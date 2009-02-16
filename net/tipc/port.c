@@ -210,10 +210,19 @@ exit:
  *
  * Returns pointer to (locked) TIPC port, or NULL if unable to create it
  */
+
+
+#ifdef CONFIG_KRGRPC
+struct tipc_port *tipc_createport_raw(void *usr_handle,
+			u32 (*dispatcher)(struct tipc_port *, struct sk_buff *),
+			void (*wakeup)(struct tipc_port *),
+			const u32 importance, void *user_port)
+#else
 struct tipc_port *tipc_createport_raw(void *usr_handle,
 			u32 (*dispatcher)(struct tipc_port *, struct sk_buff *),
 			void (*wakeup)(struct tipc_port *),
 			const u32 importance)
+#endif
 {
 	struct tipc_port *p_ptr;
 	struct tipc_msg *msg;
@@ -238,7 +247,11 @@ struct tipc_port *tipc_createport_raw(void *usr_handle,
 	INIT_LIST_HEAD(&p_ptr->subscription.nodesub_list);
 	p_ptr->dispatcher = dispatcher;
 	p_ptr->wakeup = wakeup;
+#ifdef CONFIG_KRGRPC
+	p_ptr->user_port = user_port;
+#else
 	p_ptr->user_port = NULL;
+#endif
 	k_init_timer(&p_ptr->timer, (Handler)port_timeout, ref);
 	INIT_LIST_HEAD(&p_ptr->publications);
 	INIT_LIST_HEAD(&p_ptr->port_list);
@@ -915,8 +928,13 @@ int tipc_createport(void *usr_handle,
 		pr_warn("Port creation failed, no memory\n");
 		return -ENOMEM;
 	}
+#ifdef CONFIG_KRGRPC
+	p_ptr = tipc_createport_raw(NULL, port_dispatcher, port_wakeup,
+				    importance, up_ptr);
+#else
 	p_ptr = tipc_createport_raw(NULL, port_dispatcher, port_wakeup,
 				    importance);
+#endif
 	if (!p_ptr) {
 		kfree(up_ptr);
 		return -ENOMEM;
