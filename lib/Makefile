@@ -17,6 +17,11 @@ lib-y := ctype.o string.o vsprintf.o cmdline.o \
 	 siphash.o
 
 obj-$(CONFIG_ARCH_HAS_DEBUG_STRICT_USER_COPY_CHECKS) += usercopy.o
+
+ifdef CONFIG_KRGRPC
+lib-y += krg_hashtable.o unique_id.o
+endif
+
 lib-$(CONFIG_MMU) += ioremap.o
 lib-$(CONFIG_SMP) += cpumask.o
 lib-$(CONFIG_HAS_DMA) += dma-noop.o

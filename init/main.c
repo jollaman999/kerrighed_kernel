@@ -106,6 +106,11 @@ static inline void mark_rodata_ro(void) { }
 extern void tc_init(void);
 #endif
 
+#ifdef CONFIG_KRGRPC
+extern void kerrighed_init(void);
+extern void global_pid_init(int, int, int, int);
+#endif
+
 /*
  * Debug helper: via this flag we know that we are in 'early bootup code'
  * where only the boot processor is running with IRQ disabled.  This means
@@ -916,6 +921,17 @@ static int __ref kernel_init(void *unused)
 	kernel_init_freeable();
 	/* need to finish all async __init code before freeing the memory */
 	async_synchronize_full();
+#if defined(CONFIG_KERRIGHED) || defined(CONFIG_KRGRPC)
+	/*
+	 * In a perfect world we would like to call global_pid_init and
+	 * kerrighed_init just after async_synchronize_full
+	 * Since we use early_kerrighed_* vars and such vars are tagged by
+	 * __initdata, this raise some WARNINGs.
+	 * In order to fix that we need to call kerrighed_init just after
+	 * async_synchronize_full
+	 */
+	kerrighed_init();
+#endif
 	jump_label_invalidate_initmem();
 	free_initmem();
 	mark_rodata_ro();
