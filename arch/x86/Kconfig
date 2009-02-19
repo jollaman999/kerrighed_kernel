@@ -2766,6 +2766,8 @@ config VMD
 
 source "net/Kconfig"
 
+source "kerrighed/Kconfig.Kerrighed"
+
 source "drivers/Kconfig"
 
 source "drivers/firmware/Kconfig"
