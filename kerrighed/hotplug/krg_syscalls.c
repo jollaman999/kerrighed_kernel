@@ -11,9 +11,6 @@
 #include <linux/slab.h>
 #include <linux/krg_hashtable.h>
 
-#define MODULE_NAME "Syscalls interface"
-#define DEBUG_THIS_MODULE
-
 #include <kerrighed/debug.h>
 
 #include <kerrighed/krg_syscalls.h>
