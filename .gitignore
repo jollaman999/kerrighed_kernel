@@ -96,6 +96,9 @@ signing_key.priv
 signing_key.x509
 x509.genkey
 
+# semantic files (from emacs)
+semantic.cache
+
 #
 # Red Hat
 #
