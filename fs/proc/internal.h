@@ -76,9 +76,10 @@ union proc_op {
 struct proc_distant_pid_info;
 
 union proc_distant_op {
-	int (*proc_get_link)(struct inode *,
-			     struct dentry **, struct vfsmount **);
+	int (*proc_get_link)(struct inode *, struct path *);
 	int (*proc_read)(struct proc_distant_pid_info *task, char *page);
+	int (*proc_show)(struct file *file, struct proc_distant_pid_info *task,
+			 char *buf, size_t count);
 };
 
 struct task_kddm_object;
@@ -192,12 +193,17 @@ extern const struct file_operations proc_tid_children_operations;
 
 extern int proc_tid_stat(struct seq_file *, struct pid_namespace *,
 			 struct pid *, struct task_struct *);
+#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
 extern int proc_tgid_stat(struct seq_file *, struct pid_namespace *,
 			  struct pid *, struct task_struct *);
 extern int proc_pid_status(struct seq_file *, struct pid_namespace *,
 			   struct pid *, struct task_struct *);
 extern int proc_pid_statm(struct seq_file *, struct pid_namespace *,
 			  struct pid *, struct task_struct *);
+#else /* CONFIG_KRG_PROCFS && CONFIG_KRG_PROC */
+/* Moved into: */
+#include <linux/procfs_internal.h>
+#endif /* CONFIG_KRG_PROCFS && CONFIG_KRG_PROC */
 
 /*
  * base.c
