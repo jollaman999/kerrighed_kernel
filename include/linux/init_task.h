@@ -177,6 +177,17 @@ extern struct task_group root_task_group;
 # define INIT_RT_MUTEXES(tsk)
 #endif
 
+#ifdef CONFIG_KRG_CAP
+#define INIT_KRG_CAP .krg_caps = {			    \
+	.permitted = KRG_CAP_INIT_PERM_SET,		    \
+	.effective = KRG_CAP_INIT_EFF_SET,		    \
+	.inheritable_permitted = KRG_CAP_INIT_INH_PERM_SET, \
+	.inheritable_effective = KRG_CAP_INIT_INH_EFF_SET   \
+},
+#else
+#define INIT_KRG_CAP
+#endif
+
 #ifdef CONFIG_KRG_KDDM
 #define INIT_KDDM .kddm_info = NULL,
 #else
