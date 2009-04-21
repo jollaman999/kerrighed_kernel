@@ -57,6 +57,10 @@
 #include <linux/oom.h>
 #include <linux/compat.h>
 
+#ifdef CONFIG_KRG_CAP
+#include <kerrighed/capabilities.h>
+#endif
+
 #include <asm/uaccess.h>
 #include <asm/mmu_context.h>
 #include <asm/tlb.h>
@@ -1389,6 +1393,12 @@ int prepare_binprm(struct linux_binprm *bprm)
 		return retval;
 	bprm->cred_prepared = 1;
 
+#ifdef CONFIG_KRG_CAP
+	retval = krg_cap_prepare_binprm(bprm);
+	if (retval)
+		return retval;
+#endif
+
 	memset(bprm->buf, 0, BINPRM_BUF_SIZE);
 	return kernel_read(bprm->file, 0, bprm->buf, BINPRM_BUF_SIZE);
 }
@@ -1623,6 +1633,9 @@ static int do_execve_common(struct filename *filename,
 	current->fs->in_exec = 0;
 	current->in_execve = 0;
 	membarrier_execve(current);
+#ifdef CONFIG_KRG_CAP
+	krg_cap_finish_exec(bprm);
+#endif
 	acct_update_integrals(current);
 	task_numa_free(current);
 	free_bprm(bprm);

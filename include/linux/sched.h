@@ -54,6 +54,11 @@ struct sched_param {
 #include <linux/uidgid.h>
 #include <linux/gfp.h>
 
+
+#ifdef CONFIG_KRG_CAP
+#include <kerrighed/capabilities.h>
+#endif
+
 #include <asm/processor.h>
 
 #define SCHED_ATTR_SIZE_VER0	48	/* sizeof first published struct */
@@ -1870,6 +1875,12 @@ struct task_struct {
 	u64	 parent_exec_id;
 	u64	 self_exec_id;
 #endif /* __GENKSYMS__ */
+#ifdef CONFIG_KRG_CAP
+	kernel_krg_cap_t krg_caps;
+	atomic_t krg_cap_used[CAP_SIZE];
+	atomic_t krg_cap_unavailable[CAP_SIZE];
+	atomic_t krg_cap_unavailable_private[CAP_SIZE];
+#endif
 #ifdef CONFIG_KRG_KDDM
 	struct kddm_info_struct *kddm_info;
 #endif
