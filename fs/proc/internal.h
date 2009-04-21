@@ -70,11 +70,41 @@ union proc_op {
 		struct task_struct *task);
 };
 
+#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+#include <kerrighed/sys/types.h>
+
+struct proc_distant_pid_info;
+
+union proc_distant_op {
+	int (*proc_get_link)(struct inode *,
+			     struct dentry **, struct vfsmount **);
+	int (*proc_read)(struct proc_distant_pid_info *task, char *page);
+};
+
+struct task_kddm_object;
+
+struct proc_distant_pid_info {
+	struct task_kddm_object *task_obj;
+	pid_t pid;
+	kerrighed_node_t prob_node;
+	int dumpable;
+	uid_t euid;
+	gid_t egid;
+	union proc_distant_op op;
+};
+#endif
+
 struct proc_inode {
 	struct pid *pid;
 	int fd;
 	union proc_op op;
 	struct proc_dir_entry *pde;
+#ifdef CONFIG_KRG_PROCFS
+	void *krg_procfs_private;
+#ifdef CONFIG_KRG_PROC
+	struct proc_distant_pid_info distant_proc;
+#endif
+#endif
 	struct ctl_table_header *sysctl;
 	struct ctl_table *sysctl_entry;
 	struct hlist_node sysctl_inodes;

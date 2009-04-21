@@ -86,6 +86,10 @@
 #include <linux/fs_struct.h>
 #include <linux/nospec.h>
 
+#ifdef CONFIG_KRG_PROCFS
+#include <kerrighed/cpu_id.h>
+#endif
+
 #include <asm/pgtable.h>
 #include <asm/processor.h>
 #include "internal.h"
@@ -580,7 +584,11 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 	seq_put_decimal_ull(m, ' ', 0);
 	seq_put_decimal_ull(m, ' ', 0);
 	seq_put_decimal_ll(m, ' ', task->exit_signal);
+#ifdef CONFIG_KRG_PROCFS
+	seq_put_decimal_ll(m, ' ', krg_cpu_id(task_cpu(task)));
+#else
 	seq_put_decimal_ll(m, ' ', task_cpu(task));
+#endif
 	seq_put_decimal_ull(m, ' ', task->rt_priority);
 	seq_put_decimal_ull(m, ' ', task->policy);
 	seq_put_decimal_ull(m, ' ', delayacct_blkio_ticks(task));

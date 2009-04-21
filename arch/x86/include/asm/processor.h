@@ -144,6 +144,10 @@ struct cpuinfo_x86 {
 	/* Index into per_cpu list: */
 	u16			cpu_index;
 	u32			microcode;
+#ifdef CONFIG_KRG_PROCFS
+	int                     krg_cpu_id;
+	unsigned long           cpu_khz;
+#endif /* CONFIG_KRG_PROCFS */
 } __attribute__((__aligned__(SMP_CACHE_BYTES)));
 
 struct cpuid_regs {

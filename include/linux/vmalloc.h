@@ -198,6 +198,7 @@ pcpu_free_vm_areas(struct vm_struct **vms, int nr_vms)
 # endif
 #endif
 
+#ifndef CONFIG_KRG_PROCFS
 struct vmalloc_info {
 	unsigned long   used;
 	unsigned long   largest_chunk;
@@ -215,5 +216,9 @@ do {						\
 	(vmi)->largest_chunk = 0;		\
 } while (0)
 #endif
+#else /* !CONFIG_KRG_PROCFS */
+/* Moved into: */
+#include <linux/procfs_internal.h>
+#endif /* !CONFIG_KRG_PROCFS */
 
 #endif /* _LINUX_VMALLOC_H */

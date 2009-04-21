@@ -24,6 +24,10 @@
 #include <linux/mount.h>
 #include <linux/magic.h>
 
+#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+#include <kerrighed/task.h>
+#endif
+
 #include <asm/uaccess.h>
 
 #include "internal.h"
@@ -40,6 +44,10 @@ static void proc_evict_inode(struct inode *inode)
 
 	/* Stop tracking associated processes */
 	put_pid(PROC_I(inode)->pid);
+#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+	KRGFCT(kh_task_put)(PROC_I(inode)->distant_proc.task_obj);
+	PROC_I(inode)->distant_proc.task_obj = NULL;
+#endif
 
 	/* Let go of any associated proc directory entry */
 	de = PROC_I(inode)->pde;
@@ -72,6 +80,9 @@ static struct inode *proc_alloc_inode(struct super_block *sb)
 	ei->fd = 0;
 	ei->op.proc_get_link = NULL;
 	ei->pde = NULL;
+#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+	ei->distant_proc.task_obj = NULL;
+#endif
 	ei->sysctl = NULL;
 	ei->sysctl_entry = NULL;
 	ei->ns.ns = NULL;
@@ -383,6 +394,9 @@ struct inode *proc_get_inode(struct super_block *sb, struct proc_dir_entry *de)
 		inode->i_ino = de->low_ino;
 		inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
 		PROC_I(inode)->pde = de;
+#ifdef CONFIG_KRG_PROCFS
+		PROC_I(inode)->krg_procfs_private = de->data;
+#endif /* CONFIG_KRG_PROCFS */
 
 		if (is_empty_pde(de)) {
 			make_empty_dir_inode(inode);
