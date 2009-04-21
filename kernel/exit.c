@@ -58,6 +58,13 @@
 #ifdef CONFIG_KRG_KDDM
 #include <kddm/kddm_info.h>
 #endif
+#ifdef CONFIG_KRG_PROC
+#include <kerrighed/task.h>
+#include <kerrighed/krginit.h>
+#endif
+#ifdef CONFIG_KRG_EPM
+#include <kerrighed/signal.h>
+#endif
 
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
@@ -178,7 +185,19 @@ void release_task(struct task_struct * p)
 {
 	struct task_struct *leader;
 	int zap_leader;
+#ifdef CONFIG_KRG_EPM
+	pid_t signal_id;
+#endif
 repeat:
+#ifdef CONFIG_KRG_PROC
+	krg_release_task(p);
+#endif /* CONFIG_KRG_PROC */
+#ifdef CONFIG_KRG_EPM
+	signal_id = 0;
+	if (likely(p->exit_state != EXIT_MIGRATION))
+		if (kh_exit_signal)
+			signal_id = kh_exit_signal(p);
+#endif /* CONFIG_KRG_EPM */
 	/* don't need to get the RCU readlock here - the process is dead and
 	 * can't be modifying its own credentials. But shut RCU-lockdep up */
 	rcu_read_lock();
@@ -212,6 +231,10 @@ repeat:
 	qwrite_unlock_irq(&tasklist_lock);
 	cgroup_pids_release(p);
 	release_thread(p);
+#ifdef CONFIG_KRG_EPM
+       if (signal_id)
+               kh_signal_struct_unlock(signal_id);
+#endif
 	call_rcu(&p->rcu, delayed_put_task_struct);
 
 	p = leader;
@@ -738,6 +761,30 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 	struct task_struct *p, *n;
 	LIST_HEAD(dead);
 
+#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_KRG_EPM
+	if (rcu_dereference(tsk->parent_children_obj))
+		parent_children_obj =
+			parent_children_writelock_pid_location_lock(
+				tsk,
+				&real_parent_tgid,
+				&real_parent_pid,
+				&parent_pid,
+				&parent_node);
+	if (tsk->children_obj) {
+		if (parent_children_obj)
+			kh_children_writelock_nested(tsk->tgid);
+		else
+			kh_children_writelock(tsk->tgid);
+	}
+	if (parent_children_obj)
+		kh_task_writelock_nested(tsk->pid);
+	else
+#endif /* CONFIG_KRG_EPM */
+		if (tsk->task_obj)
+			krg_task_writelock(tsk->pid);
+#endif /* CONFIG_KRG_PROC */
+
 	tasklist_write_lock_irq();
 	forget_original_parent(tsk, &dead);
 
@@ -768,6 +815,36 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 		list_del_init(&p->sibling);
 		release_task(p);
 	}
+
+#ifdef CONFIG_KRG_EPM
+	if (parent_children_obj) {
+		kh_unlock_pid_location(parent_pid);
+		if (tsk->exit_signal == -1 && original_exit_signal != -1)
+			/* Parent was not interested by notification, but may
+			 * have been woken up in do_wait and should not see tsk
+			 * as a child anymore. Remove tsk from its children kddm
+			 * object before parent can access it again. */
+			kh_remove_child(parent_children_obj, tsk->pid);
+		else {
+			kh_set_child_exit_signal(parent_children_obj,
+						 tsk->pid, tsk->exit_signal);
+			kh_set_child_exit_state(parent_children_obj,
+						tsk->pid, tsk->exit_state);
+			kh_set_child_location(parent_children_obj,
+					      tsk->pid, kerrighed_node_id);
+		}
+		kh_children_unlock(real_parent_tgid);
+	}
+#endif /* CONFIG_KRG_EPM */
+#ifdef CONFIG_KRG_PROC
+       if (tsk->task_obj)
+		krg_task_unlock(tsk->pid);
+	/*
+	 * No kerrighed structure should be accessed after this point,
+	 * since the task may have already been released by its reaper.
+	 * The exception of course is the case in which the task self-reaps.
+	 */
+#endif /* CONFIG_KRG_PROC */
 
 	/* If the process is dead, release it - nobody will wait for it */
 	if (autoreap)
@@ -847,6 +924,9 @@ void do_exit(long code)
 		schedule();
 	}
 
+#ifdef CONFIG_KRG_PROC
+	down_read_non_owner(&kerrighed_init_sem);
+#endif
 	exit_signals(tsk);  /* sets PF_EXITING */
 	/*
 	 * tsk->flags are checked in the futex code to protect against
@@ -970,6 +1050,9 @@ void do_exit(long code)
 	/* causes final put_task_struct in finish_task_switch(). */
 	tsk->state = TASK_DEAD;
 	tsk->flags |= PF_NOFREEZE;	/* tell freezer to ignore us */
+#ifdef CONFIG_KRG_PROC
+	up_read_non_owner(&kerrighed_init_sem);
+#endif
 	schedule();
 	BUG();
 	/* Avoid "noreturn function does return".  */
@@ -1036,19 +1119,6 @@ SYSCALL_DEFINE1(exit_group, int, error_code)
 	/* NOTREACHED */
 	return 0;
 }
-
-struct wait_opts {
-	enum pid_type		wo_type;
-	int			wo_flags;
-	struct pid		*wo_pid;
-
-	struct siginfo __user	*wo_info;
-	int __user		*wo_stat;
-	struct rusage __user	*wo_rusage;
-
-	wait_queue_t		child_wait;
-	int			notask_error;
-};
 
 static inline
 struct pid *task_pid_type(struct task_struct *task, enum pid_type type)
@@ -1594,6 +1664,7 @@ static int ptrace_do_wait(struct wait_opts *wo, struct task_struct *tsk)
 	return 0;
 }
 
+#ifndef CONFIG_KRG_EPM
 static int child_wait_callback(wait_queue_t *wait, unsigned mode,
 				int sync, void *key)
 {
@@ -1609,23 +1680,36 @@ static int child_wait_callback(wait_queue_t *wait, unsigned mode,
 
 	return default_wake_function(wait, mode, sync, key);
 }
+#endif
 
 void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
 {
+#ifdef CONFIG_KRG_EPM
+	wake_up_interruptible_sync(&parent->signal->wait_chldexit);
+#else
 	__wake_up_sync_key(&parent->signal->wait_chldexit,
 				TASK_INTERRUPTIBLE, 1, p);
+#endif
 }
 
 static long do_wait(struct wait_opts *wo)
 {
+#ifdef CONFIG_KRG_EPM
+	DECLARE_WAITQUEUE(wait, current);
+#endif
 	struct task_struct *tsk;
 	int retval;
 
 	trace_sched_process_wait(wo->wo_pid);
 
+#ifdef CONFIG_KRG_PROC
+	down_read(&kerrighed_init_sem);
+	add_wait_queue(&current->signal->wait_chldexit,&wait);
+#else
 	init_waitqueue_func_entry(&wo->child_wait, child_wait_callback);
 	wo->child_wait.private = current;
 	add_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
+#endif
 repeat:
 	/*
 	 * If there is nothing that can match our critiera just get out.
@@ -1660,13 +1744,24 @@ notask:
 	if (!retval && !(wo->wo_flags & WNOHANG)) {
 		retval = -ERESTARTSYS;
 		if (!signal_pending(current)) {
+#ifdef CONFIG_KRG_PROC
+			up_read(&kerrighed_init_sem);
+#endif
 			schedule();
+#ifdef CONFIG_KRG_PROC
+			down_read(&kerrighed_init_sem);
+#endif
 			goto repeat;
 		}
 	}
 end:
 	__set_current_state(TASK_RUNNING);
+#ifdef CONFIG_KRG_PROC
+	remove_wait_queue(&current->signal->wait_chldexit,&wait);
+	up_read(&kerrighed_init_sem);
+#else
 	remove_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
+#endif
 	return retval;
 }
 

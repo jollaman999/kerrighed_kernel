@@ -1337,6 +1337,21 @@ struct sched_dl_entity {
 	struct hrtimer inactive_timer;
 };
 
+struct wait_opts {
+	enum pid_type		wo_type;
+	int			wo_flags;
+	struct pid		*wo_pid;
+
+	struct siginfo __user	*wo_info;
+	int __user		*wo_stat;
+	struct rusage __user	*wo_rusage;
+
+#ifndef CONFIG_KRG_EPM
+	wait_queue_t		child_wait;
+#endif
+	int			notask_error;
+};
+
 struct rcu_node;
 
 enum perf_event_task_context {
@@ -1883,6 +1898,9 @@ struct task_struct {
 #endif
 #ifdef CONFIG_KRG_KDDM
 	struct kddm_info_struct *kddm_info;
+#endif
+#ifdef CONFIG_KRG_PROC
+	struct task_kddm_object *task_obj;
 #endif
 };
 

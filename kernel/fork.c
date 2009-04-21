@@ -83,6 +83,10 @@
 #ifdef CONFIG_KRG_KDDM
 #include <kddm/kddm_info.h>
 #endif
+#ifdef CONFIG_KRG_PROC
+#include <kerrighed/task.h>
+#include <kerrighed/krginit.h>
+#endif
 
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
@@ -1665,6 +1669,12 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	if (retval)
 		goto bad_fork_free_pid;
 
+#ifdef CONFIG_KRG_PROC
+	retval = krg_task_alloc(p, pid);
+	if (retval)
+		goto bad_fork_cancel_cgroup;
+#endif
+
 	/*
 	 * Make it visible to the rest of the system, but dont wake it up yet.
 	 * Need tasklist lock for parent etc handling!
@@ -1705,6 +1715,9 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 		retval = -ERESTARTNOINTR;
 		goto bad_fork_cancel_cgroup;
 	}
+#ifdef CONFIG_KRG_PROC
+	krg_task_fill(p, clone_flags);
+#endif
 
 	if (likely(p->pid)) {
 		ptrace_init_task(p, (clone_flags & CLONE_PTRACE) || trace);
@@ -1742,6 +1755,9 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	total_forks++;
 	spin_unlock(&current->sighand->siglock);
 	qwrite_unlock_irq(&tasklist_lock);
+#ifdef CONFIG_KRG_PROC
+	krg_task_commit(p);
+#endif
 	proc_fork_connector(p);
 	cgroup_post_fork(p, cgrp_ss_priv);
 	if (clone_flags & CLONE_THREAD)
@@ -1754,6 +1770,9 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	return p;
 
 bad_fork_cancel_cgroup:
+#ifdef CONFIG_KRG_PROC
+	krg_task_abort(p);
+#endif
 	cgroup_cancel_fork(p, cgrp_ss_priv);
 bad_fork_free_pid:
 	if (pid != &init_struct_pid)
@@ -1846,6 +1865,10 @@ long do_fork(unsigned long clone_flags,
 	int trace = 0;
 	long nr;
 
+#ifdef CONFIG_KRG_PROC
+	down_read(&kerrighed_init_sem);
+#endif
+
 	/*
 	 * Determine whether and which event to report to ptracer.  When
 	 * called from kernel_thread or CLONE_UNTRACED is explicitly
@@ -1903,6 +1926,9 @@ long do_fork(unsigned long clone_flags,
 	} else {
 		nr = PTR_ERR(p);
 	}
+#ifdef CONFIG_KRG_PROC
+	up_read(&kerrighed_init_sem);
+#endif
 	return nr;
 }
 
