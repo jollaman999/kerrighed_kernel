@@ -55,6 +55,10 @@
 #include <linux/shm.h>
 #include <linux/userfaultfd_k.h>
 
+#ifdef CONFIG_KRG_KDDM
+#include <kddm/kddm_info.h>
+#endif
+
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
 #include <asm/pgtable.h>
@@ -913,6 +917,10 @@ void do_exit(long code)
 
 	exit_notify(tsk, group_dead);
 	mpol_put_task_policy(tsk);
+#ifdef CONFIG_KRG_KDDM
+	if (tsk->kddm_info)
+		kmem_cache_free(kddm_info_cachep, tsk->kddm_info);
+#endif
 #ifdef CONFIG_FUTEX
 	if (unlikely(current->pi_state_cache))
 		kfree(current->pi_state_cache);

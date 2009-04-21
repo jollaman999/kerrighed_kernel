@@ -14,7 +14,7 @@
 #include <linux/lockdep.h>
 #include <linux/string.h>
 #include <kerrighed/krgnodemask.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>

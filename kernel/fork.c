@@ -80,6 +80,10 @@
 #endif
 #include <linux/livepatch.h>
 
+#ifdef CONFIG_KRG_KDDM
+#include <kddm/kddm_info.h>
+#endif
+
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
 #include <asm/uaccess.h>
@@ -1526,12 +1530,33 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	if (retval)
 		goto bad_fork_cleanup_policy;
 
+#ifdef CONFIG_KRG_KDDM
+	if (!kh_copy_kddm_info)
+		p->kddm_info = NULL;
+	else {
+		retval = kh_copy_kddm_info(clone_flags, p)
+		if (retval)
+#ifdef CONFIG_KRG_EPM
+			goto bad_fork_cleanup_children_obj;
+#else
+			goto bad_fork_cleanup_policy;
+#endif /* CONFIG_KRG_EPM */
+	}
+#endif /* CONFIG_KRG_KDDM */
+
 	retval = perf_event_init_task(p);
 	if (retval)
 		goto bad_fork_cleanup_policy;
 	retval = audit_alloc(p);
 	if (retval)
+#ifdef CONFIG_KRG_KDDM
+		goto bad_fork_cleanup_kddm_info;
+#else
+#ifdef CONFIG_KRG_EPM
+#error CONFIG_KRG_KDDM should be set!
+#endif /* CONFIG_KRG_EPM */
 		goto bad_fork_cleanup_perf;
+#endif /* CONFIG_KRG_KDDM */
 	/* copy all the process information */
 	retval = copy_semundo(clone_flags, p);
 	if (retval)
@@ -1752,6 +1777,11 @@ bad_fork_cleanup_semundo:
 	exit_sem(p);
 bad_fork_cleanup_audit:
 	audit_free(p);
+#ifdef CONFIG_KRG_KDDM
+bad_fork_cleanup_kddm_info:
+	if (p->kddm_info)
+		kmem_cache_free(kddm_info_cachep, p->kddm_info);
+#endif
 bad_fork_cleanup_perf:
 	perf_event_free_task(p);
 bad_fork_cleanup_policy:

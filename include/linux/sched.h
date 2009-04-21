@@ -1870,6 +1870,9 @@ struct task_struct {
 	u64	 parent_exec_id;
 	u64	 self_exec_id;
 #endif /* __GENKSYMS__ */
+#ifdef CONFIG_KRG_KDDM
+	struct kddm_info_struct *kddm_info;
+#endif
 };
 
 /* Future-safe accessor for struct task_struct's cpus_allowed. */
