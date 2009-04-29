@@ -1713,7 +1713,11 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 		spin_unlock(&current->sighand->siglock);
 		qwrite_unlock_irq(&tasklist_lock);
 		retval = -ERESTARTNOINTR;
+#ifdef CONFIG_KRG_PROC
+		goto bad_fork_free_krg_task;
+#else
 		goto bad_fork_cancel_cgroup;
+#endif
 	}
 #ifdef CONFIG_KRG_PROC
 	krg_task_fill(p, clone_flags);
@@ -1769,10 +1773,11 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 
 	return p;
 
-bad_fork_cancel_cgroup:
 #ifdef CONFIG_KRG_PROC
+bad_fork_free_krg_task:
 	krg_task_abort(p);
 #endif
+bad_fork_cancel_cgroup:
 	cgroup_cancel_fork(p, cgrp_ss_priv);
 bad_fork_free_pid:
 	if (pid != &init_struct_pid)
