@@ -582,9 +582,9 @@ int get_unused_fd_flags(unsigned flags)
 EXPORT_SYMBOL(get_unused_fd_flags);
 
 #ifdef CONFIG_KRG_FAF
-int __get_unused_fd(struct files_struct *files)
+int __get_unused_fd(struct task_struct *task)
 {
-	return __alloc_fd(files, 0, rlimit(RLIMIT_NOFILE), 0);
+	return __alloc_fd(task->files, 0, task_rlimit(task, RLIMIT_NOFILE), 0);
 }
 #endif
 
