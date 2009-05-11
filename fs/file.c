@@ -581,7 +581,17 @@ int get_unused_fd_flags(unsigned flags)
 }
 EXPORT_SYMBOL(get_unused_fd_flags);
 
-static void __put_unused_fd(struct files_struct *files, unsigned int fd)
+#ifdef CONFIG_KRG_FAF
+int __get_unused_fd(struct files_struct *files)
+{
+	return __alloc_fd(files, 0, rlimit(RLIMIT_NOFILE), 0);
+}
+#endif
+
+#ifndef CONFIG_KRG_FAF
+static
+#endif
+void __put_unused_fd(struct files_struct *files, unsigned int fd)
 {
 	struct fdtable *fdt = files_fdtable(files);
 	__clear_open_fd(fd, fdt);

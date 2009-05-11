@@ -14,6 +14,9 @@
 #include <linux/security.h>
 #include <linux/syscalls.h>
 #include <linux/pagemap.h>
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
+#endif
 
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
@@ -61,6 +64,13 @@ int vfs_fstat(unsigned int fd, struct kstat *stat)
 	int error = -EBADF;
 
 	if (f.file) {
+#ifdef CONFIG_KRG_FAF
+		if (f.file->f_flags & O_FAF_CLT) {
+			error = krg_faf_fstat(f.file, stat);
+			fdput(f);
+			return error;
+		}
+#endif
 		error = vfs_getattr(&f.file->f_path, stat);
 		fdput(f);
 	}

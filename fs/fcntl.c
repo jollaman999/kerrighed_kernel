@@ -23,6 +23,10 @@
 #include <linux/user_namespace.h>
 #include <linux/shmem_fs.h>
 
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
+#endif
+
 #include <asm/poll.h>
 #include <asm/siginfo.h>
 #include <asm/uaccess.h>
@@ -382,6 +386,12 @@ SYSCALL_DEFINE3(fcntl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
 			goto out1;
 	}
 
+#ifdef CONFIG_KRG_FAF
+	if ((f.file->f_flags & O_FAF_CLT) && (cmd != F_DUPFD)) {
+		err = krg_faf_fcntl(f.file, cmd, arg);
+		goto out1;
+       }
+#endif
 	err = security_file_fcntl(f.file, cmd, arg);
 	if (!err)
 		err = do_fcntl(fd, cmd, arg, f.file);
@@ -408,6 +418,13 @@ SYSCALL_DEFINE3(fcntl64, unsigned int, fd, unsigned int, cmd,
 		if (!check_fcntl_cmd(cmd))
 			goto out1;
 	}
+
+#ifdef CONFIG_KRG_FAF
+	if ((f.file->f_flags & O_FAF_CLT) && (cmd != F_DUPFD)) {
+		err = krg_faf_fcntl64(f.file, cmd, arg);
+		goto out1;
+       }
+#endif
 
 	err = security_file_fcntl(f.file, cmd, arg);
 	if (err)

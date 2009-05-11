@@ -29,6 +29,9 @@
 #ifdef CONFIG_KRG_DVFS
 #include <kerrighed/dvfs.h>
 #endif
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
+#endif
 
 typedef ssize_t (*io_fn_t)(struct file *, char __user *, size_t, loff_t *);
 typedef ssize_t (*iov_fn_t)(struct kiocb *, const struct iovec *,
@@ -356,6 +359,13 @@ SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, whence)
 	if (!f.file)
 		return -EBADF;
 
+#ifdef CONFIG_KRG_FAF
+	if (f.file->f_flags & O_FAF_CLT) {
+		retval = krg_faf_lseek(f.file, offset, whence);
+		fdput_pos(f);
+		return retval;
+	}
+#endif
 	retval = -EINVAL;
 	if (whence <= SEEK_MAX) {
 		loff_t res = vfs_llseek(f.file, offset, whence);
@@ -390,10 +400,19 @@ SYSCALL_DEFINE5(llseek, unsigned int, fd, unsigned long, offset_high,
 	if (whence > SEEK_MAX)
 		goto out_putf;
 
+#ifdef CONFIG_KRG_FAF
+	if (f.file->f_flags & O_FAF_CLT) {
+		retval = krg_faf_llseek(f.file, offset_high, offset_low,
+					&offset, whence);
+	} else {
+#endif
 	offset = vfs_llseek(f.file, ((loff_t) offset_high << 32) | offset_low,
 			whence);
 
 	retval = (int)offset;
+#ifdef CONFIG_KRG_FAF
+	}
+#endif
 	if (offset >= 0) {
 		retval = -EFAULT;
 		if (!copy_to_user(result, &offset, sizeof(offset)))
@@ -596,7 +615,17 @@ SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
 	ssize_t ret = -EBADF;
 
 	if (f.file) {
+#ifdef CONFIG_KRG_FAF
+		loff_t pos;
+		if (f.file->f_flags & O_FAF_CLT) {
+			ret = krg_faf_read(f.file, buf, count);
+			fdput_pos(f);
+			return ret;
+		}
+		pos = file_pos_read(f.file);
+#else
 		loff_t pos = file_pos_read(f.file);
+#endif
 		ret = vfs_read(f.file, buf, count, &pos);
 		if (ret >= 0)
 			file_pos_write(f.file, pos);
@@ -612,7 +641,17 @@ SYSCALL_DEFINE3(write, unsigned int, fd, const char __user *, buf,
 	ssize_t ret = -EBADF;
 
 	if (f.file) {
+#ifdef CONFIG_KRG_FAF
+		loff_t pos;
+		if (f.file->f_flags & O_FAF_CLT) {
+			ret = krg_faf_write(f.file, buf, count);
+			fdput_pos(f);
+			return ret;
+		}
+		pos = file_pos_read(f.file);
+#else
 		loff_t pos = file_pos_read(f.file);
+#endif
 		ret = vfs_write(f.file, buf, count, &pos);
 		if (ret >= 0)
 			file_pos_write(f.file, pos);

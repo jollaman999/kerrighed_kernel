@@ -3237,6 +3237,13 @@ finish_lookup:
 		goto out;
 	audit_inode(name, nd->path.dentry, 0);
 finish_open:
+#ifdef CONFIG_KRG_FAF
+	if ((!nd.path.dentry) && (nd.path.mnt)) {
+		error = 0;
+		goto out;
+	}
+#endif
+
 	if (!S_ISREG(nd->inode->i_mode))
 		will_truncate = false;
 
@@ -3438,6 +3445,13 @@ static struct file *path_openat(int dfd, struct filename *pathname,
 		error = do_last(nd, &path, file, op, &opened, pathname);
 		put_link(nd, &link, cookie);
 	}
+#ifdef CONFIG_KRG_FAF
+	if ((!nd.path.dentry) && (nd.path.mnt)) {
+		struct file *file = (struct file *)nd.path.mnt;
+		get_file(file);
+		return file;
+	}
+#endif
 out:
 	if (nd->root.mnt && !(nd->flags & LOOKUP_ROOT))
 		path_put(&nd->root);

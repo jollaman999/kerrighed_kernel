@@ -17,6 +17,10 @@
 #include <linux/backing-dev.h>
 #include "internal.h"
 
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
+#endif
+
 #define VALID_FLAGS (SYNC_FILE_RANGE_WAIT_BEFORE|SYNC_FILE_RANGE_WRITE| \
 			SYNC_FILE_RANGE_WAIT_AFTER)
 
@@ -198,6 +202,10 @@ EXPORT_SYMBOL(vfs_fsync_range);
  */
 int vfs_fsync(struct file *file, int datasync)
 {
+#ifdef CONFIG_KRG_FAF
+	if (file->f_flags & O_FAF_CLT)
+		return krg_faf_fsync(file);
+#endif
 	return vfs_fsync_range(file, 0, LLONG_MAX, datasync);
 }
 EXPORT_SYMBOL(vfs_fsync);

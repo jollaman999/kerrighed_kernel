@@ -10,6 +10,9 @@
 #include <linux/posix_types.h>
 
 struct file;
+#ifdef CONFIG_KRG_FAF
+struct files_struct;
+#endif
 
 extern void fput(struct file *);
 
@@ -66,8 +69,15 @@ extern bool get_close_on_exec(unsigned int fd);
 extern void put_filp(struct file *);
 extern int get_unused_fd_flags(unsigned flags);
 #define get_unused_fd() get_unused_fd_flags(0)
+#ifdef CONFIG_KRG_FAF
+int __get_unused_fd(struct files_struct *files);
+extern void __put_unused_fd(struct files_struct *files, unsigned int fd);
+#endif
 extern void put_unused_fd(unsigned int fd);
-
+#ifdef CONFIG_KRG_FAF
+extern void __fd_install(struct files_struct *files,
+			 unsigned int fd, struct file *file);
+#endif
 extern void fd_install(unsigned int fd, struct file *file);
 
 extern void flush_delayed_fput(void);

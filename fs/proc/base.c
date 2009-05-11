@@ -100,6 +100,10 @@
 #include <kerrighed/pid.h>
 #endif
 
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
+#endif
+
 #include "internal.h"
 #include "fd.h"
 
@@ -1844,6 +1848,11 @@ int do_proc_readlink(struct path *path, char __user *buffer, int buflen)
 	if (!tmp)
 		return -ENOMEM;
 
+#ifdef CONFIG_KRG_FAF
+	if (!path->dentry && path->mnt)
+		pathname = krg_faf_d_path((struct file *)path->mnt, tmp, PAGE_SIZE);
+	else
+#endif
 	pathname = d_path(path, tmp, PAGE_SIZE);
 	len = PTR_ERR(pathname);
 	if (IS_ERR(pathname))

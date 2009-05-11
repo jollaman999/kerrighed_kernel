@@ -12,6 +12,10 @@
 
 #include <linux/proc_fs.h>
 
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
+#endif
+
 #include "../mount.h"
 #include "internal.h"
 #include "fd.h"
@@ -163,6 +167,12 @@ static int proc_fd_link(struct dentry *dentry, struct path *path)
 		if (fd_file) {
 			*path = fd_file->f_path;
 			path_get(&fd_file->f_path);
+#ifdef CONFIG_KRG_FAF
+			if (fd_file->f_flags & O_FAF_CLT) {
+				path->mnt = (struct vfsmount *)fd_file;
+				path->dentry = NULL;
+			}
+#endif
 			ret = 0;
 		}
 		spin_unlock(&files->file_lock);

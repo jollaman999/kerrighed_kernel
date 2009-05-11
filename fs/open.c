@@ -34,6 +34,10 @@
 
 #include "internal.h"
 
+#ifdef CONFIG_KRG_IPC
+#include <kerrighed/faf.h>
+#endif
+
 int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
 	struct file *filp)
 {
@@ -1005,6 +1009,13 @@ long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
 	if (fd)
 		return fd;
 
+#ifdef CONFIG_KRG_FAF
+       /* Flush Kerrighed O_flags to prevent kernel crashes due to wrong
+        * flags passed from userland.
+        */
+	flags = flags & (~O_KRG_FLAGS);
+#endif
+
 	tmp = getname(filename);
 	if (IS_ERR(tmp))
 		return PTR_ERR(tmp);
@@ -1016,7 +1027,13 @@ long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
 			put_unused_fd(fd);
 			fd = PTR_ERR(f);
 		} else {
+#ifdef CONFIG_KRG_FAF
+			if (!(f->f_flags & O_FAF_CLT)) {
+#endif
 			fsnotify_open(f);
+#ifdef CONFIG_KRG_FAF
+			}
+#endif
 			fd_install(fd, f);
 		}
 	}
@@ -1061,6 +1078,9 @@ SYSCALL_DEFINE2(creat, const char __user *, pathname, umode_t, mode)
 int filp_close(struct file *filp, fl_owner_t id)
 {
 	int retval = 0;
+#ifdef CONFIG_KRG_FAF
+	int flags = filp->f_flags;
+#endif
 
 	if (!file_count(filp)) {
 		printk(KERN_ERR "VFS: Close: file count is 0\n");
@@ -1070,11 +1090,21 @@ int filp_close(struct file *filp, fl_owner_t id)
 	if (filp->f_op && filp->f_op->flush)
 		retval = filp->f_op->flush(filp, id);
 
+#ifdef CONFIG_KRG_FAF
+	if (filp->f_flags & O_FAF_CLT) {
+		fput(filp);
+		return retval;
+	}
+#endif
 	if (likely(!(filp->f_mode & FMODE_PATH))) {
 		dnotify_flush(filp, id);
 		locks_remove_posix(filp, id);
 	}
 	fput(filp);
+#ifdef CONFIG_KRG_FAF
+	if ((flags & O_FAF_SRV) && (file_count(filp) == 1))
+		krg_faf_srv_close(filp);
+#endif
 	return retval;
 }
 

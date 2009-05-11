@@ -881,7 +881,11 @@ struct file {
 #endif
 #endif
 	atomic_long_t		f_count;
+#ifdef CONFIG_KRG_FAF
+	unsigned long           f_flags;
+#else
 	unsigned int 		f_flags;
+#endif
 	fmode_t			f_mode;
 	loff_t			f_pos;
 	struct fown_struct	f_owner;
@@ -895,6 +899,10 @@ struct file {
 #ifdef CONFIG_KRG_DVFS
 	unsigned long           f_objid;
 #endif
+#ifdef CONFIG_KRG_FAF
+	unsigned long           f_faf_srv_index;
+#endif
+
 	/* needed for tty driver, and maybe others */
 	void			*private_data;
 
