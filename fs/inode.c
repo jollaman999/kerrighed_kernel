@@ -153,6 +153,9 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	inode->i_cdev = NULL;
 	inode->i_rdev = 0;
 	inode->dirtied_when = 0;
+#ifdef CONFIG_KRG_DVFS
+	inode->i_objid = 0;
+#endif
 
 	if (security_inode_alloc(inode))
 		goto out;
@@ -164,6 +167,9 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 
 	atomic_set(&inode->i_dio_count, 0);
 
+#ifdef CONFIG_KRG_DVFS
+	mapping->kddm_set = NULL;
+#endif
 	mapping->a_ops = &empty_aops;
 	mapping->host = inode;
 	mapping->flags = 0;

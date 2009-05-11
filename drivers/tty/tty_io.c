@@ -453,7 +453,10 @@ static long hung_up_tty_compat_ioctl(struct file *file,
 	return cmd == TIOCSPGRP ? -ENOTTY : -EIO;
 }
 
-static const struct file_operations tty_fops = {
+#ifndef CONFIG_KRG_DVFS
+static
+#endif
+const struct file_operations tty_fops = {
 	.llseek		= no_llseek,
 	.read		= tty_read,
 	.write		= tty_write,
@@ -477,7 +480,10 @@ static const struct file_operations console_fops = {
 	.fasync		= tty_fasync,
 };
 
-static const struct file_operations hung_up_tty_fops = {
+#ifndef CONFIG_KRG_DVFS
+static
+#endif
+const struct file_operations hung_up_tty_fops = {
 	.llseek		= no_llseek,
 	.read		= hung_up_tty_read,
 	.write		= hung_up_tty_write,

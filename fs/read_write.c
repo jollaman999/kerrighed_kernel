@@ -26,6 +26,10 @@
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
 
+#ifdef CONFIG_KRG_DVFS
+#include <kerrighed/dvfs.h>
+#endif
+
 typedef ssize_t (*io_fn_t)(struct file *, char __user *, size_t, loff_t *);
 typedef ssize_t (*iov_fn_t)(struct kiocb *, const struct iovec *,
 		unsigned long, loff_t);
@@ -298,12 +302,24 @@ loff_t vfs_llseek(struct file *file, loff_t offset, int whence)
 {
 	loff_t (*fn)(struct file *, loff_t, int);
 
+#ifdef CONFIG_KRG_DVFS
+	loff_t pos;
+	if (file->f_flags & O_KRG_SHARED)
+		krg_file_pos_read(file);
+#endif
 	fn = no_llseek;
 	if (file->f_mode & FMODE_LSEEK) {
 		if (file->f_op && file->f_op->llseek)
 			fn = file->f_op->llseek;
 	}
+#ifdef CONFIG_KRG_DVFS
+	pos = fn(file, offset, whence);
+	if (file->f_flags & O_KRG_SHARED)
+		krg_file_pos_write(file, file->f_pos);
+	return pos;
+#else
 	return fn(file, offset, whence);
+#endif
 }
 EXPORT_SYMBOL(vfs_llseek);
 
@@ -558,11 +574,19 @@ EXPORT_SYMBOL(vfs_write);
 
 static inline loff_t file_pos_read(struct file *file)
 {
+#ifdef CONFIG_KRG_DVFS
+	if (file->f_flags & O_KRG_SHARED)
+		return krg_file_pos_read(file);
+#endif
 	return file->f_pos;
 }
 
 static inline void file_pos_write(struct file *file, loff_t pos)
 {
+#ifdef CONFIG_KRG_DVFS
+	if (file->f_flags & O_KRG_SHARED)
+		return krg_file_pos_write(file, pos);
+#endif
 	file->f_pos = pos;
 }
 

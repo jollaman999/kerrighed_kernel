@@ -73,4 +73,11 @@ extern void fd_install(unsigned int fd, struct file *file);
 extern void flush_delayed_fput(void);
 extern void __fput_sync(struct file *);
 
+#ifdef CONFIG_KRG_DVFS
+struct fdtable;
+int count_open_files(struct fdtable *fdt);
+
+struct fdtable * alloc_fdtable(unsigned int nr);
+#endif
+
 #endif /* __LINUX_FILE_H */

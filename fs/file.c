@@ -105,7 +105,10 @@ static void copy_fdtable(struct fdtable *nfdt, struct fdtable *ofdt)
 	copy_fd_bitmaps(nfdt, ofdt, ofdt->max_fds);
 }
 
-static struct fdtable * alloc_fdtable(unsigned int nr)
+#ifndef CONFIG_KRG_DVFS
+static
+#endif
+struct fdtable * alloc_fdtable(unsigned int nr)
 {
 	struct fdtable *fdt;
 	void *data;
@@ -272,7 +275,10 @@ static inline void __clear_open_fd(unsigned int fd, struct fdtable *fdt)
 	__clear_bit(fd / BITS_PER_LONG, fdt->full_fds_bits);
 }
 
-static int count_open_files(struct fdtable *fdt)
+#ifndef CONFIG_KRG_DVFS
+static
+#endif
+int count_open_files(struct fdtable *fdt)
 {
 	int size = fdt->max_fds;
 	int i;

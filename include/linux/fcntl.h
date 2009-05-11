@@ -28,4 +28,8 @@
 #define IS_SETLK(cmd)	(IS_SETLK32(cmd)  || IS_SETLK64(cmd))
 #define IS_SETLKW(cmd)	(IS_SETLKW32(cmd) || IS_SETLKW64(cmd))
 
+#ifdef CONFIG_KRG_DVFS
+#include <kerrighed/fcntl.h>
+#endif
+
 #endif

@@ -467,6 +467,9 @@ struct address_space {
 	spinlock_t		private_lock;	/* for use by the address_space */
 	struct list_head	private_list;	/* ditto */
 	void			*private_data;	/* ditto */
+#ifdef CONFIG_KRG_DVFS
+	struct kddm_set         *kddm_set;
+#endif
 } __attribute__((aligned(sizeof(long))));
 	/*
 	 * On most architectures that alignment is already the case; but
@@ -677,6 +680,9 @@ struct inode {
 
 	__u32			i_generation;
 
+#ifdef CONFIG_KRG_DVFS
+	unsigned long           i_objid;
+#endif
 #ifdef CONFIG_FSNOTIFY
 	__u32			i_fsnotify_mask; /* all events this inode cares about */
 	RH_KABI_REPLACE(struct hlist_head i_fsnotify_marks,
@@ -885,6 +891,9 @@ struct file {
 	u64			f_version;
 #ifdef CONFIG_SECURITY
 	void			*f_security;
+#endif
+#ifdef CONFIG_KRG_DVFS
+	unsigned long           f_objid;
 #endif
 	/* needed for tty driver, and maybe others */
 	void			*private_data;
@@ -1928,6 +1937,10 @@ struct super_operations {
 #define S_DAX		16384	/* Direct Access, avoiding the page cache */
 #else
 #define S_DAX		0	/* Make all the DAX code disappear */
+#endif
+
+#ifdef CONFIG_KRG_FAF
+#define S_IFAF          32768
 #endif
 
 /*
