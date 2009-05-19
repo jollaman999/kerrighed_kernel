@@ -414,6 +414,9 @@ struct mm_struct {
 	unsigned long free_area_cache;		/* first hole of size cached_hole_size or larger */
 	unsigned long highest_vm_end;		/* highest vma end address */
 	pgd_t * pgd;
+#ifdef CONFIG_KRG_EPM
+	atomic_t mm_ltasks;			/* How many tasks sharing this mm_struct locally */
+#endif
 	atomic_t mm_users;			/* How many users with user space? */
 	atomic_t mm_count;			/* How many references to "struct mm_struct" (users count as 1) */
 	atomic_long_t nr_ptes;			/* Page table pages */

@@ -634,6 +634,9 @@ static __always_inline void mm_clear_owner(struct mm_struct *mm,
 
 static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p)
 {
+#ifdef CONFIG_KRG_EPM
+	atomic_set(&mm->mm_ltasks, 1);
+#endif
 	atomic_set(&mm->mm_users, 1);
 	atomic_set(&mm->mm_count, 1);
 	init_rwsem(&mm->mmap_sem);
@@ -737,6 +740,9 @@ void mmput(struct mm_struct *mm)
 		}
 		if (mm->binfmt)
 			module_put(mm->binfmt->module);
+#ifdef CONFIG_KRG_EPM
+		BUG_ON(atomic_read(&mm->mm_ltasks) != 0);
+#endif
 		mmdrop(mm);
 	}
 }
@@ -925,6 +931,10 @@ void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 
 	/* Get rid of any cached register state */
 	deactivate_mm(tsk, mm);
+#ifdef CONFIG_KRG_EPM
+	if (mm)
+		atomic_dec(&mm->mm_ltasks);
+#endif
 
 	/*
 	 * If we're exiting normally, clear a user-space tid field if
@@ -1038,6 +1048,9 @@ static int copy_mm(unsigned long clone_flags, struct task_struct *tsk)
 		return 0;
 
 	if (clone_flags & CLONE_VM) {
+#ifdef CONFIG_KRG_EPM
+		atomic_inc(&oldmm->mm_ltasks);
+#endif
 		atomic_inc(&oldmm->mm_users);
 		mm = oldmm;
 		goto good_mm;
@@ -1786,6 +1799,9 @@ bad_fork_cleanup_namespaces:
 bad_fork_cleanup_mm:
 	if (p->mm) {
 		mm_clear_owner(p->mm, p);
+#ifdef CONFIG_KRG_EPM
+		atomic_dec(&p->mm->mm_ltasks);
+#endif
 		mmput(p->mm);
 	}
 bad_fork_cleanup_signal:

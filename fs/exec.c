@@ -1685,6 +1685,10 @@ static int do_execve_common(struct filename *filename,
 out:
 	if (bprm->mm) {
 		acct_arg_size(bprm, 0);
+#ifdef CONFIG_KRG_EPM
+		/* Quiet the BUG_ON() in mmput() */
+		atomic_dec(&bprm->mm->mm_ltasks);
+#endif
 		mmput(bprm->mm);
 	}
 
