@@ -23,7 +23,12 @@
 static int seq_show(struct seq_file *m, void *v)
 {
 	struct files_struct *files = NULL;
+#ifdef CONFIG_KRG_FAF
+	unsigned int f_flags = 0;
+	int ret = -ENOENT;
+#else
 	int f_flags = 0, ret = -ENOENT;
+#endif
 	struct file *file = NULL;
 	struct task_struct *task;
 
@@ -42,7 +47,12 @@ static int seq_show(struct seq_file *m, void *v)
 		if (file) {
 			struct fdtable *fdt = files_fdtable(files);
 
+#ifdef CONFIG_KRG_FAF
+			f_flags =
+				(unsigned int)(file->f_flags & ~(unsigned long)O_KRG_FLAGS));
+#else
 			f_flags = file->f_flags;
+#endif
 			if (close_on_exec(fd, fdt))
 				f_flags |= O_CLOEXEC;
 
