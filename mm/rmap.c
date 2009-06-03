@@ -864,7 +864,11 @@ int page_mapped_in_vma(struct page *page, struct vm_area_struct *vma)
 struct page_referenced_arg {
 	int mapcount;
 	int referenced;
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags;
+#else
 	unsigned long vm_flags;
+#endif
 	struct mem_cgroup *memcg;
 };
 /*
@@ -972,7 +976,11 @@ static bool invalid_page_referenced_vma(struct vm_area_struct *vma, void *arg)
 int page_referenced(struct page *page,
 		    int is_locked,
 		    struct mem_cgroup *memcg,
+#ifdef CONFIG_KRG_MM
+		    unsigned long long *vm_flags)
+#else
 		    unsigned long *vm_flags)
+#endif
 {
 	int ret;
 	int we_locked = 0;

@@ -7,7 +7,11 @@
 extern int __khugepaged_enter(struct mm_struct *mm);
 extern void __khugepaged_exit(struct mm_struct *mm);
 extern int khugepaged_enter_vma_merge(struct vm_area_struct *vma,
+#ifdef CONFIG_KRG_MM
+				      unsigned long long vm_flags);
+#else
 				      unsigned long vm_flags);
+#endif
 
 #define khugepaged_enabled()					       \
 	(transparent_hugepage_flags &				       \
@@ -37,7 +41,11 @@ static inline void khugepaged_exit(struct mm_struct *mm)
 }
 
 static inline int khugepaged_enter(struct vm_area_struct *vma,
+#ifdef CONFIG_KRG_MM
+				   unsigned long long vm_flags);
+#else
 				   unsigned long vm_flags)
+#endif
 {
 	if (!test_bit(MMF_VM_HUGEPAGE, &vma->vm_mm->flags))
 		if ((khugepaged_always() ||
@@ -56,12 +64,20 @@ static inline void khugepaged_exit(struct mm_struct *mm)
 {
 }
 static inline int khugepaged_enter(struct vm_area_struct *vma,
+#ifdef CONFIG_KRG_MM
+				   unsigned long long vm_flags)
+#else
 				   unsigned long vm_flags)
+#endif
 {
 	return 0;
 }
 static inline int khugepaged_enter_vma_merge(struct vm_area_struct *vma,
+#ifdef CONFIG_KRG_MM
+					     unsigned long long vm_flags)
+#else
 					     unsigned long vm_flags)
+#endif
 {
 	return 0;
 }

@@ -241,7 +241,11 @@ struct page_frag_cache {
 	bool pfmemalloc;
 };
 
+#ifdef CONFIG_KRG_MM
+typedef unsigned long long __nocast vm_flags_t;
+#else
 typedef unsigned long __nocast vm_flags_t;
+#endif
 
 /*
  * A region containing a mapping of a non-memory backed file under NOMMU
@@ -304,7 +308,11 @@ struct vm_area_struct {
 
 	struct mm_struct *vm_mm;	/* The address space we belong to. */
 	pgprot_t vm_page_prot;		/* Access permissions of this VMA. */
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags;	/* Flags, see mm.h. */
+#else
 	unsigned long vm_flags;		/* Flags, see mm.h. */
+#endif
 
 	/*
 	 * For areas with an address space and backing store,

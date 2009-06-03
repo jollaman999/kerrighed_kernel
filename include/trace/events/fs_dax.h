@@ -14,7 +14,11 @@ DECLARE_EVENT_CLASS(dax_pmd_fault_class,
 		__field(unsigned long, ino)
 		__field(unsigned long, vm_start)
 		__field(unsigned long, vm_end)
+#ifdef CONFIG_KRG_MM
+		__field(unsigned long long, vm_flags)
+#else
 		__field(unsigned long, vm_flags)
+#endif
 		__field(unsigned long, address)
 		__field(pgoff_t, pgoff)
 		__field(pgoff_t, max_pgoff)

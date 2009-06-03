@@ -195,7 +195,11 @@ static inline void page_dup_rmap(struct page *page)
  * Called from mm/vmscan.c to handle paging out
  */
 int page_referenced(struct page *, int is_locked,
+#ifdef CONFIG_KRG_MM
+			struct mem_cgroup *memcg, unsigned long long *vm_flags);
+#else
 			struct mem_cgroup *memcg, unsigned long *vm_flags);
+#endif
 int page_referenced_one(struct page *, struct vm_area_struct *,
 	unsigned long address, void *arg);
 
@@ -277,7 +281,11 @@ int rmap_walk(struct page *page, struct rmap_walk_control *rwc);
 
 static inline int page_referenced(struct page *page, int is_locked,
 				  struct mem_cgroup *memcg,
+#ifdef CONFIG_KRG_MM
+				  unsigned long long *vm_flags)
+#else
 				  unsigned long *vm_flags)
+#endif
 {
 	*vm_flags = 0;
 	return 0;

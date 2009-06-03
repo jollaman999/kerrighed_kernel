@@ -4624,8 +4624,13 @@ static unsigned long page_table_shareable(struct vm_area_struct *svma,
 	unsigned long s_end = sbase + PUD_SIZE;
 
 	/* Allow segments to share if only one is marked locked */
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags = vma->vm_flags & VM_LOCKED_CLEAR_MASK;
+	unsigned long long svm_flags = svma->vm_flags & VM_LOCKED_CLEAR_MASK;
+#else
 	unsigned long vm_flags = vma->vm_flags & VM_LOCKED_CLEAR_MASK;
 	unsigned long svm_flags = svma->vm_flags & VM_LOCKED_CLEAR_MASK;
+#endif
 
 	/*
 	 * match the virtual addresses, permission and the alignment of the

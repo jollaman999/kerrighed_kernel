@@ -878,18 +878,34 @@ out:
  * already present in the new task to be cleared in the whole range
  * covered by this vma.
  */
-
+#ifdef CONFIG_KRG_MM
+static inline unsigned long
+copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,
+		unsigned long addr, int *rss, int anon_only)
+#else
 static inline unsigned long
 copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,
 		unsigned long addr, int *rss)
+#endif
 {
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags = vma->vm_flags;
+#else
 	unsigned long vm_flags = vma->vm_flags;
+#endif
 	pte_t pte = *src_pte;
 	struct page *page;
 
 	/* pte contains position in swap or file, so copy. */
 	if (unlikely(!pte_present(pte))) {
+#ifdef CONFIG_KRG_MM
+		if (pte_obj_entry(src_pte)) {
+			pte_clear(dst_mm, addr, dst_pte);
+			return;
+		}
+#endif
 		if (!pte_file(pte)) {
 			swp_entry_t entry = pte_to_swp_entry(pte);
 
@@ -967,6 +983,12 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 
 	page = vm_normal_page(vma, addr, pte);
 	if (page) {
+#ifdef CONFIG_KRG_MM
+		if (anon_only && !PageAnon(page)) {
+			pte_clear(dst_mm, addr, dst_pte);
+			return;
+		}
+#endif
 		get_page(page);
 		page_dup_rmap(page);
 		rss[mm_counter(page)]++;
@@ -977,9 +999,15 @@ out_set_pte:
 	return 0;
 }
 
+#ifdef CONFIG_KRG_MM
+int copy_pte_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		   pmd_t *dst_pmd, pmd_t *src_pmd, struct vm_area_struct *vma,
+		   unsigned long addr, unsigned long end, int anon_only)
+#else
 int copy_pte_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		   pmd_t *dst_pmd, pmd_t *src_pmd, struct vm_area_struct *vma,
 		   unsigned long addr, unsigned long end)
+#endif
 {
 	pte_t *orig_src_pte, *orig_dst_pte;
 	pte_t *src_pte, *dst_pte;
@@ -1016,8 +1044,13 @@ again:
 			progress++;
 			continue;
 		}
+#ifdef CONFIG_KRG_MM
+		entry.val = copy_one_pte(dst_mm, src_mm, dst_pte, src_pte,
+							vma, addr, rss, anon_only);
+#else
 		entry.val = copy_one_pte(dst_mm, src_mm, dst_pte, src_pte,
 							vma, addr, rss);
+#endif
 		if (entry.val)
 			break;
 		progress += 8;
@@ -1040,9 +1073,15 @@ again:
 	return 0;
 }
 
+#ifdef CONFIG_KRG_MM
+static inline int copy_pmd_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pud_t *dst_pud, pud_t *src_pud, struct vm_area_struct *vma,
+		unsigned long addr, unsigned long end, int anon_only)
+#else
 static inline int copy_pmd_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pud_t *dst_pud, pud_t *src_pud, struct vm_area_struct *vma,
 		unsigned long addr, unsigned long end)
+#endif
 {
 	pmd_t *src_pmd, *dst_pmd;
 	unsigned long next;
@@ -1066,16 +1105,27 @@ static inline int copy_pmd_range(struct mm_struct *dst_mm, struct mm_struct *src
 		}
 		if (pmd_none_or_clear_bad(src_pmd))
 			continue;
+#ifdef CONFIG_KRG_MM
+		if (copy_pte_range(dst_mm, src_mm, dst_pmd, src_pmd,
+				   vma, addr, next, anon_only))
+#else
 		if (copy_pte_range(dst_mm, src_mm, dst_pmd, src_pmd,
 						vma, addr, next))
+#endif
 			return -ENOMEM;
 	} while (dst_pmd++, src_pmd++, addr = next, addr != end);
 	return 0;
 }
 
+#ifdef CONFIG_KRG_MM
+static inline int copy_pud_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pgd_t *dst_pgd, pgd_t *src_pgd, struct vm_area_struct *vma,
+		unsigned long addr, unsigned long end, int anon_only)
+#else
 static inline int copy_pud_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pgd_t *dst_pgd, pgd_t *src_pgd, struct vm_area_struct *vma,
 		unsigned long addr, unsigned long end)
+#endif
 {
 	pud_t *src_pud, *dst_pud;
 	unsigned long next;
@@ -1100,15 +1150,25 @@ static inline int copy_pud_range(struct mm_struct *dst_mm, struct mm_struct *src
 		}
 		if (pud_none_or_clear_bad(src_pud))
 			continue;
+#ifdef CONFIG_KRG_MM
+		if (copy_pmd_range(dst_mm, src_mm, dst_pud, src_pud,
+				   vma, addr, next, anon_only))
+#else
 		if (copy_pmd_range(dst_mm, src_mm, dst_pud, src_pud,
 						vma, addr, next))
+#endif
 			return -ENOMEM;
 	} while (dst_pud++, src_pud++, addr = next, addr != end);
 	return 0;
 }
 
+#ifdef CONFIG_KRG_MM
+int copy_page_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		struct vm_area_struct *vma, int anon_only)
+#else
 int copy_page_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		struct vm_area_struct *vma)
+#endif
 {
 	pgd_t *src_pgd, *dst_pgd;
 	unsigned long next;
@@ -1164,8 +1224,13 @@ int copy_page_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		next = pgd_addr_end(addr, end);
 		if (pgd_none_or_clear_bad(src_pgd))
 			continue;
+#ifdef CONFIG_KRG_MM
+		if (unlikely(copy_pud_range(dst_mm, src_mm, dst_pgd, src_pgd,
+					    vma, addr, next, anon_only))) {
+#else
 		if (unlikely(copy_pud_range(dst_mm, src_mm, dst_pgd, src_pgd,
 					    vma, addr, next))) {
+#endif
 			ret = -ENOMEM;
 			break;
 		}
@@ -3491,7 +3556,11 @@ static int handle_pte_fault(struct vm_fault *vmf)
 
 	entry = vmf->orig_pte;
 	if (!pte_present(entry)) {
+#ifdef CONFIG_KRG_MM
+		if (pte_none(entry) || pte_obj_entry(pte)) {
+#else
 		if (pte_none(entry)) {
+#endif
 			if (!vma_is_anonymous(vma))
 				return do_linear_fault(mm, vma, address,
 						vmf->pte, vmf->pmd,

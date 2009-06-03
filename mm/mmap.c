@@ -90,7 +90,11 @@ pgprot_t protection_map[16] = {
 	__S000, __S001, __S010, __S011, __S100, __S101, __S110, __S111
 };
 
+#ifdef CONFIG_KRG_MM
+pgprot_t vm_get_page_prot(unsigned long long vm_flags)
+#else
 pgprot_t vm_get_page_prot(unsigned long vm_flags)
+#endif
 {
 	return __pgprot(pgprot_val(protection_map[vm_flags &
 				(VM_READ|VM_WRITE|VM_EXEC|VM_SHARED)]) |
@@ -98,7 +102,11 @@ pgprot_t vm_get_page_prot(unsigned long vm_flags)
 }
 EXPORT_SYMBOL(vm_get_page_prot);
 
+#ifdef CONFIG_KRG_MM
+static pgprot_t vm_pgprot_modify(pgprot_t oldprot, unsigned long long vm_flags)
+#else
 static pgprot_t vm_pgprot_modify(pgprot_t oldprot, unsigned long vm_flags)
+#endif
 {
 	return pgprot_modify(oldprot, vm_get_page_prot(vm_flags));
 }
@@ -106,7 +114,11 @@ static pgprot_t vm_pgprot_modify(pgprot_t oldprot, unsigned long vm_flags)
 /* Update vma->vm_page_prot to reflect vma->vm_flags. */
 void vma_set_page_prot(struct vm_area_struct *vma)
 {
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags = vma->vm_flags;
+#else
 	unsigned long vm_flags = vma->vm_flags;
+#endif
 	pgprot_t vm_page_prot;
 
 	vm_page_prot = vm_pgprot_modify(vma->vm_page_prot, vm_flags);
@@ -1105,7 +1117,11 @@ static inline int is_mergeable_anon_vma(struct anon_vma *anon_vma1,
  * wrap, nor mmaps which cover the final page at index -1UL.
  */
 static int
+#ifdef CONFIG_KRG_MM
+can_vma_merge_before(struct vm_area_struct *vma, unsigned long long vm_flags,
+#else
 can_vma_merge_before(struct vm_area_struct *vma, unsigned long vm_flags,
+#endif
 		     struct anon_vma *anon_vma, struct file *file,
 		     pgoff_t vm_pgoff,
 		     struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
@@ -1126,7 +1142,11 @@ can_vma_merge_before(struct vm_area_struct *vma, unsigned long vm_flags,
  * anon_vmas, nor if same anon_vma is assigned but offsets incompatible.
  */
 static int
+#ifdef CONFIG_KRG_MM
+can_vma_merge_after(struct vm_area_struct *vma, unsigned long long vm_flags,
+#else
 can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
+#endif
 		    struct anon_vma *anon_vma, struct file *file,
 		    pgoff_t vm_pgoff,
 		    struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
@@ -1183,7 +1203,11 @@ can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
  */
 struct vm_area_struct *vma_merge(struct mm_struct *mm,
 			struct vm_area_struct *prev, unsigned long addr,
+#ifdef CONFIG_KRG_MM
+			unsigned long end, unsigned long long vm_flags,
+#else
 			unsigned long end, unsigned long vm_flags,
+#endif
 		     	struct anon_vma *anon_vma, struct file *file,
 			pgoff_t pgoff, struct mempolicy *policy,
 			struct vm_userfaultfd_ctx vm_userfaultfd_ctx)

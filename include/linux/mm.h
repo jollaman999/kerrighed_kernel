@@ -178,6 +178,10 @@ extern unsigned int kobjsize(const void *objp);
 #define VM_NOHUGEPAGE	0x40000000	/* MADV_NOHUGEPAGE marked this vma */
 #define VM_MERGEABLE	0x80000000	/* KSM may merge identical pages */
 
+#ifdef CONFIG_KRG_MM
+#define VM_KDDM		0x100000000ULL	/* The vma is stored inside KDDM */
+#endif
+
 #ifdef CONFIG_ARCH_USES_HIGH_VMA_FLAGS
 #define VM_HIGH_ARCH_BIT_0	32	/* bit only usable on 64-bit architectures */
 #define VM_HIGH_ARCH_BIT_1	33	/* bit only usable on 64-bit architectures */
@@ -1328,8 +1332,13 @@ int walk_page_range(unsigned long addr, unsigned long end,
 int walk_page_vma(struct vm_area_struct *vma, struct mm_walk *walk);
 void free_pgd_range(struct mmu_gather *tlb, unsigned long addr,
 		unsigned long end, unsigned long floor, unsigned long ceiling);
+#ifdef CONFIG_KRG_MM
+int copy_page_range(struct mm_struct *dst, struct mm_struct *src,
+			struct vm_area_struct *vma, int anon_only);
+#else
 int copy_page_range(struct mm_struct *dst, struct mm_struct *src,
 			struct vm_area_struct *vma);
+#endif
 void unmap_mapping_range(struct address_space *mapping,
 		loff_t const holebegin, loff_t const holelen, int even_cows);
 int follow_pte_pmd(struct mm_struct *mm, unsigned long address,
@@ -2035,7 +2044,11 @@ static inline int vma_adjust(struct vm_area_struct *vma, unsigned long start,
 }
 extern struct vm_area_struct *vma_merge(struct mm_struct *,
 	struct vm_area_struct *prev, unsigned long addr, unsigned long end,
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags, struct anon_vma *, struct file *, pgoff_t,
+#else
 	unsigned long vm_flags, struct anon_vma *, struct file *, pgoff_t,
+#endif
 	struct mempolicy *, struct vm_userfaultfd_ctx);
 extern struct anon_vma *find_mergeable_anon_vma(struct vm_area_struct *);
 extern int __split_vma(struct mm_struct *, struct vm_area_struct *,
@@ -2258,10 +2271,18 @@ static inline struct vm_area_struct *find_exact_vma(struct mm_struct *mm,
 }
 
 #ifdef CONFIG_MMU
+#ifdef CONFIG_KRG_MM
+pgprot_t vm_get_page_prot(unsigned long long vm_flags);
+#else
 pgprot_t vm_get_page_prot(unsigned long vm_flags);
+#endif
 void vma_set_page_prot(struct vm_area_struct *vma);
 #else
+#ifdef CONFIG_KRG_MM
+static inline pgprot_t vm_get_page_prot(unsigned long long vm_flags)
+#else
 static inline pgprot_t vm_get_page_prot(unsigned long vm_flags)
+#endif
 {
 	return __pgprot(0);
 }
@@ -2488,6 +2509,10 @@ static inline bool page_is_guard(struct page *page) { return false; }
 void __init setup_nr_node_ids(void);
 #else
 static inline void setup_nr_node_ids(void) {}
+#endif
+
+#ifdef CONFIG_KRG_MM
+#include <kerrighed/mm.h>
 #endif
 
 #endif /* __KERNEL__ */

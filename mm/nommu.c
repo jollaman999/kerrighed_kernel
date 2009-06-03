@@ -148,7 +148,11 @@ long __get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
 		      struct vm_area_struct **vmas, int *nonblocking)
 {
 	struct vm_area_struct *vma;
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags;
+#else
 	unsigned long vm_flags;
+#endif
 	int i;
 
 	/* calculate required read or write permissions.
@@ -1117,7 +1121,11 @@ static unsigned long determine_vm_flags(struct file *file,
 					unsigned long flags,
 					unsigned long capabilities)
 {
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags;
+#else
 	unsigned long vm_flags;
+#endif
 
 	vm_flags = calc_vm_prot_bits(prot, 0) | calc_vm_flag_bits(flags);
 	/* vm_flags |= mm->def_flags; */

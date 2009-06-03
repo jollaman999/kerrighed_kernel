@@ -363,13 +363,25 @@ extern int dma_common_mmap(struct device *dev, struct vm_area_struct *vma,
 			   void *cpu_addr, dma_addr_t dma_addr, size_t size);
 
 void *dma_common_contiguous_remap(struct page *page, size_t size,
+#ifdef CONFIG_KRG_MM
+			unsigned long long vm_flags,
+#else
 			unsigned long vm_flags,
+#endif
 			pgprot_t prot, const void *caller);
 
 void *dma_common_pages_remap(struct page **pages, size_t size,
-			unsigned long vm_flags, pgprot_t prot,
-			const void *caller);
+#ifdef CONFIG_KRG_MM
+			unsigned long long vm_flags,
+#else
+			unsigned long vm_flags,
+#endif
+			pgprot_t prot, const void *caller);
+#ifdef CONFIG_KRG_MM
+void dma_common_free_remap(void *cpu_addr, size_t size, unsigned long long vm_flags);
+#else
 void dma_common_free_remap(void *cpu_addr, size_t size, unsigned long vm_flags);
+#endif
 
 /**
  * dma_mmap_attrs - map a coherent DMA allocation into user space
