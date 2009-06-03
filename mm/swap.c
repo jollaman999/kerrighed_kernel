@@ -1040,6 +1040,9 @@ void release_pages(struct page **pages, int nr, bool cold)
 			}
 		}
 
+#if defined(CONFIG_KRG_MM) && defined(CONFIG_DEBUG_PAGEALLOC)
+		ClearPageInVec(page);
+#endif
 		if (!put_page_testzero(page))
 			continue;
 
@@ -1148,6 +1151,9 @@ static void __pagevec_lru_add_fn(struct page *page, struct lruvec *lruvec,
 
 	VM_BUG_ON_PAGE(PageLRU(page), page);
 
+#if defined(CONFIG_KRG_MM) && defined(CONFIG_DEBUG_PAGEALLOC)
+	ClearPageInVec(page);
+#endif
 	SetPageLRU(page);
 	add_page_to_lru_list(page, lruvec, lru);
 	update_page_reclaim_stat(lruvec, file, active);

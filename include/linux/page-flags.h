@@ -95,6 +95,13 @@ enum pageflags {
 	PG_swapcache,		/* Swap page: swp_entry_t in private */
 	PG_mappedtodisk,	/* Has blocks allocated on-disk */
 	PG_reclaim,		/* To be reclaimed asap */
+#ifdef CONFIG_KRG_MM
+	PG_to_invalidate,
+	PG_to_set_read_only,
+#ifdef CONFIG_DEBUG_PAGEALLOC
+	PG_in_vec,
+#endif
+#endif
 	PG_swapbacked,		/* Page is backed by RAM/swap */
 	PG_unevictable,		/* Page is "unevictable"  */
 #ifdef CONFIG_MMU
@@ -341,6 +348,14 @@ TESTPAGEFLAG_FALSE(Ksm)
 #endif
 
 u64 stable_page_flags(struct page *page);
+
+#ifdef CONFIG_KRG_MM
+PAGEFLAG(ToInvalidate, to_invalidate)
+PAGEFLAG(ToSetReadOnly, to_set_read_only)
+#ifdef CONFIG_DEBUG_PAGEALLOC
+PAGEFLAG(InVec, in_vec)
+#endif
+#endif
 
 static inline int PageUptodate(struct page *page)
 {
