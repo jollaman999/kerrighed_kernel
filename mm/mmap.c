@@ -44,6 +44,10 @@
 #include <asm/tlb.h>
 #include <asm/mmu_context.h>
 
+#ifdef CONFIG_KRG_MM
+#include <kerrighed/krgsyms.h>
+#endif
+
 #include "internal.h"
 
 #ifndef arch_mmap_check
@@ -3298,6 +3302,18 @@ static const struct vm_operations_struct special_mapping_vmops = {
 	.close = special_mapping_close,
 	.fault = special_mapping_fault,
 };
+
+#ifdef CONFIG_KRG_MM
+int special_mapping_vm_ops_krgsyms_register(void)
+{
+	return krgsyms_register(KRGSYMS_VM_OPS_SPECIAL_MAPPING, &special_mapping_vmops);
+}
+
+int special_mapping_vm_ops_krgsyms_unregister(void)
+{
+	return krgsyms_unregister(KRGSYMS_VM_OPS_SPECIAL_MAPPING);
+}
+#endif
 
 /*
  * Called with mm->mmap_sem held for writing.
