@@ -129,6 +129,12 @@ struct page {
 		};
 	};
 
+#ifdef CONFIG_KRG_MM
+	atomic_t _kddm_count;		/* Count number of KDDM set sharing
+					 * the page */
+	void *obj_entry;
+#endif
+
 	/* Third double word block */
 	union {
 		struct list_head lru;	/* Pageout list, eg. active_list

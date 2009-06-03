@@ -794,6 +794,10 @@ static inline int free_pages_check(struct page *page)
 		bad_reason = "non-NULL mapping";
 	if (unlikely(page_ref_count(page) != 0))
 		bad_reason = "nonzero _count";
+#ifdef CONFIG_KRG_MM
+	if (unlikely(page_kddm_count(page) != 0))
+		bad_reason = "nonzero kddm_count";
+#endif
 	if (unlikely(page->flags & PAGE_FLAGS_CHECK_AT_FREE)) {
 		bad_reason = "PAGE_FLAGS_CHECK_AT_FREE flag(s) set";
 		bad_flags = PAGE_FLAGS_CHECK_AT_FREE;
@@ -888,6 +892,9 @@ static void free_one_page(struct zone *zone, struct page *page, int order,
 static void __meminit __init_single_page(struct page *page, unsigned long pfn,
 				unsigned long zone, int nid)
 {
+#ifdef CONFIG_KRG_MM
+	atomic_set(&page->_kddm_count, 0);
+#endif
 	set_page_links(page, zone, nid, pfn);
 	init_page_count(page);
 	page_mapcount_reset(page);
@@ -7595,10 +7602,17 @@ static void dump_page_flags(unsigned long flags)
 
 void dump_page_badflags(struct page *page, char *reason, unsigned long badflags)
 {
+#ifdef CONFIG_KRG_MM
+	printk(KERN_ALERT
+	       "page:%p count:%d mapcount:%d mapping:%p index:%#lx kddm_count:%d\n",
+		page, atomic_read(&page->_count), page_mapcount(page),
+		page->mapping, page->index, page_kddm_count(page));
+#else
 	printk(KERN_ALERT
 	       "page:%p count:%d mapcount:%d mapping:%p index:%#lx\n",
 		page, atomic_read(&page->_count), page_mapcount(page),
 		page->mapping, page->index);
+#endif
 	dump_page_flags(page->flags);
 	if (reason)
 		pr_alert("page dumped because: %s\n", reason);

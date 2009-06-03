@@ -1243,6 +1243,12 @@ void page_add_new_anon_rmap(struct page *page,
 	else
 		__inc_zone_page_state(page, NR_ANON_TRANSPARENT_HUGEPAGES);
 	__page_set_anon_rmap(page, vma, address, 1);
+
+#ifdef CONFIG_KRG_MM
+	if (page->obj_entry)
+		return;
+	/* following code is done in Krg MM code */
+#endif
 	if (!mlocked_vma_newpage(vma, page)) {
 		SetPageActive(page);
 		if (!is_zone_device_page(page))
