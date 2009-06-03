@@ -1578,8 +1578,13 @@ static int unuse_vma(struct vm_area_struct *vma,
 	return 0;
 }
 
+#ifdef CONFIG_KRG_FAF
+static int __unuse_mm(struct mm_struct *mm,
+				swp_entry_t entry, struct page *page)
+#else
 static int unuse_mm(struct mm_struct *mm,
 				swp_entry_t entry, struct page *page)
+#endif
 {
 	struct vm_area_struct *vma;
 	int ret = 0;
@@ -1763,7 +1768,11 @@ int try_to_unuse(unsigned int type, bool frontswap,
 			continue;
 		}
 		if (swap_count(swcount) && start_mm != &init_mm)
+#ifdef CONFIG_KRG_FAF
+			retval = __unuse_mm(start_mm, entry, page);
+#else
 			retval = unuse_mm(start_mm, entry, page);
+#endif
 
 		if (swap_count(*swap_map)) {
 			int set_start_mm = (*swap_map >= swcount);
@@ -1792,7 +1801,11 @@ int try_to_unuse(unsigned int type, bool frontswap,
 				else if (mm == &init_mm)
 					set_start_mm = 1;
 				else
+#ifdef CONFIG_KRG_FAF
+					retval = __unuse_mm(mm, entry, page);
+#else
 					retval = unuse_mm(mm, entry, page);
+#endif
 
 				if (set_start_mm && *swap_map < swcount) {
 					mmput(new_start_mm);

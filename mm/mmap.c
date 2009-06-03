@@ -69,10 +69,11 @@ const int mmap_rnd_compat_bits_max = CONFIG_ARCH_MMAP_RND_COMPAT_BITS_MAX;
 int mmap_rnd_compat_bits __read_mostly = CONFIG_ARCH_MMAP_RND_COMPAT_BITS;
 #endif
 
-
+#ifndef CONFIG_KRG_MM
 static void unmap_region(struct mm_struct *mm,
 		struct vm_area_struct *vma, struct vm_area_struct *prev,
 		unsigned long start, unsigned long end);
+#endif
 
 /* description of effects of mapping type and prot in current implementation.
  * this is due to the limited x86 page protection hardware.  The expected
@@ -293,7 +294,10 @@ void unlink_file_vma(struct vm_area_struct *vma)
 /*
  * Close a vm structure and free it, returning the next.
  */
-static struct vm_area_struct *remove_vma(struct vm_area_struct *vma)
+#ifndef CONFIG_KRG_MM
+static
+#endif
+struct vm_area_struct *remove_vma(struct vm_area_struct *vma)
 {
 	struct vm_area_struct *next = vma->vm_next;
 
@@ -691,7 +695,10 @@ void __vma_link_rb(struct mm_struct *mm, struct vm_area_struct *vma,
 	vma_rb_insert(vma, &mm->mm_rb);
 }
 
-static void __vma_link_file(struct vm_area_struct *vma)
+#ifndef CONFIG_KRG_MM
+static
+#endif
+void __vma_link_file(struct vm_area_struct *vma)
 {
 	struct file *file;
 
@@ -1068,14 +1075,29 @@ again:
 	return 0;
 }
 
+/* Flags that can be inherited from an existing mapping when merging */
+#ifdef CONFIG_KRG_MM
+#define VM_MERGEABLE_FLAGS (VM_CAN_NONLINEAR|VM_KDDM)
+#else
+#define VM_MERGEABLE_FLAGS (VM_CAN_NONLINEAR)
+#endif
+
 /*
  * If the vma has a ->close operation then the driver probably needs to release
  * per-vma resources, so we don't attempt to merge those.
  */
 static inline int is_mergeable_vma(struct vm_area_struct *vma,
+#ifdef CONFIG_KRG_MM
+				struct file *file, unsigned long long vm_flags,
+#else
 				struct file *file, unsigned long vm_flags,
+#endif
 				struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
 {
+#ifdef CONFIG_KRG_MM
+	BUG_ON(!(vma->vm_flags & VM_KDDM) && (vm_flags & VM_KDDM));
+#endif
+
 	/*
 	 * VM_SOFTDIRTY should not prevent from VMA merging, if we
 	 * match the flags but dirty bit -- the caller should mark
@@ -1926,6 +1948,10 @@ out:
 
 	vma_set_page_prot(vma);
 
+#ifdef CONFIG_KRG_MM
+	KRGFCT(kh_do_mmap)(vma);
+#endif
+
 	return addr;
 
 unmap_and_free_vma:
@@ -2671,7 +2697,10 @@ EXPORT_SYMBOL_GPL(find_extend_vma);
  *
  * Called with the mm semaphore held.
  */
-static void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma)
+#ifndef CONFIG_KRG_MM
+static
+#endif
+void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma)
 {
 	unsigned long nr_accounted = 0;
 
@@ -2694,7 +2723,10 @@ static void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma)
  *
  * Called with the mm semaphore held.
  */
-static void unmap_region(struct mm_struct *mm,
+#ifndef CONFIG_KRG_MM
+static
+#endif
+void unmap_region(struct mm_struct *mm,
 		struct vm_area_struct *vma, struct vm_area_struct *prev,
 		unsigned long start, unsigned long end)
 {
@@ -2714,7 +2746,10 @@ static void unmap_region(struct mm_struct *mm,
  * Create a list of vma's touched by the unmap, removing them from the mm's
  * vma list as we go..
  */
-static void
+#ifndef CONFIG_KRG_MM
+static
+#endif
+void
 detach_vmas_to_be_unmapped(struct mm_struct *mm, struct vm_area_struct *vma,
 	struct vm_area_struct *prev, unsigned long end)
 {
@@ -2915,6 +2950,10 @@ int do_munmap(struct mm_struct *mm, unsigned long start, size_t len,
 	 * Remove the vma's, and unmap the actual pages
 	 */
 	detach_vmas_to_be_unmapped(mm, vma, prev, end);
+#ifdef CONFIG_KRG_MM
+	if (kh_do_munmap && mm->anon_vma_kddm_set)
+		kh_do_munmap(mm, start, len, vma);
+#endif
 	unmap_region(mm, vma, prev, start, end);
 
 	arch_unmap(mm, vma, start, end);
@@ -3043,6 +3082,9 @@ static unsigned long do_brk_flags(unsigned long addr, unsigned long len, struct 
 	vma->vm_flags = flags;
 	vma->vm_page_prot = vm_get_page_prot(flags);
 	vma_link(mm, vma, prev, rb_link, rb_parent);
+#ifdef CONFIG_KRG_MM
+	KRGFCT(kh_do_mmap)(vma);
+#endif
 out:
 	perf_event_mmap(vma);
 	mm->total_vm += len >> PAGE_SHIFT;
@@ -3326,7 +3368,11 @@ int special_mapping_vm_ops_krgsyms_unregister(void)
  */
 int install_special_mapping(struct mm_struct *mm,
 			    unsigned long addr, unsigned long len,
+#ifdef CONFIG_KRG_MM
+			    unsigned long long vm_flags, struct page **pages)
+#else
 			    unsigned long vm_flags, struct page **pages)
+#endif
 {
 	int ret;
 	struct vm_area_struct *vma;

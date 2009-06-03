@@ -1262,9 +1262,17 @@ again:
 	do {
 		swp_entry_t entry;
 		pte_t ptent = *pte;
-		if (pte_none(ptent)) {
+		if (pte_none(ptent))
 			continue;
+
+#ifdef CONFIG_KRG_MM
+		if (vma->vm_mm->anon_vma_kddm_set) {
+			KRGFCT(kh_zap_pte)(vma->vm_mm, addr, pte);
+			ptent = *pte;
+			if (pte_none(ptent))
+				continue;
 		}
+#endif
 
 		if (pte_present(ptent)) {
 			struct page *page;
@@ -2379,9 +2387,15 @@ static inline int wp_page_reuse(struct mm_struct *mm,
  *   held to the old page, as well as updating the rmap.
  * - In any case, unlock the PTL and drop the reference we took to the old page.
  */
+#ifdef CONFIG_KRG_MM
+static int wp_page_copy(struct mm_struct *mm, struct vm_area_struct *vma,
+			unsigned long address, pte_t *page_table, pmd_t *pmd,
+			pte_t orig_pte, struct page *old_page, int need_vma_link_check)
+#else
 static int wp_page_copy(struct mm_struct *mm, struct vm_area_struct *vma,
 			unsigned long address, pte_t *page_table, pmd_t *pmd,
 			pte_t orig_pte, struct page *old_page)
+#endif
 {
 	struct page *new_page = NULL;
 	spinlock_t *ptl = NULL;
@@ -2392,6 +2406,39 @@ static int wp_page_copy(struct mm_struct *mm, struct vm_area_struct *vma,
 
 	if (unlikely(anon_vma_prepare(vma)))
 		goto oom;
+
+#ifdef CONFIG_KRG_MM
+	if (need_vma_link_check)
+		KRGFCT(kh_do_mmap)(vma);
+	if (vma->vm_ops && vma->vm_ops->wppage) {
+		new_page = vma->vm_ops->wppage(vma, address & PAGE_MASK,
+					       old_page);
+
+		if (!new_page)
+			goto oom;
+
+		if (new_page != old_page) {
+			/* Unlike the kernel COW function, the KDDM one does
+			 * all the job (unmap, count decrement, etc). Nothing
+			 * more has to be done by the kernel.
+			 */
+			page_cache_release(old_page);
+			old_page = NULL;
+			goto install_page;
+		}
+
+		/* We have just a write access upgrade to do... */
+
+		page_table = pte_offset_map_lock(mm, pmd, address, &ptl);
+		entry = mk_pte(new_page, vma->vm_page_prot);
+		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+		set_pte_at(mm, address, page_table, entry);
+		update_mmu_cache(vma, address, entry);
+		if (old_page)
+			page_cache_release(old_page);
+		return 0;
+	}
+#endif /* CONFIG_KRG_MM */
 
 	if (is_zero_pfn(pte_pfn(orig_pte))) {
 		new_page = alloc_zeroed_user_highpage_movable(vma, address);
@@ -2413,7 +2460,14 @@ static int wp_page_copy(struct mm_struct *mm, struct vm_area_struct *vma,
 	/*
 	 * Re-check the pte - we dropped the lock
 	 */
+#ifdef CONFIG_KRG_MM
+install_page:
+#endif
 	page_table = pte_offset_map_lock(mm, pmd, address, &ptl);
+#ifdef CONFIG_KRG_MM
+	if (pfn_to_page(pte_pfn(*page_table)) == new_page)
+		orig_pte = *page_table;
+#endif
 	if (likely(pte_same(*page_table, orig_pte))) {
 		if (old_page) {
 			if (!PageAnon(old_page)) {
@@ -2650,6 +2704,9 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	__releases(ptl)
 {
 	struct page *old_page;
+#ifdef CONFIG_KRG_MM
+	int need_vma_link_check = (vma->anon_vma == NULL);
+#endif
 
 	old_page = vm_normal_page(vma, address, orig_pte);
 	if (!old_page) {
@@ -2666,14 +2723,22 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 					     orig_pte, pmd);
 
 		pte_unmap_unlock(page_table, ptl);
+#ifdef CONFIG_KRG_MM
+		return wp_page_copy(mm, vma, address, page_table, pmd,
+				    orig_pte, old_page, need_vma_link_check);
+#else
 		return wp_page_copy(mm, vma, address, page_table, pmd,
 				    orig_pte, old_page);
+#endif
 	}
 
 	/*
 	 * Take out anonymous pages first, anonymous shared vmas are
 	 * not dirty accountable.
 	 */
+#ifdef CONFIG_KRG_MM
+	if (!(vma->vm_flags & VM_KDDM)) {
+#endif
 	if (PageAnon(old_page) && !PageKsm(old_page)) {
 		if (!trylock_page(old_page)) {
 			page_cache_get(old_page);
@@ -2706,6 +2771,9 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 		return wp_page_shared(mm, vma, address, page_table, pmd,
 				      ptl, orig_pte, old_page);
 	}
+#ifdef CONFIG_KRG_MM
+	}
+#endif
 
 	/*
 	 * Ok, we need to copy. Oh, well..
@@ -2713,8 +2781,13 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	page_cache_get(old_page);
 
 	pte_unmap_unlock(page_table, ptl);
+#ifdef CONFIG_KRG_MM
+	return wp_page_copy(mm, vma, address, page_table, pmd,
+			    orig_pte, old_page, need_vma_link_check);
+#else
 	return wp_page_copy(mm, vma, address, page_table, pmd,
 			    orig_pte, old_page);
+#endif
 }
 
 static void unmap_mapping_range_vma(struct vm_area_struct *vma,

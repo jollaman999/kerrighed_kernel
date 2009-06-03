@@ -65,7 +65,10 @@ static void free_ldt(struct ldt_struct *ldt, int size)
 }
 
 /* The caller must call finalize_ldt_struct on the result. LDT starts zeroed. */
-static struct ldt_struct *alloc_ldt_struct(unsigned int size)
+#ifndef CONFIG_KRG_MM
+static
+#endif
+struct ldt_struct *alloc_ldt_struct(unsigned int size)
 {
 	struct ldt_struct *new_ldt;
 	unsigned int alloc_size;

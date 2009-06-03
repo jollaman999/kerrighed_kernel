@@ -310,4 +310,8 @@ static inline int page_mkclean(struct page *page)
 #define SWAP_MLOCK	3
 #define SWAP_LZFREE	4
 
+#ifdef CONFIG_KRG_MM
+extern struct kmem_cache *anon_vma_cachep;
+#endif
+
 #endif	/* _LINUX_RMAP_H */

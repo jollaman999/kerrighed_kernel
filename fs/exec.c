@@ -768,6 +768,11 @@ int setup_arg_pages(struct linux_binprm *bprm,
 	 * will align it up.
 	 */
 	rlim_stack = rlimit(RLIMIT_STACK) & PAGE_MASK;
+
+#ifdef CONFIG_KRG_MM
+        KRGFCT(kh_do_mmap)(vma);
+#endif
+
 #ifdef CONFIG_STACK_GROWSUP
 	if (stack_size + stack_expand > rlim_stack)
 		stack_base = vma->vm_start + rlim_stack;
@@ -871,6 +876,9 @@ static int exec_mmap(struct mm_struct *mm)
 {
 	struct task_struct *tsk;
 	struct mm_struct * old_mm, *active_mm;
+#ifdef CONFIG_KRG_MM
+	unique_id_t mm_id = 0;
+#endif
 
 	/* Notify parent that we're no longer interested in the old VM */
 	tsk = current;
@@ -885,6 +893,9 @@ static int exec_mmap(struct mm_struct *mm)
 		 * through with the exec.  We must hold mmap_sem around
 		 * checking core_state and changing tsk->mm.
 		 */
+#ifdef CONFIG_KRG_MM
+		mm_id = old_mm->mm_id;
+#endif
 		down_read(&old_mm->mmap_sem);
 		if (unlikely(old_mm->core_state)) {
 			up_read(&old_mm->mmap_sem);
@@ -904,6 +915,10 @@ static int exec_mmap(struct mm_struct *mm)
 		setmax_mm_hiwater_rss(&tsk->signal->maxrss, old_mm);
 		mm_update_next_owner(old_mm);
 		mmput(old_mm);
+#ifdef CONFIG_KRG_MM
+		if (mm_id)
+			kh_mm_release(old_mm, 1);
+#endif
 		return 0;
 	}
 	mmdrop(active_mm);
@@ -1667,6 +1682,11 @@ static int do_execve_common(struct filename *filename,
 	if (retval < 0)
 		goto out;
 
+#ifdef CONFIG_KRG_MM
+	retval = krg_do_execve(current, current->mm);
+	if (retval)
+		goto out;
+#endif
 	/* execve succeeded */
 	current->fs->in_exec = 0;
 	current->in_execve = 0;
