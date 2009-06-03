@@ -414,6 +414,9 @@ struct mm_struct {
 	unsigned long free_area_cache;		/* first hole of size cached_hole_size or larger */
 	unsigned long highest_vm_end;		/* highest vma end address */
 	pgd_t * pgd;
+#ifdef CONFIG_KRG_MM
+	atomic_t mm_tasks;			/* How many tasks sharing this mm_struct cluster wide */
+#endif
 #ifdef CONFIG_KRG_EPM
 	atomic_t mm_ltasks;			/* How many tasks sharing this mm_struct locally */
 #endif
