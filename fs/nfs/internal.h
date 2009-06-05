@@ -226,6 +226,12 @@ static inline void nfs_fs_proc_exit(void)
 }
 #endif
 
+#ifdef CONFIG_KRG_MM
+struct vm_operations_struct;
+
+extern const struct vm_operations_struct nfs_file_vm_ops;
+#endif
+
 /* callback_xdr.c */
 extern struct svc_version nfs4_callback_version1;
 extern struct svc_version nfs4_callback_version4;

@@ -42,7 +42,9 @@
 
 #define NFSDBG_FACILITY		NFSDBG_FILE
 
+#ifndef CONFIG_KRG_MM
 static const struct vm_operations_struct nfs_file_vm_ops;
+#endif
 
 /* Hack for future NFS swap support */
 #ifndef IS_SWAPFILE
@@ -635,7 +637,10 @@ out:
 	return ret;
 }
 
-static const struct vm_operations_struct nfs_file_vm_ops = {
+#ifndef CONFIG_KRG_MM
+static
+#endif
+const struct vm_operations_struct nfs_file_vm_ops = {
 	.fault = filemap_fault,
 	.page_mkwrite = nfs_vm_page_mkwrite,
 	.remap_pages = generic_file_remap_pages,

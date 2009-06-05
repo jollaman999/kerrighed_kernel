@@ -39,6 +39,10 @@
 #include <linux/compat.h>
 #include <linux/freezer.h>
 
+#ifdef CONFIG_KRG_MM
+#include <kerrighed/krgsyms.h>
+#endif
+
 #include <asm/uaccess.h>
 
 #include "nfs4_fs.h"
@@ -2063,6 +2067,12 @@ static int __init init_nfs_fs(void)
 {
 	int err;
 
+#ifdef CONFIG_KRG_MM
+	err = krgsyms_register(KRGSYMS_VM_OPS_NFS_FILE, &nfs_file_vm_ops);
+	if (err)
+		goto out10;
+#endif
+
 	err = register_pernet_subsys(&nfs_net_ops);
 	if (err < 0)
 		goto out9;
@@ -2126,6 +2136,10 @@ out7:
 out8:
 	unregister_pernet_subsys(&nfs_net_ops);
 out9:
+#ifdef CONFIG_KRG_MM
+	krgsyms_unregister(KRGSYMS_VM_OPS_NFS_FILE);
+out10:
+#endif
 	return err;
 }
 
@@ -2142,6 +2156,9 @@ static void __exit exit_nfs_fs(void)
 	unregister_nfs_fs();
 	nfs_fs_proc_exit();
 	nfsiod_stop();
+#ifdef CONFIG_KRG_MM
+	krgsyms_unregister(KRGSYMS_VM_OPS_NFS_FILE);
+#endif
 }
 
 /* Not quite true; I just maintain it */
