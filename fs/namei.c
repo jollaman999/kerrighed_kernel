@@ -1038,12 +1038,23 @@ static int do_lookup(struct nameidata *nd, struct qstr *name,
 		     struct path *path)
 {
 	struct vfsmount *mnt = nd->path.mnt;
-	struct dentry *dentry = __d_lookup(nd->path.dentry, name);
+	struct dentry *dentry, *parent;
 	int flags = nd->flags;
-	struct dentry *parent;
 	struct inode *dir;
 	int err;
 
+	/*
+	 * See if the low-level filesystem might want
+	 * to use its own hash..
+	 */
+	barrier_nospec();
+	if (nd->path.dentry->d_op && nd->path.dentry->d_op->d_hash) {
+		int err = nd->path.dentry->d_op->d_hash(nd->path.dentry, name);
+		if (err < 0)
+			return err;
+	}
+
+	dentry = __d_lookup(nd->path.dentry, name);
 	if (!dentry)
 		goto need_lookup;
 found:
@@ -1211,17 +1222,7 @@ static int __link_path_walk(struct filename *filename, struct nameidata *nd)
 			case 1:
 				continue;
 		}
-		/*
-		 * See if the low-level filesystem might want
-		 * to use its own hash..
-		 */
-		barrier_nospec();
-		if (nd->path.dentry->d_op && nd->path.dentry->d_op->d_hash) {
-			err = nd->path.dentry->d_op->d_hash(nd->path.dentry,
-							    &this);
-			if (err < 0)
-				break;
-		}
+
 		/* This does the actual lookups.. */
 		err = do_lookup(nd, &this, &next);
 		if (err)
@@ -1268,12 +1269,6 @@ last_component:
 				/* fallthrough */
 			case 1:
 				goto return_reval;
-		}
-		if (nd->path.dentry->d_op && nd->path.dentry->d_op->d_hash) {
-			err = nd->path.dentry->d_op->d_hash(nd->path.dentry,
-							    &this);
-			if (err < 0)
-				break;
 		}
 		err = do_lookup(nd, &this, &next);
 		if (err)
