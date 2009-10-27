@@ -1083,7 +1083,7 @@ nfsd_vfs_write(struct svc_rqst *rqstp, struct svc_fh *fhp, struct file *file,
 		stable = 0;
 	if (stable && !use_wgather) {
 		spin_lock(&file->f_lock);
-		file->f_flags |= O_SYNC;
+		file->f_flags |= O_DSYNC;
 		spin_unlock(&file->f_lock);
 	}
 
