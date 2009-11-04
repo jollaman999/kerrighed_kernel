@@ -161,6 +161,7 @@ enum rpcid {
 	PROC_PID_LINK_TASK,
 	PROC_END_PID_RESERVATION,
 	EPM_PIDMAP_STEAL,
+	EPM_PIDMAP_INJECT,
 
 /** System V IPC messages types */
 	IPC_MSG_SEND,
