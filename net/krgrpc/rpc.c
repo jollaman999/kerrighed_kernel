@@ -192,6 +192,13 @@ void rpc_disable(enum rpcid rpcid){
 		set_bit(rpcid, static_communicator.rpc_mask);
 };
 
+void rpc_disable_all(void)
+{
+	int i;
+
+	for(i = 0; i < RPCID_MAX; i++)
+		rpc_disable(i);
+}
 
 int
 rpc_connection_alloc(struct rpc_communicator *comm, kerrighed_node_t node)
