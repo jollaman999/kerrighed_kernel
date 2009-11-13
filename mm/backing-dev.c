@@ -779,10 +779,9 @@ long congestion_wait(int rw, long timeout)
 	struct task_struct *krg_cur;
 	long ret;
 
-	krg_cur = krg_current;
-	krg_current = NULL;
+	krg_current_save(krg_cur);
 	ret = __congestion_wait(rw, timeout);
-	krg_current = krg_cur;
+	krg_current_restore(krg_cur);
 
 	return ret;
 }
