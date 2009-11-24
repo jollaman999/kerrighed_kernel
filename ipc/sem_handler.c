@@ -327,7 +327,8 @@ found:
 		goto sem_base;
 }
 
-void krg_ipc_sem_wakeup_process(struct sem_queue *q, int error)
+void krg_ipc_sem_wakeup_process(struct sem_array *sma, struct sem_queue *q,
+				int error)
 {
 	struct ipcsem_wakeup_msg msg;
 	struct rpc_communicator *comm;

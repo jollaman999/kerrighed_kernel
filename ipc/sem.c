@@ -625,7 +625,8 @@ undo:
  * The queue is invalid (may not be accessed) after the function returns.
  */
 #ifdef CONFIG_KRG_IPC
-static void wake_up_sem_queue(struct sem_queue *q, int error, int remote)
+static void wake_up_sem_queue(struct sem_array *sma, struct sem_queue *q,
+			       int error, int remote)
 #else
 static void wake_up_sem_queue(struct sem_queue *q, int error)
 #endif
@@ -640,7 +641,7 @@ static void wake_up_sem_queue(struct sem_queue *q, int error)
 	q->status = IN_WAKEUP;
 #ifdef CONFIG_KRG_IPC
 	if (remote)
-		krg_ipc_sem_wakeup_process(q, error);
+		krg_ipc_sem_wakeup_process(sma, q, error);
 	else
 #endif
 	wake_up_process(q->sleeper);
@@ -831,7 +832,7 @@ again:
 		}
 
 #ifdef CONFIG_KRG_IPC
-		wake_up_sem_queue(q, error, remote);
+		wake_up_sem_queue(sma, q, error, remote);
 #else
 		wake_up_sem_queue(q, error);
 #endif
@@ -1051,7 +1052,7 @@ static void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 	list_for_each_entry_safe(q, tq, &sma->sem_pending, list) {
 		unlink_queue(sma, q);
 #ifdef CONFIG_KRG_IPC
-		wake_up_sem_queue(q, -EIDRM, 0);
+		wake_up_sem_queue(sma, q, -EIDRM, 0);
 #else
 		wake_up_sem_queue(q, -EIDRM);
 #endif
@@ -1075,7 +1076,7 @@ static void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 		list_for_each_entry_safe(q, tq, &sem->sem_pending, list) {
 			unlink_queue(sma, q);
 #ifdef CONFIG_KRG_IPC
-			wake_up_sem_queue(q, -EIDRM, 0);
+			wake_up_sem_queue(sma, q, -EIDRM, 0);
 #else
 			wake_up_sem_queue(q, -EIDRM);
 #endif
