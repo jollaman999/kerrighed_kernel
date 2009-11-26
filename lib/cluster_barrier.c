@@ -10,6 +10,7 @@
 #include <linux/krg_hashtable.h>
 #include <linux/unique_id.h>
 #include <linux/sched.h>
+#include <kddm/name_space.h>
 #include <net/krgrpc/rpc.h>
 
 #include <kerrighed/types.h>
@@ -99,7 +100,7 @@ int cluster_barrier(struct cluster_barrier *barrier,
 	if (err)
 		return err;
 
-	desc = rpc_begin(RPC_ENTER_BARRIER, master);
+	desc = rpc_begin(RPC_ENTER_BARRIER, kddm_def_ns->rpc_comm, master);
 
 	rpc_pack_type (desc, id);
 	rpc_pack(desc, 0, nodes, sizeof(krgnodemask_t));
@@ -145,7 +146,8 @@ static int handle_enter_barrier(struct rpc_desc* desc,
 	krgnode_clear(desc->client, core_bar->nodes_to_wait);
 
 	if (krgnodes_empty(core_bar->nodes_to_wait)) {
-                rpc_async_m(RPC_EXIT_BARRIER, &core_bar->nodes_in_barrier,
+                rpc_async_m(RPC_EXIT_BARRIER, kddm_def_ns->rpc_comm,
+			    &core_bar->nodes_in_barrier,
 			    id, sizeof (struct cluster_barrier_id));
 	}
 

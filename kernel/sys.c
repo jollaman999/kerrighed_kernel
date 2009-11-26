@@ -298,7 +298,8 @@ static int krg_setpriority_pg_user(int which, int who, int niceval)
 
 	krgnodes_copy(nodes, krgnode_online_map);
 
-	desc = rpc_begin_m(PROC_SETPRIORITY_PG_USER, &nodes);
+	desc = rpc_begin_m(PROC_SETPRIORITY_PG_USER,
+			   current->nsproxy->krg_ns->rpc_comm, &nodes);
 	if (!desc) {
 		retval = -ENOMEM;
 		goto out_release;
@@ -546,7 +547,8 @@ static int krg_getpriority_pg_user(int which, int who)
 
 	krgnodes_copy(nodes, krgnode_online_map);
 
-	desc = rpc_begin_m(PROC_GETPRIORITY_PG_USER, &nodes);
+	desc = rpc_begin_m(PROC_GETPRIORITY_PG_USER,
+			   current->nsproxy->krg_ns->rpc_comm, &nodes);
 	if (!desc) {
 		retval = -ENOMEM;
 		goto out_release;
@@ -1489,7 +1491,9 @@ static int krg_forward_setpgid(kerrighed_node_t node, pid_t pid, pid_t pgid)
 	msg.pgid = pgid;
 	msg.parent_session = task_session_knr(current);
 
-	retval = rpc_sync(PROC_FORWARD_SETPGID, node, &msg, sizeof(msg));
+	retval = rpc_sync(PROC_FORWARD_SETPGID,
+			  current->nsproxy->krg_ns->rpc_comm, node,
+			  &msg, sizeof(msg));
 
 out:
 	return retval;
