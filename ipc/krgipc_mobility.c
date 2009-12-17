@@ -655,7 +655,7 @@ out:
 	return r;
 }
 
-static int export_full_all_msgs(ghost_t * ghost, struct msg_queue *msq)
+int export_full_all_msgs(ghost_t * ghost, struct msg_queue *msq)
 {
 	int r = 0;
 	struct msg_msg *msg;
@@ -689,7 +689,7 @@ static int export_full_local_sysv_msgq(ghost_t *ghost, int msgid)
 		goto out;
 	}
 
-	if (!msq->is_master) {
+	if (msq->master_node != kerrighed_node_id) {
 		r = -EPERM;
 		goto out_unlock;
 	}
@@ -916,8 +916,8 @@ out_err:
 	return ERR_PTR(r);
 }
 
-static int import_full_all_msgs(ghost_t *ghost, struct ipc_namespace *ns,
-				struct msg_queue *msq)
+int import_full_all_msgs(ghost_t *ghost, struct ipc_namespace *ns,
+			 struct msg_queue *msq)
 {
 	int i;
 	int r = 0;
