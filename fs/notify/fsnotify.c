@@ -193,8 +193,6 @@ void fsnotify(struct inode *to_tell, __u32 mask, void *data, int data_is, const 
  
 	if (data_is == FSNOTIFY_EVENT_PATH)
 		mnt = ((struct path *)data)->mnt;
-	else if (data_is == FSNOTIFY_EVENT_FILE)
-		mnt = ((struct file *)data)->f_path.mnt;
 
 	/* if this inode's directed listeners don't care and nothing on the vfsmount
 	 * listeners list cares, nothing to do */
