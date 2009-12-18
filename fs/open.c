@@ -939,7 +939,7 @@ long do_sys_open(int dfd, const char __user *filename, int flags, int mode)
 #ifdef CONFIG_KRG_FAF
 				if (!(f->f_flags & O_FAF_CLT))
 #endif
-				fsnotify_open(f->f_path.dentry);
+				fsnotify_open(f);
 				fd_install(fd, f);
 			}
 		}
