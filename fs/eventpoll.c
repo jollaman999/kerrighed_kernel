@@ -1687,7 +1687,7 @@ SYSCALL_DEFINE1(epoll_create1, int, flags)
 		goto out_free_ep;
 	}
 	file = anon_inode_getfile("[eventpoll]", &eventpoll_fops, ep,
-				  (flags & O_CLOEXEC));
+				   O_RDWR | (flags & O_CLOEXEC));
 
 	if (IS_ERR(file)) {
 		error = PTR_ERR(file);

@@ -643,7 +643,7 @@ static int krg_proc_handler_single_getfd(struct task_struct *task,
 	fd = anon_inode_getfd("krg-proc-handler-single",
 			      &krg_proc_handler_single_file_operations,
 			      NULL,
-			      0);
+			      O_RDWR);
 	if (fd < 0)
 		goto err_free_data;
 
