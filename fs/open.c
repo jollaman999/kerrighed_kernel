@@ -36,6 +36,7 @@
 #ifdef CONFIG_KRG_FAF
 #include <kerrighed/faf.h>
 #endif
+#include <linux/dnotify.h>
 
 #include "internal.h"
 

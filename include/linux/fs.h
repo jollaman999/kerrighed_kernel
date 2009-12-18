@@ -853,11 +853,6 @@ struct inode {
 	struct dnotify_struct	*i_dnotify; /* for directory notifications */
 #endif
 
-#ifdef CONFIG_INOTIFY
-	struct list_head	inotify_watches; /* watches on this inode */
-	struct mutex		inotify_mutex;	/* protects the watches list */
-#endif
-
 	unsigned long		i_state;
 	unsigned long		dirtied_when;	/* jiffies of first dirtying */
 
