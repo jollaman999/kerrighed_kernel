@@ -329,6 +329,8 @@ int fsnotify_add_mark(struct fsnotify_mark_entry *entry,
 	if (unlikely(!inode))
 		return -EINVAL;
 
+	entry->flags = FSNOTIFY_MARK_FLAG_INODE;
+
 	/*
 	 * if this group isn't being testing for inode type events we need
 	 * to start testing
