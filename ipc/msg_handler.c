@@ -203,6 +203,8 @@ void krg_ipc_msg_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 
 /*****************************************************************************/
 
+DEFINE_REMOTE_SLEEPERS_QUEUE(msg_remote_sleepers);
+
 struct msgsnd_msg
 {
 	kerrighed_node_t requester;
@@ -312,6 +314,7 @@ static void handle_do_msg_send(struct rpc_desc *desc, void *_msg, size_t size)
 	struct msgsnd_msg *msg = _msg;
 	struct ipc_namespace *ns;
 	const struct cred *old_cred = NULL;
+	DEFINE_REMOTE_SLEEPERS_WAIT(wait);
 
 	ns = find_get_krg_ipcns();
 	BUG_ON(!ns);
@@ -330,15 +333,21 @@ static void handle_do_msg_send(struct rpc_desc *desc, void *_msg, size_t size)
 	if (err)
 		goto cancel;
 
-	err = remote_sleep_prepare(desc);
-	if (err)
+	err = remote_sleep_prepare(desc, &msg_remote_sleepers, &wait);
+	if (err) {
+		if (err == -ERESTARTSYS) {
+			r = err;
+			goto pack_res;
+		}
 		goto cancel;
+	}
 
 	r = __do_msgsnd(msg->msqid, msg->mtype, mtext, msg->msgsz, msg->msgflg,
 			ns, msg->tgid);
 
-	remote_sleep_finish();
+	remote_sleep_finish(&msg_remote_sleepers, &wait);
 
+pack_res:
 	err = rpc_pack_type(desc, r);
 	if (err)
 		goto cancel;
@@ -476,6 +485,7 @@ static void handle_do_msg_rcv(struct rpc_desc *desc, void *_msg, size_t size)
 	struct msgrcv_msg *msg = _msg;
 	struct ipc_namespace *ns;
 	const struct cred *old_cred = NULL;
+	DEFINE_REMOTE_SLEEPERS_WAIT(wait);
 
 	ns = find_get_krg_ipcns();
 	BUG_ON(!ns);
@@ -490,15 +500,21 @@ static void handle_do_msg_rcv(struct rpc_desc *desc, void *_msg, size_t size)
 	if (!mtext)
 		goto cancel;
 
-	r = remote_sleep_prepare(desc);
-	if (r)
+	r = remote_sleep_prepare(desc, &msg_remote_sleepers, &wait);
+	if (r) {
+		if (r == -ERESTARTSYS) {
+			msgsz = -ERESTARTSYS;
+			goto pack_res;
+		}
 		goto cancel;
+	}
 
 	msgsz = __do_msgrcv(msg->msqid, &pmtype, mtext, msg->msgsz,
 			    msg->msgtyp, msg->msgflg, ns, msg->tgid);
 
-	remote_sleep_finish();
+	remote_sleep_finish(&msg_remote_sleepers, &wait);
 
+pack_res:
 	r = rpc_pack_type(desc, msgsz);
 	if (r)
 		goto cancel;

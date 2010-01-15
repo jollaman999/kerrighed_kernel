@@ -474,7 +474,7 @@ ssize_t krg_faf_readv(struct file *file, const struct iovec __user *vec,
 	err = unpack_remote_sleep_res_prepare(desc);
 	if (err)
 		goto cancel;
-	err = unpack_remote_sleep_res_type(desc, ret);
+	err = unpack_remote_sleep_res_type_struct(desc, ret, ret.ret);
 	if (err)
 		goto cancel;
 
@@ -549,7 +549,7 @@ ssize_t krg_faf_writev(struct file *file, const struct iovec __user *vec,
 	err = unpack_remote_sleep_res_prepare(desc);
 	if (err)
 		goto cancel;
-	err = unpack_remote_sleep_res_type(desc, ret);
+	err = unpack_remote_sleep_res_type_struct(desc, ret, ret.ret);
 	if (err)
 		goto cancel;
 
