@@ -50,8 +50,6 @@ static struct kern_ipc_perm *kcb_ipc_msg_lock(struct ipc_ids *ids, int id)
 	struct msg_queue *msq;
 	int index;
 
-	rcu_read_lock();
-
 	index = ipcid_to_idx(id);
 
 	msq_object = _kddm_grab_object_no_ft(ids->krgops->data_kddm_set, index);
@@ -65,35 +63,25 @@ static struct kern_ipc_perm *kcb_ipc_msg_lock(struct ipc_ids *ids, int id)
 
 	spin_lock(&msq->q_perm.lock);
 
-	if (msq->q_perm.deleted) {
-		spin_unlock(&msq->q_perm.lock);
-		goto error;
-	}
+	BUG_ON(msq->q_perm.deleted);
 
 	return &(msq->q_perm);
 
 error:
 	_kddm_put_object(ids->krgops->data_kddm_set, index);
-	rcu_read_unlock();
 
 	return ERR_PTR(-EINVAL);
 }
 
 static void kcb_ipc_msg_unlock(struct kern_ipc_perm *ipcp)
 {
-	int index, deleted = 0;
+	int index = 0;
 
 	index = ipcid_to_idx(ipcp->id);
 
-	if (ipcp->deleted)
-		deleted = 1;
-
 	_kddm_put_object(ipcp->krgops->data_kddm_set, index);
 
-	if (!deleted)
-		spin_unlock(&ipcp->lock);
-
-	rcu_read_unlock();
+	spin_unlock(&ipcp->lock);
 }
 
 static struct kern_ipc_perm *kcb_ipc_msg_findkey(struct ipc_ids *ids, key_t key)
