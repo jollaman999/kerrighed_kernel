@@ -1135,11 +1135,6 @@ cascade:
 	return expires;
 }
 
-#if defined(CONFIG_KRG_SCHED) && defined(CONFIG_MODULE_HOOK)
-struct module_hook_desc kmh_calc_load;
-EXPORT_SYMBOL(kmh_calc_load);
-#endif
-
 /*
  * Check, if the next hrtimer event is before the next timer wheel
  * event:
