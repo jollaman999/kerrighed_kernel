@@ -343,5 +343,5 @@ struct rpc_communicator *rpc_find_get_communicator(int id);
 kerrighed_node_t rpc_desc_get_client(struct rpc_desc *desc);
 
 extern struct task_struct *first_krgrpc;
-
+extern struct files_struct krgrpc_files;
 #endif
