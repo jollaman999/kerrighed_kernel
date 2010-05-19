@@ -19,6 +19,7 @@
 #include <linux/pagemap.h>
 #include <linux/audit.h>
 #include <linux/syscalls.h>
+#include <linux/fcntl.h>
 
 #include <asm/uaccess.h>
 #include <asm/ioctls.h>
@@ -30,6 +31,12 @@
 #include <kerrighed/ghost_helpers.h>
 #include <kerrighed/regular_file_mgr.h>
 #endif
+
+/*
+ * The max size that a non-root user is allowed to grow the pipe. Can
+ * be set by root in /proc/sys/fs/pipe-max-pages
+ */
+unsigned int pipe_max_pages = PIPE_DEF_BUFFERS * 16;
 
 /*
  * We use a start+len construction, which provides full use of the 
@@ -1546,6 +1553,14 @@ long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
 
 	switch (cmd) {
 	case F_SETPIPE_SZ:
+		if (!capable(CAP_SYS_ADMIN) && arg > pipe_max_pages)
+			return -EINVAL;
+		/*
+		 * The pipe needs to be at least 2 pages large to
+		 * guarantee POSIX behaviour.
+		 */
+		if (arg < 2)
+			return -EINVAL;
 		ret = pipe_set_size(pipe, arg);
 		break;
 	case F_GETPIPE_SZ:

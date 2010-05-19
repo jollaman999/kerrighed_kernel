@@ -54,6 +54,7 @@
 #include <linux/kprobes.h>
 #include <linux/kmod.h>
 #include <linux/capability.h>
+#include <linux/pipe_fs_i.h>
 
 #include <asm/uaccess.h>
 #include <asm/processor.h>
@@ -1882,6 +1883,14 @@ static struct ctl_table fs_table[] = {
 		.child		= binfmt_misc_table,
 	},
 #endif
+	{
+		.procname	= "pipe-max-pages",
+		.data		= &pipe_max_pages,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= &proc_dointvec_minmax,
+		.extra1		= &two,
+	},
 /*
  * NOTE: do not add new entries to this table unless you have read
  * Documentation/sysctl/ctl_unnumbered.txt
