@@ -104,4 +104,11 @@ extern int link_pipe(struct pipe_inode_info *ipipe,
 		     size_t len, unsigned int flags);
 #endif
 
+/*
+ * for dynamic pipe sizing
+ */
+extern int splice_grow_spd(struct pipe_inode_info *, struct splice_pipe_desc *);
+extern void splice_shrink_spd(struct pipe_inode_info *,
+				struct splice_pipe_desc *);
+
 #endif
