@@ -682,7 +682,7 @@ static int fuse_copy_fill(struct fuse_copy_state *cs)
 			cs->pipebufs++;
 			cs->nr_segs--;
 		} else {
-			if (cs->nr_segs == PIPE_BUFFERS)
+			if (cs->nr_segs == cs->pipe->buffers)
 				return -EIO;
 
 			page = alloc_page(GFP_HIGHUSER);
@@ -868,7 +868,7 @@ static int fuse_ref_page(struct fuse_copy_state *cs, struct page *page,
 {
 	struct pipe_buffer *buf;
 
-	if (cs->nr_segs == PIPE_BUFFERS)
+	if (cs->nr_segs == cs->pipe->buffers)
 		return -EIO;
 
 	unlock_request(cs->fc, cs->req);
@@ -1235,7 +1235,7 @@ static ssize_t fuse_dev_splice_read(struct file *in, loff_t *ppos,
 	if (!fc)
 		return -EPERM;
 
-	bufs = kmalloc(PIPE_BUFFERS * sizeof(struct pipe_buffer), GFP_KERNEL);
+	bufs = kmalloc(pipe->buffers * sizeof(struct pipe_buffer), GFP_KERNEL);
 	if (!bufs)
 		return -ENOMEM;
 
@@ -1256,13 +1256,13 @@ static ssize_t fuse_dev_splice_read(struct file *in, loff_t *ppos,
 		goto out_unlock;
 	}
 
-	if (pipe->nrbufs + cs.nr_segs > PIPE_BUFFERS) {
+	if (pipe->nrbufs + cs.nr_segs > pipe->buffers) {
 		ret = -EIO;
 		goto out_unlock;
 	}
 
 	while (page_nr < cs.nr_segs) {
-		int newbuf = (pipe->curbuf + pipe->nrbufs) & (PIPE_BUFFERS - 1);
+		int newbuf = (pipe->curbuf + pipe->nrbufs) & (pipe->buffers - 1);
 		struct pipe_buffer *buf = pipe->bufs + newbuf;
 
 		buf->page = bufs[page_nr].page;
@@ -1586,7 +1586,7 @@ static ssize_t fuse_dev_splice_write(struct pipe_inode_info *pipe,
 	if (!fc)
 		return -EPERM;
 
-	bufs = kmalloc(PIPE_BUFFERS * sizeof(struct pipe_buffer), GFP_KERNEL);
+	bufs = kmalloc(pipe->buffers * sizeof(struct pipe_buffer), GFP_KERNEL);
 	if (!bufs)
 		return -ENOMEM;
 
@@ -1594,7 +1594,7 @@ static ssize_t fuse_dev_splice_write(struct pipe_inode_info *pipe,
 	nbuf = 0;
 	rem = 0;
 	for (idx = 0; idx < pipe->nrbufs && rem < len; idx++)
-		rem += pipe->bufs[(pipe->curbuf + idx) & (PIPE_BUFFERS - 1)].len;
+		rem += pipe->bufs[(pipe->curbuf + idx) & (pipe->buffers - 1)].len;
 
 	ret = -EINVAL;
 	if (rem < len) {
@@ -1607,7 +1607,7 @@ static ssize_t fuse_dev_splice_write(struct pipe_inode_info *pipe,
 		struct pipe_buffer *ibuf;
 		struct pipe_buffer *obuf;
 
-		BUG_ON(nbuf >= PIPE_BUFFERS);
+		BUG_ON(nbuf >= pipe->buffers);
 		BUG_ON(!pipe->nrbufs);
 		ibuf = &pipe->bufs[pipe->curbuf];
 		obuf = &bufs[nbuf];
@@ -1615,7 +1615,7 @@ static ssize_t fuse_dev_splice_write(struct pipe_inode_info *pipe,
 		if (rem >= ibuf->len) {
 			*obuf = *ibuf;
 			ibuf->ops = NULL;
-			pipe->curbuf = (pipe->curbuf + 1) & (PIPE_BUFFERS - 1);
+			pipe->curbuf = (pipe->curbuf + 1) & (pipe->buffers - 1);
 			pipe->nrbufs--;
 		} else {
 			ibuf->ops->get(pipe, ibuf);
