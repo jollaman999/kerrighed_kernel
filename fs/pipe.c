@@ -1581,15 +1581,19 @@ long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
 		nr_pages = (arg + PAGE_SIZE - 1) >> PAGE_SHIFT;
 		nr_pages = roundup_pow_of_two(nr_pages);
 
-		if (!capable(CAP_SYS_ADMIN) && nr_pages > pipe_max_pages)
-			return -EPERM;
+		if (!capable(CAP_SYS_ADMIN) && nr_pages > pipe_max_pages) {
+			ret = -EPERM;
+			goto out;
+		}
 
 		/*
 		 * The pipe needs to be at least 2 pages large to
 		 * guarantee POSIX behaviour.
 		 */
-		if (nr_pages < 2)
-			return -EINVAL;
+		if (nr_pages < 2) {
+			ret = -EINVAL;
+			goto out;
+		}
 		ret = pipe_set_size(pipe, nr_pages);
 		break;
 		}
@@ -1601,6 +1605,7 @@ long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	}
 
+out:
 	mutex_unlock(&pipe->inode->i_mutex);
 	return ret;
 }
