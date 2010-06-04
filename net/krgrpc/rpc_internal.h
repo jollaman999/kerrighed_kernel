@@ -46,7 +46,7 @@ struct rpc_desc_recv {
 	struct list_head list_signal_head;
 	struct rpc_desc_elem *iter;
 	struct rpc_desc_elem *iter_provided;
-	int flags;
+	unsigned long flags;		     /* bitfield */
 };
 
 struct rpc_connection {
