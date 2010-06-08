@@ -311,7 +311,7 @@ int end_import_dvfs_file(unsigned long dvfs_objid,
 		* Setup the DVFS file field and inc the DVFS counter.
 		*/
 		file->f_objid = dvfs_objid;
-		dvfs_file->file = file;
+		dvfs_file_link(dvfs_file, file);
 
 		dvfs_file->count++;
 	}
