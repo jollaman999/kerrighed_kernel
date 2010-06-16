@@ -1745,6 +1745,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #ifdef CONFIG_KRG_EPM
 	krg_children_commit_fork(p);
 #endif
+	proc_new_task(p);
 	proc_fork_connector(p);
 	cgroup_post_fork(p);
 	if (clone_flags & CLONE_THREAD)

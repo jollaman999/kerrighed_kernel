@@ -108,6 +108,7 @@ struct vmcore {
 
 extern void proc_root_init(void);
 
+void proc_new_task(struct task_struct *task);
 void proc_flush_task(struct task_struct *task);
 
 extern struct proc_dir_entry *create_proc_entry(const char *name, mode_t mode,
@@ -194,6 +195,9 @@ extern void proc_free_inum(unsigned int inum);
 #define proc_net_fops_create(net, name, mode, fops)  ({ (void)(mode), NULL; })
 static inline void proc_net_remove(struct net *net, const char *name) {}
 
+static inline void proc_new_task(struct task_struct *task)
+{
+}
 static inline void proc_flush_task(struct task_struct *task)
 {
 }
