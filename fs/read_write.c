@@ -315,6 +315,11 @@ int rw_verify_area(int read_write, struct file *file, loff_t *ppos, size_t count
 	loff_t pos;
 	int retval = -EINVAL;
 
+#ifdef CONFIG_KRG_FAF
+	if (file->f_flags & O_FAF_CLT)
+		inode = NULL;
+	else
+#endif
 	inode = file->f_path.dentry->d_inode;
 	if (unlikely((ssize_t) count < 0))
 		return retval;
@@ -322,6 +327,9 @@ int rw_verify_area(int read_write, struct file *file, loff_t *ppos, size_t count
 	if (unlikely((pos < 0) || (loff_t) (pos + count) < 0))
 		return retval;
 
+#ifdef CONFIG_KRG_FAF
+	if (inode)
+#endif
 	if (unlikely(inode->i_flock && mandatory_lock(inode))) {
 		retval = locks_mandatory_area(
 			read_write == READ ? FLOCK_VERIFY_READ : FLOCK_VERIFY_WRITE,
@@ -928,12 +936,21 @@ static ssize_t do_sendfile(int out_fd, int in_fd, loff_t *ppos,
 		goto out;
 	if (!(in_file->f_mode & FMODE_READ))
 		goto fput_in;
+#ifdef CONFIG_KRG_FAF
+	if (in_file->f_flags & O_FAF_CLT) {
+		in_inode = NULL; /* to please gcc */
+		goto check_outfile;
+	}
+#endif
 	retval = -ESPIPE;
 	if (!ppos)
 		ppos = &in_file->f_pos;
 	else
 		if (!(in_file->f_mode & FMODE_PREAD))
 			goto fput_in;
+#ifdef CONFIG_KRG_FAF
+check_outfile:
+#endif
 	retval = rw_verify_area(READ, in_file, ppos, count);
 	if (retval < 0)
 		goto fput_in;
@@ -948,14 +965,34 @@ static ssize_t do_sendfile(int out_fd, int in_fd, loff_t *ppos,
 		goto fput_in;
 	if (!(out_file->f_mode & FMODE_WRITE))
 		goto fput_out;
+#ifdef CONFIG_KRG_FAF
+	if (out_file->f_flags & O_FAF_CLT) {
+		out_inode = NULL; /* to please gcc */
+		goto faf_sendfile;
+	}
+#endif
 	retval = -EINVAL;
 	in_inode = in_file->f_path.dentry->d_inode;
 	out_inode = out_file->f_path.dentry->d_inode;
+#ifdef CONFIG_KRG_FAF
+faf_sendfile:
+#endif
 	retval = rw_verify_area(WRITE, out_file, &out_file->f_pos, count);
 	if (retval < 0)
 		goto fput_out;
 	count = retval;
 
+#ifdef CONFIG_KRG_FAF
+	if (in_file->f_flags & O_FAF_CLT
+	    || out_file->f_flags & O_FAF_CLT) {
+
+		if (!max)
+			max = *ppos + count;
+
+		retval = krg_faf_sendfile(out_file, in_file, ppos, count, max);
+		goto update_stat;
+	}
+#endif
 	if (!max)
 		max = min(in_inode->i_sb->s_maxbytes, out_inode->i_sb->s_maxbytes);
 
@@ -980,6 +1017,9 @@ static ssize_t do_sendfile(int out_fd, int in_fd, loff_t *ppos,
 #endif
 	retval = do_splice_direct(in_file, ppos, out_file, count, fl);
 
+#ifdef CONFIG_KRG_FAF
+update_stat:
+#endif
 	if (retval > 0) {
 		add_rchar(current, retval);
 		add_wchar(current, retval);
