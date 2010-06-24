@@ -121,9 +121,9 @@ static struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_p
 	if (accept_parent) {
 		ns->global = parent_pid_ns->global;
 		ns->global |= current->create_krg_ns;
-		if (parent_pid_ns->krg_ns_root)
-			get_pid_ns(parent_pid_ns->krg_ns_root);
-		ns->krg_ns_root = parent_pid_ns->krg_ns_root;
+		if (parent_pid_ns->krg_ns)
+			get_krg_ns(parent_pid_ns->krg_ns);
+		ns->krg_ns = parent_pid_ns->krg_ns;
 		ns->parent = get_pid_ns(parent_pid_ns);
 	}
 #else
@@ -153,8 +153,8 @@ static void destroy_pid_namespace(struct pid_namespace *ns)
 	int i;
 
 #ifdef CONFIG_KRG_PROC
-	if (ns->krg_ns_root && ns->krg_ns_root != ns)
-		put_pid_ns(ns->krg_ns_root);
+	if (ns->krg_ns && krg_pid_ns_root(ns) != ns)
+		put_krg_ns(ns->krg_ns);
 #endif
 	proc_free_inum(ns->proc_inum);
 	for (i = 0; i < PIDMAP_ENTRIES; i++)
