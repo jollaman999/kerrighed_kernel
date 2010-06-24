@@ -51,7 +51,6 @@ int krg_do_fork(unsigned long clone_flags,
 	struct epm_action remote_clone;
 	struct rpc_desc *desc;
 	struct completion vfork;
-	pid_t remote_pid = -1;
 	int retval = -ENOSYS;
 
 	if (!cluster_started)
@@ -88,12 +87,12 @@ int krg_do_fork(unsigned long clone_flags,
 	membership_online_hold();
 	retval = -ENONET;
 	if (!krgnode_online(distant_node))
-		goto err_release;
+		goto out_release;
 
 	retval = -ENOMEM;
 	desc = rpc_begin(RPC_EPM_REMOTE_CLONE, distant_node);
 	if (!desc)
-		goto err_release;
+		goto out_release;
 
 	remote_clone.type = EPM_REMOTE_CLONE;
 	remote_clone.remote_clone.target = distant_node;
@@ -110,26 +109,23 @@ int krg_do_fork(unsigned long clone_flags,
 		get_task_struct(task);
 	}
 
-	remote_pid = send_task(desc, task, regs, &remote_clone);
+	retval = send_task(desc, task, regs, &remote_clone);
 
-	if (remote_pid < 0)
+	if (retval < 0)
 		rpc_cancel_sync(desc);
 	rpc_end(desc, 0);
 
+out_release:
 	membership_online_release();
 
-	if (remote_pid > 0 && (clone_flags & CLONE_VFORK))
+	if (retval > 0 && (clone_flags & CLONE_VFORK)) {
 		wait_for_vfork_done(task, &vfork);
 
 out_action_stop:
 	krg_action_stop(task, EPM_REMOTE_CLONE);
 
 out:
-	return remote_pid;
-
-err_release:
-	membership_online_release();
-	goto out_action_stop;
+	return retval;
 }
 
 static void handle_remote_clone(struct rpc_desc *desc, void *msg, size_t size)
