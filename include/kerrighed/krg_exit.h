@@ -25,7 +25,6 @@ struct remote_child {
 	int ptraced;
 	int exit_signal;
 	long exit_state;
-	kerrighed_node_t node;
 };
 
 /* do_wait() hook */

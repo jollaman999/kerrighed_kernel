@@ -513,7 +513,6 @@ static int new_child(struct children_kddm_object *obj,
 	item->ptraced = 0;
 	item->exit_signal = exit_signal;
 	item->exit_state = 0;
-	item->node = kerrighed_node_id;
 	set_child_links(obj, item);
 	obj->nr_children++;
 
@@ -601,22 +600,6 @@ void krg_set_child_exit_state(struct children_kddm_object *obj,
 	list_for_each_entry(item, &obj->children, sibling)
 		if (item->pid == pid) {
 			item->exit_state = child->exit_state;
-			break;
-		}
-}
-
-void krg_set_child_location(struct children_kddm_object *obj,
-			    struct task_struct *child)
-{
-	pid_t pid = task_pid_knr(child);
-	struct remote_child *item;
-
-	if (!obj)
-		return;
-
-	list_for_each_entry(item, &obj->children, sibling)
-		if (item->pid == pid) {
-			item->node = kerrighed_node_id;
 			break;
 		}
 }
