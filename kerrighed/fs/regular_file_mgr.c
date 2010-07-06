@@ -921,7 +921,7 @@ static int cr_import_complete_file(struct task_struct *fake, void *_file_link)
 		file = dvfs_file->file;
 	}
 
-	BUG_ON(atomic_read((const atomic_t *)&file->f_count) <= 1);
+	BUG_ON(file_count(file) <= 1);
 
 	fput(file);
 
