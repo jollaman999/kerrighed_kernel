@@ -233,12 +233,6 @@ config NLATTR
 config GENERIC_ATOMIC64
        bool
 
-config MODULE_HOOK
-	bool "Enable module hooks"
-	help
-	  Enable modules to register/unregister hooks at various places.
-	  In-tree users are Kerrighed's scheduler probes.
-
 config AVERAGE
 	bool
 
