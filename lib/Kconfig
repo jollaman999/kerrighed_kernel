@@ -243,10 +243,4 @@ config CORDIC
 	  so its calculations are in fixed point. Modules can select this
 	  when they require this function. Module will be called cordic.
 
-config MODULE_HOOK
-	bool "Enable module hooks"
-	help
-	  Enable modules to register/unregister hooks at various places.
-	  In-tree users are Kerrighed's scheduler probes.
-
 endmenu
