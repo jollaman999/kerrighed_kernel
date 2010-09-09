@@ -1270,7 +1270,7 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 				goto out_unmap;
 			}
 
-			if (TEST_AND_SET_OBJECT_LOCKED(obj_entry)) {
+			if (!trylock_obj_entry(obj_entry)) {
 				ret = SWAP_FAIL;
 				goto out_unmap;
 			}
@@ -1348,7 +1348,7 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 
 #ifdef CONFIG_KRG_MM
 	if (obj_entry)
-		CLEAR_OBJECT_LOCKED(obj_entry);
+		unlock_obj_entry(obj_entry);
 #endif
 
 	page_remove_rmap(page);
