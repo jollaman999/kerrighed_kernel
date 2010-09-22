@@ -402,7 +402,7 @@ int conf_write(const char *name)
 	struct symbol *sym;
 	struct menu *menu;
 	const char *basename;
-	char dirname[128], tmpname[128], newname[128];
+	char dirname[PATH_MAX+1], tmpname[PATH_MAX+1], newname[PATH_MAX+1];
 	int type, l;
 	const char *str;
 	time_t now;
@@ -563,7 +563,7 @@ int conf_write(const char *name)
 static int conf_split_config(void)
 {
 	const char *name;
-	char path[128];
+	char path[PATH_MAX+1];
 	char *s, *d, c;
 	struct symbol *sym;
 	struct stat sb;
