@@ -829,6 +829,10 @@ int export_signal_struct(struct epm_action *action,
 	}
 
 err_write:
+	if (r)
+		epm_error(action, r, tsk,
+			  "Fail to save struct signal_struct");
+
 	return r;
 }
 
@@ -1030,6 +1034,10 @@ err_free_signal:
 	}
 
 err_read:
+	if (r)
+		epm_error(action, r, tsk,
+			  "Fail to restore struct signal_struct");
+
 	return r;
 }
 
@@ -1048,13 +1056,7 @@ static int cr_export_now_signal_struct(struct epm_action *action,
 				       struct task_struct *task,
 				       union export_args *args)
 {
-	int r;
-	r = export_signal_struct(action, ghost, task);
-	if (r)
-		ckpt_err(action, r,
-			 "Fail to save struct signal_struct of process %d (%s)",
-			 task_pid_knr(task), task->comm);
-	return r;
+	return export_signal_struct(action, ghost, task);
 }
 
 static int cr_import_now_signal_struct(struct epm_action *action,
@@ -1068,13 +1070,8 @@ static int cr_import_now_signal_struct(struct epm_action *action,
 	BUG_ON(*returned_data != NULL);
 
 	r = import_signal_struct(action, ghost, fake);
-	if (r) {
-		ckpt_err(action, r,
-			 "App %ld - Fail to restore a struct signal_struct",
-			 action->restart.app->app_id);
+	if (r)
 		goto err;
-	}
-
 	*returned_data = fake->signal;
 err:
 	return r;
