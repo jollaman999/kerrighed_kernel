@@ -145,8 +145,7 @@ int export_one_open_file (struct epm_action *action,
 		goto err;
 	}
 
-	if (action->type != EPM_CHECKPOINT
-	    && index != MMAPPED_FILE) {
+	if (index != MMAPPED_FILE) {
 		if (!file->f_objid)
 			create_kddm_file_object(file);
 		check_file_struct_sharing (index, file, action);
@@ -872,7 +871,7 @@ int import_one_open_file (struct epm_action *action,
 	int first_import = 0;
 	int r = 0;
 
-	BUG_ON(action->type == EPM_CHECKPOINT);
+	BUG_ON(action->type == EPM_RESTART);
 
 	*returned_file = NULL;
 
@@ -953,7 +952,7 @@ int import_open_files (struct epm_action *action,
 {
 	int i, j, r = 0;
 
-	BUG_ON(action->type == EPM_CHECKPOINT);
+	BUG_ON(action->type == EPM_RESTART);
 
 	/* Reception of the files list and their names */
 	for (i = 0; i < last_open_fd; i++) {
@@ -988,7 +987,7 @@ static int cr_link_to_open_files(struct epm_action *action,
 {
 	int i, r = 0;
 
-	BUG_ON(action->type == EPM_CHECKPOINT
+	BUG_ON(action->type == EPM_RESTART
 	       && action->restart.shared == CR_LINK_ONLY);
 
 	/* Linking the files in the files_struct */
@@ -1068,7 +1067,7 @@ int import_files_struct (struct epm_action *action,
 		BUG_ON (!r && magic != 780574);
 	}
 
-	if (action->type == EPM_CHECKPOINT
+	if (action->type == EPM_RESTART
 	    && action->restart.shared == CR_LINK_ONLY) {
 		r = cr_link_to_files_struct(action, ghost, tsk);
 		return r;
@@ -1141,7 +1140,7 @@ int import_files_struct (struct epm_action *action,
 		BUG_ON (!r && magic != 280574);
 	}
 
-	if (action->type == EPM_CHECKPOINT)
+	if (action->type == EPM_RESTART)
 		r = cr_link_to_open_files(action, ghost, tsk, files,
 					  fdt, last_open_fd);
 	else
@@ -1232,7 +1231,7 @@ int import_vma_phys_file(struct epm_action *action,
 	int import_file;
 	int r;
 
-	if (action->type == EPM_CHECKPOINT) {
+	if (action->type == EPM_RESTART) {
 		r = cr_link_to_vma_phys_file(action, ghost, tsk, vma, &file);
 		if (r || is_anon_shared_mmap(file))
 			goto err;
@@ -1329,7 +1328,7 @@ int import_mm_exe_file(struct epm_action *action, ghost_t *ghost,
 {
 	int dump, r = 0;
 
-	BUG_ON(action->type == EPM_CHECKPOINT
+	BUG_ON(action->type == EPM_RESTART
 	       && action->restart.shared == CR_LINK_ONLY);
 
 #ifdef CONFIG_PROC_FS
@@ -1338,7 +1337,7 @@ int import_mm_exe_file(struct epm_action *action, ghost_t *ghost,
 		goto exit;
 
 	if (dump) {
-		if (action->type == EPM_CHECKPOINT)
+		if (action->type == EPM_RESTART)
 			r = cr_link_to_file(action, ghost, tsk,
 					    &tsk->mm->exe_file);
 		else
@@ -1394,7 +1393,7 @@ int import_fs_struct (struct epm_action *action,
 	char *buffer;
 	int r;
 
-	if (action->type == EPM_CHECKPOINT
+	if (action->type == EPM_RESTART
 	    && action->restart.shared == CR_LINK_ONLY) {
 		r = cr_link_to_fs_struct(action, ghost, tsk);
 		return r;
