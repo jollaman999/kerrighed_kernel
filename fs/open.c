@@ -269,6 +269,13 @@ int do_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
 	if (IS_IMMUTABLE(inode))
 		return -EPERM;
 
+#ifdef CONFIG_KRG_FAF
+	if (file->f_flags & O_FAF_CLT) {
+		ret = krg_faf_fallocate(file, mode, offset, len);
+		return ret;
+	}
+#endif
+
 	/*
 	 * Revalidate the write permissions, in case security policy has
 	 * changed since the files were opened.
