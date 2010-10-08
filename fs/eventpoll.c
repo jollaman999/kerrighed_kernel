@@ -360,7 +360,10 @@ ctl_table epoll_table[] = {
 };
 #endif /* CONFIG_SYSCTL */
 
-static const struct file_operations eventpoll_fops;
+#ifndef CONFIG_KRG_DVFS
+static
+#endif
+const struct file_operations eventpoll_fops;
 
 /* Setup the structure that is used as key for the RB tree */
 static inline void ep_set_ffd(struct epoll_filefd *ffd,
@@ -847,7 +850,10 @@ static unsigned int ep_eventpoll_poll(struct file *file, poll_table *wait)
 }
 
 /* File callbacks that implement the eventpoll file behaviour */
-static const struct file_operations eventpoll_fops = {
+#ifndef CONFIG_KRG_DVFS
+static
+#endif
+const struct file_operations eventpoll_fops = {
 	.release	= ep_eventpoll_release,
 	.poll		= ep_eventpoll_poll
 };
