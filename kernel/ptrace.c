@@ -89,10 +89,9 @@ void krg_ptrace_unlink(struct task_struct *task)
 {
 	BUG_ON(task->real_parent == baby_sitter);
 	if (!is_container_init(task->real_parent)
-	    && task->real_parent != task->parent) {
+	    && task->real_parent != task->parent)
 		krg_action_enable(task->real_parent, EPM_MIGRATE, 0);
-		krg_action_enable(task->real_parent, EPM_CHECKPOINT, 0);
-	}
+
 	BUG_ON(task->parent == baby_sitter);
 	krg_action_enable(task->parent, EPM_MIGRATE, 0);
 	krg_action_enable(task->parent, EPM_CHECKPOINT, 0);
@@ -113,8 +112,6 @@ void krg_ptrace_reparent_ptraced(struct task_struct *real_parent,
 
 	/* Not really needed as long as zombies do not migrate... */
 	krg_action_enable(real_parent, EPM_MIGRATE, 0);
-	krg_action_enable(real_parent, EPM_CHECKPOINT, 0);
-
 	/* new real_parent has already been assigned. */
 	BUG_ON(task->real_parent == baby_sitter);
 	if (!is_container_init(task->real_parent)
@@ -122,9 +119,6 @@ void krg_ptrace_reparent_ptraced(struct task_struct *real_parent,
 		int retval;
 
 		retval = krg_action_disable(task->real_parent, EPM_MIGRATE, 0);
-		BUG_ON(retval);
-
-		retval = krg_action_disable(task->real_parent, EPM_CHECKPOINT, 0);
 		BUG_ON(retval);
 	}
 }
