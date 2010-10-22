@@ -31,6 +31,10 @@
 #include <linux/uio.h>
 #include <linux/security.h>
 
+#ifdef CONFIG_KRG_EPM
+#include <kerrighed/file_stat.h>
+#endif
+
 #ifdef CONFIG_KRG_FAF
 #include <kerrighed/faf.h>
 #endif
@@ -1337,6 +1341,18 @@ static inline struct pipe_inode_info *pipe_info(struct inode *inode)
 	return NULL;
 }
 
+#ifdef CONFIG_KRG_EPM
+long krg_do_splice(struct file *in, struct file *out,
+		   loff_t *offset, size_t len, unsigned int flags)
+{
+	/*
+	 * returns -EINVAL as for file that does not have
+	 * splice_write() / splice_read()
+	 */
+	return -EINVAL;
+}
+#endif
+
 /*
  * Determine where to splice to/from.
  */
@@ -1349,8 +1365,24 @@ static long do_splice(struct file *in, loff_t __user *off_in,
 	loff_t offset, *off;
 	long ret;
 
+#ifdef CONFIG_KRG_EPM
+	if (is_pipe(in)) {
+		if (!(in->f_flags & O_FAF_CLT))
+			ipipe = pipe_info(in->f_path.dentry->d_inode);
+		else
+			ipipe = NULL;
+	}
+
+	if (is_pipe(out)) {
+		if (!(out->f_flags & O_FAF_CLT))
+			opipe = pipe_info(out->f_path.dentry->d_inode);
+		else
+			opipe = NULL;
+	}
+#else
 	ipipe = pipe_info(in->f_path.dentry->d_inode);
 	opipe = pipe_info(out->f_path.dentry->d_inode);
+#endif
 
 	if (ipipe && opipe) {
 		if (off_in || off_out)
@@ -1369,7 +1401,11 @@ static long do_splice(struct file *in, loff_t __user *off_in,
 		return splice_pipe_to_pipe(ipipe, opipe, len, flags);
 	}
 
+#ifdef CONFIG_KRG_EPM
+	if (is_pipe(in)) {
+#else
 	if (ipipe) {
+#endif
 		if (off_in)
 			return -ESPIPE;
 		if (off_out) {
@@ -1382,6 +1418,11 @@ static long do_splice(struct file *in, loff_t __user *off_in,
 		} else
 			off = &out->f_pos;
 
+#ifdef CONFIG_KRG_EPM
+		if (!ipipe)
+			ret = krg_do_splice(in, out, off, len, flags);
+		else
+#endif
 		ret = do_splice_from(ipipe, out, off, len, flags);
 
 		if (off_out && copy_to_user(off_out, off, sizeof(loff_t)))
@@ -1390,7 +1431,11 @@ static long do_splice(struct file *in, loff_t __user *off_in,
 		return ret;
 	}
 
+#ifdef CONFIG_KRG_EPM
+	if (is_pipe(out)) {
+#else
 	if (opipe) {
+#endif
 		if (off_out)
 			return -ESPIPE;
 		if (off_in) {
@@ -1403,6 +1448,11 @@ static long do_splice(struct file *in, loff_t __user *off_in,
 		} else
 			off = &in->f_pos;
 
+#ifdef CONFIG_KRG_EPM
+		if (!opipe)
+			ret = krg_do_splice(in, out, off, len, flags);
+		else
+#endif
 		ret = do_splice_to(in, off, opipe, len, flags);
 
 		if (off_in && copy_to_user(off_in, off, sizeof(loff_t)))
