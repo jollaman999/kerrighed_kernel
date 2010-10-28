@@ -50,7 +50,7 @@
  * need to use it within a single byte (to ensure we get endianness right).
  * We can use memset for the rest of the bitmap as there are no other users.
  */
-void mark_bitmap_end(int start_bit, int end_bit, char *bitmap)
+void ext4_mark_bitmap_end(int start_bit, int end_bit, char *bitmap)
 {
 	int i;
 
@@ -87,7 +87,7 @@ unsigned ext4_init_inode_bitmap(struct super_block *sb, struct buffer_head *bh,
 	}
 
 	memset(bh->b_data, 0, (EXT4_INODES_PER_GROUP(sb) + 7) / 8);
-	mark_bitmap_end(EXT4_INODES_PER_GROUP(sb), sb->s_blocksize * 8,
+	ext4_mark_bitmap_end(EXT4_INODES_PER_GROUP(sb), sb->s_blocksize * 8,
 			bh->b_data);
 	ext4_inode_bitmap_csum_set(sb, block_group, gdp, bh,
 				   EXT4_INODES_PER_GROUP(sb) / 8);

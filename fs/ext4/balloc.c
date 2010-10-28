@@ -184,7 +184,7 @@ unsigned ext4_init_block_bitmap(struct super_block *sb, struct buffer_head *bh,
 		 * less than the blocksize * 8 ( which is the size
 		 * of bitmap ), set rest of the block bitmap to 1
 		 */
-		mark_bitmap_end(group_blocks, sb->s_blocksize * 8, bh->b_data);
+		ext4_mark_bitmap_end(group_blocks, sb->s_blocksize * 8, bh->b_data);
 		ext4_block_bitmap_csum_set(sb, block_group, gdp, bh,
 					   EXT4_BLOCKS_PER_GROUP(sb) / 8);
 		gdp->bg_checksum = ext4_group_desc_csum(sbi, block_group, gdp);
