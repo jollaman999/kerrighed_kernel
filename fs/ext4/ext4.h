@@ -1866,7 +1866,7 @@ extern unsigned ext4_init_inode_bitmap(struct super_block *sb,
 				       struct buffer_head *bh,
 				       ext4_group_t group,
 				       struct ext4_group_desc *desc);
-extern void mark_bitmap_end(int start_bit, int end_bit, char *bitmap);
+extern void ext4_mark_bitmap_end(int start_bit, int end_bit, char *bitmap);
 extern int ext4_init_inode_table(struct super_block *sb,
 				 ext4_group_t group, int barrier);
 
