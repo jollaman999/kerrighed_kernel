@@ -16,6 +16,7 @@
 #include <kddm/kddm.h>
 #include <net/krgrpc/rpc.h>
 #include <kerrighed/hotplug.h>
+#include <kerrighed/remote_cred.h>
 #include "ipc_handler.h"
 #include "msg_handler.h"
 #include "msg_io_linker.h"
@@ -264,19 +265,25 @@ long krg_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 
 	r = rpc_pack_type(desc, msg);
 	if (r)
-		goto exit_rpc;
+		goto cancel;
+
+	r = pack_creds(desc, current_cred());
+	if (r)
+		goto cancel;
 
 	r = rpc_pack(desc, 0, buffer, msgsz);
 	if (r)
-		goto exit_rpc;
+		goto cancel;
 
 	r = unpack_remote_sleep_res_prepare(desc);
 	if (r)
-		goto exit_rpc;
+		goto cancel;
 
 	err = unpack_remote_sleep_res_type(desc, r);
-	if (err)
+	if (err) {
 		r = err;
+		goto cancel;
+	}
 
 exit_rpc:
 	rpc_end(desc, 0);
@@ -284,43 +291,64 @@ exit_free_buffer:
 	kfree(buffer);
 exit:
 	return r;
+
+cancel:
+	rpc_cancel(desc);
+	goto exit_rpc;
 }
 
 static void handle_do_msg_send(struct rpc_desc *desc, void *_msg, size_t size)
 {
-	void *mtext;
+	void *mtext = NULL;
+	int err;
 	long r;
 	struct msgsnd_msg *msg = _msg;
 	struct ipc_namespace *ns;
+	const struct cred *old_cred = NULL;
 
 	ns = find_get_krg_ipcns();
 	BUG_ON(!ns);
 
-	mtext = kmalloc(msg->msgsz, GFP_KERNEL);
-	if (!mtext) {
-		r = -ENOMEM;
-		goto exit_put_ns;
+	old_cred = unpack_override_creds(desc);
+	if (IS_ERR(old_cred)) {
+		old_cred = NULL;
+		goto cancel;
 	}
 
-	r = rpc_unpack(desc, 0, mtext, msg->msgsz);
-	if (r)
-		goto exit_free_text;
+	mtext = kmalloc(msg->msgsz, GFP_KERNEL);
+	if (!mtext)
+		goto cancel;
 
-	r = remote_sleep_prepare(desc);
-	if (r)
-		goto exit_free_text;
+	err = rpc_unpack(desc, 0, mtext, msg->msgsz);
+	if (err)
+		goto cancel;
+
+	err = remote_sleep_prepare(desc);
+	if (err)
+		goto cancel;
 
 	r = __do_msgsnd(msg->msqid, msg->mtype, mtext, msg->msgsz, msg->msgflg,
 			ns, msg->tgid);
 
 	remote_sleep_finish();
 
-	r = rpc_pack_type(desc, r);
+	err = rpc_pack_type(desc, r);
+	if (err)
+		goto cancel;
 
-exit_free_text:
-	kfree(mtext);
-exit_put_ns:
+exit:
+	if (mtext)
+		kfree(mtext);
+
+	if (old_cred)
+		revert_creds(old_cred);
+
 	put_ipc_ns(ns);
+	return;
+
+cancel:
+	rpc_cancel(desc);
+	goto exit;
 }
 
 struct msgrcv_msg
@@ -380,6 +408,10 @@ long krg_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	if (err)
 		goto cancel;
 
+	err = pack_creds(desc, current_cred());
+	if (err)
+		goto cancel;
+
 	err = unpack_remote_sleep_res_prepare(desc);
 	if (err)
 		goto cancel;
@@ -426,22 +458,29 @@ cancel:
 
 static void handle_do_msg_rcv(struct rpc_desc *desc, void *_msg, size_t size)
 {
-	void *mtext;
+	void *mtext = NULL;
 	long msgsz, pmtype;
 	int r;
 	struct msgrcv_msg *msg = _msg;
 	struct ipc_namespace *ns;
+	const struct cred *old_cred = NULL;
 
 	ns = find_get_krg_ipcns();
 	BUG_ON(!ns);
 
+	old_cred = unpack_override_creds(desc);
+	if (IS_ERR(old_cred)) {
+		old_cred = NULL;
+		goto cancel;
+	}
+
 	mtext = kmalloc(msg->msgsz, GFP_KERNEL);
 	if (!mtext)
-		goto exit_put_ns;
+		goto cancel;
 
 	r = remote_sleep_prepare(desc);
 	if (r)
-		goto exit_free_text;
+		goto cancel;
 
 	msgsz = __do_msgrcv(msg->msqid, &pmtype, mtext, msg->msgsz,
 			    msg->msgtyp, msg->msgflg, ns, msg->tgid);
@@ -449,21 +488,33 @@ static void handle_do_msg_rcv(struct rpc_desc *desc, void *_msg, size_t size)
 	remote_sleep_finish();
 
 	r = rpc_pack_type(desc, msgsz);
-	if (r || msgsz <= 0)
-		goto exit_free_text;
+	if (r)
+		goto cancel;
+
+	if (msgsz <= 0)
+		goto exit;
 
 	r = rpc_pack_type(desc, pmtype); /* send the real type of msg */
 	if (r)
-		goto exit_free_text;
+		goto cancel;
 
 	r = rpc_pack(desc, 0, mtext, msgsz);
 	if (r)
-		goto exit_free_text;
+		goto cancel;
 
-exit_free_text:
-	kfree(mtext);
-exit_put_ns:
+exit:
+	if (mtext)
+		kfree(mtext);
+
+	if (old_cred)
+		revert_creds(old_cred);
+
 	put_ipc_ns(ns);
+	return;
+
+cancel:
+	rpc_cancel(desc);
+	goto exit;
 }
 
 
