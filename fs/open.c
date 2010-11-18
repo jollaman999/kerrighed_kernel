@@ -33,7 +33,7 @@
 #include <linux/ima.h>
 #include <linux/nospec.h>
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_KRG_FAF
 #include <kerrighed/faf.h>
 #endif
 
@@ -436,6 +436,14 @@ SYSCALL_DEFINE1(fchdir, unsigned int, fd)
 	file = fget(fd);
 	if (!file)
 		goto out;
+
+#ifdef CONFIG_KRG_FAF
+	if (file->f_flags & O_FAF_CLT) {
+		faf_error(file, "fchdir");
+		error = -ENOSYS;
+		goto out_putf;
+	}
+#endif
 
 	inode = file->f_path.dentry->d_inode;
 
