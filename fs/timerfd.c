@@ -27,6 +27,10 @@
 #include <kerrighed/faf.h>
 #endif
 
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
+#endif
+
 struct timerfd_ctx {
 	struct hrtimer tmr;
 	ktime_t tintv;
