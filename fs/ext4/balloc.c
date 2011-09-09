@@ -99,7 +99,7 @@ unsigned ext4_init_block_bitmap(struct super_block *sb, struct buffer_head *bh,
 		if (!ext4_group_desc_csum_verify(sbi, block_group, gdp)) {
 			ext4_error(sb, "Checksum bad for group %u",
 					block_group);
-			ext4_free_blks_set(sb, gdp, 0);
+			ext4_free_group_clusters_set(sb, gdp, 0);
 			ext4_free_inodes_set(sb, gdp, 0);
 			ext4_itable_unused_set(sb, gdp, 0);
 			memset(bh->b_data, 0xff, sb->s_blocksize);
@@ -126,7 +126,7 @@ unsigned ext4_init_block_bitmap(struct super_block *sb, struct buffer_head *bh,
 	if (bh && ((bit_max >> 3) >= bh->b_size)) {
 		ext4_error(sb, "Metadata block count (%d) too high in group %u",
 				bit_max, block_group);
-		ext4_free_blks_set(sb, gdp, 0);
+		ext4_free_group_clusters_set(sb, gdp, 0);
 		ext4_free_inodes_set(sb, gdp, 0);
 		ext4_itable_unused_set(sb, gdp, 0);
 		memset(bh->b_data, 0xff, sb->s_blocksize);
@@ -529,7 +529,7 @@ ext4_fsblk_t ext4_count_free_blocks(struct super_block *sb)
 		gdp = ext4_get_group_desc(sb, i, NULL);
 		if (!gdp)
 			continue;
-		desc_count += ext4_free_blks_count(sb, gdp);
+		desc_count += ext4_free_group_clusters(sb, gdp);
 		brelse(bitmap_bh);
 		bitmap_bh = ext4_read_block_bitmap(sb, i);
 		if (bitmap_bh == NULL)
@@ -537,7 +537,7 @@ ext4_fsblk_t ext4_count_free_blocks(struct super_block *sb)
 
 		x = ext4_count_free(bitmap_bh, sb->s_blocksize);
 		printk(KERN_DEBUG "group %u: stored = %d, counted = %u\n",
-			i, ext4_free_blks_count(sb, gdp), x);
+			i, ext4_free_group_clusters(sb, gdp), x);
 		bitmap_count += x;
 	}
 	brelse(bitmap_bh);
@@ -551,7 +551,7 @@ ext4_fsblk_t ext4_count_free_blocks(struct super_block *sb)
 		gdp = ext4_get_group_desc(sb, i, NULL);
 		if (!gdp)
 			continue;
-		desc_count += ext4_free_blks_count(sb, gdp);
+		desc_count += ext4_free_group_clusters(sb, gdp);
 	}
 
 	return desc_count;
