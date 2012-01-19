@@ -71,6 +71,7 @@
 #include <linux/debugfs.h>
 #include <linux/ctype.h>
 #include <linux/ftrace.h>
+#include <linux/clocksource.h>
 
 #ifdef CONFIG_KRG_PROC
 #include <net/krgrpc/rpc.h>
@@ -5966,7 +5967,6 @@ need_resched_nonpreemptible:
 		rq->nr_switches++;
 		rq->curr = next;
 		++*switch_count;
-		WARN_ON_ONCE(test_tsk_need_resched(next));
 
 		context_switch(rq, prev, next); /* unlocks the rq */
 		/*
@@ -7795,6 +7795,7 @@ void show_state_filter(unsigned long state_filter)
 	} while_each_thread(g, p);
 
 	touch_all_softlockup_watchdogs();
+	clocksource_touch_watchdog();
 
 #ifdef CONFIG_SCHED_DEBUG
 	sysrq_sched_debug_show();
