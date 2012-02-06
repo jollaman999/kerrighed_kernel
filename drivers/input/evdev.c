@@ -1,4 +1,4 @@
-/*
+	/*
  * Event char devices, giving access to raw input device events.
  *
  * Copyright (c) 1999-2002 Vojtech Pavlik
@@ -18,7 +18,7 @@
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/init.h>
-#include <linux/input.h>
+#include <linux/input/mt.h>
 #include <linux/major.h>
 #include <linux/device.h>
 #include "input-compat.h"
@@ -558,6 +558,28 @@ static int handle_eviocgbit(struct input_dev *dev, unsigned int cmd, void __user
 }
 #undef OLD_KEY_MAX
 
+static int evdev_handle_mt_request(struct input_dev *dev,
+				   unsigned int size,
+				   int __user *ip)
+{
+	const struct input_mt_slot *mt = dev->mt;
+	unsigned int code;
+	int max_slots;
+	int i;
+
+	if (get_user(code, &ip[0]))
+		return -EFAULT;
+	if (!input_is_mt_value(code))
+		return -EINVAL;
+
+	max_slots = (size - sizeof(__u32)) / sizeof(__s32);
+	for (i = 0; i < dev->mtsize && i < max_slots; i++)
+		if (put_user(input_mt_get_value(&mt[i], code), &ip[1 + i]))
+			return -EFAULT;
+
+	return 0;
+}
+
 static long evdev_do_ioctl(struct file *file, unsigned int cmd,
 			   void __user *p, int compat_mode)
 {
@@ -657,6 +679,9 @@ static long evdev_do_ioctl(struct file *file, unsigned int cmd,
 			if (_IOC_NR(cmd) == _IOC_NR(EVIOCGPROP(0)))
 				return bits_to_user(dev->propbit, INPUT_PROP_MAX,
 				    _IOC_SIZE(cmd), p, compat_mode);
+
+			if (_IOC_NR(cmd) == _IOC_NR(EVIOCGMTSLOTS(0)))
+				return evdev_handle_mt_request(dev, _IOC_SIZE(cmd), ip);
 
 			if (_IOC_NR(cmd) == _IOC_NR(EVIOCGKEY(0)))
 				return bits_to_user(dev->key, KEY_MAX, _IOC_SIZE(cmd),
