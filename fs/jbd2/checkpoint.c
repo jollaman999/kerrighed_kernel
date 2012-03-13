@@ -536,7 +536,7 @@ int jbd2_cleanup_journal_tail(journal_t *journal)
 	    (journal->j_flags & JBD2_BARRIER))
 		__blkdev_issue_flush(journal->j_fs_dev, GFP_NOFS, NULL);
 	if (!(journal->j_flags & JBD2_ABORT))
-		jbd2_journal_update_superblock(journal, 1);
+		jbd2_journal_update_sb_log_tail(journal);
 	return 0;
 }
 
