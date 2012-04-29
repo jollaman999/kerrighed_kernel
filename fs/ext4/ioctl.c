@@ -149,6 +149,13 @@ flags_out:
 		if (!is_owner_or_cap(inode))
 			return -EPERM;
 
+		if (EXT4_HAS_RO_COMPAT_FEATURE(inode->i_sb,
+				EXT4_FEATURE_RO_COMPAT_METADATA_CSUM)) {
+			ext4_warning(sb, "Setting inode version is not "
+				     "supported with metadata_csum enabled.");
+			return -ENOTTY;
+		}
+
 		err = mnt_want_write(filp->f_path.mnt);
 		if (err)
 			return err;
