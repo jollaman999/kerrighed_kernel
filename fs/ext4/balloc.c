@@ -103,6 +103,8 @@ unsigned ext4_init_block_bitmap(struct super_block *sb, struct buffer_head *bh,
 			ext4_free_inodes_set(sb, gdp, 0);
 			ext4_itable_unused_set(sb, gdp, 0);
 			memset(bh->b_data, 0xff, sb->s_blocksize);
+			ext4_block_bitmap_csum_set(sb, block_group, gdp, bh,
+						   EXT4_BLOCKS_PER_GROUP(sb) / 8);
 			return 0;
 		}
 		memset(bh->b_data, 0, sb->s_blocksize);
@@ -183,6 +185,9 @@ unsigned ext4_init_block_bitmap(struct super_block *sb, struct buffer_head *bh,
 		 * of bitmap ), set rest of the block bitmap to 1
 		 */
 		mark_bitmap_end(group_blocks, sb->s_blocksize * 8, bh->b_data);
+		ext4_block_bitmap_csum_set(sb, block_group, gdp, bh,
+					   EXT4_BLOCKS_PER_GROUP(sb) / 8);
+		gdp->bg_checksum = ext4_group_desc_csum(sbi, block_group, gdp);
 	}
 	return free_blocks - ext4_group_used_meta_blocks(sb, block_group, gdp);
 }
@@ -290,6 +295,23 @@ err_out:
 			block_group, bitmap_blk);
 	return 0;
 }
+
+void ext4_validate_block_bitmap(struct super_block *sb,
+			       struct ext4_group_desc *desc,
+			       unsigned int block_group,
+			       struct buffer_head *bh)
+{
+	if (buffer_verified(bh))
+		return;
+
+	ext4_lock_group(sb, block_group);
+	if (ext4_valid_block_bitmap(sb, desc, block_group, bh) &&
+	    ext4_block_bitmap_csum_verify(sb, block_group, desc, bh,
+					  EXT4_BLOCKS_PER_GROUP(sb) / 8))
+		set_buffer_verified(bh);
+	ext4_unlock_group(sb, block_group);
+}
+
 /**
  * ext4_read_block_bitmap()
  * @sb:			super block
@@ -361,7 +383,7 @@ ext4_read_block_bitmap(struct super_block *sb, ext4_group_t block_group)
 		return NULL;
 	}
 verify:
-	if (ext4_valid_block_bitmap(sb, desc, block_group, bh))
+	if (ext4_validate_block_bitmap(sb, desc, block_group, bh))
 		return bh;
 	/*
 	 * file system mounted not to panic on error,
