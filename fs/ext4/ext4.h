@@ -2298,6 +2298,9 @@ extern int ext4_move_extents(struct file *o_filp, struct file *d_filp,
 
 /* mmp.c */
 extern int ext4_multi_mount_protect(struct super_block *, ext4_fsblk_t);
+extern void ext4_mmp_csum_set(struct super_block *sb, struct mmp_struct *mmp);
+extern int ext4_mmp_csum_verify(struct super_block *sb,
+				struct mmp_struct *mmp);
 
 /*
  * Add new method to test wether block and inode bitmaps are properly
