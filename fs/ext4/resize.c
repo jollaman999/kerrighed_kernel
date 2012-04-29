@@ -705,6 +705,47 @@ exit_err:
 	}
 }
 
+static struct buffer_head *ext4_get_bitmap(struct super_block *sb, __u64 block)
+{
+	struct buffer_head *bh = sb_getblk(sb, block);
+	if (!bh)
+		return NULL;
+
+	if (bitmap_uptodate(bh))
+		return bh;
+
+	lock_buffer(bh);
+	if (bh_submit_read(bh) < 0) {
+		unlock_buffer(bh);
+		brelse(bh);
+		return NULL;
+	}
+	unlock_buffer(bh);
+
+	return bh;
+}
+
+static int ext4_set_bitmap_checksums(struct super_block *sb,
+				     ext4_group_t group,
+				     struct ext4_group_desc *gdp,
+				     struct ext4_new_group_data *group_data)
+{
+	struct buffer_head *bh;
+
+	if (!EXT4_HAS_RO_COMPAT_FEATURE(sb,
+					EXT4_FEATURE_RO_COMPAT_METADATA_CSUM))
+		return 0;
+
+	bh = ext4_get_bitmap(sb, group_data->inode_bitmap);
+	if (!bh)
+		return -EIO;
+	ext4_inode_bitmap_csum_set(sb, group, gdp, bh,
+				   EXT4_INODES_PER_GROUP(sb) / 8);
+	brelse(bh);
+
+	return 0;
+}
+
 /* Add group descriptor data to an existing or new group descriptor block.
  * Ensure we handle all possible error conditions _before_ we start modifying
  * the filesystem, because we cannot abort the transaction and not have it
@@ -843,6 +884,12 @@ int ext4_group_add(struct super_block *sb, struct ext4_new_group_data *input)
 	memset(gdp, 0, EXT4_DESC_SIZE(sb));
 	ext4_block_bitmap_set(sb, gdp, input->block_bitmap); /* LV FIXME */
 	ext4_inode_bitmap_set(sb, gdp, input->inode_bitmap); /* LV FIXME */
+	err = ext4_set_bitmap_checksums(sb, group, gdp, group_data);
+	if (err) {
+		ext4_std_error(sb, err);
+		goto exit_journal;
+	}
+
 	ext4_inode_table_set(sb, gdp, input->inode_table); /* LV FIXME */
 	ext4_free_blks_set(sb, gdp, input->free_blocks_count);
 	ext4_free_inodes_set(sb, gdp, EXT4_INODES_PER_GROUP(sb));
