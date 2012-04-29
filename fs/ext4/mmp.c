@@ -6,18 +6,50 @@
 
 #include "ext4.h"
 
+/* Checksumming functions */
+static __u32 ext4_mmp_csum(struct super_block *sb, struct mmp_struct *mmp)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	int offset = offsetof(struct mmp_struct, mmp_checksum);
+	__u32 csum;
+
+	csum = ext4_chksum(sbi, sbi->s_csum_seed, (char *)mmp, offset);
+
+	return cpu_to_le32(csum);
+}
+
+int ext4_mmp_csum_verify(struct super_block *sb, struct mmp_struct *mmp)
+{
+	if (!EXT4_HAS_RO_COMPAT_FEATURE(sb,
+				       EXT4_FEATURE_RO_COMPAT_METADATA_CSUM))
+		return 1;
+
+	return mmp->mmp_checksum == ext4_mmp_csum(sb, mmp);
+}
+
+void ext4_mmp_csum_set(struct super_block *sb, struct mmp_struct *mmp)
+{
+	if (!EXT4_HAS_RO_COMPAT_FEATURE(sb,
+				       EXT4_FEATURE_RO_COMPAT_METADATA_CSUM))
+		return;
+
+	mmp->mmp_checksum = ext4_mmp_csum(sb, mmp);
+}
+
 /*
  * Write the MMP block using WRITE_SYNC to try to get the block on-disk
  * faster.
  */
 static int write_mmp_block(struct super_block *sb, struct buffer_head *bh)
 {
+	struct mmp_struct *mmp = (struct mmp_struct *)(bh->b_data);
 
 	/*
 	 * We protect against freezing so that we don't create dirty buffers
 	 * on frozen filesystem.
 	 */
 	sb_start_write(sb);
+	ext4_mmp_csum_set(sb, mmp);
 	mark_buffer_dirty(bh);
 	lock_buffer(bh);
 	bh->b_end_io = end_buffer_write_sync;
@@ -66,7 +98,8 @@ static int read_mmp_block(struct super_block *sb, struct buffer_head **bh,
 	}
 
 	mmp = (struct mmp_struct *)((*bh)->b_data);
-	if (le32_to_cpu(mmp->mmp_magic) != EXT4_MMP_MAGIC)
+	if (le32_to_cpu(mmp->mmp_magic) != EXT4_MMP_MAGIC ||
+	    !ext4_mmp_csum_verify(sb, mmp))
 		return -EINVAL;
 
 	return 0;
