@@ -2627,7 +2627,6 @@ const struct file_operations shmem_file_operations = {
 static const struct inode_operations shmem_inode_operations = {
 	.truncate	= shmem_truncate,
 	.setattr	= shmem_setattr,
-	.truncate_range	= shmem_truncate_range,
 #ifdef CONFIG_TMPFS
 	.fallocate	= shmem_fallocate,
 #endif
