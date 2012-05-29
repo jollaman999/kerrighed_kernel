@@ -9,6 +9,7 @@
 #include <linux/security.h>
 #include <linux/ipc_namespace.h>
 #include <linux/ipc.h>
+#include <linux/shmem_fs.h>
 #include <net/krgrpc/rpc.h>
 #include <kddm/kddm.h>
 #include "ipc_handler.h"
