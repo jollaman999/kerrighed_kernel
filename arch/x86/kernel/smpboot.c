@@ -123,6 +123,8 @@ EXPORT_PER_CPU_SYMBOL(cpu_info);
 DEFINE_PER_CPU_SHARED_ALIGNED(struct cpuinfo_x86_rh, cpu_info_rh);
 EXPORT_PER_CPU_SYMBOL(cpu_info_rh);
 
+static DEFINE_PER_CPU(struct completion, die_complete);
+
 atomic_t init_deasserted;
 
 static void remove_siblinginfo(int cpu);
@@ -1429,26 +1431,24 @@ int native_cpu_disable(void)
 	if (nmi_watchdog == NMI_LOCAL_APIC)
 		stop_apic_nmi_watchdog(NULL);
 	clear_local_APIC();
-
+	init_completion(&per_cpu(die_complete, smp_processor_id()));
 	cpu_disable_common();
+
 	return 0;
 }
 
 void native_cpu_die(unsigned int cpu)
 {
 	/* We don't do anything here: idle task is faking death itself. */
-	unsigned int i;
+	wait_for_completion_timeout(&per_cpu(die_complete, cpu), HZ);
 
-	for (i = 0; i < 10; i++) {
-		/* They ack this in play_dead by setting CPU_DEAD */
-		if (per_cpu(cpu_state, cpu) == CPU_DEAD) {
-			if (system_state == SYSTEM_RUNNING)
-				pr_info("CPU %u is now offline\n", cpu);
-			return;
-		}
-		msleep(100);
+	/* They ack this in play_dead() by setting CPU_DEAD */
+	if (per_cpu(cpu_state, cpu) == CPU_DEAD) {
+		if (system_state == SYSTEM_RUNNING)
+			pr_info("CPU %u is now offline\n", cpu);
+	} else {
+		pr_err("CPU %u didn't die...\n", cpu);
 	}
-	pr_err("CPU %u didn't die...\n", cpu);
 }
 
 void play_dead_common(void)
@@ -1461,6 +1461,7 @@ void play_dead_common(void)
 	mb();
 	/* Ack it */
 	__get_cpu_var(cpu_state) = CPU_DEAD;
+	complete(&per_cpu(die_complete, smp_processor_id()));
 
 	/*
 	 * With physical CPU hotplug, we should halt the cpu
