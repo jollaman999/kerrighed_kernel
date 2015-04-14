@@ -93,6 +93,7 @@ enum psmouse_type {
 	PSMOUSE_HGPK,
 	PSMOUSE_ELANTECH,
 	PSMOUSE_FSP,
+	PSMOUSE_VMMOUSE,
 	PSMOUSE_AUTO		/* This one should always be last */
 };
 
