@@ -31,6 +31,7 @@
 #include "touchkit_ps2.h"
 #include "elantech.h"
 #include "sentelic.h"
+#include "vmmouse.h"
 
 #define DRIVER_DESC	"PS/2 mouse driver"
 
@@ -608,6 +609,13 @@ static int psmouse_extensions(struct psmouse *psmouse,
 		}
 	}
 
+	if (psmouse_do_detect(vmmouse_detect, psmouse, set_properties) == 0) {
+		if (max_proto > PSMOUSE_IMEX) {
+			if (!set_properties || vmmouse_init(psmouse) == 0)
+				return PSMOUSE_VMMOUSE;
+		}
+	}
+
 /*
  * Try Kensington ThinkingMouse (we try first, because synaptics probe
  * upsets the thinkingmouse).
@@ -867,6 +875,15 @@ static const struct psmouse_protocol psmouse_protocols[] = {
 		.alias		= "cortps",
 		.detect		= cortron_detect,
 	},
+#ifdef CONFIG_MOUSE_PS2_VMMOUSE
+	{
+		.type		= PSMOUSE_VMMOUSE,
+		.name		= VMMOUSE_PSNAME,
+		.alias		= "vmmouse",
+		.detect		= vmmouse_detect,
+		.init		= vmmouse_init,
+	},
+#endif
 	{
 		.type		= PSMOUSE_AUTO,
 		.name		= "auto",
