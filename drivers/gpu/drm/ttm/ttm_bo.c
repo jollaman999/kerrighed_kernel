@@ -1665,13 +1665,8 @@ static int ttm_bo_swapout(struct ttm_mem_shrink *shrink)
 	ttm_bo_list_ref_sub(bo, put_count, true);
 
 	/**
-	 * Wait for GPU, then move to system cached.
+	 * Move to system cached
 	 */
-
-	ret = ttm_bo_wait(bo, false, false);
-
-	if (unlikely(ret != 0))
-		goto out;
 
 	if ((bo->mem.placement & swap_placement) != swap_placement) {
 		struct ttm_mem_reg evict_mem;
@@ -1686,6 +1681,14 @@ static int ttm_bo_swapout(struct ttm_mem_shrink *shrink)
 		if (unlikely(ret != 0))
 			goto out;
 	}
+
+	/**
+	 * Make sure BO is idle.
+	 */
+
+	ret = ttm_bo_wait(bo, false, false);
+	if (unlikely(ret != 0))
+		goto out;
 
 	ttm_bo_unmap_virtual(bo);
 
