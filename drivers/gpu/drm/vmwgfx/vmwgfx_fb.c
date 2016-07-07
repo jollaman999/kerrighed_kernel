@@ -591,7 +591,7 @@ static int vmw_fb_set_par(struct fb_info *info)
 		ret = vfb->pin(vfb);
 		if (ret) {
 			DRM_ERROR("Could not pin the fbdev framebuffer.\n");
-			return ret;
+			goto out_unlock;
 		}
 
 		ret = ttm_bo_kmap(&par->vmw_bo->base, 0,
@@ -599,7 +599,7 @@ static int vmw_fb_set_par(struct fb_info *info)
 		if (ret) {
 			vfb->unpin(vfb);
 			DRM_ERROR("Could not map the fbdev framebuffer.\n");
-			return ret;
+			goto out_unlock;
 		}
 
 		par->bo_ptr = ttm_kmap_obj_virtual(&par->map, &par->bo_iowrite);
