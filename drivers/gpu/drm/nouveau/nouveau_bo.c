@@ -1224,7 +1224,8 @@ out:
 }
 
 static void
-nouveau_bo_move_ntfy(struct ttm_buffer_object *bo, struct ttm_mem_reg *new_mem)
+nouveau_bo_move_ntfy(struct ttm_buffer_object *bo, bool evict,
+		     struct ttm_mem_reg *new_mem)
 {
 	struct nouveau_bo *nvbo = nouveau_bo(bo);
 	struct nvkm_vma *vma;
