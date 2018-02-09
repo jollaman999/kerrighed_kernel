@@ -108,12 +108,9 @@ void krg_ptrace_reparent_ptraced(struct task_struct *real_parent,
 
 #endif /* CONFIG_KRG_EPM */
 
-int ___ptrace_may_access(struct task_struct *tracer,
-			 const struct cred *cred, /* tracer cred */
-			 struct task_struct *task,
-			 unsigned int mode)
+int __ptrace_may_access(struct task_struct *task, unsigned int mode)
 {
-	const struct cred *tcred;
+	const struct cred *cred = current_cred(), *tcred;
 
 	/* May we inspect the given task?
 	 * This check is used both for attaching with ptrace
@@ -125,17 +122,9 @@ int ___ptrace_may_access(struct task_struct *tracer,
 	 */
 	int dumpable = 0;
 	/* Don't let security modules deny introspection */
-	if (same_thread_group(task, tracer))
+	if (same_thread_group(task, current))
 		return 0;
 	rcu_read_lock();
-	if (!cred) {
-		WARN_ON_ONCE(tracer == current);
-		WARN_ON_ONCE(task != current);
-		cred = __task_cred(tracer);
-	} else {
-		WARN_ON_ONCE(tracer != current);
-		WARN_ON_ONCE(task == current);
-	}
 	tcred = __task_cred(task);
 	if ((cred->uid != tcred->euid ||
 	     cred->uid != tcred->suid ||
@@ -159,11 +148,6 @@ int ___ptrace_may_access(struct task_struct *tracer,
 		return security_ptrace_access_check(task, mode);
 
 	return 0;
-}
-
-int __ptrace_may_access(struct task_struct *task, unsigned int mode)
-{
-	return ___ptrace_may_access(current, current_cred(), task, mode);
 }
 
 bool ptrace_may_access(struct task_struct *task, unsigned int mode)

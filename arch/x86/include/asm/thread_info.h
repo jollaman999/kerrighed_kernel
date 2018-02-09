@@ -184,6 +184,8 @@ struct thread_info {
 	ret;								\
 })
 
+#include <asm/percpu.h>
+
 #ifdef CONFIG_X86_32
 
 #define STACK_WARN	(THREAD_SIZE/8)
@@ -194,6 +196,7 @@ struct thread_info {
  */
 #ifndef __ASSEMBLY__
 
+DECLARE_PER_CPU_USER_MAPPED(unsigned int, spec_ctrl_pcp);
 
 /* how to get the current stack pointer from C */
 register unsigned long current_stack_pointer asm("esp") __used;
@@ -220,7 +223,6 @@ static inline struct thread_info *current_thread_info(void)
 
 #else /* X86_32 */
 
-#include <asm/percpu.h>
 #define KERNEL_STACK_OFFSET (5*8)
 
 /*

@@ -137,10 +137,6 @@ extern void krg_ptrace_unlink(struct task_struct *task);
 extern void krg_ptrace_reparent_ptraced(struct task_struct *real_parent,
 					struct task_struct *task);
 #endif /* CONFIG_KRG_EPM */
-extern int ___ptrace_may_access(struct task_struct *tracer,
-				const struct cred *cred, /* tracer cred */
-				struct task_struct *task,
-				unsigned int mode);
 
 static inline int ptrace_reparented(struct task_struct *child)
 {
