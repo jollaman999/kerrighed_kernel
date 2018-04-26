@@ -44,6 +44,11 @@ struct cpa_data {
 };
 
 /*
+ * Allowable kernel _PAGE_GLOBAL flag.
+ */
+pgprotval_t kernel_page_global __read_mostly;
+
+/*
  * Serialize cpa() (for !DEBUG_PAGEALLOC which uses large identity mappings)
  * using cpa_lock. So that we don't allow any other cpu, with stale large tlb
  * entries change the page attribute in parallel to some other cpu
@@ -503,9 +508,9 @@ try_preserve_large_page(pte_t *kpte, unsigned long address,
 	 * for the ancient hardware that doesn't support it.
 	 */
 	if (pgprot_val(new_prot) & _PAGE_PRESENT)
-		pgprot_val(new_prot) |= _PAGE_PSE | __PAGE_KERNEL_GLOBAL;
+		pgprot_val(new_prot) |= _PAGE_PSE | kernel_page_global;
 	else
-		pgprot_val(new_prot) &= ~(_PAGE_PSE | __PAGE_KERNEL_GLOBAL);
+		pgprot_val(new_prot) &= ~(_PAGE_PSE | kernel_page_global);
 
 	new_prot = canon_pgprot(new_prot);
 
@@ -624,9 +629,9 @@ static int split_large_page(pte_t *kpte, unsigned long address)
 	 * for the ancient hardware that doesn't support it.
 	 */
 	if (pgprot_val(ref_prot) & _PAGE_PRESENT)
-		pgprot_val(ref_prot) |= __PAGE_KERNEL_GLOBAL;
+		pgprot_val(ref_prot) |= kernel_page_global;
 	else
-		pgprot_val(ref_prot) &= ~__PAGE_KERNEL_GLOBAL;
+		pgprot_val(ref_prot) &= ~kernel_page_global;
 
 	/*
 	 * Get the target pfn from the original entry:
@@ -751,9 +756,9 @@ repeat:
 		 * support it.
 		 */
 		if (pgprot_val(new_prot) & _PAGE_PRESENT)
-			pgprot_val(new_prot) |= __PAGE_KERNEL_GLOBAL;
+			pgprot_val(new_prot) |= kernel_page_global;
 		else
-			pgprot_val(new_prot) &= ~__PAGE_KERNEL_GLOBAL;
+			pgprot_val(new_prot) &= ~kernel_page_global;
 
 		/*
 		 * We need to keep the pfn from the existing PTE,

@@ -729,7 +729,7 @@ struct rq {
 #endif
 
 #ifndef __GENKSYMS__
-	unsigned int skip_clock_update;
+	unsigned int clock_skip_update;
 #endif
 	/* capture load from *all* tasks on this cpu: */
 	struct load_weight load;
@@ -867,6 +867,18 @@ static inline int cpu_of(struct rq *rq)
 #define cpu_curr(cpu)		(cpu_rq(cpu)->curr)
 #define raw_rq()		(&__raw_get_cpu_var(runqueues))
 
+#define RQCF_REQ_SKIP	0x01
+#define RQCF_ACT_SKIP	0x02
+
+static inline void rq_clock_skip_update(struct rq *rq, bool skip)
+{
+	lockdep_assert_held(&rq->lock);
+	if (skip)
+		rq->clock_skip_update |= RQCF_REQ_SKIP;
+	else
+		rq->clock_skip_update &= ~RQCF_REQ_SKIP;
+}
+
 #ifdef CONFIG_PARAVIRT
 static inline u64 steal_ticks(u64 steal)
 {
@@ -901,7 +913,9 @@ static void update_rq_clock(struct rq *rq)
 {
 	s64 delta;
 
-	if (rq->skip_clock_update > 0)
+	lockdep_assert_held(&rq->lock);
+
+	if (rq->clock_skip_update & RQCF_ACT_SKIP)
 		return;
 
 	delta = sched_clock_cpu(cpu_of(rq)) - rq->clock;
@@ -2208,7 +2222,7 @@ static void check_preempt_curr(struct rq *rq, struct task_struct *p, int flags)
  	* this case, we can save a useless back to back clock update.
  	*/
 	if (test_tsk_need_resched(rq->curr))
-		rq->skip_clock_update = 1;
+		rq_clock_skip_update(rq, true);
 }
 
 /**
@@ -6196,6 +6210,8 @@ need_resched_nonpreemptible:
 
 	spin_lock_irq(&rq->lock);
 
+	rq->clock_skip_update <<= 1; /* promote REQ to ACT */
+
 	if (prev->state && !(preempt_count() & PREEMPT_ACTIVE)) {
 		if (unlikely(signal_pending_state(prev->state, prev)))
 			prev->state = TASK_RUNNING;
@@ -6219,7 +6235,7 @@ need_resched_nonpreemptible:
 	put_prev_task(rq, prev);
 	next = pick_next_task(rq);
 	clear_tsk_need_resched(prev);
-	rq->skip_clock_update = 0;
+	rq->clock_skip_update = 0;
 
 	if (likely(prev != next)) {
 		sched_info_switch(prev, next);
