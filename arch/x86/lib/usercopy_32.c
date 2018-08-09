@@ -824,6 +824,7 @@ EXPORT_SYMBOL(__copy_to_user_ll);
 unsigned long __copy_from_user_ll(void *to, const void __user *from,
 					unsigned long n)
 {
+	__uaccess_begin_nospec();
 #ifdef CONFIG_KRG_FAF
 	if (check_ruaccess())
 		n = krg_copy_user_generic(to, from, n, 1);
@@ -833,6 +834,7 @@ unsigned long __copy_from_user_ll(void *to, const void __user *from,
 		__copy_user_zeroing(to, from, n);
 	else
 		n = __copy_user_zeroing_intel(to, from, n);
+	__uaccess_end();
 	return n;
 }
 EXPORT_SYMBOL(__copy_from_user_ll);
@@ -840,6 +842,7 @@ EXPORT_SYMBOL(__copy_from_user_ll);
 unsigned long __copy_from_user_ll_nozero(void *to, const void __user *from,
 					 unsigned long n)
 {
+	__uaccess_begin_nospec();
 #ifdef CONFIG_KRG_FAF
 	if (check_ruaccess())
 		n = krg_copy_user_generic(to, from, n, 0);
@@ -850,6 +853,7 @@ unsigned long __copy_from_user_ll_nozero(void *to, const void __user *from,
 	else
 		n = __copy_user_intel((void __user *)to,
 				      (const void *)from, n);
+	__uaccess_end();
 	return n;
 }
 EXPORT_SYMBOL(__copy_from_user_ll_nozero);
@@ -857,6 +861,7 @@ EXPORT_SYMBOL(__copy_from_user_ll_nozero);
 unsigned long __copy_from_user_ll_nocache(void *to, const void __user *from,
 					unsigned long n)
 {
+	__uaccess_begin_nospec();
 #ifdef CONFIG_KRG_FAF
 	if (check_ruaccess())
 		n = krg_copy_user_generic(to, from, n, 1);
@@ -870,6 +875,7 @@ unsigned long __copy_from_user_ll_nocache(void *to, const void __user *from,
 #else
 	__copy_user_zeroing(to, from, n);
 #endif
+	__uaccess_end();
 	return n;
 }
 EXPORT_SYMBOL(__copy_from_user_ll_nocache);
@@ -877,6 +883,7 @@ EXPORT_SYMBOL(__copy_from_user_ll_nocache);
 unsigned long __copy_from_user_ll_nocache_nozero(void *to, const void __user *from,
 					unsigned long n)
 {
+	__uaccess_begin_nospec();
 #ifdef CONFIG_KRG_FAF
 	if (check_ruaccess())
 		n = krg_copy_user_generic(to, from, n, 0);
@@ -890,6 +897,7 @@ unsigned long __copy_from_user_ll_nocache_nozero(void *to, const void __user *fr
 #else
 	__copy_user(to, from, n);
 #endif
+	__uaccess_end();
 	return n;
 }
 EXPORT_SYMBOL(__copy_from_user_ll_nocache_nozero);

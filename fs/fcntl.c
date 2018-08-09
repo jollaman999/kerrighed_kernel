@@ -19,6 +19,7 @@
 #include <linux/signal.h>
 #include <linux/rcupdate.h>
 #include <linux/pid_namespace.h>
+#include <linux/nospec.h>
 
 #ifdef CONFIG_KRG_FAF
 #include <kerrighed/faf.h>
@@ -34,6 +35,7 @@ void set_close_on_exec(unsigned int fd, int flag)
 	struct fdtable *fdt;
 	spin_lock(&files->file_lock);
 	fdt = files_fdtable(files);
+	fd = array_index_nospec(fd, fdt->max_fds);
 	if (flag)
 		FD_SET(fd, fdt->close_on_exec);
 	else
@@ -92,6 +94,7 @@ SYSCALL_DEFINE3(dup3, unsigned int, oldfd, unsigned int, newfd, int, flags)
 	 */
 	err = -EBUSY;
 	fdt = files_fdtable(files);
+	newfd = array_index_nospec(newfd, fdt->max_fds);
 	tofree = fdt->fd[newfd];
 	if (!tofree && FD_ISSET(newfd, fdt->open_fds))
 		goto out_unlock;

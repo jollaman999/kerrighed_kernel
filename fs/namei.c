@@ -33,6 +33,7 @@
 #include <linux/fcntl.h>
 #include <linux/device_cgroup.h>
 #include <linux/fs_struct.h>
+#include <linux/nospec.h>
 #include <asm/uaccess.h>
 #ifdef CONFIG_KRG_FAF
 #include <kerrighed/faf.h>
@@ -1203,6 +1204,7 @@ static int __link_path_walk(struct filename *filename, struct nameidata *nd)
 		 * See if the low-level filesystem might want
 		 * to use its own hash..
 		 */
+		barrier_nospec();
 		if (nd->path.dentry->d_op && nd->path.dentry->d_op->d_hash) {
 			err = nd->path.dentry->d_op->d_hash(nd->path.dentry,
 							    &this);
@@ -1500,6 +1502,7 @@ static struct dentry *__lookup_hash(struct qstr *name,
 	 * See if the low-level filesystem might want
 	 * to use its own hash..
 	 */
+	barrier_nospec();
 	if (base->d_op && base->d_op->d_hash) {
 		err = base->d_op->d_hash(base, name);
 		dentry = ERR_PTR(err);

@@ -31,6 +31,7 @@
 #include <linux/falloc.h>
 #include <linux/fs_struct.h>
 #include <linux/ima.h>
+#include <linux/nospec.h>
 
 #ifdef CONFIG_KRG_IPC
 #include <kerrighed/faf.h>
@@ -862,6 +863,7 @@ static
 void __put_unused_fd(struct files_struct *files, unsigned int fd)
 {
 	struct fdtable *fdt = files_fdtable(files);
+	fd = array_index_nospec(fd, fdt->max_fds);
 	__FD_CLR(fd, fdt->open_fds);
 	if (fd < files->next_fd)
 		files->next_fd = fd;
@@ -1037,6 +1039,8 @@ SYSCALL_DEFINE1(close, unsigned int, fd)
 	fdt = files_fdtable(files);
 	if (fd >= fdt->max_fds)
 		goto out_unlock;
+	fd = array_index_nospec(fd, fdt->max_fds);
+
 	filp = fdt->fd[fd];
 	if (!filp)
 		goto out_unlock;
