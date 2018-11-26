@@ -257,6 +257,7 @@ enum mlx5_ib_rq_flags {
 };
 
 struct mlx5_ib_wq {
+	struct mlx5_frag_buf_ctrl fbc;
 	u64		       *wrid;
 	u32		       *wr_data;
 	struct wr_list	       *w_list;
@@ -274,7 +275,7 @@ struct mlx5_ib_wq {
 	unsigned		head;
 	unsigned		tail;
 	u16			cur_post;
-	void		       *qend;
+	void			*cur_edge;
 };
 
 enum mlx5_ib_wq_flags {
