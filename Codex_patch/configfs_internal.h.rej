@@ -1,0 +1,12 @@
+--- fs/configfs/configfs_internal.h
++++ fs/configfs/configfs_internal.h
+@@ -39,6 +39,9 @@
+ 	umode_t			s_mode;
+ 	struct dentry		* s_dentry;
+ 	struct iattr		* s_iattr;
++#ifdef CONFIG_LOCKDEP
++	int			s_depth;
++#endif
+ };
+ 
+ #define CONFIGFS_ROOT		0x0001

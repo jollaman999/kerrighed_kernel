@@ -1,0 +1,15 @@
+--- fs/proc/array.c
++++ fs/proc/array.c
+@@ -82,6 +82,12 @@
+ #include <linux/pid_namespace.h>
+ #include <linux/ptrace.h>
+ #include <linux/tracehook.h>
++#ifdef CONFIG_KRG_PROCFS
++#include <kerrighed/cpu_id.h>
++#endif
++#ifdef CONFIG_KRG_EPM
++#include <kerrighed/children.h>
++#endif
+ 
+ #include <asm/pgtable.h>
+ #include <asm/processor.h>

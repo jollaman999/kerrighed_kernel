@@ -1,0 +1,18 @@
+--- kernel/nsproxy.c
++++ kernel/nsproxy.c
+@@ -21,8 +21,14 @@
+ #include <linux/pid_namespace.h>
+ #include <net/net_namespace.h>
+ #include <linux/ipc_namespace.h>
++#ifdef CONFIG_KRG_HOTPLUG
++#include <kerrighed/namespace.h>
++#endif
+ 
+-static struct kmem_cache *nsproxy_cachep;
++#ifndef CONFIG_KRG_EPM
++static
++#endif
++struct kmem_cache *nsproxy_cachep;
+ 
+ struct nsproxy init_nsproxy = INIT_NSPROXY(init_nsproxy);
+ 

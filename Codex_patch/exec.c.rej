@@ -1,0 +1,82 @@
+--- fs/exec.c
++++ fs/exec.c
+@@ -54,6 +54,16 @@
+ #include <linux/kmod.h>
+ #include <linux/fsnotify.h>
+ #include <linux/fs_struct.h>
++#ifdef CONFIG_KRG_CAP
++#include <kerrighed/capabilities.h>
++#endif
++#ifdef CONFIG_KRG_PROC
++#include <kerrighed/task.h>
++#include <kerrighed/krginit.h>
++#endif
++#ifdef CONFIG_KRG_EPM
++#include <kerrighed/signal.h>
++#endif
+ 
+ #include <asm/uaccess.h>
+ #include <asm/mmu_context.h>
+@@ -893,8 +960,19 @@
+ 		BUG_ON(leader->exit_state != EXIT_ZOMBIE);
+ 		leader->exit_state = EXIT_DEAD;
+ 		write_unlock_irq(&tasklist_lock);
++#ifdef CONFIG_KRG_PROC
++		/* tsk has taken leader's pid. */
++		if (obj)
++			__krg_task_unlock(tsk);
++#endif /* CONFIG_KRG_PROC */
++#ifdef CONFIG_KRG_EPM
++		krg_children_finish_de_thread(parent_children_obj, tsk);
++#endif
+ 
+ 		release_task(leader);
++#ifdef CONFIG_KRG_PROC
++		up_read(&kerrighed_init_sem);
++#endif
+ 	}
+ 
+ 	sig->group_exit_task = NULL;
+@@ -1405,10 +1503,18 @@
+ 	if (retval < 0)
+ 		goto out;
+ 
++#ifdef CONFIG_KRG_MM
++	retval = krg_do_execve(current, current->mm);
++	if (retval)
++		goto out;
++#endif
+ 	/* execve succeeded */
+ 	current->fs->in_exec = 0;
+ 	current->in_execve = 0;
+ 	mutex_unlock(&current->cred_exec_mutex);
++#ifdef CONFIG_KRG_CAP
++	krg_cap_finish_exec(bprm);
++#endif
+ 	acct_update_integrals(current);
+ 	free_bprm(bprm);
+ 	if (displaced)
+@@ -1416,6 +1522,11 @@
+ 	return retval;
+ 
+ out:
++#ifdef CONFIG_KRG_EPM
++	/* Quiet the BUG_ON() in mmput() */
++	if (bprm->mm)
++		atomic_dec(&bprm->mm->mm_ltasks);
++#endif
+ 	if (bprm->mm)
+ 		mmput (bprm->mm);
+ 
+@@ -1699,6 +1810,11 @@
+ 	vfork_done = tsk->vfork_done;
+ 	if (vfork_done) {
+ 		tsk->vfork_done = NULL;
++#ifdef CONFIG_KRG_EPM
++		if (tsk->remote_vfork_done)
++			krg_vfork_done(vfork_done);
++		else
++#endif
+ 		complete(vfork_done);
+ 	}
+ 

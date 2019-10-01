@@ -1,0 +1,14 @@
+--- arch/x86/include/asm/elf.h
++++ arch/x86/include/asm/elf.h
+@@ -344,4 +344,11 @@
+ extern unsigned long arch_randomize_brk(struct mm_struct *mm);
+ #define arch_randomize_brk arch_randomize_brk
+ 
++#ifdef CONFIG_KRG_MM
++struct vm_area_struct;
++
++void import_vdso_context(struct vm_area_struct *vma);
++int import_mm_struct_end(struct mm_struct *mm, struct task_struct *task);
++#endif
++
+ #endif /* _ASM_X86_ELF_H */

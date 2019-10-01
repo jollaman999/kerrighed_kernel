@@ -1,0 +1,38 @@
+--- fs/proc/base.c
++++ fs/proc/base.c
+@@ -263,7 +273,10 @@
+ 	return NULL;
+ }
+ 
+-static int proc_pid_cmdline(struct task_struct *task, char * buffer)
++#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
++static
++#endif
++int proc_pid_cmdline(struct task_struct *task, char * buffer)
+ {
+ 	int res = 0;
+ 	unsigned int len;
+@@ -466,7 +492,10 @@
+ 
+ /* The badness from the OOM killer */
+ unsigned long badness(struct task_struct *p, unsigned long uptime);
+-static int proc_oom_score(struct task_struct *task, char *buffer)
++#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
++static
++#endif
++int proc_oom_score(struct task_struct *task, char *buffer)
+ {
+ 	unsigned long points;
+ 	struct timespec uptime;
+@@ -672,7 +785,10 @@
+ 	return allowed;
+ }
+ 
+-static int proc_setattr(struct dentry *dentry, struct iattr *attr)
++#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
++static
++#endif
++int proc_setattr(struct dentry *dentry, struct iattr *attr)
+ {
+ 	int error;
+ 	struct inode *inode = dentry->d_inode;

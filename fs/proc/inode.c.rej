@@ -1,0 +1,12 @@
+--- fs/proc/inode.c
++++ fs/proc/inode.c
+@@ -18,6 +18,9 @@
+ #include <linux/module.h>
+ #include <linux/smp_lock.h>
+ #include <linux/sysctl.h>
++#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
++#include <kerrighed/task.h>
++#endif
+ 
+ #include <asm/system.h>
+ #include <asm/uaccess.h>
