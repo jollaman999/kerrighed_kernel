@@ -365,8 +365,12 @@ void activate_page(struct page *page)
 		lru += LRU_ACTIVE;
 		add_page_to_lru_list(zone, page, lru);
 		__count_vm_event(PGACTIVATE);
-
+#ifdef CONFIG_KRG_MM
+		update_page_reclaim_stat(zone, page, file,
+					 page_is_migratable(page), 1);
+#else
 		update_page_reclaim_stat(zone, page, file, 1);
+#endif
 	}
 	spin_unlock_irq(&zone->lru_lock);
 }

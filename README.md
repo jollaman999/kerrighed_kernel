@@ -14,8 +14,10 @@ HCC 서버의 스펙때문에 특히 Xeon CPU를 구버전(2.6.30 kerrighed kern
  * Complete
     ./mm/swapfile.c
     ./mm/vmscan.c
+    ./mm/swap.c
  * Working
- 
+    ./mm/mmap.c
+       get_unmapped_area_prot 수정중
 [etc]
 git ignore update
  * ignore vscode workspace file

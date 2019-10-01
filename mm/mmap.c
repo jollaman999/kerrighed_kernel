@@ -143,7 +143,10 @@ EXPORT_SYMBOL_GPL(vm_memory_committed);
 int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
 {
 	long free, allowed;
-
+#ifdef CONFIG_KRG_MM
+	krg_dynamic_node_info_t *dyn_info;
+	kerrighed_node_t node;
+#endif
 	vm_acct_memory(pages);
 
 	/*
@@ -788,7 +791,11 @@ again:			remove_next = 1 + (end > next->vm_end);
 
 	return 0;
 }
-
+#ifdef CONFIG_KRG_MM
+#define VM_MERGEABLE_FLAGS (VM_CAN_NONLINEAR|VM_KDDM)
+#else
+#define VM_MERGEABLE_FLAGS (VM_CAN_NONLINEAR)
+#endif
 /*
  * If the vma has a ->close operation then the driver probably needs to release
  * per-vma resources, so we don't attempt to merge those.
