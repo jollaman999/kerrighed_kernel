@@ -7,3 +7,16 @@ HCC 서버의 스펙때문에 특히 Xeon CPU를 구버전(2.6.30 kerrighed kern
 하지만 패치 과정에서 Centos 에서 수정한 부분이 있기 때문에 해당 부분들은
 수동으로 수정해줘야 한다.
 
+## 10/01
+
+```shell
+[Patching]
+ * Complete
+    ./mm/swapfile.c
+    ./mm/vmscan.c
+ * Working
+ 
+[etc]
+git ignore update
+ * ignore vscode workspace file
+```
