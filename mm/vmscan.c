@@ -1899,7 +1899,10 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 		zone_nr_lru_pages(mz, LRU_INACTIVE_ANON);
 	file  = zone_nr_lru_pages(mz, LRU_ACTIVE_FILE) +
 		zone_nr_lru_pages(mz, LRU_INACTIVE_FILE);
-
+#ifdef CONFIG_KRG_MM
+	kddm  = zone_nr_lru_pages(mz, LRU_ACTIVE_MIGR) +
+		zone_nr_lru_pages(mz, LRU_INACTIVE_MIGR);
+#else
 	if (global_reclaim(sc)) {
 		free  = zone_page_state(mz->zone, NR_FREE_PAGES);
 		zonefile =
@@ -1907,7 +1910,6 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 		    zone_page_state(mz->zone, NR_LRU_BASE + LRU_INACTIVE_FILE);
 		/* If we have very few page cache pages,
 		   force-scan anon pages. */
-#ifndef CONFIG_KRG_MM
 		if (unlikely(zonefile + free <= high_wmark_pages(mz->zone))) {
 			percent[0] = 100;
 			percent[1] = 0;
@@ -2094,8 +2096,13 @@ static void shrink_mem_cgroup_zone(int priority, struct mem_cgroup_zone *mz,
 	 * rebalance the anon lru active/inactive ratio.
 	 */
 	if (inactive_anon_is_low(mz) && get_nr_swap_pages() > 0)
+#ifdef CONFIG_KRG_MM
+		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0, 0);
+	if (inactive_kddm_is_low(mz, sc))
+		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0, 1);
+#else
 		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0);
-
+#endif
 	throttle_vm_writeout(sc->gfp_mask);
 }
 
@@ -2622,7 +2629,15 @@ static void age_active_anon(struct zone *zone, struct scan_control *sc,
 
 		if (inactive_anon_is_low(&mz))
 			shrink_active_list(SWAP_CLUSTER_MAX, &mz,
+#ifndef CONFIG_KRG_MM
 					   sc, priority, 0);
+#else
+                       sc, priority, 0, 0);
+			/* Do the same on kddm lru pages */
+			if (inactive_kddm_is_low(&mz, sc))
+				shrink_active_list(SWAP_CLUSTER_MAX, &mz,
+						   sc, priority, 0, 1);
+#endif
 
 		memcg = mem_cgroup_iter(NULL, memcg, NULL);
 	} while (memcg);
@@ -3057,10 +3072,18 @@ unsigned long global_reclaimable_pages(void)
 	int nr;
 
 	nr = global_page_state(NR_ACTIVE_FILE) +
+#ifdef CONFIG_KRG_MM
+		+ global_page_state(NR_ACTIVE_MIGR)
+		+ global_page_state(NR_INACTIVE_MIGR)
+#endif
 	     global_page_state(NR_INACTIVE_FILE);
 
 	if (get_nr_swap_pages() > 0)
 		nr += global_page_state(NR_ACTIVE_ANON) +
+#ifdef CONFIG_KRG_MM
+		+ global_page_state(NR_ACTIVE_MIGR)
+		+ global_page_state(NR_INACTIVE_MIGR)
+#endif
 		      global_page_state(NR_INACTIVE_ANON);
 
 	return nr;
