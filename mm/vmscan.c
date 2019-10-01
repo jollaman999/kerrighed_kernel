@@ -1872,6 +1872,7 @@ static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
 	return shrink_inactive_list(nr_to_scan, mz, sc, priority, file, is_kddm_lru(lru));
 #else
 	return shrink_inactive_list(nr_to_scan, mz, sc, priority, file);
+#endif
 }
 
 /*
@@ -1886,6 +1887,9 @@ static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
 static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 					unsigned long *percent)
 {
+#ifdef CONFIG_KRG_MM
+	unsigned long kddm, kddm_prio, kp;
+#endif
 	unsigned long anon, file, free, zonefile;
 	unsigned long anon_prio, file_prio;
 	unsigned long ap, fp;
@@ -1903,13 +1907,13 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 		    zone_page_state(mz->zone, NR_LRU_BASE + LRU_INACTIVE_FILE);
 		/* If we have very few page cache pages,
 		   force-scan anon pages. */
+#ifndef CONFIG_KRG_MM
 		if (unlikely(zonefile + free <= high_wmark_pages(mz->zone))) {
 			percent[0] = 100;
 			percent[1] = 0;
 			return;
 		}
 	}
-#endif
 	/*
 	 * OK, so we have swap space and a fair amount of page cache
 	 * pages.  We use the recently rotated / recently scanned
