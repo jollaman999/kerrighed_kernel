@@ -685,6 +685,11 @@ static void complete_vfork_done(struct task_struct *tsk)
 	vfork = tsk->vfork_done;
 	if (likely(vfork)) {
 		tsk->vfork_done = NULL;
+#ifdef CONFIG_KRG_EPM
+		if (tsk->remote_vfork_done)
+			krg_vfork_done(vfork_done);
+		else
+#endif
 		complete(vfork);
 	}
 	task_unlock(tsk);

@@ -57,6 +57,17 @@
 #include <linux/pipe_fs_i.h>
 #include <linux/oom.h>
 
+#ifdef CONFIG_KRG_CAP
+#include <kerrighed/capabilities.h>
+#endif
+#ifdef CONFIG_KRG_PROC
+#include <kerrighed/task.h>
+#include <kerrighed/krginit.h>
+#endif
+#ifdef CONFIG_KRG_EPM
+#include <kerrighed/signal.h>
+#endif
+
 #include <asm/uaccess.h>
 #include <asm/mmu_context.h>
 #include <asm/tlb.h>
@@ -996,9 +1007,20 @@ static int de_thread(struct task_struct *tsk)
 		BUG_ON(leader->exit_state != EXIT_ZOMBIE);
 		leader->exit_state = EXIT_DEAD;
 		write_unlock_irq(&tasklist_lock);
+#ifdef CONFIG_KRG_PROC
+		/* tsk has taken leader's pid. */
+		if (obj)
+			__krg_task_unlock(tsk);
+#endif /* CONFIG_KRG_PROC */
+#ifdef CONFIG_KRG_EPM
+		krg_children_finish_de_thread(parent_children_obj, tsk);
+#endif
 		threadgroup_change_end(tsk);
 
 		release_task(leader);
+#ifdef CONFIG_KRG_PROC
+		up_read(&kerrighed_init_sem);
+#endif
 	}
 
 	sig->group_exit_task = NULL;
@@ -1592,9 +1614,17 @@ int do_execve(const char * filename,
 	if (retval < 0)
 		goto out;
 
+#ifdef CONFIG_KRG_MM
+	retval = krg_do_execve(current, current->mm);
+	if (retval)
+		goto out;
+#endif
 	/* execve succeeded */
 	current->fs->in_exec = 0;
 	current->in_execve = 0;
+#ifdef CONFIG_KRG_CAP
+	krg_cap_finish_exec(bprm);
+#endif
 	acct_update_integrals(current);
 	free_bprm(bprm);
 	if (displaced)
@@ -1602,6 +1632,11 @@ int do_execve(const char * filename,
 	return retval;
 
 out:
+#ifdef CONFIG_KRG_EPM
+	/* Quiet the BUG_ON() in mmput() */
+	if (bprm->mm)
+		atomic_dec(&bprm->mm->mm_ltasks);
+#endif
 	if (bprm->mm) {
 		acct_arg_size(bprm, 0);
 		mmput(bprm->mm);
