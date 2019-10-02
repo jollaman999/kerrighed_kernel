@@ -26,6 +26,10 @@
 #include <linux/init.h>
 #include <linux/coredump.h>
 
+#ifdef CONFIG_KRG_EPM
+#include <kerrighed/krgsyms.h>
+#endif
+
 #include <asm/system.h>
 #include <asm/uaccess.h>
 #include <asm/cacheflush.h>
