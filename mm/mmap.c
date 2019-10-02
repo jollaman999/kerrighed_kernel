@@ -1768,7 +1768,24 @@ unsigned long
 				  unsigned long, unsigned long, unsigned long);
 
 	get_area = mm->get_unmapped_area;
-#else
+
+	if (file && file->f_op && file->f_op->get_unmapped_area)
+		get_area = file->f_op->get_unmapped_area;
+	addr = get_area(file, addr, len, pgoff, flags);
+	if (IS_ERR_VALUE(addr))
+		return addr;
+
+	if (addr > TASK_SIZE - len)
+		return -ENOMEM;
+	if (addr & ~PAGE_MASK)
+		return -EINVAL;
+
+	return arch_rebalance_pgtables(addr, len);
+}
+
+EXPORT_SYMBOL(get_unmapped_area);
+#endif
+
 unsigned long
 get_unmapped_area_prot(struct file *file, unsigned long addr, unsigned long len,
 		unsigned long pgoff, unsigned long flags, int exec)
@@ -2168,7 +2185,11 @@ static int __init cmdline_parse_stack_guard_gap(char *p)
 __setup("stack_guard_gap=", cmdline_parse_stack_guard_gap);
 
 #ifdef CONFIG_STACK_GROWSUP
+#ifdef CONFIG_KRG_MM
+int __expand_stack(struct vm_area_struct *vma, unsigned long address)
+#else
 int expand_stack(struct vm_area_struct *vma, unsigned long address)
+#endif
 {
 	return expand_upwards(vma, address);
 }
@@ -2634,6 +2655,10 @@ unsigned long do_brk(unsigned long addr, unsigned long len)
 	vma->vm_page_prot = vm_get_page_prot(flags);
 	vma_link(mm, vma, prev, rb_link, rb_parent);
 out:
+#ifdef CONFIG_KRG_MM
+	if (mm->anon_vma_kddm_set)
+		krg_check_vma_link(vma);
+#endif
 	perf_event_mmap(vma);
 	mm->total_vm += len >> PAGE_SHIFT;
 	if (flags & VM_LOCKED) {
@@ -2858,11 +2883,24 @@ static int special_mapping_fault(struct vm_area_struct *vma,
 static void special_mapping_close(struct vm_area_struct *vma)
 {
 }
-
-static const struct vm_operations_struct special_mapping_vmops = {
+#ifndef CONFIG_KRG_MM
+static const 
+#endif
+struct vm_operations_struct special_mapping_vmops = {
 	.close = special_mapping_close,
 	.fault = special_mapping_fault,
 };
+#ifdef CONFIG_KRG_MM
+int special_mapping_vm_ops_krgsyms_register(void)
+{
+	return krgsyms_register(KRGSYMS_VM_OPS_SPECIAL_MAPPING, &special_mapping_vmops);
+}
+
+int special_mapping_vm_ops_krgsyms_unregister(void)
+{
+	return krgsyms_unregister(KRGSYMS_VM_OPS_SPECIAL_MAPPING);
+}
+#endif
 
 /*
  * Called with mm->mmap_sem held for writing.
