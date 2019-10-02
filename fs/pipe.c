@@ -1000,11 +1000,10 @@ fail_inode:
 	return NULL;
 }
 
-struct file *create_write_pipe(int flags)
+struct dentry *__prepare_pipe_dentry(void)
 {
 	int err;
 	struct inode *inode;
-	struct file *f;
 	struct path path;
 	struct qstr name = { .name = "" };
 
@@ -1028,25 +1027,65 @@ struct file *create_write_pipe(int flags)
 	path.dentry->d_flags &= ~DCACHE_UNHASHED;
 	d_instantiate(path.dentry, inode);
 
-	err = -ENFILE;
+	return dentry;
+
+err_inode:
+	free_pipe_info(inode);
+	iput(inode);
+err:
+	return ERR_PTR(err);
+}
+
+struct file *__create_write_pipe(struct dentry *dentry, int flags)
+{
+	struct file *f;
+	int err = -ENFILE;
+#ifdef CONFIG_KRG_EPM
+	struct pipe_inode_info *pipe;
+#endif
 	f = alloc_file(&path, FMODE_WRITE, &write_pipefifo_fops);
 	if (!f)
-		goto err_dentry;
-	f->f_mapping = inode->i_mapping;
+		goto err;
+	f->f_mapping = dentry->d_inode->i_mapping;
 
 	f->f_flags = O_WRONLY | (flags & O_NONBLOCK);
 	f->f_version = 0;
+#ifdef CONFIG_KRG_EPM
+	pipe = dentry->d_inode->i_pipe;
+	pipe->fwrite = f;
+#endif
+
+	return f;
+
+err:
+	return ERR_PTR(err);
+}
+
+struct file *create_write_pipe(int flags)
+{
+	int err;
+	struct file *f;
+	struct dentry *dentry;
+
+	dentry = __prepare_pipe_dentry();
+	if (IS_ERR(dentry)) {
+		err = PTR_ERR(dentry);
+		goto err;
+	}
+
+	f = __create_write_pipe(dentry, flags);
+	if (IS_ERR(f)) {
+		err = PTR_ERR(f);
+		goto err_dentry;
+	}
 
 	return f;
 
  err_dentry:
-	free_pipe_info(inode);
+	free_pipe_info(dentry->d_inode);
 	path_put(&path);
 	return ERR_PTR(err);
 
- err_inode:
-	free_pipe_info(inode);
-	iput(inode);
  err:
 	return ERR_PTR(err);
 }
@@ -1058,18 +1097,37 @@ void free_write_pipe(struct file *f)
 	put_filp(f);
 }
 
-struct file *create_read_pipe(struct file *wrf, int flags)
+struct file *__create_read_pipe(struct dentry *dentry, int flags)
 {
-	/* Grab pipe from the writer */
-	struct file *f = alloc_file(&wrf->f_path, FMODE_READ,
-				    &read_pipefifo_fops);
+#ifdef CONFIG_KRG_EPM
+	struct pipe_inode_info *pipe;
+#endif
+	struct file *f = get_empty_filp();
 	if (!f)
 		return ERR_PTR(-ENFILE);
 
-	path_get(&wrf->f_path);
+	/* Grab pipe from the writer */
+	f->f_path.dentry = dget(dentry);
+	f->f_path.mnt = mntget(pipe_mnt);
+
+	f->f_mapping = dentry->d_inode->i_mapping;
+
+	f->f_pos = 0;
 	f->f_flags = O_RDONLY | (flags & O_NONBLOCK);
+	f->f_op = &read_pipefifo_fops;
+	f->f_mode = FMODE_READ;
+	f->f_version = 0;
+#ifdef CONFIG_KRG_EPM
+	pipe = dentry->d_inode->i_pipe;
+	pipe->fread = f;
+#endif
 
 	return f;
+}
+
+struct file *create_read_pipe(struct file *wrf, int flags)
+{
+	return __create_read_pipe(wrf->f_path.dentry, flags);
 }
 
 int do_pipe_flags(int *fd, int flags)
