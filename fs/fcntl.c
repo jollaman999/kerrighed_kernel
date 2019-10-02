@@ -21,6 +21,10 @@
 #include <linux/pid_namespace.h>
 #include <linux/nospec.h>
 
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
+#endif
+
 #include <asm/poll.h>
 #include <asm/siginfo.h>
 #include <asm/uaccess.h>
