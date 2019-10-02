@@ -53,6 +53,9 @@ static ssize_t nfs_file_read(struct kiocb *, const struct iovec *iov,
 static ssize_t nfs_file_splice_write(struct pipe_inode_info *pipe,
 					struct file *filp, loff_t *ppos,
 					size_t count, unsigned int flags);
+static ssize_t nfs_file_splice_write(struct pipe_inode_info *pipe,
+					struct file *filp, loff_t *ppos,
+					size_t count, unsigned int flags);
 static ssize_t nfs_file_write(struct kiocb *, const struct iovec *iov,
 				unsigned long nr_segs, loff_t pos);
 static int  nfs_file_flush(struct file *, fl_owner_t id);
@@ -61,7 +64,9 @@ static int nfs_lock(struct file *filp, int cmd, struct file_lock *fl);
 static int nfs_flock(struct file *filp, int cmd, struct file_lock *fl);
 static int nfs_setlease(struct file *file, long arg, struct file_lock **fl);
 
+#ifndef CONFIG_KRG_MM
 static const struct vm_operations_struct nfs_file_vm_ops;
+#endif
 
 const struct file_operations nfs_file_operations = {
 	.llseek		= nfs_file_llseek,
@@ -592,7 +597,10 @@ out:
 	return ret;
 }
 
-static const struct vm_operations_struct nfs_file_vm_ops = {
+#ifndef CONFIG_KRG_MM
+static
+#endif
+const struct vm_operations_struct nfs_file_vm_ops = {
 	.fault = filemap_fault,
 	.page_mkwrite = nfs_vm_page_mkwrite,
 };

@@ -41,6 +41,10 @@
 #include <linux/freezer.h>
 #include <linux/crc32.h>
 
+#ifdef CONFIG_KRG_MM
+#include <kerrighed/krgsyms.h>
+#endif
+
 #include <asm/system.h>
 #include <asm/uaccess.h>
 
@@ -1786,6 +1790,10 @@ out5:
 out6:
 	nfs_fscache_unregister();
 out7:
+#ifdef CONFIG_KRG_MM
+	krgsyms_unregister(KRGSYMS_VM_OPS_NFS_FILE);
+out8:
+#endif
 	nfs_dns_resolver_destroy();
 out8:
 	nfs_idmap_quit();
