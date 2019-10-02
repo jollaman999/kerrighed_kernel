@@ -2047,9 +2047,19 @@ char *__d_path(const struct path *path, struct path *root,
 
 	spin_lock(&vfsmount_lock);
 	prepend(&end, &buflen, "\0", 1);
+#ifdef CONFIG_KRG_DVFS
+	if (d_unlinked(dentry)) {
+		*deleted = true;
+		if (prepend(&end, &buflen, " (deleted)", 10) != 0)
+			goto Elong;
+	} else {
+		*deleted = false;
+	}
+#else
 	if (d_unlinked(dentry) &&
 		(prepend(&end, &buflen, " (deleted)", 10) != 0))
 			goto Elong;
+#endif
 
 	if (buflen < 1)
 		goto Elong;
