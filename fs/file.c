@@ -526,11 +526,25 @@ out:
 	return error;
 }
 
+#ifdef CONFIG_KRG_FAF
+int alloc_fd(unsigned start, unsigned flags)
+{
+	return __alloc_fd(current, start, flags);
+}
+#endif
+
 int get_unused_fd(void)
 {
 	return alloc_fd(0, 0);
 }
 EXPORT_SYMBOL(get_unused_fd);
+
+#ifdef CONFIG_KRG_FAF
+int __get_unused_fd(struct task_struct *task)
+{
+	return __alloc_fd(task, 0, 0);
+}
+#endif
 
 int get_unused_fd_flags(unsigned flags)
 {
