@@ -63,6 +63,9 @@
 #include <asm/tlb.h>
 #include <asm/tlbflush.h>
 #include <asm/pgtable.h>
+#ifdef CONFIG_KRG_MM
+#include <kerrighed/page_table_tree.h>
+#endif
 #include <trace/events/kmem.h>
 
 #include "internal.h"
@@ -568,11 +571,18 @@ out:
  * already present in the new task to be cleared in the whole range
  * covered by this vma.
  */
-
+#ifdef CONFIG_KRG_MM
+static inline void
+copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,
+		unsigned long addr, int *rss, int anon_only)
+#else
 static inline unsigned long
 copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,
 		unsigned long addr, int *rss)
+#endif
+
 {
 	unsigned long vm_flags = vma->vm_flags;
 	pte_t pte = *src_pte;
@@ -651,9 +661,16 @@ out_set_pte:
 	return 0;
 }
 
+#ifdef CONFIG_KRG_MM
+static int copy_pte_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pmd_t *dst_pmd, pmd_t *src_pmd, struct vm_area_struct *vma,
+		unsigned long addr, unsigned long end, int anon_only)
+#else
 int copy_pte_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		   pmd_t *dst_pmd, pmd_t *src_pmd, struct vm_area_struct *vma,
 		   unsigned long addr, unsigned long end)
+#endif
+
 {
 	pte_t *orig_src_pte, *orig_dst_pte;
 	pte_t *src_pte, *dst_pte;
@@ -689,8 +706,13 @@ again:
 			progress++;
 			continue;
 		}
-		entry.val = copy_one_pte(dst_mm, src_mm, dst_pte, src_pte,
-							vma, addr, rss);
+#ifdef CONFIG_KRG_MM
+		entry.val = copy_one_pte(dst_mm, src_mm, dst_pte, src_pte, vma, addr, rss,
+			     anon_only);
+#else
+		entry.val = copy_one_pte(dst_mm, src_mm, dst_pte, src_pte,vma, addr, rss);
+#endif
+
 		if (entry.val)
 			break;
 		progress += 8;
@@ -2409,6 +2431,30 @@ gotten:
 	if (unlikely(anon_vma_prepare(vma)))
 		goto oom;
 
+#ifdef CONFIG_KRG_MM
+	if (need_vma_link_check && mm->anon_vma_kddm_set)
+		krg_check_vma_link(vma);
+	if (vma->vm_ops && vma->vm_ops->wppage) {
+		new_page = vma->vm_ops->wppage(vma, address & PAGE_MASK,
+					       old_page);
+		/* Check if we have called the regular SHM wppage code.
+		 * If we did so, continue with regular kernel code.
+		 */
+		if (new_page == ERR_PTR(EPERM))
+			goto continue_wppage;
+
+		if (!new_page)
+			goto oom;
+
+		if (old_page)
+			page_cache_release(old_page);
+
+		ret |= VM_FAULT_WRITE;
+		return ret;
+	}
+continue_wppage:
+#endif /* CONFIG_KRG_MM */
+
 	if (is_zero_pfn(pte_pfn(orig_pte))) {
 		new_page = alloc_zeroed_user_highpage_movable(vma, address);
 		if (!new_page)
@@ -2783,9 +2829,16 @@ EXPORT_SYMBOL(unmap_mapping_range);
  * but allow concurrent faults), and pte mapped but not yet locked.
  * We return with mmap_sem still held, but pte unmapped and unlocked.
  */
+#ifdef CONFIG_KRG_MM
+int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
+		unsigned long address, pte_t *page_table, pmd_t *pmd,
+		unsigned int flags, pte_t orig_pte)
+#else
 static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 		unsigned long address, pte_t *page_table, pmd_t *pmd,
 		unsigned int flags, pte_t orig_pte)
+#endif
+
 {
 	spinlock_t *ptl;
 	struct page *page = NULL, *swapcache = NULL;
@@ -3088,10 +3141,34 @@ static int __do_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 	vmf.flags = flags;
 	vmf.page = NULL;
 
+#ifdef CONFIG_KRG_MM
+	vmf.pte = orig_pte;
+
+	if (flags & FAULT_FLAG_WRITE
+	    && !vma->anon_vma
+	    && !(vma->vm_flags & VM_SHARED)) {
+		if (unlikely(anon_vma_prepare(vma))) {
+			anon = 1;
+			return VM_FAULT_OOM;
+		}
+		if (mm->anon_vma_kddm_set)
+			krg_check_vma_link(vma);
+	}
+#endif
+
 	ret = vma->vm_ops->fault(vma, &vmf);
 	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE |
 			    VM_FAULT_RETRY)))
 		return ret;
+		
+#ifdef CONFIG_KRG_MM
+	/*
+	 * If we are in a KDDM linked VMA, all the mapping job has been done
+	 * by the Kerrighed MM layer.
+	 */
+	if (vma->vm_flags & VM_KDDM)
+		return ret;
+#endif
 
 	if (unlikely(PageHWPoison(vmf.page))) {
 		if (ret & VM_FAULT_LOCKED)
