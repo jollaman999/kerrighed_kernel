@@ -2574,6 +2574,9 @@ unsigned long try_to_free_mem_cgroup_pages(struct mem_cgroup *mem_cont,
 		.swappiness = swappiness,
 		.order = 0,
 		.target_mem_cgroup = mem_cont,
+#ifdef CONFIG_KRG_MM
+		.isolate_pages = mem_cgroup_isolate_pages,
+#endif
 		.nodemask = NULL, /* we don't care the placement */
 		.oom_force_anon_scan = false,
 	};
