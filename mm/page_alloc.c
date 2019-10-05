@@ -324,10 +324,19 @@ static void bad_page(struct page *page)
 
 	printk(KERN_ALERT "BUG: Bad page state in process %s  pfn:%05lx\n",
 		current->comm, page_to_pfn(page));
+#ifdef CONFIG_KRG_MM
+	printk(KERN_ALERT
+	        "page:%p flags:%p count:%d mapcount:%d mapping:%p index:%lx kddm_count:%d obj_entry:%p\n",
+	       page, (void *)page->flags, page_count(page),
+	       page_mapcount(page), page->mapping, page->index,
+	       page_kddm_count(page), page->obj_entry);
+#else
+
 	printk(KERN_ALERT
 		"page:%p flags:%p count:%d mapcount:%d mapping:%p ",
 		page, (void *)page->flags, page_count(page),
 		page_mapcount(page), page->mapping);
+#endif
 	printk(KERN_CONT "index:%lx (%s)\n", page->index, print_tainted());
 	mem_cgroup_print_bad_page(page);
 	dump_stack();
@@ -586,6 +595,10 @@ static inline int free_pages_check(struct page *page)
 	if (unlikely(page_mapcount(page) |
 		(page->mapping != NULL)  |
 		(atomic_read(&page->_count) != 0) |
+#ifdef CONFIG_KRG_MM
+		(page->obj_entry != NULL) |
+		(page_kddm_count(page) != 0) |
+#endif
 		(page->flags & PAGE_FLAGS_CHECK_AT_FREE) |
 		(mem_cgroup_bad_page_check(page)))) {
 		bad_page(page);
@@ -2332,7 +2345,9 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 	gfp_mask &= gfp_allowed_mask;
 
 	lockdep_trace_alloc(gfp_mask);
-
+#ifdef CONFIG_KRG_MM
+	krg_notify_mem(0);
+#endif
 	might_sleep_if(gfp_mask & __GFP_WAIT);
 
 	if (should_fail_alloc_page(gfp_mask, order))
