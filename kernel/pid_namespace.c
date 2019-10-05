@@ -15,6 +15,10 @@
 #include <linux/acct.h>
 #include <linux/proc_fs.h>
 #include <linux/reboot.h>
+#ifdef CONFIG_KRG_PROC
+#include <linux/module.h>
+#include <kerrighed/namespace.h>
+#endif
 
 #define BITS_PER_PAGE		(PAGE_SIZE*8)
 
@@ -74,8 +78,10 @@ static void proc_cleanup_work(struct work_struct *work)
 	struct pid_namespace *ns = container_of(work, struct pid_namespace, proc_work);
 	pid_ns_release_proc(ns);
 }
-
-static struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns)
+#ifndef CONFIG_KRG_EPM
+static
+#endif
+struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns)
 {
 	struct pid_namespace *ns;
 	unsigned int level = parent_pid_ns->level + 1;
@@ -122,7 +128,10 @@ out:
 static void destroy_pid_namespace(struct pid_namespace *ns)
 {
 	int i;
-
+#ifdef CONFIG_KRG_PROC
+	if (ns->krg_ns_root && ns->krg_ns_root != ns)
+		put_pid_ns(ns->krg_ns_root);
+#endif
 	proc_free_inum(ns->proc_inum);
 	for (i = 0; i < PIDMAP_ENTRIES; i++)
 		kfree(ns->pidmap[i].page);
@@ -131,11 +140,28 @@ static void destroy_pid_namespace(struct pid_namespace *ns)
 
 struct pid_namespace *copy_pid_ns(unsigned long flags, struct pid_namespace *old_ns)
 {
+	struct pid_namespace *new_ns;
+
 	if (!(flags & CLONE_NEWPID))
 		return get_pid_ns(old_ns);
 	if (task_active_pid_ns(current) != old_ns)
 		return ERR_PTR(-EINVAL);
-	return create_pid_namespace(old_ns);
+
+	new_ns=create_pid_namespace(old_ns);
+#ifdef CONFIG_KRG_PROC
+	{
+		new_ns->global = old_ns->global;
+		new_ns->global |= current->create_krg_ns;
+		if (old_ns->krg_ns_root)
+			get_pid_ns(old_ns->krg_ns_root);
+		new_ns->krg_ns_root = old_ns->krg_ns_root;
+		new_ns->parent = get_pid_ns(old_ns);
+	}
+#else
+		new_ns->parent = get_pid_ns(old_ns);
+#endif
+
+	return new_ns;
 }
 
 void free_pid_ns(struct kref *kref)
