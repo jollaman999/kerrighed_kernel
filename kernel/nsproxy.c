@@ -21,11 +21,17 @@
 #include <linux/pid_namespace.h>
 #include <net/net_namespace.h>
 #include <linux/ipc_namespace.h>
+#ifdef CONFIG_KRG_HOTPLUG
+#include <kerrighed/namespace.h>
+#endif
 #include <linux/proc_fs.h>
 #include <linux/file.h>
 #include <linux/syscalls.h>
 
-static struct kmem_cache *nsproxy_cachep;
+#ifndef CONFIG_KRG_EPM
+static
+#endif
+struct kmem_cache *nsproxy_cachep;
 
 struct nsproxy init_nsproxy = INIT_NSPROXY(init_nsproxy);
 
