@@ -72,7 +72,17 @@
 #include <linux/ctype.h>
 #include <linux/ftrace.h>
 #include <linux/clocksource.h>
-
+#ifdef CONFIG_KRG_PROC
+#include <net/krgrpc/rpc.h>
+#include <net/krgrpc/rpcid.h>
+#include <kerrighed/remote_syscall.h>
+#endif
+#ifdef CONFIG_KRG_EPM
+#include <kerrighed/ghost.h>
+#endif
+#ifdef CONFIG_KRG_SCHED
+#include <kerrighed/scheduler/hooks.h>
+#endif
 #include <asm/tlb.h>
 #include <asm/irq_regs.h>
 #include <asm/mutex.h>
@@ -2898,6 +2908,9 @@ void wake_up_new_task(struct task_struct *p, unsigned long clone_flags)
 
 	rq = task_rq_lock(p, &flags);
 	activate_task(rq, p, 0);
+#if defined(CONFIG_KRG_SCHED) && defined(CONFIG_MODULE_HOOK)
+	module_hook_call(&kmh_process_on, (unsigned long)p);
+#endif
 	trace_sched_wakeup_new(rq, p, 1);
 	check_preempt_curr(rq, p, WF_FORK);
 #ifdef CONFIG_SMP
@@ -6166,6 +6179,14 @@ asmlinkage void __sched schedule(void)
 	unsigned long *switch_count;
 	struct rq *rq;
 	int cpu;
+#ifdef CONFIG_KRG_EPM
+	struct task_struct *krg_cur;
+#endif
+
+#ifdef CONFIG_KRG_EPM
+	krg_cur = krg_current;
+	krg_current = NULL;
+#endif
 
 need_resched:
 	preempt_disable();
@@ -6191,7 +6212,14 @@ need_resched_nonpreemptible:
 		if (unlikely(signal_pending_state(prev->state, prev)))
 			prev->state = TASK_RUNNING;
 		else
+#if defined(CONFIG_KRG_SCHED) && defined(CONFIG_MODULE_HOOK)
+		{
+			module_hook_call(&kmh_process_off, (unsigned long)prev);
+#endif
 			deactivate_task(rq, prev, DEQUEUE_SLEEP);
+#if defined(CONFIG_KRG_SCHED) && defined(CONFIG_MODULE_HOOK)
+		}
+#endif
 		switch_count = &prev->nvcsw;
 	}
 
@@ -6227,6 +6255,9 @@ need_resched_nonpreemptible:
 
 	if (unlikely(reacquire_kernel_lock(current) < 0))
 		goto need_resched_nonpreemptible;
+#ifdef CONFIG_KRG_EPM
+	krg_current = krg_cur;
+#endif
 
 	preempt_enable_no_resched();
 	if (need_resched())
@@ -7342,8 +7373,79 @@ SYSCALL_DEFINE1(sched_getscheduler, pid_t, pid)
 				| (p->sched_reset_on_fork ? SCHED_RESET_ON_FORK : 0);
 	}
 	rcu_read_unlock();
+#ifdef CONFIG_KRG_PROC
+	if (!p)
+		retval = krg_sched_getscheduler(pid);
+#endif
 	return retval;
 }
+#ifdef CONFIG_KRG_PROC
+static
+int handle_sched_getparam(struct rpc_desc *desc, void *msg, size_t size)
+{
+	struct pid *pid;
+	struct sched_param param;
+	const struct cred *old_cred;
+	int retval, err;
+
+	pid = krg_handle_remote_syscall_begin(desc, msg, size,
+					      NULL, &old_cred);
+	if (IS_ERR(pid)) {
+		retval = PTR_ERR(pid);
+		goto out;
+	}
+
+	retval = sys_sched_getparam(pid_vnr(pid), &param);
+	if (retval)
+		goto out_end;
+
+	err = rpc_pack_type(desc, param);
+	if (err) {
+		rpc_cancel(desc);
+		retval = err;
+	}
+
+out_end:
+	krg_handle_remote_syscall_end(pid, old_cred);
+
+out:
+	return retval;
+}
+
+static int krg_sched_getparam(pid_t pid, struct sched_param *param)
+{
+	struct rpc_desc *desc;
+	int res, r;
+
+	desc = krg_remote_syscall_begin(PROC_SCHED_GETPARAM, pid, NULL, 0);
+	if (IS_ERR(desc)) {
+		r = PTR_ERR(desc);
+		goto out;
+	}
+
+	r = rpc_unpack_type(desc, res);
+	if (r)
+		goto err_cancel;
+	r = res;
+	if (r)
+		goto out_end;
+	r = rpc_unpack_type(desc, *param);
+	if (r)
+		goto err_cancel;
+
+out_end:
+	krg_remote_syscall_end(desc, pid);
+
+out:
+	return r;
+
+err_cancel:
+	if (r > 0)
+		r = -EPIPE;
+	rpc_cancel(desc);
+	goto out_end;
+}
+#endif /* CONFIG_KRG_PROC */
 
 /**
  * sys_sched_getparam - get the RT priority of a thread
