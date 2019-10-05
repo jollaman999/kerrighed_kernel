@@ -757,7 +757,11 @@ EXPORT_SYMBOL(set_bdi_congested);
  * write congestion.  If no backing_devs are congested then just wait for the
  * next write to be completed.
  */
+#ifdef CONFIG_KRG_EPM
+static long __congestion_wait(int sync, long timeout)
+#else
 long congestion_wait(int sync, long timeout)
+#endif
 {
 	long ret;
 	DEFINE_WAIT(wait);
