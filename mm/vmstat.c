@@ -877,7 +877,14 @@ static void zoneinfo_show_print(struct seq_file *m, pg_data_t *pgdat,
 		   "\n        min      %lu"
 		   "\n        low      %lu"
 		   "\n        high     %lu"
-		   "\n        scanned  %lu"
+#ifdef CONFIG_KRG_MM
+		   "\n        scanned  %lu (aa: %lu ia: %lu af: %lu if: %lu "
+		   "ak: %lu ik: %lu)"
+#else
+// origin code
+// 		   "\n        scanned  %lu"
+		   "\n        scanned  %lu (aa: %lu ia: %lu af: %lu if: %lu)"
+#endif
 		   "\n        spanned  %lu"
 		   "\n        present  %lu",
 		   zone_page_state(zone, NR_FREE_PAGES),
