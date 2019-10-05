@@ -1,7 +1,7 @@
 VERSION = 2
 PATCHLEVEL = 6
 SUBLEVEL = 32
-EXTRAVERSION =
+EXTRAVERSION = -krg_xeon
 NAME = Man-Eating Seals of Antiquity
 RHEL_MAJOR = 6
 RHEL_MINOR = 10
