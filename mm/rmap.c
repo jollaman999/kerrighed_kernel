@@ -61,10 +61,17 @@
 #include <trace/events/kmem.h>
 
 #include <asm/tlbflush.h>
-
+#ifdef CONFIG_KRG_MM
+#include <kerrighed/page_table_tree.h>
+#include <kddm/object.h>
+#include <kddm/kddm_types.h>
+#endif
 #include "internal.h"
 
-static struct kmem_cache *anon_vma_cachep;
+#ifndef CONFIG_KRG_MM
+static
+#endif
+struct kmem_cache *anon_vma_cachep;
 static struct kmem_cache *anon_vma_chain_cachep;
 
 static inline struct anon_vma *anon_vma_alloc(void)
@@ -1304,6 +1311,16 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 		}
 		set_pte_at(mm, address, pte, swp_entry_to_pte(entry));
 		BUG_ON(pte_file(*pte));
+#ifdef CONFIG_KRG_MM
+		wait_lock_kddm_page(page);
+		if (obj_entry && mm->anon_vma_kddm_id) {
+			obj_entry->object = (void*) mk_swap_pte_page(pte);
+			set_swap_pte_obj_entry(pte, obj_entry);
+			if (atomic_dec_and_test(&page->_kddm_count))
+				page->obj_entry = NULL;
+		}
+		unlock_kddm_page(page);
+#endif
 	} else if (PAGE_MIGRATION && (TTU_ACTION(flags) == TTU_MIGRATION)) {
 		/* Establish migration entry for a file page */
 		swp_entry_t entry;
@@ -1311,7 +1328,10 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 		set_pte_at(mm, address, pte, swp_entry_to_pte(entry));
 	} else
 		dec_mm_counter(mm, file_rss);
-
+#ifdef CONFIG_KRG_MM
+	if (obj_entry)
+		CLEAR_OBJECT_LOCKED(obj_entry);
+#endif
 	page_remove_rmap(page);
 	page_cache_release(page);
 
