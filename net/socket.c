@@ -362,7 +362,7 @@ static const struct dentry_operations sockfs_dentry_operations = {
 static int sock_alloc_file(struct socket *sock, struct file **f, int flags)
 {
 	struct qstr name = { .name = "" };
-	struct path path;
+	struct dentry *dentry;
 	struct file *file;
 	int fd;
 
@@ -370,29 +370,28 @@ static int sock_alloc_file(struct socket *sock, struct file **f, int flags)
 	if (unlikely(fd < 0))
 		return fd;
 
-	path.dentry = d_alloc_pseudo(sock_mnt->mnt_sb, &name);
-	if (unlikely(!path.dentry)) {
+	dentry = d_alloc(sock_mnt->mnt_sb->s_root, &name);
+	if (unlikely(!dentry)) {
 		put_unused_fd(fd);
 		return -ENOMEM;
 	}
-	path.mnt = mntget(sock_mnt);
 
-	path.dentry->d_op = &sockfs_dentry_operations;
+	dentry->d_op = &sockfs_dentry_operations;
 	/*
 	 * We dont want to push this dentry into global dentry hash table.
 	 * We pretend dentry is already hashed, by unsetting DCACHE_UNHASHED
 	 * This permits a working /proc/$pid/fd/XXX on sockets
 	 */
-	path.dentry->d_flags &= ~DCACHE_UNHASHED;
-	d_instantiate(path.dentry, SOCK_INODE(sock));
+	dentry->d_flags &= ~DCACHE_UNHASHED;
+	d_instantiate(dentry, SOCK_INODE(sock));
 	SOCK_INODE(sock)->i_fop = &socket_file_ops;
 
-	file = alloc_file(&path, FMODE_READ | FMODE_WRITE,
+	file = alloc_file(sock_mnt, dentry, FMODE_READ | FMODE_WRITE,
 		  &socket_file_ops);
 	if (unlikely(!file)) {
 		/* drop dentry, keep inode */
 		atomic_inc(&path.dentry->d_inode->i_count);
-		path_put(&path);
+		dput(dentry);
 		put_unused_fd(fd);
 		return -ENFILE;
 	}

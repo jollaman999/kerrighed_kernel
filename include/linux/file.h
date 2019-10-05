@@ -22,9 +22,8 @@ extern void drop_file_write_access(struct file *file);
 struct file_operations;
 struct vfsmount;
 struct dentry;
-struct path;
-extern struct file *alloc_file(struct path *, fmode_t mode,
-	const struct file_operations *fop);
+extern struct file *alloc_file(struct vfsmount *, struct dentry *dentry,
+		fmode_t mode, const struct file_operations *fop);
 
 #define FDPUT_FPUT       1
 #define FDPUT_POS_UNLOCK 2

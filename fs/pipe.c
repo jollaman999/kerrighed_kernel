@@ -22,6 +22,8 @@
 #include <asm/uaccess.h>
 #include <asm/ioctls.h>
 
+#include "internal.h"
+
 #ifdef CONFIG_KRG_EPM
 #include <linux/splice.h>
 #include <kerrighed/app_shared.h>
@@ -1004,7 +1006,7 @@ struct dentry *__prepare_pipe_dentry(void)
 {
 	int err;
 	struct inode *inode;
-	struct path path;
+	struct dentry *dentry;
 	struct qstr name = { .name = "" };
 
 	err = -ENFILE;
@@ -1013,19 +1015,18 @@ struct dentry *__prepare_pipe_dentry(void)
 		goto err;
 
 	err = -ENOMEM;
-	path.dentry = d_alloc_pseudo(pipe_mnt->mnt_sb, &name);
-	if (!path.dentry)
+	dentry = d_alloc_pseudo(pipe_mnt->mnt_sb, &name);
+	if (!dentry)
 		goto err_inode;
-	path.mnt = mntget(pipe_mnt);
 
-	path.dentry->d_op = &pipefs_dentry_operations;
+	dentry->d_op = &pipefs_dentry_operations;
 	/*
 	 * We dont want to publish this dentry into global dentry hash table.
 	 * We pretend dentry is already hashed, by unsetting DCACHE_UNHASHED
 	 * This permits a working /proc/$pid/fd/XXX on pipes
 	 */
-	path.dentry->d_flags &= ~DCACHE_UNHASHED;
-	d_instantiate(path.dentry, inode);
+	dentry->d_flags &= ~DCACHE_UNHASHED;
+	d_instantiate(dentry, inode);
 
 	return dentry;
 
@@ -1043,7 +1044,7 @@ struct file *__create_write_pipe(struct dentry *dentry, int flags)
 #ifdef CONFIG_KRG_EPM
 	struct pipe_inode_info *pipe;
 #endif
-	f = alloc_file(&path, FMODE_WRITE, &write_pipefifo_fops);
+	f = alloc_file(pipe_mnt, dentry, FMODE_WRITE, &write_pipefifo_fops);
 	if (!f)
 		goto err;
 	f->f_mapping = dentry->d_inode->i_mapping;
@@ -1083,7 +1084,7 @@ struct file *create_write_pipe(int flags)
 
  err_dentry:
 	free_pipe_info(dentry->d_inode);
-	path_put(&path);
+	dput(dentry);
 	return ERR_PTR(err);
 
  err:

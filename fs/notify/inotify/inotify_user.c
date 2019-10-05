@@ -664,7 +664,6 @@ SYSCALL_DEFINE1(inotify_init1, int, flags)
 {
 	struct fsnotify_group *group;
 	struct file *filp;
-	struct path path;
 	int fd, ret;
 
 	/* Check the IN_* constants for consistency.  */
@@ -684,12 +683,9 @@ SYSCALL_DEFINE1(inotify_init1, int, flags)
 		goto out_group;
 	fd = ret;
 
-	path.mnt = inotify_mnt;
-	path.dentry = inotify_mnt->mnt_root;
-	path_get(&path);
-
 	ret = -ENFILE;
-	filp = alloc_file(&path, FMODE_READ, &inotify_fops);
+	filp = alloc_file(inotify_mnt, dget(inotify_mnt->mnt_root),
+			  FMODE_READ, &inotify_fops);
 	if (!filp)
 		goto out_fd;
 
@@ -701,7 +697,6 @@ SYSCALL_DEFINE1(inotify_init1, int, flags)
 	return fd;
 
 out_fd:
-	path_put(&path);
 	put_unused_fd(fd);
 out_group:
 	fsnotify_put_group(group);
