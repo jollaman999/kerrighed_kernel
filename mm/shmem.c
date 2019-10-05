@@ -2299,7 +2299,13 @@ int __init shmem_init(void)
 		printk(KERN_ERR "Could not register tmpfs\n");
 		goto out2;
 	}
-
+#ifdef CONFIG_KRG_EPM
+	error = krgsyms_register(KRGSYMS_VM_OPS_SHMEM, &shmem_vm_ops);
+	if (error) {
+		printk(KERN_ERR "Could not register shmem_vm_ops\n");
+		goto out1_1;
+	}
+#endif
 	shm_mnt = vfs_kern_mount(&shmem_fs_type, MS_NOUSER,
 				 shmem_fs_type.name, NULL);
 	if (IS_ERR(shm_mnt)) {
@@ -2310,6 +2316,10 @@ int __init shmem_init(void)
 	return 0;
 
 out1:
+#ifdef CONFIG_KRG_EPM
+	krgsyms_unregister(KRGSYMS_VM_OPS_SHMEM);
+out1_1:
+#endif
 	unregister_filesystem(&shmem_fs_type);
 out2:
 	shmem_destroy_inodecache();
