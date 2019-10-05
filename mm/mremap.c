@@ -319,7 +319,11 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
 	if (vma->vm_flags & VM_LOCKED) {
 		unsigned long locked, lock_limit;
 		locked = mm->locked_vm << PAGE_SHIFT;
+#ifdef CONFIG_KRG_MM
+		lock_limit = _lock_limit;
+#else
 		lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur;
+#endif
 		locked += new_len - old_len;
 		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
 			goto Eagain;
@@ -330,7 +334,11 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
 
 	if (vma->vm_flags & VM_ACCOUNT) {
 		unsigned long charged = (new_len - old_len) >> PAGE_SHIFT;
+#ifdef CONFIG_KRG_MM
+		if (security_vm_enough_memory_mm(mm, charged))
+#else
 		if (security_vm_enough_memory(charged))
+#endif
 			goto Efault;
 		*p = charged;
 	}
@@ -541,10 +549,24 @@ unsigned long do_mremap(unsigned long addr,
 		if (vma->vm_flags & VM_MAYSHARE)
 			map_flags |= MAP_SHARED;
 
+#ifdef CONFIG_KRG_MM
+		if (*_new_addr == 0) {
+			new_addr = get_unmapped_area_prot(vma->vm_file, 0, new_len,
+						vma->vm_pgoff +
+						((addr - vma->vm_start) >> PAGE_SHIFT),
+						map_flags, vma->vm_flags & VM_EXEC);
+			*_new_addr = new_addr;
+		}
+		else
+			new_addr = *_new_addr;
+#else
 		new_addr = get_unmapped_area_prot(vma->vm_file, 0, new_len,
 					vma->vm_pgoff +
 					((addr - vma->vm_start) >> PAGE_SHIFT),
 					map_flags, vma->vm_flags & VM_EXEC);
+#endif
+
+
 		if (new_addr & ~PAGE_MASK) {
 			ret = new_addr;
 			goto out;
