@@ -457,6 +457,8 @@ extern int ruaccess_get_user_asm(void);
 		     : "=r" (err), ltype(x)				\
 		     : "m" (__m(addr)), "i" (errret), "0" (err))
 
+#endif /* !CONFIG_KRG_FAF */
+
 /*
  * This doesn't do __uaccess_begin/end - the exception handling
  * around it must do that.
