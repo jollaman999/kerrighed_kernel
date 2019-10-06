@@ -275,7 +275,9 @@ struct inodes_stat_t {
 #define S_PRIVATE	512	/* Inode is fs-internal */
 #define S_AUTOMOUNT	2048	/* Automount/referral quasi-directory */
 #define S_AOP_EXT	16384 /* fs supports extended aops */
-
+#ifdef CONFIG_KRG_FAF
+#define S_IFAF          1024
+#endif
 /*
  * Note that nosuid etc flags are inode-specific: setting some file-system
  * flags just means all the inodes inherit those flags by default. It might be
@@ -832,6 +834,9 @@ struct inode {
 
 	__u32			i_generation;
 
+#ifdef CONFIG_KRG_DVFS
+	unsigned long           i_objid;
+#endif
 #ifdef CONFIG_FSNOTIFY
 	__u32			i_fsnotify_mask; /* all events this inode cares about */
 	struct hlist_head	i_fsnotify_mark_entries; /* fsnotify mark entries */
