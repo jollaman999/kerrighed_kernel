@@ -28,6 +28,9 @@ void detach_vmas_to_be_unmapped(struct mm_struct *mm,
 				struct vm_area_struct *vma,
 				struct vm_area_struct *prev,
 				unsigned long end);
+#ifdef CONFIG_KRG_MM
+static
+#endif
 void unmap_region(struct mm_struct *mm, struct vm_area_struct *vma,
 		  struct vm_area_struct *prev, unsigned long start,
 		  unsigned long end);
