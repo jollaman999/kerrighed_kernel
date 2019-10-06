@@ -124,10 +124,23 @@ extern struct pid *find_vpid(int nr);
 extern struct pid *find_get_pid(int nr);
 extern struct pid *find_ge_pid(int nr, struct pid_namespace *);
 int next_pidmap(struct pid_namespace *pid_ns, unsigned int last);
-
+#ifndef CONFIG_KRG_EPM
 extern struct pid *alloc_pid(struct pid_namespace *ns);
+#endif
 extern void free_pid(struct pid *pid);
 extern void disable_pid_allocation(struct pid_namespace *ns);
+#ifdef CONFIG_KRG_EPM
+extern struct pid *__alloc_pid(struct pid_namespace *ns, const int *req_nr);
+extern int reserve_pidmap(struct pid_namespace *ns, int nr);
+extern void __free_pidmap(struct upid *upid);
+struct pidmap;
+extern int alloc_pidmap_page(struct pidmap *map);
+
+static inline struct pid *alloc_pid(struct pid_namespace *ns)
+{
+	return __alloc_pid(ns, NULL);
+}
+#endif /* CONFIG_KRG_EPM */
 
 /*
  * ns_of_pid() returns the pid namespace in which the specified pid was
