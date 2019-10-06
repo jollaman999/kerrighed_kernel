@@ -369,4 +369,12 @@ struct va_alignment {
 
 extern struct va_alignment va_align;
 extern unsigned long align_addr(unsigned long, struct file *, enum align_flags);
+
+#ifdef CONFIG_KRG_MM
+struct vm_area_struct;
+
+void import_vdso_context(struct vm_area_struct *vma);
+int import_mm_struct_end(struct mm_struct *mm, struct task_struct *task);
+#endif
+
 #endif /* _ASM_X86_ELF_H */
