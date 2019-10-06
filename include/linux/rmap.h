@@ -226,7 +226,10 @@ enum ttu_flags {
 int try_to_unmap(struct page *, enum ttu_flags flags);
 int try_to_unmap_one(struct page *, struct vm_area_struct *,
 			unsigned long address, enum ttu_flags flags);
-
+#ifdef CONFIG_KRG_MM
+struct anon_vma *page_lock_anon_vma(struct page *page);
+void page_unlock_anon_vma(struct anon_vma *anon_vma);
+#endif
 /*
  * Called from mm/filemap_xip.c to unmap empty zero page
  */
