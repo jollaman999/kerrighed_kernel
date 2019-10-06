@@ -1342,28 +1342,7 @@ struct sched_rt_entity {
 	/* rq "owned" by this entity/group: */
 	struct rt_rq		*my_q;
 #endif
-#ifdef CONFIG_KRG_CAP
-	kernel_krg_cap_t krg_caps;
-	atomic_t krg_cap_used[CAP_SIZE];
-	atomic_t krg_cap_unavailable[CAP_SIZE];
-	atomic_t krg_cap_unavailable_private[CAP_SIZE];
-#endif
-#ifdef CONFIG_KRG_KDDM
-	struct kddm_info_struct *kddm_info;
-#endif
-#ifdef CONFIG_KRG_PROC
-	struct task_kddm_object *task_obj;
-#endif
-#ifdef CONFIG_KRG_EPM
-	int krg_action_flags;
-	struct task_struct *effective_current;
-	struct children_kddm_object *parent_children_obj;
-	struct children_kddm_object *children_obj;
-	struct app_struct *application;
-#endif
-#ifdef CONFIG_KRG_SCHED
-	struct krg_sched_info *krg_sched;
-#endif
+
 };
 
 /*
@@ -1767,6 +1746,29 @@ struct task_struct {
 	} memcg_oom;
 #endif
 #endif /* __GENKYSMS__ */
+#ifdef CONFIG_KRG_CAP
+	kernel_krg_cap_t krg_caps;
+	atomic_t krg_cap_used[CAP_SIZE];
+	atomic_t krg_cap_unavailable[CAP_SIZE];
+	atomic_t krg_cap_unavailable_private[CAP_SIZE];
+#endif
+#ifdef CONFIG_KRG_KDDM
+	struct kddm_info_struct *kddm_info;
+#endif
+#ifdef CONFIG_KRG_PROC
+	struct task_kddm_object *task_obj;
+#endif
+#ifdef CONFIG_KRG_EPM
+	int krg_action_flags;
+	struct task_struct *effective_current;
+	struct children_kddm_object *parent_children_obj;
+	struct children_kddm_object *children_obj;
+	struct app_struct *application;
+#endif
+#ifdef CONFIG_KRG_SCHED
+	struct krg_sched_info *krg_sched;
+#endif
+
 };
 
 /* Future-safe accessor for struct task_struct's cpus_allowed. */
