@@ -1424,7 +1424,23 @@ unsigned long ra_submit(struct file_ra_state *ra,
 extern unsigned long stack_guard_gap;
 
 /* Do stack extension */
+#ifdef CONFIG_KRG_MM
+extern int krg_expand_stack(struct vm_area_struct *vma, unsigned long address);
+extern int __expand_stack(struct vm_area_struct *vma, unsigned long address);
+static inline int expand_stack(struct vm_area_struct *vma,
+			       unsigned long address)
+{
+	int err;
+
+	err = __expand_stack(vma, address);
+	if (!err && vma->vm_mm->anon_vma_kddm_set)
+		krg_expand_stack(vma, address);
+
+	return err;
+}
+#else
 extern int expand_stack(struct vm_area_struct *vma, unsigned long address);
+#endif
 #if VM_GROWSUP
 extern int expand_upwards(struct vm_area_struct *vma, unsigned long address);
 #else
@@ -1599,6 +1615,10 @@ extern void copy_user_huge_page(struct page *dst, struct page *src,
 				unsigned long addr, struct vm_area_struct *vma,
 				unsigned int pages_per_huge_page);
 #endif /* CONFIG_TRANSPARENT_HUGEPAGE || CONFIG_HUGETLBFS */
+
+#ifdef CONFIG_KRG_MM
+#include <kerrighed/mm.h>
+#endif
 
 #endif /* __KERNEL__ */
 #endif /* _LINUX_MM_H */
