@@ -86,6 +86,10 @@ enum zone_stat_item {
 	NR_INACTIVE_FILE,	/*  "     "     "   "       "         */
 	NR_ACTIVE_FILE,		/*  "     "     "   "       "         */
 	NR_UNEVICTABLE,		/*  "     "     "   "       "         */
+#ifdef CONFIG_KRG_MM
+	NR_INACTIVE_MIGR,
+	NR_ACTIVE_MIGR,
+#endif
 	NR_MLOCK,		/* mlock()ed pages found and moved off LRU */
 	NR_ANON_PAGES,	/* Mapped anonymous pages */
 	NR_FILE_MAPPED,	/* pagecache pages mapped into pagetables.
@@ -128,12 +132,16 @@ enum zone_stat_item {
 #define LRU_BASE 0
 #define LRU_ACTIVE 1
 #define LRU_FILE 2
-
+#define LRU_MIGR 4
 enum lru_list {
 	LRU_INACTIVE_ANON = LRU_BASE,
 	LRU_ACTIVE_ANON = LRU_BASE + LRU_ACTIVE,
 	LRU_INACTIVE_FILE = LRU_BASE + LRU_FILE,
 	LRU_ACTIVE_FILE = LRU_BASE + LRU_FILE + LRU_ACTIVE,
+#ifdef CONFIG_KRG_MM
+	LRU_INACTIVE_MIGR = LRU_BASE + LRU_MIGR,
+	LRU_ACTIVE_MIGR = LRU_BASE + LRU_MIGR + LRU_ACTIVE,
+#endif
 	LRU_UNEVICTABLE,
 	NR_LRU_LISTS
 };
@@ -308,9 +316,14 @@ struct zone_reclaim_stat {
 	 *
 	 * The anon LRU stats live in [0], file LRU stats in [1]
 	 */
+#ifdef CONFIG_KRG_MM
+	/* The KDDM migratable LRU stats live in [2] */
+	unsigned long		recent_rotated[3];
+	unsigned long		recent_scanned[3];
+#else
 	unsigned long		recent_rotated[2];
 	unsigned long		recent_scanned[2];
-
+#endif
 	/*
 	 * accumulated for batching
 	 */
