@@ -24,6 +24,10 @@
 #include <asm/proto.h>
 #include <asm/pat.h>
 
+#ifdef CONFIG_KRG_PROCFS
+#include <kerrighed/dynamic_node_info_linker.h>
+#endif
+
 /*
  * The current flushing context - we pass it instead of 5 arguments:
  */
