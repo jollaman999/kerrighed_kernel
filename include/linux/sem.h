@@ -36,6 +36,7 @@ struct semid_ds {
 	unsigned short	sem_nsems;		/* no. of semaphores in array */
 };
 
+
 /* Include the definition of semid64_ds */
 #include <asm/sembuf.h>
 
@@ -98,9 +99,22 @@ struct task_struct;
 struct sem {
 	int	semval;		/* current value */
 	int	sempid;		/* pid of last operation */
+
 };
 #endif
-
+struct sem_queue {
+	struct list_head	list;	 /* queue of pending operations */
+	struct task_struct	*sleeper; /* this process */
+	struct sem_undo		*undo;	 /* undo structure */
+	int			pid;	 /* process id of requesting process */
+	int			status;	 /* completion status of operation */
+	struct sembuf		*sops;	 /* array of pending operations */
+	int			nsops;	 /* number of operations */
+	int			alter;	 /* does *sops alter the array? */
+#ifdef CONFIG_KRG_IPC
+	struct list_head        remote_sem_pending;
+#endif
+};
 /* One sem_array data structure for each set of semaphores in the system. */
 struct sem_array {
 	struct kern_ipc_perm	sem_perm;	/* permissions .. see ipc.h */
@@ -113,12 +127,33 @@ struct sem_array {
 	unsigned long		sem_nsems;	/* no. of semaphores in array */
 #else
 	int			sem_nsems;	/* no. of semaphores in array */
+#ifdef CONFIG_KRG_IPC
+	struct list_head        remote_sem_pending;
+#endif
 	int			complex_count;	/* pending complex operations */
 #endif
 };
 
 #ifdef __GENKSYMS__
 /* This struct is only used in ipc/sem.c, the non-GENKSYMS define is there */
+
+struct sem_undo {
+#ifdef CONFIG_KRG_IPC
+	unique_id_t             proc_list_id;
+	/* list_proc is useless in KRG code */
+#endif
+	struct list_head	list_proc;	/* per-process list: *
+						 * all undos from one process
+						 * rcu protected */
+	struct rcu_head		rcu;		/* rcu struct for sem_undo */
+	struct sem_undo_list	*ulp;		/* back ptr to sem_undo_list */
+	struct list_head	list_id;	/* per semaphore array list:
+						 * all undos for one array */
+	int			semid;		/* semaphore set identifier */
+	short			*semadj;	/* array of adjustments */
+						/* one per semaphore */
+};
+
 struct sem_undo_list {
 	atomic_t		refcnt;
 	spinlock_t		lock;
