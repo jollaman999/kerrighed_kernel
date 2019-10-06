@@ -328,3 +328,70 @@ ENTRY(copy_user_enhanced_fast_string)
 	.previous
 	CFI_ENDPROC
 ENDPROC(copy_user_enhanced_fast_string)
+
+#ifdef CONFIG_KRG_FAF
+ENTRY(copy_user_check_ruaccess)
+	CFI_STARTPROC
+	cmpl %edx,(%rsp)
+	leaq 8(%rsp),%rsp
+	jne copy_user_handle_tail
+	GET_THREAD_INFO(%rax)
+	testl $_TIF_RUACCESS,TI_flags(%rax)
+	jz copy_user_handle_tail
+	cmpq $-1,TI_addr_limit(%rax)
+	je copy_user_handle_tail
+	jmp krg_copy_user_generic
+	CFI_ENDPROC
+ENDPROC(copy_user_check_ruaccess)
+
+/*
+ * Inputs: rax is the address of the hook to call
+ *         the hook's arg (up to 4) are already passed in conventional order
+ * Outputs: rax is 0 if the hook was called, non zero otherwise
+ *	    if rax is 0, rdx is the hook's result.
+ *
+ * Called from inline assembly, so save all possibly clobbered registers
+ */
+ENTRY(usercopy_check_ruaccess)
+	CFI_STARTPROC
+	pushq_cfi %r8
+	CFI_REL_OFFSET r8,0
+	GET_THREAD_INFO(%r8)
+	testl $_TIF_RUACCESS,TI_flags(%r8)
+	jz back_to_local
+	cmpq $-1,TI_addr_limit(%r8)
+	je back_to_local
+	pushq_cfi %rdi
+	CFI_REL_OFFSET rdi,0
+	pushq_cfi %rsi
+	CFI_REL_OFFSET rsi,0
+	pushq_cfi %rcx
+	CFI_REL_OFFSET rcx,0
+	pushq_cfi %r9
+	CFI_REL_OFFSET r9,0
+	pushq_cfi %r10
+	CFI_REL_OFFSET r10,0
+	pushq_cfi %r11
+	CFI_REL_OFFSET r11,0
+	call *%rax
+	movq %rax,%rdx
+	xorl %eax,%eax
+	popq_cfi %r11
+	CFI_RESTORE r11
+	popq_cfi %r10
+	CFI_RESTORE r10
+	popq_cfi %r9
+	CFI_RESTORE r9
+	popq_cfi %rcx
+	CFI_RESTORE rcx
+	popq_cfi %rsi
+	CFI_RESTORE rsi
+	popq_cfi %rdi
+	CFI_RESTORE rdi
+back_to_local:
+	popq_cfi %r8
+	CFI_RESTORE r8
+	ret
+	CFI_ENDPROC
+ENDPROC(usercopy_check_ruaccess)
+#endif
