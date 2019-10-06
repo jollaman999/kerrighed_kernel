@@ -71,11 +71,6 @@ extern void __fd_install(struct files_struct *files,
 #ifdef CONFIG_KRG_DVFS
 struct fdtable;
 int count_open_files(struct fdtable *fdt);
-
-#ifdef CONFIG_KRG_DVFS
-struct fdtable;
-int count_open_files(struct fdtable *fdt);
-
 struct fdtable * alloc_fdtable(unsigned int nr);
 #endif
 
