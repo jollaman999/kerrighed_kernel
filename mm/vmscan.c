@@ -3097,10 +3097,18 @@ unsigned long zone_reclaimable_pages(struct zone *zone)
 	int nr;
 
 	nr = zone_page_state(zone, NR_ACTIVE_FILE) +
+#ifdef CONFIG_KRG_MM
+		+ zone_page_state(zone, NR_ACTIVE_MIGR)
+		+ zone_page_state(zone, NR_INACTIVE_MIGR)
+#endif
 	     zone_page_state(zone, NR_INACTIVE_FILE);
 
 	if (get_nr_swap_pages() > 0)
 		nr += zone_page_state(zone, NR_ACTIVE_ANON) +
+#ifdef CONFIG_KRG_MM
+		+ zone_page_state(zone, NR_ACTIVE_MIGR)
+		+ zone_page_state(zone, NR_INACTIVE_MIGR)
+#endif
 		      zone_page_state(zone, NR_INACTIVE_ANON);
 
 	return nr;
