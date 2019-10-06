@@ -825,6 +825,11 @@ unsigned long __copy_from_user_ll(void *to, const void __user *from,
 					unsigned long n)
 {
 	__uaccess_begin_nospec();
+#ifdef CONFIG_KRG_FAF
+	if (check_ruaccess())
+		n = krg_copy_user_generic(to, from, n, 1);
+	else
+#endif
 	if (movsl_is_ok(to, from, n))
 		__copy_user_zeroing(to, from, n);
 	else
@@ -838,6 +843,11 @@ unsigned long __copy_from_user_ll_nozero(void *to, const void __user *from,
 					 unsigned long n)
 {
 	__uaccess_begin_nospec();
+#ifdef CONFIG_KRG_FAF
+	if (check_ruaccess())
+		n = krg_copy_user_generic(to, from, n, 0);
+	else
+#endif
 	if (movsl_is_ok(to, from, n))
 		__copy_user(to, from, n);
 	else
@@ -852,6 +862,11 @@ unsigned long __copy_from_user_ll_nocache(void *to, const void __user *from,
 					unsigned long n)
 {
 	__uaccess_begin_nospec();
+#ifdef CONFIG_KRG_FAF
+	if (check_ruaccess())
+		n = krg_copy_user_generic(to, from, n, 1);
+	else
+#endif
 #ifdef CONFIG_X86_INTEL_USERCOPY
 	if (n > 64 && cpu_has_xmm2)
 		n = __copy_user_zeroing_intel_nocache(to, from, n);
@@ -869,6 +884,11 @@ unsigned long __copy_from_user_ll_nocache_nozero(void *to, const void __user *fr
 					unsigned long n)
 {
 	__uaccess_begin_nospec();
+#ifdef CONFIG_KRG_FAF
+	if (check_ruaccess())
+		n = krg_copy_user_generic(to, from, n, 0);
+	else
+#endif
 #ifdef CONFIG_X86_INTEL_USERCOPY
 	if (n > 64 && cpu_has_xmm2)
 		n = __copy_user_intel_nocache(to, from, n);
