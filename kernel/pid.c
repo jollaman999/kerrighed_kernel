@@ -37,6 +37,10 @@
 #include <linux/init_task.h>
 #include <linux/syscalls.h>
 #include <linux/proc_fs.h>
+#ifdef CONFIG_KRG_PROC
+#include <kerrighed/pid.h>
+#include <kerrighed/krginit.h>
+#endif
 
 #define pid_hashfn(nr, ns)	\
 	hash_long((unsigned long)nr + (unsigned long)ns, pidhash_shift)
@@ -80,6 +84,10 @@ struct pid_namespace init_pid_ns = {
 	.level = 0,
 	.child_reaper = &init_task,
 	.proc_inum = PROC_PID_INIT_INO,
+#ifdef CONFIG_KRG_PROC
+	.krg_ns_root = NULL,
+	.global = 0,
+#endif
 };
 EXPORT_SYMBOL_GPL(init_pid_ns);
 
@@ -262,6 +270,36 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
 	return -1;
 }
 
+#ifdef CONFIG_KRG_EPM
+int reserve_pidmap(struct pid_namespace *pid_ns, int pid)
+{
+	int offset;
+	struct pidmap *map;
+
+	pid = SHORT_PID(pid);
+	if (pid >= pid_max)
+		return -EINVAL;
+
+	offset = pid & BITS_PER_PAGE_MASK;
+	map = &pid_ns->pidmap[pid/BITS_PER_PAGE];
+	if (!map->page) {
+		/* next_pidmap() is safe if intermediate pages are missing */
+		int err = alloc_pidmap_page(map);
+		if (err)
+			return err;
+	}
+
+	/* Reserve pid in the page */
+	BUG_ON(pid != mk_pid(pid_ns, map, offset));
+	if (!test_and_set_bit(offset, map->page)) {
+		atomic_dec(&map->nr_free);
+		return 0;
+	}
+
+	return -EBUSY;
+}
+#endif /* CONFIG_KRG_EPM */
+
 int next_pidmap(struct pid_namespace *pid_ns, unsigned int last)
 {
 	int offset;
@@ -358,13 +396,29 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
 	if (!pid)
 		goto out;
+#ifdef CONFIG_KRG_EPM
+	pid->kddm_obj = NULL;
+	BUG_ON(req_nr && !is_krg_pid_ns_root(ns));
+#endif
 
 	tmp = ns;
 	pid->level = ns->level;
 	for (i = ns->level; i >= 0; i--) {
+#ifdef CONFIG_KRG_EPM
+		if (req_nr && tmp == ns) {
+			nr = req_nr[i - tmp->level];
+		} else {
+#endif
 		nr = alloc_pidmap(tmp);
 		if (nr < 0)
 			goto out_free;
+#ifdef CONFIG_KRG_PROC
+		if (tmp->global && nr != 1)
+			nr = GLOBAL_PID(nr);
+#endif
+#ifdef CONFIG_KRG_EPM
+		}
+#endif
 
 		pid->numbers[i].nr = nr;
 		pid->numbers[i].ns = tmp;
@@ -574,6 +628,9 @@ pid_t pid_nr_ns(struct pid *pid, struct pid_namespace *ns)
 	}
 	return nr;
 }
+#ifdef CONFIG_KRG_PROC
+EXPORT_SYMBOL(pid_nr_ns);
+#endif
 
 pid_t pid_vnr(struct pid *pid)
 {
