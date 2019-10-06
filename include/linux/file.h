@@ -61,12 +61,17 @@ extern void __fd_install(struct files_struct *files,
 			 unsigned int fd, struct file *file);
 #endif
 extern void fd_install(unsigned int fd, struct file *file);
-
+#ifdef CONFIG_KRG_FAF
+extern void __put_unused_fd(struct files_struct *files, unsigned int fd);
+#endif
+#ifdef CONFIG_KRG_FAF
+extern void __fd_install(struct files_struct *files,
+			 unsigned int fd, struct file *file);
+#endif
 #ifdef CONFIG_KRG_DVFS
 struct fdtable;
 int count_open_files(struct fdtable *fdt);
 
 struct fdtable * alloc_fdtable(unsigned int nr);
 #endif
-
 #endif /* __LINUX_FILE_H */
