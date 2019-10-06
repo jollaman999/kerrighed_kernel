@@ -30,6 +30,21 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/signal.h>
 #include <linux/nospec.h>
+#ifdef CONFIG_KRG_PROC
+#include <net/krgrpc/rpc.h>
+#include <net/krgrpc/rpcid.h>
+#include <kerrighed/pid.h>
+#include <kerrighed/remote_cred.h>
+#include <kerrighed/krgnodemask.h>
+#include <kerrighed/krginit.h>
+#include <kerrighed/remote_syscall.h>
+#endif
+#ifdef CONFIG_KRG_EPM
+#include <kerrighed/krg_exit.h>
+#include <kerrighed/action.h>
+#include <kerrighed/kerrighed_signal.h>
+#include <kerrighed/signal.h>
+#endif
 
 #include <asm/param.h>
 #include <asm/uaccess.h>
@@ -1774,6 +1789,11 @@ int do_notify_parent(struct task_struct *tsk, int sig)
 	 * correct to rely on this
 	 */
 	rcu_read_lock();
+#ifdef CONFIG_KRG_EPM
+	if (tsk->parent == baby_sitter)
+		info.si_pid = task_pid_knr(tsk);
+	else
+#endif
 	info.si_pid = task_pid_nr_ns(tsk, task_active_pid_ns(tsk->parent));
 	info.si_uid = __task_cred(tsk)->uid;
 	rcu_read_unlock();
@@ -2811,6 +2831,12 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 
 	idx = array_index_nospec(sig - 1, _NSIG);
 	k = &t->sighand->action[idx];
+#ifdef CONFIG_KRG_EPM
+	down_read(&kerrighed_init_sem);
+	sighand_id = current->sighand->krg_objid;
+	if (sighand_id)
+		krg_sighand_writelock(sighand_id);
+#endif
 
 	spin_lock_irq(&current->sighand->siglock);
 	if (oact)
