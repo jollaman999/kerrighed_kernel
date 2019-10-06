@@ -50,6 +50,24 @@
 #include <linux/perf_event.h>
 #include <trace/events/sched.h>
 #include <linux/oom.h>
+#ifdef CONFIG_KRG_KDDM
+#include <kddm/kddm_info.h>
+#endif
+#ifdef CONFIG_KRG_HOTPLUG
+#include <kerrighed/namespace.h>
+#endif
+#ifdef CONFIG_KRG_PROC
+#include <kerrighed/task.h>
+#include <kerrighed/krginit.h>
+#include <kerrighed/krg_exit.h>
+#endif
+#ifdef CONFIG_KRG_EPM
+#include <kerrighed/signal.h>
+#include <kerrighed/children.h>
+#endif
+#ifdef CONFIG_KRG_SCHED
+#include <kerrighed/scheduler/info.h>
+#endif
 
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
@@ -94,6 +112,7 @@ static void __exit_signal(struct task_struct *tsk)
 	atomic_dec(&sig->count);
 
 	posix_cpu_timers_exit(tsk);
+
 	if (group_dead) {
 		posix_cpu_timers_exit_group(tsk);
 	} else {
@@ -102,6 +121,13 @@ static void __exit_signal(struct task_struct *tsk)
 		 * FIXME: this is the temporary hack, we should teach
 		 * posix-cpu-timers to handle this case correctly.
 		 */
+#ifdef CONFIG_KRG_EPM
+	if (tsk->exit_state == EXIT_MIGRATION) {
+		BUG_ON(atomic_read(&sig->count) > 1);
+		posix_cpu_timers_exit_group(tsk);
+		sig->curr_target = NULL;
+	} else
+#endif
 		if (unlikely(has_group_leader_pid(tsk)))
 			posix_cpu_timers_exit_group(tsk);
 
@@ -149,16 +175,30 @@ static void __exit_signal(struct task_struct *tsk)
 	tsk->sighand = NULL;
 	spin_unlock(&sighand->siglock);
 
+#ifdef CONFIG_KRG_EPM
+	if (tsk->exit_state == EXIT_MIGRATION)
+		krg_sighand_unpin(sighand);
+	else
+#endif
 	__cleanup_sighand(sighand);
 	clear_tsk_thread_flag(tsk,TIF_SIGPENDING);
 	if (group_dead) {
 		flush_sigqueue(&sig->shared_pending);
+#ifdef CONFIG_KRG_EPM
+		if (tsk->exit_state != EXIT_MIGRATION)
+#endif
 		taskstats_tgid_free(sig);
 		/*
 		 * Make sure ->signal can't go away under rq->lock,
 		 * see account_group_exec_runtime().
 		 */
 		task_rq_unlock_wait(tsk);
+#ifdef CONFIG_KRG_EPM
+		if (tsk->exit_state == EXIT_MIGRATION) {
+			krg_signal_unpin(sig);
+			return;
+		}
+#endif
 		__cleanup_signal(sig);
 	}
 }
@@ -404,6 +444,17 @@ kill_orphaned_pgrp(struct task_struct *tsk, struct task_struct *parent)
  */
 static void reparent_to_kthreadd(void)
 {
+#ifdef CONFIG_KRG_EPM
+	struct children_kddm_object *parent_children_obj = NULL;
+	pid_t parent_tgid;
+
+	down_read(&kerrighed_init_sem);
+
+	if (rcu_dereference(current->parent_children_obj))
+		parent_children_obj = krg_parent_children_writelock(
+					current,
+					&parent_tgid);
+#endif /* CONFIG_KRG_EPM */
 	tasklist_write_lock_irq();
 
 	ptrace_unlink(current);
@@ -850,10 +901,16 @@ static void reparent_thread(struct task_struct *father, struct task_struct *p,
 static void forget_original_parent(struct task_struct *father)
 {
 	struct task_struct *p, *n, *reaper;
+#ifdef CONFIG_KRG_EPM
+	struct children_kddm_object *children_obj = NULL;
+#endif
 	LIST_HEAD(dead_children);
 
 	exit_ptrace(father);
-
+#ifdef CONFIG_KRG_EPM
+	if (rcu_dereference(father->children_obj))
+		children_obj = __krg_children_writelock(father);
+#endif
 	tasklist_write_lock_irq();
 	reaper = find_new_reaper(father);
 
@@ -914,6 +971,9 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 	forget_original_parent(tsk);
 	exit_task_namespaces(tsk);
 
+#ifdef CONFIG_KRG_PROC
+	krg_cookie = krg_prepare_exit_notify(tsk);
+#endif /* CONFIG_KRG_PROC */
 	tasklist_write_lock_irq();
 	if (group_dead)
 		kill_orphaned_pgrp(tsk->group_leader, NULL);
@@ -1158,13 +1218,21 @@ NORET_TYPE void do_exit(long code)
 	 * gets woken up by child-exit notifications.
 	 */
 	perf_event_exit_task(tsk);
-
+#ifdef CONFIG_KRG_EPM
+	if (!notify)
+		exit_migration(tsk);
+	else
+#endif
 	exit_notify(tsk, group_dead);
 #ifdef CONFIG_NUMA
 	task_lock(tsk);
 	mpol_put(tsk->mempolicy);
 	tsk->mempolicy = NULL;
 	task_unlock(tsk);
+#endif
+#ifdef CONFIG_KRG_KDDM
+	if (tsk->kddm_info)
+		kmem_cache_free(kddm_info_cachep, tsk->kddm_info);
 #endif
 #ifdef CONFIG_FUTEX
 	if (unlikely(current->pi_state_cache))
@@ -1284,7 +1352,9 @@ struct wait_opts {
 	enum pid_type		wo_type;
 	int			wo_flags;
 	struct pid		*wo_pid;
-
+#ifdef CONFIG_KRG_EPM
+	pid_t	wo_upid;
+#endif
 	struct siginfo __user	*wo_info;
 	int __user		*wo_stat;
 	struct rusage __user	*wo_rusage;
@@ -1357,7 +1427,10 @@ static int wait_noreap_copyout(struct wait_opts *wo, struct task_struct *p,
  * the lock and this task is uninteresting.  If we return nonzero, we have
  * released the lock and the system call should return.
  */
-static int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
+#ifndef CONFIG_KRG_EPM
+static
+#endif
+int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 {
 	unsigned long state;
 	int retval, status, traced;
@@ -1405,6 +1478,10 @@ static int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 	}
 
 	traced = ptrace_reparented(p);
+#ifdef CONFIG_KRG_EPM
+	/* remote call iff p->parent == baby_sitter */
+	if (p->parent != baby_sitter)
+#endif
 	/*
 	 * It can be ptraced but not reparented, check
 	 * !task_detached() to filter out sub-threads.
@@ -1517,6 +1594,17 @@ static int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 		retval = pid;
 
 	if (traced) {
+#ifdef CONFIG_KRG_EPM
+		struct children_kddm_object *parent_children_obj = NULL;
+		pid_t real_parent_tgid;
+		/* p may be set to NULL while we still need it */
+		struct task_struct *saved_p = p;
+
+		if (rcu_dereference(saved_p->parent_children_obj))
+			parent_children_obj =
+				krg_parent_children_writelock(saved_p,
+							      &real_parent_tgid);
+#endif
 		tasklist_write_lock_irq();
 		/* We dropped tasklist, ptracer could die and untrace */
 		ptrace_unlink(p);
@@ -1532,6 +1620,7 @@ static int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 				p = NULL;
 			}
 		}
+
 		write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_KRG_EPM
 		if (parent_children_obj) {
@@ -1820,8 +1909,13 @@ void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
 	__wake_up_sync_key(&parent->signal->wait_chldexit,
 				TASK_INTERRUPTIBLE, 1, p);
 }
+#ifdef CONFIG_KRG_EPM
+static
+long do_wait(struct wait_opts *wo)
 
+#else
 static long do_wait(struct wait_opts *wo)
+#endif
 {
 	struct task_struct *tsk;
 	int retval;
@@ -1830,6 +1924,9 @@ static long do_wait(struct wait_opts *wo)
 
 	init_waitqueue_func_entry(&wo->child_wait, child_wait_callback);
 	wo->child_wait.private = current;
+#ifdef CONFIG_KRG_PROC
+	down_read(&kerrighed_init_sem);
+#endif
 	add_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
 repeat:
 	/*
@@ -1839,10 +1936,16 @@ repeat:
 	 * it yet.
 	 */
 	wo->notask_error = -ECHILD;
+#ifdef CONFIG_KRG_EPM
+	if (!current->children_obj)
+#endif
 	if ((wo->wo_type < PIDTYPE_MAX) &&
 	   (!wo->wo_pid || hlist_empty(&wo->wo_pid->tasks[wo->wo_type])))
 		goto notask;
-
+#ifdef CONFIG_KRG_EPM
+	if (current->children_obj)
+		__krg_children_readlock(current);
+#endif
 	set_current_state(TASK_INTERRUPTIBLE);
 	tasklist_read_lock();
 	tsk = current;
@@ -1859,19 +1962,38 @@ repeat:
 			break;
 	} while_each_thread(current, tsk);
 	read_unlock(&tasklist_lock);
-
+#ifdef CONFIG_KRG_EPM
+	if (current->children_obj) {
+		/* Try all children, even remote ones but don't wait yet */
+		/* Releases children lock */
+		int tsk_result = krg_do_wait(current->children_obj, &retval,
+					     type, upid, options,
+					     infop, stat_addr, ru);
+		if (tsk_result)
+			retval = tsk_result;
+	}
+#endif
 notask:
 	retval = wo->notask_error;
 	if (!retval && !(wo->wo_flags & WNOHANG)) {
 		retval = -ERESTARTSYS;
 		if (!signal_pending(current)) {
+#ifdef CONFIG_KRG_PROC
+			up_read(&kerrighed_init_sem);
+#endif
 			schedule();
+#ifdef CONFIG_KRG_PROC
+			down_read(&kerrighed_init_sem);
+#endif
 			goto repeat;
 		}
 	}
 end:
 	__set_current_state(TASK_RUNNING);
 	remove_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
+#ifdef CONFIG_KRG_PROC
+	up_read(&kerrighed_init_sem);
+#endif
 	return retval;
 }
 
@@ -1915,6 +2037,9 @@ SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
 	wo.wo_info	= infop;
 	wo.wo_stat	= NULL;
 	wo.wo_rusage	= ru;
+#ifdef CONFIG_KRG_EPM
+	wo.wo_upid=upid;
+#endif
 	ret = do_wait(&wo);
 
 	if (ret > 0) {
@@ -1977,6 +2102,15 @@ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 	wo.wo_info	= NULL;
 	wo.wo_stat	= stat_addr;
 	wo.wo_rusage	= ru;
+#ifdef CONFIG_KRG_EPM
+	wo.wo_upid=upid;
+	if (type == PIDTYPE_PGID) {
+		if (upid == 0)
+			upid = pid_vnr(pid);
+		else /* upid < 0 */
+			upid = -upid;
+	}
+#endif
 	ret = do_wait(&wo);
 	put_pid(pid);
 
