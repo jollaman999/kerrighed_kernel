@@ -11,9 +11,25 @@
 #include <linux/user_namespace.h>
 #include <linux/securebits.h>
 #include <net/net_namespace.h>
+#ifdef CONFIG_KRG_CAP
+#include <kerrighed/capabilities.h>
+#endif
 
 extern struct files_struct init_files;
 extern struct fs_struct init_fs;
+#ifdef CONFIG_KRG_EPM
+#define INIT_MM_EPM						\
+	.mm_ltasks      = ATOMIC_INIT(1),
+#else
+#define INIT_MM_EPM
+#endif
+
+#ifdef CONFIG_KRG_MM
+#define INIT_MM_MM                                              \
+        .mm_tasks       = ATOMIC_INIT(1),
+#else
+#define INIT_MM_MM
+#endif
 
 #ifdef CONFIG_CGROUPS
 #define INIT_GROUP_RWSEM(sig)						\
@@ -209,6 +225,8 @@ extern struct cred init_cred;
 	INIT_FTRACE_GRAPH						\
 	INIT_TRACE_RECURSION						\
 	INIT_TASK_RCU_PREEMPT(tsk)					\
+	INIT_KRG_CAP							\
+	INIT_KDDM							\
 }
 
 
