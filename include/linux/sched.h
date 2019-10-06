@@ -92,7 +92,12 @@ struct sched_param {
 #include <linux/latencytop.h>
 #include <linux/cred.h>
 #include <linux/percpu-rwsem.h>
-
+#ifdef CONFIG_KRG_CAP
+#include <kerrighed/capabilities.h>
+#endif
+#ifdef CONFIG_KRG_EPM
+#include <kddm/kddm_types.h>
+#endif
 #include <asm/processor.h>
 
 struct exec_domain;
@@ -198,6 +203,10 @@ extern unsigned long long time_sync_thresh;
 #define TASK_DEAD		64
 #define TASK_WAKEKILL		128
 #define TASK_WAKING		256
+#ifdef CONFIG_KRG_EPM
+/* in tsk->exit_state */
+#define EXIT_MIGRATION		256
+#endif
 
 /* Convenience macros for the sake of set_task_state */
 #define TASK_KILLABLE		(TASK_WAKEKILL | TASK_UNINTERRUPTIBLE)
@@ -1445,6 +1454,12 @@ struct task_struct {
 	unsigned did_exec:1;
 	unsigned in_execve:1;	/* Tell the LSMs that the process is doing an
 				 * execve */
+#ifdef CONFIG_KRG_HOTPLUG
+	unsigned create_krg_ns:1;
+#endif
+#ifdef CONFIG_KRG_EPM
+	unsigned remote_vfork_done:1;
+#endif
 	unsigned in_iowait:1;
 
 	/* Revert to default priority/policy when forking */
