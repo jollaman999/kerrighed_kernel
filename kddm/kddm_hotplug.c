@@ -8,7 +8,7 @@
 #include <kerrighed/sys/types.h>
 #include <kerrighed/krgnodemask.h>
 #include <kerrighed/krginit.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 #include <linux/cluster_barrier.h>
 
 #include <net/krgrpc/rpcid.h>

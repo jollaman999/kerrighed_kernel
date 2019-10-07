@@ -14,7 +14,7 @@
 #include <linux/string.h>
 #include <kerrighed/sys/types.h>
 #include <kerrighed/krgnodemask.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 #include <linux/unique_id.h>
 
 #include "process.h"

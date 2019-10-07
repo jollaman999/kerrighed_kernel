@@ -7,7 +7,7 @@
  */
 
 #include <linux/cluster_barrier.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 #include <linux/unique_id.h>
 #include <net/krgrpc/rpc.h>
 

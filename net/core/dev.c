@@ -137,7 +137,7 @@
 #endif
 #include <linux/cpu_rmap.h>
 #include <linux/net_tstamp.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 #include <linux/hrtimer.h>
 #include <linux/crash_dump.h>
 

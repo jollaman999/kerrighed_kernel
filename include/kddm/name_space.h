@@ -9,7 +9,7 @@
 #define __KDDM_NS__
 
 #include <linux/unique_id.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 #include <kddm/kddm_types.h>
 
 

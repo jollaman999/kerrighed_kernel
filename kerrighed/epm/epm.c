@@ -6,7 +6,7 @@
 
 #include <linux/kernel.h>
 #include <linux/sched.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 #include <kerrighed/ghost.h>
 #include <kerrighed/hotplug.h>
 #include <kerrighed/krgsyms.h>

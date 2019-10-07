@@ -6,7 +6,7 @@
  *  Copyright (C) 2007, Renaud Lottiaux, Kerlabs.
  */
 
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 #include <linux/module.h>
 
 #include <kddm/kddm.h>

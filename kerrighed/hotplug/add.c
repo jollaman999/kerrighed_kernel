@@ -7,7 +7,7 @@
 #include <linux/spinlock.h>
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 #include <linux/uaccess.h>
 #include <kerrighed/sys/types.h>
 #include <kerrighed/krginit.h>

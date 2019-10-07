@@ -10,7 +10,7 @@
 #include <linux/nsproxy.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 
 #include <kerrighed/debug.h>
 

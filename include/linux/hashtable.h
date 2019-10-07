@@ -5,6 +5,9 @@
 
 #ifndef _LINUX_HASHTABLE_H
 #define _LINUX_HASHTABLE_H
+#ifndef __HASHTABLE_H__
+#define __HASHTABLE_H__
+#endif
 
 #include <linux/list.h>
 #include <linux/types.h>
