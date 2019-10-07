@@ -373,7 +373,7 @@ void clean_up_mm_struct (struct mm_struct *mm)
 
 		if (!anon_vma(vma)) {
 			detach_vmas_to_be_unmapped(mm, vma, prev, vma->vm_end);
-			unmap_region(mm, vma, prev, vma->vm_start,
+			inno_unmap_region(mm, vma, prev, vma->vm_start,
 				     vma->vm_end);
 			remove_vma_list(mm, vma);
 		}

@@ -2277,10 +2277,8 @@ void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma)
  *
  * Called with the mm semaphore held.
  */
-#ifndef CONFIG_KRG_MM
-static
-#endif
-void unmap_region(struct mm_struct *mm,
+
+static void unmap_region(struct mm_struct *mm,
 		struct vm_area_struct *vma, struct vm_area_struct *prev,
 		unsigned long start, unsigned long end)
 {
@@ -2296,7 +2294,24 @@ void unmap_region(struct mm_struct *mm,
 				 next? next->vm_start: 0);
 	tlb_finish_mmu(tlb, start, end);
 }
+#ifdef CONFIG_KRG_MM
+void inno_unmap_region(struct mm_struct *mm,
+		struct vm_area_struct *vma, struct vm_area_struct *prev,
+		unsigned long start, unsigned long end)
+{
+	struct vm_area_struct *next = prev? prev->vm_next: mm->mmap;
+	struct mmu_gather *tlb;
+	unsigned long nr_accounted = 0;
 
+	lru_add_drain();
+	update_hiwater_rss(mm);
+	unmap_vmas(&tlb, vma, start, end, &nr_accounted, NULL, 0);
+	vm_unacct_memory(nr_accounted);
+	free_pgtables(tlb, vma, prev? prev->vm_end: FIRST_USER_ADDRESS,
+				 next? next->vm_start: 0);
+	tlb_finish_mmu(tlb, start, end);
+}
+#endif
 /*
  * Create a list of vma's touched by the unmap, removing them from the mm's
  * vma list as we go..
