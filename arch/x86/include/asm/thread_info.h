@@ -183,6 +183,8 @@ struct thread_info {
 									\
 	ret;								\
 })
+#define alloc_thread_info(tsk)						\
+	((struct thread_info *)__get_free_pages(THREAD_FLAGS, THREAD_ORDER))
 
 #include <asm/percpu.h>
 
