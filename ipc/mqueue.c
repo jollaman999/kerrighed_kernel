@@ -757,7 +757,7 @@ out_putname:
 SYSCALL_DEFINE1(mq_unlink, const char __user *, u_name)
 {
 	int err;
-	char *name;
+	struct filename *name;
 	struct dentry *dentry;
 	struct inode *inode = NULL;
 	struct ipc_namespace *ipc_ns = current->nsproxy->ipc_ns;
@@ -766,9 +766,11 @@ SYSCALL_DEFINE1(mq_unlink, const char __user *, u_name)
 	if (IS_ERR(name))
 		return PTR_ERR(name);
 
+	audit_inode_parent_hidden(name, ipc_ns->mq_mnt->mnt_root);
 	mutex_lock_nested(&ipc_ns->mq_mnt->mnt_root->d_inode->i_mutex,
 			I_MUTEX_PARENT);
-	dentry = lookup_one_len(name, ipc_ns->mq_mnt->mnt_root, strlen(name));
+	dentry = lookup_one_len(name->name, ipc_ns->mq_mnt->mnt_root,
+				strlen(name->name));
 	if (IS_ERR(dentry)) {
 		err = PTR_ERR(dentry);
 		goto out_unlock;

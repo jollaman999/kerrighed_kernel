@@ -1002,7 +1002,8 @@ struct file {
 #define f_vfsmnt	f_path.mnt
 	const struct file_operations	*f_op;
 	spinlock_t		f_lock;  /* f_ep_links, f_flags, no IRQ */
-	atomic_long_t		f_count;
+//Codex fix atomic_log_t -> atomic_t
+	atomic_t		f_count;
 #ifdef CONFIG_KRG_FAF
 	unsigned long           f_flags;
 #else
