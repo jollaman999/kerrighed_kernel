@@ -222,8 +222,7 @@ static int cr_export_semundos(ghost_t *ghost, struct task_struct *task)
 
 		struct ipc_namespace *ns = task_nsproxy(task)->ipc_ns;
 		struct sem_undo *undo;
-		struct sem_array *sma = sem_obtain_object(ns, undo_id->semid);
-		sem_lock(sma,NULL,-1);
+		struct sem_array *sma = sem_lock(ns, undo_id->semid);
 
 		if (IS_ERR(sma)) {
 			BUG();
@@ -347,7 +346,7 @@ static int cr_import_one_semundo(ghost_t *ghost, struct task_struct *task,
 	if (r)
 		goto end;
 
-	sma = sem_obtain_object_check(ns, semid);
+	sma = sem_lock_check(ns, semid);
 	if (IS_ERR(sma)) {
 		r = PTR_ERR(sma);
 		goto end;

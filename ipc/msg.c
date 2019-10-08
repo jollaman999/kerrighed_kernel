@@ -182,15 +182,6 @@ static inline void msg_rmid(struct ipc_namespace *ns, struct msg_queue *s)
 	ipc_rmid(&msg_ids(ns), &s->q_perm);
 }
 
-static void msg_rcu_free(struct rcu_head *head)
-{
-	struct ipc_rcu *p = container_of(head, struct ipc_rcu, rcu);
-	struct msg_queue *msq = ipc_rcu_to_struct(p);
-
-	security_msg_queue_free(msq);
-	ipc_rcu_free(head);
-}
-
 /**
  * newque - Create a new msg queue
  * @ns: namespace
@@ -218,18 +209,9 @@ int newque(struct ipc_namespace *ns, struct ipc_params *params)
 	msq->q_perm.security = NULL;
 	retval = security_msg_queue_alloc(msq);
 	if (retval) {
-		ipc_rcu_putref(msq, ipc_rcu_free);
+		ipc_rcu_putref(msq);
 		return retval;
 	}
-
-	msq->q_stime = msq->q_rtime = 0;
-	msq->q_ctime = get_seconds();
-	msq->q_cbytes = msq->q_qnum = 0;
-	msq->q_qbytes = ns->msg_ctlmnb;
-	msq->q_lspid = msq->q_lrpid = 0;
-	INIT_LIST_HEAD(&msq->q_messages);
-	INIT_LIST_HEAD(&msq->q_receivers);
-	INIT_LIST_HEAD(&msq->q_senders);
 
 	/*
 	 * ipc_addid() locks msq
@@ -241,9 +223,19 @@ int newque(struct ipc_namespace *ns, struct ipc_params *params)
 	id = ipc_addid(&msg_ids(ns), &msq->q_perm, ns->msg_ctlmni);
 #endif
 	if (id < 0) {
-		ipc_rcu_putref(msq, msg_rcu_free);
+		security_msg_queue_free(msq);
+		ipc_rcu_putref(msq);
 		return id;
 	}
+
+	msq->q_stime = msq->q_rtime = 0;
+	msq->q_ctime = get_seconds();
+	msq->q_cbytes = msq->q_qnum = 0;
+	msq->q_qbytes = ns->msg_ctlmnb;
+	msq->q_lspid = msq->q_lrpid = 0;
+	INIT_LIST_HEAD(&msq->q_messages);
+	INIT_LIST_HEAD(&msq->q_receivers);
+	INIT_LIST_HEAD(&msq->q_senders);
 
 #ifdef CONFIG_KRG_IPC
 	if (is_krg_ipc(&msg_ids(ns))) {
@@ -354,7 +346,8 @@ static void freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 		free_msg(msg);
 	}
 	atomic_sub(msq->q_cbytes, &ns->msg_bytes);
-	ipc_rcu_putref(msq, msg_rcu_free);
+	security_msg_queue_free(msq);
+	ipc_rcu_putref(msq);
 }
 
 /*
@@ -797,30 +790,54 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 			goto out_unlock_free;
 		}
 		ss_add(msq, &s);
-
-		if (!ipc_rcu_getref(msq)) {
-			err = -EIDRM;
-			goto out_unlock_free;
-		}
-
+#ifndef CONFIG_KRG_IPC
+		ipc_rcu_getref(msq);
+#endif
 		msg_unlock(msq);
+#ifdef CONFIG_KRG_IPC
+		up_read(&msg_ids(ns).rw_mutex);
+#endif
+
 		schedule();
 
+#ifdef CONFIG_KRG_IPC
+		down_read(&msg_ids(ns).rw_mutex);
+		msq = msg_lock_check(ns, msqid);
+		if (IS_ERR(msq)) {
+			err = -EIDRM;
+			goto out_free;
+		}
+#else
 		ipc_lock_by_ptr(&msq->q_perm);
-		ipc_rcu_putref(msq, ipc_rcu_free);
+		ipc_rcu_putref(msq);
 		if (msq->q_perm.deleted) {
 			err = -EIDRM;
 			goto out_unlock_free;
 		}
+#endif
 		ss_del(&s);
 
+#if defined(CONFIG_KRG_IPC) && defined(CONFIG_KRG_EPM)
+		if (krg_action_any_pending(current)) {
+#ifdef CONFIG_KRG_DEBUG
+			printk("%s:%d - action kerrighed! --> need replay!!\n",
+			       __PRETTY_FUNCTION__, __LINE__);
+#endif
+			err = -ERESTARTSYS;
+			goto out_unlock_free;
+		}
+#endif
 		if (signal_pending(current)) {
 			err = -ERESTARTNOHAND;
 			goto out_unlock_free;
 		}
 	}
 
+#ifdef CONFIG_KRG_IPC
+	msq->q_lspid = tgid;
+#else
 	msq->q_lspid = task_tgid_vnr(current);
+#endif
 	msq->q_stime = get_seconds();
 
 	if (!pipelined_send(msq, msg)) {
