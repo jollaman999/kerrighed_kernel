@@ -95,13 +95,11 @@ struct task_struct;
  * visible to the kabitool.  The actual code is not affected,
  * since all it does is pass a sem_array pointer.
  */
-#ifdef __GENKSYMS__
 struct sem {
 	int	semval;		/* current value */
 	int	sempid;		/* pid of last operation */
 
 };
-#endif
 struct sem_queue {
 	struct list_head	list;	 /* queue of pending operations */
 	struct task_struct	*sleeper; /* this process */
@@ -134,7 +132,6 @@ struct sem_array {
 #endif
 };
 
-#ifdef __GENKSYMS__
 /* This struct is only used in ipc/sem.c, the non-GENKSYMS define is there */
 
 struct sem_undo {
@@ -159,7 +156,6 @@ struct sem_undo_list {
 	spinlock_t		lock;
 	struct list_head	list_proc;
 };
-#endif
 
 struct sysv_sem {
 #ifdef CONFIG_KRG_IPC
