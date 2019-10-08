@@ -602,7 +602,8 @@ static inline void __remove_semundo_from_sem_list(struct ipc_namespace *ns,
 	struct sem_array *sma;
 	struct sem_undo *un, *tu;
 
-	sma = sem_lock(ns, semid);
+	sma = sem_obtain_object(ns, semid);
+	sem_lock(sma,NULL,-1);
 	if (IS_ERR(sma))
 		return;
 

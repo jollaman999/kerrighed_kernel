@@ -19,10 +19,15 @@ void krg_ipc_sem_exit_sem(struct ipc_namespace *ns, struct task_struct * tsk);
 
 int newary(struct ipc_namespace *ns, struct ipc_params *params);
 
-struct sem_array *sem_lock(struct ipc_namespace *ns, int id);
 
-struct sem_array *sem_lock_check(struct ipc_namespace *ns, int id);
+//Codex
+// struct sem_array *sem_lock(struct ipc_namespace *ns, int id);
+struct sem_array *sem_obtain_object(struct ipc_namespace *ns, int id);
 
+// struct sem_array *sem_lock_check(struct ipc_namespace *ns, int id);
+struct sem_array *sem_obtain_object_check(struct ipc_namespace *ns,int id);
+
+int sem_lock(struct sem_array *sma, struct sembuf *sops, int nsops);
 static inline struct sem_array *local_sem_lock(struct ipc_namespace *ns, int id)
 {
 	struct kern_ipc_perm *ipcp = local_ipc_lock(&sem_ids(ns), id);
