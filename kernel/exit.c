@@ -1432,12 +1432,12 @@ int krg_kernel_wait_task_zombie(struct task_struct *p, int options,
 		     struct siginfo __user *infop,
 		     int __user *stat_addr, struct rusage __user *ru){
 	struct wait_opts wo;
-	wo.wo_pid	= pid;
+
 	wo.wo_flags	= options;
 	wo.wo_info	= infop;
 	wo.wo_stat	= NULL;
 	wo.wo_rusage	= ru;
-	wo.wo_upid=upid;
+
 	return wait_task_zombie(&wo,p);				 
 			 }
 
@@ -1982,8 +1982,8 @@ repeat:
 		/* Try all children, even remote ones but don't wait yet */
 		/* Releases children lock */
 		int tsk_result = krg_do_wait(current->children_obj, &retval,
-					     type, upid, options,
-					     infop, stat_addr, ru);
+					     wo->wo_type, wo->upid, wo->wo_flags,
+					     wo->wo_info, wo->wo_stat, wo->wo_rusage);
 		if (tsk_result)
 			retval = tsk_result;
 	}

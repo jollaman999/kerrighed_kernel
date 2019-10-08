@@ -511,7 +511,11 @@ static void lru_deactivate(struct page *page, struct zone *zone)
 
 	if (active)
 		__count_vm_event(PGDEACTIVATE);
+#ifdef CONFIG_KRG_MM
+	update_page_reclaim_stat(zone, page, page, file, 0);
+#else
 	update_page_reclaim_stat(zone, page, file, 0);
+#endif
 }
 
 static void ____pagevec_lru_deactivate(struct pagevec *pvec)
@@ -794,7 +798,11 @@ void lru_add_page_tail(struct zone* zone,
 			active = 0;
 			lru = LRU_INACTIVE_ANON;
 		}
+#ifdef CONFIG_KRG_MM
+		update_page_reclaim_stat(zone, page_tail, page_tail, file, active);
+#else
 		update_page_reclaim_stat(zone, page_tail, file, active);
+#endif
 	} else {
 		SetPageUnevictable(page_tail);
 		lru = LRU_UNEVICTABLE;

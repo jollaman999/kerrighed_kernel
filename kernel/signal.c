@@ -2825,7 +2825,9 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 	struct k_sigaction *k;
 	sigset_t mask;
 	int idx;
-
+#ifdef CONFIG_KRG_EPM
+	unsigned long sighand_id;
+#endif
 	if (!valid_signal(sig) || sig < 1 || (act && sig_kernel_only(sig)))
 		return -EINVAL;
 

@@ -749,6 +749,7 @@ static int wait_for_vfork_done(struct task_struct *child,
 void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 {
 	/* Get rid of any futexes when releasing the mm */
+	struct completion *vfork_done = tsk->vfork_done;
 #ifdef CONFIG_FUTEX
 	if (unlikely(tsk->robust_list)) {
 		exit_robust_list(tsk);

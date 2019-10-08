@@ -1252,9 +1252,9 @@ static unsigned long isolate_pages(unsigned long nr, struct mem_cgroup_zone *mz,
 				   unsigned long *scanned, int order,
 				   isolate_mode_t mode,
 #ifdef CONFIG_KRG_MM
-				   int active, int file, int kddm);
+				   int active, int file, int kddm)
 #else
-			       int active, int file);
+			       int active, int file)
 #endif				   
 {
 	struct lruvec *lruvec;
@@ -1810,7 +1810,7 @@ static int inactive_kddm_is_low(struct zone *zone, struct scan_control *sc)
 {
 	int low;
 
-	if (scanning_global_lru(sc))
+	if (scanning_global_lru(sc->target_mem_cgroup))
 		low = inactive_kddm_is_low_global(zone);
 	else
 		BUG();
@@ -1864,7 +1864,7 @@ static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
 		return 0;
 	}
 #ifdef CONFIG_KRG_MM
-	if (lru == LRU_ACTIVE_MIGR && inactive_kddm_is_low(mz, sc)) {
+	if (lru == LRU_ACTIVE_MIGR && inactive_kddm_is_low(mz->zone, sc)) {
 		shrink_active_list(nr_to_scan, mz, sc, priority, 0, 1);
 		return 0;
 	}
@@ -2574,9 +2574,6 @@ unsigned long try_to_free_mem_cgroup_pages(struct mem_cgroup *mem_cont,
 		.swappiness = swappiness,
 		.order = 0,
 		.target_mem_cgroup = mem_cont,
-#ifdef CONFIG_KRG_MM
-		.isolate_pages = mem_cgroup_isolate_pages,
-#endif
 		.nodemask = NULL, /* we don't care the placement */
 		.oom_force_anon_scan = false,
 	};
