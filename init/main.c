@@ -577,7 +577,7 @@ void __init __weak thread_info_cache_init(void)
 /*
  * Set up kernel memory allocators
  */
-static void __init mm_init(void)
+static void __init kernel_mm_init(void)
 {
 	/*
 	 * page_cgroup requires countinous pages as memmap
@@ -652,7 +652,7 @@ asmlinkage void __init start_kernel(void)
 	sort_main_extable();
 	kaiser_early_init(0);
 	trap_init();
-	mm_init();
+	kernel_mm_init();
 	/*
 	 * Set up the scheduler prior starting any interrupts (such as the
 	 * timer interrupt). Full topology setup happens at smp_init()
