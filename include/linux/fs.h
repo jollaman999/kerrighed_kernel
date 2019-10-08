@@ -1003,7 +1003,7 @@ struct file {
 	const struct file_operations	*f_op;
 	spinlock_t		f_lock;  /* f_ep_links, f_flags, no IRQ */
 //Codex fix atomic_log_t -> atomic_t
-	atomic_log_t		f_count;
+	atomic_long_t		f_count;
 #ifdef CONFIG_KRG_FAF
 	unsigned long           f_flags;
 #else
