@@ -6,11 +6,6 @@
 
 #define PGALLOC_GFP GFP_KERNEL | __GFP_NOTRACK | __GFP_REPEAT | __GFP_ZERO
 
-#ifdef CONFIG_KRG_MM
-	if (in_atomic())
-		pte = alloc_pages(GFP_ATOMIC|__GFP_ZERO, 0);
-	else
-#endif
 #ifdef CONFIG_HIGHPTE
 #define PGALLOC_USER_GFP __GFP_HIGHMEM
 #else
@@ -27,6 +22,12 @@ pte_t *pte_alloc_one_kernel(struct mm_struct *mm, unsigned long address)
 pgtable_t pte_alloc_one(struct mm_struct *mm, unsigned long address)
 {
 	struct page *pte;
+
+#ifdef CONFIG_KRG_MM
+	if (in_atomic())
+		pte = alloc_pages(GFP_ATOMIC|__GFP_ZERO, 0);
+	else
+#endif
 
 	pte = alloc_pages(__userpte_alloc_gfp, 0);
 	if (pte)
