@@ -283,6 +283,20 @@ int ima_file_mmap(struct file *file, unsigned long prot)
 	return 0;
 }
 
+
+/*
+ * ima_shm_check - IPC shm and shmat create/fput a file
+ *
+ * Maintain the opencount for these files to prevent unnecessary
+ * imbalance messages.
+ */
+void ima_shm_check(struct file *file)
+{
+	opencount_get(file);
+	return;
+}
+
+
 /**
  * ima_bprm_check - based on policy, collect/store measurement.
  * @bprm: contains the linux_binprm structure

@@ -110,6 +110,8 @@ struct sem_queue {
 	int			nsops;	 /* number of operations */
 	int			alter;	 /* does *sops alter the array? */
 #ifdef CONFIG_KRG_IPC
+	int                     semid;
+	kerrighed_node_t        node;
 	struct list_head        remote_sem_pending;
 #endif
 };
@@ -125,10 +127,11 @@ struct sem_array {
 	unsigned long		sem_nsems;	/* no. of semaphores in array */
 #else
 	int			sem_nsems;	/* no. of semaphores in array */
+
+	int			complex_count;	/* pending complex operations */
+#endif
 #ifdef CONFIG_KRG_IPC
 	struct list_head        remote_sem_pending;
-#endif
-	int			complex_count;	/* pending complex operations */
 #endif
 };
 

@@ -450,8 +450,9 @@ int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 		/* hugetlb_file_setup applies strict accounting */
 		if (shmflg & SHM_NORESERVE)
 			acctflag = VM_NORESERVE;
-		file = hugetlb_file_setup(name, size, acctflag);
-		shp->mlock_user = current_user();
+		
+		file = hugetlb_file_setup(name, hugesize, acctflag,
+					&shp->mlock_user, HUGETLB_SHMFS_INODE);		
 	} else {
 		/*
 		 * Do not allow no accounting for OVERCOMMIT_NEVER, even

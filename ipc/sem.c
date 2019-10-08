@@ -368,7 +368,7 @@ SYSCALL_DEFINE3(semget, key_t, key, int, nsems, int, semflg)
 
 	sem_ops.getnew = newary;
 	sem_ops.associate = sem_security;
-	sem_ops.more_checks = sem_moreOsem_checks;
+	sem_ops.more_checks = sem_more_checks;
 
 	sem_params.key = key;
 	sem_params.flg = semflg;
