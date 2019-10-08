@@ -202,6 +202,8 @@ static inline int pte_file_max_bits(void)
 #else
 #define SWP_OFFSET_SHIFT (_PAGE_BIT_PROTNONE + 1)
 #endif /* !CONFIG_KRG_MM */
+/*Inno SWP_OFFSET_FIRST_BIT Fix  */
+#define SWP_OFFSET_FIRST_BIT	(_PAGE_BIT_PROTNONE + 1)
 
 #define MAX_SWAPFILES_CHECK() BUILD_BUG_ON(MAX_SWAPFILES_SHIFT > SWP_TYPE_BITS)
 
