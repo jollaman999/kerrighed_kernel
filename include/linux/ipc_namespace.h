@@ -148,6 +148,9 @@ static inline int mq_init_ns(struct ipc_namespace *ns) { return 0; }
 
 #if defined(CONFIG_IPC_NS)
 extern void free_ipc_ns(struct ipc_namespace *ns);
+extern void free_ipcs(struct ipc_namespace *ns, struct ipc_ids *ids,
+		      void (*free)(struct ipc_namespace *,
+				   struct kern_ipc_perm *));
 extern struct ipc_namespace *copy_ipcs(unsigned long flags,
 				       struct ipc_namespace *ns);
 static inline struct ipc_namespace *get_ipc_ns(struct ipc_namespace *ns)
