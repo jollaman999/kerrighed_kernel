@@ -34,7 +34,9 @@
 #include <linux/nospec.h>
 
 #include "internal.h"
-
+#ifdef CONFIG_KRG_IPC
+#include <kerrighed/faf.h>
+#endif
 int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
 	struct file *filp)
 {

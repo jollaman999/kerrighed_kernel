@@ -1427,6 +1427,21 @@ static int wait_noreap_copyout(struct wait_opts *wo, struct task_struct *p,
  * the lock and this task is uninteresting.  If we return nonzero, we have
  * released the lock and the system call should return.
  */
+#ifdef CONFIG_KRG_EPM
+int krg_kernel_wait_task_zombie(struct task_struct *p, int options,
+		     struct siginfo __user *infop,
+		     int __user *stat_addr, struct rusage __user *ru){
+	struct wait_opts wo;
+	wo.wo_pid	= pid;
+	wo.wo_flags	= options;
+	wo.wo_info	= infop;
+	wo.wo_stat	= NULL;
+	wo.wo_rusage	= ru;
+	wo.wo_upid=upid;
+	return wait_task_zombie(&wo,p);				 
+			 }
+
+#endif
 #ifndef CONFIG_KRG_EPM
 static
 #endif

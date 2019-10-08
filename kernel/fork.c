@@ -709,11 +709,6 @@ static void complete_vfork_done(struct task_struct *tsk)
 	vfork = tsk->vfork_done;
 	if (likely(vfork)) {
 		tsk->vfork_done = NULL;
-#ifdef CONFIG_KRG_EPM
-		if (tsk->remote_vfork_done)
-			krg_vfork_done(vfork_done);
-		else
-#endif
 		complete(vfork);
 	}
 	task_unlock(tsk);
@@ -1780,6 +1775,8 @@ bad_fork_cleanup_application:
 	if (!krg_current)
 		krg_exit_application(p);
 #endif
+bad_fork_free_graph:
+	ftrace_graph_exit_task(p);
 bad_fork_free_pid:
 #ifdef CONFIG_KRG_EPM
 	if (!krg_current)
@@ -1839,9 +1836,10 @@ bad_fork_cleanup_audit:
 bad_fork_cleanup_kddm_info:
 	if (p->kddm_info)
 		kmem_cache_free(kddm_info_cachep, p->kddm_info);
-#endif
+#else
 bad_fork_cleanup_perf:
 	perf_event_free_task(p);
+#endif
 bad_fork_cleanup_policy:
 #ifdef CONFIG_NUMA
 	mpol_put(p->mempolicy);

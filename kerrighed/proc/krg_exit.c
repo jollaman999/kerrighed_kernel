@@ -344,7 +344,7 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 		res.ioac = p->ioac;
 		task_io_accounting_add(&res.ioac, &sig->ioac);
 	}
-	retval = wait_task_zombie(p, req->options,
+	retval = krg_kernel_wait_task_zombie(p, req->options,
 				  &res.info,
 				  &res.status, &res.ru);
 	if (!retval)

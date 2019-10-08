@@ -634,6 +634,12 @@ struct signal_struct {
 	 */
 	struct cpu_itimer it[2];
 
+// krrighed Code
+	/* ITIMER_PROF and ITIMER_VIRTUAL timers for the process */
+	cputime_t it_prof_expires, it_virt_expires;
+	cputime_t it_prof_incr, it_virt_incr;
+
+
 	/*
 	 * Thread group totals for process CPU timers.
 	 * See thread_group_cputimer(), et al, for details.
@@ -731,6 +737,11 @@ struct signal_struct {
 	unsigned audit_tty_log_passwd;
 #endif /* CONFIG_AUDIT */
 #endif /* __GENKSYMS__ */
+
+#ifdef CONFIG_KRG_EPM
+	objid_t krg_objid;
+	struct signal_struct_kddm_object *kddm_obj;
+#endif
 };
 
 /* Context switch must be unlocked if interrupts are to be enabled */
@@ -2463,7 +2474,7 @@ extern void exit_itimers(struct signal_struct *);
 extern void flush_itimer_signals(void);
 
 #ifdef CONFIG_KRG_EPM
-int wait_task_zombie(struct task_struct *p, int options,
+int krg_kernel_wait_task_zombie(struct task_struct *p, int options,
 		     struct siginfo __user *infop,
 		     int __user *stat_addr, struct rusage __user *ru);
 #endif

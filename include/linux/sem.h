@@ -123,13 +123,8 @@ struct sem_array {
 	struct sem		*sem_base;	/* ptr to first semaphore in array */
 	struct list_head	sem_pending;	/* pending operations to be processed */
 	struct list_head	list_id;	/* undo requests on this array */
-#ifdef __GENKSYMS__
 	unsigned long		sem_nsems;	/* no. of semaphores in array */
-#else
-	int			sem_nsems;	/* no. of semaphores in array */
-
 	int			complex_count;	/* pending complex operations */
-#endif
 #ifdef CONFIG_KRG_IPC
 	struct list_head        remote_sem_pending;
 #endif

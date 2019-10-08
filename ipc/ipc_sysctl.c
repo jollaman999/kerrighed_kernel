@@ -249,6 +249,15 @@ static struct ctl_table ipc_kern_table[] = {
 		.strategy	= sysctl_ipc_data,
 	},
 	{
+		.procname       = "shm_rmid_forced",
+		.data           = &init_ipc_ns.shm_rmid_forced,
+		.maxlen         = sizeof(init_ipc_ns.shm_rmid_forced),
+		.mode           = 0644,
+		.proc_handler   = proc_ipc_dointvec_minmax_orphans,
+		.extra1         = &zero,
+		.extra2         = &one,
+	},
+	{
 		.ctl_name	= KERN_MSGMAX,
 		.procname	= "msgmax",
 		.data		= &init_ipc_ns.msg_ctlmax,

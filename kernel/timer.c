@@ -1600,9 +1600,6 @@ static void migrate_timer_list(struct tvec_base *new_base, struct list_head *hea
 			new_base->next_timer = timer->expires;
 		internal_add_timer(new_base, timer);
 	}
-#if defined(CONFIG_KRG_SCHED) && defined(CONFIG_MODULE_HOOK)
-	module_hook_call(&kmh_calc_load, ticks);
-#endif
 }
 
 static void __cpuinit migrate_timers(int cpu)
