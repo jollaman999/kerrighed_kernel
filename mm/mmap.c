@@ -308,6 +308,8 @@ unsigned long __sys_brk(struct mm_struct *mm, unsigned long brk,
 	unsigned long rlim = data_limit, retval;
 	unsigned long newbrk, oldbrk;
 	unsigned long min_brk;
+	struct vm_area_struct *next;
+	
 #else
 SYSCALL_DEFINE1(brk, unsigned long, brk)
 {
@@ -2277,8 +2279,10 @@ void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma)
  *
  * Called with the mm semaphore held.
  */
-
-static void unmap_region(struct mm_struct *mm,
+#ifndef CONFIG_KRG_MM
+static
+#endif
+void unmap_region(struct mm_struct *mm,
 		struct vm_area_struct *vma, struct vm_area_struct *prev,
 		unsigned long start, unsigned long end)
 {

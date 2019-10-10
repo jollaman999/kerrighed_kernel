@@ -883,7 +883,7 @@ static void zoneinfo_show_print(struct seq_file *m, pg_data_t *pgdat,
 #else
 // origin code
 // 		   "\n        scanned  %lu"
-		   "\n        scanned  %lu (aa: %lu ia: %lu af: %lu if: %lu)"
+		   "\n        scanned  %lu"
 #endif
 		   "\n        spanned  %lu"
 		   "\n        present  %lu",
@@ -892,6 +892,14 @@ static void zoneinfo_show_print(struct seq_file *m, pg_data_t *pgdat,
 		   low_wmark_pages(zone),
 		   high_wmark_pages(zone),
 		   zone->pages_scanned,
+#ifdef CONFIG_KRG_MM
+		   zone->lru[LRU_ACTIVE_ANON].nr_scan,
+		   zone->lru[LRU_INACTIVE_ANON].nr_scan,
+		   zone->lru[LRU_ACTIVE_FILE].nr_scan,
+		   zone->lru[LRU_INACTIVE_FILE].nr_scan,
+		   zone->lru[LRU_ACTIVE_MIGR].nr_scan,
+		   zone->lru[LRU_INACTIVE_MIGR].nr_scan,
+#endif
 		   zone->spanned_pages,
 		   zone->present_pages);
 

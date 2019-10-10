@@ -320,7 +320,7 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
 		unsigned long locked, lock_limit;
 		locked = mm->locked_vm << PAGE_SHIFT;
 #ifdef CONFIG_KRG_MM
-		lock_limit = _lock_limit;
+		lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur;
 #else
 		lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur;
 #endif

@@ -1916,6 +1916,7 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 			return;
 		}
 	}
+#endif
 	/*
 	 * OK, so we have swap space and a fair amount of page cache
 	 * pages.  We use the recently rotated / recently scanned
