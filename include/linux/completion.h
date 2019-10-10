@@ -22,10 +22,10 @@
  * reinit_completion(), and macros DECLARE_COMPLETION(),
  * DECLARE_COMPLETION_ONSTACK().
  */
-typedef struct completion {
+struct completion {
 	unsigned int done;
 	wait_queue_head_t wait;
-}completion;
+};
 
 #define COMPLETION_INITIALIZER(work) \
 	{ 0, __WAIT_QUEUE_HEAD_INITIALIZER((work).wait) }
