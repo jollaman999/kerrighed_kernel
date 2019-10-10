@@ -673,7 +673,10 @@ static void stk_v4l_vm_close(struct vm_area_struct *vma)
 	if (sbuf->mapcount == 0)
 		sbuf->v4lbuf.flags &= ~V4L2_BUF_FLAG_MAPPED;
 }
-static const struct vm_operations_struct stk_v4l_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const 
+#endif
+struct vm_operations_struct stk_v4l_vm_ops = {
 	.open = stk_v4l_vm_open,
 	.close = stk_v4l_vm_close
 };

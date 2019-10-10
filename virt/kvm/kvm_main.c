@@ -2936,7 +2936,10 @@ static int kvm_vm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 	return 0;
 }
 
-static const struct vm_operations_struct kvm_vm_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const 
+#endif
+struct vm_operations_struct kvm_vm_vm_ops = {
 	.fault = kvm_vm_fault,
 };
 
