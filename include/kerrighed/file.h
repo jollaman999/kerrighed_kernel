@@ -57,7 +57,7 @@ static inline struct dvfs_file_struct *grab_dvfs_file_struct(unsigned long file_
 
 	dvfs_file = _kddm_grab_object(dvfs_file_struct_ctnr, file_id);
 	if (dvfs_file && dvfs_file->file) {
-		if (atomic_read ((const)&dvfs_file->file->f_count) == 0)
+		if (atomic_read ((const)dvfs_file->file->f_count) == 0)
 			dvfs_file->file = NULL;
 	}
 	return dvfs_file;
@@ -69,7 +69,7 @@ static inline struct dvfs_file_struct *get_dvfs_file_struct(unsigned long file_i
 
 	dvfs_file = _kddm_get_object(dvfs_file_struct_ctnr, file_id);
 	if (dvfs_file && dvfs_file->file) {
-		if (atomic_read ((const)&&dvfs_file->file->f_count) == 0)
+		if (atomic_read ((const)dvfs_file->file->f_count) == 0)
 			dvfs_file->file = NULL;
 	}
 	return dvfs_file;
