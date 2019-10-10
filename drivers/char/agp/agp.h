@@ -125,7 +125,7 @@ struct agp_bridge_driver {
 struct agp_bridge_data {
 	const struct agp_version *version;
 	const struct agp_bridge_driver *driver;
-#ifdef CONFIG_KERRIGHED
+#ifndef CONFIG_KERRIGHED
 	const
 #endif	
 	struct vm_operations_struct *vm_ops;

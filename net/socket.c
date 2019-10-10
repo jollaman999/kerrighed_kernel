@@ -2486,7 +2486,7 @@ out_freeiov:
 // #ifdef CONFIG_KRG_FAF
 // 		faf_sock_kfree_s(sock->sk, iov, iov_size, faf_file);
 // #else
-// 		sock_kfree_s(sock->sk, iov, iov_size);
+		sock_kfree_s(sock->sk, iov, iov_size);
 // #endif
 out:
 	return err;

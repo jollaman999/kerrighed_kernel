@@ -298,7 +298,6 @@ int try_to_flush_page(struct page *page)
 {
 
     struct anon_vma *anon_vma;
-	struct anon_vma_chain *avc;
     struct vm_area_struct *vma;
 	int ret = SWAP_AGAIN;
 	unsigned long address;
