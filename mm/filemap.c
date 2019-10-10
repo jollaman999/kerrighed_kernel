@@ -1799,7 +1799,10 @@ out:
 }
 EXPORT_SYMBOL(filemap_page_mkwrite);
 
-const struct vm_operations_struct generic_file_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+const
+#endif
+struct vm_operations_struct generic_file_vm_ops = {
 	.fault		= filemap_fault,
 	.page_mkwrite	= filemap_page_mkwrite,
 };

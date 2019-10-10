@@ -46,7 +46,8 @@
 #else /* CONFIG_KRG_PROC */
 
 #include <kerrighed/sys/types.h>
-
+#define PIDS_PER_CPU_DEFAULT	1024
+#define PIDS_PER_CPU_MIN	8
 /* We need the number of bits for Kerrighed PIDs definitions. */
 #define NR_BITS_PID_MAX_DEFAULT (CONFIG_BASE_SMALL ? 12 : 15)
 #define PID_MAX_DEFAULT (1 << NR_BITS_PID_MAX_DEFAULT)
