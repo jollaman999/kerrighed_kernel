@@ -75,11 +75,11 @@
 #endif
 
 #ifndef CONFIG_KRG_MM
-static void unmap_region(struct mm_struct *mm,
+static 
+#endif
+void unmap_region(struct mm_struct *mm,
 						 struct vm_area_struct *vma, struct vm_area_struct *prev,
 						 unsigned long start, unsigned long end);
-#endif
-
 /*
  * WARNING: the debugging will use recursive algorithms so never enable this
  * unless you know what you are doing.

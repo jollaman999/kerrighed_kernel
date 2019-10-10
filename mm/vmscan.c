@@ -1864,7 +1864,7 @@ static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
 		return 0;
 	}
 #ifdef CONFIG_KRG_MM
-	if (lru == LRU_ACTIVE_MIGR && inactive_kddm_is_low(&mz->zone, mz)) {
+	if (lru == LRU_ACTIVE_MIGR && inactive_kddm_is_low(mz->zone, mz)) {
 		shrink_active_list(nr_to_scan, mz, sc, priority, 0, 1);
 		return 0;
 	}
@@ -1961,10 +1961,10 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 	if (!sc->may_swap || ((long)nr_swap_pages <= 0))
 		anon_prio = 0;
 	if (scanning_global_lru(mz)) {
-		free  = zone_page_state(zone, NR_FREE_PAGES);
+		free  = zone_page_state(&mz->zone, NR_FREE_PAGES);
 		/* If we have very few page cache pages,
 		   force-scan anon pages. */
-		if (unlikely(file + free <= zone->pages_high))
+		if (unlikely(file + free <= mz->zone->pages_high))
 			file_prio = 0;
 	}
 	kddm_prio = 400 - anon_prio - file_prio;
@@ -2099,7 +2099,7 @@ static void shrink_mem_cgroup_zone(int priority, struct mem_cgroup_zone *mz,
 	if (inactive_anon_is_low(mz) && get_nr_swap_pages() > 0)
 #ifdef CONFIG_KRG_MM
 		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0, 0);
-	if (inactive_kddm_is_low(&mz->zone,sc))
+	if (inactive_kddm_is_low(mz->zone,mz))
 		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0, 1);
 #else
 		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0);
@@ -2635,7 +2635,7 @@ static void age_active_anon(struct zone *zone, struct scan_control *sc,
 #else
                        sc, priority, 0, 0);
 			/* Do the same on kddm lru pages */
-			if (inactive_kddm_is_low(&mz->zone, mz))
+			if (inactive_kddm_is_low(mz->zone, mz))
 				shrink_active_list(SWAP_CLUSTER_MAX, &mz,
 						   sc, priority, 0, 1);
 #endif
@@ -3096,16 +3096,16 @@ unsigned long zone_reclaimable_pages(struct zone *zone)
 
 	nr = zone_page_state(zone, NR_ACTIVE_FILE) +
 #ifdef CONFIG_KRG_MM
-		+ zone_page_state(zone, NR_ACTIVE_MIGR)
-		+ zone_page_state(zone, NR_INACTIVE_MIGR)
+		zone_page_state(zone, NR_ACTIVE_MIGR)
+		+ zone_page_state(zone, NR_INACTIVE_MIGR)+
 #endif
 	     zone_page_state(zone, NR_INACTIVE_FILE);
 
 	if (get_nr_swap_pages() > 0)
 		nr += zone_page_state(zone, NR_ACTIVE_ANON) +
 #ifdef CONFIG_KRG_MM
-		+ zone_page_state(zone, NR_ACTIVE_MIGR)
-		+ zone_page_state(zone, NR_INACTIVE_MIGR)
+		zone_page_state(zone, NR_ACTIVE_MIGR)
+		+ zone_page_state(zone, NR_INACTIVE_MIGR)+
 #endif
 		      zone_page_state(zone, NR_INACTIVE_ANON);
 
