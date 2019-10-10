@@ -773,11 +773,14 @@ void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 #endif
 	if (tsk->vfork_done){
 #ifdef CONFIG_KRG_EPM
-		if (tsk->remote_vfork_done)
-			krg_vfork_done(vfork_done);
-		else
+		if (tsk->remote_vfork_done){
+			krg_vfork_done(vfork_done);}
+		else{
 #endif
 		complete_vfork_done(tsk);
+#ifdef CONFIG_KRG_EPM
+		}
+#endif	
 	}
 	/*
 	 * If we're exiting normally, clear a user-space tid field if

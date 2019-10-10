@@ -1431,17 +1431,19 @@ static int wait_noreap_copyout(struct wait_opts *wo, struct task_struct *p,
 int krg_kernel_wait_task_zombie(struct task_struct *p, int options,
 		     struct siginfo __user *infop,
 		     int __user *stat_addr, struct rusage __user *ru){
+	int retval;
 	struct wait_opts wo;
 
 	wo.wo_flags	= options;
 	wo.wo_info	= infop;
 	wo.wo_stat	= NULL;
 	wo.wo_rusage	= ru;
-
-	return wait_task_zombie(wo,p);	
+	retval=wait_task_zombie(wo,p)
+	return retval;	
 	}
 
 #endif
+
 #ifndef CONFIG_KRG_EPM
 static
 #endif
@@ -2053,7 +2055,7 @@ SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
 	wo.wo_stat	= NULL;
 	wo.wo_rusage	= ru;
 #ifdef CONFIG_KRG_EPM
-	wo.wo_upid=upid;
+	wo.wo_upid= upid;
 #endif
 	ret = do_wait(&wo);
 
