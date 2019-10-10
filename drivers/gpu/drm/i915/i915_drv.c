@@ -1662,7 +1662,10 @@ static const struct dev_pm_ops i915_pm_ops = {
 	.runtime_resume = intel_runtime_resume,
 };
 
-static const struct vm_operations_struct i915_gem_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct i915_gem_vm_ops = {
 	.fault = i915_gem_fault,
 	.open = drm_gem_vm_open,
 	.close = drm_gem_vm_close,

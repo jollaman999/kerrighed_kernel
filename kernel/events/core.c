@@ -4073,7 +4073,10 @@ out_put:
 	ring_buffer_put(rb); /* could be last */
 }
 
-static const struct vm_operations_struct perf_mmap_vmops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct perf_mmap_vmops = {
 	.open		= perf_mmap_open,
 	.close		= perf_mmap_close,
 	.fault		= perf_mmap_fault,

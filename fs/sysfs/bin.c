@@ -331,7 +331,10 @@ static int bin_migrate(struct vm_area_struct *vma, const nodemask_t *from,
 }
 #endif
 
-static const struct vm_operations_struct bin_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct bin_vm_ops = {
 	.open		= bin_vma_open,
 	.close		= bin_vma_close,
 	.fault		= bin_fault,

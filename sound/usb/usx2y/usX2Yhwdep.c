@@ -53,7 +53,10 @@ static int snd_us428ctls_vm_fault(struct vm_area_struct *area,
 	return 0;
 }
 
-static const struct vm_operations_struct us428ctls_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct us428ctls_vm_ops = {
 	.fault = snd_us428ctls_vm_fault,
 };
 

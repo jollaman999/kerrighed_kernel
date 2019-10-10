@@ -2257,7 +2257,10 @@ static void packet_mm_close(struct vm_area_struct *vma)
 		atomic_dec(&pkt_sk(sk)->mapped);
 }
 
-static const struct vm_operations_struct packet_mmap_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct packet_mmap_ops = {
 	.open	=	packet_mm_open,
 	.close	=	packet_mm_close,
 };

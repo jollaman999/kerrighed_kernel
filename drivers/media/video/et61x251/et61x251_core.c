@@ -1496,7 +1496,10 @@ static void et61x251_vm_close(struct vm_area_struct* vma)
 }
 
 
-static const struct vm_operations_struct et61x251_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct et61x251_vm_ops = {
 	.open = et61x251_vm_open,
 	.close = et61x251_vm_close,
 };

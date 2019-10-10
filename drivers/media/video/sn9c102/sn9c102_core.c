@@ -2077,7 +2077,10 @@ static void sn9c102_vm_close(struct vm_area_struct* vma)
 }
 
 
-static const struct vm_operations_struct sn9c102_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct sn9c102_vm_ops = {
 	.open = sn9c102_vm_open,
 	.close = sn9c102_vm_close,
 };

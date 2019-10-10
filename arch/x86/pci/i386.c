@@ -279,7 +279,10 @@ void pcibios_set_master(struct pci_dev *dev)
 	pci_write_config_byte(dev, PCI_LATENCY_TIMER, lat);
 }
 
-static const struct vm_operations_struct pci_mmap_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct pci_mmap_ops = {
 	.access = generic_access_phys,
 };
 

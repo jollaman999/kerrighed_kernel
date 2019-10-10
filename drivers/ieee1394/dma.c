@@ -247,7 +247,10 @@ static int dma_region_pagefault(struct vm_area_struct *vma,
 	return 0;
 }
 
-static const struct vm_operations_struct dma_region_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct dma_region_vm_ops = {
 	.fault = dma_region_pagefault,
 };
 

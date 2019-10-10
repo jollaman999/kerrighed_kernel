@@ -95,7 +95,10 @@ static void ehca_mm_close(struct vm_area_struct *vma)
 		     vma->vm_start, vma->vm_end, *count);
 }
 
-static const struct vm_operations_struct vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct vm_ops = {
 	.open =	ehca_mm_open,
 	.close = ehca_mm_close,
 };

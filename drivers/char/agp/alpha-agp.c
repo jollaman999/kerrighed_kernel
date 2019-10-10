@@ -40,7 +40,10 @@ static struct aper_size_info_fixed alpha_core_agp_sizes[] =
 	{ 0, 0, 0 }, /* filled in by alpha_core_agp_setup */
 };
 
-static const struct vm_operations_struct alpha_core_agp_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct alpha_core_agp_vm_ops = {
 	.fault = alpha_core_agp_vm_fault,
 };
 

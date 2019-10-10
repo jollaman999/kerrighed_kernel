@@ -1590,7 +1590,10 @@ static void meye_vm_close(struct vm_area_struct *vma)
 	meye.vma_use_count[idx]--;
 }
 
-static const struct vm_operations_struct meye_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct meye_vm_ops = {
 	.open		= meye_vm_open,
 	.close		= meye_vm_close,
 };

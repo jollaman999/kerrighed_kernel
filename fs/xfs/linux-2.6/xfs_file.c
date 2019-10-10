@@ -39,7 +39,10 @@
 #include <linux/dcache.h>
 #include <linux/splice.h>
 
-static const struct vm_operations_struct xfs_file_vm_ops;
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct xfs_file_vm_ops;
 
 /*
  * Locking primitives for read and write IO paths to ensure we consistently use
