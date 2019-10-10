@@ -61,7 +61,7 @@ static inline void restore_initial_vm_ops (struct vm_area_struct *vma)
 
 
 /* Return the page table entry associated to a virtual address */
-static inline pte_t *get_pte_no_lock (struct mm_struct *mm, unsigned long addr)
+static inline pte_t *get_pte_no_lock (struct mm_struct *mm, struct vm_area_struct *vma, unsigned long addr)
 {
 	pgd_t * pgd = pgd_offset(mm, addr);
 	pud_t * pud = pud_alloc(mm, pgd, addr);
@@ -75,7 +75,7 @@ static inline pte_t *get_pte_no_lock (struct mm_struct *mm, unsigned long addr)
 		return NULL;
 
 	if (unlikely(!pmd_present(*(pmd))) &&
-	    __pte_alloc(mm, pmd, addr))
+	    __pte_alloc(mm, vma ,pmd, addr))
 		return NULL;
 
 	return pte_offset_map(pmd, addr);
