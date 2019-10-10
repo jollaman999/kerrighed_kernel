@@ -20,6 +20,7 @@ static __always_inline struct task_struct *get_current(void)
 	struct task_struct *__cur = get_current();			\
 	__cur->effective_current ? __cur->effective_current : __cur;	\
 })
+#define current_ori get_current()
 #else /* !CONFIG_KRG_EPM */
 #define current get_current()
 #endif /* !CONFIG_KRG_EPM */
