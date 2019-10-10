@@ -313,8 +313,10 @@ static inline int private_mapping_ok(struct vm_area_struct *vma)
 	return 1;
 }
 #endif
-
-static const struct vm_operations_struct mmap_mem_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct mmap_mem_ops = {
 #ifdef CONFIG_HAVE_IOREMAP_PROT
 	.access = generic_access_phys
 #endif
