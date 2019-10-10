@@ -164,13 +164,14 @@ static inline void check_node_id (int node_id)
 static char *read_from_file(char *_filename, int size)
 {
 	int error;
-	struct file *f;
+	struct file *f,*dir_filename;
 	char *b, *filename;
 
 	b = kmalloc(size, GFP_ATOMIC);
 	BUG_ON(b==NULL);
 
-	filename = getname(_filename);
+	dir_filename = getname(_filename);
+	filename= dir_filename->name;
 	if (!IS_ERR(filename)) {
 		f = filp_open(filename, O_RDONLY, 0);
 		if (IS_ERR(f)) {
