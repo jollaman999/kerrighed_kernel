@@ -630,7 +630,10 @@ static inline int is_kernel_context(struct gru_thread_state *gts)
  */
 struct gru_unload_context_req;
 
-extern const struct vm_operations_struct gru_vm_ops;
+#ifndef CONFIG_KERRIGHED
+extern const
+#endif
+struct vm_operations_struct gru_vm_ops;
 extern struct device *grudev;
 
 extern struct gru_vma_data *gru_alloc_vma_data(struct vm_area_struct *vma,
