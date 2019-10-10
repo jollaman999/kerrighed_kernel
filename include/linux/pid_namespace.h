@@ -49,7 +49,7 @@ extern struct pid_namespace init_pid_ns;
 #define PIDNS_HASH_ADDING (1U << 31)
 
 #ifdef CONFIG_PID_NS
-static inline struct pid_namespace *get_pid_ns(struct pid_namespace *ns);
+static inline struct pid_namespace *get_pid_ns(struct pid_namespace *ns)
 {
 	if (ns != &init_pid_ns)
 		kref_get(&ns->kref);
@@ -77,7 +77,8 @@ struct pid_namespace *find_get_krg_pid_ns(void);
 #endif
 
 #ifdef CONFIG_KRG_EPM
-struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns)
+struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns);
+
 #endif
 
 #else /* !CONFIG_PID_NS */
