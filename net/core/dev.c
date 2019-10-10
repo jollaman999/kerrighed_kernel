@@ -142,7 +142,7 @@
 #include <linux/crash_dump.h>
 
 #include "net-sysfs.h"
-
+#include <linux/hashtable.h>
 /* Instead of increasing this, you should create a hash table. */
 #define MAX_GRO_SKBS 8
 
