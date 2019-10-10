@@ -2300,7 +2300,7 @@ int __init shmem_init(void)
 		goto out2;
 	}
 #ifdef CONFIG_KRG_EPM
-	error = krgsyms_register(KRGSYMS_VM_OPS_SHMEM, (const *vm_operations_struct)&shmem_vm_ops);
+	error = krgsyms_register(KRGSYMS_VM_OPS_SHMEM, (void *)&shmem_vm_ops);
 	if (error) {
 		printk(KERN_ERR "Could not register shmem_vm_ops\n");
 		goto out1_1;
