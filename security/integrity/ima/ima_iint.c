@@ -74,6 +74,26 @@ out:
 	return rc;
 }
 
+
+#ifdef CONFIG_KRG_IPC
+struct ima_iint_cache *ima_iint_find_insert_get(struct inode *inode)
+{
+	struct ima_iint_cache *iint = NULL;
+
+	iint = ima_iint_find_get(inode);
+	if (iint)
+		return iint;
+
+	iint = ima_iint_insert(inode);
+	if (iint)
+		kref_get(&iint->refcount);
+
+	return iint;
+}
+EXPORT_SYMBOL_GPL(ima_iint_find_insert_get);
+#endif
+
+
 /* iint_free - called when the iint refcount goes to zero */
 void iint_free(struct kref *kref)
 {

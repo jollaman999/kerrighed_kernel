@@ -127,6 +127,7 @@ void ima_template_show(struct seq_file *m, void *e,
  */
 struct ima_iint_cache *ima_iint_insert(struct inode *inode);
 struct ima_iint_cache *ima_iint_find_get(struct inode *inode);
+struct ima_iint_cache *ima_iint_find_insert_get(struct inode *inode);
 void iint_free(struct kref *kref);
 void iint_rcu_free(struct rcu_head *rcu);
 

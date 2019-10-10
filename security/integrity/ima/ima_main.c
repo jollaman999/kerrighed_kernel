@@ -284,17 +284,6 @@ int ima_file_mmap(struct file *file, unsigned long prot)
 }
 
 #ifdef CONFIG_KRG_IPC
-/*
- * ima_shm_check - IPC shm and shmat create/fput a file
- *
- * Maintain the opencount for these files to prevent unnecessary
- * imbalance messages.
- */
-void ima_shm_check(struct file *file)
-{
-	opencount_get(file);
-	return;
-}
 static void opencount_get(struct file *file)
 {
 	struct inode *inode = file->f_dentry->d_inode;
@@ -309,6 +298,18 @@ static void opencount_get(struct file *file)
 	iint->opencount++;
 	mutex_unlock(&iint->mutex);
 }
+/*
+ * ima_shm_check - IPC shm and shmat create/fput a file
+ *
+ * Maintain the opencount for these files to prevent unnecessary
+ * imbalance messages.
+ */
+void ima_shm_check(struct file *file)
+{
+	opencount_get(file);
+	return;
+}
+
 #endif
 /**
  * ima_bprm_check - based on policy, collect/store measurement.
