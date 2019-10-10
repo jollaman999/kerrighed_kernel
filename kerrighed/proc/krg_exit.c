@@ -362,7 +362,7 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 		res.ioac = p->ioac;
 		task_io_accounting_add(&res.ioac, &sig->ioac);
 	}
-	upid = pid->numbers
+	upid = pid->numbers;
 	pid = find_get_pid(upid);
 	wo.wo_pid = pid;
 	wo.wo_flags	= req->options;

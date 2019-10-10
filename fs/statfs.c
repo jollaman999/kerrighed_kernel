@@ -8,9 +8,6 @@
 #include <linux/security.h>
 #include <linux/uaccess.h>
 
-#ifdef CONFIG_KRG_IPC
-#include <kerrighed/faf.h>
-#endif
 
 static int flags_by_mnt(int mnt_flags)
 {
@@ -100,11 +97,6 @@ int fd_statfs(int fd, struct kstatfs *st)
 	struct file *file = fget(fd);
 	int error = -EBADF;
 	if (file) {
-#ifdef CONFIG_KRG_FAF
-		if (file->f_flags & O_FAF_CLT)
-			error = krg_faf_fstatfs(file, &tmp);
-		else
-#endif
 		error = vfs_statfs(&file->f_path, st);
 		fput(file);
 	}

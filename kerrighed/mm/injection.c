@@ -300,14 +300,15 @@ int try_to_flush_page(struct page *page)
     struct anon_vma *anon_vma;
     struct vm_area_struct *vma;
 	int ret = SWAP_AGAIN;
-	unsigned long address = vma_address(page, vma);
+	unsigned long address
 	krg_notify_mem(OUT_OF_MEM);
 
-	anon_vma = page_lock_anon_vma(page);
         if (!anon_vma)
                 return SWAP_AGAIN;
 
 	list_for_each_entry(vma, &anon_vma->head, anon_vma_node) {
+			struct vm_area_struct *vma = avc->vma;
+			 address = vma_address(page, vma);
 		if (page_mapcount(page) <= 1)
 			break;
 		ret = try_to_unmap_one(page, vma, address, 1);
