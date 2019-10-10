@@ -3056,7 +3056,10 @@ static int snd_pcm_mmap_status_fault(struct vm_area_struct *area,
 	return 0;
 }
 
-static const struct vm_operations_struct snd_pcm_vm_ops_status =
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct snd_pcm_vm_ops_status =
 {
 	.fault =	snd_pcm_mmap_status_fault,
 };
@@ -3093,7 +3096,10 @@ static int snd_pcm_mmap_control_fault(struct vm_area_struct *area,
 	return 0;
 }
 
-static const struct vm_operations_struct snd_pcm_vm_ops_control =
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct snd_pcm_vm_ops_control =
 {
 	.fault =	snd_pcm_mmap_control_fault,
 };

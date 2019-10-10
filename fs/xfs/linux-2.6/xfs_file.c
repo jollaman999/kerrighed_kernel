@@ -959,7 +959,10 @@ const struct file_operations xfs_dir_file_operations = {
 	.fsync		= xfs_dir_fsync,
 };
 
-static const struct vm_operations_struct xfs_file_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct xfs_file_vm_ops = {
 	.fault		= filemap_fault,
 	.page_mkwrite	= xfs_vm_page_mkwrite,
 };

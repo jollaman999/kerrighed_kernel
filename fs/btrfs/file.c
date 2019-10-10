@@ -1581,7 +1581,10 @@ out:
 	return ret > 0 ? -EIO : ret;
 }
 
-static const struct vm_operations_struct btrfs_file_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const
+#endif
+struct vm_operations_struct btrfs_file_vm_ops = {
 	.fault		= filemap_fault,
 	.page_mkwrite	= btrfs_page_mkwrite,
 };

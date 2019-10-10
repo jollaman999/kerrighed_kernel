@@ -463,7 +463,10 @@ out:
 	return block_page_mkwrite_return(ret);
 }
 
-static const struct vm_operations_struct gfs2_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+static const 
+#endif
+struct vm_operations_struct gfs2_vm_ops = {
 	.fault = filemap_fault,
 	.page_mkwrite = gfs2_page_mkwrite,
 };
