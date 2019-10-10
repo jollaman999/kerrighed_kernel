@@ -302,9 +302,9 @@ int try_to_flush_page(struct page *page)
 	int ret = SWAP_AGAIN;
 	unsigned long address;
 	krg_notify_mem(OUT_OF_MEM);
-
-        if (!anon_vma)
-                return SWAP_AGAIN;
+	anon_vma = page_lock_anon_vma(page);
+     if (!anon_vma)
+            return SWAP_AGAIN;
 
 	list_for_each_entry(vma, &anon_vma->head, anon_vma_node) {
 			 address = vma_address(page, vma);
