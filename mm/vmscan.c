@@ -1958,7 +1958,7 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 	anon_prio = sc->swappiness;
 	file_prio = 200 - sc->swappiness;
 #ifdef CONFIG_KRG_MM
-	if (!sc->may_swap || ((int)nr_swap_pages <= 0))
+	if (!sc->may_swap || ((nr_swap_pages->counter) <= 0))
 		anon_prio = 0;
 	if (scanning_global_lru(mz)) {
 		free  = zone_page_state(mz->zone, NR_FREE_PAGES);
@@ -2635,7 +2635,7 @@ static void age_active_anon(struct zone *zone, struct scan_control *sc,
 #else
                        sc, priority, 0, 0);
 			/* Do the same on kddm lru pages */
-			if (inactive_kddm_is_low(mz->zone, mz))
+			if (inactive_kddm_is_low(mz.zone, &mz))
 				shrink_active_list(SWAP_CLUSTER_MAX, &mz,
 						   sc, priority, 0, 1);
 #endif
