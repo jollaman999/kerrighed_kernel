@@ -116,6 +116,11 @@ extern int print_fatal_signals;
  */
 #define CLONE_KERNEL	(CLONE_FS | CLONE_FILES | CLONE_SIGHAND)
 
+#ifdef CONFIG_KRG_PROC
+extern cputime_t task_utime(struct task_struct *p);
+extern cputime_t task_stime(struct task_struct *p);
+#endif
+
 /*
  * These are the constant used to fake the fixed-point load-average
  * counting. Some notes:
@@ -2479,9 +2484,7 @@ extern void exit_itimers(struct signal_struct *);
 extern void flush_itimer_signals(void);
 
 #ifdef CONFIG_KRG_EPM
-int krg_kernel_wait_task_zombie(struct task_struct *p, int options,
-		     struct siginfo __user *infop,
-		     int __user *stat_addr, struct rusage __user *ru);
+int wait_task_zombie(struct wait_opts *wo, struct task_struct *p);
 #endif
 extern NORET_TYPE void do_group_exit(int);
 

@@ -391,7 +391,7 @@ ssize_t krg_faf_readv(struct file *file, const struct iovec __user *vec,
 	int err;
 
 	ret.ret = rw_copy_check_uvector(READ, vec, vlen,
-					ARRAY_SIZE(iovstack), iovstack, &iov);
+					ARRAY_SIZE(iovstack), iovstack, &iov,1);
 	if (ret.ret < 0)
 		return ret.ret;
 	iovcnt = vlen;
@@ -455,7 +455,7 @@ ssize_t krg_faf_writev(struct file *file, const struct iovec __user *vec,
 	int err;
 
 	ret.ret = rw_copy_check_uvector(WRITE, vec, vlen,
-					ARRAY_SIZE(iovstack), iovstack, &iov);
+					ARRAY_SIZE(iovstack), iovstack, &iov,1);
 	if (ret.ret < 0)
 		return ret.ret;
 	iovcnt = vlen;
@@ -1565,7 +1565,7 @@ static void handle_faf_poll_notify(struct rpc_desc *desc,
 	dvfs_file = _kddm_get_object_no_ft(dvfs_file_struct_ctnr, dvfs_id);
 	if (dvfs_file && dvfs_file->file) {
 		/* TODO: still required? */
-		if (atomic_read (&dvfs_file->file->f_count) == 0)
+		if (atomic_long_read (&dvfs_file->file->f_count) == 0)
 			dvfs_file->file = NULL;
 	}
 	if (!dvfs_file || !dvfs_file->file)

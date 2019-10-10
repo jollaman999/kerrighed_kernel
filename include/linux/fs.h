@@ -302,7 +302,7 @@ struct inodes_stat_t {
 #define IS_NOATIME(inode)   __IS_FLG(inode, MS_RDONLY|MS_NOATIME)
 #define IS_I_VERSION(inode)   __IS_FLG(inode, MS_I_VERSION)
 
-#define IS_NOQUOTA(inode)	((inode)->i_flags & S_NOQUOTA)
+#define IS_NOQUOTA(inode)	((in)->i_flags & S_NOQUOTA)
 #define IS_APPEND(inode)	((inode)->i_flags & S_APPEND)
 #define IS_IMMUTABLE(inode)	((inode)->i_flags & S_IMMUTABLE)
 #define IS_POSIXACL(inode)	__IS_FLG(inode, MS_POSIXACL)
@@ -2483,6 +2483,10 @@ extern void remove_inode_hash(struct inode *);
 static inline void insert_inode_hash(struct inode *inode) {
 	__insert_inode_hash(inode, inode->i_ino);
 }
+
+#ifdef CONFIG_KRG_FAF
+extern struct file * get_empty_filp(void);
+#endif
 
 extern void file_move(struct file *f, struct list_head *list);
 extern void file_kill(struct file *f);

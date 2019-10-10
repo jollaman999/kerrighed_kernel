@@ -307,8 +307,6 @@ int try_to_flush_page(struct page *page)
         if (!anon_vma)
                 return SWAP_AGAIN;
 	unsigned long address = vma_address(page, vma);
-		if (address == -EFAULT)
-			continue;
 	list_for_each_entry(vma, &anon_vma->head, anon_vma_node) {
 		if (page_mapcount(page) <= 1)
 			break;
