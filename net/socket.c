@@ -2111,9 +2111,9 @@ static int __sys_sendmsg(struct socket *sock, struct msghdr __user *msg,
 	/* 20 is size of ipv6_pktinfo */
 	unsigned char *ctl_buf = ctl;
 	int err, ctl_len, iov_size, total_len;
-#ifdef CONFIG_KRG_FAF
-	struct file *faf_file;
-#endif
+// #ifdef CONFIG_KRG_FAF
+// 	struct file *faf_file;
+// #endif
 	err = -EFAULT;
 	if (MSG_CMSG_COMPAT & flags) {
 		if (get_compat_msghdr(msg_sys, msg_compat))
@@ -2131,11 +2131,11 @@ static int __sys_sendmsg(struct socket *sock, struct msghdr __user *msg,
 	err = -ENOMEM;
 	iov_size = msg_sys->msg_iovlen * sizeof(struct iovec);
 	if (msg_sys->msg_iovlen > UIO_FASTIOV) {
-#ifdef CONFIG_KRG_FAF
-		iov = faf_sock_kmalloc(sock->sk, iov_size, GFP_KERNEL, faf_file);
-#else
+// #ifdef CONFIG_KRG_FAF
+// 		iov = faf_sock_kmalloc(sock->sk, iov_size, GFP_KERNEL, faf_file);
+// #else
 		iov = sock_kmalloc(sock->sk, iov_size, GFP_KERNEL);
-#endif
+// #endif
 		if (!iov)
 			goto out;
 	}
@@ -2168,12 +2168,12 @@ static int __sys_sendmsg(struct socket *sock, struct msghdr __user *msg,
 		ctl_len = msg_sys->msg_controllen;
 	} else if (ctl_len) {
 		if (ctl_len > sizeof(ctl)) {
-#ifdef CONFIG_KRG_FAF
-			ctl_buf = faf_sock_kmalloc(sock->sk, ctl_len, GFP_KERNEL,
-						   faf_file);
-#else
+// #ifdef CONFIG_KRG_FAF
+// 			ctl_buf = faf_sock_kmalloc(sock->sk, ctl_len, GFP_KERNEL,
+// 						   faf_file);
+// #else
 			ctl_buf = sock_kmalloc(sock->sk, ctl_len, GFP_KERNEL);
-#endif
+// #endif
 			if (ctl_buf == NULL)
 				goto out_freeiov;
 		}
@@ -2189,12 +2189,12 @@ static int __sys_sendmsg(struct socket *sock, struct msghdr __user *msg,
 		msg_sys->msg_control = ctl_buf;
 	}
 	msg_sys->msg_flags = flags;
-#ifdef CONFIG_KRG_FAF
-	if (faf_file) {
-		err = krg_faf_sendmsg(faf_file, &msg_sys, total_len);
-		goto out_freectl;
-	}
-#endif
+// #ifdef CONFIG_KRG_FAF
+// 	if (faf_file) {
+// 		err = krg_faf_sendmsg(faf_file, &msg_sys, total_len);
+// 		goto out_freectl;
+// 	}
+// #endif
 	if (sock->file->f_flags & O_NONBLOCK)
 		msg_sys->msg_flags |= MSG_DONTWAIT;
 	/*
@@ -2224,18 +2224,18 @@ static int __sys_sendmsg(struct socket *sock, struct msghdr __user *msg,
 
 out_freectl:
 	if (ctl_buf != ctl)
-#ifdef CONFIG_KRG_FAF
-		faf_sock_kfree_s(sock->sk, ctl_buf, ctl_len, faf_file);
-#else
+// #ifdef CONFIG_KRG_FAF
+// 		faf_sock_kfree_s(sock->sk, ctl_buf, ctl_len, faf_file);
+// #else
 		sock_kfree_s(sock->sk, ctl_buf, ctl_len);
-#endif
+// #endif
 out_freeiov:
 	if (iov != iovstack)
-#ifdef CONFIG_KRG_FAF
-		faf_sock_kfree_s(sock->sk, iov, iov_size, faf_file);
-#else
+// #ifdef CONFIG_KRG_FAF
+// 		faf_sock_kfree_s(sock->sk, iov, iov_size, faf_file);
+// #else
 		sock_kfree_s(sock->sk, iov, iov_size);
-#endif
+// #endif
 out:
 	return err;
 }
@@ -2282,8 +2282,8 @@ SYSCALL_DEFINE3(sendmsg, int, fd, struct msghdr __user *, msg, unsigned, flags)
 	if (!sock && !faf_file)
 		goto out;
 	err = -ENOSYS;
-	if (faf_file && (flags & MSG_CMSG_COMPAT))
-		goto out_put;
+	// if (faf_file && (flags & MSG_CMSG_COMPAT))
+	// 	goto out_put;
 #else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 
@@ -2325,7 +2325,7 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 #ifdef CONFIG_KRG_FAF
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (!sock && !faf_file)
-		goto out;
+		return err;
 #else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 #endif
@@ -2510,8 +2510,8 @@ SYSCALL_DEFINE3(recvmsg, int, fd, struct msghdr __user *, msg,
 	if (!sock && !faf_file)
 		goto out;
 	err = -ENOSYS;
-	if (faf_file && (flags & MSG_CMSG_COMPAT))
-		goto out_put;
+	// if (faf_file && (flags & MSG_CMSG_COMPAT))
+	// 	goto out_put;
 #else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 
@@ -2555,7 +2555,7 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 #ifdef CONFIG_KRG_FAF
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (!sock && !faf_file)
-		goto out;
+		goto err;
 #else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 #endif
