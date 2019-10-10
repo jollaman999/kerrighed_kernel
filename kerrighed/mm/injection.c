@@ -296,11 +296,11 @@ static int try_to_flush_one(struct page *page, struct vm_area_struct *vma)
 
 int try_to_flush_page(struct page *page)
 {
-	unsigned long address = vma_address(page, vma);
+
     struct anon_vma *anon_vma;
     struct vm_area_struct *vma;
 	int ret = SWAP_AGAIN;
-
+	unsigned long address = vma_address(page, vma);
 	krg_notify_mem(OUT_OF_MEM);
 
 	anon_vma = page_lock_anon_vma(page);

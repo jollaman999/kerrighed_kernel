@@ -593,7 +593,8 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 #ifdef CONFIG_KRG_MM
 		if (pte_obj_entry(src_pte)) {
 			pte_clear(dst_mm, addr, dst_pte);
-			return;
+			//return 1 error
+			return 1;
 		}
 #endif
 		if (!pte_file(pte)) {
@@ -648,7 +649,8 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 #ifdef CONFIG_KRG_MM
 		if (anon_only && !PageAnon(page)) {
 			pte_clear(dst_mm, addr, dst_pte);
-			return;
+			//return 1 error
+			return 1;
 		}
 #endif
 		get_page(page);

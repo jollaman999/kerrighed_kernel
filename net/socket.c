@@ -101,6 +101,9 @@
 #ifndef __GENKSYMS__
 #include <net/busy_poll.h>
 #endif
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
+#endif
 
 #ifdef CONFIG_NET_RX_BUSY_POLL
 unsigned int sysctl_net_busy_read __read_mostly;
@@ -362,7 +365,7 @@ static const struct dentry_operations sockfs_dentry_operations = {
 static int sock_alloc_file(struct socket *sock, struct file **f, int flags)
 {
 	struct qstr name = { .name = "" };
-	struct dentry *dentry;
+	struct path path;
 	struct file *file;
 	int fd;
 
@@ -370,28 +373,29 @@ static int sock_alloc_file(struct socket *sock, struct file **f, int flags)
 	if (unlikely(fd < 0))
 		return fd;
 
-	dentry = d_alloc(sock_mnt->mnt_sb->s_root, &name);
-	if (unlikely(!dentry)) {
+	path.dentry = d_alloc_pseudo(sock_mnt->mnt_sb, &name);
+	if (unlikely(!path.dentry)) {
 		put_unused_fd(fd);
 		return -ENOMEM;
 	}
+	path.mnt = mntget(sock_mnt);
 
-	dentry->d_op = &sockfs_dentry_operations;
+	path.dentry->d_op = &sockfs_dentry_operations;
 	/*
 	 * We dont want to push this dentry into global dentry hash table.
 	 * We pretend dentry is already hashed, by unsetting DCACHE_UNHASHED
 	 * This permits a working /proc/$pid/fd/XXX on sockets
 	 */
-	dentry->d_flags &= ~DCACHE_UNHASHED;
-	d_instantiate(dentry, SOCK_INODE(sock));
+	path.dentry->d_flags &= ~DCACHE_UNHASHED;
+	d_instantiate(path.dentry, SOCK_INODE(sock));
 	SOCK_INODE(sock)->i_fop = &socket_file_ops;
 
-	file = alloc_file(sock_mnt, dentry, FMODE_READ | FMODE_WRITE,
+	file = alloc_file(&path, FMODE_READ | FMODE_WRITE,
 		  &socket_file_ops);
 	if (unlikely(!file)) {
 		/* drop dentry, keep inode */
 		atomic_inc(&path.dentry->d_inode->i_count);
-		dput(dentry);
+		path_put(&path);
 		put_unused_fd(fd);
 		return -ENFILE;
 	}
@@ -460,6 +464,7 @@ static struct socket *sockfd_lookup_light(int fd, int *err, int *fput_needed,
 					  struct file **faf_file)
 #else
 static struct socket *sockfd_lookup_light(int fd, int *err, int *fput_needed)
+
 #endif
 {
 	struct file *file;
@@ -1800,7 +1805,20 @@ SYSCALL_DEFINE6(sendto, int, fd, void __user *, buff, size_t, len,
 
 	if (len > INT_MAX)
 		len = INT_MAX;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
+
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_bind(faf_file,
+				  (struct sockaddr __user *)umyaddr, addrlen);
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
+
 	if (!sock)
 		goto out;
 
@@ -1871,7 +1889,20 @@ SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, ubuf, size_t, size,
 
 	if (size > INT_MAX)
 		size = INT_MAX;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
+
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_bind(faf_file,
+				  (struct sockaddr __user *)umyaddr, addrlen);
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
+
 	if (!sock)
 		goto out;
 
@@ -2204,7 +2235,20 @@ SYSCALL_DEFINE3(sendmsg, int, fd, struct msghdr __user *, msg, unsigned, flags)
 {
 	int fput_needed, err;
 	struct msghdr msg_sys;
+	
+	#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
+	struct socket *sock;
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_bind(faf_file,
+				  (struct sockaddr __user *)umyaddr, addrlen);
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
+#else
 	struct socket *sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 
 	if (!sock)
 		goto out;
@@ -2235,7 +2279,19 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 
 	datagrams = 0;
 
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
+
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_bind(faf_file,
+				  (struct sockaddr __user *)umyaddr, addrlen);
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 	if (!sock)
 		return err;
 
@@ -2388,8 +2444,20 @@ SYSCALL_DEFINE3(recvmsg, int, fd, struct msghdr __user *, msg,
 {
 	int fput_needed, err;
 	struct msghdr msg_sys;
-	struct socket *sock = sockfd_lookup_light(fd, &err, &fput_needed);
+	struct socket *sock;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
 
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_bind(faf_file,
+				  (struct sockaddr __user *)umyaddr, addrlen);
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
+#else
+	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 	if (!sock)
 		goto out;
 
@@ -2421,7 +2489,19 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 
 	datagrams = 0;
 
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
+
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_bind(faf_file,
+				  (struct sockaddr __user *)umyaddr, addrlen);
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 	if (!sock)
 		return err;
 
