@@ -572,7 +572,6 @@ out:
  * covered by this vma.
  */
 #ifdef CONFIG_KRG_MM
-static inline void
 static inline unsigned long
 copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,

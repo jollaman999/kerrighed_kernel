@@ -1944,10 +1944,10 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 
 #ifdef CONFIG_KRG_MM
 	if (unlikely(reclaim_stat->recent_scanned[2] > kddm / 4)) {
-		spin_lock_irq(&zone->lru_lock);
+		spin_lock_irq(&mz->zone->lru_lock);
 		reclaim_stat->recent_scanned[2] /= 2;
 		reclaim_stat->recent_rotated[2] /= 2;
-		spin_unlock_irq(&zone->lru_lock);
+		spin_unlock_irq(&mz->zone->lru_lock);
 	}
 #endif
 
@@ -1958,9 +1958,9 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 	anon_prio = sc->swappiness;
 	file_prio = 200 - sc->swappiness;
 #ifdef CONFIG_KRG_MM
-	if (!sc->may_swap || (nr_swap_pages <= 0))
+	if (!sc->may_swap || ((long)nr_swap_pages <= 0))
 		anon_prio = 0;
-	if (scanning_global_lru(sc)) {
+	if (scanning_global_lru(mz)) {
 		free  = zone_page_state(zone, NR_FREE_PAGES);
 		/* If we have very few page cache pages,
 		   force-scan anon pages. */
@@ -2099,7 +2099,7 @@ static void shrink_mem_cgroup_zone(int priority, struct mem_cgroup_zone *mz,
 	if (inactive_anon_is_low(mz) && get_nr_swap_pages() > 0)
 #ifdef CONFIG_KRG_MM
 		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0, 0);
-	if (inactive_kddm_is_low(mz, sc))
+	if (inactive_kddm_is_low(&mz->zone,sc))
 		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0, 1);
 #else
 		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0);
@@ -2635,7 +2635,7 @@ static void age_active_anon(struct zone *zone, struct scan_control *sc,
 #else
                        sc, priority, 0, 0);
 			/* Do the same on kddm lru pages */
-			if (inactive_kddm_is_low(&mz, sc))
+			if (inactive_kddm_is_low(&mz->zone, sc))
 				shrink_active_list(SWAP_CLUSTER_MAX, &mz,
 						   sc, priority, 0, 1);
 #endif
@@ -3074,8 +3074,8 @@ unsigned long global_reclaimable_pages(void)
 
 	nr = global_page_state(NR_ACTIVE_FILE) +
 #ifdef CONFIG_KRG_MM
-		+ global_page_state(NR_ACTIVE_MIGR)
-		+ global_page_state(NR_INACTIVE_MIGR)
+		global_page_state(NR_ACTIVE_MIGR)
+		+ global_page_state(NR_INACTIVE_MIGR)+
 #endif
 	     global_page_state(NR_INACTIVE_FILE);
 
