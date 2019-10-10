@@ -1958,7 +1958,7 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 	anon_prio = sc->swappiness;
 	file_prio = 200 - sc->swappiness;
 #ifdef CONFIG_KRG_MM
-	if (!sc->may_swap || ((nr_swap_pages->counter) <= 0))
+	if (!sc->may_swap || ((nr_swap_pages->atomic_long_t->counter) <= 0))
 		anon_prio = 0;
 	if (scanning_global_lru(mz)) {
 		free  = zone_page_state(mz->zone, NR_FREE_PAGES);
