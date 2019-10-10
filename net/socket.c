@@ -2111,7 +2111,9 @@ static int __sys_sendmsg(struct socket *sock, struct msghdr __user *msg,
 	/* 20 is size of ipv6_pktinfo */
 	unsigned char *ctl_buf = ctl;
 	int err, ctl_len, iov_size, total_len;
-
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
+#endif
 	err = -EFAULT;
 	if (MSG_CMSG_COMPAT & flags) {
 		if (get_compat_msghdr(msg_sys, msg_compat))
@@ -2443,7 +2445,7 @@ static int __sys_recvmsg(struct socket *sock, struct msghdr __user *msg,
 	msg_sys->msg_flags = flags & (MSG_CMSG_CLOEXEC|MSG_CMSG_COMPAT);
 #ifdef CONFIG_KRG_FAF
 	if (faf_file) {
-		err = krg_faf_recvmsg(faf_file, &msg_sys, total_len, flags);
+		err = krg_faf_recvmsg(faf_file, msg_sys, total_len, flags);
 		goto check_err;
 	}
 #endif
