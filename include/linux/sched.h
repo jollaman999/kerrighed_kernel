@@ -1372,6 +1372,11 @@ enum perf_event_task_context {
 };
 
 struct task_struct {
+#ifdef CONFIG_KRG_EPM
+	struct linux_binfmt *binfmt;
+	struct mutex cred_exec_mutex;	/* execve vs ptrace cred calculation mutex */
+
+#endif
 	volatile long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
 	void *stack;
 	atomic_t usage;

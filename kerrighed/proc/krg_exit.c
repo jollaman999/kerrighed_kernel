@@ -294,6 +294,22 @@ struct wait_task_result {
 	struct task_io_accounting ioac;
 };
 
+//For Wait Task zombie
+struct wait_opts {
+	enum pid_type		wo_type;
+	int			wo_flags;
+	struct pid		*wo_pid;
+#ifdef CONFIG_KRG_EPM
+	pid_t	wo_upid;
+#endif
+	struct siginfo __user	*wo_info;
+	int __user		*wo_stat;
+	struct rusage __user	*wo_rusage;
+
+	wait_queue_t		child_wait;
+	int			notask_error;
+};
+
 static void handle_wait_task_zombie(struct rpc_desc *desc,
 				    void *_msg, size_t size)
 {
@@ -345,9 +361,10 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 		task_io_accounting_add(&res.ioac, &sig->ioac);
 	}
 	struct wait_opts wo;
+
 	wo.wo_pid = req->pid;
 	wo.wo_flags	= req->options;
-	wo.wo_info	= &res.info,;
+	wo.wo_info	= &res.info;
 	wo.wo_stat	=  &res.status;
 	wo.wo_rusage = &res.ru;
 

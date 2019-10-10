@@ -186,7 +186,11 @@ struct vm_area_struct {
 	struct list_head anon_vma_node;	/* Serialized by anon_vma->lock */
 #endif
 	/* Function pointers to deal with this struct. */
-	const struct vm_operations_struct *vm_ops;
+#ifdef CONFIG_KRG_MM
+struct vm_operations_struct *vm_ops;
+#else
+const struct vm_operations_struct *vm_ops;
+#endif
 
 	/* Information about our backing store: */
 	unsigned long vm_pgoff;		/* Offset (within vm_file) in PAGE_SIZE

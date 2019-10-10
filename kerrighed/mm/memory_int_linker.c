@@ -140,12 +140,13 @@ do_prefetch:
 /*                                                                           */
 /*****************************************************************************/
 
-static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
-{
-	if (likely(vma->vm_flags & VM_WRITE))
-		pte = pte_mkwrite(pte);
-	return pte;
-}
+//Codex Function Duplicate include/linux/mm.h:480
+// static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
+// {
+// 	if (likely(vma->vm_flags & VM_WRITE))
+// 		pte = pte_mkwrite(pte);
+// 	return pte;
+// }
 
 void map_kddm_page(struct vm_area_struct *vma,
 		   unsigned long address,
