@@ -172,7 +172,8 @@ static char *read_from_file(char *_filename, int size)
 	BUG_ON(b==NULL);
 
 	dir_filename = getname(_filename);
-	filename= dir_filename->name;
+	strcpy(filename,dir_filename->name);
+	// filename= dir_filename->name;
 	if (!IS_ERR(filename)) {
 		f = filp_open(filename, O_RDONLY, 0);
 		if (IS_ERR(f)) {
