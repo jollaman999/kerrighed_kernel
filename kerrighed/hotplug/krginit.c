@@ -164,7 +164,8 @@ static inline void check_node_id (int node_id)
 static char *read_from_file(char *_filename, int size)
 {
 	int error;
-	struct file *f,*dir_filename;
+	struct file *f;
+	struct filename *dir_filename;
 	char *b, *filename;
 
 	b = kmalloc(size, GFP_ATOMIC);
