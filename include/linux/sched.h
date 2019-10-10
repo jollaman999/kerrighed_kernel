@@ -2484,6 +2484,7 @@ extern void exit_itimers(struct signal_struct *);
 extern void flush_itimer_signals(void);
 
 #ifdef CONFIG_KRG_EPM
+struct wait_opts;
 int wait_task_zombie(struct wait_opts *wo, struct task_struct *p);
 #endif
 extern NORET_TYPE void do_group_exit(int);
