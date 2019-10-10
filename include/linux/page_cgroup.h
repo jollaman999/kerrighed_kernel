@@ -28,6 +28,10 @@ enum {
 struct page_cgroup {
 	unsigned long flags;
 	struct mem_cgroup *mem_cgroup;
+#ifdef CONFIG_KRG_MM
+	struct page *page;
+	struct list_head lru;		/* per cgroup LRU list */
+#endif
 };
 
 void __meminit pgdat_page_cgroup_init(struct pglist_data *pgdat);

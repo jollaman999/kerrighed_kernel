@@ -142,7 +142,9 @@ struct mem_cgroup_reclaim_iter {
 struct mem_cgroup_per_zone {
 	struct lruvec		lruvec;
 	unsigned long		count[NR_LRU_LISTS];
-
+#ifdef CONFIG_KRG_MM
+	struct list_head	lists[NR_LRU_LISTS];
+#endif
 	struct mem_cgroup_reclaim_iter reclaim_iter[DEF_PRIORITY + 1];
 
 	struct zone_reclaim_stat reclaim_stat;
