@@ -161,7 +161,7 @@ static inline void check_node_id (int node_id)
 	}
 }
 
-static char *read_from_file(const char __user  *_filename, int size)
+static char *read_from_file(char *_filename, int size)
 {
 	int error;
 	struct file *f;
