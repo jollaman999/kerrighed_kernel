@@ -322,7 +322,7 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 	int err = -ENOMEM;
 	struct wait_opts wo;
 	struct pid *pid = NULL;
-	struct upid *upid = NULL;
+	// struct upid *upid = NULL;
 	read_lock(&tasklist_lock);
 	p = find_task_by_kpid(req->pid);
 	/*
@@ -364,7 +364,7 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 	}
 	// upid = pid->numbers;
 	// pid = find_get_pid(upid);
-	pid = task_pid(task);
+	pid = task_pid(p);
 	wo.wo_pid = pid;
 	wo.wo_flags	= req->options;
 	wo.wo_info	= &res.info;

@@ -2394,9 +2394,9 @@ static int __sys_recvmsg(struct socket *sock, struct msghdr __user *msg,
 	/* user mode address pointers */
 	struct sockaddr __user *uaddr;
 	int __user *uaddr_len;
-#ifdef CONFIG_KRG_FAF
-	struct file *faf_file;
-#endif
+// #ifdef CONFIG_KRG_FAF
+// 	struct file *faf_file;
+// #endif
 
 	if (MSG_CMSG_COMPAT & flags) {
 		if (get_compat_msghdr(msg_sys, msg_compat))
@@ -2413,11 +2413,11 @@ static int __sys_recvmsg(struct socket *sock, struct msghdr __user *msg,
 	err = -ENOMEM;
 	iov_size = msg_sys->msg_iovlen * sizeof(struct iovec);
 	if (msg_sys->msg_iovlen > UIO_FASTIOV) {
-#ifdef CONFIG_KRG_FAF
-		iov = faf_sock_kmalloc(sock->sk, iov_size, GFP_KERNEL, faf_file);
-#else
+// #ifdef CONFIG_KRG_FAF
+// 		iov = faf_sock_kmalloc(sock->sk, iov_size, GFP_KERNEL, faf_file);
+// #else
 		iov = sock_kmalloc(sock->sk, iov_size, GFP_KERNEL);
-#endif
+// #endif
 		if (!iov)
 			goto out;
 	}
@@ -2443,19 +2443,19 @@ static int __sys_recvmsg(struct socket *sock, struct msghdr __user *msg,
 
 	cmsg_ptr = (unsigned long)msg_sys->msg_control;
 	msg_sys->msg_flags = flags & (MSG_CMSG_CLOEXEC|MSG_CMSG_COMPAT);
-#ifdef CONFIG_KRG_FAF
-	if (faf_file) {
-		err = krg_faf_recvmsg(faf_file, msg_sys, total_len, flags);
-		goto check_err;
-	}
-#endif
+// #ifdef CONFIG_KRG_FAF
+// 	if (faf_file) {
+// 		err = krg_faf_recvmsg(faf_file, msg_sys, total_len, flags);
+// 		goto check_err;
+// 	}
+// #endif
 	if (sock->file->f_flags & O_NONBLOCK)
 		flags |= MSG_DONTWAIT;
 	err = (nosec ? sock_recvmsg_nosec : sock_recvmsg)(sock, msg_sys,
 							  total_len, flags);
-#ifdef CONFIG_KRG_FAF
-check_err:
-#endif
+// #ifdef CONFIG_KRG_FAF
+// check_err:
+// #endif
 	if (err < 0)
 		goto out_freeiov;
 	len = err;
@@ -2483,11 +2483,11 @@ check_err:
 
 out_freeiov:
 	if (iov != iovstack)
-#ifdef CONFIG_KRG_FAF
-		faf_sock_kfree_s(sock->sk, iov, iov_size, faf_file);
-#else
-		sock_kfree_s(sock->sk, iov, iov_size);
-#endif
+// #ifdef CONFIG_KRG_FAF
+// 		faf_sock_kfree_s(sock->sk, iov, iov_size, faf_file);
+// #else
+// 		sock_kfree_s(sock->sk, iov, iov_size);
+// #endif
 out:
 	return err;
 }
