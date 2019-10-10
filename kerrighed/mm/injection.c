@@ -296,9 +296,9 @@ static int try_to_flush_one(struct page *page, struct vm_area_struct *vma)
 
 int try_to_flush_page(struct page *page)
 {
-
-        struct anon_vma *anon_vma;
-        struct vm_area_struct *vma;
+	unsigned long address = vma_address(page, vma);
+    struct anon_vma *anon_vma;
+    struct vm_area_struct *vma;
 	int ret = SWAP_AGAIN;
 
 	krg_notify_mem(OUT_OF_MEM);
@@ -306,7 +306,7 @@ int try_to_flush_page(struct page *page)
 	anon_vma = page_lock_anon_vma(page);
         if (!anon_vma)
                 return SWAP_AGAIN;
-	unsigned long address = vma_address(page, vma);
+
 	list_for_each_entry(vma, &anon_vma->head, anon_vma_node) {
 		if (page_mapcount(page) <= 1)
 			break;

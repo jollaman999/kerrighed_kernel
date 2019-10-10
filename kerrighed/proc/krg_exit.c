@@ -320,7 +320,8 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 	struct wait_task_result res;
 	int retval;
 	int err = -ENOMEM;
-
+	struct wait_opts wo;
+	
 	read_lock(&tasklist_lock);
 	p = find_task_by_kpid(req->pid);
 	/*
@@ -360,7 +361,7 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 		res.ioac = p->ioac;
 		task_io_accounting_add(&res.ioac, &sig->ioac);
 	}
-	struct wait_opts wo;
+	
 
 	wo.wo_pid = req->pid;
 	wo.wo_flags	= req->options;
@@ -368,7 +369,7 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 	wo.wo_stat	=  &res.status;
 	wo.wo_rusage = &res.ru;
 
-	retval=wait_task_zombie(wo,p);
+	retval=wait_task_zombie(&wo,p);
 	// retval = krg_kernel_wait_task_zombie(p, req->options,
 	// 			  &res.info,
 	// 			  &res.status, &res.ru);
