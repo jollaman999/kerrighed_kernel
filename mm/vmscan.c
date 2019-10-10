@@ -1742,7 +1742,7 @@ static void shrink_active_list(unsigned long nr_pages,
 						LRU_ACTIVE + file * LRU_FILE);
 	move_active_pages_to_lru(zone, &l_inactive,
 #ifdef CONFIG_KRG_MM
-						BUILD_LRU_ID(0 /* inactive */, file, kddm);
+						BUILD_LRU_ID(0 /* inactive */, file, kddm));
 #else
 						LRU_BASE   + file * LRU_FILE);
 #endif
@@ -1806,11 +1806,11 @@ static int inactive_kddm_is_low_global(struct zone *zone)
 	return 0;
 }
 
-static int inactive_kddm_is_low(struct zone *zone, struct scan_control *sc)
+static int inactive_kddm_is_low(struct zone *zone, struct mem_cgroup_zone *mz)
 {
 	int low;
 
-	if (scanning_global_lru(sc->target_mem_cgroup))
+	if (scanning_global_lru(mz))
 		low = inactive_kddm_is_low_global(zone);
 	else
 		BUG();
@@ -1864,7 +1864,7 @@ static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
 		return 0;
 	}
 #ifdef CONFIG_KRG_MM
-	if (lru == LRU_ACTIVE_MIGR && inactive_kddm_is_low(mz->zone, sc)) {
+	if (lru == LRU_ACTIVE_MIGR && inactive_kddm_is_low(mz->zone, mz)) {
 		shrink_active_list(nr_to_scan, mz, sc, priority, 0, 1);
 		return 0;
 	}

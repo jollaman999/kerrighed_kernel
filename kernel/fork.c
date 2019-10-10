@@ -771,14 +771,14 @@ void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 	if (mm)
 		atomic_dec(&mm->mm_ltasks);
 #endif
-	if (tsk->vfork_done)
+	if (tsk->vfork_done){
 #ifdef CONFIG_KRG_EPM
 		if (tsk->remote_vfork_done)
 			krg_vfork_done(vfork_done);
 		else
 #endif
 		complete_vfork_done(tsk);
-
+	}
 	/*
 	 * If we're exiting normally, clear a user-space tid field if
 	 * requested.  We leave this alone when dying by signal, to leave

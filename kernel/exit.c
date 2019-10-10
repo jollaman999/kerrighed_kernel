@@ -1438,8 +1438,8 @@ int krg_kernel_wait_task_zombie(struct task_struct *p, int options,
 	wo.wo_stat	= NULL;
 	wo.wo_rusage	= ru;
 
-	return wait_task_zombie(&wo,p);				 
-			 }
+	return wait_task_zombie(wo,p);	
+	}
 
 #endif
 #ifndef CONFIG_KRG_EPM
@@ -1982,7 +1982,7 @@ repeat:
 		/* Try all children, even remote ones but don't wait yet */
 		/* Releases children lock */
 		int tsk_result = krg_do_wait(current->children_obj, &retval,
-					     wo->wo_type, wo->upid, wo->wo_flags,
+					     wo->wo_type, wo->wo_upid, wo->wo_flags,
 					     wo->wo_info, wo->wo_stat, wo->wo_rusage);
 		if (tsk_result)
 			retval = tsk_result;
