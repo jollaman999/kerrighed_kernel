@@ -80,6 +80,13 @@ static
 #endif
 void exit_mm(struct task_struct * tsk);
 
+#ifdef CONFIG_KRG_MM
+int krg_kernel_wait_task_zombie(struct task_struct *p, int options,
+		     struct siginfo __user *infop,
+		     int __user *stat_addr, struct rusage __user *ru);
+int wait_task_zombie(struct wait_opts *wo, struct task_struct *p);
+#endif
+
 static void __unhash_process(struct task_struct *p, bool group_dead)
 {
 	nr_threads--;
@@ -1438,7 +1445,7 @@ int krg_kernel_wait_task_zombie(struct task_struct *p, int options,
 	wo.wo_info	= infop;
 	wo.wo_stat	= NULL;
 	wo.wo_rusage	= ru;
-	retval=wait_task_zombie(wo,p)
+	retval=wait_task_zombie(wo,p);
 	return retval;	
 	}
 
