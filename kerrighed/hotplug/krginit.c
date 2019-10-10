@@ -161,7 +161,7 @@ static inline void check_node_id (int node_id)
 	}
 }
 
-static char *read_from_file(char  *_filename, int size)
+static char *read_from_file(const char __user  *_filename, int size)
 {
 	int error;
 	struct file *f;
@@ -170,7 +170,7 @@ static char *read_from_file(char  *_filename, int size)
 	b = kmalloc(size, GFP_ATOMIC);
 	BUG_ON(b==NULL);
 
-	filename = getname((const char __user)_filename);
+	filename = getname(_filename);
 	if (!IS_ERR(filename)) {
 		f = filp_open(filename, O_RDONLY, 0);
 		if (IS_ERR(f)) {
