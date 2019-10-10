@@ -170,7 +170,7 @@ static char *read_from_file(char  *_filename, int size)
 	b = kmalloc(size, GFP_ATOMIC);
 	BUG_ON(b==NULL);
 
-	filename = getname((const char __user *)_filename);
+	filename = getname((const char __user)_filename);
 	if (!IS_ERR(filename)) {
 		f = filp_open(filename, O_RDONLY, 0);
 		if (IS_ERR(f)) {

@@ -1889,8 +1889,10 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 {
 #ifdef CONFIG_KRG_MM
 	unsigned long kddm, kddm_prio, kp;
+#else
+	unsigned long zonefile;
 #endif
-	unsigned long anon, file, free, zonefile;
+	unsigned long anon, file, free;
 	unsigned long anon_prio, file_prio;
 	unsigned long ap, fp;
 	struct zone_reclaim_stat *reclaim_stat = get_reclaim_stat(mz);
