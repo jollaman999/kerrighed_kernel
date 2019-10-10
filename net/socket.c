@@ -2555,7 +2555,7 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 #ifdef CONFIG_KRG_FAF
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (!sock && !faf_file)
-		goto err;
+		return err;
 #else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 #endif
