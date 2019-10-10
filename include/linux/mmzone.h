@@ -398,13 +398,10 @@ struct zone {
 
 	/* Fields commonly accessed by the page reclaim scanner */
 	spinlock_t		lru_lock;
-#ifdef __GENKSYMS__
 	struct zone_lru {
 		struct list_head list;
 	} lru[NR_LRU_LISTS];
-#else
 	struct lruvec		lruvec;
-#endif
 
 	struct zone_reclaim_stat reclaim_stat;
 

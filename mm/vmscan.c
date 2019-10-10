@@ -1864,7 +1864,7 @@ static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
 		return 0;
 	}
 #ifdef CONFIG_KRG_MM
-	if (lru == LRU_ACTIVE_MIGR && inactive_kddm_is_low(mz->zone, mz)) {
+	if (lru == LRU_ACTIVE_MIGR && inactive_kddm_is_low(&mz->zone, mz)) {
 		shrink_active_list(nr_to_scan, mz, sc, priority, 0, 1);
 		return 0;
 	}
@@ -2635,7 +2635,7 @@ static void age_active_anon(struct zone *zone, struct scan_control *sc,
 #else
                        sc, priority, 0, 0);
 			/* Do the same on kddm lru pages */
-			if (inactive_kddm_is_low(&mz->zone, sc))
+			if (inactive_kddm_is_low(&mz->zone, mz))
 				shrink_active_list(SWAP_CLUSTER_MAX, &mz,
 						   sc, priority, 0, 1);
 #endif
@@ -3082,8 +3082,8 @@ unsigned long global_reclaimable_pages(void)
 	if (get_nr_swap_pages() > 0)
 		nr += global_page_state(NR_ACTIVE_ANON) +
 #ifdef CONFIG_KRG_MM
-		+ global_page_state(NR_ACTIVE_MIGR)
-		+ global_page_state(NR_INACTIVE_MIGR)
+		global_page_state(NR_ACTIVE_MIGR)
+		+ global_page_state(NR_INACTIVE_MIGR)+
 #endif
 		      global_page_state(NR_INACTIVE_ANON);
 

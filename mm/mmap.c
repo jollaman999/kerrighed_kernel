@@ -1861,43 +1861,23 @@ void arch_unmap_area_topdown(struct mm_struct *mm, unsigned long addr)
 
 #ifdef CONFIG_KRG_MM
 unsigned long
-get_unmapped_area(struct file *file, unsigned long addr, unsigned long len,
-				  unsigned long pgoff, unsigned long flags)
+get_unmapped_area_prot(struct file *file, unsigned long addr, unsigned long len,
+					   unsigned long pgoff, unsigned long flags, int exec)
 {
-	return __get_unmapped_area(current->mm, file, addr, len, pgoff, flags);
+	return __get_unmapped_area_prot(current->mm, file, addr, len, pgoff, flags,0);
 }
-
 unsigned long
-__get_unmapped_area(struct mm_struct *mm, struct file *file,
-					unsigned long addr, unsigned long len,
-					unsigned long pgoff, unsigned long flags)
-{
-	unsigned long (*get_area)(struct file *, unsigned long,
-							  unsigned long, unsigned long, unsigned long);
+__get_unmapped_area_prot(struct mm_struct *mm, struct file *file, unsigned long addr, unsigned long len,
+					   unsigned long pgoff, unsigned long flags, int exec)
 
-	get_area = mm->get_unmapped_area;
-
-	if (file && file->f_op && file->f_op->get_unmapped_area)
-		get_area = file->f_op->get_unmapped_area;
-	addr = get_area(file, addr, len, pgoff, flags);
-	if (IS_ERR_VALUE(addr))
-		return addr;
-
-	if (addr > TASK_SIZE - len)
-		return -ENOMEM;
-	if (addr & ~PAGE_MASK)
-		return -EINVAL;
-
-	return arch_rebalance_pgtables(addr, len);
-}
-
-EXPORT_SYMBOL(get_unmapped_area);
-#endif
+#else
 
 unsigned long
 get_unmapped_area_prot(struct file *file, unsigned long addr, unsigned long len,
 					   unsigned long pgoff, unsigned long flags, int exec)
+#endif
 {
+
 	unsigned long (*get_area)(struct file *, unsigned long,
 							  unsigned long, unsigned long, unsigned long);
 
@@ -1909,10 +1889,18 @@ get_unmapped_area_prot(struct file *file, unsigned long addr, unsigned long len,
 	if (len > TASK_SIZE)
 		return -ENOMEM;
 
-	if (exec && current->mm->get_unmapped_exec_area)
+	if (exec && current->mm->get_unmapped_exec_area){
 		get_area = current->mm->get_unmapped_exec_area;
-	else
+	}
+	else{
+#ifdef CONFIG_KRG_MM
+		get_area = mm->get_unmapped_area;
+
+#else
 		get_area = current->mm->get_unmapped_area;
+
+#endif
+	}
 
 	if (file && file->f_op && file->f_op->get_unmapped_area)
 		get_area = file->f_op->get_unmapped_area;
@@ -2415,8 +2403,7 @@ static
 #ifndef CONFIG_KRG_MM
 static
 #endif
-	void
-	unmap_region(struct mm_struct *mm,
+void unmap_region(struct mm_struct *mm,
 				 struct vm_area_struct *vma, struct vm_area_struct *prev,
 				 unsigned long start, unsigned long end)
 {

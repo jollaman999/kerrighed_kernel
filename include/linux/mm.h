@@ -1345,7 +1345,7 @@ static inline unsigned long get_unmapped_area(struct file *file, unsigned long a
 }
 
 #ifdef CONFIG_KRG_MM
-extern unsigned long __get_unmapped_area(struct mm_struct *, struct file *, unsigned long , unsigned long , unsigned long , unsigned long );
+extern unsigned long __get_unmapped_area_prot(struct mm_struct *, struct file *, unsigned long , unsigned long , unsigned long , unsigned long , int );
 #endif
 
 extern unsigned long do_mmap_pgoff(struct file *file, unsigned long addr,
