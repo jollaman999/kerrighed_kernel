@@ -331,8 +331,10 @@ struct zone_reclaim_stat {
 };
 
 struct zone {
+#ifdef CONFIG_KRG_MM
 	/* Fields commonly accessed by the page allocator */
-
+	unsigned long		pages_min, pages_low, pages_high;
+#endif
 	/* zone watermarks, access with *_wmark_pages(zone) macros */
 	unsigned long watermark[NR_WMARK];
 

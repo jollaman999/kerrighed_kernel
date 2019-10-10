@@ -1958,10 +1958,10 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 	anon_prio = sc->swappiness;
 	file_prio = 200 - sc->swappiness;
 #ifdef CONFIG_KRG_MM
-	if (!sc->may_swap || ((long)nr_swap_pages <= 0))
+	if (!sc->may_swap || ((int)nr_swap_pages <= 0))
 		anon_prio = 0;
 	if (scanning_global_lru(mz)) {
-		free  = zone_page_state(&mz->zone, NR_FREE_PAGES);
+		free  = zone_page_state(mz->zone, NR_FREE_PAGES);
 		/* If we have very few page cache pages,
 		   force-scan anon pages. */
 		if (unlikely(file + free <= mz->zone->pages_high))
