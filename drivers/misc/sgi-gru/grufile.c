@@ -595,7 +595,10 @@ static struct miscdevice gru_miscdev = {
 	.fops		= &gru_fops,
 };
 
-const struct vm_operations_struct gru_vm_ops = {
+#ifndef CONFIG_KERRIGHED
+const
+#endif
+struct vm_operations_struct gru_vm_ops = {
 	.close		= gru_vma_close,
 	.fault		= gru_fault,
 };
