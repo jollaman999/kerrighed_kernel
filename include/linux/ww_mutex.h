@@ -15,7 +15,6 @@
 #define __LINUX_WW_MUTEX_H
 
 #include <linux/mutex.h>
-
 struct ww_class {
 	atomic_long_t stamp;
 	struct lock_class_key acquire_key;

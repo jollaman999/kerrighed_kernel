@@ -344,9 +344,17 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 		res.ioac = p->ioac;
 		task_io_accounting_add(&res.ioac, &sig->ioac);
 	}
-	retval = krg_kernel_wait_task_zombie(p, req->options,
-				  &res.info,
-				  &res.status, &res.ru);
+	struct wait_opts wo;
+	wo.wo_pid = req->pid;
+	wo.wo_flags	= req->options;
+	wo.wo_info	= &res.info,;
+	wo.wo_stat	=  &res.status;
+	wo.wo_rusage = &res.ru;
+
+	retval=wait_task_zombie(wo,p);
+	// retval = krg_kernel_wait_task_zombie(p, req->options,
+	// 			  &res.info,
+	// 			  &res.status, &res.ru);
 	if (!retval)
 		read_unlock(&tasklist_lock);
 
