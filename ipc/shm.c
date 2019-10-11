@@ -234,6 +234,24 @@ static void shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 }
 #endif
 
+
+
+/*
+ * shm_may_destroy - identifies whether shm segment should be destroyed now
+ *
+ * Returns true if and only if there are no active users of the segment and
+ * one of the following is true:
+ *
+ * 1) shmctl(id, IPC_RMID, NULL) was called for this shp
+ *
+ * 2) sysctl kernel.shm_rmid_forced is set to 1.
+ */
+static bool shm_may_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
+{
+	return (shp->shm_nattch == 0) &&
+	       (ns->shm_rmid_forced ||
+		(shp->shm_perm.mode & SHM_DEST));
+}
 /*
  * remove the attach descriptor vma.
  * free memory for segment if it is marked destroyed.
