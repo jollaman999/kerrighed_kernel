@@ -34,7 +34,7 @@ typedef uint32_t key_perm_t;
 
 struct key;
 
-#ifdef CONFIG_KEYS
+// #ifdef CONFIG_KEYS
 
 #undef KEY_DEBUGGING
 
@@ -345,6 +345,6 @@ extern void key_init(void);
 #define key_init()			do { } while(0)
 #define key_replace_session_keyring()	do { } while(0)
 
-#endif /* CONFIG_KEYS */
+// #endif /* CONFIG_KEYS */
 #endif /* __KERNEL__ */
 #endif /* _LINUX_KEY_H */
