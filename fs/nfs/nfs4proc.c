@@ -73,15 +73,15 @@
 static unsigned short max_session_slots = NFS4_DEF_SLOT_TABLE_SIZE;
 
 struct nfs4_opendata;
-// static int _nfs4_proc_open(struct nfs4_opendata *data);
-// static int _nfs4_recover_proc_open(struct nfs4_opendata *data);
-// static int nfs4_do_fsinfo(struct nfs_server *, struct nfs_fh *, struct nfs_fsinfo *);
-// static int nfs4_async_handle_error(struct rpc_task *, const struct nfs_server *, struct nfs4_state *);
-// static int nfs4_proc_getattr(struct nfs_server *server, struct nfs_fh *fhandle, struct nfs_fattr *fattr);
-// static int _nfs4_proc_getattr(struct nfs_server *server, struct nfs_fh *fhandle, struct nfs_fattr *fattr);
-// static int nfs4_do_setattr(struct inode *inode, struct rpc_cred *cred,
-// 			    struct nfs_fattr *fattr, struct iattr *sattr,
-// 			    struct nfs4_state *state);
+static int _nfs4_proc_open(struct nfs4_opendata *data);
+static int _nfs4_recover_proc_open(struct nfs4_opendata *data);
+static int nfs4_do_fsinfo(struct nfs_server *, struct nfs_fh *, struct nfs_fsinfo *);
+static int nfs4_async_handle_error(struct rpc_task *, const struct nfs_server *, struct nfs4_state *);
+static int nfs4_proc_getattr(struct nfs_server *server, struct nfs_fh *fhandle, struct nfs_fattr *fattr);
+static int _nfs4_proc_getattr(struct nfs_server *server, struct nfs_fh *fhandle, struct nfs_fattr *fattr);
+static int nfs4_do_setattr(struct inode *inode, struct rpc_cred *cred,
+			    struct nfs_fattr *fattr, struct iattr *sattr,
+			    struct nfs4_state *state);
 // static struct rpc_task *_nfs41_proc_sequence(struct nfs_client *clp,
 // 		struct rpc_cred *cred,
 // 		struct nfs4_slot *slot,
