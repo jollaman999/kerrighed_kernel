@@ -82,20 +82,20 @@ struct key;
 // struct keyring_list;
 // struct keyring_name;
 
-// /*****************************************************************************/
-// /*
-//  * key reference with possession attribute handling
-//  *
-//  * NOTE! key_ref_t is a typedef'd pointer to a type that is not actually
-//  * defined. This is because we abuse the bottom bit of the reference to carry a
-//  * flag to indicate whether the calling process possesses that key in one of
-//  * its keyrings.
-//  *
-//  * the key_ref_t has been made a separate type so that the compiler can reject
-//  * attempts to dereference it without proper conversion.
-//  *
-//  * the three functions are used to assemble and disassemble references
-//  */
+/*****************************************************************************/
+/*
+ * key reference with possession attribute handling
+ *
+ * NOTE! key_ref_t is a typedef'd pointer to a type that is not actually
+ * defined. This is because we abuse the bottom bit of the reference to carry a
+ * flag to indicate whether the calling process possesses that key in one of
+ * its keyrings.
+ *
+ * the key_ref_t has been made a separate type so that the compiler can reject
+ * attempts to dereference it without proper conversion.
+ *
+ * the three functions are used to assemble and disassemble references
+ */
 // typedef struct __key_reference_with_attributes *key_ref_t;
 
 // static inline key_ref_t make_key_ref(const struct key *key,
@@ -114,14 +114,14 @@ struct key;
 // 	return (unsigned long) key_ref & 1UL;
 // }
 
-// /*****************************************************************************/
-// /*
-//  * authentication token / access credential / keyring
-//  * - types of key include:
-//  *   - keyrings
-//  *   - disk encryption IDs
-//  *   - Kerberos TGTs and tickets
-//  */
+/*****************************************************************************/
+/*
+ * authentication token / access credential / keyring
+ * - types of key include:
+ *   - keyrings
+ *   - disk encryption IDs
+ *   - Kerberos TGTs and tickets
+ */
 // struct key {
 // 	atomic_t		usage;		/* number of references */
 // 	key_serial_t		serial;		/* key serial number */
@@ -167,26 +167,26 @@ struct key;
 // #define KEY_FLAG_INVALIDATED	7	/* set if key has been invalidated */
 // #define KEY_FLAG_ROOT_CAN_INVAL	11	/* set if key can be invalidated by root without permission */
 
-// 	/* the description string
-// 	 * - this is used to match a key against search criteria
-// 	 * - this should be a printable string
-// 	 * - eg: for krb5 AFS, this might be "afs@REDHAT.COM"
-// 	 */
+	/* the description string
+	 * - this is used to match a key against search criteria
+	 * - this should be a printable string
+	 * - eg: for krb5 AFS, this might be "afs@REDHAT.COM"
+	 */
 // 	char			*description;
 
-// 	/* type specific data
-// 	 * - this is used by the keyring type to index the name
-// 	 */
+	/* type specific data
+	 * - this is used by the keyring type to index the name
+	 */
 // 	union {
 // 		struct list_head	link;
 // 		unsigned long		x[2];
 // 		void			*p[2];
 // 	} type_data;
 
-// 	/* key data
-// 	 * - this is used to hold the data actually used in cryptography or
-// 	 *   whatever
-// 	 */
+	/* key data
+	 * - this is used to hold the data actually used in cryptography or
+	 *   whatever
+	 */
 // 	union {
 // 		unsigned long		value;
 // 		void			*data;
@@ -293,36 +293,36 @@ struct key;
 
 // extern void key_set_timeout(struct key *, unsigned);
 
-// /**
-//  * key_is_instantiated - Determine if a key has been positively instantiated
-//  * @key: The key to check.
-//  *
-//  * Return true if the specified key has been positively instantiated, false
-//  * otherwise.
-//  */
+/**
+ * key_is_instantiated - Determine if a key has been positively instantiated
+ * @key: The key to check.
+ *
+ * Return true if the specified key has been positively instantiated, false
+ * otherwise.
+ */
 // static inline bool key_is_instantiated(const struct key *key)
 // {
 // 	return test_bit(KEY_FLAG_INSTANTIATED, &key->flags) &&
 // 		!test_bit(KEY_FLAG_NEGATIVE, &key->flags);
 // }
 
-// #define rcu_dereference_key(KEY)					\
-// 	(rcu_dereference((KEY)->payload.data))
+// #define rcu_dereference_key(KEY) (rcu_dereference((KEY)->payload.data))
 
-// #define rcu_assign_keypointer(KEY, PAYLOAD)				\
-// do {									\
-// 	rcu_assign_pointer((KEY)->payload.data, (PAYLOAD));		\
-// } while (0)
-
+/*
+*#define rcu_assign_keypointer(KEY, PAYLOAD)				\
+*do {									\
+*	rcu_assign_pointer((KEY)->payload.data, (PAYLOAD));		\
+*} while (0)
+*/
 // #ifdef CONFIG_SYSCTL
 // extern ctl_table key_sysctls[];
 // #endif
 
 // extern void key_replace_session_keyring(void);
 
-// /*
-//  * the userspace interface
-//  */
+/*
+ * the userspace interface
+ */
 // extern int install_thread_keyring_to_cred(struct cred *cred);
 // extern void key_fsuid_changed(struct task_struct *tsk);
 // extern void key_fsgid_changed(struct task_struct *tsk);
