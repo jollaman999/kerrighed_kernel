@@ -262,6 +262,23 @@ static void shm_close(struct vm_area_struct *vma)
 	up_write(&shm_ids(ns).rw_mutex);
 }
 
+void exit_shm(struct task_struct *task)
+{
+	struct nsproxy *nsp = task->nsproxy;
+	struct ipc_namespace *ns;
+
+	if (!nsp)
+		return;
+	ns = nsp->ipc_ns;
+	if (!ns || !ns->shm_rmid_forced)
+		return;
+
+	/* Destroy all already created segments, but not mapped yet */
+	down_write(&shm_ids(ns).rw_mutex);
+	idr_for_each(&shm_ids(ns).ipcs_idr, &shm_try_destroy_current, ns);
+	up_write(&shm_ids(ns).rw_mutex);
+}
+
 static int shm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	struct file *file = vma->vm_file;
