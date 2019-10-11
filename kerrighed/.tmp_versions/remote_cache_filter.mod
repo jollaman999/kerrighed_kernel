@@ -1,0 +1,2 @@
+kerrighed/scheduler/filters/remote_cache_filter.ko
+kerrighed/scheduler/filters/remote_cache_filter.o

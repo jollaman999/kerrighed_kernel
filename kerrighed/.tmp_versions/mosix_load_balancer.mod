@@ -1,0 +1,2 @@
+kerrighed/scheduler/policies/mosix_load_balancer.ko
+kerrighed/scheduler/policies/mosix_load_balancer.o

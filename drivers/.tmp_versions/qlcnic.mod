@@ -1,0 +1,2 @@
+drivers/net/qlcnic/qlcnic.ko
+drivers/net/qlcnic/qlcnic_hw.o drivers/net/qlcnic/qlcnic_main.o drivers/net/qlcnic/qlcnic_init.o drivers/net/qlcnic/qlcnic_ethtool.o drivers/net/qlcnic/qlcnic_ctx.o drivers/net/qlcnic/qlcnic_io.o drivers/net/qlcnic/qlcnic_sysfs.o drivers/net/qlcnic/qlcnic_minidump.o drivers/net/qlcnic/qlcnic_83xx_hw.o drivers/net/qlcnic/qlcnic_83xx_init.o drivers/net/qlcnic/qlcnic_83xx_vnic.o drivers/net/qlcnic/qlcnic_sriov_common.o drivers/net/qlcnic/qlcnic_compat.o drivers/net/qlcnic/qlcnic_sriov_pf.o drivers/net/qlcnic/qlcnic_dcb.o

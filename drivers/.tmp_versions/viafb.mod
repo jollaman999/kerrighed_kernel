@@ -1,0 +1,2 @@
+drivers/video/via/viafb.ko
+drivers/video/via/viafbdev.o drivers/video/via/hw.o drivers/video/via/iface.o drivers/video/via/via_i2c.o drivers/video/via/dvi.o drivers/video/via/lcd.o drivers/video/via/ioctl.o drivers/video/via/accel.o drivers/video/via/via_utility.o drivers/video/via/vt1636.o drivers/video/via/global.o drivers/video/via/tblDPASetting.o drivers/video/via/viamode.o drivers/video/via/tbl1636.o

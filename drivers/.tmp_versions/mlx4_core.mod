@@ -1,0 +1,2 @@
+drivers/net/mlx4/mlx4_core.ko
+drivers/net/mlx4/alloc.o drivers/net/mlx4/catas.o drivers/net/mlx4/cmd.o drivers/net/mlx4/cq.o drivers/net/mlx4/eq.o drivers/net/mlx4/fw.o drivers/net/mlx4/fw_qos.o drivers/net/mlx4/icm.o drivers/net/mlx4/intf.o drivers/net/mlx4/main.o drivers/net/mlx4/mcg.o drivers/net/mlx4/mr.o drivers/net/mlx4/pd.o drivers/net/mlx4/port.o drivers/net/mlx4/profile.o drivers/net/mlx4/qp.o drivers/net/mlx4/reset.o drivers/net/mlx4/sense.o drivers/net/mlx4/srq.o drivers/net/mlx4/resource_tracker.o

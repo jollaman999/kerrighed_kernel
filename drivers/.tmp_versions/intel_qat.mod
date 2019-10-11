@@ -1,0 +1,2 @@
+drivers/crypto/qat/qat_common/intel_qat.ko
+drivers/crypto/qat/qat_common/adf_cfg.o drivers/crypto/qat/qat_common/adf_ctl_drv.o drivers/crypto/qat/qat_common/adf_dev_mgr.o drivers/crypto/qat/qat_common/adf_init.o drivers/crypto/qat/qat_common/adf_accel_engine.o drivers/crypto/qat/qat_common/adf_aer.o drivers/crypto/qat/qat_common/adf_transport.o drivers/crypto/qat/qat_common/qat_crypto.o drivers/crypto/qat/qat_common/qat_algs.o drivers/crypto/qat/qat_common/qat_uclo.o drivers/crypto/qat/qat_common/qat_hal.o drivers/crypto/qat/qat_common/adf_transport_debug.o

@@ -1,0 +1,2 @@
+lib/raid6/raid6_pq.ko
+lib/raid6/raid6algos.o lib/raid6/raid6recov.o lib/raid6/raid6recov_ssse3.o lib/raid6/raid6tables.o lib/raid6/raid6int1.o lib/raid6/raid6int2.o lib/raid6/raid6int4.o lib/raid6/raid6int8.o lib/raid6/raid6int16.o lib/raid6/raid6int32.o lib/raid6/raid6altivec1.o lib/raid6/raid6altivec2.o lib/raid6/raid6altivec4.o lib/raid6/raid6altivec8.o lib/raid6/raid6mmx.o lib/raid6/raid6sse1.o lib/raid6/raid6sse2.o
