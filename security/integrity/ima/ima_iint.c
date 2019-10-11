@@ -42,7 +42,44 @@ out:
 	rcu_read_unlock();
 	return iint;
 }
+/* Allocate memory for the iint associated with the inode
+ * from the iint_cache slab, initialize the iint, and
+ * insert it into the radix tree.
+ *
+ * On success return a pointer to the iint; on failure return NULL.
+ */
+struct ima_iint_cache *ima_iint_insert(struct inode *inode)
+{
+	struct ima_iint_cache *iint = NULL;
+	int rc = 0;
 
+	if (!ima_initialized)
+		return iint;
+	iint = kmem_cache_alloc(iint_cache, GFP_KERNEL);
+	if (!iint)
+		return iint;
+
+	rc = radix_tree_preload(GFP_KERNEL);
+	if (rc < 0)
+		goto out;
+
+	spin_lock(&ima_iint_lock);
+	rc = radix_tree_insert(&ima_iint_store, (unsigned long)inode, iint);
+	spin_unlock(&ima_iint_lock);
+out:
+	if (rc < 0) {
+		kmem_cache_free(iint_cache, iint);
+		if (rc == -EEXIST) {
+			spin_lock(&ima_iint_lock);
+			iint = radix_tree_lookup(&ima_iint_store,
+						 (unsigned long)inode);
+			spin_unlock(&ima_iint_lock);
+		} else
+			iint = NULL;
+	}
+	radix_tree_preload_end();
+	return iint;
+}
 /**
  * ima_inode_alloc - allocate an iint associated with an inode
  * @inode: pointer to the inode
