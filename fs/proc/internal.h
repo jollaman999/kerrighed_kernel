@@ -151,10 +151,7 @@ int pid_revalidate(struct dentry *dentry, struct nameidata *nd);
 struct inode *proc_pid_make_inode(struct super_block * sb, struct task_struct *task);
 extern const struct dentry_operations pid_dentry_operations;
 int pid_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat);
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
-static
-#endif
-int proc_setattr(struct dentry *dentry, struct iattr *attr);
+// int proc_setattr(struct dentry *dentry, struct iattr *attr);
 
 extern const struct inode_operations proc_ns_dir_inode_operations;
 extern const struct file_operations proc_ns_dir_operations;
