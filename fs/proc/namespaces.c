@@ -14,7 +14,14 @@
 #include <linux/pid_namespace.h>
 #include "internal.h"
 
-
+const struct proc_ns_operations ipcns_operations = {
+	.name		= "ipc",
+	.type		= CLONE_NEWIPC,
+	.get		= ipcns_get,
+	.put		= ipcns_put,
+	.install	= ipcns_install,
+	.inum		= ipcns_inum,
+};
 static const struct proc_ns_operations *ns_entries[] = {
 #ifdef CONFIG_NET_NS
 	&netns_operations,
