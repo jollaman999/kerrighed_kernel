@@ -280,14 +280,14 @@ extern void kclist_add(struct kcore_list *, void *, size_t, int type);
 #endif
 
 struct nsproxy;
-// struct proc_ns_operations {
-// 	const char *name;
-// 	int type;
-// 	void *(*get)(struct task_struct *task);
-// 	void (*put)(void *ns);
-// 	int (*install)(struct nsproxy *nsproxy, void *ns);
-// 	unsigned int (*inum)(void *ns);
-// };
+struct proc_ns_operations {
+	const char *name;
+	int type;
+	void *(*get)(struct task_struct *task);
+	void (*put)(void *ns);
+	int (*install)(struct nsproxy *nsproxy, void *ns);
+	unsigned int (*inum)(void *ns);
+};
 extern const struct proc_ns_operations netns_operations;
 extern const struct proc_ns_operations utsns_operations;
 extern const struct proc_ns_operations ipcns_operations;
