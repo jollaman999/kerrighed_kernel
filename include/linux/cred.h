@@ -135,13 +135,13 @@ struct cred {
 	kernel_cap_t	cap_permitted;	/* caps we're permitted */
 	kernel_cap_t	cap_effective;	/* caps we can actually use */
 	kernel_cap_t	cap_bset;	/* capability bounding set */
-#ifdef CONFIG_KEYS
+// #ifdef CONFIG_KEYS
 	unsigned char	jit_keyring;	/* default keyring to attach requested
 					 * keys to */
 	struct key	*thread_keyring; /* keyring private to this thread */
 	struct key	*request_key_auth; /* assumed request_key authority */
 	struct thread_group_cred *tgcred; /* thread-group shared credentials */
-#endif
+// #endif
 #ifdef CONFIG_SECURITY
 	void		*security;	/* subjective LSM security */
 #endif
