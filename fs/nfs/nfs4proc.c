@@ -82,10 +82,10 @@ static int _nfs4_proc_getattr(struct nfs_server *server, struct nfs_fh *fhandle,
 static int nfs4_do_setattr(struct inode *inode, struct rpc_cred *cred,
 			    struct nfs_fattr *fattr, struct iattr *sattr,
 			    struct nfs4_state *state);
-// static struct rpc_task *_nfs41_proc_sequence(struct nfs_client *clp,
-// 		struct rpc_cred *cred,
-// 		struct nfs4_slot *slot,
-// 		bool is_privileged);
+static struct rpc_task *_nfs41_proc_sequence(struct nfs_client *clp,
+		struct rpc_cred *cred,
+		struct nfs4_slot *slot,
+		bool is_privileged);
 
 /* Prevent leaks of NFSv4 errors into userland */
 static int nfs4_map_errors(int err)
