@@ -598,9 +598,9 @@ out:
 }
 
 #ifndef CONFIG_KRG_MM
-static
+static const 
 #endif
-const struct vm_operations_struct nfs_file_vm_ops = {
+struct vm_operations_struct nfs_file_vm_ops = {
 	.fault = filemap_fault,
 	.page_mkwrite = nfs_vm_page_mkwrite,
 };
