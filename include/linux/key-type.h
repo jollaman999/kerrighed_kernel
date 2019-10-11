@@ -15,7 +15,7 @@
 #include <linux/key.h>
 #include <linux/errno.h>
 
-#ifdef CONFIG_KEYS
+// #ifdef CONFIG_KEYS
 
 /*
  * key under-construction record
@@ -114,5 +114,5 @@ extern int key_reject_and_link(struct key *key,
 			       struct key *instkey);
 extern void complete_request_key(struct key_construction *cons, int error);
 
-#endif /* CONFIG_KEYS */
+// #endif /* CONFIG_KEYS */
 #endif /* _LINUX_KEY_TYPE_H */
