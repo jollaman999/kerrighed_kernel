@@ -11,6 +11,8 @@
 #include <linux/slab.h>
 #include <linux/fs.h>
 #include <linux/mount.h>
+#include <linux/user_namespace.h>
+#include <linux/proc_fs.h>
 
 #include "util.h"
 
