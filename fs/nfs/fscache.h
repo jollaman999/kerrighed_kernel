@@ -161,7 +161,7 @@ static inline void nfs_fscache_invalidate(struct inode *inode)
 /*
  * Wait for an object to finish being invalidated.
  */
-void nfs_fscache_wait_on_invalidate(struct inode *inode)
+static inline void nfs_fscache_wait_on_invalidate(struct inode *inode)
 {
 	fscache_wait_on_invalidate(NFS_I(inode)->fscache);
 }
