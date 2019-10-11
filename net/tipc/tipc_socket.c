@@ -1346,7 +1346,7 @@ static u32 dispatch(struct tipc_port *tport, struct sk_buff *buf)
 	if (!sock_owned_by_user(sk)) {
 		res = filter_rcv(sk, buf);
 	} else {
-		sk_add_backlog(sk, buf);
+		sk_add_backlog(sk, buf,sk->sk_rcvbuf);
 		res = TIPC_OK;
 	}
 	bh_unlock_sock(sk);
@@ -1688,7 +1688,7 @@ restart:
  */
 
 static int setsockopt(struct socket *sock,
-		      int lvl, int opt, char __user *ov, int ol)
+		      int lvl, int opt, char __user *ov, unsigned int ol)
 {
 	struct sock *sk = sock->sk;
 	struct tipc_port *tport = tipc_sk_port(sk);
