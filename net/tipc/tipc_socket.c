@@ -193,7 +193,7 @@ static void reject_rx_queue(struct sock *sk)
  */
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
-static int tipc_create(struct net *net, struct socket *sock, int protocol)
+//static int tipc_create(struct net *net, struct socket *sock, int protocol)
 static int tipc_create(struct net *net, struct socket *sock, int protocol,
 		       int kern)
 #else
