@@ -262,6 +262,26 @@ static void shm_close(struct vm_area_struct *vma)
 	up_write(&shm_ids(ns).rw_mutex);
 }
 
+static int shm_try_destroy_current(int id, void *p, void *data)
+{
+	struct ipc_namespace *ns = data;
+	struct shmid_kernel *shp = shm_lock(ns, id);
+
+	if (IS_ERR(shp))
+		return 0;
+
+	if (shp->shm_cprid != task_tgid_vnr(current)) {
+		shm_unlock(shp);
+		return 0;
+	}
+
+	if (shm_may_destroy(ns, shp))
+		shm_destroy(ns, shp);
+	else
+		shm_unlock(shp);
+	return 0;
+}
+
 void exit_shm(struct task_struct *task)
 {
 	struct nsproxy *nsp = task->nsproxy;
