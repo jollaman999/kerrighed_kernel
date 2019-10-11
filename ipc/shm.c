@@ -299,6 +299,40 @@ static int shm_try_destroy_current(int id, void *p, void *data)
 		shm_unlock(shp);
 	return 0;
 }
+static int shm_try_destroy_orphaned(int id, void *p, void *data)
+{
+	struct ipc_namespace *ns = data;
+	struct shmid_kernel *shp = shm_lock(ns, id);
+	struct task_struct *task;
+
+	if (IS_ERR(shp))
+		return 0;
+
+	/*
+	 * We want to destroy segments without users and with already
+	 * exit'ed originating process.
+	 *
+	 * XXX: the originating process may exist in another pid namespace.
+	 */
+	task = find_task_by_vpid(shp->shm_cprid);
+	if (task != NULL) {
+		shm_unlock(shp);
+		return 0;
+	}
+
+	if (shm_may_destroy(ns, shp))
+		shm_destroy(ns, shp);
+	else
+		shm_unlock(shp);
+	return 0;
+}
+
+void shm_destroy_orphaned(struct ipc_namespace *ns)
+{
+	down_write(&shm_ids(ns).rw_mutex);
+	idr_for_each(&shm_ids(ns).ipcs_idr, &shm_try_destroy_orphaned, ns);
+	up_write(&shm_ids(ns).rw_mutex);
+}
 
 void exit_shm(struct task_struct *task)
 {
