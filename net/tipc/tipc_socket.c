@@ -194,6 +194,8 @@ static void reject_rx_queue(struct sock *sk)
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
 static int tipc_create(struct net *net, struct socket *sock, int protocol)
+static int tipc_create(struct net *net, struct socket *sock, int protocol,
+		       int kern)
 #else
 static int tipc_create(struct socket *sock, int protocol)
 #endif
@@ -1346,7 +1348,7 @@ static u32 dispatch(struct tipc_port *tport, struct sk_buff *buf)
 	if (!sock_owned_by_user(sk)) {
 		res = filter_rcv(sk, buf);
 	} else {
-		sk_add_backlog(sk, buf,sk->sk_rcvbuf);
+		__sk_add_backlog(sk, buf);
 		res = TIPC_OK;
 	}
 	bh_unlock_sock(sk);
@@ -1553,7 +1555,7 @@ static int accept(struct socket *sock, struct socket *new_sock, int flags)
 	buf = skb_peek(&sk->sk_receive_queue);
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
-	res = tipc_create(sock_net(sock->sk), new_sock, 0);
+	res = tipc_create(sock_net(sock->sk), new_sock, 0,0);
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
 	res = tipc_create(sock->sk->sk_net, new_sock, 0);
 #else
