@@ -2263,10 +2263,8 @@ static const struct super_operations shmem_ops = {
 	.put_super	= shmem_put_super,
 };
 
-#ifndef CONFIG_KERRIGHED
-static const
-#endif
-struct vm_operations_struct shmem_vm_ops = {
+
+static struct vm_operations_struct shmem_vm_ops = {
 	.fault		= shmem_fault,
 #ifdef CONFIG_NUMA
 	.set_policy     = shmem_set_policy,
