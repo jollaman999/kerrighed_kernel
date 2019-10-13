@@ -2,8 +2,12 @@
 #define _LINUX_IPC_H
 
 #include <linux/types.h>
-#include <linux/mutex.h>
-
+// #include <linux/mutex.h>
+/*
+*
+/usr/src/kerrighed-src/kernel/usr/include/linux/ipc.h:5: included file 'linux/mutex.h' is not exported
+*
+*/
 #define IPC_PRIVATE ((__kernel_key_t) 0)  
 
 /* Obsolete, used only for backwards compatibility and libc5 compiles */
