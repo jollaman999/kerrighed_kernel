@@ -145,7 +145,14 @@ libs-y  += arch/x86/lib/
 
 # See arch/x86/Kbuild for content of core part of the kernel
 core-y += arch/x86/
+# Kerrighed
 core-$(CONFIG_KERRIGHED) += arch/x86/kerrighed/
+core-y += arch/x86/kernel/
+core-y += arch/x86/mm/
+
+core-y += arch/x86/crypto/
+core-y += arch/x86/vdso/
+#kerrighed
 # drivers-y are linked after core-y
 drivers-$(CONFIG_MATH_EMULATION) += arch/x86/math-emu/
 drivers-$(CONFIG_PCI)            += arch/x86/pci/
