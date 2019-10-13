@@ -2303,13 +2303,13 @@ int __init shmem_init(void)
 		printk(KERN_ERR "Could not register tmpfs\n");
 		goto out2;
 	}
-#ifdef CONFIG_KRG_EPM
-	error = krgsyms_register(KRGSYMS_VM_OPS_SHMEM, (void *)&shmem_vm_ops);
-	if (error) {
-		printk(KERN_ERR "Could not register shmem_vm_ops\n");
-		goto out1_1;
-	}
-#endif
+// #ifdef CONFIG_KRG_EPM
+// 	error = krgsyms_register(KRGSYMS_VM_OPS_SHMEM, (void *)&shmem_vm_ops);
+// 	if (error) {
+// 		printk(KERN_ERR "Could not register shmem_vm_ops\n");
+// 		goto out1_1;
+// 	}
+// #endif
 	shm_mnt = vfs_kern_mount(&shmem_fs_type, MS_NOUSER,
 				 shmem_fs_type.name, NULL);
 	if (IS_ERR(shm_mnt)) {

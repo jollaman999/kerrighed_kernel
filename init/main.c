@@ -931,12 +931,11 @@ static void __init do_basic_setup(void)
 	cgroup_wq_init();
 	cpuset_init_smp();
 	usermodehelper_init();
-	
+	shmem_init();	
 	driver_init();
 	init_irq_proc();
 	do_ctors();
 	do_initcalls();
-	shmem_init();
 }
 
 static void __init do_pre_smp_initcalls(void)
