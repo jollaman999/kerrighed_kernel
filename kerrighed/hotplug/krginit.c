@@ -166,7 +166,8 @@ static char *read_from_file(char *_filename, int size)
 	int error;
 	struct file *f;
 	struct filename *dir_filename;
-	char *b, *filename;
+	char *b;
+	char *filename=NULL;
 
 	b = kmalloc(size, GFP_ATOMIC);
 	BUG_ON(b==NULL);

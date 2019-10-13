@@ -11,6 +11,8 @@ header-y += ptrace-abi.h
 header-y += sigcontext32.h
 header-y += ucontext.h
 header-y += processor-flags.h
+header-y += mutex.h
+header-y += unique_id.h
 
 unifdef-y += e820.h
 unifdef-y += ist.h
