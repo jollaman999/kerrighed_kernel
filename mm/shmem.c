@@ -2320,10 +2320,10 @@ int __init shmem_init(void)
 	return 0;
 
 out1:
-#ifdef CONFIG_KRG_EPM
-	krgsyms_unregister(KRGSYMS_VM_OPS_SHMEM);
-out1_1:
-#endif
+// #ifdef CONFIG_KRG_EPM
+// 	krgsyms_unregister(KRGSYMS_VM_OPS_SHMEM);
+// out1_1:
+// #endif
 	unregister_filesystem(&shmem_fs_type);
 out2:
 	shmem_destroy_inodecache();
