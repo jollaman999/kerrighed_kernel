@@ -390,6 +390,3 @@ unifdef-y += xfrm.h
 objhdr-y += version.h
 header-y += wimax.h
 header-y += wimax/
-unifdef-y += mutex.h
-unifdef-y  += unique_id.h
-
