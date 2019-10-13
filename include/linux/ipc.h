@@ -2,6 +2,7 @@
 #define _LINUX_IPC_H
 
 #include <linux/types.h>
+#include <linux/mutex.h>
 // #include <linux/mutex.h>
 /*
 *
