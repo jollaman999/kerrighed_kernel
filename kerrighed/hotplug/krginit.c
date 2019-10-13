@@ -278,19 +278,20 @@ static void read_kerrighed_nodes(char *_h, char *k)
 
 static void __init init_ids(void)
 {
-	char *hostname, *kerrighed_nodes;
+	char *hostname = "krg";
+	char *kerrighed_nodes=NULL;
 
 	if (!ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID) ||
 	    !ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID)) {
 		/* first we read the name of the node */
-		hostname = read_from_file("/etc/hostname", 256);
+		// hostname = read_from_file("/etc/hostname", 256);
 		if (!hostname) {
 			printk("Can't read /etc/hostname\n");
 			goto out;
 		}
 		strip_hostname(hostname);
 
-		kerrighed_nodes = read_from_file("/etc/kerrighed_nodes", 4096);
+		// kerrighed_nodes = read_from_file("/etc/kerrighed_nodes", 4096);
 		if (!kerrighed_nodes) {
 			kfree(hostname);
 			printk("Can't read /etc/kerrighed_nodes\n");
