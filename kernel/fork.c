@@ -230,7 +230,11 @@ void __put_task_struct(struct task_struct *tsk)
 	WARN_ON(atomic_read(&tsk->usage));
 	WARN_ON(tsk == current);
 
-	exit_creds(tsk);
+// Codex Cred Error
+	// exit_creds(tsk);
+	put_cred(tsk->real_cred);
+	put_cred(tsk->cred);
+
 	delayacct_tsk_free(tsk);
 
 	if (!profile_handoff_task(tsk))
@@ -1859,7 +1863,10 @@ bad_fork_cleanup_cgroup:
 	module_put(task_thread_info(p)->exec_domain->module);
 bad_fork_cleanup_count:
 	atomic_dec(&p->cred->user->processes);
-	exit_creds(p);
+// Codex Cred Error
+	// exit_creds(tsk);
+	put_cred(tsk->real_cred);
+	put_cred(tsk->cred);
 bad_fork_free:
 	free_task(p);
 fork_out:
