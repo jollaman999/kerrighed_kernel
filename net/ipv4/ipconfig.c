@@ -256,9 +256,9 @@ static int __init ic_open_devs(void)
 	*last = NULL;
 
 	printk("########################\n dev->name: [%s]  UP (xid=%08x) \n##############\n", dev->name, d->xid);
-	printk("##########################\n ic_first_dev: [%d], user_dev_name: [%s] \
-				, user_dev_name[0] : [%s]\n#################\n",ic_first_dev,user_dev_name,user_dev_name[0]);
-				
+	printk("##########################\n ic_first_dev: [], user_dev_name: [%s] \
+				, user_dev_name[0] : []\n#################\n",user_dev_name);
+
 	if (!ic_first_dev) {
 		if (user_dev_name[0])
 			printk(KERN_ERR "IP-Config: Device `%s' not found.\n", user_dev_name);
