@@ -249,6 +249,7 @@ static int __init ic_open_devs(void)
 			ic_proto_have_if |= able;
 			DBG(("IP-Config: %s UP (able=%d, xid=%08x)\n",
 				dev->name, able, d->xid));
+		printk("Codex_conf: %s UP (able=%d, xid=%08x) ######### %d #######\n", dev->name, able, d->xid,ic_first_dev);
 		}
 	}
 	rtnl_unlock();
@@ -256,8 +257,7 @@ static int __init ic_open_devs(void)
 	*last = NULL;
 
 	printk("########################\n dev->name: [%s]  UP (xid=%08x) \n##############\n", dev->name, d->xid);
-	printk("##########################\n ic_first_dev: [], user_dev_name: [%s] \
-				, user_dev_name[0] : []\n#################\n",user_dev_name);
+	printk("##########################\n ic_first_dev: [], user_dev_name: [%s] , user_dev_name[0] : []\n#################\n",user_dev_name);
 
 	if (!ic_first_dev) {
 		if (user_dev_name[0])
