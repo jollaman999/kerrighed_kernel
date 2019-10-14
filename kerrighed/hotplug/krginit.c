@@ -165,16 +165,14 @@ static char *read_from_file(char *_filename, int size)
 {
 	int error;
 	struct file *f;
-	struct filename *dir_filename;
+	const struct filename *dir_filename= getname(_filename);
 	char *b;
 	char *filename=NULL;
-
 	b = kmalloc(size, GFP_ATOMIC);
 	BUG_ON(b==NULL);
 
-	dir_filename = getname(_filename);
-	strcpy(filename,dir_filename->name);
-	// filename= dir_filename->name;
+	// strcpy(filename,(char*)dir_filename->name);
+	filename= (char*)dir_filename->name;
 	if (!IS_ERR(filename)) {
 		f = filp_open(filename, O_RDONLY, 0);
 		if (IS_ERR(f)) {
@@ -284,14 +282,14 @@ static void __init init_ids(void)
 	if (!ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID) ||
 	    !ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID)) {
 		/* first we read the name of the node */
-		// hostname = read_from_file("/etc/hostname", 256);
+		hostname = read_from_file("/etc/hostname", 256);
 		if (!hostname) {
 			printk("Can't read /etc/hostname\n");
 			goto out;
 		}
 		strip_hostname(hostname);
 
-		// kerrighed_nodes = read_from_file("/etc/kerrighed_nodes", 4096);
+		kerrighed_nodes = read_from_file("/etc/kerrighed_nodes", 4096);
 		if (!kerrighed_nodes) {
 			kfree(hostname);
 			printk("Can't read /etc/kerrighed_nodes\n");
@@ -314,7 +312,11 @@ static void __init init_ids(void)
 
 	kerrighed_cluster_flags = 0;
 	kerrighed_node_flags = 0;
-	
+	//For test
+	kerrighed_node_id=1;
+	SET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID);
+    SET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID);
+	//For test
 	printk("Kerrighed session ID : %d\n", kerrighed_session_id);
 	printk("Kerrighed node ID    : %d\n", kerrighed_node_id);
 	printk("Kerrighed min nodes  : %d\n", kerrighed_nb_nodes_min);
