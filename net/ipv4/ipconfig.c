@@ -249,7 +249,7 @@ static int __init ic_open_devs(void)
 			ic_proto_have_if |= able;
 			DBG(("IP-Config: %s UP (able=%d, xid=%08x)\n",
 				dev->name, able, d->xid));
-		printk("Codex_conf: %s UP (able=%d, xid=%08x) ######### %d #######\n", dev->name, able, d->xid,ic_first_dev);
+		// printk("Codex_conf: %s UP (able=%d, xid=%08x) ######### %d #######\n", dev->name, able, d->xid,ic_first_dev);
 		}
 	}
 	rtnl_unlock();
