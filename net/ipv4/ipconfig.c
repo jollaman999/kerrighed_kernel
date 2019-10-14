@@ -201,7 +201,7 @@ static int __init ic_open_devs(void)
 
 	last = &ic_first_dev;
 	rtnl_lock();
-
+	printk("##############\n NetDevice detect\n###################\n");
 	/* bring loopback device up first */
 	for_each_netdev(&init_net, dev) {
 		if (!(dev->flags & IFF_LOOPBACK))
@@ -209,6 +209,7 @@ static int __init ic_open_devs(void)
 		if (dev_change_flags(dev, dev->flags | IFF_UP) < 0)
 			printk(KERN_ERR "IP-Config: Failed to open %s\n", dev->name);
 	}
+	printk("##############\n NetDevice [%s] \n###################\n",dev->name);
 
 	for_each_netdev(&init_net, dev) {
 		if (dev->flags & IFF_LOOPBACK)
@@ -254,6 +255,10 @@ static int __init ic_open_devs(void)
 
 	*last = NULL;
 
+	printk("########################\n dev->name: [%s]  UP (xid=%08x) \n##############\n", dev->name, d->xid);
+	printk("##########################\n ic_first_dev: [%d], user_dev_name: [%s] \
+				, user_dev_name[0] : [%s]\n#################\n",ic_first_dev,user_dev_name,user_dev_name[0]);
+				
 	if (!ic_first_dev) {
 		if (user_dev_name[0])
 			printk(KERN_ERR "IP-Config: Device `%s' not found.\n", user_dev_name);
@@ -1335,9 +1340,12 @@ static int __init ip_auto_config(void)
 	/* Give hardware a chance to settle */
 	msleep(CONF_PRE_OPEN);
 
+/* Setup all network devices */
+	printk("##################################\n ic_open_devs Entered\n#####################\n");
 	/* Setup all network devices */
 	if (ic_open_devs() < 0)
 		return -1;
+ 	printk("##################################\n ic_open_devs End\n#####################\n"); 
 
 	/* Give drivers a chance to settle */
 	ssleep(CONF_POST_OPEN);
@@ -1396,6 +1404,8 @@ static int __init ip_auto_config(void)
 		ic_close_devs();
 		return -1;
 #endif /* IPCONFIG_DYNAMIC */
+                printk("##### ic_dynamic end ######");
+
 	} else {
 		/* Device selected manually or only one device -> use it */
 		ic_dev = ic_first_dev->dev;
@@ -1425,6 +1435,7 @@ static int __init ip_auto_config(void)
 #ifdef IPCONFIG_DYNAMIC
 	ic_proto_used = ic_got_reply | (ic_proto_enabled & IC_USE_DHCP);
 #endif
+	printk("######Pre Codex [%d]  \n",((unsigned char *)&ic_myaddr)[3]);
 
 #ifdef CONFIG_KRG_AUTONODEID
  	if(ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_AUTONODEID)){
@@ -1433,6 +1444,8 @@ static int __init ip_auto_config(void)
 		printk("Automatic setting of kerrighed_node_id: %d\n",
 			kerrighed_node_id);
 	}
+	printk("######Codex [%d]  \n",((unsigned char *)&ic_myaddr)[3]);
+
 #endif
 
 #ifndef IPCONFIG_SILENT
