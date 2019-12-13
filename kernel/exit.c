@@ -852,9 +852,11 @@ static struct task_struct *find_new_reaper(struct task_struct *father)
 	}
 
 	if (unlikely(pid_ns->child_reaper == father)) {
+		printk(KERN_WARNING "~~~ pid_ns->child_reaper == father ~~~\n");
 		write_unlock_irq(&tasklist_lock);
 		if (unlikely(pid_ns == &init_pid_ns))
 			panic("Attempted to kill init!");
+		
 
 		zap_pid_ns_processes(pid_ns);
 		tasklist_write_lock_irq();
@@ -901,11 +903,19 @@ static void reparent_thread(struct task_struct *father, struct task_struct *p,
 
 static void forget_original_parent(struct task_struct *father)
 {
+
+
 	struct task_struct *p, *n, *reaper;
 #ifdef CONFIG_KRG_EPM
 	struct children_kddm_object *children_obj = NULL;
 #endif
+
+//	struct pid_namespace *pid_ns = task_active_pid_ns(father);
+
 	LIST_HEAD(dead_children);
+	
+//	if(pid_ns->child_reaper == father)
+//		return;
 
 	exit_ptrace(father);
 #ifdef CONFIG_KRG_EPM
@@ -913,6 +923,7 @@ static void forget_original_parent(struct task_struct *father)
 		children_obj = __krg_children_writelock(father);
 #endif
 	tasklist_write_lock_irq();
+	
 	reaper = find_new_reaper(father);
 
 	list_for_each_entry_safe(p, n, &father->children, sibling) {
@@ -960,6 +971,7 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 #ifdef CONFIG_KRG_EPM
 	u32 real_parent_self_exec_id;
 #endif
+	//printk(KERN_WARNING "=== start exit_notify ===\n");
 
 	/*
 	 * This does two things:
@@ -969,13 +981,18 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 	 *	as a result of our exiting, and if they have any stopped
 	 *	jobs, send them a SIGHUP and then a SIGCONT.  (POSIX 3.2.2.2)
 	 */
+	//printk(KERN_WARNING "forget_original_parent ===\n");
 	forget_original_parent(tsk);
+	//printk(KERN_WARNING "exit_task_namespaces ===\n");
 	exit_task_namespaces(tsk);
 
+	//printk(KERN_WARNING "krg_prepare_exit_notify\n");
 #ifdef CONFIG_KRG_PROC
 	krg_cookie = krg_prepare_exit_notify(tsk);
 #endif /* CONFIG_KRG_PROC */
+	//printk(KERN_WARNING "tasklist_write_lock_irq\n");
 	tasklist_write_lock_irq();
+	//printk(KERN_WARNING "group_dead %d\n",group_dead);
 	if (group_dead)
 		kill_orphaned_pgrp(tsk->group_leader, NULL);
 
@@ -1008,12 +1025,14 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 		tsk->exit_signal = SIGCHLD;
 #endif
 
+	//printk(KERN_WARNING "tracehook_notify_death\n");
 	signal = tracehook_notify_death(tsk, &cookie, group_dead);
 	if (signal >= 0)
 		signal = do_notify_parent(tsk, signal);
 
 	tsk->exit_state = signal == DEATH_REAP ? EXIT_DEAD : EXIT_ZOMBIE;
 
+	//printk(KERN_WARNING "thread_group_leader\n");
 	/* mt-exec, de_thread() is waiting for us */
 	if (thread_group_leader(tsk) &&
 	    tsk->signal->group_exit_task &&
@@ -1022,6 +1041,7 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 
 	write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_KRG_PROC
+	//printk(KERN_WARNING "krg_finish_exit_notify\n");
 	krg_finish_exit_notify(tsk, signal, krg_cookie);
 	/*
 	 * No kerrighed structure should be accessed after this point,
@@ -1030,11 +1050,14 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 	 */
 #endif /* CONFIG_KRG_PROC */
 
+	//printk(KERN_WARNING "tracehook_report_death\n");
 	tracehook_report_death(tsk, signal, cookie, group_dead);
 
 	/* If the process is dead, release it - nobody will wait for it */
 	if (signal == DEATH_REAP)
 		release_task(tsk);
+	
+	//printk(KERN_WARNING "=== end exit_notify ===\n");
 }
 
 #ifdef CONFIG_DEBUG_STACK_USAGE
@@ -1218,7 +1241,7 @@ NORET_TYPE void do_exit(long code)
 	 * Flush inherited counters to the parent - before the parent
 	 * gets woken up by child-exit notifications.
 	 */
-	perf_event_exit_task(tsk);
+	//perf_event_exit_task(tsk);
 #ifdef CONFIG_KRG_EPM
 	if (!notify)
 		exit_migration(tsk);

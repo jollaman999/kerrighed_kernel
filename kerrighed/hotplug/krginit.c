@@ -315,7 +315,7 @@ static void __init init_ids(void)
 	//For test
 	kerrighed_node_id=1;
 	SET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID);
-    SET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID);
+        SET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID);
 	//For test
 	printk("Kerrighed session ID : %d\n", kerrighed_session_id);
 	printk("Kerrighed node ID    : %d\n", kerrighed_node_id);

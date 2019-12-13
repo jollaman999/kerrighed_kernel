@@ -226,14 +226,21 @@ EXPORT_SYMBOL(free_task);
 
 void __put_task_struct(struct task_struct *tsk)
 {
+	if(tsk == NULL) return;		
+	if(tsk->real_cred == NULL) return;	
+	if(tsk->cred == NULL) return;		
+	if(!tsk->exit_state) return;
+
+	//printk(KERN_INFO "%s %u put_task_struct %p, %p  ",tsk->comm,tsk->pid, tsk->real_cred, tsk->cred);
 	WARN_ON(!tsk->exit_state);
 	WARN_ON(atomic_read(&tsk->usage));
 	WARN_ON(tsk == current);
 
 // Codex Cred Error
-	// exit_creds(tsk);
-	put_cred(tsk->real_cred);
-	put_cred(tsk->cred);
+//	if(tsk->real_cred != NULL)
+	exit_creds(tsk);
+	//put_cred(tsk->real_cred);
+	//put_cred(tsk->cred);
 
 	delayacct_tsk_free(tsk);
 
@@ -1355,6 +1362,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 
 	ftrace_graph_init_task(p);
 
+	//printk(KERN_INFO "%s %u copy_process %p, %p  \n",p->comm,p->pid, p->real_cred, p->cred);
 #ifdef CONFIG_KRG_HOTPLUG
 	p->create_krg_ns = 0;
 #endif
@@ -1862,11 +1870,12 @@ bad_fork_cleanup_cgroup:
 	delayacct_tsk_free(p);
 	module_put(task_thread_info(p)->exec_domain->module);
 bad_fork_cleanup_count:
+	printk(KERN_INFO "copy_process bad_fork_cleanup_count\n");
 	atomic_dec(&p->cred->user->processes);
 // Codex Cred Error
-	// exit_creds(tsk);
-	put_cred(tsk->real_cred);
-	put_cred(tsk->cred);
+	exit_creds(p);
+	//put_cred(p->real_cred);
+	//put_cred(p->cred);
 bad_fork_free:
 	free_task(p);
 fork_out:

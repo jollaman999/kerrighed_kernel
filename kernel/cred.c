@@ -157,6 +157,7 @@ static void put_cred_rcu(struct rcu_head *rcu)
  */
 void __put_cred(struct cred *cred)
 {
+
 	kdebug("__put_cred(%p{%d,%d})", cred,
 	       atomic_read(&cred->usage),
 	       read_cred_subscribers(cred));
@@ -171,6 +172,7 @@ void __put_cred(struct cred *cred)
 	BUG_ON(cred == current->real_cred);
 
 	call_rcu(&cred->rcu, put_cred_rcu);
+
 }
 EXPORT_SYMBOL(__put_cred);
 
@@ -180,6 +182,8 @@ EXPORT_SYMBOL(__put_cred);
 void exit_creds(struct task_struct *tsk)
 {
 	struct cred *cred;
+	//printk(KERN_INFO "%s %u exit_creds %p, %p  ",tsk->comm,tsk->pid, tsk->real_cred, tsk->cred);
+	//printk(KERN_INFO "-- usage/subscriber {%d,%d}\n ",tsk->comm,tsk->pid,atomic_read(&tsk->cred->usage),read_cred_subscribers(tsk->cred));
 
 	kdebug("exit_creds(%u,%p,%p,{%d,%d})", tsk->pid, tsk->real_cred, tsk->cred,
 	       atomic_read(&tsk->cred->usage),

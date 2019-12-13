@@ -71,6 +71,7 @@ int __rpc_send(struct rpc_desc* desc,
 			}
 
 			/* Calls rpc_new_desc_id_unlock() on success */
+			printk("===__rpc_send seq_id %u \n",seq_id);
 			err = __rpc_send_ll(desc, &desc->nodes,
 					    seq_id,
 					    __flags, data, size,
@@ -492,6 +493,7 @@ inline
 int __rpc_unpack_from_node(struct rpc_desc* desc, kerrighed_node_t node,
 			   int flags, void* data, size_t size)
 {
+
 	struct rpc_desc_elem *descelem;
 	struct rpc_desc_recv* desc_recv = desc->desc_recv[node];
 	LIST_HEAD(signals_head);
@@ -503,7 +505,6 @@ int __rpc_unpack_from_node(struct rpc_desc* desc, kerrighed_node_t node,
 
 	if (desc_recv->flags & RPC_FLAGS_CLOSED)
 		return RPC_EPIPE;
-
 	if (unlikely(desc_recv->flags & RPC_FLAGS_REPOST))
 		atomic_set(&seq_id, atomic_read(&desc_recv->seq_id));
 	else
@@ -575,7 +576,6 @@ int __rpc_unpack_from_node(struct rpc_desc* desc, kerrighed_node_t node,
 		__rpc_signal_deliver_pending(desc, &signals_head);
 	if (unlikely(!list_empty(&sigacks_head)))
 		__rpc_end_unpack_clean_queue(&sigacks_head);
-
 	if (desc_recv->iter->flags & __RPC_HEADER_FLAGS_CANCEL_PACK) {
 		desc_recv->flags |= RPC_FLAGS_CLOSED;
 		return RPC_EPIPE;
@@ -673,10 +673,13 @@ enum rpc_error
 rpc_unpack_from(struct rpc_desc* desc, kerrighed_node_t node,
 		int flags, void* data, size_t size)
 {
+	printk("rpc_unpack_from start kerrighed_node_t %d \n",node);
 	switch(desc->type){
 	case RPC_RQ_CLT:
+		printk("RPC_RQ_CLT ENTER\n");
 		return __rpc_unpack_from_node(desc, node, flags, data, size);
 	case RPC_RQ_SRV:
+		printk("RPC_RQ_SRV ENTER\n");
 		if(node == desc->client)
 			return __rpc_unpack_from_node(desc, node, flags, data, size);
 		return 0;

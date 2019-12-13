@@ -1387,6 +1387,8 @@ int tipc_port_recv_msg(struct sk_buff *buf)
 	u32 dsz = msg_data_sz(msg);
 	u32 err;
 	
+	printk("====== tipc_port_recv_msg start ======\n");
+	printk("====== destport %u, dsz %u ======\n",destport,dsz);
 	/* forward unresolved named message */
 	if (unlikely(destport == 0)) {
 		tipc_net_route_msg(buf);
@@ -1405,6 +1407,8 @@ int tipc_port_recv_msg(struct sk_buff *buf)
 		}
 		err = p_ptr->dispatcher(&p_ptr->publ, buf);
 		tipc_port_unlock(p_ptr);
+		printk("====== err %u ======\n",err);
+		printk("====== dsz %u ======\n",dsz);
 		if (likely(!err))
 			return dsz;
 	} else {
@@ -1426,10 +1430,16 @@ int tipc_port_recv_sections(struct port *sender, unsigned int num_sect,
 	struct sk_buff *buf;
 	int res;
 
+	printk("===== tipc_port_recv_sections start =====\n");
+
 	res = tipc_msg_build(&sender->publ.phdr, msg_sect, num_sect,
 			     MAX_MSG_SIZE, !sender->user_port, &buf);
+
+
 	if (likely(buf))
 		tipc_port_recv_msg(buf);
+	
+	printk("===== tipc_msg_build end res %d =====\n",res);
 	return res;
 }
 
@@ -1539,6 +1549,7 @@ int tipc_forward2name(u32 ref,
 	u32 destport;
 	int res;
 
+	printk("===== tipc_forward2name start =====\n");
 	p_ptr = tipc_port_deref(ref);
 	if (!p_ptr || p_ptr->publ.connected)
 		return -EINVAL;
@@ -1558,12 +1569,15 @@ int tipc_forward2name(u32 ref,
 	msg_set_destport(msg, destport);
 
 	if (likely(destport || destnode)) {
+		printk("===== tipc_forward2name if destport %u , destnode %u =====\n",destport,destnode);
 		p_ptr->sent++;
 		if (addr_in_node(destnode))
 			return tipc_port_recv_sections(p_ptr, num_sect,
 						       msg_sect);
+
 		if (!orig->node)
 			msg_set_orignode(msg, tipc_own_addr);
+
 		res = tipc_link_send_sections_fast(p_ptr, msg_sect, num_sect,
 						   destnode);
 		if (likely(res != -ELINKCONG))
@@ -1574,6 +1588,7 @@ int tipc_forward2name(u32 ref,
 		}
 		return -ELINKCONG;
 	}
+
 	return tipc_port_reject_sections(p_ptr, msg, msg_sect, num_sect,
 					 TIPC_ERR_NO_NAME);
 }
@@ -1613,6 +1628,7 @@ int tipc_forward_buf2name(u32 ref,
 	u32 destnode = domain;
 	u32 destport;
 	int res;
+	printk("=========== start tipc_forward_buf2name ==============\n");
 
 	p_ptr = (struct port *)tipc_ref_deref(ref);
 	if (!p_ptr || p_ptr->publ.connected)

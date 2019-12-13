@@ -622,16 +622,20 @@ static void cluster_start_worker(struct work_struct *work)
 	free_page((unsigned long)page);
 
 	desc = rpc_begin_m(CLUSTER_START, &cluster_start_ctx->node_set.v);
+
 	if (!desc)
 		goto out;
 	err = rpc_pack_type(desc, cluster_start_msg);
 	if (err)
 		goto end;
+
 	for_each_krgnode_mask(node, cluster_start_ctx->node_set.v) {
+		printk("for each krgnode %d\n",node);
 		err = rpc_unpack_type_from(desc, node, ret);
 		if (err)
 			goto cancel;
 	}
+
 	ret = 0;
 	err = rpc_pack_type(desc, ret);
 	if (err)

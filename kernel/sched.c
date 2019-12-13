@@ -6173,6 +6173,7 @@ pick_next_task(struct rq *rq)
 /*
  * schedule() is the main scheduler function.
  */
+//asmlinkage void __sched __schedule(void)
 asmlinkage void __sched schedule(void)
 {
 	struct task_struct *prev, *next;
@@ -6264,6 +6265,20 @@ need_resched_nonpreemptible:
 		goto need_resched;
 }
 EXPORT_SYMBOL(schedule);
+
+
+/*
+asmlinkage void __sched schedule(void)
+{
+need_resched:
+	preempt_disable();
+	__schedule();
+	preempt_enable_no_resched();
+	if (unlikely(test_thread_flag(TIF_NEED_RESCHED)))
+		goto need_resched;
+}
+EXPORT_SYMBOL(schedule);
+*/
 
 #ifdef CONFIG_SMP
 /*

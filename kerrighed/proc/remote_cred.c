@@ -151,6 +151,7 @@ int import_cred(struct epm_action *action,
 	cred->cap_bset = tmp_cred.cap_bset;
 
 #ifdef CONFIG_KEYS
+/*
 	BUG();
 	key_put(cred->thread_keyring);
 	cred->thread_keyring = NULL;
@@ -158,6 +159,7 @@ int import_cred(struct epm_action *action,
 	cred->request_key_auth = NULL;
 	release_tgcred(cred->tgcred);
 	cred->tgcred = NULL;
+*/
 #endif
 
 #ifdef CONFIG_SECURITY

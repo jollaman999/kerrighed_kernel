@@ -154,6 +154,7 @@ inline int __send_iovec(kerrighed_node_t node, int nr_iov, struct iovec *iov)
 	};
 	struct __rpc_header *h = iov[0].iov_base;
 	int err;
+	
 
 	h->link_ack_id = rpc_link_recv_seq_id[node] - 1;
 	lockdep_off();
@@ -622,6 +623,7 @@ int __rpc_send_ll(struct rpc_desc* desc,
 		__for_each_krgnode_mask(node, nodes){
 
 			err = __rpc_tx_elem_send(elem, link_seq_index, node);
+
 			if(err<0){
 				spin_lock_bh(&tipc_tx_queue_lock);
 				list_add_tail(&elem->tx_queue,
@@ -691,16 +693,16 @@ inline
 int do_action(struct rpc_desc *desc, struct __rpc_header *h)
 {
 	switch (desc->state) {
-	case RPC_STATE_NEW:
+	case __RPC_STATE_NEW:
 		spin_unlock(&desc->desc_lock);
 		return rpc_handle_new(desc);
-	case RPC_STATE_WAIT1:
+	case __RPC_STATE_WAIT1:
 		if (desc->type == RPC_RQ_CLT
 		    && desc->wait_from != h->from) {
 			spin_unlock(&desc->desc_lock);
 			break;
 		}
-	case RPC_STATE_WAIT:
+	case __RPC_STATE_WAIT:
 		desc->state = RPC_STATE_RUN;
 		wake_up_process(desc->thread);
 		spin_unlock(&desc->desc_lock);

@@ -100,6 +100,8 @@ static int shmem_replace_page(struct page **pagep, gfp_t gfp,
 static int shmem_getpage_gfp(struct inode *inode, pgoff_t index,
 	struct page **pagep, enum sgp_type sgp, gfp_t gfp, int *fault_type);
 
+static int shmem_mmap(struct file *file, struct vm_area_struct *vma);
+
 static inline int shmem_getpage(struct inode *inode, pgoff_t index,
 	struct page **pagep, enum sgp_type sgp, int *fault_type)
 {
@@ -162,9 +164,9 @@ static const struct inode_operations shmem_inode_operations;
 static const struct inode_operations shmem_dir_inode_operations;
 static const struct inode_operations shmem_special_inode_operations;
 #ifndef CONFIG_KERRIGHED
-static const
+//static const
 #endif
-static struct vm_operations_struct shmem_vm_ops;
+//static struct vm_operations_struct shmem_vm_ops;
 
 static struct backing_dev_info shmem_backing_dev_info  __read_mostly = {
 	.ra_pages	= 0,	/* No readahead */
@@ -1199,14 +1201,6 @@ int shmem_lock(struct file *file, int lock, struct user_struct *user)
 out_nomem:
 	spin_unlock(&info->lock);
 	return retval;
-}
-
-static int shmem_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	file_accessed(file);
-	vma->vm_ops = &shmem_vm_ops;
-	vma->vm_flags |= VM_CAN_NONLINEAR;
-	return 0;
 }
 
 static struct inode *shmem_get_inode(struct super_block *sb, const struct inode *dir,
@@ -2272,7 +2266,6 @@ static struct vm_operations_struct shmem_vm_ops = {
 #endif
 };
 
-
 static int shmem_get_sb(struct file_system_type *fs_type,
 	int flags, const char *dev_name, void *data, struct vfsmount *mnt)
 {
@@ -2285,6 +2278,14 @@ static struct file_system_type shmem_fs_type = {
 	.get_sb		= shmem_get_sb,
 	.kill_sb	= kill_litter_super,
 };
+
+static int shmem_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	file_accessed(file);
+	vma->vm_ops = &shmem_vm_ops;
+	vma->vm_flags |= VM_CAN_NONLINEAR;
+	return 0;
+}
 
 int __init shmem_init(void)
 {
