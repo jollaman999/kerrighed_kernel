@@ -113,7 +113,13 @@ static void __exit_signal(struct task_struct *tsk)
 	atomic_dec(&sig->count);
 
 	posix_cpu_timers_exit(tsk);
-
+#ifdef CONFIG_KRG_EPM
+	if (tsk->exit_state == EXIT_MIGRATION) {
+		BUG_ON(atomic_read(&sig->count) > 1);
+		posix_cpu_timers_exit_group(tsk);
+		sig->curr_target = NULL;
+	} else
+#endif
 	if (group_dead) {
 		posix_cpu_timers_exit_group(tsk);
 	} else {
@@ -122,13 +128,6 @@ static void __exit_signal(struct task_struct *tsk)
 		 * FIXME: this is the temporary hack, we should teach
 		 * posix-cpu-timers to handle this case correctly.
 		 */
-#ifdef CONFIG_KRG_EPM
-	if (tsk->exit_state == EXIT_MIGRATION) {
-		BUG_ON(atomic_read(&sig->count) > 1);
-		posix_cpu_timers_exit_group(tsk);
-		sig->curr_target = NULL;
-	} else
-#endif
 		if (unlikely(has_group_leader_pid(tsk)))
 			posix_cpu_timers_exit_group(tsk);
 
