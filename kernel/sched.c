@@ -3303,7 +3303,7 @@ void calc_global_load(void)
 
 	calc_load_update += LOAD_FREQ;
 #if defined(CONFIG_KRG_SCHED) && defined(CONFIG_MODULE_HOOK)
-	atomic_notifier_call_chain(&kmh_calc_load, ticks, NULL);
+	atomic_notifier_call_chain(&kmh_calc_load, 0, NULL);
 #endif
 }
 

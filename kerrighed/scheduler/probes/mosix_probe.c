@@ -344,16 +344,14 @@ static void mp_calc_load(void)
  *  Called each time calc_load is called.
  *  This function is called in the timer interrupt,
  *  with the xtime_lock write lock held.
- *
- *  @param ticks   Clock ticks since last called.
  */
-static int kmcb_accumulate_load(struct notifier_block *notifier, unsigned long ticks, void *data)
+static int kmcb_accumulate_load(struct notifier_block *notifier, unsigned long arg, void *data)
 {
 	unsigned long load;
 
 	load_adder += nr_running();
-/*	cpu_use += ticks * num_online_cpus(); */
-	load_ticks += ticks;
+/*	cpu_use += 10 ticks * num_online_cpus(); */
+	load_ticks += 10;
 
 	/* CF is equal to HZ, which means load is computed every second */
 	if (load_ticks >= CF) {
