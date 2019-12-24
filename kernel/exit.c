@@ -1934,12 +1934,10 @@ void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
 	__wake_up_sync_key(&parent->signal->wait_chldexit,
 				TASK_INTERRUPTIBLE, 1, p);
 }
-#ifdef CONFIG_KRG_EPM
+#ifndef CONFIG_KRG_EPM
 static
-long do_wait(struct wait_opts *wo)
-
 #else
-static long do_wait(struct wait_opts *wo)
+long do_wait(struct wait_opts *wo)
 #endif
 {
 	struct task_struct *tsk;
@@ -2063,7 +2061,7 @@ SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
 	wo.wo_stat	= NULL;
 	wo.wo_rusage	= ru;
 #ifdef CONFIG_KRG_EPM
-	wo.wo_upid= upid;
+	wo.wo_upid = upid;
 #endif
 	ret = do_wait(&wo);
 
@@ -2128,13 +2126,13 @@ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 	wo.wo_stat	= stat_addr;
 	wo.wo_rusage	= ru;
 #ifdef CONFIG_KRG_EPM
-	wo.wo_upid=upid;
 	if (type == PIDTYPE_PGID) {
 		if (upid == 0)
 			upid = pid_vnr(pid);
 		else /* upid < 0 */
 			upid = -upid;
 	}
+	wo.wo_upid = upid;
 #endif
 	ret = do_wait(&wo);
 	put_pid(pid);
