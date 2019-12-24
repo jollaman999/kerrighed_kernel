@@ -654,9 +654,6 @@ static int check_kill_permission(int sig, struct siginfo *info,
 
 	cred = current_cred();
 	tcred = __task_cred(t);
-	if( cred == NULL || tcred == NULL)
-		return 0;
-
 	if (!same_thread_group(current, t) &&
 	    (cred->euid ^ tcred->suid) &&
 	    (cred->euid ^ tcred->uid) &&
