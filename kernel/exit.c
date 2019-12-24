@@ -1455,18 +1455,20 @@ static int wait_noreap_copyout(struct wait_opts *wo, struct task_struct *p,
 #ifndef CONFIG_KRG_EPM
 static
 #endif
-int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
+int wait_task_zombie(struct task_struct *p, int options,
+				    struct siginfo __user *infop,
+				    int __user *stat_addr, struct rusage __user *ru)
 {
 	unsigned long state;
 	int retval, status, traced;
 	pid_t pid = task_pid_vnr(p);
 	uid_t uid = __task_cred(p)->uid;
-	struct siginfo __user *infop;
+	struct wait_opts wo;
 
-	if (!likely(wo->wo_flags & WEXITED))
+	if (!likely(options & WEXITED))
 		return 0;
 
-	if (unlikely(wo->wo_flags & WNOWAIT)) {
+	if (unlikely(options & WNOWAIT)) {
 		int exit_code = p->exit_code;
 		int why, status;
 
@@ -1484,7 +1486,13 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 			why = (exit_code & 0x80) ? CLD_DUMPED : CLD_KILLED;
 			status = exit_code & 0x7f;
 		}
-		return wait_noreap_copyout(wo, p, pid, uid, why, status);
+
+		wo.wo_flags	= options;
+		wo.wo_info	= infop;
+		wo.wo_stat	= stat_addr;
+		wo.wo_rusage	= ru;
+
+		return wait_noreap_copyout(&wo, p, pid, uid, why, status);
 	}
 
 #ifdef CONFIG_KRG_EPM
@@ -1585,14 +1593,11 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 		krg_children_unlock(current->children_obj);
 #endif
 
-	retval = wo->wo_rusage
-		? getrusage(p, RUSAGE_BOTH, wo->wo_rusage) : 0;
+	retval = ru ? getrusage(p, RUSAGE_BOTH, ru) : 0;
 	status = (p->signal->flags & SIGNAL_GROUP_EXIT)
 		? p->signal->group_exit_code : p->exit_code;
-	if (!retval && wo->wo_stat)
-		retval = put_user(status, wo->wo_stat);
-
-	infop = wo->wo_info;
+	if (!retval && stat_addr)
+		retval = put_user(status, stat_addr);
 	if (!retval && infop)
 		retval = put_user(SIGCHLD, &infop->si_signo);
 	if (!retval && infop)
@@ -1859,7 +1864,7 @@ static int wait_consider_task(struct wait_opts *wo, int ptrace,
 	 * We don't reap group leaders with subthreads.
 	 */
 	if (p->exit_state == EXIT_ZOMBIE && !delay_group_leader(p))
-		return wait_task_zombie(wo, p);
+		return wait_task_zombie(p, wo->wo_flags, wo->wo_info, wo->wo_stat, wo->wo_rusage);
 
 	/*
 	 * It's stopped or running now, so it might

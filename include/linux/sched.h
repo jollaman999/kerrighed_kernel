@@ -639,11 +639,10 @@ struct signal_struct {
 	 */
 	struct cpu_itimer it[2];
 
-// krrighed Code
-	/* ITIMER_PROF and ITIMER_VIRTUAL timers for the process */
+#ifdef CONFIG_KRG_PROC
 	cputime_t it_prof_expires, it_virt_expires;
 	cputime_t it_prof_incr, it_virt_incr;
-
+#endif
 
 	/*
 	 * Thread group totals for process CPU timers.
@@ -742,7 +741,6 @@ struct signal_struct {
 	unsigned audit_tty_log_passwd;
 #endif /* CONFIG_AUDIT */
 #endif /* __GENKSYMS__ */
-
 #ifdef CONFIG_KRG_EPM
 	objid_t krg_objid;
 	struct signal_struct_kddm_object *kddm_obj;
@@ -801,10 +799,10 @@ struct user_struct {
 #endif
 	unsigned long locked_shm; /* How many pages of mlocked shm ? */
 
-// #ifdef CONFIG_KEYS
+#ifdef CONFIG_KEYS
 	struct key *uid_keyring;	/* UID specific keyring */
 	struct key *session_keyring;	/* UID's default session keyring */
-// #endif
+#endif
 
 	/* Hash table maintenance information */
 	struct hlist_node uidhash_node;
@@ -1382,6 +1380,7 @@ struct task_struct {
 	struct mutex cred_exec_mutex;	/* execve vs ptrace cred calculation mutex */
 
 #endif
+
 	volatile long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
 	void *stack;
 	atomic_t usage;
@@ -2484,8 +2483,9 @@ extern void exit_itimers(struct signal_struct *);
 extern void flush_itimer_signals(void);
 
 #ifdef CONFIG_KRG_EPM
-struct wait_opts;
-int wait_task_zombie(struct wait_opts *wo, struct task_struct *p);
+int wait_task_zombie(struct task_struct *p, int options,
+				    struct siginfo __user *infop,
+				    int __user *stat_addr, struct rusage __user *ru);
 #endif
 extern NORET_TYPE void do_group_exit(int);
 
