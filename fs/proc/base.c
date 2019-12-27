@@ -3456,11 +3456,8 @@ static struct tgid_iter next_tgid(struct pid_namespace *ns, struct tgid_iter ite
 {
 	struct pid *pid;
 
-	if (iter.task){
-		//printk(KERN_INFO "%s %u next_tgid %p, %p  ",iter.task->comm,iter.task->pid, iter.task->real_cred, iter.task->cred);
-		if(iter.task->real_cred != NULL)
-			put_task_struct(iter.task);
-	}
+	if (iter.task)
+		put_task_struct(iter.task);
 	rcu_read_lock();
 retry:
 	iter.task = NULL;
@@ -3500,7 +3497,6 @@ int proc_pid_fill_cache(struct file *filp, void *dirent, filldir_t filldir,
 {
 	char name[PROC_NUMBUF];
 	int len = snprintf(name, sizeof(name), "%d", iter.tgid);
-//	printk(KERN_INFO "%s %u proc_pid_fill_cache %d ",iter.task->comm, iter.task->pid, iter.tgid);
 	return proc_fill_cache(filp, dirent, filldir, name, len,
 				proc_pid_instantiate, iter.task, NULL);
 }
@@ -3530,12 +3526,8 @@ int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
 
 	for (; nr < ARRAY_SIZE(proc_base_stuff); filp->f_pos++, nr++) {
 		const struct pid_entry *p = &proc_base_stuff[nr];
-		if(reaper->real_cred != NULL){
-			if (proc_base_fill_cache(filp, dirent, filldir, reaper, p) < 0)
-				goto out;
-		}else{
+		if (proc_base_fill_cache(filp, dirent, filldir, reaper, p) < 0)
 			goto out;
-		}
 	}
 
 	ns = filp->f_dentry->d_sb->s_fs_info;
@@ -3557,11 +3549,9 @@ int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
 			__filldir = fake_filldir;
 
 		filp->f_pos = iter.tgid + TGID_OFFSET;
-		if(iter.task->real_cred != NULL){
-			if (proc_pid_fill_cache(filp, dirent, __filldir, iter) < 0) {
-				put_task_struct(iter.task);
-				goto out;
-			}
+		if (proc_pid_fill_cache(filp, dirent, __filldir, iter) < 0) {
+			put_task_struct(iter.task);
+			goto out;
 		}
 	}
 #if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
