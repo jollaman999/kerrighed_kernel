@@ -1843,12 +1843,8 @@ bad_fork_cleanup_cgroup:
 	delayacct_tsk_free(p);
 	module_put(task_thread_info(p)->exec_domain->module);
 bad_fork_cleanup_count:
-	printk(KERN_INFO "copy_process bad_fork_cleanup_count\n");
 	atomic_dec(&p->cred->user->processes);
-// Codex Cred Error
 	exit_creds(p);
-	//put_cred(p->real_cred);
-	//put_cred(p->cred);
 bad_fork_free:
 	free_task(p);
 fork_out:
