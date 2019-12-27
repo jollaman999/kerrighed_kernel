@@ -226,22 +226,11 @@ EXPORT_SYMBOL(free_task);
 
 void __put_task_struct(struct task_struct *tsk)
 {
-	if(tsk == NULL) return;		
-	if(tsk->real_cred == NULL) return;	
-	if(tsk->cred == NULL) return;		
-	if(!tsk->exit_state) return;
-
-	//printk(KERN_INFO "%s %u put_task_struct %p, %p  ",tsk->comm,tsk->pid, tsk->real_cred, tsk->cred);
 	WARN_ON(!tsk->exit_state);
 	WARN_ON(atomic_read(&tsk->usage));
 	WARN_ON(tsk == current);
 
-// Codex Cred Error
-//	if(tsk->real_cred != NULL)
 	exit_creds(tsk);
-	//put_cred(tsk->real_cred);
-	//put_cred(tsk->cred);
-
 	delayacct_tsk_free(tsk);
 
 	if (!profile_handoff_task(tsk))
@@ -720,6 +709,11 @@ static void complete_vfork_done(struct task_struct *tsk)
 	vfork = tsk->vfork_done;
 	if (likely(vfork)) {
 		tsk->vfork_done = NULL;
+#ifdef CONFIG_KRG_EPM
+		if (tsk->remote_vfork_done)
+			krg_vfork_done(vfork);
+		else
+#endif
 		complete(vfork);
 	}
 	task_unlock(tsk);
@@ -760,7 +754,6 @@ static int wait_for_vfork_done(struct task_struct *child,
 void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 {
 	/* Get rid of any futexes when releasing the mm */
-	struct completion *vfork_done = tsk->vfork_done;
 #ifdef CONFIG_FUTEX
 	if (unlikely(tsk->robust_list)) {
 		exit_robust_list(tsk);
@@ -782,17 +775,10 @@ void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 	if (mm)
 		atomic_dec(&mm->mm_ltasks);
 #endif
-	if (tsk->vfork_done){
-#ifdef CONFIG_KRG_EPM
-		if (tsk->remote_vfork_done){
-			krg_vfork_done(vfork_done);}
-		else{
-#endif
+
+	if (tsk->vfork_done)
 		complete_vfork_done(tsk);
-#ifdef CONFIG_KRG_EPM
-		}
-#endif	
-	}
+
 	/*
 	 * If we're exiting normally, clear a user-space tid field if
 	 * requested.  We leave this alone when dying by signal, to leave
@@ -1214,25 +1200,6 @@ void __cleanup_signal(struct signal_struct *sig)
 	tty_kref_put(sig->tty);
 	sched_autogroup_exit(sig);
 	kmem_cache_free(signal_cachep, sig);
-}
-
-static void cleanup_signal(struct task_struct *tsk)
-{
-	struct signal_struct *sig = tsk->signal;
-#ifdef CONFIG_KRG_EPM
-	struct signal_struct *locked_sig;
-#endif
-
-#ifdef CONFIG_KRG_EPM
-	locked_sig = krg_signal_exit(sig);
-#endif
-	atomic_dec(&sig->live);
-
-	if (atomic_dec_and_test(&sig->count))
-		__cleanup_signal(sig);
-#ifdef CONFIG_KRG_EPM
-	krg_signal_unlock(locked_sig);
-#endif
 }
 
 static void copy_flags(unsigned long clone_flags, struct task_struct *p)
@@ -1750,7 +1717,9 @@ struct task_struct *copy_process(unsigned long clone_flags,
 			list_add_tail_rcu(&p->tasks, &init_task.tasks);
 			__get_cpu_var(process_counts)++;
 		}
+#ifndef CONFIG_KRG_EPM
 		attach_pid(p, PIDTYPE_PID, pid);
+#endif
 		nr_threads++;
 	}
 #ifdef CONFIG_KRG_PROC
@@ -1826,13 +1795,16 @@ bad_fork_cleanup_mm:
 	}
 bad_fork_cleanup_signal:
 #ifdef CONFIG_KRG_EPM
-	if (!krg_current || in_krg_do_fork())
+	if (!krg_current || in_krg_do_fork()) {
+		struct signal_struct *locked_sig;
+
+		locked_sig = krg_signal_exit(p->signal);
 #endif
 	if (!(clone_flags & CLONE_THREAD))
-#ifdef CONFIG_KRG_EPM
-		cleanup_signal(p);
-#else
 		__cleanup_signal(p->signal);
+#ifdef CONFIG_KRG_EPM
+		krg_signal_unlock(locked_sig);
+	}
 #endif
 bad_fork_cleanup_sighand:
 #ifdef CONFIG_KRG_EPM
