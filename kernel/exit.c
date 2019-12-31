@@ -1240,7 +1240,7 @@ NORET_TYPE void do_exit(long code)
 	 * Flush inherited counters to the parent - before the parent
 	 * gets woken up by child-exit notifications.
 	 */
-	//perf_event_exit_task(tsk);
+	perf_event_exit_task(tsk);
 #ifdef CONFIG_KRG_EPM
 	if (!notify)
 		exit_migration(tsk);
