@@ -1110,8 +1110,21 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 
 	if (!krg_current)
 #endif
-	if (clone_flags & CLONE_THREAD)
+	if (clone_flags & CLONE_THREAD) {
+#ifdef CONFIG_KRG_EPM
+		if (current->signal->kddm_obj)
+			krg_signal_writelock(current->signal);
+#endif
+		atomic_inc(&current->signal->count);
+		atomic_inc(&current->signal->live);
+#ifdef CONFIG_KRG_EPM
+		if (current->signal->kddm_obj) {
+			krg_signal_share(current->signal);
+			krg_signal_unlock(current->signal);
+		}
+#endif
 		return 0;
+	}
 
 	sig = kmem_cache_alloc(signal_cachep, GFP_KERNEL);
 	tsk->signal = sig;
@@ -1191,6 +1204,25 @@ void __cleanup_signal(struct signal_struct *sig)
 	tty_kref_put(sig->tty);
 	sched_autogroup_exit(sig);
 	kmem_cache_free(signal_cachep, sig);
+}
+
+static void cleanup_signal(struct task_struct *tsk)
+{
+	struct signal_struct *sig = tsk->signal;
+#ifdef CONFIG_KRG_EPM
+	struct signal_struct *locked_sig;
+#endif
+
+#ifdef CONFIG_KRG_EPM
+	locked_sig = krg_signal_exit(sig);
+#endif
+	atomic_dec(&sig->live);
+
+	if (atomic_dec_and_test(&sig->count))
+		__cleanup_signal(sig);
+#ifdef CONFIG_KRG_EPM
+	krg_signal_unlock(locked_sig);
+#endif
 }
 
 static void copy_flags(unsigned long clone_flags, struct task_struct *p)
@@ -1674,30 +1706,15 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #endif
 	}
 #endif /* CONFIG_KRG_EPM */
-
+#ifdef CONFIG_KRG_EPM
+	if (!krg_current || !thread_group_leader(krg_current))
+#endif
+#ifdef CONFIG_KRG_EPM
 	if (clone_flags & CLONE_THREAD) {
-#ifdef CONFIG_KRG_EPM
-		if (!krg_current) {
-			if (current->signal->kddm_obj)
-				krg_signal_writelock(current->signal);
-#endif
-		atomic_inc(&current->signal->count);
-		atomic_inc(&current->signal->live);
-#ifdef CONFIG_KRG_EPM
-			if (current->signal->kddm_obj) {
-				krg_signal_share(current->signal);
-				krg_signal_unlock(current->signal);
-			}
-		}
-
-		if (!thread_group_leader(krg_current)) {
-#endif
 		p->group_leader = current->group_leader;
 		list_add_tail_rcu(&p->thread_group, &p->group_leader->thread_group);
-#ifdef CONFIG_KRG_EPM
-		}
-#endif
 	}
+#endif
 
 	if (likely(p->pid)) {
 #ifdef CONFIG_KRG_EPM
@@ -1801,17 +1818,9 @@ bad_fork_cleanup_mm:
 	}
 bad_fork_cleanup_signal:
 #ifdef CONFIG_KRG_EPM
-	if (!krg_current || in_krg_do_fork()) {
-		struct signal_struct *locked_sig;
-
-		locked_sig = krg_signal_exit(p->signal);
+	if (!krg_current || in_krg_do_fork())
 #endif
-	if (!(clone_flags & CLONE_THREAD))
-		__cleanup_signal(p->signal);
-#ifdef CONFIG_KRG_EPM
-		krg_signal_unlock(locked_sig);
-	}
-#endif
+	cleanup_signal(p);
 bad_fork_cleanup_sighand:
 #ifdef CONFIG_KRG_EPM
 	if (!krg_current || in_krg_do_fork())
