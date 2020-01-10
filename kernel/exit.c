@@ -902,8 +902,6 @@ static void reparent_thread(struct task_struct *father, struct task_struct *p,
 
 static void forget_original_parent(struct task_struct *father)
 {
-
-
 	struct task_struct *p, *n, *reaper;
 #ifdef CONFIG_KRG_EPM
 	struct children_kddm_object *children_obj = NULL;
@@ -922,7 +920,6 @@ static void forget_original_parent(struct task_struct *father)
 		children_obj = __krg_children_writelock(father);
 #endif
 	tasklist_write_lock_irq();
-	
 	reaper = find_new_reaper(father);
 
 	list_for_each_entry_safe(p, n, &father->children, sibling) {
