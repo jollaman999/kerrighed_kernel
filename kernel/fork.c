@@ -1097,6 +1097,7 @@ void posix_cpu_timers_init_group(struct signal_struct *sig)
 static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 {
 	struct signal_struct *sig;
+
 #ifdef CONFIG_KRG_EPM
 	if (krg_current && !in_krg_do_fork()) {
 		/*
@@ -1109,7 +1110,6 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 
 	if (!krg_current)
 #endif
-
 	if (clone_flags & CLONE_THREAD)
 		return 0;
 
@@ -1117,18 +1117,9 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	tsk->signal = sig;
 	if (!sig)
 		return -ENOMEM;
-#ifdef CONFIG_KRG_EPM
-		if (current->signal->kddm_obj)
-			krg_signal_writelock(current->signal);
-#endif
+
 	atomic_set(&sig->count, 1);
 	atomic_set(&sig->live, 1);
-#ifdef CONFIG_KRG_EPM
-		if (current->signal->kddm_obj) {
-			krg_signal_share(current->signal);
-			krg_signal_unlock(current->signal);
-		}
-#endif
 	init_waitqueue_head(&sig->wait_chldexit);
 	sig->flags = 0;
 	sig->group_exit_code = 0;
@@ -1683,14 +1674,29 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #endif
 	}
 #endif /* CONFIG_KRG_EPM */
-#ifdef CONFIG_KRG_EPM
-	if (!krg_current || !thread_group_leader(krg_current))
-#endif
+
 	if (clone_flags & CLONE_THREAD) {
+#ifdef CONFIG_KRG_EPM
+		if (!krg_current) {
+			if (current->signal->kddm_obj)
+				krg_signal_writelock(current->signal);
+#endif
 		atomic_inc(&current->signal->count);
 		atomic_inc(&current->signal->live);
+#ifdef CONFIG_KRG_EPM
+			if (current->signal->kddm_obj) {
+				krg_signal_share(current->signal);
+				krg_signal_unlock(current->signal);
+			}
+		}
+
+		if (!thread_group_leader(krg_current)) {
+#endif
 		p->group_leader = current->group_leader;
 		list_add_tail_rcu(&p->thread_group, &p->group_leader->thread_group);
+#ifdef CONFIG_KRG_EPM
+		}
+#endif
 	}
 
 	if (likely(p->pid)) {
