@@ -693,16 +693,16 @@ inline
 int do_action(struct rpc_desc *desc, struct __rpc_header *h)
 {
 	switch (desc->state) {
-	case __RPC_STATE_NEW:
+	case RPC_STATE_NEW:
 		spin_unlock(&desc->desc_lock);
 		return rpc_handle_new(desc);
-	case __RPC_STATE_WAIT1:
+	case RPC_STATE_WAIT1:
 		if (desc->type == RPC_RQ_CLT
 		    && desc->wait_from != h->from) {
 			spin_unlock(&desc->desc_lock);
 			break;
 		}
-	case __RPC_STATE_WAIT:
+	case RPC_STATE_WAIT:
 		desc->state = RPC_STATE_RUN;
 		wake_up_process(desc->thread);
 		spin_unlock(&desc->desc_lock);
