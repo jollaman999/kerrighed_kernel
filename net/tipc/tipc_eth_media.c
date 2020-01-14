@@ -39,10 +39,7 @@
 #include <net/tipc/tipc_plugin_msg.h>
 #include <linux/netdevice.h>
 #include <linux/workqueue.h>
-#include <linux/version.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
 #include <net/net_namespace.h>
-#endif
 
 #define MAX_ETH_BEARERS		TIPC_MAX_BEARERS
 #define ETH_LINK_PRIORITY	TIPC_DEF_LINK_PRI
@@ -117,20 +114,12 @@ static int send_msg(struct sk_buff *buf, struct tipc_bearer *tb_ptr,
 		return 0;
 	}
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 	skb_reset_network_header(clone);
-#else
-	clone->nh.raw = clone->data;
-#endif
 	clone->dev = dev;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
 	dev_hard_header(clone, dev, ETH_P_TIPC, &dest->value[4],
 			dev->dev_addr, clone->len);
-#else
-	dev->hard_header(clone, dev, ETH_P_TIPC, &dest->value[4],
-			 dev->dev_addr, clone->len);
-#endif
 	dev_queue_xmit(clone);
+
 	return 0;
 }
 
@@ -147,22 +136,10 @@ static int recv_msg(struct sk_buff *buf, struct net_device *dev,
 {
 	struct eth_bearer *eb_ptr = (struct eth_bearer *)pt->af_packet_priv;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27)
 	if (!net_eq(dev_net(dev), &init_net)) {
 		kfree_skb(buf);
 		return 0;
 	}
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
-	if (dev_net(dev) != &init_net) {
-		kfree_skb(buf);
-		return 0;
-	}
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
-	if (dev->nd_net != &init_net) {
-		kfree_skb(buf);
-		return 0;
-	}
-#endif
 
 	if (likely(eb_ptr->bearer)) {
 		if (likely(buf->pkt_type <= PACKET_BROADCAST)) {
@@ -200,13 +177,7 @@ static int enable_bearer(struct tipc_bearer *tb_ptr)
 	/* Find device with specified name */
 
 	read_lock(&dev_base_lock);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
 	for_each_netdev(&init_net, pdev) {
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
-	for_each_netdev(pdev) {
-#else
-	for (pdev = dev_base; pdev; pdev = pdev->next) {
-#endif
 		if (!strncmp(pdev->name, driver_name, IFNAMSIZ)) {
 			dev = pdev;
 			dev_hold(dev);
@@ -267,12 +238,7 @@ static void disable_bearer(struct tipc_bearer *tb_ptr)
 	struct eth_bearer *eb_ptr = (struct eth_bearer *)tb_ptr->usr_handle;
 
 	eb_ptr->bearer = NULL;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
 	INIT_WORK(&eb_ptr->cleanup, cleanup_bearer);
-#else
-	INIT_WORK(&eb_ptr->cleanup, (void (*)(void *))cleanup_bearer,
-		  &eb_ptr->cleanup);
-#endif
 	schedule_work(&eb_ptr->cleanup);
 }
 
@@ -290,16 +256,8 @@ static int recv_notification(struct notifier_block *nb, unsigned long evt,
 	struct eth_bearer *eb_ptr = &eth_bearers[0];
 	struct eth_bearer *stop = &eth_bearers[MAX_ETH_BEARERS];
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27)
 	if (!net_eq(dev_net(dev), &init_net))
 		return NOTIFY_DONE;
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
-	if (dev_net(dev) != &init_net)
-		return NOTIFY_DONE;
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
-	if (dev->nd_net != &init_net)
-		return NOTIFY_DONE;
-#endif
 
 	while ((eb_ptr->dev != dev)) {
 		if (++eb_ptr == stop)
@@ -444,11 +402,7 @@ int tipc_eth_media_start(void)
 	if (res)
 		return res;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
 	INIT_WORK(&reg_notifier, do_registration);
-#else
-	INIT_WORK(&reg_notifier, (void (*)(void *))do_registration, NULL);
-#endif
 	schedule_work(&reg_notifier);
 	eth_started = 1;
 	return res;

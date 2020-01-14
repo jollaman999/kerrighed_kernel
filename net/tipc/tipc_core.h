@@ -56,7 +56,6 @@
 #include <linux/netdevice.h>
 #include <linux/in.h>
 #include <linux/list.h>
-#include <linux/version.h>
 #include <linux/vmalloc.h>
 
 
@@ -343,29 +342,6 @@ struct tipc_skb_cb {
 
 #define TIPC_SKB_CB(__skb) ((struct tipc_skb_cb *)&((__skb)->cb[0]))
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,22)
-static inline unsigned char *skb_tail_pointer(const struct sk_buff *skb)
-{
-	return skb->tail;
-}
-
-static inline void skb_copy_to_linear_data(struct sk_buff *skb,
-					   const void *from,
-					   const unsigned int len)
-{
-	memcpy(skb->data, from, len);
-}
-
-static inline void skb_copy_to_linear_data_offset(struct sk_buff *skb,
-						  const int offset,
-						  const void *from,
-						  const unsigned int len)
-{
-	memcpy(skb->data + offset, from, len);
-}
-#endif
-
-
 static inline struct tipc_msg *buf_msg(struct sk_buff *skb)
 {
 	return (struct tipc_msg *)skb->data;
@@ -402,12 +378,7 @@ struct sk_buff *buf_acquire(u32 size);
 
 static inline void buf_discard(struct sk_buff *skb)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
 	kfree_skb(skb);
-#else
-	if (likely(skb != NULL))
-		kfree_skb(skb);
-#endif
 }
 
 /**
@@ -419,11 +390,7 @@ static inline void buf_discard(struct sk_buff *skb)
 
 static inline int buf_linearize(struct sk_buff *skb)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
 	return skb_linearize(skb);
-#else
-	return skb_linearize(skb, GFP_ATOMIC);
-#endif
 }
 
 #endif

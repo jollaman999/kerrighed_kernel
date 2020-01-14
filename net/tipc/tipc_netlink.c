@@ -61,18 +61,10 @@ static int handle_cmd(struct sk_buff *skb, struct genl_info *info)
 
 	if (rep_buf) {
 		skb_push(rep_buf, hdr_space);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 		rep_nlh = nlmsg_hdr(rep_buf);
-#else
-		rep_nlh = (struct nlmsghdr *)rep_buf->data;
-#endif
 		memcpy(rep_nlh, req_nlh, hdr_space);
 		rep_nlh->nlmsg_len = rep_buf->len;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
-		genlmsg_unicast(&init_net,rep_buf, NETLINK_CB(skb).pid);
-#else
-		genlmsg_unicast(&init_net, req_nlh->nlmsg_pid);
-#endif
+		genlmsg_unicast(&init_net, rep_buf, req_nlh->nlmsg_pid);
 	}
 
 	return 0;

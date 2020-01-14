@@ -35,7 +35,6 @@
  */
 
 #include "tipc_core.h"
-#include <linux/version.h>
 
 struct queue_item {
 	struct list_head next_signal;
@@ -43,11 +42,7 @@ struct queue_item {
 	unsigned long data;
 };
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,15)
 static struct kmem_cache *tipc_queue_item_cache;
-#else
-static struct kmem_cache_s *tipc_queue_item_cache;
-#endif
 static struct list_head signal_queue_head;
 static DEFINE_SPINLOCK(qitem_lock);
 static int handler_enabled = 0;
@@ -101,13 +96,8 @@ static void process_signal_queue(unsigned long dummy)
 int tipc_handler_start(void)
 {
 	tipc_queue_item_cache =
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
 		kmem_cache_create("tipc_queue_items", sizeof(struct queue_item),
 				  0, SLAB_HWCACHE_ALIGN, NULL);
-#else
-		kmem_cache_create("tipc_queue_items", sizeof(struct queue_item),
-				  0, SLAB_HWCACHE_ALIGN, NULL, NULL);
-#endif
 	if (!tipc_queue_item_cache)
 		return -ENOMEM;
 

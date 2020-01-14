@@ -1622,7 +1622,6 @@ static void link_retransmit_failure(struct link *l_ptr, struct sk_buff *buf)
 		char addr_string[16];
 
 		dbg_printf(TIPC_OUTPUT, "Msg seq number: %u,  ", buf_seqno(buf));
-		//dbg_printf(TIPC_OUTPUT, "Outstanding acks: %u\n", (u32)buf_handle(buf));
 		dbg_printf(TIPC_OUTPUT, "Outstanding acks: %lu\n", (unsigned long)TIPC_SKB_CB(buf)->handle);
 		
 		/* recover retransmit requester */

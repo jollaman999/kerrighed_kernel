@@ -56,12 +56,6 @@
 
 #ifdef CONFIG_TIPC_SOCKET_API
 
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,23)
-#ifndef SHUT_RDWR
-#define SHUT_RDWR 2	/* this is undefined in kernel space for some reason */
-#endif
-#endif
-
 #define SS_LISTENING	-1	/* socket is listening */
 #define SS_READY	-2	/* socket is connectionless */
 
@@ -192,13 +186,7 @@ static void reject_rx_queue(struct sock *sk)
  * Returns 0 on success, errno otherwise
  */
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
-//static int tipc_create(struct net *net, struct socket *sock, int protocol)
-static int tipc_create(struct net *net, struct socket *sock, int protocol,
-		       int kern)
-#else
-static int tipc_create(struct socket *sock, int protocol)
-#endif
+static int tipc_create(struct net *net, struct socket *sock, int protocol, int kern)
 {
 	const struct proto_ops *ops;
 	socket_state state;
@@ -206,11 +194,8 @@ static int tipc_create(struct socket *sock, int protocol)
 	struct tipc_port *tp_ptr;
 
 	/* Validate arguments */
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
 	if (net != &init_net)
 		return -EAFNOSUPPORT;
-#endif
 
 	if (unlikely(protocol != 0))
 		return -EPROTONOSUPPORT;
@@ -234,12 +219,7 @@ static int tipc_create(struct socket *sock, int protocol)
 	}
 
 	/* Allocate socket's protocol area */
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
 	sk = sk_alloc(net, AF_TIPC, GFP_KERNEL, &tipc_proto);
-#else
-	sk = sk_alloc(AF_TIPC, GFP_KERNEL, &tipc_proto, 1);
-#endif
 	if (sk == NULL)
 		return -ENOMEM;
 
@@ -1554,13 +1534,7 @@ static int accept(struct socket *sock, struct socket *new_sock, int flags)
 
 	buf = skb_peek(&sk->sk_receive_queue);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
-	res = tipc_create(sock_net(sock->sk), new_sock, 0,0);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
-	res = tipc_create(sock->sk->sk_net, new_sock, 0);
-#else
-	res = tipc_create(new_sock, 0);
-#endif
+	res = tipc_create(sock_net(sock->sk), new_sock, 0, 0);
 	if (!res) {
 		struct sock *new_sk = new_sock->sk;
 		struct tipc_sock *new_tsock = tipc_sk(new_sk);
