@@ -85,6 +85,12 @@ static inline void page_dup_rmap(struct page *page, struct vm_area_struct *vma, 
  */
 int page_referenced(struct page *, int is_locked, struct mem_cgroup *cnt);
 int try_to_unmap(struct page *, int ignore_refs);
+#ifdef CONFIG_KRG_MM
+int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
+		     int migration);
+struct anon_vma *page_lock_anon_vma(struct page *page);
+void page_unlock_anon_vma(struct anon_vma *anon_vma);
+#endif
 
 /*
  * Called from mm/filemap_xip.c to unmap empty zero page
@@ -142,5 +148,12 @@ static inline int page_mkclean(struct page *page)
 #define SWAP_AGAIN	1
 #define SWAP_FAIL	2
 #define SWAP_MLOCK	3
+#ifdef CONFIG_KRG_MM
+#define SWAP_FLUSH_FAIL	4
+#endif
+
+#ifdef CONFIG_KRG_MM
+extern struct kmem_cache *anon_vma_cachep;
+#endif
 
 #endif	/* _LINUX_RMAP_H */

@@ -249,10 +249,18 @@ static void bad_page(struct page *page)
 
 	printk(KERN_ALERT "BUG: Bad page state in process %s  pfn:%05lx\n",
 		current->comm, page_to_pfn(page));
+#ifdef CONFIG_KRG_MM
 	printk(KERN_ALERT
-		"page:%p flags:%p count:%d mapcount:%d mapping:%p index:%lx\n",
+	        "page:%p flags:%p count:%d mapcount:%d mapping:%p index:%lx kddm_count:%d obj_entry:%p\n",
+	       page, (void *)page->flags, page_count(page),
+	       page_mapcount(page), page->mapping, page->index,
+	       page_kddm_count(page), page->obj_entry);
+#else
+	printk(KERN_ALERT
+	        "page:%p flags:%p count:%d mapcount:%d mapping:%p index:%lx\n",
 		page, (void *)page->flags, page_count(page),
 		page_mapcount(page), page->mapping, page->index);
+#endif
 
 	dump_stack();
 out:
@@ -496,6 +504,10 @@ static inline int free_pages_check(struct page *page)
 	if (unlikely(page_mapcount(page) |
 		(page->mapping != NULL)  |
 		(page_count(page) != 0)  |
+#ifdef CONFIG_KRG_MM
+		(page->obj_entry != NULL) |
+		(page_kddm_count(page) != 0) |
+#endif
 		(page->flags & PAGE_FLAGS_CHECK_AT_FREE))) {
 		bad_page(page);
 		return 1;
@@ -1478,6 +1490,9 @@ __alloc_pages_internal(gfp_t gfp_mask, unsigned int order,
 
 	lockdep_trace_alloc(gfp_mask);
 
+#ifdef CONFIG_KRG_MM
+	krg_notify_mem(0);
+#endif
 	might_sleep_if(wait);
 
 	if (should_fail_alloc_page(gfp_mask, order))
@@ -1717,6 +1732,9 @@ void __pagevec_free(struct pagevec *pvec)
 
 void __free_pages(struct page *page, unsigned int order)
 {
+#ifdef CONFIG_KRG_MM
+	krg_notify_mem(0);
+#endif
 	if (put_page_testzero(page)) {
 		if (order == 0)
 			free_hot_page(page);
@@ -2632,6 +2650,9 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 				continue;
 		}
 		page = pfn_to_page(pfn);
+#ifdef CONFIG_KRG_MM
+		atomic_set(&page->_kddm_count, 0);
+#endif
 		set_page_links(page, zone, nid, pfn);
 		mminit_verify_page_links(page, zone, nid, pfn);
 		init_page_count(page);
@@ -3558,6 +3579,10 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 		zone->reclaim_stat.recent_rotated[1] = 0;
 		zone->reclaim_stat.recent_scanned[0] = 0;
 		zone->reclaim_stat.recent_scanned[1] = 0;
+#ifdef CONFIG_KRG_MM
+		zone->reclaim_stat.recent_scanned[2] = 0;
+		zone->reclaim_stat.recent_rotated[2] = 0;
+#endif
 		zap_zone_vm_stats(zone);
 		zone->flags = 0;
 		if (!size)

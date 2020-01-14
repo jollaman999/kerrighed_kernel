@@ -40,6 +40,17 @@
 #include <linux/syscalls.h>
 #include <linux/kprobes.h>
 #include <linux/user_namespace.h>
+#ifdef CONFIG_KRG_PROC
+#include <net/krgrpc/rpc.h>
+#include <net/krgrpc/rpcid.h>
+#include <kerrighed/remote_syscall.h>
+#endif
+#ifdef CONFIG_KRG_EPM
+#include <kerrighed/krginit.h>
+#include <kerrighed/pid.h>
+#include <kerrighed/task.h>
+#include <kerrighed/children.h>
+#endif
 
 #include <asm/uaccess.h>
 #include <asm/io.h>
@@ -949,19 +960,29 @@ SYSCALL_DEFINE1(times, struct tms __user *, tbuf)
  * Auch. Had to add the 'did_exec' flag to conform completely to POSIX.
  * LBT 04.03.94
  */
+#ifdef CONFIG_KRG_EPM
+static int do_setpgid(pid_t pid, pid_t pgid, pid_t parent_session,
+		      struct pid_namespace *ns)
+#else
 SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
+#endif
 {
 	struct task_struct *p;
 	struct task_struct *group_leader = current->group_leader;
 	struct pid *pgrp;
+#ifdef CONFIG_KRG_EPM
+	bool from_remote_parent = parent_session >= 0;
+#endif
 	int err;
 
+#ifndef CONFIG_KRG_EPM
 	if (!pid)
 		pid = task_pid_vnr(group_leader);
 	if (!pgid)
 		pgid = pid;
 	if (pgid < 0)
 		return -EINVAL;
+#endif
 
 	/* From this point forward we keep holding onto the tasklist lock
 	 * so that our parent does not change from under us. -DaveM
@@ -969,7 +990,11 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	write_lock_irq(&tasklist_lock);
 
 	err = -ESRCH;
+#ifdef CONFIG_KRG_EPM
+	p = find_task_by_pid_ns(pid, ns);
+#else
 	p = find_task_by_vpid(pid);
+#endif
 	if (!p)
 		goto out;
 
@@ -977,8 +1002,19 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	if (!thread_group_leader(p))
 		goto out;
 
+#ifdef CONFIG_KRG_EPM
+	if (from_remote_parent
+	    || same_thread_group(p->real_parent, group_leader)) {
+#else
 	if (same_thread_group(p->real_parent, group_leader)) {
+#endif
 		err = -EPERM;
+#ifdef CONFIG_KRG_EPM
+		if (from_remote_parent) {
+			if (task_session_nr_ns(p, ns) != parent_session)
+				goto out;
+		} else
+#endif
 		if (task_session(p) != task_session(group_leader))
 			goto out;
 		err = -EACCES;
@@ -998,9 +1034,17 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	if (pgid != pid) {
 		struct task_struct *g;
 
+#ifdef CONFIG_KRG_EPM
+		pgrp = find_pid_ns(pgid, ns);
+#else
 		pgrp = find_vpid(pgid);
+#endif
 		g = pid_task(pgrp, PIDTYPE_PGID);
+#ifdef CONFIG_KRG_EPM
+		if (!g || task_session(g) != task_session(p))
+#else
 		if (!g || task_session(g) != task_session(group_leader))
+#endif
 			goto out;
 	}
 
@@ -1018,7 +1062,149 @@ out:
 	return err;
 }
 
+#ifdef CONFIG_KRG_EPM
+struct setpgid_message {
+	pid_t pid;
+	pid_t pgid;
+	pid_t parent_session;
+};
+
+static
+int handle_forward_setpgid(struct rpc_desc *desc, void *_msg, size_t size)
+{
+	const struct setpgid_message *msg = _msg;
+	struct pid_namespace *ns;
+	int retval;
+
+	ns = find_get_krg_pid_ns();
+	retval = do_setpgid(msg->pid, msg->pgid, msg->parent_session, ns);
+	put_pid_ns(ns);
+
+	return retval;
+}
+
+static int krg_forward_setpgid(kerrighed_node_t node, pid_t pid, pid_t pgid)
+{
+	struct children_kddm_object *children_obj = current->children_obj;
+	pid_t parent, real_parent;
+	struct setpgid_message msg;
+	int retval = -ESRCH;
+
+	if (__krg_get_parent(children_obj, pid, &parent, &real_parent))
+		goto out;
+
+	msg.pid = pid;
+	msg.pgid = pgid;
+	msg.parent_session = task_session_knr(current);
+
+	retval = rpc_sync(PROC_FORWARD_SETPGID, node, &msg, sizeof(msg));
+
+out:
+	return retval;
+}
+
+static
+struct children_kddm_object *
+krg_prepare_setpgid(pid_t pid, pid_t pgid, kerrighed_node_t *nodep)
+{
+	struct children_kddm_object *parent_children_obj = NULL;
+	pid_t real_parent_tgid;
+	kerrighed_node_t node = KERRIGHED_NODE_ID_NONE;
+	struct task_kddm_object *task_obj;
+	struct timespec backoff_time = {
+		.tv_sec = 1,
+		.tv_nsec = 0
+	};	/* 1 second */
+
+	down_read(&kerrighed_init_sem);
+
+	if (!current->nsproxy->krg_ns
+	    || !is_krg_pid_ns_root(task_active_pid_ns(current))
+	    || !(pid & GLOBAL_PID_MASK))
+		goto out;
+
+	if (pid == current->tgid) {
+		if (rcu_dereference(current->parent_children_obj))
+			parent_children_obj =
+				krg_parent_children_writelock(current,
+							      &real_parent_tgid);
+		goto out;
+	}
+
+	if (!rcu_dereference(current->children_obj))
+		goto out;
+
+
+	for (;;) {
+		parent_children_obj = __krg_children_writelock(current);
+		BUG_ON(!parent_children_obj);
+
+		task_obj = krg_task_readlock(pid);
+		if (!task_obj) {
+			krg_task_unlock(pid);
+			break;
+		}
+		node = task_obj->node;
+		if (node != KERRIGHED_NODE_ID_NONE)
+			break;
+
+		/* We might deadlock with migration. Back off. */
+		krg_task_unlock(pid);
+		krg_children_unlock(parent_children_obj);
+
+		set_current_state(TASK_UNINTERRUPTIBLE);
+		schedule_timeout(timespec_to_jiffies(&backoff_time) + 1);
+	}
+
+out:
+	*nodep = node;
+	return parent_children_obj;
+}
+
+static
+void krg_cleanup_setpgid(pid_t pid, pid_t pgid,
+			 struct children_kddm_object *parent_children_obj,
+			 kerrighed_node_t node,
+			 bool success)
+{
+	if (parent_children_obj) {
+		if (node != KERRIGHED_NODE_ID_NONE)
+			krg_task_unlock(pid);
+		if (success)
+			__krg_set_child_pgid(parent_children_obj, pid, pgid);
+		krg_children_unlock(parent_children_obj);
+	}
+	up_read(&kerrighed_init_sem);
+}
+
+SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
+{
+	struct children_kddm_object *parent_children_obj;
+	kerrighed_node_t node;
+	int err;
+
+	if (!pid)
+		pid = task_pid_vnr(current->group_leader);
+	if (!pgid)
+		pgid = pid;
+	if (pgid < 0)
+		return -EINVAL;
+
+	parent_children_obj = krg_prepare_setpgid(pid, pgid, &node);
+	if (node != kerrighed_node_id && node != KERRIGHED_NODE_ID_NONE)
+		err = krg_forward_setpgid(node, pid, pgid);
+	else
+		err = do_setpgid(pid, pgid, -1, task_active_pid_ns(current));
+	krg_cleanup_setpgid(pid, pgid, parent_children_obj, node, !err);
+	return err;
+}
+#endif /* CONFIG_KRG_EPM */
+
+#ifdef CONFIG_KRG_PROC
+static int do_getpgid(pid_t pid, struct pid_namespace *ns)
+#else
 SYSCALL_DEFINE1(getpgid, pid_t, pid)
+#endif
 {
 	struct task_struct *p;
 	struct pid *grp;
@@ -1029,7 +1215,11 @@ SYSCALL_DEFINE1(getpgid, pid_t, pid)
 		grp = task_pgrp(current);
 	else {
 		retval = -ESRCH;
+#ifdef CONFIG_KRG_PROC
+		p = find_task_by_pid_ns(pid, ns);
+#else
 		p = find_task_by_vpid(pid);
+#endif
 		if (!p)
 			goto out;
 		grp = task_pgrp(p);
@@ -1040,11 +1230,54 @@ SYSCALL_DEFINE1(getpgid, pid_t, pid)
 		if (retval)
 			goto out;
 	}
+#ifdef CONFIG_KRG_PROC
+	retval = pid_nr_ns(grp, ns);
+#else
 	retval = pid_vnr(grp);
+#endif
 out:
 	rcu_read_unlock();
 	return retval;
 }
+
+#ifdef CONFIG_KRG_PROC
+static int handle_getpgid(struct rpc_desc *desc, void *msg, size_t size)
+{
+	struct pid *pid;
+	const struct cred *old_cred;
+	int retval;
+
+	pid = krg_handle_remote_syscall_begin(desc, msg, size,
+					      NULL, &old_cred);
+	if (IS_ERR(pid)) {
+		retval = PTR_ERR(pid);
+		goto out;
+	}
+
+	retval = do_getpgid(pid_knr(pid), ns_of_pid(pid)->krg_ns_root);
+
+	krg_handle_remote_syscall_end(pid, old_cred);
+
+out:
+	return retval;
+}
+
+static int krg_getpgid(pid_t pid)
+{
+	return krg_remote_syscall_simple(PROC_GETPGID, pid, NULL, 0);
+}
+
+SYSCALL_DEFINE1(getpgid, pid_t, pid)
+{
+	int retval;
+
+	retval = do_getpgid(pid, task_active_pid_ns(current));
+	if (retval == -ESRCH)
+		retval = krg_getpgid(pid);
+
+	return retval;
+}
+#endif /* CONFIG_KRG_PROC */
 
 #ifdef __ARCH_WANT_SYS_GETPGRP
 
@@ -1055,7 +1288,11 @@ SYSCALL_DEFINE0(getpgrp)
 
 #endif
 
+#ifdef CONFIG_KRG_PROC
+static int do_getsid(pid_t pid, struct pid_namespace *ns)
+#else
 SYSCALL_DEFINE1(getsid, pid_t, pid)
+#endif
 {
 	struct task_struct *p;
 	struct pid *sid;
@@ -1066,7 +1303,11 @@ SYSCALL_DEFINE1(getsid, pid_t, pid)
 		sid = task_session(current);
 	else {
 		retval = -ESRCH;
+#ifdef CONFIG_KRG_PROC
+		p = find_task_by_pid_ns(pid, ns);
+#else
 		p = find_task_by_vpid(pid);
+#endif
 		if (!p)
 			goto out;
 		sid = task_session(p);
@@ -1077,19 +1318,82 @@ SYSCALL_DEFINE1(getsid, pid_t, pid)
 		if (retval)
 			goto out;
 	}
+#ifdef CONFIG_KRG_PROC
+	retval = pid_nr_ns(sid, ns);
+#else
 	retval = pid_vnr(sid);
+#endif
 out:
 	rcu_read_unlock();
 	return retval;
 }
+
+#ifdef CONFIG_KRG_PROC
+static int handle_getsid(struct rpc_desc *desc, void *msg, size_t size)
+{
+	struct pid *pid;
+	const struct cred *old_cred;
+	int retval;
+
+	pid = krg_handle_remote_syscall_begin(desc, msg, size,
+					      NULL, &old_cred);
+	if (IS_ERR(pid)) {
+		retval = PTR_ERR(pid);
+		goto out;
+	}
+
+	retval = do_getsid(pid_knr(pid), ns_of_pid(pid)->krg_ns_root);
+
+	krg_handle_remote_syscall_end(pid, old_cred);
+
+out:
+	return retval;
+}
+
+static int krg_getsid(pid_t pid)
+{
+	return krg_remote_syscall_simple(PROC_GETSID, pid, NULL, 0);;
+}
+
+SYSCALL_DEFINE1(getsid, pid_t, pid)
+{
+	int retval;
+
+	retval = do_getsid(pid, task_active_pid_ns(current));
+	if (retval == -ESRCH)
+		retval = krg_getsid(pid);
+
+	return retval;
+}
+
+void remote_sys_init(void)
+{
+	rpc_register_int(PROC_GETPGID, handle_getpgid, 0);
+	rpc_register_int(PROC_GETSID, handle_getsid, 0);
+#ifdef CONFIG_KRG_EPM
+	rpc_register_int(PROC_FORWARD_SETPGID, handle_forward_setpgid, 0);
+#endif
+}
+#endif /* CONFIG_KRG_PROC */
 
 SYSCALL_DEFINE0(setsid)
 {
 	struct task_struct *group_leader = current->group_leader;
 	struct pid *sid = task_pid(group_leader);
 	pid_t session = pid_vnr(sid);
+#ifdef CONFIG_KRG_EPM
+	struct children_kddm_object *parent_children_obj = NULL;
+	pid_t real_parent_tgid;
+#endif /* CONFIG_KRG_EPM */
 	int err = -EPERM;
 
+#ifdef CONFIG_KRG_EPM
+	down_read(&kerrighed_init_sem);
+	if (rcu_dereference(current->parent_children_obj))
+		parent_children_obj =
+			krg_parent_children_writelock(current,
+						      &real_parent_tgid);
+#endif /* CONFIG_KRG_EPM */
 	write_lock_irq(&tasklist_lock);
 	/* Fail if I am already a session leader */
 	if (group_leader->signal->leader)
@@ -1109,6 +1413,14 @@ SYSCALL_DEFINE0(setsid)
 	err = session;
 out:
 	write_unlock_irq(&tasklist_lock);
+#ifdef CONFIG_KRG_EPM
+	if (parent_children_obj) {
+		if (err >= 0)
+			krg_set_child_pgid(parent_children_obj, current);
+		krg_children_unlock(parent_children_obj);
+	}
+	up_read(&kerrighed_init_sem);
+#endif /* CONFIG_KRG_EPM */
 	return err;
 }
 

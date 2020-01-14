@@ -512,7 +512,11 @@ void swap_free(swp_entry_t entry)
 /*
  * How many references to page are currently swapped out?
  */
+#ifdef CONFIG_KRG_MM
+int page_swapcount(struct page *page)
+#else
 static inline int page_swapcount(struct page *page)
+#endif
 {
 	int count = 0;
 	struct swap_info_struct *p;
@@ -835,8 +839,13 @@ static int unuse_vma(struct vm_area_struct *vma,
 	return 0;
 }
 
+#ifdef CONFIG_KRG_FAF
+static int __unuse_mm(struct mm_struct *mm,
+				swp_entry_t entry, struct page *page)
+#else
 static int unuse_mm(struct mm_struct *mm,
 				swp_entry_t entry, struct page *page)
+#endif
 {
 	struct vm_area_struct *vma;
 	int ret = 0;
@@ -999,7 +1008,11 @@ static int try_to_unuse(unsigned int type)
 			if (start_mm == &init_mm)
 				shmem = shmem_unuse(entry, page);
 			else
+#ifdef CONFIG_KRG_FAF
+				retval = __unuse_mm(start_mm, entry, page);
+#else
 				retval = unuse_mm(start_mm, entry, page);
+#endif
 		}
 		if (*swap_map > 1) {
 			int set_start_mm = (*swap_map >= swcount);
@@ -1029,7 +1042,11 @@ static int try_to_unuse(unsigned int type)
 					set_start_mm = 1;
 					shmem = shmem_unuse(entry, page);
 				} else
+#ifdef CONFIG_KRG_FAF
+					retval = __unuse_mm(mm, entry, page);
+#else
 					retval = unuse_mm(mm, entry, page);
+#endif
 				if (set_start_mm && *swap_map < swcount) {
 					mmput(new_start_mm);
 					atomic_inc(&mm->mm_users);

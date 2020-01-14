@@ -95,6 +95,9 @@
 
 #include <net/sock.h>
 #include <linux/netfilter.h>
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
+#endif
 
 static int sock_no_open(struct inode *irrelevant, struct file *dontcare);
 static ssize_t sock_aio_read(struct kiocb *iocb, const struct iovec *iov,
@@ -454,14 +457,33 @@ struct socket *sockfd_lookup(int fd, int *err)
 	return sock;
 }
 
+#ifdef CONFIG_KRG_FAF
+static struct socket *sockfd_lookup_light(int fd, int *err, int *fput_needed,
+					  struct file **faf_file)
+#else
 static struct socket *sockfd_lookup_light(int fd, int *err, int *fput_needed)
+#endif
 {
 	struct file *file;
 	struct socket *sock;
 
 	*err = -EBADF;
+#ifdef CONFIG_KRG_FAF
+	*faf_file = NULL;
+#endif
 	file = fget_light(fd, fput_needed);
 	if (file) {
+#ifdef CONFIG_KRG_FAF
+		if (file->f_flags & O_FAF_CLT) {
+			if (!*fput_needed) {
+				/* TODO: really needed? */
+				get_file(file);
+				*fput_needed = 1;
+			}
+			*faf_file = file;
+			return NULL;
+		}
+#endif
 		sock = sock_from_file(file, err);
 		if (sock)
 			return sock;
@@ -1410,8 +1432,19 @@ SYSCALL_DEFINE3(bind, int, fd, struct sockaddr __user *, umyaddr, int, addrlen)
 	struct socket *sock;
 	struct sockaddr_storage address;
 	int err, fput_needed;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
 
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_bind(faf_file,
+				  (struct sockaddr __user *)umyaddr, addrlen);
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 	if (sock) {
 		err = move_addr_to_kernel(umyaddr, addrlen, (struct sockaddr *)&address);
 		if (err >= 0) {
@@ -1439,8 +1472,18 @@ SYSCALL_DEFINE2(listen, int, fd, int, backlog)
 	struct socket *sock;
 	int err, fput_needed;
 	int somaxconn;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
 
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_listen(faf_file, backlog);
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 	if (sock) {
 		somaxconn = sock_net(sock->sk)->core.sysctl_somaxconn;
 		if ((unsigned)backlog > somaxconn)
@@ -1474,6 +1517,9 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
 	struct file *newfile;
 	int err, len, newfd, fput_needed;
 	struct sockaddr_storage address;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
+#endif
 
 	if (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
 		return -EINVAL;
@@ -1481,7 +1527,16 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
 	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
 		flags = (flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
 
+#ifdef CONFIG_KRG_FAF
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_accept(faf_file, upeer_sockaddr, upeer_addrlen);
+		fput_light(faf_file, fput_needed);
+		goto out;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 	if (!sock)
 		goto out;
 
@@ -1573,8 +1628,18 @@ SYSCALL_DEFINE3(connect, int, fd, struct sockaddr __user *, uservaddr,
 	struct socket *sock;
 	struct sockaddr_storage address;
 	int err, fput_needed;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
 
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_connect(faf_file, uservaddr, addrlen);
+		fput_light(faf_file, fput_needed);
+		goto out;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 	if (!sock)
 		goto out;
 	err = move_addr_to_kernel(uservaddr, addrlen, (struct sockaddr *)&address);
@@ -1605,8 +1670,18 @@ SYSCALL_DEFINE3(getsockname, int, fd, struct sockaddr __user *, usockaddr,
 	struct socket *sock;
 	struct sockaddr_storage address;
 	int len, err, fput_needed;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
 
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_getsockname(faf_file, usockaddr, usockaddr_len);
+		fput_light(faf_file, fput_needed);
+		goto out;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 	if (!sock)
 		goto out;
 
@@ -1636,8 +1711,18 @@ SYSCALL_DEFINE3(getpeername, int, fd, struct sockaddr __user *, usockaddr,
 	struct socket *sock;
 	struct sockaddr_storage address;
 	int len, err, fput_needed;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
 
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_getpeername(faf_file, usockaddr, usockaddr_len);
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 	if (sock != NULL) {
 		err = security_socket_getpeername(sock);
 		if (err) {
@@ -1672,11 +1757,17 @@ SYSCALL_DEFINE6(sendto, int, fd, void __user *, buff, size_t, len,
 	struct msghdr msg;
 	struct iovec iov;
 	int fput_needed;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
 
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (!sock && !faf_file)
+		goto out;
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
 		goto out;
-
+#endif
 	iov.iov_base = buff;
 	iov.iov_len = len;
 	msg.msg_name = NULL;
@@ -1692,12 +1783,24 @@ SYSCALL_DEFINE6(sendto, int, fd, void __user *, buff, size_t, len,
 		msg.msg_name = (struct sockaddr *)&address;
 		msg.msg_namelen = addr_len;
 	}
+#ifdef CONFIG_KRG_FAF
+	if (faf_file) {
+		msg.msg_flags = flags;
+		err = krg_faf_sendmsg(faf_file, &msg, len);
+		goto out_put;
+	}
+#endif
 	if (sock->file->f_flags & O_NONBLOCK)
 		flags |= MSG_DONTWAIT;
 	msg.msg_flags = flags;
 	err = sock_sendmsg(sock, &msg, len);
 
 out_put:
+#ifdef CONFIG_KRG_FAF
+	if (faf_file)
+		fput_light(faf_file, fput_needed);
+	else
+#endif
 	fput_light(sock->file, fput_needed);
 out:
 	return err;
@@ -1729,10 +1832,17 @@ SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, ubuf, size_t, size,
 	struct sockaddr_storage address;
 	int err, err2;
 	int fput_needed;
+#ifdef CONFIG_KRG_FAF
+	struct file * faf_file;
 
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (!sock && !faf_file)
+		goto out;
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
 		goto out;
+#endif
 
 	msg.msg_control = NULL;
 	msg.msg_controllen = 0;
@@ -1742,10 +1852,19 @@ SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, ubuf, size_t, size,
 	iov.iov_base = ubuf;
 	msg.msg_name = (struct sockaddr *)&address;
 	msg.msg_namelen = sizeof(address);
+#ifdef CONFIG_KRG_FAF
+	if (faf_file) {
+		err = krg_faf_recvmsg(faf_file, &msg, size, flags);
+		goto check_err;
+	}
+#endif
 	if (sock->file->f_flags & O_NONBLOCK)
 		flags |= MSG_DONTWAIT;
 	err = sock_recvmsg(sock, &msg, size, flags);
 
+#ifdef CONFIG_KRG_FAF
+check_err:
+#endif
 	if (err >= 0 && addr != NULL) {
 		err2 = move_addr_to_user((struct sockaddr *)&address,
 					 msg.msg_namelen, addr, addr_len);
@@ -1753,6 +1872,11 @@ SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, ubuf, size_t, size,
 			err = err2;
 	}
 
+#ifdef CONFIG_KRG_FAF
+	if (faf_file)
+		fput_light(faf_file, fput_needed);
+	else
+#endif
 	fput_light(sock->file, fput_needed);
 out:
 	return err;
@@ -1778,11 +1902,24 @@ SYSCALL_DEFINE5(setsockopt, int, fd, int, level, int, optname,
 {
 	int err, fput_needed;
 	struct socket *sock;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
+#endif
 
 	if (optlen < 0)
 		return -EINVAL;
 
+#ifdef CONFIG_KRG_FAF
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_setsockopt(faf_file, level, optname,
+					 optval, optlen);
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 	if (sock != NULL) {
 		err = security_socket_setsockopt(sock, level, optname);
 		if (err)
@@ -1812,8 +1949,19 @@ SYSCALL_DEFINE5(getsockopt, int, fd, int, level, int, optname,
 {
 	int err, fput_needed;
 	struct socket *sock;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
 
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_getsockopt(faf_file, level, optname,
+					 optval, optlen);
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 	if (sock != NULL) {
 		err = security_socket_getsockopt(sock, level, optname);
 		if (err)
@@ -1841,8 +1989,18 @@ SYSCALL_DEFINE2(shutdown, int, fd, int, how)
 {
 	int err, fput_needed;
 	struct socket *sock;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
 
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (faf_file) {
+		err = krg_faf_shutdown(faf_file, how);
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
+#endif
 	if (sock != NULL) {
 		err = security_socket_shutdown(sock, how);
 		if (!err)
@@ -1858,6 +2016,31 @@ SYSCALL_DEFINE2(shutdown, int, fd, int, how)
 #define COMPAT_MSG(msg, member)	((MSG_CMSG_COMPAT & flags) ? &msg##_compat->member : &msg->member)
 #define COMPAT_NAMELEN(msg)	COMPAT_MSG(msg, msg_namelen)
 #define COMPAT_FLAGS(msg)	COMPAT_MSG(msg, msg_flags)
+
+#ifdef CONFIG_KRG_FAF
+static inline
+void *
+faf_sock_kmalloc(struct sock *sk, int size, gfp_t flags, struct file *faf_file)
+{
+	void *mem;
+
+	if (faf_file)
+		mem = kmalloc(size, flags);
+	else
+		mem = sock_kmalloc(sk, size, flags);
+	return mem;
+}
+
+static inline
+void
+faf_sock_kfree_s(struct sock *sk, void *mem, int size, struct file *faf_file)
+{
+	if (faf_file)
+		kfree(mem);
+	else
+		sock_kfree_s(sk, mem, size);
+}
+#endif /* CONFIG_KRG_FAF */
 
 /*
  *	BSD sendmsg interface
@@ -1877,6 +2060,9 @@ SYSCALL_DEFINE3(sendmsg, int, fd, struct msghdr __user *, msg, unsigned, flags)
 	struct msghdr msg_sys;
 	int err, ctl_len, iov_size, total_len;
 	int fput_needed;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
+#endif
 
 	err = -EFAULT;
 	if (MSG_CMSG_COMPAT & flags) {
@@ -1886,9 +2072,18 @@ SYSCALL_DEFINE3(sendmsg, int, fd, struct msghdr __user *, msg, unsigned, flags)
 	else if (copy_from_user(&msg_sys, msg, sizeof(struct msghdr)))
 		return -EFAULT;
 
+#ifdef CONFIG_KRG_FAF
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (!sock && !faf_file)
+		goto out;
+	err = -ENOSYS;
+	if (faf_file && (flags & MSG_CMSG_COMPAT))
+		goto out_put;
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
 		goto out;
+#endif
 
 	/* do not move before msg_sys is valid */
 	err = -EMSGSIZE;
@@ -1899,7 +2094,11 @@ SYSCALL_DEFINE3(sendmsg, int, fd, struct msghdr __user *, msg, unsigned, flags)
 	err = -ENOMEM;
 	iov_size = msg_sys.msg_iovlen * sizeof(struct iovec);
 	if (msg_sys.msg_iovlen > UIO_FASTIOV) {
+#ifdef CONFIG_KRG_FAF
+		iov = faf_sock_kmalloc(sock->sk, iov_size, GFP_KERNEL, faf_file);
+#else
 		iov = sock_kmalloc(sock->sk, iov_size, GFP_KERNEL);
+#endif
 		if (!iov)
 			goto out_put;
 	}
@@ -1932,7 +2131,12 @@ SYSCALL_DEFINE3(sendmsg, int, fd, struct msghdr __user *, msg, unsigned, flags)
 		ctl_len = msg_sys.msg_controllen;
 	} else if (ctl_len) {
 		if (ctl_len > sizeof(ctl)) {
+#ifdef CONFIG_KRG_FAF
+			ctl_buf = faf_sock_kmalloc(sock->sk, ctl_len, GFP_KERNEL,
+						   faf_file);
+#else
 			ctl_buf = sock_kmalloc(sock->sk, ctl_len, GFP_KERNEL);
+#endif
 			if (ctl_buf == NULL)
 				goto out_freeiov;
 		}
@@ -1949,17 +2153,36 @@ SYSCALL_DEFINE3(sendmsg, int, fd, struct msghdr __user *, msg, unsigned, flags)
 	}
 	msg_sys.msg_flags = flags;
 
+#ifdef CONFIG_KRG_FAF
+	if (faf_file) {
+		err = krg_faf_sendmsg(faf_file, &msg_sys, total_len);
+		goto out_freectl;
+	}
+#endif
 	if (sock->file->f_flags & O_NONBLOCK)
 		msg_sys.msg_flags |= MSG_DONTWAIT;
 	err = sock_sendmsg(sock, &msg_sys, total_len);
 
 out_freectl:
 	if (ctl_buf != ctl)
+#ifdef CONFIG_KRG_FAF
+		faf_sock_kfree_s(sock->sk, ctl_buf, ctl_len, faf_file);
+#else
 		sock_kfree_s(sock->sk, ctl_buf, ctl_len);
+#endif
 out_freeiov:
 	if (iov != iovstack)
+#ifdef CONFIG_KRG_FAF
+		faf_sock_kfree_s(sock->sk, iov, iov_size, faf_file);
+#else
 		sock_kfree_s(sock->sk, iov, iov_size);
+#endif
 out_put:
+#ifdef CONFIG_KRG_FAF
+	if (faf_file)
+		fput_light(faf_file, fput_needed);
+	else
+#endif
 	fput_light(sock->file, fput_needed);
 out:
 	return err;
@@ -1988,6 +2211,9 @@ SYSCALL_DEFINE3(recvmsg, int, fd, struct msghdr __user *, msg,
 	/* user mode address pointers */
 	struct sockaddr __user *uaddr;
 	int __user *uaddr_len;
+#ifdef CONFIG_KRG_FAF
+	struct file *faf_file;
+#endif
 
 	if (MSG_CMSG_COMPAT & flags) {
 		if (get_compat_msghdr(&msg_sys, msg_compat))
@@ -1996,9 +2222,18 @@ SYSCALL_DEFINE3(recvmsg, int, fd, struct msghdr __user *, msg,
 	else if (copy_from_user(&msg_sys, msg, sizeof(struct msghdr)))
 		return -EFAULT;
 
+#ifdef CONFIG_KRG_FAF
+	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
+	if (!sock && !faf_file)
+		goto out;
+	err = -ENOSYS;
+	if (faf_file && (flags & MSG_CMSG_COMPAT))
+		goto out_put;
+#else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
 		goto out;
+#endif
 
 	err = -EMSGSIZE;
 	if (msg_sys.msg_iovlen > UIO_MAXIOV)
@@ -2008,7 +2243,11 @@ SYSCALL_DEFINE3(recvmsg, int, fd, struct msghdr __user *, msg,
 	err = -ENOMEM;
 	iov_size = msg_sys.msg_iovlen * sizeof(struct iovec);
 	if (msg_sys.msg_iovlen > UIO_FASTIOV) {
+#ifdef CONFIG_KRG_FAF
+		iov = faf_sock_kmalloc(sock->sk, iov_size, GFP_KERNEL, faf_file);
+#else
 		iov = sock_kmalloc(sock->sk, iov_size, GFP_KERNEL);
+#endif
 		if (!iov)
 			goto out_put;
 	}
@@ -2035,9 +2274,18 @@ SYSCALL_DEFINE3(recvmsg, int, fd, struct msghdr __user *, msg,
 	cmsg_ptr = (unsigned long)msg_sys.msg_control;
 	msg_sys.msg_flags = flags & (MSG_CMSG_CLOEXEC|MSG_CMSG_COMPAT);
 
+#ifdef CONFIG_KRG_FAF
+	if (faf_file) {
+		err = krg_faf_recvmsg(faf_file, &msg_sys, total_len, flags);
+		goto check_err;
+	}
+#endif
 	if (sock->file->f_flags & O_NONBLOCK)
 		flags |= MSG_DONTWAIT;
 	err = sock_recvmsg(sock, &msg_sys, total_len, flags);
+#ifdef CONFIG_KRG_FAF
+check_err:
+#endif
 	if (err < 0)
 		goto out_freeiov;
 	len = err;
@@ -2065,8 +2313,17 @@ SYSCALL_DEFINE3(recvmsg, int, fd, struct msghdr __user *, msg,
 
 out_freeiov:
 	if (iov != iovstack)
+#ifdef CONFIG_KRG_FAF
+		faf_sock_kfree_s(sock->sk, iov, iov_size, faf_file);
+#else
 		sock_kfree_s(sock->sk, iov, iov_size);
+#endif
 out_put:
+#ifdef CONFIG_KRG_FAF
+	if (faf_file)
+		fput_light(faf_file, fput_needed);
+	else
+#endif
 	fput_light(sock->file, fput_needed);
 out:
 	return err;

@@ -19,7 +19,10 @@ void __attribute__((weak)) arch_report_meminfo(struct seq_file *m)
 {
 }
 
-static int meminfo_proc_show(struct seq_file *m, void *v)
+#ifndef CONFIG_KRG_PROCFS
+static
+#endif
+int meminfo_proc_show(struct seq_file *m, void *v)
 {
 	struct sysinfo i;
 	unsigned long committed;
@@ -64,6 +67,10 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
 		"Inactive(anon): %8lu kB\n"
 		"Active(file):   %8lu kB\n"
 		"Inactive(file): %8lu kB\n"
+#ifdef CONFIG_KRG_MM
+		"Active(migr):   %8lu kB\n"
+		"Inactive(migr): %8lu kB\n"
+#endif
 #ifdef CONFIG_UNEVICTABLE_LRU
 		"Unevictable:    %8lu kB\n"
 		"Mlocked:        %8lu kB\n"
@@ -103,12 +110,23 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
 		K(i.bufferram),
 		K(cached),
 		K(total_swapcache_pages),
+#ifdef CONFIG_KRG_MM
+		K(pages[LRU_ACTIVE_ANON]   + pages[LRU_ACTIVE_FILE] +
+		  pages[LRU_ACTIVE_MIGR]),
+		K(pages[LRU_INACTIVE_ANON] + pages[LRU_INACTIVE_FILE] +
+		  pages[LRU_INACTIVE_MIGR]),
+#else
 		K(pages[LRU_ACTIVE_ANON]   + pages[LRU_ACTIVE_FILE]),
 		K(pages[LRU_INACTIVE_ANON] + pages[LRU_INACTIVE_FILE]),
+#endif
 		K(pages[LRU_ACTIVE_ANON]),
 		K(pages[LRU_INACTIVE_ANON]),
 		K(pages[LRU_ACTIVE_FILE]),
 		K(pages[LRU_INACTIVE_FILE]),
+#ifdef CONFIG_KRG_MM
+		K(pages[LRU_ACTIVE_MIGR]),
+		K(pages[LRU_INACTIVE_MIGR]),
+#endif
 #ifdef CONFIG_UNEVICTABLE_LRU
 		K(pages[LRU_UNEVICTABLE]),
 		K(global_page_state(NR_MLOCK)),

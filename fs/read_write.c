@@ -21,6 +21,13 @@
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
 
+#ifdef CONFIG_KRG_DVFS
+#include <kerrighed/dvfs.h>
+#endif
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
+#endif
+
 const struct file_operations generic_ro_fops = {
 	.llseek		= generic_file_llseek,
 	.read		= do_sync_read,
@@ -137,13 +144,25 @@ loff_t vfs_llseek(struct file *file, loff_t offset, int origin)
 {
 	loff_t (*fn)(struct file *, loff_t, int);
 
+#ifdef CONFIG_KRG_DVFS
+	loff_t pos;
+	if (file->f_flags & O_KRG_SHARED)
+		file->f_pos = krg_file_pos_read(file);
+#endif
 	fn = no_llseek;
 	if (file->f_mode & FMODE_LSEEK) {
 		fn = default_llseek;
 		if (file->f_op && file->f_op->llseek)
 			fn = file->f_op->llseek;
 	}
+#ifdef CONFIG_KRG_DVFS
+	pos = fn(file, offset, origin);
+	if (file->f_flags & O_KRG_SHARED)
+		krg_file_pos_write(file, file->f_pos);
+	return pos;
+#else
 	return fn(file, offset, origin);
+#endif
 }
 EXPORT_SYMBOL(vfs_llseek);
 
@@ -158,6 +177,13 @@ SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, origin)
 	if (!file)
 		goto bad;
 
+#ifdef CONFIG_KRG_FAF
+	if (file->f_flags & O_FAF_CLT) {
+		retval = krg_faf_lseek(file, offset, origin);
+		fput_light(file, fput_needed);
+		return retval;
+	}
+#endif
 	retval = -EINVAL;
 	if (origin <= SEEK_MAX) {
 		loff_t res = vfs_llseek(file, offset, origin);
@@ -189,10 +215,19 @@ SYSCALL_DEFINE5(llseek, unsigned int, fd, unsigned long, offset_high,
 	if (origin > SEEK_MAX)
 		goto out_putf;
 
+#ifdef CONFIG_KRG_FAF
+	if (file->f_flags & O_FAF_CLT) {
+		retval = krg_faf_llseek(file, offset_high, offset_low,
+					&offset, origin);
+	} else {
+#endif
 	offset = vfs_llseek(file, ((loff_t) offset_high << 32) | offset_low,
 			origin);
 
 	retval = (int)offset;
+#ifdef CONFIG_KRG_FAF
+	}
+#endif
 	if (offset >= 0) {
 		retval = -EFAULT;
 		if (!copy_to_user(result, &offset, sizeof(offset)))
@@ -280,6 +315,10 @@ ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
 
 	if (!(file->f_mode & FMODE_READ))
 		return -EBADF;
+#ifdef CONFIG_KRG_FAF
+	if (file->f_flags & O_FAF_CLT)
+		return krg_faf_read(file, buf, count, pos);
+#endif
 	if (!file->f_op || (!file->f_op->read && !file->f_op->aio_read))
 		return -EINVAL;
 	if (unlikely(!access_ok(VERIFY_WRITE, buf, count)))
@@ -335,6 +374,10 @@ ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_
 
 	if (!(file->f_mode & FMODE_WRITE))
 		return -EBADF;
+#ifdef CONFIG_KRG_FAF
+	if (file->f_flags & O_FAF_CLT)
+		return krg_faf_write(file, buf, count, pos);
+#endif
 	if (!file->f_op || (!file->f_op->write && !file->f_op->aio_write))
 		return -EINVAL;
 	if (unlikely(!access_ok(VERIFY_READ, buf, count)))
@@ -359,6 +402,7 @@ ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_
 
 EXPORT_SYMBOL(vfs_write);
 
+#ifndef CONFIG_KRG_DVFS
 static inline loff_t file_pos_read(struct file *file)
 {
 	return file->f_pos;
@@ -368,6 +412,7 @@ static inline void file_pos_write(struct file *file, loff_t pos)
 {
 	file->f_pos = pos;
 }
+#endif
 
 SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
 {
@@ -668,6 +713,10 @@ ssize_t vfs_readv(struct file *file, const struct iovec __user *vec,
 {
 	if (!(file->f_mode & FMODE_READ))
 		return -EBADF;
+#ifdef CONFIG_KRG_FAF
+	if (file->f_flags & O_FAF_CLT)
+		return krg_faf_readv(file, vec, vlen, pos);
+#endif
 	if (!file->f_op || (!file->f_op->aio_read && !file->f_op->read))
 		return -EINVAL;
 
@@ -681,6 +730,10 @@ ssize_t vfs_writev(struct file *file, const struct iovec __user *vec,
 {
 	if (!(file->f_mode & FMODE_WRITE))
 		return -EBADF;
+#ifdef CONFIG_KRG_FAF
+	if (file->f_flags & O_FAF_CLT)
+		return krg_faf_writev(file, vec, vlen, pos);
+#endif
 	if (!file->f_op || (!file->f_op->aio_write && !file->f_op->write))
 		return -EINVAL;
 

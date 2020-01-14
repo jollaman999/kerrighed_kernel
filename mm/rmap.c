@@ -52,10 +52,18 @@
 #include <linux/migrate.h>
 
 #include <asm/tlbflush.h>
+#ifdef CONFIG_KRG_MM
+#include <kerrighed/page_table_tree.h>
+#include <kddm/object.h>
+#include <kddm/kddm_types.h>
+#endif
 
 #include "internal.h"
 
-static struct kmem_cache *anon_vma_cachep;
+#ifndef CONFIG_KRG_MM
+static
+#endif
+struct kmem_cache *anon_vma_cachep;
 
 static inline struct anon_vma *anon_vma_alloc(void)
 {
@@ -191,7 +199,11 @@ void __init anon_vma_init(void)
  * Getting a lock on a stable anon_vma from a page off the LRU is
  * tricky: page_lock_anon_vma rely on RCU to guard against the races.
  */
+#ifdef CONFIG_KRG_MM
+struct anon_vma *page_lock_anon_vma(struct page *page)
+#else
 static struct anon_vma *page_lock_anon_vma(struct page *page)
+#endif
 {
 	struct anon_vma *anon_vma;
 	unsigned long anon_mapping;
@@ -211,7 +223,11 @@ out:
 	return NULL;
 }
 
+#ifdef CONFIG_KRG_MM
+void page_unlock_anon_vma(struct anon_vma *anon_vma)
+#else
 static void page_unlock_anon_vma(struct anon_vma *anon_vma)
+#endif
 {
 	spin_unlock(&anon_vma->lock);
 	rcu_read_unlock();
@@ -675,7 +691,16 @@ void page_add_new_anon_rmap(struct page *page,
 	atomic_set(&page->_mapcount, 0); /* increment count (starts at -1) */
 	__page_set_anon_rmap(page, vma, address);
 	if (page_evictable(page, vma))
+#ifdef CONFIG_KRG_MM
+	{
+		if (PageMigratable(page))
+			lru_cache_add_lru(page, LRU_ACTIVE_MIGR);
+		else
+			lru_cache_add_lru(page, LRU_ACTIVE_ANON);
+	}
+#else
 		lru_cache_add_lru(page, LRU_ACTIVE_ANON);
+#endif
 	else
 		add_page_to_unevictable_list(page);
 }
@@ -754,8 +779,13 @@ void page_remove_rmap(struct page *page)
  * Subfunctions of try_to_unmap: try_to_unmap_one called
  * repeatedly from either try_to_unmap_anon or try_to_unmap_file.
  */
+#ifdef CONFIG_KRG_MM
+int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
+		     int migration)
+#else
 static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 				int migration)
+#endif
 {
 	struct mm_struct *mm = vma->vm_mm;
 	unsigned long address;
@@ -763,6 +793,9 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 	pte_t pteval;
 	spinlock_t *ptl;
 	int ret = SWAP_AGAIN;
+#ifdef CONFIG_KRG_MM
+	struct kddm_obj *obj_entry = NULL;
+#endif
 
 	address = vma_address(page, vma);
 	if (address == -EFAULT)
@@ -771,6 +804,35 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 	pte = page_check_address(page, mm, address, &ptl, 0);
 	if (!pte)
 		goto out;
+
+#ifdef CONFIG_KRG_MM
+	if (PageToInvalidate(page)) {
+		if ((vma->vm_flags & (VM_LOCKED|VM_RESERVED))) {
+			ret = SWAP_FAIL;
+			goto out_unmap;
+		}
+
+		/* Nuke the page table entry. */
+		flush_cache_page(vma, address, page_to_pfn(page));
+		pteval = ptep_clear_flush(vma, address, pte);
+		update_hiwater_rss(mm);
+
+		if (PageAnon(page))
+			dec_mm_counter(mm, anon_rss);
+		else
+			dec_mm_counter(mm, file_rss);
+
+		page_remove_rmap(page);
+		page_cache_release(page);
+		goto out_unmap;
+	}
+
+	if (PageToSetReadOnly(page)) {
+		ptep_set_wrprotect(mm, address, pte);
+		flush_tlb_page(vma, address);
+		goto out_unmap;
+	}
+#endif // CONFIG_KRG_MM
 
 	/*
 	 * If the page is mlock()d, we cannot swap it out.
@@ -786,6 +848,23 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 			ret = SWAP_FAIL;
 			goto out_unmap;
 		}
+#ifdef CONFIG_KRG_MM
+		/* Avoid unmap of a page in an address space being inserted in
+		 * a KDDM or in use in the KDDM layer */
+		obj_entry = page->obj_entry;
+		if (obj_entry) {
+			if ((mm->anon_vma_kddm_id && !mm->anon_vma_kddm_set) ||
+			    object_frozen(obj_entry, NULL)) {
+				ret = SWAP_FAIL;
+				goto out_unmap;
+			}
+
+			if (TEST_AND_SET_OBJECT_LOCKED(obj_entry)) {
+				ret = SWAP_FAIL;
+				goto out_unmap;
+			}
+		}
+#endif
   	}
 
 	/* Nuke the page table entry. */
@@ -826,6 +905,16 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 		}
 		set_pte_at(mm, address, pte, swp_entry_to_pte(entry));
 		BUG_ON(pte_file(*pte));
+#ifdef CONFIG_KRG_MM
+		wait_lock_kddm_page(page);
+		if (obj_entry && mm->anon_vma_kddm_id) {
+			obj_entry->object = (void*) mk_swap_pte_page(pte);
+			set_swap_pte_obj_entry(pte, obj_entry);
+			if (atomic_dec_and_test(&page->_kddm_count))
+				page->obj_entry = NULL;
+		}
+		unlock_kddm_page(page);
+#endif
 	} else if (PAGE_MIGRATION && migration) {
 		/* Establish migration entry for a file page */
 		swp_entry_t entry;
@@ -834,6 +923,10 @@ static int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 	} else
 		dec_mm_counter(mm, file_rss);
 
+#ifdef CONFIG_KRG_MM
+	if (obj_entry)
+		CLEAR_OBJECT_LOCKED(obj_entry);
+#endif
 
 	page_remove_rmap(page);
 	page_cache_release(page);

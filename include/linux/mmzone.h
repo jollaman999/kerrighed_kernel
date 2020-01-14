@@ -86,6 +86,10 @@ enum zone_stat_item {
 	NR_ACTIVE_ANON,		/*  "     "     "   "       "         */
 	NR_INACTIVE_FILE,	/*  "     "     "   "       "         */
 	NR_ACTIVE_FILE,		/*  "     "     "   "       "         */
+#ifdef CONFIG_KRG_MM
+	NR_INACTIVE_MIGR,
+	NR_ACTIVE_MIGR,
+#endif
 #ifdef CONFIG_UNEVICTABLE_LRU
 	NR_UNEVICTABLE,		/*  "     "     "   "       "         */
 	NR_MLOCK,		/* mlock()ed pages found and moved off LRU */
@@ -129,12 +133,17 @@ enum zone_stat_item {
 #define LRU_BASE 0
 #define LRU_ACTIVE 1
 #define LRU_FILE 2
+#define LRU_MIGR 4
 
 enum lru_list {
 	LRU_INACTIVE_ANON = LRU_BASE,
 	LRU_ACTIVE_ANON = LRU_BASE + LRU_ACTIVE,
 	LRU_INACTIVE_FILE = LRU_BASE + LRU_FILE,
 	LRU_ACTIVE_FILE = LRU_BASE + LRU_FILE + LRU_ACTIVE,
+#ifdef CONFIG_KRG_MM
+	LRU_INACTIVE_MIGR = LRU_BASE + LRU_MIGR,
+	LRU_ACTIVE_MIGR = LRU_BASE + LRU_MIGR + LRU_ACTIVE,
+#endif
 #ifdef CONFIG_UNEVICTABLE_LRU
 	LRU_UNEVICTABLE,
 #else
@@ -145,16 +154,32 @@ enum lru_list {
 
 #define for_each_lru(l) for (l = 0; l < NR_LRU_LISTS; l++)
 
+#ifdef CONFIG_KRG_MM
+#define for_each_evictable_lru(l) for (l = 0; l <= LRU_ACTIVE_MIGR; l++)
+#else
 #define for_each_evictable_lru(l) for (l = 0; l <= LRU_ACTIVE_FILE; l++)
+#endif
 
 static inline int is_file_lru(enum lru_list l)
 {
 	return (l == LRU_INACTIVE_FILE || l == LRU_ACTIVE_FILE);
 }
 
+#ifdef CONFIG_KRG_MM
+static inline int is_kddm_lru(enum lru_list l)
+{
+	return (l == LRU_INACTIVE_MIGR || l == LRU_ACTIVE_MIGR);
+}
+#endif
+
 static inline int is_active_lru(enum lru_list l)
 {
+#ifdef CONFIG_KRG_MM
+	return (l == LRU_ACTIVE_ANON || l == LRU_ACTIVE_FILE ||
+		l == LRU_ACTIVE_MIGR);
+#else
 	return (l == LRU_ACTIVE_ANON || l == LRU_ACTIVE_FILE);
+#endif
 }
 
 static inline int is_unevictable_lru(enum lru_list l)
@@ -272,8 +297,14 @@ struct zone_reclaim_stat {
 	 *
 	 * The anon LRU stats live in [0], file LRU stats in [1]
 	 */
+#ifdef CONFIG_KRG_MM
+	/* The KDDM migratable LRU stats live in [2] */
+	unsigned long		recent_rotated[3];
+	unsigned long		recent_scanned[3];
+#else
 	unsigned long		recent_rotated[2];
 	unsigned long		recent_scanned[2];
+#endif
 };
 
 struct zone {

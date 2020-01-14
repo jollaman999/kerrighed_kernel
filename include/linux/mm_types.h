@@ -15,6 +15,10 @@
 #include <asm/page.h>
 #include <asm/mmu.h>
 
+#ifdef CONFIG_KRG_MM
+#include <kerrighed/types.h>
+#endif
+
 #ifndef AT_VECTOR_SIZE_ARCH
 #define AT_VECTOR_SIZE_ARCH 0
 #endif
@@ -51,6 +55,11 @@ struct page {
 			u16 objects;
 		};
 	};
+#ifdef CONFIG_KRG_MM
+	atomic_t _kddm_count;		/* Count number of KDDM set sharing
+					 * the page */
+	void *obj_entry;
+#endif
 	union {
 	    struct {
 		unsigned long private;		/* Mapping-private opaque data:
@@ -134,6 +143,9 @@ struct vm_area_struct {
 
 	pgprot_t vm_page_prot;		/* Access permissions of this VMA. */
 	unsigned long vm_flags;		/* Flags, see mm.h. */
+#ifdef CONFIG_KRG_MM
+	struct vm_operations_struct * initial_vm_ops;
+#endif
 
 	struct rb_node vm_rb;
 
@@ -204,6 +216,13 @@ struct mm_struct {
 	unsigned long cached_hole_size; 	/* if non-zero, the largest hole below free_area_cache */
 	unsigned long free_area_cache;		/* first hole of size cached_hole_size or larger */
 	pgd_t * pgd;
+#ifdef CONFIG_KRG_MM
+	atomic_t mm_tasks;			/* How many tasks sharing this mm_struct cluster wide */
+	struct rw_semaphore remove_sem;         /* Protect struct remove during a migration */
+#endif
+#ifdef CONFIG_KRG_EPM
+	atomic_t mm_ltasks;			/* How many tasks sharing this mm_struct locally */
+#endif
 	atomic_t mm_users;			/* How many users with user space? */
 	atomic_t mm_count;			/* How many references to "struct mm_struct" (users count as 1) */
 	int map_count;				/* number of VMAs */
@@ -251,6 +270,13 @@ struct mm_struct {
 	unsigned long flags; /* Must use atomic bitops to access the bits */
 
 	struct core_state *core_state; /* coredumping support */
+
+#ifdef CONFIG_KRG_MM
+	struct kddm_set * anon_vma_kddm_set;
+	unique_id_t anon_vma_kddm_id;
+	krgnodemask_t copyset;		/* Nodes owning a copy of the struct */
+	unique_id_t mm_id;
+#endif
 
 	/* aio bits */
 	spinlock_t		ioctx_lock;

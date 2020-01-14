@@ -8,6 +8,9 @@
 #include <linux/memcontrol.h>
 #include <linux/sched.h>
 #include <linux/node.h>
+#ifdef CONFIG_KRG_MM
+#include <linux/page-flags.h>
+#endif
 
 #include <asm/atomic.h>
 #include <asm/page.h>
@@ -173,6 +176,9 @@ extern unsigned int nr_free_pagecache_pages(void);
 /* Definition of global_page_state not available yet */
 #define nr_free_pages() global_page_state(NR_FREE_PAGES)
 
+#ifdef CONFIG_KRG_MM
+int page_swapcount(struct page *page);
+#endif
 
 /* linux/mm/swap.c */
 extern void __lru_cache_add(struct page *, enum lru_list lru);
@@ -192,11 +198,21 @@ extern void add_page_to_unevictable_list(struct page *page);
  */
 static inline void lru_cache_add_anon(struct page *page)
 {
+#ifdef CONFIG_KRG_MM
+	if (PageMigratable(page))
+		__lru_cache_add(page, LRU_INACTIVE_MIGR);
+	else
+#endif
 	__lru_cache_add(page, LRU_INACTIVE_ANON);
 }
 
 static inline void lru_cache_add_active_anon(struct page *page)
 {
+#ifdef CONFIG_KRG_MM
+	if (PageMigratable(page))
+		__lru_cache_add(page, LRU_ACTIVE_MIGR);
+	else
+#endif
 	__lru_cache_add(page, LRU_ACTIVE_ANON);
 }
 

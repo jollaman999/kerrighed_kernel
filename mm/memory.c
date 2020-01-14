@@ -61,7 +61,9 @@
 #include <asm/tlb.h>
 #include <asm/tlbflush.h>
 #include <asm/pgtable.h>
-
+#ifdef CONFIG_KRG_MM
+#include <kerrighed/page_table_tree.h>
+#endif
 #include "internal.h"
 
 #ifndef CONFIG_NEED_MULTIPLE_NODES
@@ -537,11 +539,17 @@ out:
  * already present in the new task to be cleared in the whole range
  * covered by this vma.
  */
-
+#ifdef CONFIG_KRG_MM
+static inline void
+copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,
+		unsigned long addr, int *rss, int anon_only)
+#else
 static inline void
 copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,
 		unsigned long addr, int *rss)
+#endif
 {
 	unsigned long vm_flags = vma->vm_flags;
 	pte_t pte = *src_pte;
@@ -549,6 +557,12 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 
 	/* pte contains position in swap or file, so copy. */
 	if (unlikely(!pte_present(pte))) {
+#ifdef CONFIG_KRG_MM
+		if (pte_obj_entry(src_pte)) {
+			pte_clear(dst_mm, addr, dst_pte);
+			return;
+		}
+#endif
 		if (!pte_file(pte)) {
 			swp_entry_t entry = pte_to_swp_entry(pte);
 
@@ -594,6 +608,12 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 
 	page = vm_normal_page(vma, addr, pte);
 	if (page) {
+#ifdef CONFIG_KRG_MM
+		if (anon_only && !PageAnon(page)) {
+			pte_clear(dst_mm, addr, dst_pte);
+			return;
+		}
+#endif
 		get_page(page);
 		page_dup_rmap(page, vma, addr);
 		rss[!!PageAnon(page)]++;
@@ -603,9 +623,15 @@ out_set_pte:
 	set_pte_at(dst_mm, addr, dst_pte, pte);
 }
 
+#ifdef CONFIG_KRG_MM
+static int copy_pte_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pmd_t *dst_pmd, pmd_t *src_pmd, struct vm_area_struct *vma,
+		unsigned long addr, unsigned long end, int anon_only)
+#else
 static int copy_pte_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pmd_t *dst_pmd, pmd_t *src_pmd, struct vm_area_struct *vma,
 		unsigned long addr, unsigned long end)
+#endif
 {
 	pte_t *src_pte, *dst_pte;
 	spinlock_t *src_ptl, *dst_ptl;
@@ -637,7 +663,12 @@ again:
 			progress++;
 			continue;
 		}
+#ifdef CONFIG_KRG_MM
+		copy_one_pte(dst_mm, src_mm, dst_pte, src_pte, vma, addr, rss,
+			     anon_only);
+#else
 		copy_one_pte(dst_mm, src_mm, dst_pte, src_pte, vma, addr, rss);
+#endif
 		progress += 8;
 	} while (dst_pte++, src_pte++, addr += PAGE_SIZE, addr != end);
 
@@ -652,9 +683,15 @@ again:
 	return 0;
 }
 
+#ifdef CONFIG_KRG_MM
+static inline int copy_pmd_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pud_t *dst_pud, pud_t *src_pud, struct vm_area_struct *vma,
+		unsigned long addr, unsigned long end, int anon_only)
+#else
 static inline int copy_pmd_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pud_t *dst_pud, pud_t *src_pud, struct vm_area_struct *vma,
 		unsigned long addr, unsigned long end)
+#endif
 {
 	pmd_t *src_pmd, *dst_pmd;
 	unsigned long next;
@@ -667,16 +704,27 @@ static inline int copy_pmd_range(struct mm_struct *dst_mm, struct mm_struct *src
 		next = pmd_addr_end(addr, end);
 		if (pmd_none_or_clear_bad(src_pmd))
 			continue;
+#ifdef CONFIG_KRG_MM
+		if (copy_pte_range(dst_mm, src_mm, dst_pmd, src_pmd,
+				   vma, addr, next, anon_only))
+#else
 		if (copy_pte_range(dst_mm, src_mm, dst_pmd, src_pmd,
 						vma, addr, next))
+#endif
 			return -ENOMEM;
 	} while (dst_pmd++, src_pmd++, addr = next, addr != end);
 	return 0;
 }
 
+#ifdef CONFIG_KRG_MM
+static inline int copy_pud_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pgd_t *dst_pgd, pgd_t *src_pgd, struct vm_area_struct *vma,
+		unsigned long addr, unsigned long end, int anon_only)
+#else
 static inline int copy_pud_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pgd_t *dst_pgd, pgd_t *src_pgd, struct vm_area_struct *vma,
 		unsigned long addr, unsigned long end)
+#endif
 {
 	pud_t *src_pud, *dst_pud;
 	unsigned long next;
@@ -689,15 +737,25 @@ static inline int copy_pud_range(struct mm_struct *dst_mm, struct mm_struct *src
 		next = pud_addr_end(addr, end);
 		if (pud_none_or_clear_bad(src_pud))
 			continue;
+#ifdef CONFIG_KRG_MM
+		if (copy_pmd_range(dst_mm, src_mm, dst_pud, src_pud,
+				   vma, addr, next, anon_only))
+#else
 		if (copy_pmd_range(dst_mm, src_mm, dst_pud, src_pud,
 						vma, addr, next))
+#endif
 			return -ENOMEM;
 	} while (dst_pud++, src_pud++, addr = next, addr != end);
 	return 0;
 }
 
+#ifdef CONFIG_KRG_MM
+int copy_page_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		struct vm_area_struct *vma, int anon_only)
+#else
 int copy_page_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		struct vm_area_struct *vma)
+#endif
 {
 	pgd_t *src_pgd, *dst_pgd;
 	unsigned long next;
@@ -745,8 +803,13 @@ int copy_page_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		next = pgd_addr_end(addr, end);
 		if (pgd_none_or_clear_bad(src_pgd))
 			continue;
+#ifdef CONFIG_KRG_MM
+		if (unlikely(copy_pud_range(dst_mm, src_mm, dst_pgd, src_pgd,
+					    vma, addr, next, anon_only))) {
+#else
 		if (unlikely(copy_pud_range(dst_mm, src_mm, dst_pgd, src_pgd,
 					    vma, addr, next))) {
+#endif
 			ret = -ENOMEM;
 			break;
 		}
@@ -778,6 +841,18 @@ static unsigned long zap_pte_range(struct mmu_gather *tlb,
 			continue;
 		}
 
+#ifdef CONFIG_KRG_MM
+		if (vma->vm_mm->anon_vma_kddm_set &&
+		    !(details && (details->check_mapping ||
+				  details->nonlinear_vma ))) {
+			KRGFCT(kh_zap_pte)(vma->vm_mm, addr, pte);
+			ptent = *pte;
+			if (pte_none(ptent)) {
+				(*zap_work)--;
+				continue;
+			}
+		}
+#endif
 		(*zap_work) -= PAGE_SIZE;
 
 		if (pte_present(ptent)) {
@@ -1901,6 +1976,9 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	int reuse = 0, ret = 0;
 	int page_mkwrite = 0;
 	struct page *dirty_page = NULL;
+#ifdef CONFIG_KRG_MM
+	int need_vma_link_check = (vma->anon_vma == NULL);
+#endif
 
 	old_page = vm_normal_page(vma, address, orig_pte);
 	if (!old_page) {
@@ -1916,7 +1994,14 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 			goto reuse;
 		goto gotten;
 	}
-
+#ifdef CONFIG_KRG_MM
+	else {
+		if (vma->vm_flags & VM_KDDM) {
+			page_cache_get(old_page);
+			goto gotten;
+		}
+	}
+#endif
 	/*
 	 * Take out anonymous pages first, anonymous shared vmas are
 	 * not dirty accountable.
@@ -2022,6 +2107,31 @@ gotten:
 
 	if (unlikely(anon_vma_prepare(vma)))
 		goto oom;
+
+#ifdef CONFIG_KRG_MM
+	if (need_vma_link_check && mm->anon_vma_kddm_set)
+		krg_check_vma_link(vma);
+	if (vma->vm_ops && vma->vm_ops->wppage) {
+		new_page = vma->vm_ops->wppage(vma, address & PAGE_MASK,
+					       old_page);
+		/* Check if we have called the regular SHM wppage code.
+		 * If we did so, continue with regular kernel code.
+		 */
+		if (new_page == ERR_PTR(EPERM))
+			goto continue_wppage;
+
+		if (!new_page)
+			goto oom;
+
+		if (old_page)
+			page_cache_release(old_page);
+
+		ret |= VM_FAULT_WRITE;
+		return ret;
+	}
+continue_wppage:
+#endif /* CONFIG_KRG_MM */
+
 	VM_BUG_ON(old_page == ZERO_PAGE(0));
 	new_page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, vma, address);
 	if (!new_page)
@@ -2444,9 +2554,15 @@ int vmtruncate_range(struct inode *inode, loff_t offset, loff_t end)
  * but allow concurrent faults), and pte mapped but not yet locked.
  * We return with mmap_sem still held, but pte unmapped and unlocked.
  */
+#ifdef CONFIG_KRG_MM
+int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
+		 unsigned long address, pte_t *page_table, pmd_t *pmd,
+		 int write_access, pte_t orig_pte)
+#else
 static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 		unsigned long address, pte_t *page_table, pmd_t *pmd,
 		int write_access, pte_t orig_pte)
+#endif
 {
 	spinlock_t *ptl;
 	struct page *page;
@@ -2454,10 +2570,25 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	pte_t pte;
 	struct mem_cgroup *ptr = NULL;
 	int ret = 0;
+#ifdef CONFIG_KRG_MM
+	struct kddm_obj *obj_entry = NULL;
+#endif
 
 	if (!pte_unmap_same(mm, pmd, page_table, orig_pte))
 		goto out;
 
+#ifdef CONFIG_KRG_MM
+	if (pte_obj_entry(&orig_pte)) {
+		obj_entry = get_obj_entry_from_pte(mm, address, &orig_pte,
+						   NULL);
+		page = obj_entry->object;
+		if (swap_pte_page(page))
+			entry = get_swap_entry_from_page(page);
+		else
+			entry.val = page_private(page);
+	}
+	else
+#endif
 	entry = pte_to_swp_entry(orig_pte);
 	if (is_migration_entry(entry)) {
 		migration_entry_wait(mm, pmd, address);
@@ -2527,6 +2658,19 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 		write_access = 0;
 	}
 	flush_icache_page(vma, page);
+#ifdef CONFIG_KRG_MM
+	if (obj_entry) {
+		BUG_ON (!swap_pte_obj_entry(&orig_pte));
+		wait_lock_kddm_page(page);
+		BUG_ON(page->obj_entry && page->obj_entry != obj_entry);
+		if (swap_pte_page(obj_entry->object))
+			obj_entry->object = page;
+                page->obj_entry = obj_entry;
+                atomic_inc(&page->_kddm_count);
+		unlock_kddm_page(page);
+                pte = pte_wrprotect(pte);
+	}
+#endif
 	set_pte_at(mm, address, page_table, pte);
 	page_add_anon_rmap(page, vma, address);
 	/* It's better to call commit-charge after rmap is established */
@@ -2643,9 +2787,32 @@ static int __do_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 	vmf.flags = flags;
 	vmf.page = NULL;
 
+#ifdef CONFIG_KRG_MM
+	vmf.pte = orig_pte;
+
+	if (flags & FAULT_FLAG_WRITE
+	    && !vma->anon_vma
+	    && !(vma->vm_flags & VM_SHARED)) {
+		if (unlikely(anon_vma_prepare(vma))) {
+			anon = 1;
+			return VM_FAULT_OOM;
+		}
+		if (mm->anon_vma_kddm_set)
+			krg_check_vma_link(vma);
+	}
+#endif
 	ret = vma->vm_ops->fault(vma, &vmf);
 	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE)))
 		return ret;
+
+#ifdef CONFIG_KRG_MM
+	/*
+	 * If we are in a KDDM linked VMA, all the mapping job has been done
+	 * by the Kerrighed MM layer.
+	 */
+	if (vma->vm_flags & VM_KDDM)
+		return ret;
+#endif
 
 	/*
 	 * For consistency in subsequent calls, make the faulted page always
@@ -2861,7 +3028,11 @@ static inline int handle_pte_fault(struct mm_struct *mm,
 
 	entry = *pte;
 	if (!pte_present(entry)) {
+#ifdef CONFIG_KRG_MM
+		if (pte_none(entry) || pte_obj_entry(pte)) {
+#else
 		if (pte_none(entry)) {
+#endif
 			if (vma->vm_ops) {
 				if (likely(vma->vm_ops->fault))
 					return do_linear_fault(mm, vma, address,

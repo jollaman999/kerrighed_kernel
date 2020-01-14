@@ -231,6 +231,9 @@ struct inodes_stat_t {
 #define S_NOCMTIME	128	/* Do not update file c/mtime */
 #define S_SWAPFILE	256	/* Do not truncate: swapon got its bmaps */
 #define S_PRIVATE	512	/* Inode is fs-internal */
+#ifdef CONFIG_KRG_FAF
+#define S_IFAF          1024
+#endif
 
 /*
  * Note that nosuid etc flags are inode-specific: setting some file-system
@@ -627,6 +630,9 @@ struct address_space {
 	spinlock_t		private_lock;	/* for use by the address_space */
 	struct list_head	private_list;	/* ditto */
 	struct address_space	*assoc_mapping;	/* ditto */
+#ifdef CONFIG_KRG_DVFS
+	struct kddm_set         *kddm_set;
+#endif
 } __attribute__((aligned(sizeof(long))));
 	/*
 	 * On most architectures that alignment is already the case; but
@@ -755,6 +761,9 @@ struct inode {
 
 	__u32			i_generation;
 
+#ifdef CONFIG_KRG_DVFS
+	unsigned long           i_objid;
+#endif
 #ifdef CONFIG_DNOTIFY
 	unsigned long		i_dnotify_mask; /* Directory notify events */
 	struct dnotify_struct	*i_dnotify; /* for directory notifications */
@@ -911,7 +920,11 @@ struct file {
 	const struct file_operations	*f_op;
 	spinlock_t		f_lock;  /* f_ep_links, f_flags, no IRQ */
 	atomic_long_t		f_count;
+#ifdef CONFIG_KRG_FAF
+	unsigned long           f_flags;
+#else
 	unsigned int 		f_flags;
+#endif
 	fmode_t			f_mode;
 	loff_t			f_pos;
 	struct fown_struct	f_owner;
@@ -922,6 +935,13 @@ struct file {
 #ifdef CONFIG_SECURITY
 	void			*f_security;
 #endif
+#ifdef CONFIG_KRG_DVFS
+	unsigned long           f_objid;
+#endif
+#ifdef CONFIG_KRG_FAF
+	unsigned long           f_faf_srv_index;
+#endif
+
 	/* needed for tty driver, and maybe others */
 	void			*private_data;
 

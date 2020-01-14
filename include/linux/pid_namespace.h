@@ -30,6 +30,10 @@ struct pid_namespace {
 #ifdef CONFIG_BSD_PROCESS_ACCT
 	struct bsd_acct_struct *bacct;
 #endif
+#ifdef CONFIG_KRG_PROC
+	struct pid_namespace *krg_ns_root;
+	unsigned global:1;
+#endif
 };
 
 extern struct pid_namespace init_pid_ns;
@@ -51,6 +55,19 @@ static inline void put_pid_ns(struct pid_namespace *ns)
 	if (ns != &init_pid_ns)
 		kref_put(&ns->kref, free_pid_ns);
 }
+
+#ifdef CONFIG_KRG_PROC
+static inline bool is_krg_pid_ns_root(struct pid_namespace *ns)
+{
+	return ns == ns->krg_ns_root;
+}
+
+struct pid_namespace *find_get_krg_pid_ns(void);
+#endif
+
+#ifdef CONFIG_KRG_EPM
+struct pid_namespace *create_pid_namespace(unsigned int level);
+#endif
 
 #else /* !CONFIG_PID_NS */
 #include <linux/err.h>
@@ -77,6 +94,18 @@ static inline void zap_pid_ns_processes(struct pid_namespace *ns)
 {
 	BUG();
 }
+
+#ifdef CONFIG_KRG_PROC
+static inline bool is_krg_pid_ns_root(struct pid_namespace *ns)
+{
+	return true;
+}
+
+static inline struct pid_namespace *find_get_krg_pid_ns(void)
+{
+	return &init_pid_ns;
+}
+#endif
 #endif /* CONFIG_PID_NS */
 
 extern struct pid_namespace *task_active_pid_ns(struct task_struct *tsk);
