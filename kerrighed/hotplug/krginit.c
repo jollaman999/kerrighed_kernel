@@ -312,10 +312,12 @@ static void __init init_ids(void)
 
 	kerrighed_cluster_flags = 0;
 	kerrighed_node_flags = 0;
+
 	//For test
-	kerrighed_node_id=1;
-	SET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID);
-        SET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID);
+	//kerrighed_node_id=1;
+	// SET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID);
+    //     SET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID);
+
 	//For test
 	printk("Kerrighed session ID : %d\n", kerrighed_session_id);
 	printk("Kerrighed node ID    : %d\n", kerrighed_node_id);
