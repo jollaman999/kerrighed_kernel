@@ -1723,9 +1723,11 @@ static int __init init_nfs_fs(void)
 		goto out10;
 #endif
 
+#ifdef CONFIG_NFS_V4
 	err = nfs_idmap_init();
 	if (err < 0)
 		goto out9;
+#endif
 
 	err = nfs_dns_resolver_init();
 	if (err < 0)
@@ -1791,8 +1793,10 @@ out6:
 out7:
 	nfs_dns_resolver_destroy();
 out8:
+#ifdef CONFIG_NFS_V4
 	nfs_idmap_quit();
 out9:
+#endif
 #ifdef CONFIG_KRG_MM
 	krgsyms_unregister(KRGSYMS_VM_OPS_NFS_FILE);
 out10:
