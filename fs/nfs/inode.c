@@ -1720,15 +1720,12 @@ static int __init init_nfs_fs(void)
 #ifdef CONFIG_KRG_MM
 	err = krgsyms_register(KRGSYMS_VM_OPS_NFS_FILE, &nfs_file_vm_ops);
 	if (err)
-		goto out9;
-#endif
-	// err = nfs_idmap_init();
-	if (err < 0)
-#ifdef CONFIG_KRG_MM
 		goto out10;
-#else
-		goto out9;
 #endif
+
+	err = nfs_idmap_init();
+	if (err < 0)
+		goto out9;
 
 	err = nfs_dns_resolver_init();
 	if (err < 0)
@@ -1793,11 +1790,8 @@ out6:
 	nfs_fscache_unregister();
 out7:
 	nfs_dns_resolver_destroy();
-
 out8:
-#ifndef CONFIG_KRG_MM
 	nfs_idmap_quit();
-#endif
 out9:
 #ifdef CONFIG_KRG_MM
 	krgsyms_unregister(KRGSYMS_VM_OPS_NFS_FILE);
