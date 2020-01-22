@@ -34,6 +34,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef CONFIG_KRG_HOTPLUG
+#include <kerrighed/sys/types.h>
+#include <kerrighed/hotplug.h>
+#endif
+
 #include "core.h"
 #include "config.h"
 #include "node.h"
@@ -347,6 +352,10 @@ static void node_established_contact(struct tipc_node *n_ptr)
 		tipc_k_signal((Handler)tipc_named_node_up, n_ptr->addr);
 	}
 
+#ifdef CONFIG_KRG_HOTPLUG
+	krg_node_arrival(tipc_node(n_ptr->addr)-1);
+#endif
+
 	/* Syncronize broadcast acks */
 	n_ptr->bclink.acked = tipc_bclink_get_last_sent();
 
@@ -390,6 +399,10 @@ static void node_lost_contact(struct tipc_node *n_ptr)
 	struct tipc_node_subscr *ns, *tns;
 	char addr_string[16];
 	u32 i;
+
+#ifdef CONFIG_KRG_HOTPLUG
+	krg_node_departure(tipc_node(n_ptr->addr)-1);
+#endif
 
 	/* Clean up broadcast reception remains */
 	n_ptr->bclink.gap_after = n_ptr->bclink.gap_to = 0;
