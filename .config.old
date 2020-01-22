@@ -1,3 +1,8 @@
+#
+# Automatically generated make config: don't edit
+# Linux kernel version: 2.6.32-krg_xeon
+# Thu Jan 16 14:18:29 2020
+#
 CONFIG_64BIT=y
 # CONFIG_X86_32 is not set
 CONFIG_X86_64=y
