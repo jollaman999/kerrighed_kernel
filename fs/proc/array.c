@@ -85,7 +85,6 @@
 #include <linux/ptrace.h>
 #include <linux/tracehook.h>
 #include <linux/utrace.h>
-
 #ifdef CONFIG_KRG_PROCFS
 #include <kerrighed/cpu_id.h>
 #endif

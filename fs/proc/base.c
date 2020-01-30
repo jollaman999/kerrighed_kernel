@@ -2122,14 +2122,10 @@ int pid_revalidate(struct dentry *dentry, struct nameidata *nd)
 #else
 	if (task) {
 #endif
-		//printk(KERN_INFO "proc_revalidate %s %u",task->comm,task->pid);
 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
 		    task_dumpable(task)) {
 			rcu_read_lock();			
 			cred = __task_cred(task);			
-			//printk(KERN_INFO "cred %p",cred);
-			if( cred == NULL ) return 0;
-			
 			inode->i_uid = cred->euid;
 			inode->i_gid = cred->egid;
 			rcu_read_unlock();
@@ -2194,7 +2190,6 @@ int proc_fill_cache(struct file *filp, void *dirent, filldir_t filldir,
 		struct dentry *new;
 		new = d_alloc(dir, &qname);
 		if (new) {
-		        //printk(KERN_INFO "proc_fill_cache %s %s %u",name,task->comm,task->pid);
 			child = instantiate(dir->d_inode, new, task, ptr);
 			if (child)
 				dput(new);
@@ -2356,7 +2351,6 @@ static struct dentry *proc_fd_instantiate(struct inode *dir,
  	struct proc_inode *ei;
 	struct dentry *error = ERR_PTR(-ENOENT);
 
-	//printk(KERN_INFO "proc_revalidate %s %u",task->comm,task->pid);
 	inode = proc_pid_make_inode(dir->i_sb, task);
 	if (!inode)
 		goto out;
@@ -3357,12 +3351,8 @@ static struct dentry *proc_pid_instantiate(struct inode *dir,
 	struct dentry *error = ERR_PTR(-ENOENT);
 	struct inode *inode;
 
-	if(dir->i_sb == NULL || task == NULL)
-		goto out;
-
 	inode = proc_pid_make_inode(dir->i_sb, task);
 	if (!inode)
-		//printk(KERN_INFO "proc_pid_instantiate %p, %p  ",dir->i_sb, task);
 		goto out;
 
 	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;

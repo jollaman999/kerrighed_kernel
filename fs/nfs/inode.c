@@ -40,7 +40,6 @@
 #include <linux/compat.h>
 #include <linux/freezer.h>
 #include <linux/crc32.h>
-
 #ifdef CONFIG_KRG_MM
 #include <kerrighed/krgsyms.h>
 #endif
@@ -1717,6 +1716,7 @@ static void nfsiod_stop(void)
 static int __init init_nfs_fs(void)
 {
 	int err;
+
 #ifdef CONFIG_KRG_MM
 	err = krgsyms_register(KRGSYMS_VM_OPS_NFS_FILE, &nfs_file_vm_ops);
 	if (err)
@@ -1813,7 +1813,7 @@ static void __exit exit_nfs_fs(void)
 	nfs_destroy_nfspagecache();
 	nfs_fscache_unregister();
 	nfs_dns_resolver_destroy();
-#ifndef CONFIG_PROC_FS
+#ifdef CONFIG_NFS_V4
 	nfs_idmap_quit();
 #endif
 #ifdef CONFIG_PROC_FS

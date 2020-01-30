@@ -18,11 +18,10 @@
 #include <linux/pagemap.h>
 #include <linux/audit.h>
 #include <linux/syscalls.h>
+#include <linux/ima.h>
 
 #include <asm/uaccess.h>
 #include <asm/ioctls.h>
-
-#include "internal.h"
 
 #ifdef CONFIG_KRG_EPM
 #include <linux/splice.h>
@@ -1037,22 +1036,25 @@ err:
 	return ERR_PTR(err);
 }
 
-struct file *__create_write_pipe(struct dentry *dentry, int flags)
+struct file *__create_write_pipe(struct path *path, int flags)
 {
 	struct file *f;
 	int err = -ENFILE;
 #ifdef CONFIG_KRG_EPM
 	struct pipe_inode_info *pipe;
 #endif
-	f = alloc_file(pipe_mnt, dentry, FMODE_WRITE, &write_pipefifo_fops);
+
+	path->mnt = mntget(pipe_mnt);
+
+	f = alloc_file(path, FMODE_WRITE, &write_pipefifo_fops);
 	if (!f)
 		goto err;
-	f->f_mapping = dentry->d_inode->i_mapping;
+	f->f_mapping = path->dentry->d_inode->i_mapping;
 
 	f->f_flags = O_WRONLY | (flags & O_NONBLOCK);
 	f->f_version = 0;
 #ifdef CONFIG_KRG_EPM
-	pipe = dentry->d_inode->i_pipe;
+	pipe = path->dentry->d_inode->i_pipe;
 	pipe->fwrite = f;
 #endif
 
@@ -1066,15 +1068,15 @@ struct file *create_write_pipe(int flags)
 {
 	int err;
 	struct file *f;
-	struct dentry *dentry;
+	struct path path;
 
-	dentry = __prepare_pipe_dentry();
-	if (IS_ERR(dentry)) {
-		err = PTR_ERR(dentry);
+	path.dentry = __prepare_pipe_dentry();
+	if (IS_ERR(path.dentry)) {
+		err = PTR_ERR(path.dentry);
 		goto err;
 	}
 
-	f = __create_write_pipe(dentry, flags);
+	f = __create_write_pipe(&path, flags);
 	if (IS_ERR(f)) {
 		err = PTR_ERR(f);
 		goto err_dentry;
@@ -1083,8 +1085,8 @@ struct file *create_write_pipe(int flags)
 	return f;
 
  err_dentry:
-	free_pipe_info(dentry->d_inode);
-	dput(dentry);
+	free_pipe_info(path.dentry->d_inode);
+	path_put(&path);
 	return ERR_PTR(err);
 
  err:
@@ -1098,37 +1100,52 @@ void free_write_pipe(struct file *f)
 	put_filp(f);
 }
 
-struct file *__create_read_pipe(struct dentry *dentry, int flags)
+static struct file *alloc_pipe_file(struct path *path, fmode_t mode,
+		const struct file_operations *fop, int flags)
 {
+	struct file *file;
 #ifdef CONFIG_KRG_EPM
 	struct pipe_inode_info *pipe;
 #endif
-	struct file *f = get_empty_filp();
-	if (!f)
-		return ERR_PTR(-ENFILE);
 
-	/* Grab pipe from the writer */
-	f->f_path.dentry = dget(dentry);
-	f->f_path.mnt = mntget(pipe_mnt);
+	file = get_empty_filp();
+	if (!file)
+		return NULL;
 
-	f->f_mapping = dentry->d_inode->i_mapping;
-
-	f->f_pos = 0;
-	f->f_flags = O_RDONLY | (flags & O_NONBLOCK);
-	f->f_op = &read_pipefifo_fops;
-	f->f_mode = FMODE_READ;
-	f->f_version = 0;
+	file->f_path.dentry = dget(path->dentry);
+	file->f_path.mnt = mntget(pipe_mnt);
+	file->f_mapping = path->dentry->d_inode->i_mapping;
+	file->f_mode = mode;
+	file->f_flags = O_RDONLY | (flags & O_NONBLOCK);
+	file->f_op = fop;
 #ifdef CONFIG_KRG_EPM
-	pipe = dentry->d_inode->i_pipe;
-	pipe->fread = f;
+	pipe = path->dentry->d_inode->i_pipe;
+	pipe->fread = file;
 #endif
 
-	return f;
+	/*
+	 * These mounts don't really matter in practice
+	 * for r/o bind mounts.  They aren't userspace-
+	 * visible.  We do this for consistency, and so
+	 * that we can do debugging checks at __fput()
+	 */
+	if ((mode & FMODE_WRITE) && !special_file(path->dentry->d_inode->i_mode)) {
+		file_take_write(file);
+		WARN_ON(mnt_clone_write(path->mnt));
+	}
+	ima_counts_get(file);
+	return file;
 }
 
 struct file *create_read_pipe(struct file *wrf, int flags)
 {
-	return __create_read_pipe(wrf->f_path.dentry, flags);
+	/* Grab pipe from the writer */
+	struct file *f = alloc_pipe_file(&wrf->f_path, FMODE_READ,
+				    &read_pipefifo_fops, flags);
+	if (!f)
+		return ERR_PTR(-ENFILE);
+
+	return f;
 }
 
 int do_pipe_flags(int *fd, int flags)
@@ -1436,20 +1453,24 @@ struct file *reopen_pipe_file_entry_from_krg_desc(struct task_struct *task,
 						  void *_desc)
 {
 	struct regular_file_krg_desc *desc = _desc;
-	struct dentry *dentry;
+	struct path path;
 	struct file *file;
 
-	dentry = get_imported_shared_object(task->application,
+	path.dentry = get_imported_shared_object(task->application,
 					   PIPE_INODE, desc->pipe.key);
 
-	BUG_ON(!dentry);
+	BUG_ON(!path.dentry);
 
 	if (desc->pipe.f_flags & O_WRONLY) {
-		file = __create_write_pipe(dentry, desc->pipe.f_flags);
+		file = __create_write_pipe(&path, desc->pipe.f_flags);
 		if (!IS_ERR(file))
-			dget(dentry);
-	} else
-		file = __create_read_pipe(dentry, desc->pipe.f_flags);
+			dget(path.dentry);
+	} else {
+		file = alloc_pipe_file(&path, FMODE_READ,
+				       &read_pipefifo_fops, desc->pipe.f_flags);
+		if (!file)
+			return ERR_PTR(-ENFILE);
+	}
 
 	return file;
 }

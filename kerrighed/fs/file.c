@@ -7,6 +7,7 @@
 #include <linux/file.h>
 #include <linux/unique_id.h>
 #include <linux/sched.h>
+#include <linux/hugetlb.h>
 #include <kerrighed/dvfs.h>
 
 #ifdef CONFIG_KRG_FAF
@@ -74,7 +75,8 @@ void check_file_struct_sharing (int index, struct file *file,
 	BUG_ON(file->f_op == &krg_shm_file_operations);
 
 	/* Do not share the file struct for Kerrighed SHM files */
-	if (file->f_op == &shm_file_operations)
+	if (file->f_op == &shm_file_operations ||
+	    file->f_op == &shm_file_operations_huge)
 		goto done;
 #endif
 

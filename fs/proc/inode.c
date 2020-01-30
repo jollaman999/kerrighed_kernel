@@ -19,13 +19,11 @@
 #include <linux/module.h>
 #include <linux/smp_lock.h>
 #include <linux/sysctl.h>
-
+#include <linux/seq_file.h>
+#include <linux/mount.h>
 #if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
 #include <kerrighed/task.h>
 #endif
-
-#include <linux/seq_file.h>
-#include <linux/mount.h>
 
 #include <asm/system.h>
 #include <asm/uaccess.h>

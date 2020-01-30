@@ -210,9 +210,7 @@ SYSCALL_DEFINE3(getdents, unsigned int, fd,
 	buf.count = count;
 	buf.error = 0;
 
-        //printk(KERN_NOTICE "----------getdents file name----------- %s----start\n",file->f_path.dentry->d_iname);
 	error = vfs_readdir(file, filldir, &buf);
-        //printk(KERN_NOTICE "----------getdents file name----------- %s----done\n",file->f_path.dentry->d_iname);
 	if (error >= 0)
 		error = buf.error;
 	lastdirent = buf.previous;

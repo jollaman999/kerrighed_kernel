@@ -25,7 +25,6 @@
 #include <linux/personality.h>
 #include <linux/init.h>
 #include <linux/coredump.h>
-
 #ifdef CONFIG_KRG_EPM
 #include <kerrighed/krgsyms.h>
 #endif

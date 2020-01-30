@@ -56,7 +56,6 @@
 #include <linux/fs_struct.h>
 #include <linux/pipe_fs_i.h>
 #include <linux/oom.h>
-
 #ifdef CONFIG_KRG_CAP
 #include <kerrighed/capabilities.h>
 #endif

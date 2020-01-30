@@ -32,11 +32,12 @@
 #include <linux/fs_struct.h>
 #include <linux/ima.h>
 #include <linux/nospec.h>
-
-#include "internal.h"
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_KRG_FAF
 #include <kerrighed/faf.h>
 #endif
+
+#include "internal.h"
+
 int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
 	struct file *filp)
 {

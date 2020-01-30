@@ -35,7 +35,6 @@
 #include <linux/elf-fdpic.h>
 #include <linux/elfcore.h>
 #include <linux/coredump.h>
-
 #ifdef CONFIG_KRG_EPM
 #include <kerrighed/children.h>
 #include <kerrighed/krgsyms.h>
@@ -1390,13 +1389,13 @@ static void fill_prstatus(struct elf_prstatus *prstatus,
 	prstatus->pr_info.si_signo = prstatus->pr_cursig = signr;
 	prstatus->pr_sigpend = p->pending.signal.sig[0];
 	prstatus->pr_sighold = p->blocked.sig[0];
-	rcu_read_lock();
 #ifdef CONFIG_KRG_EPM
-	prstatus->pr_ppid = krg_get_real_parent_pid(rcu_dereference(p));
+	prstatus->pr_ppid = krg_get_real_parent_pid(p);
 #else
+	rcu_read_lock();
 	prstatus->pr_ppid = task_pid_vnr(rcu_dereference(p->real_parent));
-#endif
 	rcu_read_unlock();
+#endif
 	prstatus->pr_pid = task_pid_vnr(p);
 	prstatus->pr_pgrp = task_pgrp_vnr(p);
 	prstatus->pr_sid = task_session_vnr(p);
@@ -1441,13 +1440,13 @@ static int fill_psinfo(struct elf_prpsinfo *psinfo, struct task_struct *p,
 			psinfo->pr_psargs[i] = ' ';
 	psinfo->pr_psargs[len] = 0;
 
-	rcu_read_lock();
 #ifdef CONFIG_KRG_EPM
-	psinfo->pr_ppid = krg_get_real_parent_pid(rcu_dereference(p));
+	psinfo->pr_ppid = krg_get_real_parent_pid(p);
 #else
+	rcu_read_lock();
 	psinfo->pr_ppid = task_pid_vnr(rcu_dereference(p->real_parent));
-#endif
 	rcu_read_unlock();
+#endif
 	psinfo->pr_pid = task_pid_vnr(p);
 	psinfo->pr_pgrp = task_pgrp_vnr(p);
 	psinfo->pr_sid = task_session_vnr(p);

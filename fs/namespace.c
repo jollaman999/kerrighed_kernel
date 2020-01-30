@@ -2585,11 +2585,10 @@ static unsigned int mntns_inum(void *ns)
 }
 
 const struct proc_ns_operations mntns_operations = {
-        .name           = "mnt",
-        .type           = CLONE_NEWNS,
-        .get            = mntns_get,
-        .put            = mntns_put,
-        .install        = mntns_install,
-        .inum           = mntns_inum,
+	.name		= "mnt",
+	.type		= CLONE_NEWNS,
+	.get		= mntns_get,
+	.put		= mntns_put,
+	.install	= mntns_install,
+	.inum		= mntns_inum,
 };
-

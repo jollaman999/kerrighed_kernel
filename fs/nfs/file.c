@@ -53,9 +53,6 @@ static ssize_t nfs_file_read(struct kiocb *, const struct iovec *iov,
 static ssize_t nfs_file_splice_write(struct pipe_inode_info *pipe,
 					struct file *filp, loff_t *ppos,
 					size_t count, unsigned int flags);
-static ssize_t nfs_file_splice_write(struct pipe_inode_info *pipe,
-					struct file *filp, loff_t *ppos,
-					size_t count, unsigned int flags);
 static ssize_t nfs_file_write(struct kiocb *, const struct iovec *iov,
 				unsigned long nr_segs, loff_t pos);
 static int  nfs_file_flush(struct file *, fl_owner_t id);
@@ -598,7 +595,7 @@ out:
 }
 
 #ifndef CONFIG_KRG_MM
-static const 
+static const
 #endif
 struct vm_operations_struct nfs_file_vm_ops = {
 	.fault = filemap_fault,

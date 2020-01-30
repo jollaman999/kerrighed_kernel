@@ -7,7 +7,9 @@
 #include <linux/statfs.h>
 #include <linux/security.h>
 #include <linux/uaccess.h>
-
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
+#endif
 
 static int flags_by_mnt(int mnt_flags)
 {
@@ -193,9 +195,32 @@ SYSCALL_DEFINE3(statfs64, const char __user *, pathname, size_t, sz, struct stat
 SYSCALL_DEFINE2(fstatfs, unsigned int, fd, struct statfs __user *, buf)
 {
 	struct kstatfs st;
-	int error = fd_statfs(fd, &st);
+	int error;
+#ifdef CONFIG_KRG_FAF
+	struct file * file;
+
+	error = -EBADF;
+	file = fget(fd);
+	if (!file)
+		goto out;
+
+	if (file->f_flags & O_FAF_CLT) {
+		error = krg_faf_fstatfs(file, buf);
+	} else {
+		error = vfs_statfs(&file->f_path, &st);
+		if (!error)
+			error = do_statfs_native(&st, buf);
+	}
+#else
+	error = fd_statfs(fd, &st);
 	if (!error)
 		error = do_statfs_native(&st, buf);
+#endif
+
+#ifdef CONFIG_KRG_FAF
+	fput(file);
+out:
+#endif
 	return error;
 }
 

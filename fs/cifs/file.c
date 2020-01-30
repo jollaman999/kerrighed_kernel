@@ -385,13 +385,9 @@ int cifs_open(struct inode *inode, struct file *file)
 		goto out;
 	}
 
-#ifdef CONFIG_KRG_FAF
-	cFYI(1, "inode = 0x%p file flags are 0x%lx for %s",
-		 inode, file->f_flags, full_path);
-#else
 	cFYI(1, "inode = 0x%p file flags are 0x%x for %s",
 		 inode, file->f_flags, full_path);
-#endif
+
 	if (tcon->ses->server->oplocks)
 		oplock = REQ_OPLOCK;
 	else
