@@ -85,7 +85,7 @@ void* krgsyms_import(enum krgsyms_val v)
 	return krgsyms_table[v];
 };
 
-static __init int init_krgsyms(void)
+int __init init_krgsyms(void)
 {
 	krgsyms_htable = hashtable_new(KRGSYMS_HTABLE_SIZE);
 	if (!krgsyms_htable)
@@ -93,5 +93,3 @@ static __init int init_krgsyms(void)
 
 	return 0;
 };
-
-pure_initcall(init_krgsyms);

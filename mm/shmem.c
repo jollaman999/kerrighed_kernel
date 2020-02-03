@@ -162,7 +162,7 @@ static const struct inode_operations shmem_inode_operations;
 static const struct inode_operations shmem_dir_inode_operations;
 static const struct inode_operations shmem_special_inode_operations;
 #ifdef CONFIG_KRG_EPM
-static  struct vm_operations_struct shmem_vm_ops;
+static struct vm_operations_struct shmem_vm_ops;
 #else
 static const struct vm_operations_struct shmem_vm_ops;
 #endif

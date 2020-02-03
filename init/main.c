@@ -75,6 +75,10 @@
 #include <linux/kaiser.h>
 #include <trace/boot.h>
 
+#ifdef CONFIG_KRG_HOTPLUG
+#include <kerrighed/krgsyms.h>
+#endif
+
 #include <asm/io.h>
 #include <asm/bugs.h>
 #include <asm/setup.h>
@@ -931,6 +935,9 @@ static void __init do_basic_setup(void)
 	cgroup_wq_init();
 	cpuset_init_smp();
 	usermodehelper_init();
+#ifdef CONFIG_KRG_HOTPLUG
+	init_krgsyms();
+#endif
 	shmem_init();	
 	driver_init();
 	init_irq_proc();
