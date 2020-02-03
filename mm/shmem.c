@@ -100,8 +100,6 @@ static int shmem_replace_page(struct page **pagep, gfp_t gfp,
 static int shmem_getpage_gfp(struct inode *inode, pgoff_t index,
 	struct page **pagep, enum sgp_type sgp, gfp_t gfp, int *fault_type);
 
-static int shmem_mmap(struct file *file, struct vm_area_struct *vma);
-
 static inline int shmem_getpage(struct inode *inode, pgoff_t index,
 	struct page **pagep, enum sgp_type sgp, int *fault_type)
 {
@@ -163,10 +161,11 @@ const struct file_operations shmem_file_operations;
 static const struct inode_operations shmem_inode_operations;
 static const struct inode_operations shmem_dir_inode_operations;
 static const struct inode_operations shmem_special_inode_operations;
-#ifndef CONFIG_KERRIGHED
-//static const
+#ifdef CONFIG_KRG_EPM
+static  struct vm_operations_struct shmem_vm_ops;
+#else
+static const struct vm_operations_struct shmem_vm_ops;
 #endif
-//static struct vm_operations_struct shmem_vm_ops;
 
 static struct backing_dev_info shmem_backing_dev_info  __read_mostly = {
 	.ra_pages	= 0,	/* No readahead */
@@ -1201,6 +1200,14 @@ int shmem_lock(struct file *file, int lock, struct user_struct *user)
 out_nomem:
 	spin_unlock(&info->lock);
 	return retval;
+}
+
+static int shmem_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	file_accessed(file);
+	vma->vm_ops = &shmem_vm_ops;
+	vma->vm_flags |= VM_CAN_NONLINEAR;
+	return 0;
 }
 
 static struct inode *shmem_get_inode(struct super_block *sb, const struct inode *dir,
@@ -2257,14 +2264,18 @@ static const struct super_operations shmem_ops = {
 	.put_super	= shmem_put_super,
 };
 
-
+#ifdef CONFIG_KRG_EPM
 static struct vm_operations_struct shmem_vm_ops = {
+#else
+static const struct vm_operations_struct shmem_vm_ops = {
+#endif
 	.fault		= shmem_fault,
 #ifdef CONFIG_NUMA
 	.set_policy     = shmem_set_policy,
 	.get_policy     = shmem_get_policy,
 #endif
 };
+
 
 static int shmem_get_sb(struct file_system_type *fs_type,
 	int flags, const char *dev_name, void *data, struct vfsmount *mnt)
@@ -2278,14 +2289,6 @@ static struct file_system_type shmem_fs_type = {
 	.get_sb		= shmem_get_sb,
 	.kill_sb	= kill_litter_super,
 };
-
-static int shmem_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	file_accessed(file);
-	vma->vm_ops = &shmem_vm_ops;
-	vma->vm_flags |= VM_CAN_NONLINEAR;
-	return 0;
-}
 
 int __init shmem_init(void)
 {
@@ -2304,13 +2307,15 @@ int __init shmem_init(void)
 		printk(KERN_ERR "Could not register tmpfs\n");
 		goto out2;
 	}
-// #ifdef CONFIG_KRG_EPM
-// 	error = krgsyms_register(KRGSYMS_VM_OPS_SHMEM, (void *)&shmem_vm_ops);
-// 	if (error) {
-// 		printk(KERN_ERR "Could not register shmem_vm_ops\n");
-// 		goto out1_1;
-// 	}
-// #endif
+
+#ifdef CONFIG_KRG_EPM
+	error = krgsyms_register(KRGSYMS_VM_OPS_SHMEM, &shmem_vm_ops);
+	if (error) {
+		printk(KERN_ERR "Could not register shmem_vm_ops\n");
+		goto out1_1;
+	}
+#endif
+
 	shm_mnt = vfs_kern_mount(&shmem_fs_type, MS_NOUSER,
 				 shmem_fs_type.name, NULL);
 	if (IS_ERR(shm_mnt)) {
@@ -2321,10 +2326,10 @@ int __init shmem_init(void)
 	return 0;
 
 out1:
-// #ifdef CONFIG_KRG_EPM
-// 	krgsyms_unregister(KRGSYMS_VM_OPS_SHMEM);
-// out1_1:
-// #endif
+#ifdef CONFIG_KRG_EPM
+	krgsyms_unregister(KRGSYMS_VM_OPS_SHMEM);
+out1_1:
+#endif
 	unregister_filesystem(&shmem_fs_type);
 out2:
 	shmem_destroy_inodecache();
