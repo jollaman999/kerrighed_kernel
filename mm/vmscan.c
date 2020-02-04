@@ -560,10 +560,6 @@ redo:
 		 * We know how to handle that.
 		 */
 		lru = active + page_lru_base_type(page);
-#ifdef CONFIG_KRG_MM
-		BUG_ON(page_is_migratable(page) && page_is_file_cache(page));
-		lru += page_is_migratable(page);
-#endif
 		lru_cache_add_lru(page, lru);
 	} else {
 		/*
@@ -615,28 +611,6 @@ enum page_references {
 	PAGEREF_ACTIVATE,
 };
 
-#ifdef CONFIG_KRG_MM
-static int check_injection_flow(void)
-{
-	long i = 0, limit = RPC_MAX_PAGES;
-
-	if ((rpc_consumed_bytes() / PAGE_SIZE) < limit)
-		return 0;
-
-	if (current_is_kswapd())
-		limit = limit / 2;
-	else
-		limit = 4 * limit / 5;
-
-	while ((rpc_consumed_bytes() / PAGE_SIZE) > limit) {
-		schedule();
-		i++;
-	}
-
-	return 0;
-}
-#endif
-
 static enum page_references page_check_references(struct page *page,
 						  struct mem_cgroup_zone *mz,
 						  struct scan_control *sc)
@@ -686,6 +660,28 @@ static enum page_references page_check_references(struct page *page,
 
 	return PAGEREF_RECLAIM;
 }
+
+#ifdef CONFIG_KRG_MM
+static int check_injection_flow(void)
+{
+	long i = 0, limit = RPC_MAX_PAGES;
+
+	if ((rpc_consumed_bytes() / PAGE_SIZE) < limit)
+		return 0;
+
+	if (current_is_kswapd())
+		limit = limit / 2;
+	else
+		limit = 4 * limit / 5;
+
+	while ((rpc_consumed_bytes() / PAGE_SIZE) > limit) {
+		schedule();
+		i++;
+	}
+
+	return 0;
+}
+#endif
 
 /*
  * shrink_page_list() returns the number of reclaimed pages
@@ -1250,12 +1246,11 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
 static unsigned long isolate_pages(unsigned long nr, struct mem_cgroup_zone *mz,
 				   struct list_head *dst,
 				   unsigned long *scanned, int order,
-				   isolate_mode_t mode,
 #ifdef CONFIG_KRG_MM
-				   int active, int file, int kddm)
+				   isolate_mode_t mode, int active, int file, int kddm)
 #else
-			       int active, int file)
-#endif				   
+				   isolate_mode_t mode, int active, int file)
+#endif
 {
 	struct lruvec *lruvec;
 	int lru = LRU_BASE;
@@ -1265,6 +1260,11 @@ static unsigned long isolate_pages(unsigned long nr, struct mem_cgroup_zone *mz,
 		lru += LRU_ACTIVE;
 	if (file)
 		lru += LRU_FILE;
+#ifdef CONFIG_KRG_MM
+	if (kddm)
+		lru += LRU_MIGR;
+#endif
+
 	return isolate_lru_pages(nr, &lruvec->lists[lru], dst,
 				 scanned, order, mode, file);
 }
@@ -1283,10 +1283,6 @@ static unsigned long clear_active_flags(struct list_head *page_list,
 	list_for_each_entry(page, page_list, lru) {
 		int numpages = hpage_nr_pages(page);
 		lru = page_lru_base_type(page);
-#ifdef CONFIG_KRG_MM
-		BUG_ON(page_is_migratable(page) && page_is_file_cache(page));
-		lru += page_is_migratable(page);
-#endif
 		if (PageActive(page)) {
 			lru += LRU_ACTIVE;
 			ClearPageActive(page);
@@ -1518,7 +1514,11 @@ static unsigned long shrink_inactive_list(unsigned long max_scan,
 			lru = page_lru(page);
 			add_page_to_lru_list(zone, page, lru);
 			if (is_active_lru(lru)) {
+#ifdef CONFIG_KRG_MM
+				int file = reclaim_stat_index (page);
+#else
 				int file = is_file_lru(lru);
+#endif
 				int numpages = hpage_nr_pages(page);
 				reclaim_stat->recent_rotated[file] += numpages;
 			}
@@ -1639,10 +1639,11 @@ static void move_active_pages_to_lru(struct zone *zone,
 
 static void shrink_active_list(unsigned long nr_pages,
 			       struct mem_cgroup_zone *mz,
+			       struct scan_control *sc,
 #ifdef CONFIG_KRG_MM
-			       struct scan_control *sc, int priority, int file, int kddm)
+			       int priority, int file, int kddm)
 #else
-			       struct scan_control *sc, int priority, int file)
+			       int priority, int file)
 #endif
 {
 	unsigned long nr_taken;
@@ -1670,13 +1671,16 @@ static void shrink_active_list(unsigned long nr_pages,
 #else
 				 ISOLATE_ACTIVE, 1, file);
 #endif
+
 	if (global_reclaim(sc))
 		zone->pages_scanned += pgscanned;
+
 #ifdef CONFIG_KRG_MM
 	reclaim_stat->recent_scanned[RECLAIM_STAT_INDEX(file, kddm)] += nr_taken;
 #else
 	reclaim_stat->recent_scanned[file] += nr_taken;
 #endif
+
 	__count_zone_vm_events(PGREFILL, zone, pgscanned);
 	if (file)
 		__mod_zone_page_state(zone, NR_ACTIVE_FILE, -nr_taken);
@@ -1738,12 +1742,15 @@ static void shrink_active_list(unsigned long nr_pages,
 	reclaim_stat->recent_rotated[file] += nr_rotated;
 #endif
 
+#ifdef CONFIG_KRG_MM
+	move_active_pages_to_lru(zone, &l_active,
+						LRU_ACTIVE + LRU_MIGR * kddm + file * LRU_FILE);
+	move_active_pages_to_lru(zone, &l_inactive,
+						LRU_BASE + LRU_MIGR * kddm + file * LRU_FILE);
+#else
 	move_active_pages_to_lru(zone, &l_active,
 						LRU_ACTIVE + file * LRU_FILE);
 	move_active_pages_to_lru(zone, &l_inactive,
-#ifdef CONFIG_KRG_MM
-						BUILD_LRU_ID(0 /* inactive */, file, kddm));
-#else
 						LRU_BASE   + file * LRU_FILE);
 #endif
 	__mod_zone_page_state(zone, NR_ISOLATED_ANON + file, -nr_taken);
@@ -1791,32 +1798,6 @@ static int inactive_file_is_low_global(struct zone *zone)
 	return (active > inactive);
 }
 
-
-#ifdef CONFIG_KRG_MM
-static int inactive_kddm_is_low_global(struct zone *zone)
-{
-	unsigned long active, inactive;
-
-	active = zone_page_state(zone, NR_ACTIVE_MIGR);
-	inactive = zone_page_state(zone, NR_INACTIVE_MIGR);
-
-	if (inactive * zone->inactive_ratio < active)
-		return 1;
-
-	return 0;
-}
-
-static int inactive_kddm_is_low(struct zone *zone, struct mem_cgroup_zone *mz)
-{
-	int low;
-
-	if (scanning_global_lru(mz))
-		low = inactive_kddm_is_low_global(zone);
-	else
-		BUG();
-	return low;
-}
-#endif
 /**
  * inactive_file_is_low - check if file pages need to be deactivated
  * @mz: memory cgroup and zone to check
@@ -1848,6 +1829,32 @@ static int inactive_list_is_low(struct mem_cgroup_zone *mz, int file)
 		return inactive_anon_is_low(mz);
 }
 
+#ifdef CONFIG_KRG_MM
+static int inactive_kddm_is_low_global(struct mem_cgroup_zone *mz)
+{
+	unsigned long active, inactive;
+
+	active = zone_page_state(mz->zone, NR_ACTIVE_MIGR);
+	inactive = zone_page_state(mz->zone, NR_INACTIVE_MIGR);
+
+	if (inactive * mz->zone->inactive_ratio < active)
+		return 1;
+
+	return 0;
+}
+
+static int inactive_kddm_is_low(struct mem_cgroup_zone *mz)
+{
+	int low;
+
+	if (scanning_global_lru(mz))
+		low = inactive_kddm_is_low_global(mz);
+	else
+		BUG();
+	return low;
+}
+#endif
+
 static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
 				 struct mem_cgroup_zone *mz,
 				 struct scan_control *sc, int priority)
@@ -1857,19 +1864,21 @@ static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
 	if (is_active_lru(lru)) {
 		if (inactive_list_is_low(mz, file))
 #ifdef CONFIG_KRG_MM
-		    shrink_active_list(nr_to_scan, mz, sc, priority, file, 0);
+			shrink_active_list(nr_to_scan, mz, sc, priority, file, 0);
 #else
 			shrink_active_list(nr_to_scan, mz, sc, priority, file);
 #endif
 		return 0;
 	}
+
 #ifdef CONFIG_KRG_MM
-	if (lru == LRU_ACTIVE_MIGR && inactive_kddm_is_low(mz->zone, mz)) {
+	if (lru == LRU_ACTIVE_MIGR && inactive_kddm_is_low(mz)) {
 		shrink_active_list(nr_to_scan, mz, sc, priority, 0, 1);
 		return 0;
 	}
 
-	return shrink_inactive_list(nr_to_scan, mz, sc, priority, file, is_kddm_lru(lru));
+	return shrink_inactive_list(nr_to_scan, mz, sc, priority, file,
+				    is_kddm_lru(lru));
 #else
 	return shrink_inactive_list(nr_to_scan, mz, sc, priority, file);
 #endif
@@ -1919,6 +1928,7 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 		}
 	}
 #endif
+
 	/*
 	 * OK, so we have swap space and a fair amount of page cache
 	 * pages.  We use the recently rotated / recently scanned
@@ -2101,11 +2111,12 @@ static void shrink_mem_cgroup_zone(int priority, struct mem_cgroup_zone *mz,
 	if (inactive_anon_is_low(mz) && get_nr_swap_pages() > 0)
 #ifdef CONFIG_KRG_MM
 		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0, 0);
-	if (inactive_kddm_is_low(mz->zone,mz))
+	if (inactive_kddm_is_low(mz) && get_nr_swap_pages() > 0)
 		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0, 1);
 #else
 		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0);
 #endif
+
 	throttle_vm_writeout(sc->gfp_mask);
 }
 
@@ -2630,16 +2641,17 @@ static void age_active_anon(struct zone *zone, struct scan_control *sc,
 			.zone = zone,
 		};
 
+#ifdef CONFIG_KRG_MM
 		if (inactive_anon_is_low(&mz))
 			shrink_active_list(SWAP_CLUSTER_MAX, &mz,
-#ifndef CONFIG_KRG_MM
-					   sc, priority, 0);
+					   sc, priority, 0, 0);
+		if (inactive_kddm_is_low(&mz))
+			shrink_active_list(SWAP_CLUSTER_MAX, &mz,
+					   sc, priority, 0, 1);
 #else
-                       sc, priority, 0, 0);
-			/* Do the same on kddm lru pages */
-			if (inactive_kddm_is_low(mz.zone, &mz))
-				shrink_active_list(SWAP_CLUSTER_MAX, &mz,
-						   sc, priority, 0, 1);
+		if (inactive_anon_is_low(&mz))
+			shrink_active_list(SWAP_CLUSTER_MAX, &mz,
+					   sc, priority, 0);
 #endif
 
 		memcg = mem_cgroup_iter(NULL, memcg, NULL);
@@ -3075,18 +3087,14 @@ unsigned long global_reclaimable_pages(void)
 	int nr;
 
 	nr = global_page_state(NR_ACTIVE_FILE) +
-#ifdef CONFIG_KRG_MM
-		global_page_state(NR_ACTIVE_MIGR)
-		+ global_page_state(NR_INACTIVE_MIGR)+
-#endif
 	     global_page_state(NR_INACTIVE_FILE);
+#ifdef CONFIG_KRG_MM
+	nr += global_page_state(NR_ACTIVE_MIGR) +
+	     global_page_state(NR_INACTIVE_MIGR);
+#endif
 
 	if (get_nr_swap_pages() > 0)
 		nr += global_page_state(NR_ACTIVE_ANON) +
-#ifdef CONFIG_KRG_MM
-		global_page_state(NR_ACTIVE_MIGR)
-		+ global_page_state(NR_INACTIVE_MIGR)+
-#endif
 		      global_page_state(NR_INACTIVE_ANON);
 
 	return nr;
@@ -3097,18 +3105,14 @@ unsigned long zone_reclaimable_pages(struct zone *zone)
 	int nr;
 
 	nr = zone_page_state(zone, NR_ACTIVE_FILE) +
-#ifdef CONFIG_KRG_MM
-		zone_page_state(zone, NR_ACTIVE_MIGR)
-		+ zone_page_state(zone, NR_INACTIVE_MIGR)+
-#endif
 	     zone_page_state(zone, NR_INACTIVE_FILE);
+#ifdef CONFIG_KRG_MM
+	nr += zone_page_state(zone, NR_ACTIVE_MIGR) +
+	     zone_page_state(zone, NR_INACTIVE_MIGR);
+#endif
 
 	if (get_nr_swap_pages() > 0)
 		nr += zone_page_state(zone, NR_ACTIVE_ANON) +
-#ifdef CONFIG_KRG_MM
-		zone_page_state(zone, NR_ACTIVE_MIGR)
-		+ zone_page_state(zone, NR_INACTIVE_MIGR)+
-#endif
 		      zone_page_state(zone, NR_INACTIVE_ANON);
 
 	return nr;
@@ -3550,10 +3554,6 @@ retry:
 	if (page_evictable(page, NULL)) {
 		enum lru_list l = page_lru_base_type(page);
 
-#ifdef CONFIG_KRG_MM
-		BUG_ON(page_is_migratable(page) && page_is_file_cache(page));
-		l += page_is_migratable(page);
-#endif
 		__dec_zone_state(zone, NR_UNEVICTABLE);
 		lruvec = mem_cgroup_lru_move_lists(zone, page,
 						   LRU_UNEVICTABLE, l);

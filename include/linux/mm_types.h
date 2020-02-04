@@ -185,11 +185,12 @@ struct vm_area_struct {
 #ifdef CONFIG_KRG_MM
 	struct list_head anon_vma_node;	/* Serialized by anon_vma->lock */
 #endif
+
 	/* Function pointers to deal with this struct. */
 #ifdef CONFIG_KRG_MM
-struct vm_operations_struct *vm_ops;
+	struct vm_operations_struct *vm_ops;
 #else
-const struct vm_operations_struct *vm_ops;
+	const struct vm_operations_struct *vm_ops;
 #endif
 
 	/* Information about our backing store: */
@@ -302,12 +303,14 @@ struct mm_struct {
 	unsigned long flags; /* Must use atomic bitops to access the bits */
 
 	struct core_state *core_state; /* coredumping support */
+
 #ifdef CONFIG_KRG_MM
 	struct kddm_set * anon_vma_kddm_set;
 	unique_id_t anon_vma_kddm_id;
 	krgnodemask_t copyset;		/* Nodes owning a copy of the struct */
 	unique_id_t mm_id;
 #endif
+
 #ifdef CONFIG_AIO
 	spinlock_t		ioctx_lock;
 	struct hlist_head	ioctx_list;

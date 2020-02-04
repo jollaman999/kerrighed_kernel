@@ -142,9 +142,7 @@ struct mem_cgroup_reclaim_iter {
 struct mem_cgroup_per_zone {
 	struct lruvec		lruvec;
 	unsigned long		count[NR_LRU_LISTS];
-#ifdef CONFIG_KRG_MM
-	struct list_head	lists[NR_LRU_LISTS];
-#endif
+
 	struct mem_cgroup_reclaim_iter reclaim_iter[DEF_PRIORITY + 1];
 
 	struct zone_reclaim_stat reclaim_stat;
@@ -1107,55 +1105,6 @@ mem_cgroup_get_reclaim_stat_from_page(struct page *page)
 
 	return &mz->reclaim_stat;
 }
-
-// Codex fix
-#ifdef CONFIG_KRG_MM
-unsigned long mem_cgroup_isolate_pages(unsigned long nr_to_scan,
-					struct list_head *dst,
-					unsigned long *scanned, int order,
-					int mode, struct zone *z,
-					struct mem_cgroup *mem_cont,
-					int active, int file, int kddm)
-
-{
-	unsigned long nr_taken = 0;
-	struct page *page;
-	unsigned long scan;
-	LIST_HEAD(pc_list);
-	struct list_head *src;
-	struct page_cgroup *pc, *tmp;
-	int nid = z->zone_pgdat->node_id;
-	int zid = zone_idx(z);
-	struct mem_cgroup_per_zone *mz;
-	int lru = BUILD_LRU_ID(!!active, !!file, !!kddm);
-	BUG_ON(kddm && file);
-
-	BUG_ON(!mem_cont);
-	mz = mem_cgroup_zoneinfo(mem_cont, nid, zid);
-	src = &mz->lists[lru];
-
-	scan = 0;
-	list_for_each_entry_safe_reverse(pc, tmp, src, lru) {
-		if (scan >= nr_to_scan)
-			break;
-
-		page = pc->page;
-		if (unlikely(!PageCgroupUsed(pc)))
-			continue;
-		if (unlikely(!PageLRU(page)))
-			continue;
-
-		scan++;
-		if (__isolate_lru_page(page, mode, file) == 0) {
-			list_move(&page->lru, dst);
-			nr_taken++;
-		}
-	}
-	*scanned = scan;
-	return nr_taken;
-}
-#endif
-
 
 #define mem_cgroup_from_res_counter(counter, member)	\
 	container_of(counter, struct mem_cgroup, member)

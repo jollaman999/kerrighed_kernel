@@ -61,6 +61,10 @@ static inline enum lru_list page_lru_base_type(struct page *page)
 {
 	if (page_is_file_cache(page))
 		return LRU_INACTIVE_FILE;
+#ifdef CONFIG_KRG_MM
+	else if (PageMigratable(page))
+		return LRU_INACTIVE_ANON + LRU_MIGR;
+#endif
 	return LRU_INACTIVE_ANON;
 }
 
@@ -73,17 +77,11 @@ del_page_from_lru(struct zone *zone, struct page *page)
 		__ClearPageUnevictable(page);
 		l = LRU_UNEVICTABLE;
 	} else {
-#ifdef CONFIG_KRG_MM
-		if (PageMigratable(page))
-			l += LRU_MIGR;
-		else
-#endif
 		l = page_lru_base_type(page);
 		if (PageActive(page)) {
 			__ClearPageActive(page);
 			l += LRU_ACTIVE;
 		}
-
 	}
 	mem_cgroup_lru_del_list(page, l);
 	list_del(&page->lru);
@@ -113,8 +111,7 @@ static inline enum lru_list page_lru(struct page *page)
 }
 
 #ifdef CONFIG_KRG_MM
-#define BUILD_LRU_ID(active,file,kddm) (LRU_BASE + LRU_MIGR * kddm + LRU_FILE * file + active)
-
+/* LRU_FILE is 2 */
 #define RECLAIM_STAT_INDEX(file,kddm) ((!!file) + 2 * (!!kddm))
 static inline int reclaim_stat_index(struct page *page)
 {
