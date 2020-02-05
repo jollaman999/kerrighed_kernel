@@ -1,2 +1,0 @@
-kerrighed/scheduler/policies/round_robin_balancer.ko
-kerrighed/scheduler/policies/round_robin_balancer.o

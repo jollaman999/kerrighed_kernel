@@ -1,2 +1,0 @@
-drivers/watchdog/iTCO_vendor_support.ko
-drivers/watchdog/iTCO_vendor_support.o
