@@ -165,16 +165,15 @@ static char *read_from_file(char *_filename, int size)
 {
 	int error;
 	struct file *f;
-	const struct filename *dir_filename= getname(_filename);
 	char *b;
-	char *filename=NULL;
+	struct filename *filename;
+
 	b = kmalloc(size, GFP_ATOMIC);
 	BUG_ON(b==NULL);
 
-	// strcpy(filename,(char*)dir_filename->name);
-	filename= (char*)dir_filename->name;
+	filename = getname(_filename);
 	if (!IS_ERR(filename)) {
-		f = filp_open(filename, O_RDONLY, 0);
+		f = filp_open((const char *)filename->name, O_RDONLY, 0);
 		if (IS_ERR(f)) {
 			printk("error: %ld\n", PTR_ERR(f));
 			goto err_file;
@@ -192,6 +191,7 @@ static char *read_from_file(char *_filename, int size)
 				printk("init_ids: Error while closing file %d\n", error);
 		}
 	}
+	putname(filename);
 	return b;
 
  err_file:
@@ -276,8 +276,7 @@ static void read_kerrighed_nodes(char *_h, char *k)
 
 static void __init init_ids(void)
 {
-	char *hostname = "krg";
-	char *kerrighed_nodes=NULL;
+	char *hostname, *kerrighed_nodes;
 
 	if (!ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID) ||
 	    !ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID)) {
@@ -313,12 +312,6 @@ static void __init init_ids(void)
 	kerrighed_cluster_flags = 0;
 	kerrighed_node_flags = 0;
 
-	//For test
-	//kerrighed_node_id=1;
-	// SET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID);
-    //     SET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID);
-
-	//For test
 	printk("Kerrighed session ID : %d\n", kerrighed_session_id);
 	printk("Kerrighed node ID    : %d\n", kerrighed_node_id);
 	printk("Kerrighed min nodes  : %d\n", kerrighed_nb_nodes_min);
