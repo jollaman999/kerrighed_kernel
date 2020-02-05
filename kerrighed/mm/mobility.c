@@ -761,7 +761,7 @@ int cr_import_vma_pages(ghost_t *ghost,
 		pmd = pmd_alloc(mm, pud, address);
 		BUG_ON(!pmd);
 
-		pte = pte_alloc_map(mm, vma,pmd, address);
+		pte = pte_alloc_map(mm, vma, pmd, address);
 		BUG_ON(!pte);
 		set_pte (pte, mk_pte(new_page, prot));
 

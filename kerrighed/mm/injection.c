@@ -296,21 +296,26 @@ static int try_to_flush_one(struct page *page, struct vm_area_struct *vma)
 
 int try_to_flush_page(struct page *page)
 {
-
-    struct anon_vma *anon_vma;
-    struct vm_area_struct *vma;
+        struct anon_vma *anon_vma;
+        struct vm_area_struct *vma;
 	int ret = SWAP_AGAIN;
-	unsigned long address;
+
 	krg_notify_mem(OUT_OF_MEM);
+
 	anon_vma = page_lock_anon_vma(page);
-     if (!anon_vma)
-            return SWAP_AGAIN;
+        if (!anon_vma)
+                return SWAP_AGAIN;
 
 	list_for_each_entry(vma, &anon_vma->head, anon_vma_node) {
-			 address = vma_address(page, vma);
+		unsigned long address;
+
 		if (page_mapcount(page) <= 1)
 			break;
-		ret = try_to_unmap_one(page, vma, address, 1);
+
+		address = vma_address(page, vma);
+		if (address == -EFAULT)
+			continue;
+		ret = try_to_unmap_one(page, vma, address, 0);
 		if (ret == SWAP_FAIL)
 			goto exit;
 	}

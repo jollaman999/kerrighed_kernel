@@ -40,7 +40,7 @@ int init_kermm(void)
 	printk("KerMM initialisation : start\n");
 
 	krgsyms_register (KRGSYMS_VM_OPS_NULL, &null_vm_ops);
-	krgsyms_register (KRGSYMS_VM_OPS_FILE_GENERIC, (void*)&generic_file_vm_ops);
+	krgsyms_register (KRGSYMS_VM_OPS_FILE_GENERIC, &generic_file_vm_ops);
 	special_mapping_vm_ops_krgsyms_register ();
 	krgsyms_register (KRGSYMS_VM_OPS_MEMORY_KDDM_VMOPS,
 			  &anon_memory_kddm_vmops);

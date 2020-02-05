@@ -200,7 +200,7 @@ struct kddm_obj *get_obj_entry_from_pte(struct mm_struct *mm,
 	struct kddm_obj *obj_entry = NULL;
 	struct page *page;
 
-        if (pte_present(*ptep)) {
+	if (pte_present(*ptep)) {
 		page = pfn_to_page(pte_pfn(*ptep));
 		BUG_ON(!page);
 
@@ -431,16 +431,17 @@ int kddm_pt_swap_in (struct mm_struct *mm,
 		     pte_t *orig_pte)
 {
 	struct vm_area_struct *vma;
-        pgd_t *pgd;
-        pud_t *pud;
-        pmd_t *pmd;
-        pte_t *pte;
+	pgd_t *pgd;
+	pud_t *pud;
+	pmd_t *pmd;
+	pte_t *pte;
 
-        pgd = pgd_offset(mm, addr);
-        pud = pud_alloc(mm, pgd, addr);
-        pmd = pmd_alloc(mm, pud, addr);
-		vma = find_vma(mm, addr);
-        pte = pte_alloc_map(mm, vma,pmd, addr);
+	pgd = pgd_offset(mm, addr);
+	pud = pud_alloc(mm, pgd, addr);
+	pmd = pmd_alloc(mm, pud, addr);
+
+	vma = find_vma(mm, addr);
+	pte = pte_alloc_map(mm, vma, pmd, addr);
 
 	if (!orig_pte)
 		orig_pte = pte;
