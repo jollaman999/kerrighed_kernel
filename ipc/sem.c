@@ -282,11 +282,14 @@ static inline
 void sem_unlock(struct sem_array *sma, int locknum)
 {
 	if (locknum == -1) {
+		struct kern_ipc_perm *perm = &(sma)->sem_perm;
 #ifdef CONFIG_KRG_IPC
-		ipc_unlock(&(sma)->sem_perm);
-#else
-		spin_unlock(&sma->sem_perm.lock);
+		if (perm->krgops) {
+			rcu_read_lock();
+			perm->krgops->ipc_unlock(perm);
+		} else
 #endif
+		spin_unlock(&perm->lock);
 	} else {
 		struct sem *sem = sma->sem_base + locknum;
 		spin_unlock(&sem->lock);
