@@ -98,11 +98,12 @@
 
 #include <net/sock.h>
 #include <linux/netfilter.h>
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
-#endif
 #ifndef __GENKSYMS__
 #include <net/busy_poll.h>
+#endif
+
+#ifdef CONFIG_KRG_FAF
+#include <kerrighed/faf.h>
 #endif
 
 #ifdef CONFIG_NET_RX_BUSY_POLL
@@ -131,16 +132,6 @@ static ssize_t sock_sendpage(struct file *file, struct page *page,
 static ssize_t sock_splice_read(struct file *file, loff_t *ppos,
 			        struct pipe_inode_info *pipe, size_t len,
 				unsigned int flags);
-
-#ifdef CONFIG_KRG_FAF
-static inline
-void *
-faf_sock_kmalloc(struct sock *sk, int size, gfp_t flags, struct file *faf_file);
-
-static inline
-void
-faf_sock_kfree_s(struct sock *sk, void *mem, int size, struct file *faf_file);
-#endif
 
 /*
  *	Socket files have a set of 'special' operations as well as the generic file ones. These don't appear
@@ -400,7 +391,8 @@ static int sock_alloc_file(struct socket *sock, struct file **f, int flags)
 	d_instantiate(path.dentry, SOCK_INODE(sock));
 	SOCK_INODE(sock)->i_fop = &socket_file_ops;
 
-	file = alloc_file(&path, FMODE_READ | FMODE_WRITE, &socket_file_ops);
+	file = alloc_file(&path, FMODE_READ | FMODE_WRITE,
+		  &socket_file_ops);
 	if (unlikely(!file)) {
 		/* drop dentry, keep inode */
 		atomic_inc(&path.dentry->d_inode->i_count);
@@ -1367,6 +1359,31 @@ int sock_create_kern(int family, int type, int protocol, struct socket **res)
 	return __sock_create(&init_net, family, type, protocol, res, 1);
 }
 
+#ifdef CONFIG_KRG_FAF
+static inline
+void *
+faf_sock_kmalloc(struct sock *sk, int size, gfp_t flags, struct file *faf_file)
+{
+	void *mem;
+
+	if (faf_file)
+		mem = kmalloc(size, flags);
+	else
+		mem = sock_kmalloc(sk, size, flags);
+	return mem;
+}
+
+static inline
+void
+faf_sock_kfree_s(struct sock *sk, void *mem, int size, struct file *faf_file)
+{
+	if (faf_file)
+		kfree(mem);
+	else
+		sock_kfree_s(sk, mem, size);
+}
+#endif /* CONFIG_KRG_FAF */
+
 SYSCALL_DEFINE3(socket, int, family, int, type, int, protocol)
 {
 	int retval;
@@ -1494,7 +1511,6 @@ SYSCALL_DEFINE3(bind, int, fd, struct sockaddr __user *, umyaddr, int, addrlen)
 	struct socket *sock;
 	struct sockaddr_storage address;
 	int err, fput_needed;
-
 #ifdef CONFIG_KRG_FAF
 	struct file *faf_file;
 
@@ -2231,31 +2247,6 @@ out:
 	return err;
 }
 
-#ifdef CONFIG_KRG_FAF
-static inline
-void *
-faf_sock_kmalloc(struct sock *sk, int size, gfp_t flags, struct file *faf_file)
-{
-	void *mem;
-
-	if (faf_file)
-		mem = kmalloc(size, flags);
-	else
-		mem = sock_kmalloc(sk, size, flags);
-	return mem;
-}
-
-static inline
-void
-faf_sock_kfree_s(struct sock *sk, void *mem, int size, struct file *faf_file)
-{
-	if (faf_file)
-		kfree(mem);
-	else
-		sock_kfree_s(sk, mem, size);
-}
-#endif /* CONFIG_KRG_FAF */
-
 /*
  *	BSD sendmsg interface
  */
@@ -2274,8 +2265,10 @@ SYSCALL_DEFINE3(sendmsg, int, fd, struct msghdr __user *, msg, unsigned, flags)
 	if (!sock && !faf_file)
 		goto out;
 	err = -ENOSYS;
-	if (faf_file && (flags & MSG_CMSG_COMPAT))
-		goto out_put;
+	if (faf_file && (flags & MSG_CMSG_COMPAT)) {
+		fput_light(faf_file, fput_needed);
+		goto out;
+	}
 #else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
@@ -2289,7 +2282,6 @@ SYSCALL_DEFINE3(sendmsg, int, fd, struct msghdr __user *, msg, unsigned, flags)
 #endif
 
 #ifdef CONFIG_KRG_FAF
-out_put:
 	if (faf_file)
 		fput_light(faf_file, fput_needed);
 	else
@@ -2324,10 +2316,12 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 #ifdef CONFIG_KRG_FAF
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (!sock && !faf_file)
-		goto out;
+		return err;
 	err = -ENOSYS;
-	if (faf_file && (flags & MSG_CMSG_COMPAT))
-		goto out_put;
+	if (faf_file && (flags & MSG_CMSG_COMPAT)) {
+		fput_light(faf_file, fput_needed);
+		return err;
+	}
 #else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
@@ -2372,7 +2366,6 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 	}
 
 #ifdef CONFIG_KRG_FAF
-out_put:
 	if (faf_file)
 		fput_light(faf_file, fput_needed);
 	else
@@ -2383,9 +2376,6 @@ out_put:
 	if (datagrams != 0)
 		return datagrams;
 
-#ifdef CONFIG_KRG_FAF
-out:
-#endif
 	return err;
 }
 
@@ -2469,7 +2459,6 @@ static int __sys_recvmsg(struct socket *sock, struct msghdr __user *msg,
 		goto check_err;
 	}
 #endif
-
 	if (sock->file->f_flags & O_NONBLOCK)
 		flags |= MSG_DONTWAIT;
 	err = (nosec ? sock_recvmsg_nosec : sock_recvmsg)(sock, msg_sys,
@@ -2532,8 +2521,10 @@ SYSCALL_DEFINE3(recvmsg, int, fd, struct msghdr __user *, msg,
 	if (!sock && !faf_file)
 		goto out;
 	err = -ENOSYS;
-	if (faf_file && (flags & MSG_CMSG_COMPAT))
-		goto out_put;
+	if (faf_file && (flags & MSG_CMSG_COMPAT)) {
+		fput_light(faf_file, fput_needed);
+		goto out;
+	}
 #else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
@@ -2545,8 +2536,8 @@ SYSCALL_DEFINE3(recvmsg, int, fd, struct msghdr __user *, msg,
 #else
 	err = __sys_recvmsg(sock, msg, &msg_sys, flags, 0);
 #endif
+
 #ifdef CONFIG_KRG_FAF
-out_put:
 	if (faf_file)
 		fput_light(faf_file, fput_needed);
 	else
