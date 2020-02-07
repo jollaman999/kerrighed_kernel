@@ -17,6 +17,7 @@ void krg_node_unreachable(kerrighed_node_t);
 
 void krg_node_arrival(kerrighed_node_t nodeid)
 {
+	printk("krg_node_arrival: nodeid = %d\n", nodeid);
 	set_krgnode_present(nodeid);
 	krg_node_reachable(nodeid);
 #ifdef CONFIG_KRG_HOTPLUG
@@ -26,6 +27,7 @@ void krg_node_arrival(kerrighed_node_t nodeid)
 
 void krg_node_departure(kerrighed_node_t nodeid)
 {
+	printk("krg_node_departure: nodeid = %d\n", nodeid);
 #ifdef CONFIG_KRG_HOTPLUG
 	universe[nodeid].state = 0;
 #endif
