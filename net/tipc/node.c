@@ -348,13 +348,14 @@ static void node_established_contact(struct tipc_node *n_ptr)
 	struct cluster *c_ptr;
 
 	dbg("node_established_contact:-> %x\n", n_ptr->addr);
-	if (!tipc_node_has_active_routes(n_ptr) && in_own_cluster(n_ptr->addr)) {
-		tipc_k_signal((Handler)tipc_named_node_up, n_ptr->addr);
-	}
 
 #ifdef CONFIG_KRG_HOTPLUG
 	krg_node_arrival(tipc_node(n_ptr->addr)-1);
 #endif
+
+	if (!tipc_node_has_active_routes(n_ptr) && in_own_cluster(n_ptr->addr)) {
+		tipc_k_signal((Handler)tipc_named_node_up, n_ptr->addr);
+	}
 
 	/* Syncronize broadcast acks */
 	n_ptr->bclink.acked = tipc_bclink_get_last_sent();
