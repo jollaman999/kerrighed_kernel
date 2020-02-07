@@ -72,6 +72,7 @@
 #include <linux/ctype.h>
 #include <linux/ftrace.h>
 #include <linux/clocksource.h>
+
 #ifdef CONFIG_KRG_PROC
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
@@ -83,6 +84,7 @@
 #ifdef CONFIG_KRG_SCHED
 #include <kerrighed/scheduler/hooks.h>
 #endif
+
 #include <asm/tlb.h>
 #include <asm/irq_regs.h>
 #include <asm/mutex.h>
@@ -6178,7 +6180,6 @@ pick_next_task(struct rq *rq)
 /*
  * schedule() is the main scheduler function.
  */
-//asmlinkage void __sched __schedule(void)
 asmlinkage void __sched schedule(void)
 {
 	struct task_struct *prev, *next;
@@ -6189,13 +6190,12 @@ asmlinkage void __sched schedule(void)
 	struct task_struct *krg_cur;
 #endif
 
+need_resched:
+	preempt_disable();
 #ifdef CONFIG_KRG_EPM
 	krg_cur = krg_current;
 	krg_current = NULL;
 #endif
-
-need_resched:
-	preempt_disable();
 	cpu = smp_processor_id();
 	rq = cpu_rq(cpu);
 	rcu_sched_qs(cpu);
@@ -6264,26 +6264,11 @@ need_resched_nonpreemptible:
 #ifdef CONFIG_KRG_EPM
 	krg_current = krg_cur;
 #endif
-
 	preempt_enable_no_resched();
 	if (need_resched())
 		goto need_resched;
 }
 EXPORT_SYMBOL(schedule);
-
-
-/*
-asmlinkage void __sched schedule(void)
-{
-need_resched:
-	preempt_disable();
-	__schedule();
-	preempt_enable_no_resched();
-	if (unlikely(test_thread_flag(TIF_NEED_RESCHED)))
-		goto need_resched;
-}
-EXPORT_SYMBOL(schedule);
-*/
 
 #ifdef CONFIG_SMP
 /*
@@ -7371,34 +7356,6 @@ static int krg_sched_getscheduler(pid_t pid)
 }
 #endif /* CONFIG_KRG_PROC */
 
-/**
- * sys_sched_getscheduler - get the policy (scheduling class) of a thread
- * @pid: the pid in question.
- */
-SYSCALL_DEFINE1(sched_getscheduler, pid_t, pid)
-{
-	struct task_struct *p;
-	int retval;
-
-	if (pid < 0)
-		return -EINVAL;
-
-	retval = -ESRCH;
-	rcu_read_lock();
-	p = find_process_by_pid(pid);
-	if (p) {
-		retval = security_task_getscheduler(p);
-		if (!retval)
-			retval = p->policy
-				| (p->sched_reset_on_fork ? SCHED_RESET_ON_FORK : 0);
-	}
-	rcu_read_unlock();
-#ifdef CONFIG_KRG_PROC
-	if (!p)
-		retval = krg_sched_getscheduler(pid);
-#endif
-	return retval;
-}
 #ifdef CONFIG_KRG_PROC
 static
 int handle_sched_getparam(struct rpc_desc *desc, void *msg, size_t size)
@@ -7466,6 +7423,36 @@ err_cancel:
 	goto out_end;
 }
 #endif /* CONFIG_KRG_PROC */
+
+/**
+ * sys_sched_getscheduler - get the policy (scheduling class) of a thread
+ * @pid: the pid in question.
+ */
+SYSCALL_DEFINE1(sched_getscheduler, pid_t, pid)
+{
+	struct task_struct *p;
+	int retval;
+
+	if (pid < 0)
+		return -EINVAL;
+
+	retval = -ESRCH;
+	rcu_read_lock();
+	p = find_process_by_pid(pid);
+	if (p) {
+		retval = security_task_getscheduler(p);
+		if (!retval)
+			retval = p->policy
+				| (p->sched_reset_on_fork ? SCHED_RESET_ON_FORK : 0);
+	}
+	rcu_read_unlock();
+#ifdef CONFIG_KRG_PROC
+	if (!p)
+		retval = krg_sched_getscheduler(pid);
+#endif
+
+	return retval;
+}
 
 /**
  * sys_sched_getparam - get the RT priority of a thread
@@ -12481,60 +12468,3 @@ void synchronize_sched_expedited(void)
 EXPORT_SYMBOL_GPL(synchronize_sched_expedited);
 
 #endif /* #else #ifndef CONFIG_SMP */
-
-
-#ifdef CONFIG_KRG_PROC
-/*
- * Use precise platform statistics if available:
- */
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING
-cputime_t task_utime(struct task_struct *p)
-{
-	return p->utime;
-}
-
-cputime_t task_stime(struct task_struct *p)
-{
-	return p->stime;
-}
-#else
-cputime_t task_utime(struct task_struct *p)
-{
-	clock_t utime = cputime_to_clock_t(p->utime),
-		total = utime + cputime_to_clock_t(p->stime);
-	u64 temp;
-
-	/*
-	 * Use CFS's precise accounting:
-	 */
-	temp = (u64)nsec_to_clock_t(p->se.sum_exec_runtime);
-
-	if (total) {
-		temp *= utime;
-		do_div(temp, total);
-	}
-	utime = (clock_t)temp;
-
-	p->prev_utime = max(p->prev_utime, clock_t_to_cputime(utime));
-	return p->prev_utime;
-}
-
-cputime_t task_stime(struct task_struct *p)
-{
-	clock_t stime;
-
-	/*
-	 * Use CFS's precise accounting. (we subtract utime from
-	 * the total, to make sure the total observed by userspace
-	 * grows monotonically - apps rely on that):
-	 */
-	stime = nsec_to_clock_t(p->se.sum_exec_runtime) -
-			cputime_to_clock_t(task_utime(p));
-
-	if (stime >= 0)
-		p->prev_stime = max(p->prev_stime, clock_t_to_cputime(stime));
-
-	return p->prev_stime;
-}
-#endif
-#endif
