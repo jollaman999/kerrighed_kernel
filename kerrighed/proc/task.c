@@ -182,8 +182,7 @@ static void task_update_object(struct task_kddm_object *obj)
 		obj->egid = cred->egid;
 		rcu_read_unlock();
 
-		obj->utime = task_utime(tsk);
-		obj->stime = task_stime(tsk);
+		task_times(tsk, &obj->utime, &obj->stime);
 
 		obj->dumpable = (tsk->mm && get_dumpable(tsk->mm) == 1);
 
