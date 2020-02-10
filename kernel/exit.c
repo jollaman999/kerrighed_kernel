@@ -50,6 +50,7 @@
 #include <linux/perf_event.h>
 #include <trace/events/sched.h>
 #include <linux/oom.h>
+
 #ifdef CONFIG_KRG_KDDM
 #include <kddm/kddm_info.h>
 #endif
@@ -80,12 +81,11 @@ static
 #endif
 void exit_mm(struct task_struct * tsk);
 
-
-static void __unhash_process(struct task_struct *p)
+static void __unhash_process(struct task_struct *p, bool group_dead)
 {
 	nr_threads--;
 	detach_pid(p, PIDTYPE_PID);
-	if (thread_group_leader(p)) {
+	if (group_dead) {
 		detach_pid(p, PIDTYPE_PGID);
 		detach_pid(p, PIDTYPE_SID);
 
@@ -102,6 +102,7 @@ static void __unhash_process(struct task_struct *p)
 static void __exit_signal(struct task_struct *tsk)
 {
 	struct signal_struct *sig = tsk->signal;
+	bool group_dead = thread_group_leader(tsk);
 	struct sighand_struct *sighand;
 
 	BUG_ON(!sig);
@@ -109,9 +110,12 @@ static void __exit_signal(struct task_struct *tsk)
 
 	sighand = rcu_dereference(tsk->sighand);
 	spin_lock(&sighand->siglock);
+#ifdef CONFIG_KRG_EPM
+	if (tsk->exit_state != EXIT_MIGRATION)
+#endif
+	atomic_dec(&sig->count);
 
 	posix_cpu_timers_exit(tsk);
-
 #ifdef CONFIG_KRG_EPM
 	if (tsk->exit_state == EXIT_MIGRATION) {
 		BUG_ON(atomic_read(&sig->count) > 1);
@@ -119,9 +123,9 @@ static void __exit_signal(struct task_struct *tsk)
 		sig->curr_target = NULL;
 	} else
 #endif
-	if (atomic_dec_and_test(&sig->count))
+	if (group_dead) {
 		posix_cpu_timers_exit_group(tsk);
-	else {
+	} else {
 		/*
 		 * This can only happen if the caller is de_thread().
 		 * FIXME: this is the temporary hack, we should teach
@@ -160,10 +164,9 @@ static void __exit_signal(struct task_struct *tsk)
 		sig->oublock += task_io_get_oublock(tsk);
 		task_io_accounting_add(&sig->ioac, &tsk->ioac);
 		sig->sum_sched_runtime += tsk->se.sum_exec_runtime;
-		sig = NULL; /* Marker for below. */
 	}
 
-	__unhash_process(tsk);
+	__unhash_process(tsk, group_dead);
 
 	/*
 	 * Do this under ->siglock, we can race with another thread
@@ -182,7 +185,7 @@ static void __exit_signal(struct task_struct *tsk)
 #endif
 	__cleanup_sighand(sighand);
 	clear_tsk_thread_flag(tsk,TIF_SIGPENDING);
-	if (sig) {
+	if (group_dead) {
 		flush_sigqueue(&sig->shared_pending);
 #ifdef CONFIG_KRG_EPM
 		if (tsk->exit_state != EXIT_MIGRATION)
@@ -851,11 +854,9 @@ static struct task_struct *find_new_reaper(struct task_struct *father)
 	}
 
 	if (unlikely(pid_ns->child_reaper == father)) {
-		printk(KERN_WARNING "~~~ pid_ns->child_reaper == father ~~~\n");
 		write_unlock_irq(&tasklist_lock);
 		if (unlikely(pid_ns == &init_pid_ns))
 			panic("Attempted to kill init!");
-		
 
 		zap_pid_ns_processes(pid_ns);
 		tasklist_write_lock_irq();
@@ -906,15 +907,10 @@ static void forget_original_parent(struct task_struct *father)
 #ifdef CONFIG_KRG_EPM
 	struct children_kddm_object *children_obj = NULL;
 #endif
-
-//	struct pid_namespace *pid_ns = task_active_pid_ns(father);
-
 	LIST_HEAD(dead_children);
-	
-//	if(pid_ns->child_reaper == father)
-//		return;
 
 	exit_ptrace(father);
+
 #ifdef CONFIG_KRG_EPM
 	if (rcu_dereference(father->children_obj))
 		children_obj = __krg_children_writelock(father);
@@ -967,7 +963,6 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 #ifdef CONFIG_KRG_EPM
 	u32 real_parent_self_exec_id;
 #endif
-	//printk(KERN_WARNING "=== start exit_notify ===\n");
 
 	/*
 	 * This does two things:
@@ -977,18 +972,13 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 	 *	as a result of our exiting, and if they have any stopped
 	 *	jobs, send them a SIGHUP and then a SIGCONT.  (POSIX 3.2.2.2)
 	 */
-	//printk(KERN_WARNING "forget_original_parent ===\n");
 	forget_original_parent(tsk);
-	//printk(KERN_WARNING "exit_task_namespaces ===\n");
 	exit_task_namespaces(tsk);
 
-	//printk(KERN_WARNING "krg_prepare_exit_notify\n");
 #ifdef CONFIG_KRG_PROC
 	krg_cookie = krg_prepare_exit_notify(tsk);
 #endif /* CONFIG_KRG_PROC */
-	//printk(KERN_WARNING "tasklist_write_lock_irq\n");
 	tasklist_write_lock_irq();
-	//printk(KERN_WARNING "group_dead %d\n",group_dead);
 	if (group_dead)
 		kill_orphaned_pgrp(tsk->group_leader, NULL);
 
@@ -1021,14 +1011,12 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 		tsk->exit_signal = SIGCHLD;
 #endif
 
-	//printk(KERN_WARNING "tracehook_notify_death\n");
 	signal = tracehook_notify_death(tsk, &cookie, group_dead);
 	if (signal >= 0)
 		signal = do_notify_parent(tsk, signal);
 
 	tsk->exit_state = signal == DEATH_REAP ? EXIT_DEAD : EXIT_ZOMBIE;
 
-	//printk(KERN_WARNING "thread_group_leader\n");
 	/* mt-exec, de_thread() is waiting for us */
 	if (thread_group_leader(tsk) &&
 	    tsk->signal->group_exit_task &&
@@ -1037,7 +1025,6 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 
 	write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_KRG_PROC
-	//printk(KERN_WARNING "krg_finish_exit_notify\n");
 	krg_finish_exit_notify(tsk, signal, krg_cookie);
 	/*
 	 * No kerrighed structure should be accessed after this point,
@@ -1046,14 +1033,11 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 	 */
 #endif /* CONFIG_KRG_PROC */
 
-	//printk(KERN_WARNING "tracehook_report_death\n");
 	tracehook_report_death(tsk, signal, cookie, group_dead);
 
 	/* If the process is dead, release it - nobody will wait for it */
 	if (signal == DEATH_REAP)
 		release_task(tsk);
-	
-	//printk(KERN_WARNING "=== end exit_notify ===\n");
 }
 
 #ifdef CONFIG_DEBUG_STACK_USAGE
@@ -1238,6 +1222,7 @@ NORET_TYPE void do_exit(long code)
 	 * gets woken up by child-exit notifications.
 	 */
 	perf_event_exit_task(tsk);
+
 #ifdef CONFIG_KRG_EPM
 	if (!notify)
 		exit_migration(tsk);
@@ -1375,6 +1360,7 @@ struct wait_opts {
 #ifdef CONFIG_KRG_EPM
 	pid_t	wo_upid;
 #endif
+
 	struct siginfo __user	*wo_info;
 	int __user		*wo_stat;
 	struct rusage __user	*wo_rusage;
@@ -1447,14 +1433,12 @@ static int wait_noreap_copyout(struct wait_opts *wo, struct task_struct *p,
  * the lock and this task is uninteresting.  If we return nonzero, we have
  * released the lock and the system call should return.
  */
-
-
 #ifndef CONFIG_KRG_EPM
 static
 #endif
 int wait_task_zombie(struct task_struct *p, int options,
-				    struct siginfo __user *infop,
-				    int __user *stat_addr, struct rusage __user *ru)
+				   struct siginfo __user *infop,
+				   int __user *stat_addr, struct rusage __user *ru)
 {
 	unsigned long state;
 	int retval, status, traced;
@@ -1647,7 +1631,6 @@ int wait_task_zombie(struct task_struct *p, int options,
 				p = NULL;
 			}
 		}
-
 		write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_KRG_EPM
 		if (parent_children_obj) {
@@ -1936,11 +1919,11 @@ void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
 	__wake_up_sync_key(&parent->signal->wait_chldexit,
 				TASK_INTERRUPTIBLE, 1, p);
 }
+
 #ifndef CONFIG_KRG_EPM
 static
-#else
-long do_wait(struct wait_opts *wo)
 #endif
+long do_wait(struct wait_opts *wo)
 {
 	struct task_struct *tsk;
 	int retval;
@@ -1967,6 +1950,7 @@ repeat:
 	if ((wo->wo_type < PIDTYPE_MAX) &&
 	   (!wo->wo_pid || hlist_empty(&wo->wo_pid->tasks[wo->wo_type])))
 		goto notask;
+
 #ifdef CONFIG_KRG_EPM
 	if (current->children_obj)
 		__krg_children_readlock(current);
@@ -1998,6 +1982,7 @@ repeat:
 			retval = tsk_result;
 	}
 #endif
+
 notask:
 	retval = wo->notask_error;
 	if (!retval && !(wo->wo_flags & WNOHANG)) {
