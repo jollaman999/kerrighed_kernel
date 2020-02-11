@@ -65,6 +65,13 @@
 #include <linux/blkdev.h>
 #include <linux/fs_struct.h>
 #include <linux/magic.h>
+#include <linux/perf_event.h>
+#include <linux/posix-timers.h>
+#include <linux/user-return-notifier.h>
+#include <linux/khugepaged.h>
+#include <linux/oom.h>
+#include <linux/signalfd.h>
+
 #ifdef CONFIG_KRG_KDDM
 #include <kddm/kddm_info.h>
 #endif
@@ -83,12 +90,6 @@
 #ifdef CONFIG_KRG_SCHED
 #include <kerrighed/scheduler/info.h>
 #endif
-#include <linux/perf_event.h>
-#include <linux/posix-timers.h>
-#include <linux/user-return-notifier.h>
-#include <linux/khugepaged.h>
-#include <linux/oom.h>
-#include <linux/signalfd.h>
 
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
@@ -645,11 +646,11 @@ void mmput(struct mm_struct *mm)
 			spin_unlock(&mmlist_lock);
 		}
 		put_swap_token(mm);
+		if (mm->binfmt)
+			module_put(mm->binfmt->module);
 #ifdef CONFIG_KRG_EPM
 		BUG_ON(atomic_read(&mm->mm_ltasks) != 0);
 #endif
-		if (mm->binfmt)
-			module_put(mm->binfmt->module);
 		mmdrop(mm);
 	}
 }
@@ -1110,21 +1111,8 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 
 	if (!krg_current)
 #endif
-	if (clone_flags & CLONE_THREAD) {
-#ifdef CONFIG_KRG_EPM
-		if (current->signal->kddm_obj)
-			krg_signal_writelock(current->signal);
-#endif
-		atomic_inc(&current->signal->count);
-		atomic_inc(&current->signal->live);
-#ifdef CONFIG_KRG_EPM
-		if (current->signal->kddm_obj) {
-			krg_signal_share(current->signal);
-			krg_signal_unlock(current->signal);
-		}
-#endif
+	if (clone_flags & CLONE_THREAD)
 		return 0;
-	}
 
 	sig = kmem_cache_alloc(signal_cachep, GFP_KERNEL);
 	tsk->signal = sig;
@@ -1210,19 +1198,12 @@ static void cleanup_signal(struct task_struct *tsk)
 {
 	struct signal_struct *sig = tsk->signal;
 #ifdef CONFIG_KRG_EPM
-	struct signal_struct *locked_sig;
-#endif
+	struct signal_struct *locked_sig = krg_signal_exit(sig);
 
-#ifdef CONFIG_KRG_EPM
-	locked_sig = krg_signal_exit(sig);
+	if (locked_sig)
+		krg_signal_unlock(locked_sig);
 #endif
-	atomic_dec(&sig->live);
-
-	if (atomic_dec_and_test(&sig->count))
-		__cleanup_signal(sig);
-#ifdef CONFIG_KRG_EPM
-	krg_signal_unlock(locked_sig);
-#endif
+	__cleanup_signal(sig);
 }
 
 static void copy_flags(unsigned long clone_flags, struct task_struct *p)
@@ -1352,7 +1333,6 @@ struct task_struct *copy_process(unsigned long clone_flags,
 
 	ftrace_graph_init_task(p);
 
-	//printk(KERN_INFO "%s %u copy_process %p, %p  \n",p->comm,p->pid, p->real_cred, p->cred);
 #ifdef CONFIG_KRG_HOTPLUG
 	p->create_krg_ns = 0;
 #endif
@@ -1499,7 +1479,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		goto bad_fork_cleanup_kddm_info;
 #else
 		goto bad_fork_cleanup_perf;
-#endif /* CONFIG_KRG_KDDM */
+#endif
 	/* copy all the process information */
 	if ((retval = copy_semundo(clone_flags, p)))
 		goto bad_fork_cleanup_audit;
@@ -1616,7 +1596,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	if (!krg_current) {
 		retval = krg_copy_application(p);
 		if (retval)
-			goto bad_fork_free_graph;
+			goto bad_fork_free_pid;
 	}
 
 	retval = krg_children_prepare_fork(p, pid, clone_flags);
@@ -1629,7 +1609,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #ifdef CONFIG_KRG_EPM
 		goto bad_fork_cleanup_children;
 #else
-		goto bad_fork_free_graph;
+		goto bad_fork_free_pid;
 #endif
 #endif
 #ifdef CONFIG_KRG_SCHED
@@ -1638,7 +1618,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #ifdef CONFIG_KRG_PROC
 		goto bad_fork_free_krg_task;
 #else
-		goto bad_fork_free_graph;
+		goto bad_fork_free_pid;
 #endif
 #endif /* CONFIG_KRG_SCHED */
 
@@ -1680,7 +1660,6 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	/* Only check if inside a remote clone() */
 	if (!krg_current || in_krg_do_fork())
 #endif
-
 	if (signal_pending(current)) {
 		spin_unlock(&current->sighand->siglock);
 		write_unlock_irq(&tasklist_lock);
@@ -1706,15 +1685,30 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #endif
 	}
 #endif /* CONFIG_KRG_EPM */
-#ifdef CONFIG_KRG_EPM
-	if (!krg_current || !thread_group_leader(krg_current))
-#endif
-#ifdef CONFIG_KRG_EPM
+
 	if (clone_flags & CLONE_THREAD) {
+#ifdef CONFIG_KRG_EPM
+		if (!krg_current) {
+			if (current->signal->kddm_obj)
+				krg_signal_writelock(current->signal);
+#endif
+		atomic_inc(&current->signal->count);
+		atomic_inc(&current->signal->live);
+#ifdef CONFIG_KRG_EPM
+			if (current->signal->kddm_obj) {
+				krg_signal_share(current->signal);
+				krg_signal_unlock(current->signal);
+			}
+		}
+
+		if (!krg_current || !thread_group_leader(krg_current)) {
+#endif
 		p->group_leader = current->group_leader;
 		list_add_tail_rcu(&p->thread_group, &p->group_leader->thread_group);
-	}
+#ifdef CONFIG_KRG_EPM
+		}
 #endif
+	}
 
 	if (likely(p->pid)) {
 #ifdef CONFIG_KRG_EPM
@@ -1784,8 +1778,6 @@ bad_fork_cleanup_application:
 	if (!krg_current)
 		krg_exit_application(p);
 #endif
-bad_fork_free_graph:
-	ftrace_graph_exit_task(p);
 bad_fork_free_pid:
 #ifdef CONFIG_KRG_EPM
 	if (!krg_current)
@@ -1820,7 +1812,8 @@ bad_fork_cleanup_signal:
 #ifdef CONFIG_KRG_EPM
 	if (!krg_current || in_krg_do_fork())
 #endif
-	cleanup_signal(p);
+	if (!(clone_flags & CLONE_THREAD))
+		cleanup_signal(p);
 bad_fork_cleanup_sighand:
 #ifdef CONFIG_KRG_EPM
 	if (!krg_current || in_krg_do_fork())
@@ -1842,8 +1835,8 @@ bad_fork_cleanup_kddm_info:
 		kmem_cache_free(kddm_info_cachep, p->kddm_info);
 #else
 bad_fork_cleanup_perf:
-	perf_event_free_task(p);
 #endif
+	perf_event_free_task(p);
 bad_fork_cleanup_policy:
 #ifdef CONFIG_NUMA
 	mpol_put(p->mempolicy);
@@ -2141,10 +2134,11 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 	struct files_struct *fd, *new_fd = NULL;
 	struct nsproxy *new_nsproxy = NULL;
 	int do_sysvsem = 0;
-	int err;
 #ifdef CONFIG_KRG_HOTPLUG
 	int saved_create_krg_ns;
 #endif
+	int err;
+
 	/*
 	 * If unsharing a pid namespace must also unshare the thread.
 	 */
@@ -2166,13 +2160,15 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 	if (unshare_flags & CLONE_NEWNS)
 		unshare_flags |= CLONE_FS;
 
-	err = check_unshare_flags(unshare_flags);
 #ifdef CONFIG_KRG_HOTPLUG
 	saved_create_krg_ns = current->create_krg_ns;
 	current->create_krg_ns = 0;
 #endif
+
+	err = check_unshare_flags(unshare_flags);
 	if (err)
 		goto bad_unshare_out;
+
 	/*
 	 * CLONE_NEWIPC must also detach from the undolist: after switching
 	 * to a new ipc namespace, the semaphore arrays from the old
