@@ -110,21 +110,15 @@ static void __exit_signal(struct task_struct *tsk)
 
 	sighand = rcu_dereference(tsk->sighand);
 	spin_lock(&sighand->siglock);
-#ifdef CONFIG_KRG_EPM
-	if (tsk->exit_state != EXIT_MIGRATION)
-#endif
 	atomic_dec(&sig->count);
 
 	posix_cpu_timers_exit(tsk);
-#ifdef CONFIG_KRG_EPM
-	if (tsk->exit_state == EXIT_MIGRATION) {
-		BUG_ON(atomic_read(&sig->count) > 1);
-		posix_cpu_timers_exit_group(tsk);
-		sig->curr_target = NULL;
-	} else
-#endif
 	if (group_dead) {
 		posix_cpu_timers_exit_group(tsk);
+#ifdef CONFIG_KRG_EPM
+		if (tsk->exit_state == EXIT_MIGRATION)
+			sig->curr_target = NULL;
+#endif
 	} else {
 		/*
 		 * This can only happen if the caller is de_thread().
