@@ -205,7 +205,7 @@ extern unsigned long long time_sync_thresh;
 #define TASK_WAKING		256
 #ifdef CONFIG_KRG_EPM
 /* in tsk->exit_state */
-#define EXIT_MIGRATION		256
+#define EXIT_MIGRATION		512
 #endif
 
 /* Convenience macros for the sake of set_task_state */
