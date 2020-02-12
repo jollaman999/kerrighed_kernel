@@ -1230,13 +1230,13 @@ static int handle_change_prob_owner_req(struct rpc_desc* desc,
 
 void object_server_init ()
 {
-        struct rpc_synchro* object_server;
+	struct rpc_synchro* object_server;
 	struct rpc_synchro* object_server_may_block;
 
 	object_server = rpc_synchro_new(1, "object server", 1);
 	object_server_may_block = rpc_synchro_new(1, "object srv may block", 1);
 
-	/***  Init the object serveur  ***/
+	/***  Init the object server  ***/
 
 	__rpc_register(REQ_OBJECT_COPY,
 		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
