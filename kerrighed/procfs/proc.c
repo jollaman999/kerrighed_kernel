@@ -535,6 +535,8 @@ static int krg_show_stat(struct seq_file *p, void *v)
 	kerrighed_node_t node_id;
 	unsigned int *irqs, *cpu_irqs;
 	u64 total_intr = 0;
+	u64 sum_softirq = 0;
+	unsigned int per_softirq_sums[NR_SOFTIRQS] = {0};
 #define HEAD_BLANK_LEN 81
 	static const char head_blank[HEAD_BLANK_LEN + 1] = {
 		[ 0 ... HEAD_BLANK_LEN - 2 ] = ' ',
@@ -618,6 +620,13 @@ static int krg_show_stat(struct seq_file *p, void *v)
 			for (j = 0; j < NR_IRQS; j++)
 				irqs[j] += cpu_irqs[j];
 			total_intr += dynamic_cpu_info->total_intr;
+
+			for (j = 0; j < NR_SOFTIRQS; j++) {
+				unsigned int softirq_stat = kstat_softirqs_cpu(j, i);
+
+				per_softirq_sums[j] += softirq_stat;
+				sum_softirq += softirq_stat;
+			}
 		}
 		total_intr += dynamic_node_info->arch_irq;
 	}
@@ -665,6 +674,12 @@ static int krg_show_stat(struct seq_file *p, void *v)
 		   nr_running,
 		   nr_iowait);
 
+	seq_printf(p, "softirq %llu", (unsigned long long)sum_softirq);
+
+	for (i = 0; i < NR_SOFTIRQS; i++)
+		seq_printf(p, " %u", per_softirq_sums[i]);
+	seq_printf(p, "\n");
+
 	return 0;
 }
 
@@ -673,6 +688,9 @@ static int stat_open(struct inode *inode, struct file *file)
 	unsigned size;
 
 	size = 256 + NR_IRQS * 8 + NR_CPUS * kerrighed_nb_nodes * 80;
+
+	/* minimum size to display an interrupt count : 2 bytes */
+	size += 2 * nr_irqs;
 
 	return krg_proc_stat_open(inode, file, krg_show_stat, size);
 }
