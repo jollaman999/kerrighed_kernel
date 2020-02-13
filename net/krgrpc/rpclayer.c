@@ -116,6 +116,8 @@ struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
 	struct rpc_desc* desc;
 	int i;
 
+	printk("krgrpc: rpc_begin_m - rpcid : %u \n", rpcid);
+
 	desc = rpc_desc_alloc();
 	if(!desc)
 		goto oom;
