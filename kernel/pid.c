@@ -425,9 +425,6 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 		tmp = tmp->parent;
 	}
 
-#ifdef CONFIG_KRG_EPM
-	if (!krg_current)
-#endif
 	if (unlikely(is_child_reaper(pid))) {
 		if (pid_ns_prepare_proc(ns))
 			goto out_free;
