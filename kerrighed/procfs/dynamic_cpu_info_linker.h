@@ -23,10 +23,9 @@
 
 typedef struct {
 	struct kernel_stat stat;
-#ifdef CONFIG_GENERIC_HARDIRQS
-	unsigned int irqs[NR_IRQS];
-#endif
-	u64 total_intr;
+	u64 sum_irq;
+	u64 sum_softirq;
+	unsigned int per_softirq_sums[NR_SOFTIRQS];
 } krg_dynamic_cpu_info_t;
 
 /*--------------------------------------------------------------------------*
@@ -59,16 +58,6 @@ static inline krg_dynamic_cpu_info_t *get_dynamic_cpu_info(int node_id,
 	return _fkddm_get_object(dynamic_cpu_info_kddm_set,
 				 __krg_cpu_id(node_id, cpu_id),
 				 KDDM_NO_FREEZE|KDDM_NO_FT_REQ);
-}
-
-static inline
-unsigned int *krg_dynamic_cpu_info_irqs(krg_dynamic_cpu_info_t *info)
-{
-#ifdef CONFIG_GENERIC_HARDIRQS
-	return &info->irqs[0];
-#else
-	return &info->stat.irqs[0];
-#endif
 }
 
 #endif /* DYNAMIC_CPU_INFO LINKER_H */

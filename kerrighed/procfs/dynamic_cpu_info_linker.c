@@ -19,6 +19,8 @@
 
 #include <kerrighed/debug.h>
 
+extern cputime64_t get_idle_time(int cpu);
+
 struct kddm_set *dynamic_cpu_info_kddm_set;
 
 /*****************************************************************************/
@@ -57,23 +59,20 @@ static void update_dynamic_cpu_info_worker(struct work_struct *data)
 		/* Compute data for stat proc file */
 
 		dynamic_cpu_info->stat = kstat_cpu(i);
-#ifdef arch_idle_time
 		dynamic_cpu_info->stat.cpustat.idle =
 			cputime64_add(dynamic_cpu_info->stat.cpustat.idle,
-				      arch_idle_time(i));
-#endif
-		dynamic_cpu_info->total_intr = 0;
-		for (j = 0; j < NR_IRQS; j++) {
-			unsigned int *irqs =
-				krg_dynamic_cpu_info_irqs(dynamic_cpu_info);
-#ifdef CONFIG_GENERIC_HARDIRQS
-			irqs[j] = kstat_irqs_cpu(j, i);
-#endif
-			dynamic_cpu_info->total_intr += irqs[j];
+				      get_idle_time(i));
+		dynamic_cpu_info->sum_irq = 0;
+		dynamic_cpu_info->sum_irq += kstat_cpu_irqs_sum(i);
+		dynamic_cpu_info->sum_irq += arch_irq_stat_cpu(i);
+
+		dynamic_cpu_info->sum_softirq = 0;
+		for (j = 0; j < NR_SOFTIRQS; j++) {
+			unsigned int softirq_stat = kstat_softirqs_cpu(j, i);
+
+			dynamic_cpu_info->per_softirq_sums[j] += softirq_stat;
+			dynamic_cpu_info->sum_softirq += softirq_stat;
 		}
-#ifdef arch_irq_stat_cpu
-		dynamic_cpu_info->total_intr += arch_irq_stat_cpu(i);
-#endif
 
 		_kddm_put_object(dynamic_cpu_info_kddm_set, cpu_id);
 	}
