@@ -10,6 +10,7 @@
 #include <linux/pagevec.h>
 #include <linux/cpuset.h>
 #include <linux/mm_inline.h>
+#include <linux/mmu_notifier.h>
 #include <asm/tlbflush.h>
 #include <linux/module.h>
 #include <kerrighed/sys/types.h>
@@ -261,30 +262,30 @@ static int flush_page(struct page *page,
 
 static int try_to_flush_one(struct page *page, struct vm_area_struct *vma)
 {
-        struct mm_struct *mm = vma->vm_mm;
-        unsigned long address;
+	struct mm_struct *mm = vma->vm_mm;
+	unsigned long address;
 	objid_t objid;
-        pte_t *pte;
-        spinlock_t *ptl;
-        int ret = SWAP_AGAIN;
+	pte_t *pte;
+	spinlock_t *ptl;
+	int ret = SWAP_AGAIN;
 
 	objid = page->index;
 	if (vma->vm_file)
 		objid += (vma->vm_start >> PAGE_SHIFT) - vma->vm_pgoff;
 
-        address = objid * PAGE_SIZE;
+	address = objid * PAGE_SIZE;
 
-        pte = page_check_address(page, mm, address, &ptl, 0);
-        if (!pte)
+	pte = page_check_address(page, mm, address, &ptl, 0);
+	if (!pte)
 		return ret;
 
-        /*
-         * If the page is mlock()d, we cannot swap it out.
-         * If it's recently referenced (perhaps page_referenced
-         * skipped over this mm) then we should reactivate it.
-         */
-        if (((vma->vm_flags & VM_LOCKED) ||
-	     (ptep_clear_flush_young(vma, address, pte)))) {
+	/*
+	* If the page is mlock()d, we cannot swap it out.
+	* If it's recently referenced (perhaps page_referenced
+	* skipped over this mm) then we should reactivate it.
+	*/
+	if ((vma->vm_flags & VM_LOCKED) ||
+	   (ptep_clear_flush_young_notify(vma, address, pte))) {
 		pte_unmap_unlock(pte, ptl);
 		return SWAP_FAIL;
 	}
@@ -296,18 +297,23 @@ static int try_to_flush_one(struct page *page, struct vm_area_struct *vma)
 
 int try_to_flush_page(struct page *page)
 {
-        struct anon_vma *anon_vma;
-        struct vm_area_struct *vma;
+	struct anon_vma *anon_vma;
+	struct anon_vma_chain *avc;
+	struct vm_area_struct *vma = NULL;
 	int ret = SWAP_AGAIN;
 
 	krg_notify_mem(OUT_OF_MEM);
 
 	anon_vma = page_lock_anon_vma(page);
-        if (!anon_vma)
-                return SWAP_AGAIN;
+	if (!anon_vma)
+		return ret;
 
-	list_for_each_entry(vma, &anon_vma->head, anon_vma_node) {
+	list_for_each_entry(avc, &anon_vma->head, same_anon_vma) {
 		unsigned long address;
+
+		vma = avc->vma;
+		if (!vma)
+			continue;
 
 		if (page_mapcount(page) <= 1)
 			break;
@@ -315,14 +321,14 @@ int try_to_flush_page(struct page *page)
 		address = vma_address(page, vma);
 		if (address == -EFAULT)
 			continue;
-		ret = try_to_unmap_one(page, vma, address, 0);
-		if (ret == SWAP_FAIL)
+		ret = try_to_unmap_one(page, vma, address, TTU_UNMAP);
+		if (ret != SWAP_AGAIN)
 			goto exit;
 	}
 
 	page_unlock_anon_vma(anon_vma);
 
-	if (page_mapcount(page) == 1)
+	if (page_mapcount(page) == 1 && vma != NULL)
 		ret = try_to_flush_one(page, vma);
 
 exit:

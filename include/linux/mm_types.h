@@ -182,9 +182,6 @@ struct vm_area_struct {
 	struct list_head anon_vma_chain; /* Serialized by mmap_sem &
 					  * page_table_lock */
 	struct anon_vma *anon_vma;	/* Serialized by page_table_lock */
-#ifdef CONFIG_KRG_MM
-	struct list_head anon_vma_node;	/* Serialized by anon_vma->lock */
-#endif
 
 	/* Function pointers to deal with this struct. */
 #ifdef CONFIG_KRG_MM
