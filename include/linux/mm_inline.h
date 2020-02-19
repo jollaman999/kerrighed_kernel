@@ -61,10 +61,6 @@ static inline enum lru_list page_lru_base_type(struct page *page)
 {
 	if (page_is_file_cache(page))
 		return LRU_INACTIVE_FILE;
-#ifdef CONFIG_KRG_MM
-	else if (PageMigratable(page))
-		return LRU_INACTIVE_ANON + LRU_MIGR;
-#endif
 	return LRU_INACTIVE_ANON;
 }
 
@@ -82,6 +78,10 @@ del_page_from_lru(struct zone *zone, struct page *page)
 			__ClearPageActive(page);
 			l += LRU_ACTIVE;
 		}
+#ifdef CONFIG_KRG_MM
+		if (PageMigratable(page))
+			l += LRU_MIGR;
+#endif
 	}
 	mem_cgroup_lru_del_list(page, l);
 	list_del(&page->lru);
@@ -105,14 +105,49 @@ static inline enum lru_list page_lru(struct page *page)
 		lru = page_lru_base_type(page);
 		if (PageActive(page))
 			lru += LRU_ACTIVE;
+#ifdef CONFIG_KRG_MM
+		if (PageMigratable(page))
+			lru += LRU_MIGR;
+#endif
 	}
 
 	return lru;
 }
 
 #ifdef CONFIG_KRG_MM
-/* LRU_FILE is 2 */
-#define RECLAIM_STAT_INDEX(file,kddm) ((!!file) + 2 * (!!kddm))
+/*
+ * 2020-02-14 commented by ish
+ *
+ * - Kerrighed's original code
+ * #define BUILD_LRU_ID(active,file,kddm) (LRU_BASE + LRU_MIGR * kddm + LRU_FILE * file + active)
+ *
+ * Wrong calculation..? It seems LRU_FILE should not be added.
+ *
+ * in 'include/linux/mmzone.h'
+ *
+ * #define LRU_BASE 0
+ * #define LRU_ACTIVE 1
+ * #define LRU_FILE 2
+ * #define LRU_MIGR 4
+ *
+ * enum lru_list {
+ *	LRU_INACTIVE_ANON = LRU_BASE,
+ *	LRU_ACTIVE_ANON = LRU_BASE + LRU_ACTIVE,
+ *	LRU_INACTIVE_FILE = LRU_BASE + LRU_FILE,
+ *	LRU_ACTIVE_FILE = LRU_BASE + LRU_FILE + LRU_ACTIVE,
+ * #ifdef CONFIG_KRG_MM
+ *	LRU_INACTIVE_MIGR = LRU_BASE + LRU_MIGR,
+ *	LRU_ACTIVE_MIGR = LRU_BASE + LRU_MIGR + LRU_ACTIVE,
+ * #endif
+ *	LRU_UNEVICTABLE,
+ *	NR_LRU_LISTS
+ * };
+ *
+ * Refer to Kerrighed's original code, when LRU_FILE is added, the result value will be
+ * LRU_UNEVICTABLE or NR_LRU_LISTS .
+*/
+#define BUILD_LRU_ID(active,kddm) (LRU_BASE + LRU_MIGR * kddm + LRU_ACTIVE * active)
+#define RECLAIM_STAT_INDEX(file,kddm) (file + LRU_FILE * (!!kddm))
 static inline int reclaim_stat_index(struct page *page)
 {
 	return RECLAIM_STAT_INDEX(page_is_file_cache(page),
