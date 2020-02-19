@@ -1242,7 +1242,9 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 			ret = SWAP_FAIL;
 			goto out_unmap;
 		}
+	}
 #ifdef CONFIG_KRG_MM
+	if (TTU_ACTION(flags) != TTU_MIGRATION) {
 		/* Avoid unmap of a page in an address space being inserted in
 		 * a KDDM or in use in the KDDM layer */
 		obj_entry = page->obj_entry;
@@ -1258,8 +1260,8 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 				goto out_unmap;
 			}
 		}
+	}
 #endif
-  	}
 
 	/* Nuke the page table entry. */
 	flush_cache_page(vma, address, page_to_pfn(page));
