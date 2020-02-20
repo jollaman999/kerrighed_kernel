@@ -1261,11 +1261,9 @@ static unsigned long isolate_pages(unsigned long nr, struct mem_cgroup_zone *mz,
 	if (file)
 		lru += LRU_FILE;
 #ifdef CONFIG_KRG_MM
-	if (kddm) {
-		if (file)
-			lru -= LRU_FILE;
+	if (kddm)
 		lru += LRU_MIGR;
-	}
+	BUG_ON(kddm && file);
 #endif
 
 	return isolate_lru_pages(nr, &lruvec->lists[lru], dst,
@@ -1747,9 +1745,9 @@ static void shrink_active_list(unsigned long nr_pages,
 
 #ifdef CONFIG_KRG_MM
 	move_active_pages_to_lru(zone, &l_active,
-						BUILD_LRU_ID(1 /* active */, kddm));
+						BUILD_LRU_ID(1 /* active */, file, kddm));
 	move_active_pages_to_lru(zone, &l_inactive,
-						BUILD_LRU_ID(0 /* inactive */, kddm));
+						BUILD_LRU_ID(0 /* inactive */, file, kddm));
 #else
 	move_active_pages_to_lru(zone, &l_active,
 						LRU_ACTIVE + file * LRU_FILE);
