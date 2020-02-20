@@ -140,28 +140,29 @@ static void destroy_pid_namespace(struct pid_namespace *ns)
 
 struct pid_namespace *copy_pid_ns(unsigned long flags, struct pid_namespace *old_ns)
 {
+#ifdef CONFIG_KRG_PROC
 	struct pid_namespace *new_ns;
+#endif
 
 	if (!(flags & CLONE_NEWPID))
 		return get_pid_ns(old_ns);
 	if (task_active_pid_ns(current) != old_ns)
 		return ERR_PTR(-EINVAL);
 
-	new_ns=create_pid_namespace(old_ns);
 #ifdef CONFIG_KRG_PROC
-	{
+	new_ns = create_pid_namespace(old_ns);
+	if (!IS_ERR(new_ns)) {
 		new_ns->global = old_ns->global;
 		new_ns->global |= current->create_krg_ns;
 		if (old_ns->krg_ns_root)
 			get_pid_ns(old_ns->krg_ns_root);
 		new_ns->krg_ns_root = old_ns->krg_ns_root;
-		new_ns->parent = get_pid_ns(old_ns);
 	}
-#else
-		new_ns->parent = get_pid_ns(old_ns);
-#endif
 
 	return new_ns;
+#else
+	return create_pid_namespace(old_ns);
+#endif
 }
 
 void free_pid_ns(struct kref *kref)
