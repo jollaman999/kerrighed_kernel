@@ -560,6 +560,10 @@ redo:
 		 * We know how to handle that.
 		 */
 		lru = active + page_lru_base_type(page);
+#ifdef CONFIG_KRG_MM
+		BUG_ON(page_is_migratable(page) && page_is_file_cache(page));
+		lru += page_is_migratable(page);
+#endif
 		lru_cache_add_lru(page, lru);
 	} else {
 		/*
