@@ -2516,6 +2516,7 @@ void mem_cgroup_uncharge_cache_page(struct page *page)
 	VM_BUG_ON(page->mapping);
 	__mem_cgroup_uncharge_common(page, MEM_CGROUP_CHARGE_TYPE_CACHE);
 }
+
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 /*
  * When a hugepage is charged, PCG_USED bit (see mem_cgroup_commit_charge())

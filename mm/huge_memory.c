@@ -1239,7 +1239,9 @@ static void __split_huge_page_refcount(struct page *page)
 		BUG_ON(!PageDirty(page_tail));
 		BUG_ON(!PageSwapBacked(page_tail));
 
+#ifdef CONFIG_CGROUP_MEM_RES_CTLR
 		mem_cgroup_split_hugepage_commit(page_tail, page);
+#endif
 		lru_add_page_tail(zone, page, page_tail);
 	}
 	atomic_sub(tail_count, &page->_count);
