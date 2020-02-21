@@ -1397,8 +1397,8 @@ static unsigned long shrink_inactive_list(unsigned long max_scan,
 	struct pagevec pvec;
 	unsigned long nr_scanned = 0;
 	unsigned long nr_reclaimed = 0;
-        unsigned long nr_dirty = 0;
-        unsigned long nr_writeback = 0;
+	unsigned long nr_dirty = 0;
+	unsigned long nr_writeback = 0;
 	struct zone_reclaim_stat *reclaim_stat = get_reclaim_stat(mz);
 	struct zone *zone = mz->zone;
 	int order = 0;
@@ -3563,6 +3563,10 @@ retry:
 	if (page_evictable(page, NULL)) {
 		enum lru_list l = page_lru_base_type(page);
 
+#ifdef CONFIG_KRG_MM
+		BUG_ON(page_is_migratable(page) && page_is_file_cache(page));
+		l += page_is_migratable(page);
+#endif
 		__dec_zone_state(zone, NR_UNEVICTABLE);
 		lruvec = mem_cgroup_lru_move_lists(zone, page,
 						   LRU_UNEVICTABLE, l);
