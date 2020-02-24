@@ -1,0 +1,14 @@
+--- mm/backing-dev.c
++++ mm/backing-dev.c
+@@ -315,7 +315,11 @@
+  * write congestion.  If no backing_devs are congested then just wait for the
+  * next write to be completed.
+  */
++#ifdef CONFIG_KRG_EPM
++static long __congestion_wait(int rw, long timeout)
++#else
+ long congestion_wait(int rw, long timeout)
++#endif
+ {
+ 	long ret;
+ 	DEFINE_WAIT(wait);

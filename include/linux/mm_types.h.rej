@@ -1,0 +1,16 @@
+--- include/linux/mm_types.h
++++ include/linux/mm_types.h
+@@ -271,6 +290,13 @@
+ 
+ 	struct core_state *core_state; /* coredumping support */
+ 
++#ifdef CONFIG_KRG_MM
++	struct kddm_set * anon_vma_kddm_set;
++	unique_id_t anon_vma_kddm_id;
++	krgnodemask_t copyset;		/* Nodes owning a copy of the struct */
++	unique_id_t mm_id;
++#endif
++
+ 	/* aio bits */
+ 	spinlock_t		ioctx_lock;
+ 	struct hlist_head	ioctx_list;

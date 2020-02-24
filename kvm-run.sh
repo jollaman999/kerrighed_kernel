@@ -1,0 +1,1 @@
+/usr/libexec/qemu-kvm -kernel arch/x86/boot/bzImage -cpu Skylake-Server-IBRS -smp 72 -boot c -m 2048M -initrd ../initramfs-2.6.32-krg_xeon.img_nokill_udev -hda /root/work/filesystem/kerrighd_file.img -append "root=/dev/sda rw console=ttyS0,115200 ip=dhcp session_id=1 autonodeid=1 init=/sbin/init-krg selinux=0" -net nic -net tap,ifname=tap1,script=no  -serial stdio -display none

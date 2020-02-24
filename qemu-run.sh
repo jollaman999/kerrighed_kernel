@@ -1,0 +1,1 @@
+qemu -no-kvm -kernel arch/x86/boot/bzImage -smp 72 -boot c -m 2048M -initrd ../initramfs-2.6.32-krg_xeon.img -hda /root/work/filesystem/kerrighd_file.img -append "root=/dev/sda rw console=ttyS0 console=ttyS0,115200 acpi=off ip=auto session_id=1 autonodeid=1 init=/sbin/init-krg selinux=0" -net nic -net tap,ifname=tap1,script=no  -serial stdio -display none

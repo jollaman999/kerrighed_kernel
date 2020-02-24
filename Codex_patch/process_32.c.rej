@@ -1,0 +1,18 @@
+--- arch/x86/kernel/process_32.c
++++ arch/x86/kernel/process_32.c
+@@ -299,8 +306,15 @@
+ 
+ 	ds_copy_thread(p, current);
+ 
++#ifdef CONFIG_KRG_EPM
++	/* Do not corrupt debugctlmsr in migration/restart */
++	if (!krg_current || in_krg_do_fork()) {
++#endif
+ 	clear_tsk_thread_flag(p, TIF_DEBUGCTLMSR);
+ 	p->thread.debugctlmsr = 0;
++#ifdef CONFIG_KRG_EPM
++	}
++#endif
+ 
+ 	return err;
+ }
