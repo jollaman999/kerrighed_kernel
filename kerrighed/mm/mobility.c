@@ -1089,14 +1089,13 @@ static int import_context_struct(ghost_t * ghost, struct mm_struct *mm)
 	int r = 0;
 
 #ifndef CONFIG_USERMODE
-
 	if (mm->context.ldt) {
 		int orig_size = mm->context.size;
 
 		mm->context.ldt = NULL;
 		mm->context.size = 0;
 
-		r = alloc_ldt (&mm->context, orig_size, 0);
+		r = alloc_ldt(&mm->context, orig_size, 0);
 		if (r < 0)
 			return r;
 
