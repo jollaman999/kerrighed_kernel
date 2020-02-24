@@ -125,8 +125,16 @@ extern unsigned int kobjsize(const void *objp);
 #define VM_SAO		0x20000000	/* Strong Access Ordering (powerpc) */
 #define VM_PFN_AT_MMAP	0x40000000	/* PFNMAP vma that is fully mapped at mmap time */
 #define VM_MERGEABLE	0x80000000	/* KSM may merge identical pages */
+#ifdef CONFIG_KRG_MM
+#define VM_KDDM		0x100000000ULL	/* The vma is stored inside KDDM */
+#endif
+
+#ifdef CONFIG_KRG_MM
+#define VM_HUGEPAGE	0x200000000ULL	/* MADV_HUGEPAGE marked this vma */
+#else
 #if BITS_PER_LONG > 32
 #define VM_HUGEPAGE	0x100000000UL	/* MADV_HUGEPAGE marked this vma */
+#endif
 #endif
 
 /*
@@ -140,10 +148,6 @@ extern unsigned int kobjsize(const void *objp);
 
 /* Bits set in the VMA until the stack is in its final location */
 #define VM_STACK_INCOMPLETE_SETUP	(VM_RAND_READ | VM_SEQ_READ)
-
-#ifdef CONFIG_KRG_MM
-#define VM_KDDM		0x80000000	/* The vma is stored inside KDDM */
-#endif
 
 #ifndef VM_STACK_DEFAULT_FLAGS		/* arch can override this */
 #define VM_STACK_DEFAULT_FLAGS VM_DATA_DEFAULT_FLAGS
@@ -1303,7 +1307,11 @@ extern int vma_adjust(struct vm_area_struct *vma, unsigned long start,
 	unsigned long end, pgoff_t pgoff, struct vm_area_struct *insert);
 extern struct vm_area_struct *vma_merge(struct mm_struct *,
 	struct vm_area_struct *prev, unsigned long addr, unsigned long end,
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags, struct anon_vma *, struct file *, pgoff_t,
+#else
 	unsigned long vm_flags, struct anon_vma *, struct file *, pgoff_t,
+#endif
 	struct mempolicy *);
 extern struct anon_vma *find_mergeable_anon_vma(struct vm_area_struct *);
 extern int split_vma(struct mm_struct *,
@@ -1334,7 +1342,11 @@ static inline void removed_exe_file_vma(struct mm_struct *mm)
 extern int may_expand_vm(struct mm_struct *mm, unsigned long npages);
 extern int install_special_mapping(struct mm_struct *mm,
 				   unsigned long addr, unsigned long len,
+#ifdef CONFIG_KRG_MM
+				   unsigned long long flags, struct page **pages);
+#else
 				   unsigned long flags, struct page **pages);
+#endif
 
 
 extern unsigned long get_unmapped_area_prot(struct file *, unsigned long, unsigned long, unsigned long, unsigned long, int);
@@ -1353,15 +1365,20 @@ extern unsigned long __get_unmapped_area_prot(struct mm_struct *, struct file *,
 extern unsigned long do_mmap_pgoff(struct file *file, unsigned long addr,
 	unsigned long len, unsigned long prot,
 	unsigned long flag, unsigned long pgoff);
+#ifdef CONFIG_KRG_MM
+extern unsigned long mmap_region(struct file *file, unsigned long addr,
+	unsigned long len, unsigned long flags,
+	unsigned long long vm_flags, unsigned long pgoff);
+extern unsigned long __mmap_region(struct mm_struct *mm, struct file *file,
+				   unsigned long addr, unsigned long len,
+				   unsigned long flags, unsigned long long vm_flags,
+				   unsigned long pgoff, int handler_call);
+#else
 extern unsigned long mmap_region(struct file *file, unsigned long addr,
 	unsigned long len, unsigned long flags,
 	unsigned int vm_flags, unsigned long pgoff);
-#ifdef CONFIG_KRG_MM
-extern unsigned long __mmap_region(struct mm_struct *mm, struct file *file,
-				   unsigned long addr, unsigned long len,
-				   unsigned long flags, unsigned int vm_flags,
-				   unsigned long pgoff, int handler_call);
 #endif
+
 static inline unsigned long do_mmap(struct file *file, unsigned long addr,
 	unsigned long len, unsigned long prot,
 	unsigned long flag, unsigned long offset)
@@ -1496,7 +1513,11 @@ static inline unsigned long vma_pages(struct vm_area_struct *vma)
 	return (vma->vm_end - vma->vm_start) >> PAGE_SHIFT;
 }
 
+#ifdef CONFIG_KRG_MM
+pgprot_t vm_get_page_prot(unsigned long long vm_flags);
+#else
 pgprot_t vm_get_page_prot(unsigned long vm_flags);
+#endif
 struct vm_area_struct *find_extend_vma(struct mm_struct *, unsigned long addr);
 int remap_pfn_range(struct vm_area_struct *, unsigned long addr,
 			unsigned long pfn, unsigned long size, pgprot_t);

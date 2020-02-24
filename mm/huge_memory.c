@@ -1421,7 +1421,11 @@ out:
 	return ret;
 }
 
+#ifdef CONFIG_KRG_MM
+int hugepage_madvise(unsigned long long *vm_flags, int advice)
+#else
 int hugepage_madvise(unsigned long *vm_flags, int advice)
+#endif
 {
 	switch (advice) {
 	case MADV_HUGEPAGE:

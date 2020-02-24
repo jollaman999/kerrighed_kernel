@@ -105,7 +105,11 @@ pgprot_t protection_map[16] = {
 	__P000, __P001, __P010, __P011, __P100, __P101, __P110, __P111,
 	__S000, __S001, __S010, __S011, __S100, __S101, __S110, __S111};
 
+#ifdef CONFIG_KRG_MM
+pgprot_t vm_get_page_prot(unsigned long long vm_flags)
+#else
 pgprot_t vm_get_page_prot(unsigned long vm_flags)
+#endif
 {
 	return __pgprot(pgprot_val(protection_map[vm_flags &
 											  (VM_READ | VM_WRITE | VM_EXEC | VM_SHARED)]) |
@@ -858,7 +862,11 @@ int vma_adjust(struct vm_area_struct *vma, unsigned long start,
  * per-vma resources, so we don't attempt to merge those.
  */
 static inline int is_mergeable_vma(struct vm_area_struct *vma,
+#ifdef CONFIG_KRG_MM
+								   struct file *file, unsigned long long vm_flags)
+#else
 								   struct file *file, unsigned long vm_flags)
+#endif
 {
 	/* VM_CAN_NONLINEAR may get set later by f_op->mmap() */
 	if ((vma->vm_flags ^ vm_flags) & ~VM_CAN_NONLINEAR)
@@ -901,7 +909,11 @@ static inline int is_mergeable_anon_vma(struct anon_vma *anon_vma1,
  * wrap, nor mmaps which cover the final page at index -1UL.
  */
 static int
+#ifdef CONFIG_KRG_MM
+can_vma_merge_before(struct vm_area_struct *vma, unsigned long long vm_flags,
+#else
 can_vma_merge_before(struct vm_area_struct *vma, unsigned long vm_flags,
+#endif
 					 struct anon_vma *anon_vma, struct file *file, pgoff_t vm_pgoff)
 {
 	if (is_mergeable_vma(vma, file, vm_flags) &&
@@ -921,7 +933,11 @@ can_vma_merge_before(struct vm_area_struct *vma, unsigned long vm_flags,
  * anon_vmas, nor if same anon_vma is assigned but offsets incompatible.
  */
 static int
+#ifdef CONFIG_KRG_MM
+can_vma_merge_after(struct vm_area_struct *vma, unsigned long long vm_flags,
+#else
 can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
+#endif
 					struct anon_vma *anon_vma, struct file *file, pgoff_t vm_pgoff)
 {
 	if (is_mergeable_vma(vma, file, vm_flags) &&
@@ -966,7 +982,11 @@ can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
  */
 struct vm_area_struct *vma_merge(struct mm_struct *mm,
 								 struct vm_area_struct *prev, unsigned long addr,
+#ifdef CONFIG_KRG_MM
+								 unsigned long end, unsigned long long vm_flags,
+#else
 								 unsigned long end, unsigned long vm_flags,
+#endif
 								 struct anon_vma *anon_vma, struct file *file,
 								 pgoff_t pgoff, struct mempolicy *policy)
 {
@@ -1177,7 +1197,11 @@ unsigned long do_mmap_pgoff(struct file *file, unsigned long addr,
 {
 	struct mm_struct *mm = current->mm;
 	struct inode *inode;
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags;
+#else
 	unsigned int vm_flags;
+#endif
 	int error;
 	unsigned long reqprot = prot;
 
@@ -1325,7 +1349,11 @@ EXPORT_SYMBOL(do_mmap_pgoff);
  */
 int vma_wants_writenotify(struct vm_area_struct *vma)
 {
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags = vma->vm_flags;
+#else
 	unsigned int vm_flags = vma->vm_flags;
+#endif
 
 	/* If it was private or non-writable, the write bit is already clear */
 	if ((vm_flags & (VM_WRITE | VM_SHARED)) != ((VM_WRITE | VM_SHARED)))
@@ -1353,7 +1381,11 @@ int vma_wants_writenotify(struct vm_area_struct *vma)
  * We account for memory if it's a private writeable mapping,
  * not hugepages and VM_NORESERVE wasn't set.
  */
+#ifdef CONFIG_KRG_MM
+static inline int accountable_mapping(struct file *file, unsigned long long vm_flags)
+#else
 static inline int accountable_mapping(struct file *file, unsigned int vm_flags)
+#endif
 {
 	/*
 	 * hugetlb has its own accounting separate from the core VM
@@ -1368,14 +1400,14 @@ static inline int accountable_mapping(struct file *file, unsigned int vm_flags)
 #ifdef CONFIG_KRG_MM
 unsigned long mmap_region(struct file *file, unsigned long addr,
 						  unsigned long len, unsigned long flags,
-						  unsigned int vm_flags, unsigned long pgoff)
+						  unsigned long long vm_flags, unsigned long pgoff)
 {
 	return __mmap_region(current->mm, file, addr, len, flags, vm_flags,
 						 pgoff, 0);
 }
 unsigned long __mmap_region(struct mm_struct *mm, struct file *file,
 							unsigned long addr, unsigned long len,
-							unsigned long flags, unsigned int vm_flags,
+							unsigned long flags, unsigned long long vm_flags,
 							unsigned long pgoff, int handler_call)
 {
 #else
@@ -3080,7 +3112,11 @@ int special_mapping_vm_ops_krgsyms_unregister(void)
  */
 int install_special_mapping(struct mm_struct *mm,
 							unsigned long addr, unsigned long len,
+#ifdef CONFIG_KRG_MM
+							unsigned long long vm_flags, struct page **pages)
+#else
 							unsigned long vm_flags, struct page **pages)
+#endif
 {
 	int ret;
 	struct vm_area_struct *vma;

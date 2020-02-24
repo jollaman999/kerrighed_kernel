@@ -54,7 +54,7 @@ static inline void dump_vma(struct task_struct *tsk)
 	vma = tsk->mm->mmap;
 
 	while(vma) {
-		printk ("[0x%08lx:0x%08lx] - flags 0x%08lx - offset 0x%08lx - "
+		printk ("[0x%08lx:0x%08lx] - flags 0x%08llx - offset 0x%08lx - "
 			"file %p\n", vma->vm_start, vma->vm_end, vma->vm_flags,
 			vma->vm_pgoff, vma->vm_file);
 
@@ -103,7 +103,7 @@ void krg_notify_mem(int mem_usage);
 void krg_check_vma_link(struct vm_area_struct *vma);
 
 void krg_do_mmap_region(struct vm_area_struct *vma, unsigned long flags,
-			unsigned int vm_flags);
+			unsigned long long vm_flags);
 
 void krg_do_munmap(struct mm_struct *mm, unsigned long start, size_t len);
 

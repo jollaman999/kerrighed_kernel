@@ -187,7 +187,11 @@ static unsigned long move_vma(struct vm_area_struct *vma,
 {
 	struct mm_struct *mm = vma->vm_mm;
 	struct vm_area_struct *new_vma;
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags = vma->vm_flags;
+#else
 	unsigned long vm_flags = vma->vm_flags;
+#endif
 	unsigned long new_pgoff;
 	unsigned long moved_len;
 	unsigned long excess = 0;

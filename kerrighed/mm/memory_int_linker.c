@@ -75,7 +75,6 @@ link:
 		return r;
 
 	/*** Make the VMA a kddm set VMA ***/
-
 	BUG_ON(vma->initial_vm_ops == &anon_memory_kddm_vmops);
 	if (vma->vm_ops == NULL)
 		vma->initial_vm_ops = &null_vm_ops;
