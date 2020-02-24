@@ -11,14 +11,12 @@ void partial_init_vma(struct mm_struct *mm, struct vm_area_struct *vma)
 {
 	vma->vm_mm = mm;
 	vma->vm_next = NULL;
-	INIT_LIST_HEAD (&vma->anon_vma_chain);
+	INIT_LIST_HEAD(&vma->anon_vma_chain);
 	vma->vm_truncate_count = 0;
 	memset (&vma->shared, 0, sizeof (vma->shared));
 	memset (&vma->vm_rb, 0, sizeof (vma->vm_rb));
 	vma->vm_private_data = NULL;
 }
-
-
 
 int alloc_fake_vma(struct mm_struct *mm,
 		   unsigned long start,
@@ -37,7 +35,7 @@ int alloc_fake_vma(struct mm_struct *mm,
 	vma->vm_flags = VM_READ | VM_WRITE | VM_MAYREAD | VM_MAYWRITE |
 		VM_MAYEXEC;
 
-	r = insert_vm_struct (mm, vma);
+	r = insert_vm_struct(mm, vma);
 	if (unlikely(r))
 		goto err;
 

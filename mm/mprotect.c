@@ -313,7 +313,11 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
 		unsigned long, prot)
 #endif
 {
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags, nstart, end, tmp, reqprot;
+#else
 	unsigned long vm_flags, nstart, end, tmp, reqprot;
+#endif
 	struct vm_area_struct *vma, *prev;
 	int error = -EINVAL;
 	const int grows = prot & (PROT_GROWSDOWN|PROT_GROWSUP);

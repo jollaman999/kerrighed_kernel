@@ -452,9 +452,15 @@ static void print_bad_pte(struct vm_area_struct *vma, unsigned long addr,
 		page, (void *)page->flags, page_count(page),
 		page_mapcount(page), page->mapping, page->index);
 	}
+#ifdef CONFIG_KRG_MM
+	printk(KERN_ALERT
+		"addr:%p vm_flags:%08llx anon_vma:%p mapping:%p index:%lx\n",
+		(void *)addr, vma->vm_flags, vma->anon_vma, mapping, index);
+#else
 	printk(KERN_ALERT
 		"addr:%p vm_flags:%08lx anon_vma:%p mapping:%p index:%lx\n",
 		(void *)addr, vma->vm_flags, vma->anon_vma, mapping, index);
+#endif
 	/*
 	 * Choose text because data symbols depend on CONFIG_KALLSYMS_ALL=y
 	 */
@@ -585,7 +591,11 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		unsigned long addr, int *rss)
 #endif
 {
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags = vma->vm_flags;
+#else
 	unsigned long vm_flags = vma->vm_flags;
+#endif
 	pte_t pte = *src_pte;
 	struct page *page;
 
@@ -1464,7 +1474,11 @@ int __get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
 		     struct page **pages, struct vm_area_struct **vmas)
 {
 	int i;
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags;
+#else
 	unsigned long vm_flags;
+#endif
 
 	if (nr_pages <= 0)
 		return 0;

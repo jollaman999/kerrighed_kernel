@@ -124,7 +124,11 @@ struct page {
  */
 struct vm_region {
 	struct rb_node	vm_rb;		/* link in global region tree */
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags;	/* VMA vm_flags */
+#else
 	unsigned long	vm_flags;	/* VMA vm_flags */
+#endif
 	unsigned long	vm_start;	/* start address of region */
 	unsigned long	vm_end;		/* region initialised to here */
 	unsigned long	vm_top;		/* region allocated to here */
@@ -150,7 +154,11 @@ struct vm_area_struct {
 	struct vm_area_struct *vm_next, *vm_prev;
 
 	pgprot_t vm_page_prot;		/* Access permissions of this VMA. */
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags;	/* Flags, see mm.h. */
+#else
 	unsigned long vm_flags;		/* Flags, see mm.h. */
+#endif
 #ifdef CONFIG_KRG_MM
 	const struct vm_operations_struct * initial_vm_ops;
 #endif

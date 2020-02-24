@@ -427,7 +427,7 @@ static void kcb_mm_release(struct mm_struct *mm, int notify)
 
 void krg_do_mmap_region(struct vm_area_struct *vma,
 			unsigned long flags,
-			unsigned int vm_flags)
+			unsigned long long vm_flags)
 {
 	struct mm_struct *mm = vma->vm_mm;
 	struct mm_mmap_msg msg;
