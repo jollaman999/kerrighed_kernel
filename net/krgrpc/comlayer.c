@@ -126,11 +126,6 @@ s64 rpc_consumed_bytes(void)
  * Local definition
  */
 
-/* 2020-02-21 by ish - Limit the rpc max multi queue threads */
-#define RPC_MULTIQUEUE_MAX_LIMIT 4
-static int possible_cpus = 0;
-static long possible_cpu_index[RPC_MULTIQUEUE_MAX_LIMIT];
-
 u32 tipc_user_ref = 0;
 u32 tipc_port_ref;
 DEFINE_PER_CPU(u32, tipc_send_ref);
@@ -159,11 +154,11 @@ inline int __send_iovec(kerrighed_node_t node, int nr_iov, struct iovec *iov)
 	};
 	struct __rpc_header *h = iov[0].iov_base;
 	int err;
-	int cpu_index = smp_processor_id() % possible_cpus;
+	
 
 	h->link_ack_id = rpc_link_recv_seq_id[node] - 1;
 	lockdep_off();
-	err = tipc_send2name(per_cpu(tipc_send_ref, possible_cpu_index[cpu_index]),
+	err = tipc_send2name(per_cpu(tipc_send_ref, smp_processor_id()),
 			     &name, 0,
 			     nr_iov, iov);
 	lockdep_on();
@@ -485,13 +480,12 @@ void tipc_unreachable_node_worker(struct work_struct *work){
 static
 void tipc_reachable_node_worker(struct work_struct *work){
 	struct tx_engine *engine = container_of(work, struct tx_engine, reachable_work.work);
-	int cpu_index = smp_processor_id() % possible_cpus;
 
 	spin_lock_bh(&tipc_tx_queue_lock);
 	list_splice_init(&engine->not_retx_queue, &engine->retx_queue);
 	spin_unlock_bh(&tipc_tx_queue_lock);
 
-	queue_delayed_work_on(possible_cpu_index[cpu_index], krgcom_wq,
+	queue_delayed_work_on(smp_processor_id(), krgcom_wq,
 			      &engine->retx_work, 0);
 }
 
@@ -567,7 +561,6 @@ int __rpc_send_ll(struct rpc_desc* desc,
 	struct tx_engine *engine;
 	kerrighed_node_t node;
 	int link_seq_index;
-	int cpu_index = smp_processor_id() % possible_cpus;
 
 	elem = __rpc_tx_elem_alloc(size, __krgnodes_weight(nodes));
 	if (!elem) {
@@ -611,7 +604,7 @@ int __rpc_send_ll(struct rpc_desc* desc,
 	__krgnodes_copy(&elem->nodes, nodes);	
 
 	preempt_disable();
-	engine = &per_cpu(tipc_tx_engine, possible_cpu_index[cpu_index]);
+	engine = &per_cpu(tipc_tx_engine, smp_processor_id());
 	if (irqs_disabled()) {
 		/* Add the packet in the tx_queue */
 		lockdep_off();
@@ -622,6 +615,7 @@ int __rpc_send_ll(struct rpc_desc* desc,
 
 		/* Schedule the work ASAP */
 		queue_work(krgcom_wq, &engine->delayed_tx_work.work);
+
 	} else {
 		int err = 0;
 
@@ -1125,18 +1119,14 @@ static void tipc_handler(void *usr_handle,
 		rpc_link_send_ack_id[h->from] = h->link_ack_id;
 		if(rpc_link_send_ack_id[h->from] - last_cleanup_ack[h->from]
 			> ack_cleanup_window_size){
-			int i;
-
+			int cpuid;
 			last_cleanup_ack[h->from] = h->link_ack_id;
-			for(i = 0; i < possible_cpus; i++) {
-				struct tx_engine *engine;
+			for_each_online_cpu(cpuid){
+				struct tx_engine *engine = &per_cpu(tipc_tx_engine,
+									cpuid);
+				queue_delayed_work_on(cpuid, krgcom_wq,
+							&engine->cleanup_not_retx_work,0);
 
-				if (!cpu_online(possible_cpu_index[i]))
-					continue;
-
-				engine = &per_cpu(tipc_tx_engine, possible_cpu_index[i]);
-				queue_delayed_work_on(possible_cpu_index[i], krgcom_wq,
-							&engine->cleanup_not_retx_work, 0);
 			}
 		}
 
@@ -1289,26 +1279,19 @@ void comlayer_disable(void)
 	read_unlock(&dev_base_lock);
 }
 
-void krg_node_reachable(kerrighed_node_t nodeid)
-{
-	int i;
+void krg_node_reachable(kerrighed_node_t nodeid){
+	int cpuid;
 
 	queue_delayed_work(krgcom_wq, &tipc_ack_work, 0);
+	for_each_online_cpu(cpuid){
+		struct tx_engine *engine = &per_cpu(tipc_tx_engine, cpuid);
 
-	for(i = 0; i < possible_cpus; i++) {
-		struct tx_engine *engine;
-
-		if (!cpu_online(possible_cpu_index[i]))
-			continue;
-
-		engine = &per_cpu(tipc_tx_engine, possible_cpu_index[i]);
-		queue_delayed_work_on(possible_cpu_index[i], krgcom_wq,
+		queue_delayed_work_on(cpuid, krgcom_wq,
 				      &engine->reachable_work, 0);
 	}
 }
 
-void krg_node_unreachable(kerrighed_node_t nodeid)
-{
+void krg_node_unreachable(kerrighed_node_t nodeid){
 }
 
 void rpc_enable_lowmem_mode(kerrighed_node_t nodeid){
@@ -1322,20 +1305,14 @@ void rpc_disable_lowmem_mode(kerrighed_node_t nodeid){
 	max_consecutive_recv[nodeid] = MAX_CONSECUTIVE_RECV;
 }
 
-void rpc_enable_local_lowmem_mode(void)
-{
-	int i;
+void rpc_enable_local_lowmem_mode(void){
+	int cpuid;
 
 	ack_cleanup_window_size = ACK_CLEANUP_WINDOW_SIZE__LOWMEM_MODE;
 
-	for(i = 0; i < possible_cpus; i++) {
-		struct tx_engine *engine;
-
-		if (!cpu_online(possible_cpu_index[i]))
-			continue;
-
-		engine = &per_cpu(tipc_tx_engine, possible_cpu_index[i]);
-		queue_delayed_work_on(possible_cpu_index[i], krgcom_wq,
+	for_each_online_cpu(cpuid){
+		struct tx_engine *engine = &per_cpu(tipc_tx_engine, cpuid);
+		queue_delayed_work_on(cpuid, krgcom_wq,
 			&engine->cleanup_not_retx_work, 0);
 	}
 }
@@ -1352,24 +1329,7 @@ int comlayer_init(void)
 	krgnodes_clear(nodes_requiring_ack);	
 
 	for_each_possible_cpu(i) {
-		possible_cpus++;
-
-		if (possible_cpus > RPC_MULTIQUEUE_MAX_LIMIT) {
-			possible_cpus--;
-			break;
-		}
-
-		possible_cpu_index[possible_cpus - 1] = i;
-	}
-
-	if (possible_cpus == 0) {
-		printk("comlayer: There are no possible cpus!");
-		goto exit_error;
-	}
-
-	for(i = 0; i < possible_cpus; i++) {
-		struct tx_engine *engine = &per_cpu(tipc_tx_engine, possible_cpu_index[i]);
-
+		struct tx_engine *engine = &per_cpu(tipc_tx_engine, i);
 		INIT_LIST_HEAD(&engine->delayed_tx_queue);
 		INIT_DELAYED_WORK(&engine->delayed_tx_work,
 					tipc_delayed_tx_worker);
@@ -1419,8 +1379,8 @@ int comlayer_init(void)
         tipc_seq.lower = tipc_seq.upper = kerrighed_node_id;
         res = tipc_publish(tipc_port_ref, TIPC_CLUSTER_SCOPE, &tipc_seq);
 
-	for(i = 0; i < possible_cpus; i++) {
-		u32* send_ref = &per_cpu(tipc_send_ref, possible_cpu_index[i]);
+	for_each_possible_cpu(i){
+		u32* send_ref = &per_cpu(tipc_send_ref, i);
 		struct tipc_port* p;
 
 		/* since TIPC do strange assumption regarding this field
@@ -1428,7 +1388,7 @@ int comlayer_init(void)
 		   to the plugins of TIPC. ie: only our code use this field. So
 		   we can set it to any value we want.
 		*/
-		p = tipc_createport_raw((void*)possible_cpu_index[i],
+		p = tipc_createport_raw((void*)i,
 					port_dispatcher, port_wakeup,
 					TIPC_LOW_IMPORTANCE,
 					(void*)0x1111);
@@ -1439,7 +1399,7 @@ int comlayer_init(void)
 			spin_unlock_bh(p->lock);
 			goto exit_error;
 		}
-	}
+	};
 
 	lockdep_on();
 
