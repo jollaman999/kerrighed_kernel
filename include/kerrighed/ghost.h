@@ -106,13 +106,13 @@ err_write:
 static inline
 int __must_check ghost_read(ghost_t *ghost, void *buff, size_t length)
 {
-	int r = 0 ;
+	int r = 0;
 
 	BUG_ON (!(ghost->access & GHOST_READ));
 
 	r = ghost->ops->read(ghost, buff, length);
 
-	return r ;
+	return r;
 }
 
 #define ghost_read_type(ghost, v) ghost_read(ghost, &v, sizeof(v))
