@@ -288,6 +288,14 @@ int copy_thread(unsigned long clone_flags, unsigned long sp,
 	p->thread.usersp = me->thread.usersp;
 
 	set_tsk_thread_flag(p, TIF_FORK);
+#ifdef CONFIG_KRG_EPM
+	/*
+	 * Migration/restart could have rcx, r11, and rflags corrupted by
+	 * ret_from_fork.
+	 */
+	if (krg_current && !in_krg_do_fork())
+		set_tsk_thread_flag(p, TIF_MIGRATION);
+#endif
 
 	p->fpu_counter = 0;
 
