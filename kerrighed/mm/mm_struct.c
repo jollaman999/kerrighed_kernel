@@ -195,12 +195,12 @@ struct mm_struct *krg_dup_mm(struct task_struct *tsk, struct mm_struct *src_mm)
 	/* The duplicated mm does not yet belong to any real process */
 	atomic_set(&mm->mm_ltasks, 0);
 
-        err = __dup_mmap(mm, src_mm, 1);
-        if (err)
-                goto exit_put_mm;
+	err = __dup_mmap(mm, src_mm, 1);
+	if (err)
+			goto exit_put_mm;
 
-        mm->hiwater_rss = get_mm_rss(mm);
-        mm->hiwater_vm = mm->total_vm;
+	mm->hiwater_rss = get_mm_rss(mm);
+	mm->hiwater_vm = mm->total_vm;
 
 	err = init_anon_vma_kddm_set(tsk, mm);
 	if (err)
@@ -220,22 +220,22 @@ struct mm_struct *krg_dup_mm(struct task_struct *tsk, struct mm_struct *src_mm)
 	 * create_mm_struct_object) */
 	atomic_dec(&mm->mm_users);
 
-        return mm;
+    return mm;
 
 exit_put_mm:
-        mmput(mm);
+    mmput(mm);
 
 fail_nomem:
-        return ERR_PTR(err);
+    return ERR_PTR(err);
 
 fail_nocontext:
-        /*
-         * If init_new_context() failed, we cannot use mmput() to free the mm
-         * because it calls destroy_context()
-         */
+	/*
+	* If init_new_context() failed, we cannot use mmput() to free the mm
+	* because it calls destroy_context()
+	*/
 	pgd_free(mm, mm->pgd);
-        free_mm(mm);
-        return ERR_PTR(err);
+    free_mm(mm);
+    return ERR_PTR(err);
 }
 
 
@@ -330,15 +330,11 @@ int init_anon_vma_kddm_set(struct task_struct *tsk,
 	return 0;
 }
 
-
-
 void krg_check_vma_link(struct vm_area_struct *vma)
 {
 	BUG_ON (!vma->vm_mm->anon_vma_kddm_set);
 	check_link_vma_to_anon_memory_kddm_set (vma);
 }
-
-
 
 void kcb_mm_get(struct mm_struct *mm)
 {
@@ -354,8 +350,6 @@ void kcb_mm_get(struct mm_struct *mm)
 	atomic_inc (&mm->mm_tasks);
 	krg_put_mm(mm->mm_id);
 }
-
-
 
 void clean_up_mm_struct (struct mm_struct *mm)
 {
@@ -384,8 +378,6 @@ void clean_up_mm_struct (struct mm_struct *mm)
 	}
 	up_write(&mm->mmap_sem);
 }
-
-
 
 static void kcb_mm_release(struct mm_struct *mm, int notify)
 {
@@ -589,8 +581,6 @@ void krg_do_mprotect(struct mm_struct *mm,
 /*                                                                           */
 /*****************************************************************************/
 
-
-
 void mm_struct_init (void)
 {
 	init_unique_id_root (&mm_struct_unique_id_root);
@@ -611,8 +601,6 @@ void mm_struct_init (void)
 	hook_register(&kh_fill_pte, kcb_fill_pte);
 	hook_register(&kh_zap_pte, kcb_zap_pte);
 }
-
-
 
 void mm_struct_finalize (void)
 {

@@ -1181,7 +1181,7 @@ static int cr_link_to_mm_struct(struct epm_action *action,
 		goto err;
 	}
 
-        /* the task is not yet hashed, no need to lock */
+	/* the task is not yet hashed, no need to lock */
 	atomic_inc(&mm->mm_users);
 
 	tsk->mm = mm;
