@@ -10,6 +10,7 @@
 #include <linux/swap.h>
 #include <linux/swapops.h>
 #include <linux/proc_fs.h>
+#include <linux/binfmts.h>
 #include <asm/mmu_context.h>
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
@@ -197,10 +198,13 @@ struct mm_struct *krg_dup_mm(struct task_struct *tsk, struct mm_struct *src_mm)
 
 	err = __dup_mmap(mm, src_mm, 1);
 	if (err)
-			goto exit_put_mm;
+		goto exit_put_mm;
 
 	mm->hiwater_rss = get_mm_rss(mm);
 	mm->hiwater_vm = mm->total_vm;
+
+	if (mm->binfmt && !try_module_get(mm->binfmt->module))
+		goto exit_put_mm;
 
 	err = init_anon_vma_kddm_set(tsk, mm);
 	if (err)
@@ -223,7 +227,9 @@ struct mm_struct *krg_dup_mm(struct task_struct *tsk, struct mm_struct *src_mm)
     return mm;
 
 exit_put_mm:
-    mmput(mm);
+	/* don't put binfmt in mmput, we haven't got module yet */
+	mm->binfmt = NULL;
+	mmput(mm);
 
 fail_nomem:
     return ERR_PTR(err);
