@@ -1800,14 +1800,13 @@ bad_fork_cleanup_mm:
 #endif
 			KRGFCT(kh_mm_release)(p->mm, 1);
 #endif
-#ifdef CONFIG_KRG_EPM
-	if (p->mm)
-		atomic_dec(&p->mm->mm_ltasks);
-#endif
 	if (p->mm) {
 		task_lock(p);
 		if (p->signal->oom_score_adj == OOM_SCORE_ADJ_MIN)
 			atomic_dec(&p->mm->oom_disable_count);
+#ifdef CONFIG_KRG_EPM
+		atomic_dec(&p->mm->mm_ltasks);
+#endif
 		task_unlock(p);
 		mmput(p->mm);
 	}
