@@ -1311,9 +1311,6 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	 * If the new process will be in a different pid namespace
 	 * don't allow the creation of threads.
 	 */
-#ifdef CONFIG_KRG_EPM
-	if (!krg_current)
-#endif
 	if ((clone_flags & (CLONE_VM|CLONE_NEWPID)) &&
 	    (task_active_pid_ns(current) != current->nsproxy->pid_ns))
 		return ERR_PTR(-EINVAL);
