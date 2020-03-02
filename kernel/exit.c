@@ -1924,11 +1924,11 @@ long do_wait(struct wait_opts *wo)
 
 	trace_sched_process_wait(wo->wo_pid);
 
-	init_waitqueue_func_entry(&wo->child_wait, child_wait_callback);
-	wo->child_wait.private = current;
 #ifdef CONFIG_KRG_PROC
 	down_read(&kerrighed_init_sem);
 #endif
+	init_waitqueue_func_entry(&wo->child_wait, child_wait_callback);
+	wo->child_wait.private = current;
 	add_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
 repeat:
 	/*
