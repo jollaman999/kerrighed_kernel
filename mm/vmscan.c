@@ -1271,7 +1271,6 @@ static unsigned long isolate_pages(unsigned long nr, struct mem_cgroup_zone *mz,
 #ifdef CONFIG_KRG_MM
 	if (kddm)
 		lru += LRU_MIGR;
-	BUG_ON(kddm && file);
 #endif
 
 	return isolate_lru_pages(nr, &lruvec->lists[lru], dst,
