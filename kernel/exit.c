@@ -2100,12 +2100,6 @@ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 		pid = find_get_pid(upid);
 	}
 
-	wo.wo_type	= type;
-	wo.wo_pid	= pid;
-	wo.wo_flags	= options | WEXITED;
-	wo.wo_info	= NULL;
-	wo.wo_stat	= stat_addr;
-	wo.wo_rusage	= ru;
 #ifdef CONFIG_KRG_EPM
 	if (type == PIDTYPE_PGID) {
 		if (upid == 0)
@@ -2113,6 +2107,15 @@ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 		else /* upid < 0 */
 			upid = -upid;
 	}
+#endif
+
+	wo.wo_type	= type;
+	wo.wo_pid	= pid;
+	wo.wo_flags	= options | WEXITED;
+	wo.wo_info	= NULL;
+	wo.wo_stat	= stat_addr;
+	wo.wo_rusage	= ru;
+#ifdef CONFIG_KRG_EPM
 	wo.wo_upid = upid;
 #endif
 	ret = do_wait(&wo);
