@@ -207,7 +207,7 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 
 		obj = __krg_task_writelock(tsk);
 		BUG_ON(!obj);
-		write_lock_irq(&tasklist_lock);
+		tasklist_write_lock_irq();
 		obj->task = tsk;
 		tsk->task_obj = obj;
 		write_unlock_irq(&tasklist_lock);
