@@ -1118,7 +1118,24 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	if (!krg_current)
 #endif
 	if (clone_flags & CLONE_THREAD)
+#ifdef CONFIG_KRG_EPM
+	{
+		if (current->signal->kddm_obj)
+			krg_signal_writelock(current->signal);
+
+		atomic_inc(&current->signal->count);
+		atomic_inc(&current->signal->live);
+
+		if (current->signal->kddm_obj) {
+			krg_signal_share(current->signal);
+			krg_signal_unlock(current->signal);
+		}
+
 		return 0;
+	}
+#else
+		return 0;
+#endif
 
 	sig = kmem_cache_alloc(signal_cachep, GFP_KERNEL);
 	tsk->signal = sig;
@@ -1206,10 +1223,13 @@ static void cleanup_signal(struct task_struct *tsk)
 #ifdef CONFIG_KRG_EPM
 	struct signal_struct *locked_sig = krg_signal_exit(sig);
 
-	if (locked_sig)
-		krg_signal_unlock(locked_sig);
+	atomic_dec(&sig->count);
+	atomic_dec(&sig->live);
 #endif
 	__cleanup_signal(sig);
+#ifdef CONFIG_KRG_EPM
+	krg_signal_unlock(locked_sig);
+#endif
 }
 
 static void copy_flags(unsigned long clone_flags, struct task_struct *p)
@@ -1693,28 +1713,16 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	}
 #endif /* CONFIG_KRG_EPM */
 
-	if (clone_flags & CLONE_THREAD) {
 #ifdef CONFIG_KRG_EPM
-		if (!krg_current) {
-			if (current->signal->kddm_obj)
-				krg_signal_writelock(current->signal);
+	if (!krg_current || !thread_group_leader(krg_current))
 #endif
+	if (clone_flags & CLONE_THREAD) {
+#ifndef CONFIG_KRG_EPM
 		atomic_inc(&current->signal->count);
 		atomic_inc(&current->signal->live);
-#ifdef CONFIG_KRG_EPM
-			if (current->signal->kddm_obj) {
-				krg_signal_share(current->signal);
-				krg_signal_unlock(current->signal);
-			}
-		}
-
-		if (!krg_current || !thread_group_leader(krg_current)) {
 #endif
 		p->group_leader = current->group_leader;
 		list_add_tail_rcu(&p->thread_group, &p->group_leader->thread_group);
-#ifdef CONFIG_KRG_EPM
-		}
-#endif
 	}
 
 	if (likely(p->pid)) {
