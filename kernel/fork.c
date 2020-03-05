@@ -1318,9 +1318,6 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	 * allow it to share a thread group or signal handlers with the
 	 * forking task.
 	 */
-#ifdef CONFIG_KRG_EPM
-	if (!krg_current)
-#endif
 	if ((clone_flags & CLONE_SIGHAND) && (task_active_pid_ns(current) !=
 					current->nsproxy->pid_ns))
 		return ERR_PTR(-EINVAL);
@@ -2148,9 +2145,6 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 #endif
 	int err;
 
-#ifdef CONFIG_KRG_EPM
-	if (!krg_current) {
-#endif
 	/*
 	 * If unsharing a pid namespace must also unshare the thread.
 	 */
@@ -2166,9 +2160,6 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 	 */
 	if (unshare_flags & CLONE_VM)
 		unshare_flags |= CLONE_SIGHAND;
-#ifdef CONFIG_KRG_EPM
-	}
-#endif
 	/*
 	 * If unsharing namespace, must also unshare filesystem information.
 	 */
