@@ -1347,22 +1347,6 @@ SYSCALL_DEFINE1(exit_group, int, error_code)
 	return 0;
 }
 
-struct wait_opts {
-	enum pid_type		wo_type;
-	int			wo_flags;
-	struct pid		*wo_pid;
-#ifdef CONFIG_KRG_EPM
-	pid_t	wo_upid;
-#endif
-
-	struct siginfo __user	*wo_info;
-	int __user		*wo_stat;
-	struct rusage __user	*wo_rusage;
-
-	wait_queue_t		child_wait;
-	int			notask_error;
-};
-
 static inline
 struct pid *task_pid_type(struct task_struct *task, enum pid_type type)
 {
@@ -1430,20 +1414,18 @@ static int wait_noreap_copyout(struct wait_opts *wo, struct task_struct *p,
 #ifndef CONFIG_KRG_EPM
 static
 #endif
-int wait_task_zombie(struct task_struct *p, int options,
-				   struct siginfo __user *infop,
-				   int __user *stat_addr, struct rusage __user *ru)
+int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 {
 	unsigned long state;
 	int retval, status, traced;
 	pid_t pid = task_pid_vnr(p);
 	uid_t uid = __task_cred(p)->uid;
-	struct wait_opts wo;
+	struct siginfo __user *infop;
 
-	if (!likely(options & WEXITED))
+	if (!likely(wo->wo_flags & WEXITED))
 		return 0;
 
-	if (unlikely(options & WNOWAIT)) {
+	if (unlikely(wo->wo_flags & WNOWAIT)) {
 		int exit_code = p->exit_code;
 		int why, status;
 
@@ -1461,13 +1443,7 @@ int wait_task_zombie(struct task_struct *p, int options,
 			why = (exit_code & 0x80) ? CLD_DUMPED : CLD_KILLED;
 			status = exit_code & 0x7f;
 		}
-
-		wo.wo_flags	= options;
-		wo.wo_info	= infop;
-		wo.wo_stat	= stat_addr;
-		wo.wo_rusage	= ru;
-
-		return wait_noreap_copyout(&wo, p, pid, uid, why, status);
+		return wait_noreap_copyout(wo, p, pid, uid, why, status);
 	}
 
 #ifdef CONFIG_KRG_EPM
@@ -1568,11 +1544,14 @@ int wait_task_zombie(struct task_struct *p, int options,
 		krg_children_unlock(current->children_obj);
 #endif
 
-	retval = ru ? getrusage(p, RUSAGE_BOTH, ru) : 0;
+	retval = wo->wo_rusage
+		? getrusage(p, RUSAGE_BOTH, wo->wo_rusage) : 0;
 	status = (p->signal->flags & SIGNAL_GROUP_EXIT)
 		? p->signal->group_exit_code : p->exit_code;
-	if (!retval && stat_addr)
-		retval = put_user(status, stat_addr);
+	if (!retval && wo->wo_stat)
+		retval = put_user(status, wo->wo_stat);
+
+	infop = wo->wo_info;
 	if (!retval && infop)
 		retval = put_user(SIGCHLD, &infop->si_signo);
 	if (!retval && infop)
@@ -1838,7 +1817,7 @@ static int wait_consider_task(struct wait_opts *wo, int ptrace,
 	 * We don't reap group leaders with subthreads.
 	 */
 	if (p->exit_state == EXIT_ZOMBIE && !delay_group_leader(p))
-		return wait_task_zombie(p, wo->wo_flags, wo->wo_info, wo->wo_stat, wo->wo_rusage);
+		return wait_task_zombie(wo, p);
 
 	/*
 	 * It's stopped or running now, so it might
@@ -1969,9 +1948,7 @@ repeat:
 	if (current->children_obj) {
 		/* Try all children, even remote ones but don't wait yet */
 		/* Releases children lock */
-		int tsk_result = krg_do_wait(current->children_obj, &retval,
-					     wo->wo_type, wo->wo_upid, wo->wo_flags,
-					     wo->wo_info, wo->wo_stat, wo->wo_rusage);
+		int tsk_result = krg_do_wait(current->children_obj, wo);
 		if (tsk_result)
 			retval = tsk_result;
 	}

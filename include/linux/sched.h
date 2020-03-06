@@ -1369,6 +1369,22 @@ enum perf_event_task_context {
 	perf_nr_task_contexts,
 };
 
+struct wait_opts {
+	enum pid_type		wo_type;
+	int			wo_flags;
+	struct pid		*wo_pid;
+#ifdef CONFIG_KRG_EPM
+	pid_t			wo_upid;
+#endif
+
+	struct siginfo __user	*wo_info;
+	int __user		*wo_stat;
+	struct rusage __user	*wo_rusage;
+
+	wait_queue_t		child_wait;
+	int			notask_error;
+};
+
 struct task_struct {
 	volatile long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
 	void *stack;
@@ -2472,9 +2488,7 @@ extern void exit_itimers(struct signal_struct *);
 extern void flush_itimer_signals(void);
 
 #ifdef CONFIG_KRG_EPM
-int wait_task_zombie(struct task_struct *p, int options,
-				    struct siginfo __user *infop,
-				    int __user *stat_addr, struct rusage __user *ru);
+int wait_task_zombie(struct wait_opts *wo, struct task_struct *p);
 #endif
 extern NORET_TYPE void do_group_exit(int);
 

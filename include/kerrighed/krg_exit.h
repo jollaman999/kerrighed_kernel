@@ -13,17 +13,27 @@ enum pid_type;
 struct siginfo;
 struct rusage;
 
+struct remote_child {
+	struct list_head sibling;
+	struct list_head thread_group;
+	pid_t pid;
+	pid_t tgid;
+	pid_t pgid;
+	pid_t sid;
+	pid_t parent;
+	pid_t real_parent;
+	int ptraced;
+	int exit_signal;
+	long exit_state;
+	kerrighed_node_t node;
+};
+
 /* do_wait() hook */
-int krg_do_wait(struct children_kddm_object *obj, int *notask_error,
-		enum pid_type type, pid_t pid, int options,
-		struct siginfo __user *infop, int __user *stat_addr,
-		struct rusage __user *ru);
+int krg_do_wait(struct children_kddm_object *obj, struct wait_opts *wo);
 
 /* Used by krg_do_wait() */
-int krg_wait_task_zombie(pid_t pid, kerrighed_node_t zombie_location,
-			 int options,
-			 struct siginfo __user *infop,
-			 int __user *stat_addr, struct rusage __user *ru);
+int krg_wait_task_zombie(struct wait_opts *wo,
+			 struct remote_child *child);
 
 /* do_notify_parent() hook */
 int krg_do_notify_parent(struct task_struct *task, struct siginfo *info);
