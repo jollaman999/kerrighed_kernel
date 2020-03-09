@@ -126,8 +126,7 @@ void rpc_handler_kthread_int(struct rpc_desc* desc){
 							    rpc_data.size);
 
 		rpc_free_buffer(&rpc_data);
-		if (!rpc_desc_forwarded(desc))
-			rpc_wait_pack(desc, id);
+		rpc_wait_pack(desc, id);
 
 	}else{
 		printk("unexpected event\n");
