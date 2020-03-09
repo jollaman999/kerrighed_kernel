@@ -9,7 +9,6 @@
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/completion.h>
-#include <linux/freezer.h>
 #include <kerrighed/krginit.h>
 #include <kerrighed/sys/types.h>
 #include <kerrighed/pid.h>
