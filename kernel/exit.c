@@ -1946,11 +1946,15 @@ repeat:
 	read_unlock(&tasklist_lock);
 #ifdef CONFIG_KRG_EPM
 	if (current->children_obj) {
+		int tsk_result;
+
+		wo->notask_error = retval;
+
 		/* Try all children, even remote ones but don't wait yet */
 		/* Releases children lock */
-		int tsk_result = krg_do_wait(current->children_obj, wo);
+		tsk_result = krg_do_wait(current->children_obj, wo);
 		if (tsk_result)
-			retval = tsk_result;
+			wo->notask_error = tsk_result;
 	}
 #endif
 
