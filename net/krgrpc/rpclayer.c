@@ -71,7 +71,7 @@ int __rpc_send(struct rpc_desc* desc,
 			}
 
 			/* Calls rpc_new_desc_id_unlock() on success */
-			printk("===__rpc_send seq_id %u \n",seq_id);
+			// printk("===__rpc_send seq_id %u \n",seq_id);
 			err = __rpc_send_ll(desc, &desc->nodes,
 					    seq_id,
 					    __flags, data, size,
