@@ -302,6 +302,7 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 	struct signal_struct *sig;
 	struct task_cputime cputime;
 	struct wait_task_result res;
+	struct wait_opts wo;
 	int retval;
 	int err = -ENOMEM;
 
@@ -344,9 +345,12 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 		res.ioac = p->ioac;
 		task_io_accounting_add(&res.ioac, &sig->ioac);
 	}
-	retval = wait_task_zombie(p, req->options,
-				  &res.info,
-				  &res.status, &res.ru);
+
+	wo.wo_flags	= req->options;
+	wo.wo_info	= &res.info;
+	wo.wo_stat	= &res.status;
+	wo.wo_rusage	= &res.ru;
+	retval = wait_task_zombie(&wo, p);
 	if (!retval)
 		read_unlock(&tasklist_lock);
 
@@ -367,16 +371,15 @@ err_cancel:
 	rpc_cancel(desc);
 }
 
-int krg_wait_task_zombie(pid_t pid, kerrighed_node_t zombie_location,
-			 int options,
-			 struct siginfo __user *infop,
-			 int __user *stat_addr, struct rusage __user *ru)
+int krg_wait_task_zombie(struct wait_opts *wo,
+			 struct remote_child *child)
 {
 	struct wait_task_request req;
 	int retval;
 	struct wait_task_result res;
 	struct rpc_desc *desc;
-	bool noreap = options & WNOWAIT;
+	struct siginfo __user *infop;
+	bool noreap = wo->wo_flags & WNOWAIT;
 	int err;
 
 	/*
@@ -384,16 +387,16 @@ int krg_wait_task_zombie(pid_t pid, kerrighed_node_t zombie_location,
 	 * change afterwards, but this will be needed to support hot removal of
 	 * nodes with zombie migration.
 	 */
-	BUG_ON(!krgnode_online(zombie_location));
+	BUG_ON(!krgnode_online(child->node));
 
-	desc = rpc_begin(PROC_WAIT_TASK_ZOMBIE, zombie_location);
+	desc = rpc_begin(PROC_WAIT_TASK_ZOMBIE, child->node);
 	if (!desc)
 		return -ENOMEM;
 
-	req.pid = pid;
+	req.pid = child->pid;
 	/* True as long as no remote ptrace is allowed */
 	req.real_parent_tgid = task_tgid_knr(current);
-	req.options = options;
+	req.options = wo->wo_flags;
 	err = rpc_pack_type(desc, req);
 	if (err)
 		goto err_cancel;
@@ -429,11 +432,13 @@ int krg_wait_task_zombie(pid_t pid, kerrighed_node_t zombie_location,
 		}
 
 		retval = 0;
-		if (ru)
-			retval = copy_to_user(ru, &res.ru, sizeof(res.ru)) ?
+		if (wo->wo_rusage)
+			retval = copy_to_user(wo->wo_rusage, &res.ru, sizeof(res.ru)) ?
 				-EFAULT : 0;
-		if (!retval && stat_addr && likely(!noreap))
-			retval = put_user(res.status, stat_addr);
+		if (!retval && wo->wo_stat && likely(!noreap))
+			retval = put_user(res.status, wo->wo_stat);
+
+		infop = wo->wo_info;
 		if (!retval && infop) {
 			retval = put_user(res.info.si_signo, &infop->si_signo);
 			if (!retval)
@@ -453,7 +458,7 @@ int krg_wait_task_zombie(pid_t pid, kerrighed_node_t zombie_location,
 						  &infop->si_uid);
 		}
 		if (!retval)
-			retval = pid;
+			retval = child->pid;
 	}
 out:
 	rpc_end(desc, 0);

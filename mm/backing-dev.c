@@ -283,7 +283,6 @@ static wait_queue_head_t congestion_wqh[2] = {
 		__WAIT_QUEUE_HEAD_INITIALIZER(congestion_wqh[1])
 	};
 
-
 void clear_bdi_congested(struct backing_dev_info *bdi, int sync)
 {
 	enum bdi_state bit;
@@ -308,7 +307,7 @@ EXPORT_SYMBOL(set_bdi_congested);
 
 /**
  * congestion_wait - wait for a backing_dev to become uncongested
- * @rw: READ or WRITE
+ * @sync: SYNC or ASYNC IO
  * @timeout: timeout in jiffies
  *
  * Waits for up to @timeout jiffies for a backing_dev (any backing_dev) to exit
@@ -316,14 +315,14 @@ EXPORT_SYMBOL(set_bdi_congested);
  * next write to be completed.
  */
 #ifdef CONFIG_KRG_EPM
-static long __congestion_wait(int rw, long timeout)
+static long __congestion_wait(int sync, long timeout)
 #else
-long congestion_wait(int rw, long timeout)
+long congestion_wait(int sync, long timeout)
 #endif
 {
 	long ret;
 	DEFINE_WAIT(wait);
-	wait_queue_head_t *wqh = &congestion_wqh[rw];
+	wait_queue_head_t *wqh = &congestion_wqh[sync];
 
 	prepare_to_wait(wqh, &wait, TASK_UNINTERRUPTIBLE);
 	ret = io_schedule_timeout(timeout);

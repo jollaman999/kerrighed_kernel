@@ -342,13 +342,13 @@ static void mp_calc_load(void)
  *
  *  @param ticks   Clock ticks since last called.
  */
-static void kmcb_accumulate_load(unsigned long ticks)
+static void kmcb_accumulate_load(unsigned long __unused)
 {
 	unsigned long load;
 
 	load_adder += nr_running();
 /*	cpu_use += ticks * num_online_cpus(); */
-	load_ticks += ticks;
+	load_ticks += 10;
 
 	/* CF is equal to HZ, which means load is computed every second */
 	if (load_ticks >= CF) {

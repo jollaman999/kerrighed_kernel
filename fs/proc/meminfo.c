@@ -71,10 +71,8 @@ int meminfo_proc_show(struct seq_file *m, void *v)
 		"Active(migr):   %8lu kB\n"
 		"Inactive(migr): %8lu kB\n"
 #endif
-#ifdef CONFIG_UNEVICTABLE_LRU
 		"Unevictable:    %8lu kB\n"
 		"Mlocked:        %8lu kB\n"
-#endif
 #ifdef CONFIG_HIGHMEM
 		"HighTotal:      %8lu kB\n"
 		"HighFree:       %8lu kB\n"
@@ -127,10 +125,8 @@ int meminfo_proc_show(struct seq_file *m, void *v)
 		K(pages[LRU_ACTIVE_MIGR]),
 		K(pages[LRU_INACTIVE_MIGR]),
 #endif
-#ifdef CONFIG_UNEVICTABLE_LRU
 		K(pages[LRU_UNEVICTABLE]),
 		K(global_page_state(NR_MLOCK)),
-#endif
 #ifdef CONFIG_HIGHMEM
 		K(i.totalhigh),
 		K(i.freehigh),

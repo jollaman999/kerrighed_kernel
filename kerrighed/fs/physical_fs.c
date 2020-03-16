@@ -58,7 +58,7 @@ void get_physical_root(struct path *root)
 	put_krg_ns(krg_ns);
 
 	while (d_mountpoint(root->dentry) &&
-	       follow_down(&root->mnt, &root->dentry))
+	       follow_down(root))
 		;
 }
 

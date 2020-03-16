@@ -71,13 +71,24 @@ err_alloc:
 	return NULL;
 }
 
-#ifndef CONFIG_KRG_EPM
-static
+#ifdef CONFIG_KRG_EPM
+struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns, bool accept_parent)
+#else
+static struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns)
 #endif
-struct pid_namespace *create_pid_namespace(unsigned int level)
 {
 	struct pid_namespace *ns;
+#ifdef CONFIG_KRG_EPM
+	unsigned int level = 0;
+#else
+	unsigned int level = parent_pid_ns->level + 1;
+#endif
 	int i;
+
+#ifdef CONFIG_KRG_EPM
+	if (accept_parent)
+		level = parent_pid_ns->level + 1;
+#endif
 
 	ns = kmem_cache_zalloc(pid_ns_cachep, GFP_KERNEL);
 	if (ns == NULL)
@@ -93,6 +104,18 @@ struct pid_namespace *create_pid_namespace(unsigned int level)
 
 	kref_init(&ns->kref);
 	ns->level = level;
+#ifdef CONFIG_KRG_PROC
+	if (accept_parent) {
+		ns->global = parent_pid_ns->global;
+		ns->global |= current->create_krg_ns;
+		if (parent_pid_ns->krg_ns_root)
+			get_pid_ns(parent_pid_ns->krg_ns_root);
+		ns->krg_ns_root = parent_pid_ns->krg_ns_root;
+		ns->parent = get_pid_ns(parent_pid_ns);
+	}
+#else
+	ns->parent = get_pid_ns(parent_pid_ns);
+#endif
 
 	set_bit(0, ns->pidmap[0].page);
 	atomic_set(&ns->pidmap[0].nr_free, BITS_PER_PAGE - 1);
@@ -125,36 +148,15 @@ static void destroy_pid_namespace(struct pid_namespace *ns)
 
 struct pid_namespace *copy_pid_ns(unsigned long flags, struct pid_namespace *old_ns)
 {
-	struct pid_namespace *new_ns;
-
-	BUG_ON(!old_ns);
-	new_ns = get_pid_ns(old_ns);
 	if (!(flags & CLONE_NEWPID))
-		goto out;
-
-	new_ns = ERR_PTR(-EINVAL);
+		return get_pid_ns(old_ns);
 	if (flags & CLONE_THREAD)
-		goto out_put;
-
-	new_ns = create_pid_namespace(old_ns->level + 1);
-	if (!IS_ERR(new_ns))
-#ifdef CONFIG_KRG_PROC
-	{
-		new_ns->global = old_ns->global;
-		new_ns->global |= current->create_krg_ns;
-		if (old_ns->krg_ns_root)
-			get_pid_ns(old_ns->krg_ns_root);
-		new_ns->krg_ns_root = old_ns->krg_ns_root;
-		new_ns->parent = get_pid_ns(old_ns);
-	}
+		return ERR_PTR(-EINVAL);
+#ifdef CONFIG_KRG_EPM
+	return create_pid_namespace(old_ns, true);
 #else
-		new_ns->parent = get_pid_ns(old_ns);
+	return create_pid_namespace(old_ns);
 #endif
-
-out_put:
-	put_pid_ns(old_ns);
-out:
-	return new_ns;
 }
 
 void free_pid_ns(struct kref *kref)

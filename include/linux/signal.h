@@ -241,6 +241,8 @@ int krg_group_send_sig_info(int sig, struct siginfo *info, struct task_struct *p
 			    pid_t session);
 extern int __krg_group_send_sig_info(int, struct siginfo *, struct task_struct *);
 #endif
+extern long do_rt_tgsigqueueinfo(pid_t tgid, pid_t pid, int sig,
+				 siginfo_t *info);
 extern long do_sigpending(void __user *, unsigned long);
 extern int sigprocmask(int, sigset_t *, sigset_t *);
 extern int show_unhandled_signals;

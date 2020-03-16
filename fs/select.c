@@ -116,6 +116,7 @@ void poll_initwait(struct poll_wqueues *pwq)
 {
 	init_poll_funcptr(&pwq->pt, __pollwait);
 	pwq->polling_task = current;
+	pwq->triggered = 0;
 	pwq->error = 0;
 	pwq->table = NULL;
 	pwq->inline_index = 0;
@@ -178,7 +179,28 @@ static struct poll_table_entry *poll_get_entry(struct poll_wqueues *p)
 	return table->entry++;
 }
 
-static int pollwake(wait_queue_t *wait, unsigned mode, int sync, void *key)
+#ifdef CONFIG_KRG_FAF
+static void poll_put_entry(poll_table *_p, struct poll_table_entry *entry)
+{
+	struct poll_wqueues *p = container_of(_p, struct poll_wqueues, pt);
+	struct poll_table_page *table = p->table;
+
+	if (!table) {
+		p->inline_index--;
+	} else {
+		table->entry--;
+		if (table->entry == table->entries) {
+			p->table = table->next;
+			free_page((unsigned long)table);
+		}
+	}
+
+	p->error = -ENOMEM;
+	__set_current_state(TASK_RUNNING);
+}
+#endif
+
+static int __pollwake(wait_queue_t *wait, unsigned mode, int sync, void *key)
 {
 	struct poll_wqueues *pwq = wait->private;
 	DECLARE_WAITQUEUE(dummy_wait, pwq->polling_task);
@@ -204,26 +226,15 @@ static int pollwake(wait_queue_t *wait, unsigned mode, int sync, void *key)
 	return default_wake_function(&dummy_wait, mode, sync, key);
 }
 
-#ifdef CONFIG_KRG_FAF
-static void poll_put_entry(poll_table *_p, struct poll_table_entry *entry)
+static int pollwake(wait_queue_t *wait, unsigned mode, int sync, void *key)
 {
-	struct poll_wqueues *p = container_of(_p, struct poll_wqueues, pt);
-	struct poll_table_page *table = p->table;
+	struct poll_table_entry *entry;
 
-	if (!table) {
-		p->inline_index--;
-	} else {
-		table->entry--;
-		if (table->entry == table->entries) {
-			p->table = table->next;
-			free_page((unsigned long)table);
-		}
-	}
-
-	p->error = -ENOMEM;
-	__set_current_state(TASK_RUNNING);
+	entry = container_of(wait, struct poll_table_entry, wait);
+	if (key && !((unsigned long)key & entry->key))
+		return 0;
+	return __pollwake(wait, mode, sync, key);
 }
-#endif
 
 /* Add a new entry */
 static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
@@ -240,6 +251,7 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
 	get_file(filp);
 	entry->filp = filp;
 	entry->wait_address = wait_address;
+	entry->key = p->key;
 	init_waitqueue_func_entry(&entry->wait, pollwake);
 	entry->wait.private = pwq;
 	add_wait_queue(wait_address, &entry->wait);
@@ -413,6 +425,18 @@ get_max:
 #define POLLOUT_SET (POLLWRBAND | POLLWRNORM | POLLOUT | POLLERR)
 #define POLLEX_SET (POLLPRI)
 
+static inline void wait_key_set(poll_table *wait, unsigned long in,
+				unsigned long out, unsigned long bit)
+{
+	if (wait) {
+		wait->key = POLLEX_SET;
+		if (in & bit)
+			wait->key |= POLLIN_SET;
+		if (out & bit)
+			wait->key |= POLLOUT_SET;
+	}
+}
+
 int do_select(int n, fd_set_bits *fds, struct timespec *end_time)
 {
 	ktime_t expire, *to = NULL;
@@ -469,20 +493,25 @@ int do_select(int n, fd_set_bits *fds, struct timespec *end_time)
 				if (file) {
 					f_op = file->f_op;
 					mask = DEFAULT_POLLMASK;
-					if (f_op && f_op->poll)
-						mask = (*f_op->poll)(file, retval ? NULL : wait);
+					if (f_op && f_op->poll) {
+						wait_key_set(wait, in, out, bit);
+						mask = (*f_op->poll)(file, wait);
+					}
 					fput_light(file, fput_needed);
 					if ((mask & POLLIN_SET) && (in & bit)) {
 						res_in |= bit;
 						retval++;
+						wait = NULL;
 					}
 					if ((mask & POLLOUT_SET) && (out & bit)) {
 						res_out |= bit;
 						retval++;
+						wait = NULL;
 					}
 					if ((mask & POLLEX_SET) && (ex & bit)) {
 						res_ex |= bit;
 						retval++;
+						wait = NULL;
 					}
 				}
 			}
@@ -736,8 +765,12 @@ static inline unsigned int do_pollfd(struct pollfd *pollfd, poll_table *pwait)
 		mask = POLLNVAL;
 		if (file != NULL) {
 			mask = DEFAULT_POLLMASK;
-			if (file->f_op && file->f_op->poll)
+			if (file->f_op && file->f_op->poll) {
+				if (pwait)
+					pwait->key = pollfd->events |
+							POLLERR | POLLHUP;
 				mask = file->f_op->poll(file, pwait);
+			}
 			/* Mask out unneeded events. */
 			mask &= pollfd->events | POLLERR | POLLHUP;
 			fput_light(file, fput_needed);

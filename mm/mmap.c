@@ -28,6 +28,7 @@
 #include <linux/mempolicy.h>
 #include <linux/rmap.h>
 #include <linux/mmu_notifier.h>
+#include <linux/perf_counter.h>
 
 #include <asm/uaccess.h>
 #include <asm/cacheflush.h>
@@ -1322,6 +1323,8 @@ munmap_back:
 	if (correct_wcount)
 		atomic_inc(&inode->i_writecount);
 out:
+	perf_counter_mmap(vma);
+
 	mm->total_vm += len >> PAGE_SHIFT;
 	vm_stat_account(mm, vm_flags, file, len >> PAGE_SHIFT);
 	if (vm_flags & VM_LOCKED) {
@@ -2489,6 +2492,8 @@ int install_special_mapping(struct mm_struct *mm,
 	}
 
 	mm->total_vm += len >> PAGE_SHIFT;
+
+	perf_counter_mmap(vma);
 
 	return 0;
 }

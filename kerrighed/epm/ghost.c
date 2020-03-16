@@ -1417,7 +1417,7 @@ static struct task_struct *import_task(struct epm_action *action,
 	INIT_LIST_HEAD(&task->cpu_timers[0]);
 	INIT_LIST_HEAD(&task->cpu_timers[1]);
 	INIT_LIST_HEAD(&task->cpu_timers[2]);
-	mutex_init(&task->cred_exec_mutex);
+	mutex_init(&task->cred_guard_mutex);
 #ifndef CONFIG_KRG_IPC
 	BUG_ON(task->sysvsem.undo_list);
 #endif

@@ -1916,7 +1916,7 @@ char *__d_path(const struct path *path, struct path *root,
 	spin_lock(&vfsmount_lock);
 	prepend(&end, &buflen, "\0", 1);
 #ifdef CONFIG_KRG_DVFS
-	if (!IS_ROOT(dentry) && d_unhashed(dentry)) {
+	if (d_unlinked(dentry)) {
 		*deleted = true;
 		if (prepend(&end, &buflen, " (deleted)", 10) != 0)
 			goto Elong;
@@ -1924,7 +1924,7 @@ char *__d_path(const struct path *path, struct path *root,
 		*deleted = false;
 	}
 #else
-	if (!IS_ROOT(dentry) && d_unhashed(dentry) &&
+	if (d_unlinked(dentry) &&
 		(prepend(&end, &buflen, " (deleted)", 10) != 0))
 			goto Elong;
 #endif
@@ -2078,7 +2078,7 @@ char *dentry_path(struct dentry *dentry, char *buf, int buflen)
 
 	spin_lock(&dcache_lock);
 	prepend(&end, &buflen, "\0", 1);
-	if (!IS_ROOT(dentry) && d_unhashed(dentry) &&
+	if (d_unlinked(dentry) &&
 		(prepend(&end, &buflen, "//deleted", 9) != 0))
 			goto Elong;
 	if (buflen < 1)
@@ -2140,9 +2140,8 @@ SYSCALL_DEFINE2(getcwd, char __user *, buf, unsigned long, size)
 	read_unlock(&current->fs->lock);
 
 	error = -ENOENT;
-	/* Has the current directory has been unlinked? */
 	spin_lock(&dcache_lock);
-	if (IS_ROOT(pwd.dentry) || !d_unhashed(pwd.dentry)) {
+	if (!d_unlinked(pwd.dentry)) {
 		unsigned long len;
 		struct path tmp = root;
 		char * cwd;

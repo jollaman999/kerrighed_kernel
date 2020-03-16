@@ -12,7 +12,6 @@
 #include <linux/completion.h>
 #include <linux/personality.h>
 #include <linux/tty.h>
-#include <linux/mnt_namespace.h>
 #include <linux/iocontext.h>
 #include <linux/key.h>
 #include <linux/security.h>
@@ -48,7 +47,9 @@
 #include <linux/tracehook.h>
 #include <linux/fs_struct.h>
 #include <linux/init_task.h>
-#include <trace/sched.h>
+#include <linux/perf_counter.h>
+#include <trace/events/sched.h>
+
 #ifdef CONFIG_KRG_KDDM
 #include <kddm/kddm_info.h>
 #endif
@@ -73,10 +74,6 @@
 #include <asm/pgtable.h>
 #include <asm/mmu_context.h>
 #include "cred-internals.h"
-
-DEFINE_TRACE(sched_process_free);
-DEFINE_TRACE(sched_process_exit);
-DEFINE_TRACE(sched_process_wait);
 
 #ifndef CONFIG_KRG_MM
 static
@@ -200,6 +197,9 @@ static void delayed_put_task_struct(struct rcu_head *rhp)
 {
 	struct task_struct *tsk = container_of(rhp, struct task_struct, rcu);
 
+#ifdef CONFIG_PERF_COUNTERS
+	WARN_ON_ONCE(tsk->perf_counter_ctxp);
+#endif
 	trace_sched_process_free(tsk);
 	put_task_struct(tsk);
 }
@@ -245,6 +245,7 @@ repeat:
 	atomic_dec(&__task_cred(p)->user->processes);
 
 	proc_flush_task(p);
+
 	write_lock_irq(&tasklist_lock);
 	tracehook_finish_release_task(p);
 	__exit_signal(p);
@@ -497,9 +498,8 @@ static void set_special_pids(struct pid *pid)
 }
 
 /*
- * Let kernel threads use this to say that they
- * allow a certain signal (since daemonize() will
- * have disabled all of them by default).
+ * Let kernel threads use this to say that they allow a certain signal.
+ * Must not be used if kthread was cloned with CLONE_SIGHAND.
  */
 int allow_signal(int sig)
 {
@@ -507,14 +507,14 @@ int allow_signal(int sig)
 		return -EINVAL;
 
 	spin_lock_irq(&current->sighand->siglock);
+	/* This is only needed for daemonize()'ed kthreads */
 	sigdelset(&current->blocked, sig);
-	if (!current->mm) {
-		/* Kernel threads handle their own signals.
-		   Let the signal code know it'll be handled, so
-		   that they don't get converted to SIGKILL or
-		   just silently dropped */
-		current->sighand->action[(sig)-1].sa.sa_handler = (void __user *)2;
-	}
+	/*
+	 * Kernel threads handle their own signals. Let the signal code
+	 * know it'll be handled, so that they don't get converted to
+	 * SIGKILL or just silently dropped.
+	 */
+	current->sighand->action[(sig)-1].sa.sa_handler = (void __user *)2;
 	recalc_sigpending();
 	spin_unlock_irq(&current->sighand->siglock);
 	return 0;
@@ -713,7 +713,7 @@ retry:
 	/*
 	 * Search in the siblings
 	 */
-	list_for_each_entry(c, &p->parent->children, sibling) {
+	list_for_each_entry(c, &p->real_parent->children, sibling) {
 		if (c->mm == mm)
 			goto assign_new_owner;
 	}
@@ -883,7 +883,7 @@ static void reparent_thread(struct task_struct *father, struct task_struct *p,
 	p->exit_signal = SIGCHLD;
 
 	/* If it has exited notify the new parent about this child's death. */
-	if (!p->ptrace &&
+	if (!task_ptrace(p) &&
 	    p->exit_state == EXIT_ZOMBIE && thread_group_empty(p)) {
 		do_notify_parent(p, p->exit_signal);
 		if (task_detached(p)) {
@@ -915,7 +915,7 @@ static void forget_original_parent(struct task_struct *father)
 	list_for_each_entry_safe(p, n, &father->children, sibling) {
 		p->real_parent = reaper;
 		if (p->parent == father) {
-			BUG_ON(p->ptrace);
+			BUG_ON(task_ptrace(p));
 			p->parent = p->real_parent;
 		}
 #ifdef CONFIG_KRG_EPM
@@ -1198,6 +1198,13 @@ NORET_TYPE void do_exit(long code)
 		module_put(tsk->binfmt->module);
 
 	proc_exit_connector(tsk);
+
+	/*
+	 * Flush inherited counters to the parent - before the parent
+	 * gets woken up by child-exit notifications.
+	 */
+	perf_counter_exit_task(tsk);
+
 #ifdef CONFIG_KRG_EPM
 	if (!notify)
 		exit_migration(tsk);
@@ -1213,10 +1220,6 @@ NORET_TYPE void do_exit(long code)
 		kmem_cache_free(kddm_info_cachep, tsk->kddm_info);
 #endif
 #ifdef CONFIG_FUTEX
-	/*
-	 * This must happen late, after the PID is not
-	 * hashed anymore:
-	 */
 	if (unlikely(!list_empty(&tsk->pi_state_list)))
 		exit_pi_state_list(tsk);
 	if (unlikely(current->pi_state_cache))
@@ -1338,13 +1341,12 @@ static struct pid *task_pid_type(struct task_struct *task, enum pid_type type)
 	return pid;
 }
 
-static int eligible_child(enum pid_type type, struct pid *pid, int options,
-			  struct task_struct *p)
+static int eligible_child(struct wait_opts *wo, struct task_struct *p)
 {
 	int err;
 
-	if (type < PIDTYPE_MAX) {
-		if (task_pid_type(p, type) != pid)
+	if (wo->wo_type < PIDTYPE_MAX) {
+		if (task_pid_type(p, wo->wo_type) != wo->wo_pid)
 			return 0;
 	}
 
@@ -1353,8 +1355,8 @@ static int eligible_child(enum pid_type type, struct pid *pid, int options,
 	 * set; otherwise, wait for non-clone children *only*.  (Note:
 	 * A "clone" child here is one that reports to its parent
 	 * using a signal other than SIGCHLD.) */
-	if (((p->exit_signal != SIGCHLD) ^ ((options & __WCLONE) != 0))
-	    && !(options & __WALL))
+	if (((p->exit_signal != SIGCHLD) ^ !!(wo->wo_flags & __WCLONE))
+	    && !(wo->wo_flags & __WALL))
 		return 0;
 
 	err = security_task_wait(p);
@@ -1364,14 +1366,15 @@ static int eligible_child(enum pid_type type, struct pid *pid, int options,
 	return 1;
 }
 
-static int wait_noreap_copyout(struct task_struct *p, pid_t pid, uid_t uid,
-			       int why, int status,
-			       struct siginfo __user *infop,
-			       struct rusage __user *rusagep)
+static int wait_noreap_copyout(struct wait_opts *wo, struct task_struct *p,
+				pid_t pid, uid_t uid, int why, int status)
 {
-	int retval = rusagep ? getrusage(p, RUSAGE_BOTH, rusagep) : 0;
+	struct siginfo __user *infop;
+	int retval = wo->wo_rusage
+		? getrusage(p, RUSAGE_BOTH, wo->wo_rusage) : 0;
 
 	put_task_struct(p);
+	infop = wo->wo_info;
 	if (!retval)
 		retval = put_user(SIGCHLD, &infop->si_signo);
 	if (!retval)
@@ -1398,19 +1401,18 @@ static int wait_noreap_copyout(struct task_struct *p, pid_t pid, uid_t uid,
 #ifndef CONFIG_KRG_EPM
 static
 #endif
-int wait_task_zombie(struct task_struct *p, int options,
-			    struct siginfo __user *infop,
-			    int __user *stat_addr, struct rusage __user *ru)
+int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 {
 	unsigned long state;
 	int retval, status, traced;
 	pid_t pid = task_pid_vnr(p);
 	uid_t uid = __task_cred(p)->uid;
+	struct siginfo __user *infop;
 
-	if (!likely(options & WEXITED))
+	if (!likely(wo->wo_flags & WEXITED))
 		return 0;
 
-	if (unlikely(options & WNOWAIT)) {
+	if (unlikely(wo->wo_flags & WNOWAIT)) {
 		int exit_code = p->exit_code;
 		int why, status;
 
@@ -1428,8 +1430,7 @@ int wait_task_zombie(struct task_struct *p, int options,
 			why = (exit_code & 0x80) ? CLD_DUMPED : CLD_KILLED;
 			status = exit_code & 0x7f;
 		}
-		return wait_noreap_copyout(p, pid, uid, why,
-					   status, infop, ru);
+		return wait_noreap_copyout(wo, p, pid, uid, why, status);
 	}
 
 #ifdef CONFIG_KRG_EPM
@@ -1453,10 +1454,13 @@ int wait_task_zombie(struct task_struct *p, int options,
 	/* remote call iff p->parent == baby_sitter */
 	if (p->parent != baby_sitter)
 #endif
-	if (likely(!traced)) {
+	/*
+	 * It can be ptraced but not reparented, check
+	 * !task_detached() to filter out sub-threads.
+	 */
+	if (likely(!traced) && likely(!task_detached(p))) {
 		struct signal_struct *psig;
 		struct signal_struct *sig;
-		struct task_cputime cputime;
 
 		/*
 		 * The resource counters for the group leader are in its
@@ -1469,26 +1473,23 @@ int wait_task_zombie(struct task_struct *p, int options,
 		 * p->signal fields, because they are only touched by
 		 * __exit_signal, which runs with tasklist_lock
 		 * write-locked anyway, and so is excluded here.  We do
-		 * need to protect the access to p->parent->signal fields,
+		 * need to protect the access to parent->signal fields,
 		 * as other threads in the parent group can be right
 		 * here reaping other children at the same time.
-		 *
-		 * We use thread_group_cputime() to get times for the thread
-		 * group, which consolidates times for all threads in the
-		 * group including the group leader.
 		 */
-		thread_group_cputime(p, &cputime);
-		spin_lock_irq(&p->parent->sighand->siglock);
-		psig = p->parent->signal;
+		spin_lock_irq(&p->real_parent->sighand->siglock);
+		psig = p->real_parent->signal;
 		sig = p->signal;
 		psig->cutime =
 			cputime_add(psig->cutime,
-			cputime_add(cputime.utime,
-				    sig->cutime));
+			cputime_add(p->utime,
+			cputime_add(sig->utime,
+				    sig->cutime)));
 		psig->cstime =
 			cputime_add(psig->cstime,
-			cputime_add(cputime.stime,
-				    sig->cstime));
+			cputime_add(p->stime,
+			cputime_add(sig->stime,
+				    sig->cstime)));
 		psig->cgtime =
 			cputime_add(psig->cgtime,
 			cputime_add(p->gtime,
@@ -1510,7 +1511,7 @@ int wait_task_zombie(struct task_struct *p, int options,
 			sig->oublock + sig->coublock;
 		task_io_accounting_add(&psig->ioac, &p->ioac);
 		task_io_accounting_add(&psig->ioac, &sig->ioac);
-		spin_unlock_irq(&p->parent->sighand->siglock);
+		spin_unlock_irq(&p->real_parent->sighand->siglock);
 	}
 
 	/*
@@ -1523,11 +1524,14 @@ int wait_task_zombie(struct task_struct *p, int options,
 		krg_children_unlock(current->children_obj);
 #endif
 
-	retval = ru ? getrusage(p, RUSAGE_BOTH, ru) : 0;
+	retval = wo->wo_rusage
+		? getrusage(p, RUSAGE_BOTH, wo->wo_rusage) : 0;
 	status = (p->signal->flags & SIGNAL_GROUP_EXIT)
 		? p->signal->group_exit_code : p->exit_code;
-	if (!retval && stat_addr)
-		retval = put_user(status, stat_addr);
+	if (!retval && wo->wo_stat)
+		retval = put_user(status, wo->wo_stat);
+
+	infop = wo->wo_info;
 	if (!retval && infop)
 		retval = put_user(SIGCHLD, &infop->si_signo);
 	if (!retval && infop)
@@ -1613,15 +1617,18 @@ static int *task_stopped_code(struct task_struct *p, bool ptrace)
  * the lock and this task is uninteresting.  If we return nonzero, we have
  * released the lock and the system call should return.
  */
-static int wait_task_stopped(int ptrace, struct task_struct *p,
-			     int options, struct siginfo __user *infop,
-			     int __user *stat_addr, struct rusage __user *ru)
+static int wait_task_stopped(struct wait_opts *wo,
+				int ptrace, struct task_struct *p)
 {
+	struct siginfo __user *infop;
 	int retval, exit_code, *p_code, why;
 	uid_t uid = 0; /* unneeded, required by compiler */
 	pid_t pid;
 
-	if (!(options & WUNTRACED))
+	/*
+	 * Traditionally we see ptrace'd stopped tasks regardless of options.
+	 */
+	if (!ptrace && !(wo->wo_flags & WUNTRACED))
 		return 0;
 
 	exit_code = 0;
@@ -1635,7 +1642,7 @@ static int wait_task_stopped(int ptrace, struct task_struct *p,
 	if (!exit_code)
 		goto unlock_sig;
 
-	if (!unlikely(options & WNOWAIT))
+	if (!unlikely(wo->wo_flags & WNOWAIT))
 		*p_code = 0;
 
 	/* don't need the RCU readlock here as we're holding a spinlock */
@@ -1661,14 +1668,15 @@ unlock_sig:
 		krg_children_unlock(current->children_obj);
 #endif
 
-	if (unlikely(options & WNOWAIT))
-		return wait_noreap_copyout(p, pid, uid,
-					   why, exit_code,
-					   infop, ru);
+	if (unlikely(wo->wo_flags & WNOWAIT))
+		return wait_noreap_copyout(wo, p, pid, uid, why, exit_code);
 
-	retval = ru ? getrusage(p, RUSAGE_BOTH, ru) : 0;
-	if (!retval && stat_addr)
-		retval = put_user((exit_code << 8) | 0x7f, stat_addr);
+	retval = wo->wo_rusage
+		? getrusage(p, RUSAGE_BOTH, wo->wo_rusage) : 0;
+	if (!retval && wo->wo_stat)
+		retval = put_user((exit_code << 8) | 0x7f, wo->wo_stat);
+
+	infop = wo->wo_info;
 	if (!retval && infop)
 		retval = put_user(SIGCHLD, &infop->si_signo);
 	if (!retval && infop)
@@ -1695,15 +1703,13 @@ unlock_sig:
  * the lock and this task is uninteresting.  If we return nonzero, we have
  * released the lock and the system call should return.
  */
-static int wait_task_continued(struct task_struct *p, int options,
-			       struct siginfo __user *infop,
-			       int __user *stat_addr, struct rusage __user *ru)
+static int wait_task_continued(struct wait_opts *wo, struct task_struct *p)
 {
 	int retval;
 	pid_t pid;
 	uid_t uid;
 
-	if (!unlikely(options & WCONTINUED))
+	if (!unlikely(wo->wo_flags & WCONTINUED))
 		return 0;
 
 	if (!(p->signal->flags & SIGNAL_STOP_CONTINUED))
@@ -1715,7 +1721,7 @@ static int wait_task_continued(struct task_struct *p, int options,
 		spin_unlock_irq(&p->sighand->siglock);
 		return 0;
 	}
-	if (!unlikely(options & WNOWAIT))
+	if (!unlikely(wo->wo_flags & WNOWAIT))
 		p->signal->flags &= ~SIGNAL_STOP_CONTINUED;
 	uid = __task_cred(p)->uid;
 	spin_unlock_irq(&p->sighand->siglock);
@@ -1728,17 +1734,17 @@ static int wait_task_continued(struct task_struct *p, int options,
 		krg_children_unlock(current->children_obj);
 #endif
 
-	if (!infop) {
-		retval = ru ? getrusage(p, RUSAGE_BOTH, ru) : 0;
+	if (!wo->wo_info) {
+		retval = wo->wo_rusage
+			? getrusage(p, RUSAGE_BOTH, wo->wo_rusage) : 0;
 		put_task_struct(p);
-		if (!retval && stat_addr)
-			retval = put_user(0xffff, stat_addr);
+		if (!retval && wo->wo_stat)
+			retval = put_user(0xffff, wo->wo_stat);
 		if (!retval)
 			retval = pid;
 	} else {
-		retval = wait_noreap_copyout(p, pid, uid,
-					     CLD_CONTINUED, SIGCONT,
-					     infop, ru);
+		retval = wait_noreap_copyout(wo, p, pid, uid,
+					     CLD_CONTINUED, SIGCONT);
 		BUG_ON(retval == 0);
 	}
 
@@ -1748,19 +1754,16 @@ static int wait_task_continued(struct task_struct *p, int options,
 /*
  * Consider @p for a wait by @parent.
  *
- * -ECHILD should be in *@notask_error before the first call.
+ * -ECHILD should be in ->notask_error before the first call.
  * Returns nonzero for a final return, when we have unlocked tasklist_lock.
  * Returns zero if the search for a child should continue;
- * then *@notask_error is 0 if @p is an eligible child,
+ * then ->notask_error is 0 if @p is an eligible child,
  * or another error from security_task_wait(), or still -ECHILD.
  */
-static int wait_consider_task(struct task_struct *parent, int ptrace,
-			      struct task_struct *p, int *notask_error,
-			      enum pid_type type, struct pid *pid, int options,
-			      struct siginfo __user *infop,
-			      int __user *stat_addr, struct rusage __user *ru)
+static int wait_consider_task(struct wait_opts *wo, struct task_struct *parent,
+				int ptrace, struct task_struct *p)
 {
-	int ret = eligible_child(type, pid, options, p);
+	int ret = eligible_child(wo, p);
 	if (!ret)
 		return ret;
 
@@ -1772,16 +1775,17 @@ static int wait_consider_task(struct task_struct *parent, int ptrace,
 		 * to look for security policy problems, rather
 		 * than for mysterious wait bugs.
 		 */
-		if (*notask_error)
-			*notask_error = ret;
+		if (wo->notask_error)
+			wo->notask_error = ret;
+		return 0;
 	}
 
-	if (likely(!ptrace) && unlikely(p->ptrace)) {
+	if (likely(!ptrace) && unlikely(task_ptrace(p))) {
 		/*
 		 * This child is hidden by ptrace.
 		 * We aren't allowed to see it now, but eventually we will.
 		 */
-		*notask_error = 0;
+		wo->notask_error = 0;
 		return 0;
 	}
 
@@ -1792,34 +1796,30 @@ static int wait_consider_task(struct task_struct *parent, int ptrace,
 	 * We don't reap group leaders with subthreads.
 	 */
 	if (p->exit_state == EXIT_ZOMBIE && !delay_group_leader(p))
-		return wait_task_zombie(p, options, infop, stat_addr, ru);
+		return wait_task_zombie(wo, p);
 
 	/*
 	 * It's stopped or running now, so it might
 	 * later continue, exit, or stop again.
 	 */
-	*notask_error = 0;
+	wo->notask_error = 0;
 
 	if (task_stopped_code(p, ptrace))
-		return wait_task_stopped(ptrace, p, options,
-					 infop, stat_addr, ru);
+		return wait_task_stopped(wo, ptrace, p);
 
-	return wait_task_continued(p, options, infop, stat_addr, ru);
+	return wait_task_continued(wo, p);
 }
 
 /*
  * Do the work of do_wait() for one thread in the group, @tsk.
  *
- * -ECHILD should be in *@notask_error before the first call.
+ * -ECHILD should be in ->notask_error before the first call.
  * Returns nonzero for a final return, when we have unlocked tasklist_lock.
  * Returns zero if the search for a child should continue; then
- * *@notask_error is 0 if there were any eligible children,
+ * ->notask_error is 0 if there were any eligible children,
  * or another error from security_task_wait(), or still -ECHILD.
  */
-static int do_wait_thread(struct task_struct *tsk, int *notask_error,
-			  enum pid_type type, struct pid *pid, int options,
-			  struct siginfo __user *infop, int __user *stat_addr,
-			  struct rusage __user *ru)
+static int do_wait_thread(struct wait_opts *wo, struct task_struct *tsk)
 {
 	struct task_struct *p;
 
@@ -1828,9 +1828,7 @@ static int do_wait_thread(struct task_struct *tsk, int *notask_error,
 		 * Do not consider detached threads.
 		 */
 		if (!task_detached(p)) {
-			int ret = wait_consider_task(tsk, 0, p, notask_error,
-						     type, pid, options,
-						     infop, stat_addr, ru);
+			int ret = wait_consider_task(wo, tsk, 0, p);
 			if (ret)
 				return ret;
 		}
@@ -1839,22 +1837,12 @@ static int do_wait_thread(struct task_struct *tsk, int *notask_error,
 	return 0;
 }
 
-static int ptrace_do_wait(struct task_struct *tsk, int *notask_error,
-			  enum pid_type type, struct pid *pid, int options,
-			  struct siginfo __user *infop, int __user *stat_addr,
-			  struct rusage __user *ru)
+static int ptrace_do_wait(struct wait_opts *wo, struct task_struct *tsk)
 {
 	struct task_struct *p;
 
-	/*
-	 * Traditionally we see ptrace'd stopped tasks regardless of options.
-	 */
-	options |= WUNTRACED;
-
 	list_for_each_entry(p, &tsk->ptraced, ptrace_entry) {
-		int ret = wait_consider_task(tsk, 1, p, notask_error,
-					     type, pid, options,
-					     infop, stat_addr, ru);
+		int ret = wait_consider_task(wo, tsk, 1, p);
 		if (ret)
 			return ret;
 	}
@@ -1862,22 +1850,13 @@ static int ptrace_do_wait(struct task_struct *tsk, int *notask_error,
 	return 0;
 }
 
-#ifdef CONFIG_KRG_EPM
-static
-long do_wait(enum pid_type type, struct pid *pid, pid_t upid, int options,
-	     struct siginfo __user *infop, int __user *stat_addr,
-	     struct rusage __user *ru)
-#else
-static long do_wait(enum pid_type type, struct pid *pid, int options,
-		    struct siginfo __user *infop, int __user *stat_addr,
-		    struct rusage __user *ru)
-#endif
+static long do_wait(struct wait_opts *wo)
 {
 	DECLARE_WAITQUEUE(wait, current);
 	struct task_struct *tsk;
 	int retval;
 
-	trace_sched_process_wait(pid);
+	trace_sched_process_wait(wo->wo_pid);
 
 #ifdef CONFIG_KRG_PROC
 	down_read(&kerrighed_init_sem);
@@ -1886,58 +1865,52 @@ static long do_wait(enum pid_type type, struct pid *pid, int options,
 repeat:
 	/*
 	 * If there is nothing that can match our critiera just get out.
-	 * We will clear @retval to zero if we see any child that might later
-	 * match our criteria, even if we are not able to reap it yet.
+	 * We will clear ->notask_error to zero if we see any child that
+	 * might later match our criteria, even if we are not able to reap
+	 * it yet.
 	 */
-	retval = -ECHILD;
+	wo->notask_error = -ECHILD;
 #ifdef CONFIG_KRG_EPM
 	if (!current->children_obj)
 #endif
-	if ((type < PIDTYPE_MAX) && (!pid || hlist_empty(&pid->tasks[type])))
-		goto end;
+	if ((wo->wo_type < PIDTYPE_MAX) &&
+	   (!wo->wo_pid || hlist_empty(&wo->wo_pid->tasks[wo->wo_type])))
+		goto notask;
 
 #ifdef CONFIG_KRG_EPM
 	if (current->children_obj)
 		__krg_children_readlock(current);
 #endif
-	current->state = TASK_INTERRUPTIBLE;
+
+	set_current_state(TASK_INTERRUPTIBLE);
 	read_lock(&tasklist_lock);
 	tsk = current;
 	do {
-		int tsk_result = do_wait_thread(tsk, &retval,
-						type, pid, options,
-						infop, stat_addr, ru);
-		if (!tsk_result)
-			tsk_result = ptrace_do_wait(tsk, &retval,
-						    type, pid, options,
-						    infop, stat_addr, ru);
-		if (tsk_result) {
-			/*
-			 * tasklist_lock is unlocked and we have a final result.
-			 */
-			retval = tsk_result;
+		retval = do_wait_thread(wo, tsk);
+		if (retval)
 			goto end;
-		}
 
-		if (options & __WNOTHREAD)
+		retval = ptrace_do_wait(wo, tsk);
+		if (retval)
+			goto end;
+
+		if (wo->wo_flags & __WNOTHREAD)
 			break;
-		tsk = next_thread(tsk);
-		BUG_ON(tsk->signal != current->signal);
-	} while (tsk != current);
+	} while_each_thread(current, tsk);
 	read_unlock(&tasklist_lock);
 #ifdef CONFIG_KRG_EPM
 	if (current->children_obj) {
 		/* Try all children, even remote ones but don't wait yet */
 		/* Releases children lock */
-		int tsk_result = krg_do_wait(current->children_obj, &retval,
-					     type, upid, options,
-					     infop, stat_addr, ru);
+		int tsk_result = krg_do_wait(current->children_obj, wo);
 		if (tsk_result)
 			retval = tsk_result;
 	}
 #endif
 
-	if (!retval && !(options & WNOHANG)) {
+notask:
+	retval = wo->notask_error;
+	if (!retval && !(wo->wo_flags & WNOHANG)) {
 		retval = -ERESTARTSYS;
 		if (!signal_pending(current)) {
 #ifdef CONFIG_KRG_PROC
@@ -1950,14 +1923,15 @@ repeat:
 			goto repeat;
 		}
 	}
-
 end:
-	current->state = TASK_RUNNING;
+	__set_current_state(TASK_RUNNING);
 	remove_wait_queue(&current->signal->wait_chldexit,&wait);
 #ifdef CONFIG_KRG_PROC
 	up_read(&kerrighed_init_sem);
 #endif
-	if (infop) {
+	if (wo->wo_info) {
+		struct siginfo __user *infop = wo->wo_info;
+
 		if (retval > 0)
 			retval = 0;
 		else {
@@ -1986,6 +1960,7 @@ end:
 SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
 		infop, int, options, struct rusage __user *, ru)
 {
+	struct wait_opts wo;
 	struct pid *pid = NULL;
 	enum pid_type type;
 	long ret;
@@ -2015,11 +1990,17 @@ SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
 
 	if (type < PIDTYPE_MAX)
 		pid = find_get_pid(upid);
+
+	wo.wo_type	= type;
+	wo.wo_pid	= pid;
 #ifdef CONFIG_KRG_EPM
-	ret = do_wait(type, pid, upid, options, infop, NULL, ru);
-#else
-	ret = do_wait(type, pid, options, infop, NULL, ru);
+	wo.wo_upid	= upid;
 #endif
+	wo.wo_flags	= options;
+	wo.wo_info	= infop;
+	wo.wo_stat	= NULL;
+	wo.wo_rusage	= ru;
+	ret = do_wait(&wo);
 	put_pid(pid);
 
 	/* avoid REGPARM breakage on x86: */
@@ -2030,6 +2011,7 @@ SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
 SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 		int, options, struct rusage __user *, ru)
 {
+	struct wait_opts wo;
 	struct pid *pid = NULL;
 	enum pid_type type;
 	long ret;
@@ -2058,10 +2040,17 @@ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 		else /* upid < 0 */
 			upid = -upid;
 	}
-	ret = do_wait(type, pid, upid, options | WEXITED, NULL, stat_addr, ru);
-#else
-	ret = do_wait(type, pid, options | WEXITED, NULL, stat_addr, ru);
 #endif
+	wo.wo_type	= type;
+	wo.wo_pid	= pid;
+#ifdef CONFIG_KRG_EPM
+	wo.wo_upid	= upid;
+#endif
+	wo.wo_flags	= options | WEXITED;
+	wo.wo_info	= NULL;
+	wo.wo_stat	= stat_addr;
+	wo.wo_rusage	= ru;
+	ret = do_wait(&wo);
 	put_pid(pid);
 
 	/* avoid REGPARM breakage on x86: */

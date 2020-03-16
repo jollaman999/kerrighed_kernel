@@ -1565,7 +1565,7 @@ static void handle_faf_poll_notify(struct rpc_desc *desc,
 	dvfs_file = _kddm_get_object_no_ft(dvfs_file_struct_ctnr, dvfs_id);
 	if (dvfs_file && dvfs_file->file) {
 		/* TODO: still required? */
-		if (atomic_read (&dvfs_file->file->f_count) == 0)
+		if (atomic_read ((const atomic_t *)&dvfs_file->file->f_count) == 0)
 			dvfs_file->file = NULL;
 	}
 	if (!dvfs_file || !dvfs_file->file)

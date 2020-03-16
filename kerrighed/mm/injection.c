@@ -340,7 +340,7 @@ static inline void init_low_mem_limit(void)
 	low_mem_limit = 0;
 
 	for_each_zone(zone) {
-		low_mem_limit += zone->pages_low;
+		low_mem_limit += low_wmark_pages(zone);
 	}
 
 	low_mem_limit *= 2;
