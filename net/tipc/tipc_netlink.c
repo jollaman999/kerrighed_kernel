@@ -68,8 +68,8 @@ static int handle_cmd(struct sk_buff *skb, struct genl_info *info)
 #endif
 		memcpy(rep_nlh, req_nlh, hdr_space);
 		rep_nlh->nlmsg_len = rep_buf->len;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
-		genlmsg_unicast(rep_buf, NETLINK_CB(skb).pid);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,32)
+		genlmsg_unicast(&init_net, rep_buf, NETLINK_CB(skb).pid);
 #else
 		genlmsg_unicast(rep_buf, req_nlh->nlmsg_pid);
 #endif

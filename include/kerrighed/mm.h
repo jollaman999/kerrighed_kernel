@@ -37,7 +37,7 @@ void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma);
 /** Exported Variables **/
 
 extern struct kmem_cache *mm_cachep;
-extern struct vm_operations_struct generic_file_vm_ops ;
+extern const struct vm_operations_struct generic_file_vm_ops;
 
 int special_mapping_vm_ops_krgsyms_register(void);
 int special_mapping_vm_ops_krgsyms_unregister(void);
@@ -67,11 +67,6 @@ static inline int anon_vma(struct vm_area_struct *vma)
 
 	return (vma->anon_vma || vma->vm_flags & VM_KDDM);
 }
-
-#ifdef CONFIG_KRG_FAF
-void use_mm(struct mm_struct *mm);
-void unuse_mm(struct mm_struct *mm);
-#endif
 
 void mm_struct_pin(struct mm_struct *mm);
 void mm_struct_unpin(struct mm_struct *mm);

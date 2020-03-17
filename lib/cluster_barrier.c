@@ -9,6 +9,7 @@
 #include <linux/cluster_barrier.h>
 #include <linux/hashtable.h>
 #include <linux/unique_id.h>
+#include <linux/sched.h>
 #include <net/krgrpc/rpc.h>
 
 #include <kerrighed/types.h>

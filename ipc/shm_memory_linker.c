@@ -300,7 +300,7 @@ struct page *shmem_memory_wppage (struct vm_area_struct *vma,
 
 /* Init the Kerrighed SHM file operations structure */
 
-struct vm_operations_struct krg_shmem_vm_ops = {
+const struct vm_operations_struct krg_shmem_vm_ops = {
 	fault:	shmem_memory_fault,
 	wppage:	shmem_memory_wppage,
 };

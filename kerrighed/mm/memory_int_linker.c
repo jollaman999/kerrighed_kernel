@@ -228,6 +228,13 @@ int anon_memory_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 		if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE)))
 			goto exit_error;
 
+		if (unlikely(PageHWPoison(vmf->page))) {
+			if (ret & VM_FAULT_LOCKED)
+				unlock_page(vmf->page);
+			ret = VM_FAULT_HWPOISON;
+			goto exit_error;
+		}
+
 		/* Copy the cache page into an anonymous page (copy on write
 		 * will be done later on)
 		 *

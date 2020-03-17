@@ -107,7 +107,7 @@ static int export_binfmt(struct epm_action *action,
 {
 	int binfmt_id;
 
-	binfmt_id = krgsyms_export(task->binfmt);
+	binfmt_id = krgsyms_export(task->mm->binfmt);
 	if (binfmt_id == KRGSYMS_UNDEF)
 		return -EPERM;
 
@@ -919,7 +919,7 @@ static int import_binfmt(struct epm_action *action,
 	err = ghost_read(ghost, &binfmt_id, sizeof(int));
 	if (err)
 		goto out;
-	task->binfmt = krgsyms_import(binfmt_id);
+	task->mm->binfmt = krgsyms_import(binfmt_id);
 out:
 	return err;
 }

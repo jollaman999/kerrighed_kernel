@@ -309,7 +309,7 @@ int try_to_flush_page(struct page *page)
 	list_for_each_entry(vma, &anon_vma->head, anon_vma_node) {
 		if (page_mapcount(page) <= 1)
 			break;
-		ret = try_to_unmap_one(page, vma, 0);
+		ret = try_to_unmap_one(page, vma, TTU_UNMAP);
 		if (ret == SWAP_FAIL)
 			goto exit;
 	}

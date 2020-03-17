@@ -10,6 +10,7 @@
 #include <linux/swap.h>
 #include <linux/swapops.h>
 #include <linux/proc_fs.h>
+#include <linux/binfmts.h>
 #include <asm/mmu_context.h>
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
@@ -195,12 +196,15 @@ struct mm_struct *krg_dup_mm(struct task_struct *tsk, struct mm_struct *src_mm)
 	/* The duplicated mm does not yet belong to any real process */
 	atomic_set(&mm->mm_ltasks, 0);
 
-        err = __dup_mmap(mm, src_mm, 1);
-        if (err)
-                goto exit_put_mm;
+	err = __dup_mmap(mm, src_mm, 1);
+	if (err)
+		goto exit_put_mm;
 
-        mm->hiwater_rss = get_mm_rss(mm);
-        mm->hiwater_vm = mm->total_vm;
+	mm->hiwater_rss = get_mm_rss(mm);
+	mm->hiwater_vm = mm->total_vm;
+
+	if (mm->binfmt && !try_module_get(mm->binfmt->module))
+		goto exit_put_mm;
 
 	err = init_anon_vma_kddm_set(tsk, mm);
 	if (err)
@@ -220,22 +224,24 @@ struct mm_struct *krg_dup_mm(struct task_struct *tsk, struct mm_struct *src_mm)
 	 * create_mm_struct_object) */
 	atomic_dec(&mm->mm_users);
 
-        return mm;
+	return mm;
 
 exit_put_mm:
-        mmput(mm);
+	/* don't put binfmt in mmput, we haven't got module yet */
+	mm->binfmt = NULL;
+	mmput(mm);
 
 fail_nomem:
-        return ERR_PTR(err);
+	return ERR_PTR(err);
 
 fail_nocontext:
-        /*
-         * If init_new_context() failed, we cannot use mmput() to free the mm
-         * because it calls destroy_context()
-         */
+	/*
+	 * If init_new_context() failed, we cannot use mmput() to free the mm
+	 * because it calls destroy_context()
+	 */
 	pgd_free(mm, mm->pgd);
-        free_mm(mm);
-        return ERR_PTR(err);
+	free_mm(mm);
+	return ERR_PTR(err);
 }
 
 

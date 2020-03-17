@@ -66,7 +66,7 @@ const struct file_operations shm_file_operations;
 #ifndef CONFIG_KRG_IPC
 static
 #endif
-struct vm_operations_struct shm_vm_ops;
+const struct vm_operations_struct shm_vm_ops;
 
 #ifndef CONFIG_KRG_IPC
 #define shm_ids(ns)	((ns)->ids[IPC_SHM_IDS])
@@ -388,7 +388,7 @@ const struct file_operations shm_file_operations = {
 #ifndef CONFIG_KRG_IPC
 static
 #endif
-struct vm_operations_struct shm_vm_ops = {
+const struct vm_operations_struct shm_vm_ops = {
 	.open	= shm_open,	/* callback for a new vm-area open */
 	.close	= shm_close,	/* callback for when the vm-area is released */
 	.fault	= shm_fault,
@@ -451,7 +451,7 @@ int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 		if (shmflg & SHM_NORESERVE)
 			acctflag = VM_NORESERVE;
 		file = hugetlb_file_setup(name, size, acctflag,
-							&shp->mlock_user);
+					&shp->mlock_user, HUGETLB_SHMFS_INODE);
 	} else {
 		/*
 		 * Do not allow no accounting for OVERCOMMIT_NEVER, even
@@ -505,7 +505,7 @@ int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 	return error;
 
 no_id:
-	if (shp->mlock_user)	/* shmflg & SHM_HUGETLB case */
+	if (is_file_hugepages(file) && shp->mlock_user)
 		user_shm_unlock(size, shp->mlock_user);
 	fput(file);
 no_file:

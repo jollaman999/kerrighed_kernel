@@ -205,7 +205,7 @@ out:
 #ifndef CONFIG_KRG_MM
 static
 #endif
-struct vm_operations_struct ocfs2_file_vm_ops = {
+struct const vm_operations_struct ocfs2_file_vm_ops = {
 	.fault		= ocfs2_fault,
 	.page_mkwrite	= ocfs2_page_mkwrite,
 };

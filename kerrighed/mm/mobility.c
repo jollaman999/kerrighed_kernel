@@ -399,7 +399,7 @@ static int export_one_vma (struct epm_action *action,
 	/* Define and export the vm_ops type of the vma */
 
 	r = -EPERM;
-	vm_ops_type = krgsyms_export (vma->vm_ops);
+	vm_ops_type = krgsyms_export((void *)vma->vm_ops);
 	if (vma->vm_ops && vm_ops_type == KRGSYMS_UNDEF)
 		goto out;
 
@@ -408,7 +408,7 @@ static int export_one_vma (struct epm_action *action,
 	    && vma->vm_ops && vm_ops_type == KRGSYMS_VM_OPS_SHMEM)
 		goto out;
 
-	initial_vm_ops_type = krgsyms_export (vma->initial_vm_ops);
+	initial_vm_ops_type = krgsyms_export((void *)vma->initial_vm_ops);
 	if (vma->initial_vm_ops && initial_vm_ops_type == KRGSYMS_UNDEF)
 		goto out;
 

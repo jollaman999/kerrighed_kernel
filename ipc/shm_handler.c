@@ -278,7 +278,7 @@ void shm_handler_init(void)
 	register_io_linker(SHMID_LINKER, &shmid_linker);
 	register_io_linker(SHMKEY_LINKER, &shmkey_linker);
 
-	krgsyms_register(KRGSYMS_VM_OPS_SHM, &shm_vm_ops);
+	krgsyms_register(KRGSYMS_VM_OPS_SHM, (void *)&shm_vm_ops);
 
 	printk("Shm Server configured\n");
 }

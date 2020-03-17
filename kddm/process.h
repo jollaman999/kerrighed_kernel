@@ -1,8 +1,9 @@
 #ifndef __TOOLS_PROCESS__
 #define __TOOLS_PROCESS__
 
-#define task_on_runqueue(t) (t->run_list.next != LIST_POISON1)
+#include <linux/sched.h>
 
+#define task_on_runqueue(t) (t->run_list.next != LIST_POISON1)
 
 /** Make a process sleep
  *
