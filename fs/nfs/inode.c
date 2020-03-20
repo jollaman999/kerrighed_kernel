@@ -38,6 +38,7 @@
 #include <linux/nfs_xdr.h>
 #include <linux/slab.h>
 #include <linux/compat.h>
+#include <linux/freezer.h>
 
 #ifdef CONFIG_KRG_MM
 #include <kerrighed/krgsyms.h>
@@ -81,7 +82,7 @@ int nfs_wait_bit_killable(void *word)
 {
 	if (fatal_signal_pending(current))
 		return -ERESTARTSYS;
-	schedule();
+	freezable_schedule();
 	return 0;
 }
 
@@ -395,7 +396,7 @@ out_no_inode:
 	goto out;
 }
 
-#define NFS_VALID_ATTRS (ATTR_MODE|ATTR_UID|ATTR_GID|ATTR_SIZE|ATTR_ATIME|ATTR_ATIME_SET|ATTR_MTIME|ATTR_MTIME_SET|ATTR_FILE)
+#define NFS_VALID_ATTRS (ATTR_MODE|ATTR_UID|ATTR_GID|ATTR_SIZE|ATTR_ATIME|ATTR_ATIME_SET|ATTR_MTIME|ATTR_MTIME_SET|ATTR_FILE|ATTR_OPEN)
 
 int
 nfs_setattr(struct dentry *dentry, struct iattr *attr)
@@ -417,7 +418,7 @@ nfs_setattr(struct dentry *dentry, struct iattr *attr)
 
 	/* Optimization: if the end result is no change, don't RPC */
 	attr->ia_valid &= NFS_VALID_ATTRS;
-	if ((attr->ia_valid & ~ATTR_FILE) == 0)
+	if ((attr->ia_valid & ~(ATTR_FILE|ATTR_OPEN)) == 0)
 		return 0;
 
 	/* Write all dirty data */
@@ -1017,6 +1018,8 @@ void nfs_fattr_init(struct nfs_fattr *fattr)
 	fattr->valid = 0;
 	fattr->time_start = jiffies;
 	fattr->gencount = nfs_inc_attr_generation_counter();
+	fattr->owner_name = NULL;
+	fattr->group_name = NULL;
 }
 
 struct nfs_fattr *nfs_alloc_fattr(void)
@@ -1544,9 +1547,11 @@ static int __init init_nfs_fs(void)
 	if (err)
 		goto out10;
 #endif
+#ifdef CONFIG_KEYS
 	err = nfs_idmap_init();
 	if (err < 0)
 		goto out9;
+#endif
 
 	err = nfs_dns_resolver_init();
 	if (err < 0)
@@ -1612,8 +1617,10 @@ out6:
 out7:
 	nfs_dns_resolver_destroy();
 out8:
+#ifdef CONFIG_KEYS
 	nfs_idmap_quit();
 out9:
+#endif
 #ifdef CONFIG_KRG_MM
 	krgsyms_unregister(KRGSYMS_VM_OPS_NFS_FILE);
 out10:
@@ -1630,7 +1637,9 @@ static void __exit exit_nfs_fs(void)
 	nfs_destroy_nfspagecache();
 	nfs_fscache_unregister();
 	nfs_dns_resolver_destroy();
+#ifdef CONFIG_KEYS
 	nfs_idmap_quit();
+#endif
 #ifdef CONFIG_PROC_FS
 	rpc_proc_unregister("nfs");
 #endif

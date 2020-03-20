@@ -212,4 +212,7 @@ config MODULE_HOOK
 	  Enable modules to register/unregister hooks at various places.
 	  In-tree users are Kerrighed's scheduler probes.
 
+config AVERAGE
+	bool
+
 endmenu

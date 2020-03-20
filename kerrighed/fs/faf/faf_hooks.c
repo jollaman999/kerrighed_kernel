@@ -391,7 +391,7 @@ ssize_t krg_faf_readv(struct file *file, const struct iovec __user *vec,
 	int err;
 
 	ret.ret = rw_copy_check_uvector(READ, vec, vlen,
-					ARRAY_SIZE(iovstack), iovstack, &iov);
+					ARRAY_SIZE(iovstack), iovstack, &iov, 1);
 	if (ret.ret < 0)
 		return ret.ret;
 	iovcnt = vlen;
@@ -455,7 +455,7 @@ ssize_t krg_faf_writev(struct file *file, const struct iovec __user *vec,
 	int err;
 
 	ret.ret = rw_copy_check_uvector(WRITE, vec, vlen,
-					ARRAY_SIZE(iovstack), iovstack, &iov);
+					ARRAY_SIZE(iovstack), iovstack, &iov, 1);
 	if (ret.ret < 0)
 		return ret.ret;
 	iovcnt = vlen;
