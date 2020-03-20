@@ -185,6 +185,7 @@ static void reject_rx_queue(struct sock *sk)
  * @net: network namespace (must be default network) -- only for 2.6.24+
  * @sock: pre-allocated socket structure
  * @protocol: protocol indicator (must be 0)
+ * @kern: caused by kernel or by userspace?
  *
  * This routine creates additional data structures used by the TIPC socket,
  * initializes them, and links them together.
@@ -192,11 +193,8 @@ static void reject_rx_queue(struct sock *sk)
  * Returns 0 on success, errno otherwise
  */
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
-static int tipc_create(struct net *net, struct socket *sock, int protocol)
-#else
-static int tipc_create(struct socket *sock, int protocol)
-#endif
+static int tipc_create(struct net *net, struct socket *sock, int protocol,
+		       int kern)
 {
 	const struct proto_ops *ops;
 	socket_state state;
@@ -1346,8 +1344,10 @@ static u32 dispatch(struct tipc_port *tport, struct sk_buff *buf)
 	if (!sock_owned_by_user(sk)) {
 		res = filter_rcv(sk, buf);
 	} else {
-		sk_add_backlog(sk, buf);
-		res = TIPC_OK;
+		if (sk_add_backlog(sk, buf))
+			res = TIPC_ERR_OVERLOAD;
+		else
+			res = TIPC_OK;
 	}
 	bh_unlock_sock(sk);
 
@@ -1552,13 +1552,7 @@ static int accept(struct socket *sock, struct socket *new_sock, int flags)
 
 	buf = skb_peek(&sk->sk_receive_queue);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
-	res = tipc_create(sock_net(sock->sk), new_sock, 0);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
-	res = tipc_create(sock->sk->sk_net, new_sock, 0);
-#else
-	res = tipc_create(new_sock, 0);
-#endif
+	res = tipc_create(sock_net(sock->sk), new_sock, 0, 0);
 	if (!res) {
 		struct sock *new_sk = new_sock->sk;
 		struct tipc_sock *new_tsock = tipc_sk(new_sk);

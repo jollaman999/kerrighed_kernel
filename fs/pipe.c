@@ -1020,11 +1020,14 @@ struct file *__create_write_pipe(struct dentry *dentry, int flags)
 {
 	struct file *f;
 	int err = -ENFILE;
+	struct path path;
 #ifdef CONFIG_KRG_EPM
 	struct pipe_inode_info *pipe;
 #endif
+	path.dentry = dentry;
+	path.mnt = mntget(pipe_mnt);
 
-	f = alloc_file(pipe_mnt, dentry, FMODE_WRITE, &write_pipefifo_fops);
+	f = alloc_file(&path, FMODE_WRITE, &write_pipefifo_fops);
 	if (!f)
 		goto err;
 	f->f_mapping = dentry->d_inode->i_mapping;
@@ -1039,6 +1042,7 @@ struct file *__create_write_pipe(struct dentry *dentry, int flags)
 	return f;
 
 err:
+	path_put(&path);
 	return ERR_PTR(err);
 }
 
@@ -1078,37 +1082,30 @@ void free_write_pipe(struct file *f)
 	put_filp(f);
 }
 
-struct file *__create_read_pipe(struct dentry *dentry, int flags)
+struct file *__create_read_pipe(struct path *path, int flags)
 {
 #ifdef CONFIG_KRG_EPM
 	struct pipe_inode_info *pipe;
 #endif
-	struct file *f = get_empty_filp();
+	struct file *f = alloc_file(path, FMODE_READ,
+				    &read_pipefifo_fops);
 	if (!f)
 		return ERR_PTR(-ENFILE);
 
 	/* Grab pipe from the writer */
-	f->f_path.dentry = dget(dentry);
-	f->f_path.mnt = mntget(pipe_mnt);
-
-	f->f_mapping = dentry->d_inode->i_mapping;
-
-	f->f_pos = 0;
+	path_get(path);
 	f->f_flags = O_RDONLY | (flags & O_NONBLOCK);
-	f->f_op = &read_pipefifo_fops;
-	f->f_mode = FMODE_READ;
-	f->f_version = 0;
+
 #ifdef CONFIG_KRG_EPM
-	pipe = dentry->d_inode->i_pipe;
+	pipe = path->dentry->d_inode->i_pipe;
 	pipe->fread = f;
 #endif
-
 	return f;
 }
 
 struct file *create_read_pipe(struct file *wrf, int flags)
 {
-	return __create_read_pipe(wrf->f_path.dentry, flags);
+	return __create_read_pipe(&wrf->f_path, flags);
 }
 
 int do_pipe_flags(int *fd, int flags)
@@ -1416,20 +1413,20 @@ struct file *reopen_pipe_file_entry_from_krg_desc(struct task_struct *task,
 						  void *_desc)
 {
 	struct regular_file_krg_desc *desc = _desc;
-	struct dentry *dentry;
+	struct path path;
 	struct file *file;
 
-	dentry = get_imported_shared_object(task->application,
+	path.dentry = get_imported_shared_object(task->application,
 					   PIPE_INODE, desc->pipe.key);
 
-	BUG_ON(!dentry);
+	BUG_ON(!path.dentry);
 
 	if (desc->pipe.f_flags & O_WRONLY) {
-		file = __create_write_pipe(dentry, desc->pipe.f_flags);
+		file = __create_write_pipe(path.dentry, desc->pipe.f_flags);
 		if (!IS_ERR(file))
-			dget(dentry);
+			dget(path.dentry);
 	} else
-		file = __create_read_pipe(dentry, desc->pipe.f_flags);
+		file = __create_read_pipe(&path, desc->pipe.f_flags);
 
 	return file;
 }

@@ -761,7 +761,7 @@ int cr_import_vma_pages(ghost_t *ghost,
 		pmd = pmd_alloc(mm, pud, address);
 		BUG_ON(!pmd);
 
-		pte = pte_alloc_map(mm, pmd, address);
+		pte = pte_alloc_map(mm, vma, pmd, address);
 		BUG_ON(!pte);
 		set_pte (pte, mk_pte(new_page, prot));
 
@@ -904,9 +904,9 @@ int reconcile_vmas(struct mm_struct *mm, struct vm_area_struct *vma,
                 if (vma->vm_flags & VM_EXECUTABLE)
                         added_exe_file_vma(mm);
 		old->initial_vm_ops = vma->initial_vm_ops;
-		anon_vma_lock(old);
+		vma_lock_anon_vma(old);
 		__vma_link_file(old);
-		anon_vma_unlock(old);
+		vma_unlock_anon_vma(old);
 	}
 
 	remove_vma(vma);
@@ -1153,6 +1153,7 @@ static int import_mm_counters(struct epm_action *action,
 	mm->reserved_vm = src_mm->reserved_vm;
 	mm->brk = src_mm->brk;
 	mm->flags = src_mm->flags;
+	mm->oom_disable_count = src_mm->oom_disable_count;
 
 	r = ghost_read(ghost, &mm->mm_tasks, sizeof(atomic_t));
 

@@ -74,7 +74,8 @@ void check_file_struct_sharing (int index, struct file *file,
 	BUG_ON(file->f_op == &krg_shm_file_operations);
 
 	/* Do not share the file struct for Kerrighed SHM files */
-	if (file->f_op == &shm_file_operations)
+	if (file->f_op == &shm_file_operations_huge ||
+			file->f_op == &shm_file_operations)
 		goto done;
 #endif
 

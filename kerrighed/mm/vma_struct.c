@@ -11,7 +11,7 @@ void partial_init_vma(struct mm_struct *mm, struct vm_area_struct *vma)
 {
 	vma->vm_mm = mm;
 	vma->vm_next = NULL;
-	INIT_LIST_HEAD (&vma->anon_vma_node);
+	INIT_LIST_HEAD (&vma->anon_vma_chain);
 	vma->vm_truncate_count = 0;
 	memset (&vma->shared, 0, sizeof (vma->shared));
 	memset (&vma->vm_rb, 0, sizeof (vma->vm_rb));

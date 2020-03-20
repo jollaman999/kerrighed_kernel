@@ -292,12 +292,11 @@ static int try_to_flush_one(struct page *page, struct vm_area_struct *vma)
 	return flush_page(page, mm, objid, pte, ptl);
 }
 
-
-
+/* Similar with mm/rmap.c try_to_unmap_anon() */
 int try_to_flush_page(struct page *page)
 {
         struct anon_vma *anon_vma;
-        struct vm_area_struct *vma;
+        struct anon_vma_chain *avc;
 	int ret = SWAP_AGAIN;
 
 	krg_notify_mem(OUT_OF_MEM);
@@ -306,18 +305,25 @@ int try_to_flush_page(struct page *page)
         if (!anon_vma)
                 return SWAP_AGAIN;
 
-	list_for_each_entry(vma, &anon_vma->head, anon_vma_node) {
+	list_for_each_entry(avc, &anon_vma->head, same_anon_vma) {
+		struct vm_area_struct *vma = avc->vma;
+		unsigned long address = vma_address(page, vma);
+
 		if (page_mapcount(page) <= 1)
 			break;
-		ret = try_to_unmap_one(page, vma, TTU_UNMAP);
-		if (ret == SWAP_FAIL)
+
+		if (address == -EFAULT)
+			continue;
+
+		ret = try_to_unmap_one(page, vma, address, TTU_UNMAP);
+		if (ret != SWAP_AGAIN)
 			goto exit;
 	}
 
 	page_unlock_anon_vma(anon_vma);
 
 	if (page_mapcount(page) == 1)
-		ret = try_to_flush_one(page, vma);
+		ret = try_to_flush_one(page, avc->vma);
 
 exit:
 	return ret;

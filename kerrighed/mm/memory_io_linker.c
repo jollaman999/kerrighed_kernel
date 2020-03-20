@@ -197,7 +197,7 @@ void memory_change_state (struct kddm_obj * obj_entry,
 				  (page != ZERO_PAGE(NULL)));
 
 			  SetPageToSetReadOnly(page);
-			  try_to_unmap(page, 0);
+			  try_to_unmap(page, TTU_UNMAP);
 			  ClearPageToSetReadOnly(page);
 		  }
 

@@ -4,6 +4,7 @@
 /*
  * ELF register definitions..
  */
+#include <linux/thread_info.h>
 
 #include <asm/ptrace.h>
 #include <asm/user.h>
@@ -197,14 +198,8 @@ do {							\
 	set_fs(USER_DS);				\
 } while (0)
 
-#define COMPAT_SET_PERSONALITY(ex)			\
-do {							\
-	if (test_thread_flag(TIF_IA32))			\
-		clear_thread_flag(TIF_ABI_PENDING);	\
-	else						\
-		set_thread_flag(TIF_ABI_PENDING);	\
-	current->personality |= force_personality32;	\
-} while (0)
+void set_personality_ia32(void);
+#define COMPAT_SET_PERSONALITY(ex) set_personality_ia32()
 
 #define COMPAT_ELF_PLATFORM			("i686")
 
@@ -353,4 +348,34 @@ void import_vdso_context(struct vm_area_struct *vma);
 int import_mm_struct_end(struct mm_struct *mm, struct task_struct *task);
 #endif
 
+/*
+ * True on X86_32 or when emulating IA32 on X86_64
+ */
+static inline int mmap_is_ia32(void)
+{
+#ifdef CONFIG_X86_32
+	return 1;
+#endif
+#ifdef CONFIG_IA32_EMULATION
+	if (test_thread_flag(TIF_IA32))
+		return 1;
+#endif
+	return 0;
+}
+
+/* The first two values are special, do not change. See align_addr() */
+enum align_flags {
+	ALIGN_VA_32	= BIT(0),
+	ALIGN_VA_64	= BIT(1),
+	ALIGN_VDSO	= BIT(2),
+	ALIGN_TOPDOWN	= BIT(3),
+};
+
+struct va_alignment {
+	int flags;
+	unsigned long mask;
+} ____cacheline_aligned;
+
+extern struct va_alignment va_align;
+extern unsigned long align_addr(unsigned long, struct file *, enum align_flags);
 #endif /* _ASM_X86_ELF_H */

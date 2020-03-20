@@ -69,7 +69,8 @@ int is_socket(const struct file *file)
 
 int is_shm(const struct file *file)
 {
-	return (file->f_op == &shm_file_operations);
+	return (file->f_op == &shm_file_operations_huge ||
+		file->f_op == &shm_file_operations);
 }
 
 int is_char_device(const struct file *file)

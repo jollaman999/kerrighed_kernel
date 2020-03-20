@@ -107,8 +107,8 @@ struct file *reopen_shm_file_entry_from_krg_desc(struct task_struct *task,
 		goto out;
 	}
 
-	path.dentry = dget(shp->shm_file->f_path.dentry);
-	path.mnt    = shp->shm_file->f_path.mnt;
+	path = shp->shm_file->f_path;
+	path_get(&path);
 	shm_unlock(shp);
 	up_read(&shm_ids(ns).rw_mutex);
 
@@ -118,8 +118,10 @@ struct file *reopen_shm_file_entry_from_krg_desc(struct task_struct *task,
 		goto out_put_dentry;
 	}
 
-	file = alloc_file(path.mnt, path.dentry, desc->shm.f_mode,
-			  &shm_file_operations);
+	file = alloc_file(&path, desc->shm.f_mode,
+			  is_file_hugepages(shp->shm_file) ?
+				&shm_file_operations_huge :
+				&shm_file_operations);
 	if (!file) {
 		err = -ENOMEM;
 		goto out_free;
@@ -145,8 +147,7 @@ out:
 out_free:
 	kfree(sfd);
 out_put_dentry:
-	dput(path.dentry);
-
+	path_put(&path);
 	down_write(&shm_ids(ns).rw_mutex);
 	shp = shm_lock(ns, shmid);
 	BUG_ON(IS_ERR(shp));
@@ -160,6 +161,7 @@ out_put_dentry:
 
 	goto out;
 }
+
 
 int export_ipc_namespace(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
