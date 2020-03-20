@@ -34,6 +34,10 @@ struct pid_namespace {
 	struct pid_namespace *krg_ns_root;
 	unsigned global:1;
 #endif
+#ifndef __GENKSYMS__
+	gid_t pid_gid;
+	int hide_pid;
+#endif
 };
 
 extern struct pid_namespace init_pid_ns;
