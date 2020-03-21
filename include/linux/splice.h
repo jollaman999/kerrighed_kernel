@@ -95,4 +95,7 @@ extern int link_pipe(struct pipe_inode_info *ipipe,
 		     size_t len, unsigned int flags);
 #endif
 
+extern void spd_release_page(struct splice_pipe_desc *, unsigned int);
+
+extern const struct pipe_buf_operations page_cache_pipe_buf_ops;
 #endif

@@ -117,6 +117,7 @@ struct cpuinfo_x86 {
 	unsigned long           cpu_khz;
 #endif /* CONFIG_KRG_PROCFS */
 
+	/* RHEL6: deprecated and should use x86_hyper instead */
 	unsigned int		x86_hyper_vendor;
 #ifndef __GENKSYMS__
 	/* RHEL6:
@@ -143,9 +144,6 @@ struct cpuinfo_x86_rh {
 #define X86_VENDOR_NUM		9
 
 #define X86_VENDOR_UNKNOWN	0xff
-
-#define X86_HYPER_VENDOR_NONE  0
-#define X86_HYPER_VENDOR_VMWARE 1
 
 /*
  * capabilities of CPUs

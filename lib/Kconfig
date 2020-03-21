@@ -215,4 +215,11 @@ config MODULE_HOOK
 config AVERAGE
 	bool
 
+config CORDIC
+	tristate "Cordic function"
+	help
+	  The option provides arithmetic function using cordic algorithm
+	  so its calculations are in fixed point. Modules can select this
+	  when they require this function. Module will be called cordic.
+
 endmenu
