@@ -11,6 +11,8 @@
 #include <linux/slab.h>
 #include <linux/fs.h>
 #include <linux/mount.h>
+#include <linux/user_namespace.h>
+#include <linux/proc_fs.h>
 
 #include "util.h"
 
@@ -55,9 +57,16 @@ static struct ipc_namespace *create_ipc_ns(void)
 	if (ns == NULL)
 		return ERR_PTR(-ENOMEM);
 
+	err = proc_alloc_inum(&ns->proc_inum);
+	if (err) {
+		kfree(ns);
+		return ERR_PTR(err);
+	}
+
 	atomic_set(&ns->count, 1);
 	err = mq_init_ns(ns);
 	if (err) {
+		proc_free_inum(ns->proc_inum);
 		kfree(ns);
 		return ERR_PTR(err);
 	}
@@ -143,6 +152,7 @@ static void free_ipc_ns(struct ipc_namespace *ns)
 	krg_msg_exit_ns(ns);
 	krg_shm_exit_ns(ns);
 #endif
+	proc_free_inum(ns->proc_inum);
 	kfree(ns);
 	atomic_dec(&nr_ipc_ns);
 
@@ -178,3 +188,47 @@ void put_ipc_ns(struct ipc_namespace *ns)
 		free_ipc_ns(ns);
 	}
 }
+
+static void *ipcns_get(struct task_struct *task)
+{
+	struct ipc_namespace *ns = NULL;
+	struct nsproxy *nsproxy;
+
+	rcu_read_lock();
+	nsproxy = task_nsproxy(task);
+	if (nsproxy)
+		ns = get_ipc_ns(nsproxy->ipc_ns);
+	rcu_read_unlock();
+
+	return ns;
+}
+
+static void ipcns_put(void *ns)
+{
+	return put_ipc_ns(ns);
+}
+
+static int ipcns_install(struct nsproxy *nsproxy, void *ns)
+{
+	/* Ditch state from the old ipc namespace */
+	exit_sem(current);
+	put_ipc_ns(nsproxy->ipc_ns);
+	nsproxy->ipc_ns = get_ipc_ns(ns);
+	return 0;
+}
+
+static unsigned int ipcns_inum(void *vp)
+{
+	struct ipc_namespace *ns = vp;
+
+	return ns->proc_inum;
+}
+
+const struct proc_ns_operations ipcns_operations = {
+	.name		= "ipc",
+	.type		= CLONE_NEWIPC,
+	.get		= ipcns_get,
+	.put		= ipcns_put,
+	.install	= ipcns_install,
+	.inum		= ipcns_inum,
+};

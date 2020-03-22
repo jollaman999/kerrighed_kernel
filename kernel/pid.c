@@ -36,6 +36,8 @@
 #include <linux/pid_namespace.h>
 #include <linux/init_task.h>
 #include <linux/syscalls.h>
+#include <linux/proc_fs.h>
+
 #ifdef CONFIG_KRG_PROC
 #include <kerrighed/pid.h>
 #include <kerrighed/krginit.h>
@@ -86,6 +88,7 @@ struct pid_namespace init_pid_ns = {
 	.krg_ns_root = NULL,
 	.global = 0,
 #endif
+	.proc_inum = PROC_PID_INIT_INO,
 };
 EXPORT_SYMBOL_GPL(init_pid_ns);
 
@@ -348,8 +351,12 @@ void free_pid(struct pid *pid)
 	unsigned long flags;
 
 	spin_lock_irqsave(&pidmap_lock, flags);
-	for (i = 0; i <= pid->level; i++)
-		hlist_del_rcu(&pid->numbers[i].pid_chain);
+	for (i = 0; i <= pid->level; i++) {
+		struct upid *upid = pid->numbers + i;
+		hlist_del_rcu(&upid->pid_chain);
+		if (--upid->ns->nr_hashed == 0)
+			schedule_work(&upid->ns->proc_work);
+	}
 	spin_unlock_irqrestore(&pidmap_lock, flags);
 
 	for (i = 0; i <= pid->level; i++)
@@ -379,6 +386,7 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 #endif
 
 	tmp = ns;
+	pid->level = ns->level;
 	for (i = ns->level; i >= 0; i--) {
 #ifdef CONFIG_KRG_EPM
 		if (req_nr && tmp == ns) {
@@ -401,8 +409,12 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 		tmp = tmp->parent;
 	}
 
+	if (unlikely(is_child_reaper(pid))) {
+		if (pid_ns_prepare_proc(ns))
+			goto out_free;
+	}
+
 	get_pid_ns(ns);
-	pid->level = ns->level;
 	atomic_set(&pid->count, 1);
 	for (type = 0; type < PIDTYPE_MAX; ++type)
 		INIT_HLIST_HEAD(&pid->tasks[type]);
@@ -411,11 +423,12 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 		INIT_HLIST_HEAD(&pid->process_sets[type]);
 #endif
 
+	upid = pid->numbers + ns->level;
 	spin_lock_irq(&pidmap_lock);
-	for (i = ns->level; i >= 0; i--) {
-		upid = &pid->numbers[i];
+	for ( ; upid >= pid->numbers; --upid) {
 		hlist_add_head_rcu(&upid->pid_chain,
 				&pid_hash[pid_hashfn(upid->nr, upid->ns)]);
+		upid->ns->nr_hashed++;
 	}
 	spin_unlock_irq(&pidmap_lock);
 
@@ -718,6 +731,7 @@ void __init pidmap_init(void)
 	/* Reserve PID 0. We never call free_pidmap(0) */
 	set_bit(0, init_pid_ns.pidmap[0].page);
 	atomic_dec(&init_pid_ns.pidmap[0].nr_free);
+	init_pid_ns.nr_hashed = 1;
 
 	init_pid_ns.pid_cachep = KMEM_CACHE(pid,
 			SLAB_HWCACHE_ALIGN | SLAB_PANIC);

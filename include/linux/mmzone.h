@@ -498,9 +498,6 @@ struct zone {
 
 #ifndef __GENKSYMS__
 #if defined CONFIG_COMPACTION
-	/* Set to true when the PG_migrate_skip bits should be cleared */
-	bool			compact_blockskip_flush;
-
 	/* pfns where compaction scanners should start */
 	unsigned long		compact_cached_free_pfn;
 	unsigned long		compact_cached_migrate_pfn;
@@ -513,7 +510,6 @@ struct zone {
 
 typedef enum {
 	ZONE_ALL_UNRECLAIMABLE,		/* all pages pinned */
-	ZONE_RECLAIM_LOCKED,		/* prevents concurrent reclaim */
 	ZONE_OOM_LOCKED,		/* zone is in OOM killer zonelist */
 	ZONE_CONGESTED,			/* zone has many dirty pages backed by
 					 * a congested BDI
@@ -543,11 +539,6 @@ static inline int zone_is_all_unreclaimable(const struct zone *zone)
 static inline int zone_is_reclaim_congested(const struct zone *zone)
 {
 	return test_bit(ZONE_CONGESTED, &zone->flags);
-}
-
-static inline int zone_is_reclaim_locked(const struct zone *zone)
-{
-	return test_bit(ZONE_RECLAIM_LOCKED, &zone->flags);
 }
 
 static inline int zone_is_oom_locked(const struct zone *zone)
