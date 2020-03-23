@@ -165,14 +165,15 @@ static char *read_from_file(char *_filename, int size)
 {
 	int error;
 	struct file *f;
-	char *b, *filename;
+	char *b;
+	struct filename *filename;
 
 	b = kmalloc(size, GFP_ATOMIC);
 	BUG_ON(b==NULL);
 
 	filename = getname(_filename);
 	if (!IS_ERR(filename)) {
-		f = filp_open(filename, O_RDONLY, 0);
+		f = filp_open((const char *)filename->name, O_RDONLY, 0);
 		if (IS_ERR(f)) {
 			printk("error: %ld\n", PTR_ERR(f));
 			goto err_file;
@@ -190,6 +191,7 @@ static char *read_from_file(char *_filename, int size)
 				printk("init_ids: Error while closing file %d\n", error);
 		}
 	}
+	putname(filename);
 	return b;
 
  err_file:

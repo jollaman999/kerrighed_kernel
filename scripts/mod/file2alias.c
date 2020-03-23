@@ -794,6 +794,7 @@ static int do_mdio_entry(const char *filename,
  * complicated.
  */
 
+#if 0 /* RHEL6 */
 static int do_x86cpu_entry(const char *filename, struct x86_cpu_id *id,
 			   char *alias)
 {
@@ -810,6 +811,7 @@ static int do_x86cpu_entry(const char *filename, struct x86_cpu_id *id,
 	strcat(alias, ",*");
 	return 1;
 }
+#endif
 
 /* Ignore any prefix, eg. some architectures prepend _ */
 static inline int sym_is(const char *symbol, const char *name)

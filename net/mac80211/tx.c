@@ -1738,7 +1738,7 @@ netdev_tx_t ieee80211_subif_start_xmit(struct sk_buff *skb,
 	bool multicast;
 	u32 info_flags = 0;
 	u16 info_id = 0;
-	struct ieee80211_chanctx_conf *chanctx_conf;
+	struct ieee80211_chanctx_conf *chanctx_conf = NULL;
 	struct ieee80211_sub_if_data *ap_sdata;
 	enum ieee80211_band band;
 

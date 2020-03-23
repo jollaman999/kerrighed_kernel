@@ -1924,10 +1924,10 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 
 #ifdef CONFIG_KRG_MM
 	if (unlikely(reclaim_stat->recent_scanned[2] > kddm / 4)) {
-		spin_lock_irq(&zone->lru_lock);
+		spin_lock_irq(&mz->zone->lru_lock);
 		reclaim_stat->recent_scanned[2] /= 2;
 		reclaim_stat->recent_rotated[2] /= 2;
-		spin_unlock_irq(&zone->lru_lock);
+		spin_unlock_irq(&mz->zone->lru_lock);
 	}
 #endif
 
@@ -1940,11 +1940,11 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 #ifdef CONFIG_KRG_MM
 	if (!sc->may_swap || (nr_swap_pages <= 0))
 		anon_prio = 0;
-	if (scanning_global_lru(sc)) {
-		free  = zone_page_state(zone, NR_FREE_PAGES);
+	if (scanning_global_lru(mz)) {
+		free  = zone_page_state(mz->zone, NR_FREE_PAGES);
 		/* If we have very few page cache pages,
 		   force-scan anon pages. */
-		if (unlikely(file + free <= high_wmark_pages(zone)))
+		if (unlikely(file + free <= high_wmark_pages(mz->zone)))
 			file_prio = 0;
 	}
 	kddm_prio = 400 - anon_prio - file_prio;
@@ -2611,7 +2611,7 @@ static void age_active_anon(struct zone *zone, struct scan_control *sc,
 #else
 					   sc, priority, 0, 0);
 		/* Do the same on kddm lru pages */
-		if (inactive_kddm_is_low(zone, &sc))
+		if (inactive_kddm_is_low(&mz))
 			shrink_active_list(SWAP_CLUSTER_MAX, &mz,
 					   sc, priority, 0, 1);
 #endif

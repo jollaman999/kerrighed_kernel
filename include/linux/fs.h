@@ -11,6 +11,10 @@
 #include <linux/blk_types.h>
 #include <linux/types.h>
 
+#ifdef CONFIG_KRG_FAF
+#include <asm/statfs.h>
+#endif
+
 /*
  * It's silly to have NR_OPEN bigger than NR_FILE, but you can change
  * the file limit at runtime and only root can increase the per-process
@@ -2048,7 +2052,12 @@ extern void drop_collected_mounts(struct vfsmount *);
 
 extern int vfs_statfs(struct path *, struct kstatfs *);
 extern int user_statfs(const char __user *, struct kstatfs *);
+#ifdef CONFIG_KRG_FAF
+extern int fd_statfs(int fd, struct kstatfs *, int *,
+	      struct statfs __user *);
+#else
 extern int fd_statfs(int, struct kstatfs *);
+#endif
 extern int statfs_by_dentry(struct dentry *, struct kstatfs *);
 
 extern int current_umask(void);

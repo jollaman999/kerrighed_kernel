@@ -492,7 +492,12 @@ static void lru_deactivate(struct page *page, struct zone *zone)
 
 	if (active)
 		__count_vm_event(PGDEACTIVATE);
+#ifdef CONFIG_KRG_MM
+	update_page_reclaim_stat(zone, page, file,
+				 page_is_migratable(page), 0);
+#else
 	update_page_reclaim_stat(zone, page, file, 0);
+#endif
 }
 
 static void ____pagevec_lru_deactivate(struct pagevec *pvec)

@@ -109,7 +109,7 @@ int fd_statfs(int fd, struct kstatfs *st)
 		if (is_faf_fstatfs && file->f_flags & O_FAF_CLT) {
 			struct statfs tmp;
 
-			*is_faf = 1;
+			*is_faf_fstatfs = 1;
 			error = krg_faf_fstatfs(file, &tmp);
 			if (!error && copy_to_user(buf, &tmp, sizeof(tmp)))
 				error = -EFAULT;
