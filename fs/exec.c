@@ -902,11 +902,13 @@ static int de_thread(struct task_struct *tsk)
 #endif
 		sig->notify_count = -1;	/* for exit_notify() */
 		for (;;) {
+			threadgroup_change_begin(tsk);
 			write_lock_irq(&tasklist_lock);
 			if (likely(leader->exit_state))
 				break;
 			__set_current_state(TASK_UNINTERRUPTIBLE);
 			write_unlock_irq(&tasklist_lock);
+			threadgroup_change_end(tsk);
 			schedule();
 		}
 
@@ -992,6 +994,7 @@ static int de_thread(struct task_struct *tsk)
 #ifdef CONFIG_KRG_EPM
 		krg_children_finish_de_thread(parent_children_obj, tsk);
 #endif
+		threadgroup_change_end(tsk);
 
 		release_task(leader);
 #ifdef CONFIG_KRG_PROC

@@ -1116,7 +1116,7 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	sig->kddm_obj = NULL;
 #endif
 #ifdef CONFIG_CGROUPS
-	init_rwsem(&sig->threadgroup_fork_lock);
+	init_rwsem(&sig->group_rwsem);
 #endif
 
 	sig->oom_adj = current->signal->oom_adj;
@@ -1345,7 +1345,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	p->io_context = NULL;
 	p->audit_context = NULL;
 	if (clone_flags & CLONE_THREAD)
-		threadgroup_fork_read_lock(current);
+		threadgroup_change_begin(current);
 	cgroup_fork(p);
 #ifdef CONFIG_NUMA
 	p->mempolicy = mpol_dup(p->mempolicy);
@@ -1687,7 +1687,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	proc_fork_connector(p);
 	cgroup_post_fork(p);
 	if (clone_flags & CLONE_THREAD)
-		threadgroup_fork_read_unlock(current);
+		threadgroup_change_end(current);
 	perf_event_fork(p);
 #ifdef CONFIG_KRG_HOTPLUG
 	current->create_krg_ns = saved_create_krg_ns;
@@ -1772,7 +1772,7 @@ bad_fork_cleanup_policy:
 bad_fork_cleanup_cgroup:
 #endif
 	if (clone_flags & CLONE_THREAD)
-		threadgroup_fork_read_unlock(current);
+		threadgroup_change_end(current);
 	cgroup_exit(p, cgroup_callbacks_done);
 #ifdef CONFIG_KRG_EPM
 	if (!krg_current)
