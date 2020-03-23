@@ -6,7 +6,7 @@
 
 #include <linux/semaphore.h>
 #include <linux/sched.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 
 #define HOTPLUG_MAX_HOOKS 256
 

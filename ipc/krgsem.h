@@ -3,7 +3,7 @@
 
 #define sc_semmni       sem_ctls[3]
 
-int krg_ipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma);
+int krg_ipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma, int nsems);
 
 void krg_ipc_sem_freeary(struct ipc_namespace *ns,
 			 struct kern_ipc_perm *ipcp);
@@ -19,29 +19,15 @@ void krg_ipc_sem_exit_sem(struct ipc_namespace *ns, struct task_struct * tsk);
 
 int newary(struct ipc_namespace *ns, struct ipc_params *params);
 
-struct sem_array *sem_lock(struct ipc_namespace *ns, int id);
+int sem_lock(struct sem_array *sma, struct sembuf *sops,
+			      int nsops);
 
-struct sem_array *sem_lock_check(struct ipc_namespace *ns, int id);
+struct sem_array *sem_obtain_object(struct ipc_namespace *ns, int id);
 
-static inline struct sem_array *local_sem_lock(struct ipc_namespace *ns, int id)
-{
-	struct kern_ipc_perm *ipcp = local_ipc_lock(&sem_ids(ns), id);
+struct sem_array *sem_obtain_object_check(struct ipc_namespace *ns,
+							int id);
 
-	if (IS_ERR(ipcp))
-		return (struct sem_array *)ipcp;
-
-	return container_of(ipcp, struct sem_array, sem_perm);
-}
-
-static inline void sem_unlock(struct sem_array *sma)
-{
-	ipc_unlock(&(sma)->sem_perm);
-}
-
-static inline void local_sem_unlock(struct sem_array *sma)
-{
-	local_ipc_unlock(&(sma)->sem_perm);
-}
+void sem_unlock(struct sem_array *sma, int locknum);
 
 /* caller is responsible to call kfree(q->undo) before if needed */
 static inline void free_semqueue(struct sem_queue *q)

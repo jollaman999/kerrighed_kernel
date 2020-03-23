@@ -42,23 +42,28 @@ struct shmid_kernel *create_local_shp (struct ipc_namespace *ns,
 	*shp = *received_shp;
 	shp->shm_perm.security = NULL;
 	retval = security_shm_alloc(shp);
-	if (retval)
-		goto err_putref;
+	if (retval) {
+		ipc_rcu_putref(shp, ipc_rcu_free);
+		goto out;
+	}
 
 	/*
 	 * ipc_reserveid() locks shp
 	 */
 	retval = local_ipc_reserveid(&shm_ids(ns), &shp->shm_perm,
 				     ns->shm_ctlmni);
-	if (retval)
-		goto err_security_free;
+	if (retval) {
+		ipc_rcu_putref(shp, sem_rcu_free);
+		goto out;
+	}
 
 	sprintf (name, "SYSV%08x", received_shp->shm_perm.key);
 	shp->shm_file = shmem_file_setup(name, shp->shm_segsz, shp->shm_flags);
 
 	if (IS_ERR(shp->shm_file)) {
+		ipc_rcu_putref(shp, sem_rcu_free);
 		retval = PTR_ERR(shp->shm_file);
-		goto err_security_free;
+		goto out;
 	}
 
 	set = _find_get_kddm_set(kddm_def_ns, set_id);
@@ -79,10 +84,7 @@ struct shmid_kernel *create_local_shp (struct ipc_namespace *ns,
 
 	return shp;
 
-err_security_free:
-	security_shm_free(shp);
-err_putref:
-	ipc_rcu_putref(shp);
+out:
 	return ERR_PTR(retval);
 }
 

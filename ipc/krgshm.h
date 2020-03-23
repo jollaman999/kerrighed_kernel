@@ -15,8 +15,8 @@ void krg_ipc_shm_rmkey(struct ipc_namespace *ns, key_t key);
 
 /** Exported variables  **/
 
-extern const struct vm_operations_struct shm_vm_ops;
-extern const struct vm_operations_struct krg_shmem_vm_ops;
+extern struct vm_operations_struct shm_vm_ops;
+extern struct vm_operations_struct krg_shmem_vm_ops;
 
 extern const struct file_operations shm_file_operations;
 

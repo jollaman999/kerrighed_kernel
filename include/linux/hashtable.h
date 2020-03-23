@@ -1,279 +1,192 @@
-/** Hashtable management interface
- *  @file hashtable.h
- *
- *  Definition of hashtable management functions.
- *  @author Viet Hoa Dinh, Renaud Lottiaux
+/*
+ * Statically sized hash table implementation
+ * (C) 2012  Sasha Levin <levinsasha928@gmail.com>
  */
 
-#ifndef __HASHTABLE_H__
-#define __HASHTABLE_H__
+#ifndef _LINUX_HASHTABLE_H
+#define _LINUX_HASHTABLE_H
 
-#include <linux/stddef.h>
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
-#include <asm/system.h>
+#include <linux/list.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/hash.h>
+#include <linux/rculist.h>
 
-/*--------------------------------------------------------------------------*
- *                                                                          *
- *                                 MACROS                                   *
- *                                                                          *
- *--------------------------------------------------------------------------*/
+#define DEFINE_HASHTABLE(name, bits)						\
+	struct hlist_head name[1 << (bits)] =					\
+			{ [0 ... ((1 << (bits)) - 1)] = HLIST_HEAD_INIT }
 
+#define DECLARE_HASHTABLE(name, bits)                                   	\
+	struct hlist_head name[1 << (bits)]
 
-#define HASHTABLE_SIZE 1024
+#define HASH_SIZE(name) (ARRAY_SIZE(name))
+#define HASH_BITS(name) ilog2(HASH_SIZE(name))
 
+/* Use hash_32 when possible to allow for fast 32bit hashing in 64bit kernels. */
+#define hash_min(val, bits)							\
+	(sizeof(val) <= 4 ? hash_32(val, bits) : hash_long(val, bits))
 
-/*--------------------------------------------------------------------------*
- *                                                                          *
- *                                  TYPES                                   *
- *                                                                          *
- *--------------------------------------------------------------------------*/
-
-
-/** Hashtable linked list element */
-struct hash_list {
-	unsigned long hash;        /* Key of stored data */
-	void * data;               /* Data stored in the table */
-	struct hash_list * next;   /* Next stored data */
-};
-
-/** Hashtable Structure */
-typedef struct hashtable_t {
-	spinlock_t lock;                /** Structure lock */
-	struct hash_list * table;       /** Hash table */
-	unsigned long hashtable_size;   /** Size of the hash table */
-	unsigned long flags[NR_CPUS];
-} hashtable_t;
-
-#define hashtable_lock(table) spin_lock (&table->lock)
-#define hashtable_unlock(table) spin_unlock (&table->lock)
-
-#define hashtable_lock_bh(table) spin_lock_bh (&table->lock)
-#define hashtable_unlock_bh(table) spin_unlock_bh (&table->lock)
-
-#define hashtable_lock_irq(table) spin_lock_irq (&table->lock)
-#define hashtable_unlock_irq(table) spin_unlock_irq (&table->lock)
-
-#define hashtable_lock_irqsave(table) spin_lock_irqsave (&table->lock, table->flags[smp_processor_id()])
-#define hashtable_unlock_irqrestore(table) spin_unlock_irqrestore (&table->lock, table->flags[smp_processor_id()])
-
-/*--------------------------------------------------------------------------*
- *                                                                          *
- *                              EXTERN FUNCTIONS                            *
- *                                                                          *
- *--------------------------------------------------------------------------*/
-
-
-
-/** Create a new hash table
- *  @author Viet Hoa Dinh
- * 
- *  @param hashtable_size  Size of the hashtable to create.
- *
- *  @return  A pointer to the newly created hash table.
- */
-hashtable_t *_hashtable_new(unsigned long hashtable_size);
-static inline hashtable_t * hashtable_new(unsigned long hashtable_size)
+static inline void __hash_init(struct hlist_head *ht, unsigned int sz)
 {
-	hashtable_t *ht;
+	unsigned int i;
 
-	ht = _hashtable_new(hashtable_size);
-	if (ht)
-		spin_lock_init(&ht->lock);
-
-	return ht;
+	for (i = 0; i < sz; i++)
+		INIT_HLIST_HEAD(&ht[i]);
 }
 
-
-
-/** Free a hash table
- *  @author Viet Hoa Dinh
- * 
- *  @param table  The table to free
- */
-void hashtable_free(hashtable_t * table);
-
-
-
-/** Add an element to a hash table
- *  @author Viet Hoa Dinh
- * 
- *  @param table  The table to add the element in.
- *  @param hash   The element key.
- *  @param data   The element to add in the table
+/**
+ * hash_init - initialize a hash table
+ * @hashtable: hashtable to be initialized
  *
- *  @return  0 if everything ok.
- *           Negative value otherwise.
+ * Calculates the size of the hashtable from the given parameter, otherwise
+ * same as hash_init_size.
+ *
+ * This has to be a macro since HASH_BITS() will not work on pointers since
+ * it calculates the size during preprocessing.
  */
-int __hashtable_add(hashtable_t * table, unsigned long hash, void * data);
+#define hash_init(hashtable) __hash_init(hashtable, HASH_SIZE(hashtable))
 
-static inline int hashtable_add(hashtable_t * table, unsigned long hash,
-			       void * data)
+/**
+ * hash_add - add an object to a hashtable
+ * @hashtable: hashtable to add to
+ * @node: the &struct hlist_node of the object to be added
+ * @key: the key of the object to be added
+ */
+#define hash_add(hashtable, node, key)						\
+	hlist_add_head(node, &hashtable[hash_min(key, HASH_BITS(hashtable))])
+
+/**
+ * hash_add_rcu - add an object to a rcu enabled hashtable
+ * @hashtable: hashtable to add to
+ * @node: the &struct hlist_node of the object to be added
+ * @key: the key of the object to be added
+ */
+#define hash_add_rcu(hashtable, node, key)					\
+	hlist_add_head_rcu(node, &hashtable[hash_min(key, HASH_BITS(hashtable))])
+
+/**
+ * hash_hashed - check whether an object is in any hashtable
+ * @node: the &struct hlist_node of the object to be checked
+ */
+static inline bool hash_hashed(struct hlist_node *node)
 {
-	int r;
-
-	hashtable_lock_irqsave (table);
-
-	r = __hashtable_add (table, hash, data);
-
-	hashtable_unlock_irqrestore (table);
-
-	return r;
+	return !hlist_unhashed(node);
 }
 
-/** Add an element to a hash table
- *  It fails with EEXIST if there is already an element with the same hash.
- *
- *  @author Matthieu Fertré
- *
- *  @param table  The table to add the element in.
- *  @param hash   The element key.
- *  @param data   The element to add in the table
- *
- *  @return  0 if everything ok.
- *           Negative value otherwise.
- */
-int __hashtable_add_unique(hashtable_t *table, unsigned long hash, void *data);
-
-static inline int hashtable_add_unique(hashtable_t *table, unsigned long hash,
-				       void *data)
+static inline bool __hash_empty(struct hlist_head *ht, unsigned int sz)
 {
-	int r;
+	unsigned int i;
 
-	hashtable_lock_irqsave(table);
+	for (i = 0; i < sz; i++)
+		if (!hlist_empty(&ht[i]))
+			return false;
 
-	r = __hashtable_add_unique(table, hash, data);
-
-	hashtable_unlock_irqrestore(table);
-
-	return r;
+	return true;
 }
 
-/** Remove an element from a hash table
- *  @author Viet Hoa Dinh
- * 
- *  @param table  The table to remove the element from.
- *  @param hash   The element key.
+/**
+ * hash_empty - check whether a hashtable is empty
+ * @hashtable: hashtable to check
  *
- *  @return  The data removed.
- *           NULL value otherwise.
+ * This has to be a macro since HASH_BITS() will not work on pointers since
+ * it calculates the size during preprocessing.
  */
-void *__hashtable_remove(hashtable_t * table, unsigned long hash);
+#define hash_empty(hashtable) __hash_empty(hashtable, HASH_SIZE(hashtable))
 
-static inline void * hashtable_remove(hashtable_t * table, unsigned long hash)
+/**
+ * hash_del - remove an object from a hashtable
+ * @node: &struct hlist_node of the object to remove
+ */
+static inline void hash_del(struct hlist_node *node)
 {
-	void *data;
-
-	hashtable_lock_irqsave (table);
-
-	data = __hashtable_remove (table, hash);
-
-	hashtable_unlock_irqrestore (table);
-
-	return data;
+	hlist_del_init(node);
 }
 
-
-
-/** Find an element in a hash table
- *  @author Viet Hoa Dinh
- * 
- *  @param table  The table to search the element in.
- *  @param hash   The element key.
- *
- *  @return  A pointer to the data, if in the table.
- *           NULL if data not found.
+/**
+ * hash_del_rcu - remove an object from a rcu enabled hashtable
+ * @node: &struct hlist_node of the object to remove
  */
-void * __hashtable_find(hashtable_t * table, unsigned long hash);
-
-static inline void * hashtable_find(hashtable_t * table, unsigned long hash)
+static inline void hash_del_rcu(struct hlist_node *node)
 {
-	void * r;
-
-	hashtable_lock_irqsave (table);
-
-	r = __hashtable_find (table, hash);
-
-	hashtable_unlock_irqrestore (table);
-
-	return r;
+	hlist_del_init_rcu(node);
 }
 
-
-
-/** Find the element just following the given hash in hash order.
- *  @author Renaud Lottiaux
- *
- *  @param table  The table to search the element in.
- *  @param hash   The element key.
- *
- *  @return  A pointer to the data, if in the table.
- *           NULL if data not found.
- *           Hash of the found element is returned in hash_found.
+/**
+ * hash_for_each - iterate over a hashtable
+ * @name: hashtable to iterate
+ * @bkt: integer to use as bucket loop cursor
+ * @node: the &struct list_head to use as a loop cursor for each entry
+ * @obj: the type * to use as a loop cursor for each entry
+ * @member: the name of the hlist_node within the struct
  */
-void * __hashtable_find_next(hashtable_t * table, unsigned long hash,
-			     unsigned long *hash_found);
-static inline void * hashtable_find_next(hashtable_t * table,
-					 unsigned long hash,
-					 unsigned long *hash_found)
-{
-	void * r;
+#define hash_for_each(name, bkt, node, obj, member)				\
+	for ((bkt) = 0, node = NULL; node == NULL && (bkt) < HASH_SIZE(name); (bkt)++)\
+		hlist_for_each_entry(obj, node, &name[bkt], member)
 
-	hashtable_lock_irqsave (table);
-
-	r = __hashtable_find_next (table, hash, hash_found);
-
-	hashtable_unlock_irqrestore (table);
-
-	return r;
-}
-
-
-/** Apply a function on each hash table key.
- *  @author Viet Hoa Dinh, Pascal Gallard
- * 
- *  @param table  The table to work with.
- *  @param func   The function to apply.
- *  @param data   Data to send to the given function.
+/**
+ * hash_for_each_rcu - iterate over a rcu enabled hashtable
+ * @name: hashtable to iterate
+ * @bkt: integer to use as bucket loop cursor
+ * @node: the &struct list_head to use as a loop cursor for each entry
+ * @obj: the type * to use as a loop cursor for each entry
+ * @member: the name of the hlist_node within the struct
  */
-void __hashtable_foreach_key(hashtable_t * table,
-			     void (* func)(unsigned long, void *),
-			     void * data);
+#define hash_for_each_rcu(name, bkt, node, obj, member)				\
+	for ((bkt) = 0, node = NULL; node == NULL && (bkt) < HASH_SIZE(name); (bkt)++)\
+		hlist_for_each_entry_rcu(obj, node, &name[bkt], member)
 
-
-
-/** Apply a function on each hash table element.
- *  @author Viet Hoa Dinh, Pascal Gallard
- * 
- *  @param table  The table to work with.
- *  @param func   The function to apply.
- *  @param data   Data to send to the given function.
+/**
+ * hash_for_each_safe - iterate over a hashtable safe against removal of
+ * hash entry
+ * @name: hashtable to iterate
+ * @bkt: integer to use as bucket loop cursor
+ * @node: the &struct list_head to use as a loop cursor for each entry
+ * @tmp: a &struct used for temporary storage
+ * @obj: the type * to use as a loop cursor for each entry
+ * @member: the name of the hlist_node within the struct
  */
-void __hashtable_foreach_data(hashtable_t * table,
-			      void (* fun)(void *, void *),
-			      void * data);
+#define hash_for_each_safe(name, bkt, node, tmp, obj, member)			\
+	for ((bkt) = 0, node = NULL; node == NULL && (bkt) < HASH_SIZE(name); (bkt)++)\
+		hlist_for_each_entry_safe(obj, node, tmp, &name[bkt], member)
 
-/** Apply a function on each hash table pair (key,element).
- *  @author Louis Rilling
- *
- *  @param table  The table to work with.
- *  @param func   The function to apply.
- *  @param data   Data to send to the given function.
+/**
+ * hash_for_each_possible - iterate over all possible objects hashing to the
+ * same bucket
+ * @name: hashtable to iterate
+ * @obj: the type * to use as a loop cursor for each entry
+ * @node: the &struct list_head to use as a loop cursor for each entry
+ * @member: the name of the hlist_node within the struct
+ * @key: the key of the objects to iterate over
  */
-void __hashtable_foreach_key_data(hashtable_t * table,
-				  void (* func)(unsigned long, void *, void *),
-				  void * data);
+#define hash_for_each_possible(name, obj, node, member, key)			\
+	hlist_for_each_entry(obj, node,	&name[hash_min(key, HASH_BITS(name))], member)
 
-/** Find an element of the hashtable that staifies a criteria
- *  @author David Margery
- * 
- *  @param table  The table to work with.
- *  @param func   The function to apply.
- *  @param data   Data to send to the given function.
+/**
+ * hash_for_each_possible_rcu - iterate over all possible objects hashing to the
+ * same bucket in an rcu enabled hashtable
+ * in a rcu enabled hashtable
+ * @name: hashtable to iterate
+ * @obj: the type * to use as a loop cursor for each entry
+ * @node: the &struct list_head to use as a loop cursor for each entry
+ * @member: the name of the hlist_node within the struct
+ * @key: the key of the objects to iterate over
  */
-void * hashtable_find_data(hashtable_t * table,
-			   int (* fun)(void *, void *),
-			   void * data);
+#define hash_for_each_possible_rcu(name, obj, node, member, key)		\
+	hlist_for_each_entry_rcu(obj, node, &name[hash_min(key, HASH_BITS(name))], member)
+
+/**
+ * hash_for_each_possible_safe - iterate over all possible objects hashing to the
+ * same bucket safe against removals
+ * @name: hashtable to iterate
+ * @obj: the type * to use as a loop cursor for each entry
+ * @node: the &struct list_head to use as a loop cursor for each entry
+ * @tmp: a &struct used for temporary storage
+ * @member: the name of the hlist_node within the struct
+ * @key: the key of the objects to iterate over
+ */
+#define hash_for_each_possible_safe(name, obj, node, tmp, member, key)		\
+	hlist_for_each_entry_safe(obj, node, tmp,				\
+		&name[hash_min(key, HASH_BITS(name))], member)
 
 
-#endif // __HASHTABLE_H__
+#endif

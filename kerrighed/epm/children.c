@@ -14,7 +14,7 @@
 #include <linux/kref.h>
 #include <linux/rcupdate.h>
 #include <linux/slab.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 #include <kerrighed/children.h>
 #include <kerrighed/task.h>
 #include <kerrighed/pid.h>

@@ -4,7 +4,7 @@
 
 #include <kerrighed/krgsyms.h>
 #include <linux/module.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 #include <linux/init.h>
 
 /*****************************************************************************/

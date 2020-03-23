@@ -36,15 +36,19 @@ static struct msg_queue *create_local_msq(struct ipc_namespace *ns,
 
 	*msq = *received_msq;
 	retval = security_msg_queue_alloc(msq);
-	if (retval)
-		goto err_putref;
+	if (retval) {
+		ipc_rcu_putref(msq, ipc_rcu_free);
+		goto out;
+	}
 
 	/*
 	 * ipc_reserveid() locks msq
 	 */
 	retval = local_ipc_reserveid(&msg_ids(ns), &msq->q_perm, ns->msg_ctlmni);
-	if (retval)
-		goto err_security_free;
+	if (retval) {
+		ipc_rcu_putref(msq, msg_rcu_free);
+		goto out;
+	}
 
 	msq->is_master = 0;
 	INIT_LIST_HEAD(&msq->q_messages);
@@ -56,10 +60,7 @@ static struct msg_queue *create_local_msq(struct ipc_namespace *ns,
 
 	return msq;
 
-err_security_free:
-	security_msg_queue_free(msq);
-err_putref:
-	ipc_rcu_putref(msq);
+out:
 	return ERR_PTR(retval);
 }
 
@@ -73,13 +74,11 @@ static void delete_local_msq(struct ipc_namespace *ns, struct msg_queue *local_m
 
 	msq = local_msq;
 
-	security_msg_queue_free(msq);
-
 	ipc_rmid(&msg_ids(ns), &msq->q_perm);
 
 	local_msg_unlock(msq);
 
-	ipc_rcu_putref(msq);
+	ipc_rcu_putref(msq, msg_rcu_free);
 }
 
 /** Update a local instance of a remotly existing IPC message queue.

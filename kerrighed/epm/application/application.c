@@ -8,7 +8,7 @@
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <linux/cred.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 #include <kerrighed/remote_cred.h>
 #include <kerrighed/pid.h>
 #include <kerrighed/libproc.h>

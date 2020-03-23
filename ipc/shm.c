@@ -61,11 +61,12 @@ struct shm_file_data {
 #ifndef CONFIG_KRG_IPC
 static
 #endif
+const struct file_operations shm_file_operations_huge;
 const struct file_operations shm_file_operations;
 #ifndef CONFIG_KRG_IPC
 static
 #endif
-const struct vm_operations_struct shm_vm_ops;
+struct vm_operations_struct shm_vm_ops;
 
 #ifndef CONFIG_KRG_IPC
 #define shm_ids(ns)	((ns)->ids[IPC_SHM_IDS])
@@ -169,6 +170,15 @@ struct shmid_kernel *shm_lock_check(struct ipc_namespace *ns,
 	return container_of(ipcp, struct shmid_kernel, shm_perm);
 }
 
+static void shm_rcu_free(struct rcu_head *head)
+{
+	struct ipc_rcu *p = container_of(head, struct ipc_rcu, rcu);
+	struct shmid_kernel *shp = ipc_rcu_to_struct(p);
+
+	security_shm_free(shp);
+	ipc_rcu_free(head);
+}
+
 static inline void shm_rmid(struct ipc_namespace *ns, struct shmid_kernel *s)
 {
 	ipc_rmid(&shm_ids(ns), &s->shm_perm);
@@ -225,18 +235,8 @@ static void shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 						shp->mlock_user);
 	fput (shp->shm_file);
 	security_shm_free(shp);
-	ipc_rcu_putref(shp);
+	ipc_rcu_putref(shp, shm_rcu_free);
 }
-
-#ifdef CONFIG_KRG_IPC
-static void shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
-{
-	if (is_krg_ipc(&shm_ids(ns)))
-		krg_ipc_shm_destroy(ns, shp);
-	else
-		local_shm_destroy(ns, shp);
-}
-#endif
 
 /*
  * shm_may_destroy - identifies whether shm segment should be destroyed now
@@ -254,6 +254,16 @@ static bool shm_may_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 	       (ns->shm_rmid_forced ||
 		(shp->shm_perm.mode & SHM_DEST));
 }
+
+#ifdef CONFIG_KRG_IPC
+static void shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
+{
+	if (is_krg_ipc(&shm_ids(ns)))
+		krg_ipc_shm_destroy(ns, shp);
+	else
+		local_shm_destroy(ns, shp);
+}
+#endif
 
 /*
  * remove the attach descriptor vma.
@@ -482,9 +492,9 @@ int is_file_shm_hugepages(struct file *file)
 }
 
 #ifndef CONFIG_KRG_IPC
-static
+static const
 #endif
-const struct vm_operations_struct shm_vm_ops = {
+struct vm_operations_struct shm_vm_ops = {
 	.open	= shm_open,	/* callback for a new vm-area open */
 	.close	= shm_close,	/* callback for when the vm-area is released */
 	.fault	= shm_fault,
@@ -514,7 +524,7 @@ int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 	size_t size = params->u.size;
 	int error;
 	struct shmid_kernel *shp;
-	int numpages = (size + PAGE_SIZE -1) >> PAGE_SHIFT;
+	size_t numpages = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	struct file * file;
 	char name[13];
 	int id;
@@ -537,16 +547,26 @@ int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 	shp->shm_perm.security = NULL;
 	error = security_shm_alloc(shp);
 	if (error) {
-		ipc_rcu_putref(shp);
+		ipc_rcu_putref(shp, ipc_rcu_free);
 		return error;
 	}
 
 	sprintf (name, "SYSV%08x", key);
 	if (shmflg & SHM_HUGETLB) {
+		struct hstate *hs = hstate_sizelog((shmflg >> SHM_HUGE_SHIFT)
+						& SHM_HUGE_MASK);
+		size_t hugesize;
+
+		if (!hs) {
+			error = -EINVAL;
+			goto no_file;
+		}
+		hugesize = ALIGN(size, huge_page_size(hs));
+
 		/* hugetlb_file_setup applies strict accounting */
 		if (shmflg & SHM_NORESERVE)
 			acctflag = VM_NORESERVE;
-		file = hugetlb_file_setup(name, size, acctflag,
+		file = hugetlb_file_setup(name, hugesize, acctflag,
 					&shp->mlock_user, HUGETLB_SHMFS_INODE);
 	} else {
 		/*
@@ -562,6 +582,14 @@ int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 	if (IS_ERR(file))
 		goto no_file;
 
+	shp->shm_cprid = task_tgid_vnr(current);
+	shp->shm_lprid = 0;
+	shp->shm_atim = shp->shm_dtim = 0;
+	shp->shm_ctim = get_seconds();
+	shp->shm_segsz = size;
+	shp->shm_nattch = 0;
+	shp->shm_file = file;
+
 #ifdef CONFIG_KRG_IPC
 	id = ipc_addid(&shm_ids(ns), &shp->shm_perm, ns->shm_ctlmni,
 		       params->requested_id);
@@ -573,13 +601,6 @@ int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 		goto no_id;
 	}
 
-	shp->shm_cprid = task_tgid_vnr(current);
-	shp->shm_lprid = 0;
-	shp->shm_atim = shp->shm_dtim = 0;
-	shp->shm_ctim = get_seconds();
-	shp->shm_segsz = size;
-	shp->shm_nattch = 0;
-	shp->shm_file = file;
 	/*
 	 * shmid gets reported as "inode#" in /proc/pid/maps.
 	 * proc-ps tools use this. Changing this will break them.
@@ -605,8 +626,7 @@ no_id:
 		user_shm_unlock(size, shp->mlock_user);
 	fput(file);
 no_file:
-	security_shm_free(shp);
-	ipc_rcu_putref(shp);
+	ipc_rcu_putref(shp, shm_rcu_free);
 	return error;
 }
 

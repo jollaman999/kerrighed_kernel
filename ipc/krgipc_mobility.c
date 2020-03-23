@@ -126,7 +126,7 @@ struct file *reopen_shm_file_entry_from_krg_desc(struct task_struct *task,
 		err = -ENOMEM;
 		goto out_free;
 	}
-	ima_counts_get(file);
+	ima_shm_check(file);
 
 	file->private_data = sfd;
 	file->f_mapping = shp->shm_file->f_mapping;
@@ -161,7 +161,6 @@ out_put_dentry:
 
 	goto out;
 }
-
 
 int export_ipc_namespace(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
@@ -224,42 +223,52 @@ static int cr_export_semundos(ghost_t *ghost, struct task_struct *task)
 
 		struct ipc_namespace *ns = task_nsproxy(task)->ipc_ns;
 		struct sem_undo *undo;
-		struct sem_array *sma = sem_lock(ns, undo_id->semid);
+		struct sem_array *sma;
 
+		rcu_read_lock();
+		sma = sem_obtain_object_check(ns, undo_id->semid);
 		if (IS_ERR(sma)) {
 			BUG();
 			r = PTR_ERR(sma);
 			goto exit_put;
 		}
 
+		sem_lock(sma, NULL, -1);
 		list_for_each_entry(undo, &sma->list_id, list_id) {
 			if (undo->proc_list_id == task->sysvsem.undo_list_id) {
 				int size;
 
 				r = ghost_write(ghost,
 						&sma->sem_perm.id, sizeof(int));
-				if (r)
+				if (r) {
+					sem_unlock(sma, -1);
 					goto exit_put;
+				}
 
 				size = sizeof(struct sem_undo) +
 					sma->sem_nsems * sizeof(short);
 				r = ghost_write(ghost, &size, sizeof(int));
-				if (r)
+				if (r) {
+					sem_unlock(sma, -1);
 					goto exit_put;
+				}
 
 				r = ghost_write(ghost, undo, size);
-				if (r)
+				if (r) {
+					sem_unlock(sma, -1);
 					goto exit_put;
+				}
 
 				goto next_sma;
 			}
 		}
 		BUG();
 	next_sma:
-		sem_unlock(sma);
+		sem_unlock(sma, -1);
 	}
 
 exit_put:
+	rcu_read_unlock();
 	 _kddm_put_object(undo_list_kddm_set, task->sysvsem.undo_list_id);
 exit:
 	return r;
@@ -348,10 +357,11 @@ static int cr_import_one_semundo(ghost_t *ghost, struct task_struct *task,
 	if (r)
 		goto end;
 
-	sma = sem_lock_check(ns, semid);
+	rcu_read_lock();
+	sma = sem_obtain_object_check(ns, semid);
 	if (IS_ERR(sma)) {
 		r = PTR_ERR(sma);
-		goto end;
+		goto unlock_rcu_read;
 	}
 
 	r = ghost_read(ghost, &size, sizeof(int));
@@ -364,6 +374,7 @@ static int cr_import_one_semundo(ghost_t *ghost, struct task_struct *task,
 		goto unlock_sma;
 	}
 
+	sem_lock(sma, NULL, -1);
 	undo = kzalloc(size, GFP_KERNEL);
 	if (!undo)
 		goto unlock_sma;
@@ -383,13 +394,15 @@ static int cr_import_one_semundo(ghost_t *ghost, struct task_struct *task,
 	list_add(&undo->list_id, &sma->list_id);
 
 unlock_sma:
-	sem_unlock(sma);
+	sem_unlock(sma, -1);
+unlock_rcu_read:
+	rcu_read_unlock();
 end:
 	return r;
 
 free_undo:
 	kfree(undo);
-	goto unlock_sma;
+	goto unlock_rcu_read;
 }
 
 static int cr_import_semundos(ghost_t *ghost, struct task_struct *task)
@@ -1005,7 +1018,8 @@ int export_full_sysv_sem(ghost_t *ghost, int semid)
 	if (!ns)
 		return -ENOSYS;
 
-	sma = sem_lock(ns, semid);
+	rcu_read_lock();
+	sma = sem_obtain_object_check(ns, semid);
 	if (IS_ERR(sma)) {
 		r = PTR_ERR(sma);
 		goto out;
@@ -1023,9 +1037,8 @@ int export_full_sysv_sem(ghost_t *ghost, int semid)
 	if (r)
 		goto out;
 
-	sem_unlock(sma);
-
 out:
+	rcu_read_unlock();
 	put_ipc_ns(ns);
 	return r;
 }
@@ -1068,7 +1081,8 @@ int import_full_sysv_sem(ghost_t *ghost)
 	BUG_ON(r != params.requested_id);
 
 	/* the semaphore array cannot disappear since we hold the ns mutex */
-	sma = sem_lock(ns, params.requested_id);
+	rcu_read_lock();
+	sma = sem_obtain_object_check(ns, params.requested_id);
 	if (IS_ERR(sma)) {
 		r = PTR_ERR(sma);
 		goto out_put_ns;
@@ -1081,7 +1095,7 @@ int import_full_sysv_sem(ghost_t *ghost)
 	sma->sem_otime = copy_sma.sem_otime;
 	sma->sem_ctime = copy_sma.sem_ctime;
 
-	sem_unlock(sma);
+	rcu_read_unlock();
 
 out_put_ns:
 	up_write(&sem_ids(ns).rw_mutex);
@@ -1190,7 +1204,7 @@ int export_full_sysv_shm(ghost_t *ghost, int shmid)
 
 	flag = shp->shm_perm.mode;
 #ifdef CONFIG_HUGETLB_PAGE
-	if (shp->shm_file->f_op == &hugetlbfs_file_operations)
+	if (is_file_shm_hugepages(shp->shm_file))
 		flag |= SHM_HUGETLB;
 #endif
 	/* SHM_NORESERVE not handled */

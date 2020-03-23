@@ -45,10 +45,10 @@ static struct kern_ipc_perm *kcb_ipc_shm_lock(struct ipc_ids *ids, int id)
 
 	BUG_ON(!shp);
 
-	mutex_lock(&shp->shm_perm.mutex);
+	spin_lock(&shp->shm_perm.lock);
 
 	if (shp->shm_perm.deleted) {
-		mutex_unlock(&shp->shm_perm.mutex);
+		spin_unlock(&shp->shm_perm.lock);
 		goto error;
 	}
 
@@ -73,7 +73,7 @@ static void kcb_ipc_shm_unlock(struct kern_ipc_perm *ipcp)
 	_kddm_put_object(ipcp->krgops->data_kddm_set, index);
 
 	if (!deleted)
-		mutex_unlock(&ipcp->mutex);
+		spin_unlock(&ipcp->lock);
 
 	rcu_read_unlock();
 }
@@ -278,7 +278,7 @@ void shm_handler_init(void)
 	register_io_linker(SHMID_LINKER, &shmid_linker);
 	register_io_linker(SHMKEY_LINKER, &shmkey_linker);
 
-	krgsyms_register(KRGSYMS_VM_OPS_SHM, (void *)&shm_vm_ops);
+	krgsyms_register(KRGSYMS_VM_OPS_SHM, &shm_vm_ops);
 
 	printk("Shm Server configured\n");
 }

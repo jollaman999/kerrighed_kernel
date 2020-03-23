@@ -63,10 +63,10 @@ static struct kern_ipc_perm *kcb_ipc_msg_lock(struct ipc_ids *ids, int id)
 
 	BUG_ON(!msq);
 
-	mutex_lock(&msq->q_perm.mutex);
+	spin_lock(&msq->q_perm.lock);
 
 	if (msq->q_perm.deleted) {
-		mutex_unlock(&msq->q_perm.mutex);
+		spin_unlock(&msq->q_perm.lock);
 		goto error;
 	}
 
@@ -91,7 +91,7 @@ static void kcb_ipc_msg_unlock(struct kern_ipc_perm *ipcp)
 	_kddm_put_object(ipcp->krgops->data_kddm_set, index);
 
 	if (!deleted)
-		mutex_unlock(&ipcp->mutex);
+		spin_unlock(&ipcp->lock);
 
 	rcu_read_unlock();
 }

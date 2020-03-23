@@ -13,7 +13,7 @@
 #include <kerrighed/sys/types.h>
 #include <kerrighed/krgnodemask.h>
 #include <kerrighed/krginit.h>
-#include <kerrighed/hashtable.h>
+#include <kerrighed/krg_hashtable.h>
 #include <kerrighed/hotplug.h>
 #include <kerrighed/krgflags.h>
 #include <asm/uaccess.h>

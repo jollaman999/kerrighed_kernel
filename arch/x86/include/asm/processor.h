@@ -126,6 +126,7 @@ struct cpuinfo_x86 {
 	/* Compute unit id */
 	u8			compute_unit_id;
 #endif /* CONFIG_SMP */
+	u32			microcode;
 #endif /* !__GENKSYMS__ */
 } __attribute__((__aligned__(SMP_CACHE_BYTES)));
 
@@ -216,7 +217,8 @@ static inline void native_cpuid(unsigned int *eax, unsigned int *ebx,
 	      "=b" (*ebx),
 	      "=c" (*ecx),
 	      "=d" (*edx)
-	    : "0" (*eax), "2" (*ecx));
+	    : "0" (*eax), "2" (*ecx)
+	    : "memory");
 }
 
 static inline void load_cr3(pgd_t *pgdir)

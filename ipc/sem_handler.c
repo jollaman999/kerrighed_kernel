@@ -75,10 +75,10 @@ static struct kern_ipc_perm *kcb_ipc_sem_lock(struct ipc_ids *ids, int id)
 
 	BUG_ON(!sma);
 
-	mutex_lock(&sma->sem_perm.mutex);
+	spin_lock(&sma->sem_perm.lock);
 
 	if (sma->sem_perm.deleted) {
-		mutex_unlock(&sma->sem_perm.mutex);
+		spin_unlock(&sma->sem_perm.lock);
 		goto error;
 	}
 
@@ -103,7 +103,7 @@ static void kcb_ipc_sem_unlock(struct kern_ipc_perm *ipcp)
 	_kddm_put_object(ipcp->krgops->data_kddm_set, index);
 
 	if (!deleted)
-		mutex_unlock(&ipcp->mutex);
+		spin_unlock(&ipcp->lock);
 
 	rcu_read_unlock();
 }
@@ -130,11 +130,13 @@ static struct kern_ipc_perm *kcb_ipc_sem_findkey(struct ipc_ids *ids, key_t key)
  *
  *  @author Matthieu Fertré
  */
-int krg_ipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma)
+int krg_ipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma,
+					   int nsems)
 {
 	semarray_object_t *sem_object;
 	long *key_index;
 	int index ;
+	int i;
 
 	BUG_ON(!sem_ids(ns).krgops);
 
@@ -156,10 +158,18 @@ int krg_ipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma)
 	/* there are no pending objects for the moment */
 	BUG_ON(!list_empty(&sma->sem_pending));
 	BUG_ON(!list_empty(&sma->remote_sem_pending));
+	for (i = 0; i < nsems; i++) {
+		BUG_ON(!list_empty(&sma->sem_base[i].sem_pending));
+		BUG_ON(!list_empty(&sma->sem_base[i].remote_sem_pending));
+	}
 
 	INIT_LIST_HEAD(&sem_object->imported_sem.list_id);
 	INIT_LIST_HEAD(&sem_object->imported_sem.sem_pending);
 	INIT_LIST_HEAD(&sem_object->imported_sem.remote_sem_pending);
+	for (i = 0; i < nsems; i++) {
+		INIT_LIST_HEAD(&sem_object->imported_sem.sem_base[i].sem_pending);
+		INIT_LIST_HEAD(&sem_object->imported_sem.sem_base[i].remote_sem_pending);
+	}
 
 	_kddm_set_object(sem_ids(ns).krgops->data_kddm_set, index, sem_object);
 
@@ -237,7 +247,7 @@ void krg_ipc_sem_freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 					   ipcp->key);
 	}
 
-	local_sem_unlock(sma);
+	sem_unlock(sma, -1);
 	_kddm_remove_frozen_object(sem_ids(ns).krgops->data_kddm_set, index);
 
 	krg_ipc_rmid(&sem_ids(ns), index);
@@ -257,21 +267,39 @@ void handle_ipcsem_wakeup_process(struct rpc_desc *desc, void *_msg,
 	struct sem_array *sma;
 	struct sem_queue *q, *tq;
 	struct ipc_namespace *ns;
+	int i;
+	int end = 0;
 
 	ns = find_get_krg_ipcns();
 	BUG_ON(!ns);
 
 	/* take only a local lock because the requester node has the kddm lock
 	   on the semarray */
-	sma = local_sem_lock(ns, msg->sem_id);
+	rcu_read_lock();
+	sma = sem_obtain_object_check(ns, msg->sem_id);
 	BUG_ON(IS_ERR(sma));
 
+	sem_lock(sma, NULL, -1);
 	list_for_each_entry_safe(q, tq, &sma->sem_pending, list) {
 		/* compare to q->sleeper's pid instead of q->pid
 		   because q->pid == q->sleeper's tgid */
 		if (task_pid_knr(q->sleeper) == msg->pid) {
 			list_del(&q->list);
 			goto found;
+		}
+	}
+
+sem_base:
+	for (i = 0; i < sma->sem_nsems; i++) {
+		struct sem *sem = sma->sem_base + i;
+		list_for_each_entry_safe(q, tq, &sem->sem_pending, list) {
+			/* compare to q->sleeper's pid instead of q->pid
+			because q->pid == q->sleeper's tgid */
+			if (task_pid_knr(q->sleeper) == msg->pid) {
+				unlink_queue(sma, q);
+				end = 1;
+				goto found;
+			}
 		}
 	}
 
@@ -287,11 +315,15 @@ found:
 	smp_wmb();
 	q->status = msg->error;
 
-	local_sem_unlock(sma);
+	sem_unlock(sma, -1);
+	rcu_read_unlock();
 
 	rpc_pack_type(desc, msg->error);
 
 	put_ipc_ns(ns);
+
+	if (!end)
+		goto sem_base;
 }
 
 void krg_ipc_sem_wakeup_process(struct sem_queue *q, int error)
@@ -602,10 +634,14 @@ static inline void __remove_semundo_from_sem_list(struct ipc_namespace *ns,
 	struct sem_array *sma;
 	struct sem_undo *un, *tu;
 
-	sma = sem_lock(ns, semid);
-	if (IS_ERR(sma))
+	rcu_read_lock();
+	sma = sem_obtain_object_check(ns, semid);
+	if (IS_ERR(sma)) {
+		rcu_read_unlock();
 		return;
+	}
 
+	sem_lock(sma, NULL, -1);
 	list_for_each_entry_safe(un, tu, &sma->list_id, list_id) {
 		if (un->proc_list_id == undo_list_id) {
 			list_del(&un->list_id);
@@ -618,7 +654,8 @@ static inline void __remove_semundo_from_sem_list(struct ipc_namespace *ns,
 	BUG();
 
 exit_unlock:
-	sem_unlock(sma);
+	sem_unlock(sma, -1);
+	rcu_read_unlock();
 }
 
 void krg_ipc_sem_exit_sem(struct ipc_namespace *ns,

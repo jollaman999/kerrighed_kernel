@@ -543,3 +543,10 @@ int __get_unused_fd(struct task_struct *task)
 	return __alloc_fd(task, 0, 0);
 }
 #endif
+
+int get_unused_fd_flags(unsigned flags)
+{
+	return alloc_fd(0, flags);
+}
+EXPORT_SYMBOL(get_unused_fd_flags);
+

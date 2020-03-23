@@ -44,6 +44,7 @@ int __get_unused_fd(struct task_struct *task);
 #ifdef CONFIG_KRG_FAF
 extern void __put_unused_fd(struct files_struct *files, unsigned int fd);
 #endif
+extern int get_unused_fd_flags(unsigned flags);
 extern void put_unused_fd(unsigned int fd);
 #ifdef CONFIG_KRG_FAF
 extern void __fd_install(struct files_struct *files,

@@ -13,7 +13,7 @@
 #include <linux/string.h>
 #include <linux/list.h>
 #include <linux/seq_file.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 
 #include <kerrighed/procfs.h>
 #include <kddm/kddm.h>

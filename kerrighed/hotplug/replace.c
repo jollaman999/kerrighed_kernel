@@ -6,7 +6,7 @@
 
 #include <linux/spinlock.h>
 #include <linux/sched.h>
-#include <kerrighed/hashtable.h>
+#include <kerrighed/krg_hashtable.h>
 
 int hotplug_replace_init(void)
 {

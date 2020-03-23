@@ -22,7 +22,7 @@
 #include <kerrighed/krgnodemask.h>
 #include <kerrighed/sys/types.h>
 #include <kerrighed/krginit.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>

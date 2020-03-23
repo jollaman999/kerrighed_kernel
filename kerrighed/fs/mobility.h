@@ -9,7 +9,7 @@
 #define __MOBILITY_H__
 
 #include <kerrighed/ghost_types.h>
-#include <linux/hashtable.h>
+#include <linux/krg_hashtable.h>
 
 struct epm_action;
 

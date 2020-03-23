@@ -182,6 +182,17 @@ static inline void msg_rmid(struct ipc_namespace *ns, struct msg_queue *s)
 	ipc_rmid(&msg_ids(ns), &s->q_perm);
 }
 
+#ifndef CONFIG_KRG_IPC
+static void msg_rcu_free(struct rcu_head *head)
+{
+	struct ipc_rcu *p = container_of(head, struct ipc_rcu, rcu);
+	struct msg_queue *msq = ipc_rcu_to_struct(p);
+
+	security_msg_queue_free(msq);
+	ipc_rcu_free(head);
+}
+#endif
+
 /**
  * newque - Create a new msg queue
  * @ns: namespace
@@ -209,23 +220,8 @@ int newque(struct ipc_namespace *ns, struct ipc_params *params)
 	msq->q_perm.security = NULL;
 	retval = security_msg_queue_alloc(msq);
 	if (retval) {
-		ipc_rcu_putref(msq);
+		ipc_rcu_putref(msq, ipc_rcu_free);
 		return retval;
-	}
-
-	/*
-	 * ipc_addid() locks msq
-	 */
-#ifdef CONFIG_KRG_IPC
-	id = ipc_addid(&msg_ids(ns), &msq->q_perm, ns->msg_ctlmni,
-		       params->requested_id);
-#else
-	id = ipc_addid(&msg_ids(ns), &msq->q_perm, ns->msg_ctlmni);
-#endif
-	if (id < 0) {
-		security_msg_queue_free(msq);
-		ipc_rcu_putref(msq);
-		return id;
 	}
 
 	msq->q_stime = msq->q_rtime = 0;
@@ -237,6 +233,20 @@ int newque(struct ipc_namespace *ns, struct ipc_params *params)
 	INIT_LIST_HEAD(&msq->q_receivers);
 	INIT_LIST_HEAD(&msq->q_senders);
 
+	/*
+	 * ipc_addid() locks msq
+	 */
+#ifdef CONFIG_KRG_IPC
+	id = ipc_addid(&msg_ids(ns), &msq->q_perm, ns->msg_ctlmni,
+		       params->requested_id);
+#else
+	id = ipc_addid(&msg_ids(ns), &msq->q_perm, ns->msg_ctlmni);
+#endif
+	if (id < 0) {
+		ipc_rcu_putref(msq, msg_rcu_free);
+		return id;
+	}
+
 #ifdef CONFIG_KRG_IPC
 	if (is_krg_ipc(&msg_ids(ns))) {
 		retval = krg_ipc_msg_newque(ns, msq) ;
@@ -244,8 +254,7 @@ int newque(struct ipc_namespace *ns, struct ipc_params *params)
 			/* release locks held by ipc_addid */
 			local_ipc_unlock(&msq->q_perm);
 
-			security_msg_queue_free(msq);
-			ipc_rcu_putref(msq);
+			ipc_rcu_putref(msq, msg_rcu_free);
 			return retval;
 		}
 	} else
@@ -346,8 +355,7 @@ static void freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 		free_msg(msg);
 	}
 	atomic_sub(msq->q_cbytes, &ns->msg_bytes);
-	security_msg_queue_free(msq);
-	ipc_rcu_putref(msq);
+	ipc_rcu_putref(msq, msg_rcu_free);
 }
 
 /*
@@ -791,13 +799,16 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 		}
 		ss_add(msq, &s);
 #ifndef CONFIG_KRG_IPC
-		ipc_rcu_getref(msq);
+		if (!ipc_rcu_getref(msq)) {
+			err = -EIDRM;
+			goto out_unlock_free;
+		}
 #endif
+
 		msg_unlock(msq);
 #ifdef CONFIG_KRG_IPC
 		up_read(&msg_ids(ns).rw_mutex);
 #endif
-
 		schedule();
 
 #ifdef CONFIG_KRG_IPC
@@ -809,7 +820,7 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 		}
 #else
 		ipc_lock_by_ptr(&msq->q_perm);
-		ipc_rcu_putref(msq);
+		ipc_rcu_putref(msq, ipc_rcu_free);
 		if (msq->q_perm.deleted) {
 			err = -EIDRM;
 			goto out_unlock_free;

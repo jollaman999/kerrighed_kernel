@@ -3,7 +3,12 @@
 
 #include <linux/types.h>
 #include <linux/mutex.h>
-
+// #include <linux/mutex.h>
+/*
+*
+/usr/src/kerrighed-src/kernel/usr/include/linux/ipc.h:5: included file 'linux/mutex.h' is not exported
+*
+*/
 #define IPC_PRIVATE ((__kernel_key_t) 0)  
 
 /* Obsolete, used only for backwards compatibility and libc5 compiles */
@@ -90,11 +95,7 @@ struct krgipc_ops;
 /* used by in-kernel data structures */
 struct kern_ipc_perm
 {
-#ifdef CONFIG_KRG_IPC
-	struct mutex    mutex;
-#else
 	spinlock_t	lock;
-#endif
 	int		deleted;
 	int		id;
 	key_t		key;

@@ -44,29 +44,30 @@ struct sem_array *create_local_sem(struct ipc_namespace *ns,
 	memcpy(sma->sem_base, received_sma->sem_base, size_sems);
 
 	retval = security_sem_alloc(sma);
-	if (retval)
-		goto err_putref;
+	if (retval) {
+		ipc_rcu_putref(sma, ipc_rcu_free);
+		goto out;
+	}
 
 	/*
 	 * ipc_reserveid() locks msq
 	 */
 	retval = local_ipc_reserveid(&sem_ids(ns), &sma->sem_perm, ns->sc_semmni);
-	if (retval)
-		goto err_security_free;
+	if (retval) {
+		ipc_rcu_putref(sma, sem_rcu_free);
+		goto out;
+	}
 
 	INIT_LIST_HEAD(&sma->sem_pending);
 	INIT_LIST_HEAD(&sma->list_id);
 	INIT_LIST_HEAD(&sma->remote_sem_pending);
 
 	sma->sem_perm.krgops = sem_ids(ns).krgops;
-	local_sem_unlock(sma);
+	sem_unlock(sma, -1);
 
 	return sma;
 
-err_security_free:
-	security_sem_free(sma);
-err_putref:
-	ipc_rcu_putref(sma);
+out:
 	return ERR_PTR(retval);
 }
 
@@ -290,7 +291,11 @@ int semarray_remove_object(void *object, struct kddm_set * set,
 
 		sma = sem_object->local_sem;
 
-		local_sem_lock(ns, sma->sem_perm.id);
+		rcu_read_lock();
+		sma = sem_obtain_object(ns, sma->sem_perm.id);
+
+		sem_lock(sma, NULL, -1);
+		/* sem_unlock() and rcu_read_ulock() will be called in local_freeary() */
 		local_freeary(ns, &sma->sem_perm);
 
 		kfree(sem_object->mobile_sem_base);

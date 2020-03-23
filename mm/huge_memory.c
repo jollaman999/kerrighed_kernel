@@ -1480,6 +1480,7 @@ void __split_huge_page_pmd(struct mm_struct *mm, pmd_t *pmd)
 {
 	struct page *page;
 
+again:
 	spin_lock(&mm->page_table_lock);
 	if (unlikely(!pmd_trans_huge(*pmd))) {
 		spin_unlock(&mm->page_table_lock);
@@ -1493,7 +1494,14 @@ void __split_huge_page_pmd(struct mm_struct *mm, pmd_t *pmd)
 	split_huge_page(page);
 
 	put_page(page);
-	BUG_ON(pmd_trans_huge(*pmd));
+
+	/*
+	 * We don't always have down_write of mmap_sem here: a racing
+	 * do_huge_pmd_wp_page() might have copied-on-write to another
+	 * huge page before our split_huge_page() got the anon_vma lock.
+	 */
+	if (unlikely(pmd_trans_huge(*pmd)))
+		goto again;
 }
 
 static int __init khugepaged_slab_init(void)
