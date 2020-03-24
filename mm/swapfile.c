@@ -1287,6 +1287,7 @@ static int try_to_unuse(unsigned int type)
 					;
 				else if (mm == &init_mm)
 					set_start_mm = 1;
+				else
 #ifdef CONFIG_KRG_FAF
 					retval = __unuse_mm(mm, entry, page);
 #else
