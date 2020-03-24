@@ -456,6 +456,8 @@ out:
 
 out_unlock:
 	spin_unlock_irq(&pidmap_lock);
+	put_pid_ns(ns);
+
 out_free:
 #ifdef CONFIG_KRG_EPM
 	BUG_ON(req_nr);

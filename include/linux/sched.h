@@ -325,6 +325,7 @@ extern int proc_dowatchdog_thresh(struct ctl_table *table, int write,
 				  size_t *lenp, loff_t *ppos);
 extern unsigned int  softlockup_panic;
 extern int softlockup_thresh;
+extern unsigned int  hardlockup_panic;
 void lockup_detector_init(void);
 #else
 static inline void touch_softlockup_watchdog(void)
@@ -813,6 +814,9 @@ struct user_struct {
 	atomic_long_t epoll_watches_long;    /* The number of file */
 					     /* descriptors currently watched */
 #endif
+#endif
+#ifndef __GENKSYMS__
+	unsigned long unix_inflight;	/* How many files in flight in unix sockets */
 #endif
 };
 
@@ -2492,7 +2496,11 @@ bool in_krg_do_fork(void);
 void krg_vfork_done(struct completion *vfork_done);
 #endif /* CONFIG_KRG_EPM */
 
-extern void set_task_comm(struct task_struct *tsk, char *from);
+extern void __set_task_comm(struct task_struct *tsk, char *from, bool exec);
+static inline void set_task_comm(struct task_struct *tsk, char *from)
+{
+	__set_task_comm(tsk, from, false);
+}
 extern char *get_task_comm(char *to, struct task_struct *tsk);
 
 #ifdef CONFIG_SMP

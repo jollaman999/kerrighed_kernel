@@ -1439,7 +1439,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #ifdef CONFIG_KRG_KDDM
 		goto bad_fork_cleanup_kddm_info;
 #else
-		goto bad_fork_cleanup_policy;
+		goto bad_fork_cleanup_perf;
 #endif /* CONFIG_KRG_KDDM */
 	/* copy all the process information */
 	if ((retval = copy_semundo(clone_flags, p)))
@@ -1793,8 +1793,9 @@ bad_fork_cleanup_kddm_info:
 	if (p->kddm_info)
 		kmem_cache_free(kddm_info_cachep, p->kddm_info);
 #endif
-bad_fork_cleanup_policy:
+bad_fork_cleanup_perf:
 	perf_event_free_task(p);
+bad_fork_cleanup_policy:
 #ifdef CONFIG_NUMA
 	mpol_put(p->mempolicy);
 bad_fork_cleanup_cgroup:

@@ -14,6 +14,7 @@
 #include <linux/pagemap.h>
 #include <linux/quotaops.h>
 #include <linux/buffer_head.h>
+#include <linux/kthread.h>
 
 #include "internal.h"
 
@@ -154,7 +155,7 @@ SYSCALL_DEFINE0(sync)
 	return 0;
 }
 
-static void do_sync_work(struct work_struct *work)
+static int __do_sync_work(void *dummy)
 {
 	/*
 	 * Sync twice to reduce the possibility we skipped some inodes / pages
@@ -163,6 +164,12 @@ static void do_sync_work(struct work_struct *work)
 	sync_filesystems(0);
 	sync_filesystems(0);
 	printk("Emergency Sync complete\n");
+	return 0;
+}
+
+static void do_sync_work(struct work_struct *work)
+{
+	kthread_run(__do_sync_work, NULL, "sync_work_thread");
 	kfree(work);
 }
 

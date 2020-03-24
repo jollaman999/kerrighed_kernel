@@ -374,6 +374,7 @@ enum align_flags {
 struct va_alignment {
 	int flags;
 	unsigned long mask;
+	unsigned long bits;
 } ____cacheline_aligned;
 
 extern struct va_alignment va_align;

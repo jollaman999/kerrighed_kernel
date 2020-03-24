@@ -34,7 +34,7 @@ EXPORT_SYMBOL(__put_user_8);
 EXPORT_SYMBOL(ruaccess_put_user_asm);
 #endif /* CONFIG_KRG_FAF */
 
-__must_check unsigned long
+__must_check unsigned long notrace
 copy_user_generic(void *to, const void *from, unsigned len)
 {
 	unsigned ret;
