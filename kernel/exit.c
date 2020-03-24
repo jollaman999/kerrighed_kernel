@@ -81,11 +81,11 @@ static
 #endif
 void exit_mm(struct task_struct * tsk);
 
-static void __unhash_process(struct task_struct *p)
+static void __unhash_process(struct task_struct *p, bool group_dead)
 {
 	nr_threads--;
 	detach_pid(p, PIDTYPE_PID);
-	if (thread_group_leader(p)) {
+	if (group_dead) {
 		detach_pid(p, PIDTYPE_PGID);
 		detach_pid(p, PIDTYPE_SID);
 
@@ -102,6 +102,7 @@ static void __unhash_process(struct task_struct *p)
 static void __exit_signal(struct task_struct *tsk)
 {
 	struct signal_struct *sig = tsk->signal;
+	bool group_dead = thread_group_leader(tsk);
 	struct sighand_struct *sighand;
 
 	BUG_ON(!sig);
@@ -109,18 +110,20 @@ static void __exit_signal(struct task_struct *tsk)
 
 	sighand = rcu_dereference(tsk->sighand);
 	spin_lock(&sighand->siglock);
+	atomic_dec(&sig->count);
 
 	posix_cpu_timers_exit(tsk);
 #ifdef CONFIG_KRG_EPM
 	if (tsk->exit_state == EXIT_MIGRATION) {
+		atomic_inc(&sig->count);
 		BUG_ON(atomic_read(&sig->count) > 1);
 		posix_cpu_timers_exit_group(tsk);
 		sig->curr_target = NULL;
 	} else
 #endif
-	if (atomic_dec_and_test(&sig->count))
+	if (group_dead) {
 		posix_cpu_timers_exit_group(tsk);
-	else {
+	} else {
 		/*
 		 * This can only happen if the caller is de_thread().
 		 * FIXME: this is the temporary hack, we should teach
@@ -159,10 +162,9 @@ static void __exit_signal(struct task_struct *tsk)
 		sig->oublock += task_io_get_oublock(tsk);
 		task_io_accounting_add(&sig->ioac, &tsk->ioac);
 		sig->sum_sched_runtime += tsk->se.sum_exec_runtime;
-		sig = NULL; /* Marker for below. */
 	}
 
-	__unhash_process(tsk);
+	__unhash_process(tsk, group_dead);
 
 	/*
 	 * Do this under ->siglock, we can race with another thread
@@ -181,7 +183,7 @@ static void __exit_signal(struct task_struct *tsk)
 #endif
 	__cleanup_sighand(sighand);
 	clear_tsk_thread_flag(tsk,TIF_SIGPENDING);
-	if (sig) {
+	if (group_dead) {
 		flush_sigqueue(&sig->shared_pending);
 #ifdef CONFIG_KRG_EPM
 		if (tsk->exit_state != EXIT_MIGRATION)
@@ -857,12 +859,6 @@ static struct task_struct *find_new_reaper(struct task_struct *father)
 
 		zap_pid_ns_processes(pid_ns);
 		write_lock_irq(&tasklist_lock);
-		/*
-		 * We can not clear ->child_reaper or leave it alone.
-		 * There may by stealth EXIT_DEAD tasks on ->children,
-		 * forget_original_parent() must move them somewhere.
-		 */
-		pid_ns->child_reaper = init_pid_ns.child_reaper;
 	}
 
 	return pid_ns->child_reaper;

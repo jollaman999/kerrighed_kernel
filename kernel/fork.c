@@ -672,6 +672,43 @@ struct mm_struct *mm_access(struct task_struct *task, unsigned int mode)
 	return mm;
 }
 
+static void complete_vfork_done(struct task_struct *tsk)
+{
+	struct completion *vfork;
+
+	task_lock(tsk);
+	vfork = tsk->vfork_done;
+	if (likely(vfork)) {
+		tsk->vfork_done = NULL;
+#ifdef CONFIG_KRG_EPM
+		if (tsk->remote_vfork_done)
+			krg_vfork_done(vfork);
+		else
+#endif
+		complete(vfork);
+	}
+	task_unlock(tsk);
+}
+
+static int wait_for_vfork_done(struct task_struct *child,
+				struct completion *vfork)
+{
+	int killed;
+
+	freezer_do_not_count();
+	killed = wait_for_completion_killable(vfork);
+	freezer_count();
+
+	if (killed) {
+		task_lock(child);
+		child->vfork_done = NULL;
+		task_unlock(child);
+	}
+
+	put_task_struct(child);
+	return killed;
+}
+
 /* Please note the differences between mmput and mm_release.
  * mmput is called whenever we stop holding onto a mm_struct,
  * error success whatever.
@@ -687,8 +724,6 @@ struct mm_struct *mm_access(struct task_struct *task, unsigned int mode)
  */
 void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 {
-	struct completion *vfork_done = tsk->vfork_done;
-
 	/* Get rid of any futexes when releasing the mm */
 #ifdef CONFIG_FUTEX
 	if (unlikely(tsk->robust_list)) {
@@ -712,22 +747,15 @@ void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 		atomic_dec(&mm->mm_ltasks);
 #endif
 
-	/* notify parent sleeping on vfork() */
-	if (vfork_done) {
-		tsk->vfork_done = NULL;
-#ifdef CONFIG_KRG_EPM
-		if (tsk->remote_vfork_done)
-			krg_vfork_done(vfork_done);
-		else
-#endif
-		complete(vfork_done);
-	}
+	if (tsk->vfork_done)
+		complete_vfork_done(tsk);
 
 	/*
 	 * If we're exiting normally, clear a user-space tid field if
 	 * requested.  We leave this alone when dying by signal, to leave
 	 * the value intact in a core dump, and to save the unnecessary
-	 * trouble otherwise.  Userland only wants this done for a sys_exit.
+	 * trouble, say, a killed vfork parent shouldn't touch this mm.
+	 * Userland only wants this done for a sys_exit.
 	 */
 	if (tsk->clear_child_tid) {
 		if (!(tsk->flags & PF_SIGNALED) &&
@@ -1788,6 +1816,13 @@ fork_out:
 #ifdef CONFIG_KRG_HOTPLUG
 	current->create_krg_ns = saved_create_krg_ns;
 #endif
+	/*
+	 * HACK. A buggy subsystem can clear TIF_SIGPENDING in between.
+	 * In particular, there are a lot of sigprocmask() users, and
+	 * recalc_sigpending() is simply wrong in this case.
+	 */
+	if (unlikely(retval == -ERESTARTNOINTR))
+		set_thread_flag(TIF_SIGPENDING);
 	return ERR_PTR(retval);
 }
 
@@ -1903,6 +1938,7 @@ long do_fork(unsigned long clone_flags,
 			p->remote_vfork_done = 0;
 #endif
 			init_completion(&vfork);
+			get_task_struct(p);
 		}
 
 		audit_finish_fork(p);
@@ -1931,10 +1967,8 @@ long do_fork(unsigned long clone_flags,
 						clone_flags, nr, p);
 
 		if (clone_flags & CLONE_VFORK) {
-			freezer_do_not_count();
-			wait_for_completion(&vfork);
-			freezer_count();
-			tracehook_report_vfork_done(p, nr);
+			if (!wait_for_vfork_done(p, &vfork))
+				tracehook_report_vfork_done(p, nr);
 		}
 	} else {
 		nr = PTR_ERR(p);

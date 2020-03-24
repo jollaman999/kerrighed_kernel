@@ -141,6 +141,7 @@ static inline struct pid *alloc_pid(struct pid_namespace *ns)
 	return __alloc_pid(ns, NULL);
 }
 #endif /* CONFIG_KRG_EPM */
+extern void disable_pid_allocation(struct pid_namespace *ns);
 
 /*
  * ns_of_pid() returns the pid namespace in which the specified pid was
