@@ -110,7 +110,7 @@ int krg_do_fork(unsigned long clone_flags,
 	rpc_end(desc, 0);
 
 	if (remote_pid > 0 && (clone_flags & CLONE_VFORK))
-		wait_for_vfork_done(task, &vfork)
+		wait_for_vfork_done(task, &vfork);
 
 out_action_stop:
 	krg_action_stop(task, EPM_REMOTE_CLONE);
