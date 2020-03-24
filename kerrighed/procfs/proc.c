@@ -27,6 +27,8 @@
 
 #define PROC_STAT_DEPEND_ON_CAPABILITY (KERRIGHED_MAX_NODES + 1)
 
+extern unsigned int (*kstat_irqs_usr_fn)(unsigned int irq);
+
 /* /proc/kerrighed entries */
 
 static struct proc_dir_entry *procfs_nodes;	/* /proc/kerrighed/nodes   */
@@ -529,8 +531,9 @@ static int krg_show_stat(struct seq_file *p, void *v)
 	unsigned long long nr_context_switches = 0;
 	unsigned long jif = 0, total_forks = 0, nr_running = 0, nr_iowait = 0;
 	kerrighed_node_t node_id;
-	unsigned int *irqs, *cpu_irqs;
-	u64 total_intr = 0;
+	u64 sum_irq = 0;
+	u64 sum_softirq = 0;
+	unsigned int per_softirq_sums[NR_SOFTIRQS] = {0};
 #define HEAD_BLANK_LEN 81
 	static const char head_blank[HEAD_BLANK_LEN + 1] = {
 		[ 0 ... HEAD_BLANK_LEN - 2 ] = ' ',
@@ -541,12 +544,6 @@ static int krg_show_stat(struct seq_file *p, void *v)
 
 	if (!current->nsproxy->krg_ns)
 		return show_stat(p, v);
-
-	irqs = kmalloc(sizeof(*irqs) * NR_IRQS, GFP_KERNEL);
-	if (!irqs)
-		return -ENOMEM;
-	for (j = 0; j < NR_IRQS; j++)
-		irqs[j] = 0;
 
 	nodes = get_proc_nodes_vector(req_nodeid);
 
@@ -609,13 +606,14 @@ static int krg_show_stat(struct seq_file *p, void *v)
 			softirq = cputime64_add(softirq, stat->softirq);
 			steal = cputime64_add(steal, stat->steal);
 			guest = cputime64_add(guest, stat->guest);
+			sum_irq += dynamic_cpu_info->sum_irq;
+			sum_softirq += dynamic_cpu_info->sum_softirq;
 
-			cpu_irqs = krg_dynamic_cpu_info_irqs(dynamic_cpu_info);
-			for (j = 0; j < NR_IRQS; j++)
-				irqs[j] += cpu_irqs[j];
-			total_intr += dynamic_cpu_info->total_intr;
+			for (j = 0; j < NR_SOFTIRQS; j++) {
+				per_softirq_sums[j] += dynamic_cpu_info->per_softirq_sums[j];
+			}
 		}
-		total_intr += dynamic_node_info->arch_irq;
+		sum_irq += dynamic_node_info->arch_irq;
 	}
 
 	/* Dirty trick to print "cpu" line at the beginning without parsing data
@@ -643,11 +641,11 @@ static int krg_show_stat(struct seq_file *p, void *v)
 		p->buf[head_len] = ' ';
 #undef HEAD_BLANK_LEN
 
-	seq_printf(p, "intr %llu", (unsigned long long)total_intr);
+	seq_printf(p, "intr %llu", (unsigned long long)sum_irq);
 
-	for (j = 0; j < NR_IRQS; j++)
-		seq_printf(p, " %u", irqs[j]);
-	kfree(irqs);
+	/* sum again ? it could be updated? */
+	for_each_irq_nr(j)
+		seq_printf(p, " %u", kstat_irqs_usr_fn(j));
 
 	seq_printf(p,
 		   "\nctxt %llu\n"
@@ -661,6 +659,12 @@ static int krg_show_stat(struct seq_file *p, void *v)
 		   nr_running,
 		   nr_iowait);
 
+	seq_printf(p, "softirq %llu", (unsigned long long)sum_softirq);
+
+	for (i = 0; i < NR_SOFTIRQS; i++)
+		seq_printf(p, " %u", per_softirq_sums[i]);
+	seq_printf(p, "\n");
+
 	return 0;
 }
 
@@ -669,6 +673,9 @@ static int stat_open(struct inode *inode, struct file *file)
 	unsigned size;
 
 	size = 256 + NR_IRQS * 8 + NR_CPUS * kerrighed_nb_nodes * 80;
+
+	/* minimum size to display an interrupt count : 2 bytes */
+	size += 2 * nr_irqs;
 
 	return krg_proc_stat_open(inode, file, krg_show_stat, size);
 }
