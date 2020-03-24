@@ -235,7 +235,7 @@ int krg_delayed_notify_parent(struct task_struct *leader)
 				&parent_node);
 	__krg_task_writelock_nested(leader);
 
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 	BUG_ON(task_detached(leader));
 	/*
 	 * Needed to check whether we were reparented to init, and to
@@ -502,7 +502,7 @@ krg_prepare_exit_ptrace_task(struct task_struct *tracer,
 
 	krg_set_child_ptraced(obj, task, 0);
 
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 	BUG_ON(!task->ptrace);
 
 	if (obj && task->task_obj) {
@@ -566,7 +566,7 @@ void *krg_prepare_exit_notify(struct task_struct *task)
 			__krg_task_writelock(task);
 
 #ifdef CONFIG_KRG_EPM
-		write_lock_irq(&tasklist_lock);
+		tasklist_write_lock_irq();
 		if (cookie) {
 			/* Make sure that task_obj is up to date */
 			krg_update_parents(task, parent_pid, real_parent_pid);
@@ -693,7 +693,7 @@ static void handle_notify_remote_child_reaper(struct rpc_desc *desc,
 	bool release = false;
 
 	krg_task_writelock(msg->zombie_pid);
-	write_lock_irq(&tasklist_lock);
+	wtasklist_write_lock_irq();
 
 	zombie = find_task_by_kpid(msg->zombie_pid);
 	BUG_ON(!zombie);

@@ -1223,7 +1223,7 @@ static void update_relatives(struct task_struct *task)
 void join_local_relatives(struct task_struct *orphan)
 {
 	__krg_children_readlock(orphan);
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 
 	/*
 	 * Need to do it early to avoid a group leader task to consider itself
@@ -1278,7 +1278,7 @@ void leave_all_relatives(struct task_struct *tsk)
 {
 	struct task_struct *child, *tmp;
 
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 
 	tsk->flags |= PF_AWAY;
 
@@ -1478,7 +1478,7 @@ krg_children_prepare_de_thread(struct task_struct *task)
 
 	if (rcu_dereference(task->parent_children_obj)) {
 		obj = krg_parent_children_writelock(task, &real_parent_tgid);
-		write_lock_irq(&tasklist_lock);
+		tasklist_write_lock_irq();
 		/*
 		 * leader should not be considered as a child after the PID
 		 * switch.
@@ -1516,7 +1516,7 @@ void krg_children_finish_de_thread(struct children_kddm_object *obj,
 	if (rcu_dereference(task->children_obj))
 		krg_children_unlock(task->children_obj);
 	if (obj) {
-		write_lock_irq(&tasklist_lock);
+		tasklist_write_lock_irq();
 		krg_children_relink_krg_parent(task);
 		write_unlock_irq(&tasklist_lock);
 		krg_set_child_exit_signal(obj, task);
@@ -1607,7 +1607,7 @@ void krg_unhash_process(struct task_struct *tsk)
 	 */
 	/* Won't do anything if obj is NULL. */
 	krg_remove_child(obj, tsk);
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 	if (tsk->real_parent == baby_sitter) {
 		remove_from_krg_parent(tsk, tsk->task_obj->real_parent);
 		list_add_tail(&tsk->sibling, &baby_sitter->children);

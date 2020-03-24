@@ -141,7 +141,7 @@ EXPORT_SYMBOL_GPL(vm_memory_committed);
  */
 int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
 {
-	unsigned long free, allowed;
+	long free, allowed;
 #ifdef CONFIG_KRG_MM
 	krg_dynamic_node_info_t *dyn_info;
 	kerrighed_node_t node;

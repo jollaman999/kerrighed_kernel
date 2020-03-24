@@ -1841,7 +1841,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 
 	BUG_ON(newTsk->task_obj);
 	BUG_ON(obj->task);
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 	newTsk->task_obj = obj;
 	obj->task = newTsk;
 	write_unlock_irq(&tasklist_lock);
