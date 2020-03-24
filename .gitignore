@@ -9,8 +9,7 @@
 #
 # Normal rules
 #
-.config.old
-*.cmd
+.*
 *.o
 *.o.*
 *.a
@@ -79,6 +78,3 @@ GTAGS
 *.orig
 *~
 \#*#
-
-.idea
-.vscode
