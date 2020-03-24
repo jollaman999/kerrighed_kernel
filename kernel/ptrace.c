@@ -108,9 +108,12 @@ void krg_ptrace_reparent_ptraced(struct task_struct *real_parent,
 
 #endif /* CONFIG_KRG_EPM */
 
-int __ptrace_may_access(struct task_struct *task, unsigned int mode)
+int ___ptrace_may_access(struct task_struct *tracer,
+			 const struct cred *cred, /* tracer cred */
+			 struct task_struct *task,
+			 unsigned int mode)
 {
-	const struct cred *cred = current_cred(), *tcred;
+	const struct cred *tcred;
 
 	/* May we inspect the given task?
 	 * This check is used both for attaching with ptrace
@@ -122,9 +125,17 @@ int __ptrace_may_access(struct task_struct *task, unsigned int mode)
 	 */
 	int dumpable = 0;
 	/* Don't let security modules deny introspection */
-	if (same_thread_group(task, current))
+	if (same_thread_group(task, tracer))
 		return 0;
 	rcu_read_lock();
+	if (!cred) {
+		WARN_ON_ONCE(tracer == current);
+		WARN_ON_ONCE(task != current);
+		cred = __task_cred(tracer);
+	} else {
+		WARN_ON_ONCE(tracer != current);
+		WARN_ON_ONCE(task == current);
+	}
 	tcred = __task_cred(task);
 	if ((cred->uid != tcred->euid ||
 	     cred->uid != tcred->suid ||
@@ -132,7 +143,7 @@ int __ptrace_may_access(struct task_struct *task, unsigned int mode)
 	     cred->gid != tcred->egid ||
 	     cred->gid != tcred->sgid ||
 	     cred->gid != tcred->gid) &&
-	    !capable(CAP_SYS_PTRACE)) {
+	    (mode & PTRACE_MODE_SKIP_AUDIT || !capable(CAP_SYS_PTRACE))) {
 		rcu_read_unlock();
 		return -EPERM;
 	}
@@ -140,10 +151,19 @@ int __ptrace_may_access(struct task_struct *task, unsigned int mode)
 	smp_rmb();
 	if (task->mm)
 		dumpable = get_dumpable(task->mm);
-	if (dumpable != SUID_DUMP_USER && !capable(CAP_SYS_PTRACE))
+	if (dumpable != SUID_DUMP_USER &&
+	   (mode & PTRACE_MODE_SKIP_AUDIT || !capable(CAP_SYS_PTRACE)))
 		return -EPERM;
 
-	return security_ptrace_access_check(task, mode);
+	if (!(mode & PTRACE_MODE_NOACCESS_CHK))
+		return security_ptrace_access_check(task, mode);
+
+	return 0;
+}
+
+int __ptrace_may_access(struct task_struct *task, unsigned int mode)
+{
+	return ___ptrace_may_access(current, current_cred(), task, mode);
 }
 
 bool ptrace_may_access(struct task_struct *task, unsigned int mode)
