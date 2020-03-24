@@ -291,6 +291,7 @@ struct wait_task_result {
 	unsigned long cmin_flt, cmaj_flt;
 	unsigned long cnvcsw, cnivcsw;
 	unsigned long cinblock, coublock;
+	unsigned long cmaxrss;
 	struct task_io_accounting ioac;
 };
 
@@ -300,7 +301,6 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 	struct wait_task_request *req = _msg;
 	struct task_struct *p;
 	struct signal_struct *sig;
-	struct task_cputime cputime;
 	struct wait_task_result res;
 	struct wait_opts wo;
 	int retval;
@@ -327,11 +327,14 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 	 * Sample resource counters now since wait_task_zombie() may release p.
 	 */
 	if (!(req->options & WNOWAIT)) {
+		unsigned long maxrss;
+		cputime_t tgutime, tgstime;
+
 		sig = p->signal;
 
-		thread_group_cputime(p, &cputime);
-		res.cutime = cputime_add(cputime.utime, sig->cutime);
-		res.cstime = cputime_add(cputime.stime, sig->cstime);
+		thread_group_times(p, &tgutime, &tgstime);
+		res.cutime = cputime_add(tgutime, sig->cutime);
+		res.cstime = cputime_add(tgstime, sig->cstime);
 		res.cgtime = cputime_add(p->gtime,
 					 cputime_add(sig->gtime, sig->cgtime));
 		res.cmin_flt = p->min_flt + sig->min_flt + sig->cmin_flt;
@@ -342,6 +345,8 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 				sig->inblock + sig->cinblock;
 		res.coublock = task_io_get_oublock(p) +
 				sig->oublock + sig->coublock;
+		maxrss = max(sig->maxrss, sig->cmaxrss);
+		res.cmaxrss = maxrss;
 		res.ioac = p->ioac;
 		task_io_accounting_add(&res.ioac, &sig->ioac);
 	}
@@ -427,6 +432,7 @@ int krg_wait_task_zombie(struct wait_opts *wo,
 			psig->cnivcsw += res.cnivcsw;
 			psig->cinblock += res.cinblock;
 			psig->coublock += res.coublock;
+			psig->cmaxrss = res.cmaxrss;
 			task_io_accounting_add(&psig->ioac, &res.ioac);
 			spin_unlock_irq(&current->sighand->siglock);
 		}
