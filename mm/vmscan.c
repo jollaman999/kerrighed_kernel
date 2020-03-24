@@ -1190,7 +1190,7 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
 			 * anon page which don't already have a swap slot is
 			 * pointless.
 			 */
-			if (nr_swap_pages <= 0 && PageAnon(cursor_page) &&
+			if (get_nr_swap_pages() <= 0 && PageAnon(cursor_page) &&
 			    !PageSwapCache(cursor_page))
 				break;
 
@@ -2049,7 +2049,7 @@ static void shrink_mem_cgroup_zone(int priority, struct mem_cgroup_zone *mz,
 		get_scan_ratio(mz, sc, percent);
 #else
 	/* If we have no swap space, do not bother scanning anon pages. */
-	if (!sc->may_swap || (nr_swap_pages <= 0)) {
+	if (!sc->may_swap || (get_nr_swap_pages() <= 0)) {
 		noswap = 1;
 		percent[0] = 0;
 		percent[1] = 100;
@@ -2114,14 +2114,14 @@ static void shrink_mem_cgroup_zone(int priority, struct mem_cgroup_zone *mz,
 	 * rebalance the anon lru active/inactive ratio.
 	 */
 #ifdef CONFIG_KRG_MM
-	if (nr_swap_pages > 0) {
+	if (get_nr_swap_pages() > 0) {
 		if (inactive_anon_is_low(mz))
 			shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0, 0);
 		if (inactive_kddm_is_low(mz))
 			shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0, 1);
 	}
 #else
-	if (inactive_anon_is_low(mz) && nr_swap_pages > 0)
+	if (inactive_anon_is_low(mz) && get_nr_swap_pages() > 0)
 		shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0);
 #endif
 
@@ -2188,7 +2188,7 @@ static inline bool should_continue_reclaim(struct zone *zone,
 	 */
 	pages_for_compaction = (2UL << sc->order);
 	inactive_lru_pages = zone_page_state(zone, NR_INACTIVE_FILE);
-	if (nr_swap_pages > 0)
+	if (get_nr_swap_pages() > 0)
 		inactive_lru_pages += zone_page_state(zone, NR_INACTIVE_ANON);
 	if (sc->nr_reclaimed < pages_for_compaction &&
 			inactive_lru_pages > pages_for_compaction)
@@ -3078,7 +3078,7 @@ unsigned long global_reclaimable_pages(void)
 	nr = global_page_state(NR_ACTIVE_FILE) +
 	     global_page_state(NR_INACTIVE_FILE);
 
-	if (nr_swap_pages > 0) {
+	if (get_nr_swap_pages() > 0) {
 #ifdef CONFIG_KRG_MM
 		nr += global_page_state(NR_ACTIVE_MIGR) +
 		      global_page_state(NR_INACTIVE_MIGR);
@@ -3097,7 +3097,7 @@ unsigned long zone_reclaimable_pages(struct zone *zone)
 	nr = zone_page_state(zone, NR_ACTIVE_FILE) +
 	     zone_page_state(zone, NR_INACTIVE_FILE);
 
-	if (nr_swap_pages > 0) {
+	if (get_nr_swap_pages() > 0) {
 #ifdef CONFIG_KRG_MM
 		nr += zone_page_state(zone, NR_ACTIVE_MIGR) +
 		      zone_page_state(zone, NR_INACTIVE_MIGR);
