@@ -233,7 +233,14 @@ static inline int pte_file_max_bits(void)
 #define __swp_type(x) ((x).val >> (64 - SWP_TYPE_BITS))
 
 /* Shift up (to get rid of type), then down to get value */
+#ifdef CONFIG_KRG_MM
+/* 2020-03-24 by ish
+ * Use 58 as Obj Entry bit for kerrighed
+ */
+#define __swp_offset(x) (~(x).val << (SWP_TYPE_BITS + 1) >> SWP_OFFSET_SHIFT)
+#else
 #define __swp_offset(x) (~(x).val << SWP_TYPE_BITS >> SWP_OFFSET_SHIFT)
+#endif
 
 /*
  * Shift the offset up "too far" by TYPE bits, then down again
