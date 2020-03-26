@@ -1772,9 +1772,9 @@ static void shrink_active_list(unsigned long nr_pages,
 #endif
 
 	move_active_pages_to_lru(zone, &l_active,
-					BUILD_LRU_ID(0 /* inactive */, file, kddm));
-	move_active_pages_to_lru(zone, &l_inactive,
 					BUILD_LRU_ID(1 /* active */, file, kddm));
+	move_active_pages_to_lru(zone, &l_inactive,
+					BUILD_LRU_ID(0 /* inactive */, file, kddm));
 
 	__mod_zone_page_state(zone, NR_ISOLATED_ANON + file, -nr_taken);
 	spin_unlock_irq(&zone->lru_lock);
