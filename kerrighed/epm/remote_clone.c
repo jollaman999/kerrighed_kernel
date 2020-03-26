@@ -31,6 +31,9 @@ static struct kmem_cache *vfork_done_proxy_cachep;
 
 static void *cluster_started;
 
+extern int wait_for_vfork_done(struct task_struct *child,
+				struct completion *vfork);
+
 int krg_do_fork(unsigned long clone_flags,
 		unsigned long stack_start,
 		struct pt_regs *regs,

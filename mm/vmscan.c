@@ -1929,7 +1929,10 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 #ifdef CONFIG_KRG_MM
 	unsigned long kddm, kddm_prio, kp;
 #endif
-	unsigned long anon, file, free, zonefile;
+	unsigned long anon, file, free;
+#ifndef CONFIG_KRG_MM
+	unsigned long zonefile;
+#endif
 	unsigned long anon_prio, file_prio;
 	unsigned long ap, fp;
 	struct zone_reclaim_stat *reclaim_stat = get_reclaim_stat(mz);
@@ -1997,7 +2000,7 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 	anon_prio = sc->swappiness;
 	file_prio = 200 - sc->swappiness;
 #ifdef CONFIG_KRG_MM
-	if (!sc->may_swap || (nr_swap_pages <= 0))
+	if (!sc->may_swap || (get_nr_swap_pages() <= 0))
 		anon_prio = 0;
 	if (scanning_global_lru(mz)) {
 		free  = zone_page_state(mz->zone, NR_FREE_PAGES);
@@ -2077,7 +2080,7 @@ static void shrink_mem_cgroup_zone(int priority, struct mem_cgroup_zone *mz,
 	struct zone_reclaim_stat *reclaim_stat = get_reclaim_stat(mz);
 
 #ifdef CONFIG_KRG_MM
-	if (sc->may_swap && (nr_swap_pages > 0))
+	if (sc->may_swap && (get_nr_swap_pages > 0))
 		get_scan_ratio(mz, sc, percent);
 #else
 	/* If we have no swap space, do not bother scanning anon pages. */
@@ -2099,7 +2102,7 @@ static void shrink_mem_cgroup_zone(int priority, struct mem_cgroup_zone *mz,
 
 		scan = zone_nr_lru_pages(mz, l);
 #ifdef CONFIG_KRG_MM
-		if (priority
+		if (priority ||
 #else
 		if (priority || noswap ||
 #endif

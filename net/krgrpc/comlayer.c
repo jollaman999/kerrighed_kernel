@@ -17,8 +17,8 @@
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <net/tipc/tipc.h>
-#include <net/tipc/tipc_plugin_port.h>
-#include <net/tipc/tipc_plugin_if.h>
+#include <net/tipc/tipc_port.h>
+#include <net/tipc/tipc_bearer.h>
 #include <kerrighed/krgnodemask.h>
 #include <kerrighed/sys/types.h>
 #include <kerrighed/krginit.h>

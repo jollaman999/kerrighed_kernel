@@ -311,6 +311,7 @@ unsigned long __sys_brk(struct mm_struct *mm, unsigned long brk,
 {
 	unsigned long rlim = data_limit, retval;
 	unsigned long newbrk, oldbrk;
+	struct vm_area_struct *next;
 	unsigned long min_brk;
 #else
 SYSCALL_DEFINE1(brk, unsigned long, brk)
@@ -856,8 +857,8 @@ static int
 can_vma_merge_before(struct vm_area_struct *vma, unsigned long long vm_flags,
 #else
 can_vma_merge_before(struct vm_area_struct *vma, unsigned long vm_flags,
-	struct anon_vma *anon_vma, struct file *file, pgoff_t vm_pgoff)
 #endif
+	struct anon_vma *anon_vma, struct file *file, pgoff_t vm_pgoff)
 {
 	if (is_mergeable_vma(vma, file, vm_flags) &&
 	    is_mergeable_anon_vma(anon_vma, vma->anon_vma, vma)) {
@@ -879,8 +880,8 @@ static int
 can_vma_merge_after(struct vm_area_struct *vma, unsigned long long vm_flags,
 #else
 can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
-	struct anon_vma *anon_vma, struct file *file, pgoff_t vm_pgoff)
 #endif
+	struct anon_vma *anon_vma, struct file *file, pgoff_t vm_pgoff)
 {
 	if (is_mergeable_vma(vma, file, vm_flags) &&
 	    is_mergeable_anon_vma(anon_vma, vma->anon_vma, vma)) {

@@ -699,7 +699,7 @@ static void handle_notify_remote_child_reaper(struct rpc_desc *desc,
 	bool release = false;
 
 	krg_task_writelock(msg->zombie_pid);
-	wtasklist_write_lock_irq();
+	tasklist_write_lock_irq();
 
 	zombie = find_task_by_kpid(msg->zombie_pid);
 	BUG_ON(!zombie);

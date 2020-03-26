@@ -227,6 +227,11 @@ static inline void vma_adjust_trans_huge(struct vm_area_struct *vma,
 					 long adjust_next)
 {
 }
+
+#ifdef CONFIG_KRG_MM
+extern unsigned long vma_address(struct page *page, struct vm_area_struct *vma);
+#endif
+
 #endif /* CONFIG_TRANSPARENT_HUGEPAGE */
 
 #endif /* _LINUX_HUGE_MM_H */

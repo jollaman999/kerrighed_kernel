@@ -1466,14 +1466,14 @@ struct task_struct *copy_process(unsigned long clone_flags,
 
 	retval = perf_event_init_task(p);
 	if (retval)
-		goto bad_fork_cleanup_policy;
-
-	if ((retval = audit_alloc(p)))
 #ifdef CONFIG_KRG_KDDM
 		goto bad_fork_cleanup_kddm_info;
 #else
-		goto bad_fork_cleanup_perf;
+		goto bad_fork_cleanup_policy;
 #endif /* CONFIG_KRG_KDDM */
+	if ((retval = audit_alloc(p)))
+		goto bad_fork_cleanup_perf;
+
 	/* copy all the process information */
 	if ((retval = copy_semundo(clone_flags, p)))
 		goto bad_fork_cleanup_audit;
