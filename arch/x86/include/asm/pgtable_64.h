@@ -213,34 +213,35 @@ static inline int pte_file_max_bits(void)
  * physical bits set.
  */
 
-/* 2020-03-24 by ish
- * Use 58 as Obj Entry bit for kerrighed
- * |     ...       |58|     | 11| 10|  9|8|7|6|5| 4| 3|2|1|0| <- bit number
- * |     ...       |Obj|    |SW3|SW2|SW1|G|L|D|A|CD|WT|U|W|P| <- bit names
- * | TYPE (59-63)  |Obj| ~OFFSET (9-57) |0|0|X|X| X| X|X|X|0| <- swp entry
- */
-
 #define SWP_TYPE_BITS		5
 
+#ifdef CONFIG_KRG_MM
+#define SWP_TYPE_FIRST_BIT		(_PAGE_BIT_FILE + 1)
+/* Place the offset above the type: */
+#define SWP_OFFSET_FIRST_BIT (SWP_TYPE_FIRST_BIT + SWP_TYPE_BITS)
+#else /* CONFIG_KRG_MM */
 #define SWP_OFFSET_FIRST_BIT	(_PAGE_BIT_PROTNONE + 1)
+#endif /* CONFIG_KRG_MM */
 
 /* We always extract/encode the offset by shifting it all the way up, and then down again */
 #define SWP_OFFSET_SHIFT	(SWP_OFFSET_FIRST_BIT+SWP_TYPE_BITS)
 
 #define MAX_SWAPFILES_CHECK() BUILD_BUG_ON(MAX_SWAPFILES_SHIFT > SWP_TYPE_BITS)
 
+#ifdef CONFIG_KRG_MM
+#define __swp_type(x)			(((x).val >> (SWP_TYPE_FIRST_BIT)) \
+					 & ((1U << SWP_TYPE_BITS) - 1))
+#define __swp_offset(x)			(~(x).val >> SWP_OFFSET_FIRST_BIT)
+#define __swp_entry(type, offset)	((swp_entry_t) { \
+					 ((type) << (SWP_TYPE_FIRST_BIT)) \
+					 | (~(offset) << SWP_OFFSET_FIRST_BIT) })
+
+#else /* CONFIG_KRG_MM */
 /* Extract the high bits for type */
 #define __swp_type(x) ((x).val >> (64 - SWP_TYPE_BITS))
 
 /* Shift up (to get rid of type), then down to get value */
-#ifdef CONFIG_KRG_MM
-/* 2020-03-24 by ish
- * Use 58 as Obj Entry bit for kerrighed
- */
-#define __swp_offset(x) (~(x).val << (SWP_TYPE_BITS + 1) >> SWP_OFFSET_SHIFT)
-#else
 #define __swp_offset(x) (~(x).val << SWP_TYPE_BITS >> SWP_OFFSET_SHIFT)
-#endif
 
 /*
  * Shift the offset up "too far" by TYPE bits, then down again
@@ -250,6 +251,7 @@ static inline int pte_file_max_bits(void)
 #define __swp_entry(type, offset) ((swp_entry_t) { \
 	(~(unsigned long)(offset) << SWP_OFFSET_SHIFT >> SWP_TYPE_BITS) \
 	| ((unsigned long)(type) << (64-SWP_TYPE_BITS)) })
+#endif /* CONFIG_KRG_MM */
 
 #define __pte_to_swp_entry(pte)		((swp_entry_t) { pte_val((pte)) })
 #define __swp_entry_to_pte(x)		((pte_t) { .pte = (x).val })

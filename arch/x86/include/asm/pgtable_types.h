@@ -26,17 +26,20 @@
 #define _PAGE_BIT_SPLITTING	_PAGE_BIT_UNUSED1 /* only valid on a PSE pmd */
 #define _PAGE_BIT_NX           63       /* No execute: only valid after cpuid check */
 
-/* 2020-03-24 by ish
- * Use 58 as Obj Entry bit for kerrighed
- */
+/* If _PAGE_BIT_PRESENT is clear, we use these: */
 #ifdef CONFIG_KRG_MM
-#define _PAGE_BIT_OBJ_ENTRY	58
-#endif
 
+/* | Offset | Swap device (5 bits) | FILE    | PROT_NONE     | OBJ_ENTRY = 0| PRESENT = 0| */
+/* | ObjEntry address              | FILE = 0| PROT_NONE = 0 | OBJ_ENTRY = 1| PRESENT = 0| */
+#define _PAGE_BIT_OBJ_ENTRY	1
+#define _PAGE_BIT_PROTNONE	2
+#define _PAGE_BIT_FILE		3
+#else
 /* - if the user mapped it with PROT_NONE; pte_present gives true */
 #define _PAGE_BIT_PROTNONE	_PAGE_BIT_GLOBAL
 /* - set: nonlinear file mapping, saved PTE; unset:swap */
 #define _PAGE_BIT_FILE		_PAGE_BIT_DIRTY
+#endif
 
 #define _PAGE_PRESENT	(_AT(pteval_t, 1) << _PAGE_BIT_PRESENT)
 #define _PAGE_RW	(_AT(pteval_t, 1) << _PAGE_BIT_RW)
