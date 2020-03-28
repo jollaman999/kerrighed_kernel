@@ -11,6 +11,10 @@
 #include <linux/blk_types.h>
 #include <linux/types.h>
 
+#ifdef CONFIG_KRG_FAF
+#include <asm/statfs.h>
+#endif
+
 /*
  * It's silly to have NR_OPEN bigger than NR_FILE, but you can change
  * the file limit at runtime and only root can increase the per-process
@@ -273,11 +277,12 @@ struct inodes_stat_t {
 #define S_NOCMTIME	128	/* Do not update file c/mtime */
 #define S_SWAPFILE	256	/* Do not truncate: swapon got its bmaps */
 #define S_PRIVATE	512	/* Inode is fs-internal */
-#define S_AUTOMOUNT	2048	/* Automount/referral quasi-directory */
-#define S_AOP_EXT	16384 /* fs supports extended aops */
 #ifdef CONFIG_KRG_FAF
 #define S_IFAF          1024
 #endif
+#define S_AUTOMOUNT	2048	/* Automount/referral quasi-directory */
+#define S_AOP_EXT	16384 /* fs supports extended aops */
+
 /*
  * Note that nosuid etc flags are inode-specific: setting some file-system
  * flags just means all the inodes inherit those flags by default. It might be
@@ -837,6 +842,7 @@ struct inode {
 #ifdef CONFIG_KRG_DVFS
 	unsigned long           i_objid;
 #endif
+
 #ifdef CONFIG_FSNOTIFY
 	__u32			i_fsnotify_mask; /* all events this inode cares about */
 	struct hlist_head	i_fsnotify_mark_entries; /* fsnotify mark entries */
@@ -1002,7 +1008,6 @@ struct file {
 #define f_vfsmnt	f_path.mnt
 	const struct file_operations	*f_op;
 	spinlock_t		f_lock;  /* f_ep_links, f_flags, no IRQ */
-//Codex fix atomic_log_t -> atomic_t
 	atomic_long_t		f_count;
 #ifdef CONFIG_KRG_FAF
 	unsigned long           f_flags;
@@ -2078,7 +2083,12 @@ extern void drop_collected_mounts(struct vfsmount *);
 
 extern int vfs_statfs(struct path *, struct kstatfs *);
 extern int user_statfs(const char __user *, struct kstatfs *);
+#ifdef CONFIG_KRG_FAF
+extern int fd_statfs(int fd, struct kstatfs *, int *,
+	      struct statfs __user *);
+#else
 extern int fd_statfs(int, struct kstatfs *);
+#endif
 extern int statfs_by_dentry(struct dentry *, struct kstatfs *);
 
 extern int current_umask(void);
@@ -2484,10 +2494,7 @@ static inline void insert_inode_hash(struct inode *inode) {
 	__insert_inode_hash(inode, inode->i_ino);
 }
 
-#ifdef CONFIG_KRG_FAF
 extern struct file * get_empty_filp(void);
-#endif
-
 extern void file_move(struct file *f, struct list_head *list);
 extern void file_kill(struct file *f);
 #ifdef CONFIG_BLOCK
