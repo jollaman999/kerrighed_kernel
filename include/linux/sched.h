@@ -634,11 +634,6 @@ struct signal_struct {
 	 */
 	struct cpu_itimer it[2];
 
-#ifdef CONFIG_KRG_PROC
-	cputime_t it_prof_expires, it_virt_expires;
-	cputime_t it_prof_incr, it_virt_incr;
-#endif
-
 	/*
 	 * Thread group totals for process CPU timers.
 	 * See thread_group_cputimer(), et al, for details.

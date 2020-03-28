@@ -199,10 +199,11 @@ static int signal_struct_import_object(struct rpc_desc *desc,
 	dest->flags = tmp_sig.flags;
 
 	dest->it_real_incr = tmp_sig.it_real_incr;
-	dest->it_prof_expires = tmp_sig.it_prof_expires;
-	dest->it_virt_expires = tmp_sig.it_virt_expires;
-	dest->it_prof_incr = tmp_sig.it_prof_incr;
-	dest->it_virt_incr = tmp_sig.it_virt_incr;
+
+	dest->it[CPUCLOCK_PROF].expires = tmp_sig.it[CPUCLOCK_PROF].expires;
+	dest->it[CPUCLOCK_PROF].incr = tmp_sig.it[CPUCLOCK_PROF].incr;
+	dest->it[CPUCLOCK_VIRT].expires = tmp_sig.it[CPUCLOCK_VIRT].expires;
+	dest->it[CPUCLOCK_VIRT].incr = tmp_sig.it[CPUCLOCK_VIRT].incr;
 	dest->cputimer.cputime = tmp_sig.cputimer.cputime;
 	dest->cputimer.running = tmp_sig.cputimer.running;
 	dest->cputime_expires = tmp_sig.cputime_expires;
@@ -947,10 +948,10 @@ out_mig_unlock:
 			goto err_free_signal;
 
 		sig->it_real_incr = tmp_sig.it_real_incr;
-		sig->it_prof_expires = tmp_sig.it_prof_expires;
-		sig->it_virt_expires = tmp_sig.it_virt_expires;
-		sig->it_prof_incr = tmp_sig.it_prof_incr;
-		sig->it_virt_incr = tmp_sig.it_virt_incr;
+		sig->it[CPUCLOCK_PROF].expires = tmp_sig.it[CPUCLOCK_PROF].expires;
+		sig->it[CPUCLOCK_PROF].incr = tmp_sig.it[CPUCLOCK_PROF].incr;
+		sig->it[CPUCLOCK_VIRT].expires = tmp_sig.it[CPUCLOCK_VIRT].expires;
+		sig->it[CPUCLOCK_VIRT].incr = tmp_sig.it[CPUCLOCK_VIRT].incr;
 		sig->cputimer.cputime = tmp_sig.cputimer.cputime;
 		sig->cputimer.running = tmp_sig.cputimer.running;
 		sig->cputime_expires = tmp_sig.cputime_expires;
