@@ -117,11 +117,7 @@ static void update_dynamic_node_info_worker(struct work_struct *work)
 
 	for_each_lru(i)
 		dynamic_node_info->nr_pages[i - LRU_BASE] = global_page_state(i);
-#ifdef CONFIG_UNEVICTABLE_LRU
 	dynamic_node_info->nr_mlock = global_page_state(NR_MLOCK);
-#else
-	dynamic_node_info->nr_mlock = 0;
-#endif
 	dynamic_node_info->nr_file_pages = global_page_state(NR_FILE_PAGES);
 	dynamic_node_info->nr_file_dirty = global_page_state(NR_FILE_DIRTY);
 	dynamic_node_info->nr_writeback = global_page_state(NR_WRITEBACK);
