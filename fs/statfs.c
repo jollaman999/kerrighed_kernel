@@ -7,8 +7,7 @@
 #include <linux/statfs.h>
 #include <linux/security.h>
 #include <linux/uaccess.h>
-
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_KRG_FAF
 #include <kerrighed/faf.h>
 #endif
 
@@ -95,28 +94,12 @@ retry:
 	return error;
 }
 
-#ifdef CONFIG_KRG_FAF
-int fd_statfs(int fd, struct kstatfs *st, int *is_faf_fstatfs,
-	      struct statfs __user *buf)
-#else
 int fd_statfs(int fd, struct kstatfs *st)
-#endif
 {
 	struct file *file = fget(fd);
 	int error = -EBADF;
 	if (file) {
-#ifdef CONFIG_KRG_FAF
-		if (is_faf_fstatfs && file->f_flags & O_FAF_CLT) {
-			struct statfs tmp;
-
-			*is_faf_fstatfs = 1;
-			error = krg_faf_fstatfs(file, &tmp);
-			if (!error && copy_to_user(buf, &tmp, sizeof(tmp)))
-				error = -EFAULT;
-		} else
-#endif
 		error = vfs_statfs(&file->f_path, st);
-
 		fput(file);
 	}
 	return error;
@@ -212,22 +195,32 @@ SYSCALL_DEFINE3(statfs64, const char __user *, pathname, size_t, sz, struct stat
 SYSCALL_DEFINE2(fstatfs, unsigned int, fd, struct statfs __user *, buf)
 {
 	struct kstatfs st;
+	int error;
 #ifdef CONFIG_KRG_FAF
-	int is_faf_fstatfs = 0;
-#endif
-#ifdef CONFIG_KRG_FAF
-	int error = fd_statfs(fd, &st, &is_faf_fstatfs, buf);
+	struct file * file;
+
+	error = -EBADF;
+	file = fget(fd);
+	if (!file)
+		goto out;
+
+	if (file->f_flags & O_FAF_CLT) {
+		error = krg_faf_fstatfs(file, buf);
+	} else {
+		error = vfs_statfs(&file->f_path, &st);
+		if (!error)
+			error = do_statfs_native(&st, buf);
+	}
 #else
-	int error = fd_statfs(fd, &st);
+	error = fd_statfs(fd, &st);
+	if (!error)
+		error = do_statfs_native(&st, buf);
 #endif
 
 #ifdef CONFIG_KRG_FAF
-	if (!error && !is_faf_fstatfs) {
-#else
-	if (!error) {
+	fput(file);
+out:
 #endif
-		error = do_statfs_native(&st, buf);
-	}
 	return error;
 }
 
@@ -239,11 +232,7 @@ SYSCALL_DEFINE3(fstatfs64, unsigned int, fd, size_t, sz, struct statfs64 __user 
 	if (sz != sizeof(*buf))
 		return -EINVAL;
 
-#ifdef CONFIG_KRG_FAF
-	error = fd_statfs(fd, &st, NULL, NULL);
-#else
 	error = fd_statfs(fd, &st);
-#endif
 	if (!error)
 		error = do_statfs64(&st, buf);
 	return error;
