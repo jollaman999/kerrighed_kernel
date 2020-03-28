@@ -789,6 +789,9 @@ static const char * const vmstat_text[] = {
 	"nr_writeback_temp",
 	"nr_isolated_anon",
 	"nr_isolated_file",
+#ifdef CONFIG_KRG_MM
+	"nr_isolated_migr",
+#endif
 	"nr_shmem",
 #ifdef CONFIG_NUMA
 	"numa_hit",
@@ -877,14 +880,7 @@ static void zoneinfo_show_print(struct seq_file *m, pg_data_t *pgdat,
 		   "\n        min      %lu"
 		   "\n        low      %lu"
 		   "\n        high     %lu"
-#ifdef CONFIG_KRG_MM
-		   "\n        scanned  %lu (aa: %lu ia: %lu af: %lu if: %lu "
-		   "ak: %lu ik: %lu)"
-#else
-// origin code
-// 		   "\n        scanned  %lu"
 		   "\n        scanned  %lu"
-#endif
 		   "\n        spanned  %lu"
 		   "\n        present  %lu",
 		   zone_page_state(zone, NR_FREE_PAGES),
@@ -892,14 +888,6 @@ static void zoneinfo_show_print(struct seq_file *m, pg_data_t *pgdat,
 		   low_wmark_pages(zone),
 		   high_wmark_pages(zone),
 		   zone->pages_scanned,
-#ifdef CONFIG_KRG_MM
-		   zone->lru[LRU_ACTIVE_ANON].nr_scan,
-		   zone->lru[LRU_INACTIVE_ANON].nr_scan,
-		   zone->lru[LRU_ACTIVE_FILE].nr_scan,
-		   zone->lru[LRU_INACTIVE_FILE].nr_scan,
-		   zone->lru[LRU_ACTIVE_MIGR].nr_scan,
-		   zone->lru[LRU_INACTIVE_MIGR].nr_scan,
-#endif
 		   zone->spanned_pages,
 		   zone->present_pages);
 

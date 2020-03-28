@@ -11,6 +11,7 @@
 #include <linux/spinlock.h>
 #include <linux/rcupdate.h>
 #include <linux/mm.h>
+#include <linux/mmu_context.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/errno.h>

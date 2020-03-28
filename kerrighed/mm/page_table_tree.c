@@ -201,7 +201,7 @@ struct kddm_obj *get_obj_entry_from_pte(struct mm_struct *mm,
 	struct kddm_obj *obj_entry = NULL;
 	struct page *page;
 
-	if (pte_present(*ptep)) {
+        if (pte_present(*ptep)) {
 		page = pfn_to_page(pte_pfn(*ptep));
 		BUG_ON(!page);
 
@@ -442,22 +442,7 @@ int kddm_pt_swap_in (struct mm_struct *mm,
 	pmd = pmd_alloc(mm, pud, addr);
 
 	vma = find_vma(mm, addr);
-
-	/*
-	 * Use __pte_alloc instead of pte_alloc_map, because we can't
-	 * run pte_offset_map on the pmd, if an huge pmd could
-	 * materialize from under us from a different thread.
-	 */
-	if (unlikely(__pte_alloc(mm, vma, pmd, addr)))
-		return VM_FAULT_OOM;
-
-	/*
-	 * A regular pmd is established and it can't morph into a huge pmd
-	 * from under us anymore at this point because we hold the mmap_sem
-	 * read mode and khugepaged takes it in write mode. So now it's
-	 * safe to run pte_offset_map().
-	 */
-	pte = pte_offset_map(pmd, addr);
+	pte = pte_alloc_map(mm, vma, pmd, addr);
 
 	if (!orig_pte)
 		orig_pte = pte;

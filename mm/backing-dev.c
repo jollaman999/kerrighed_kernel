@@ -774,14 +774,14 @@ long congestion_wait(int sync, long timeout)
 }
 
 #ifdef CONFIG_KRG_EPM
-long congestion_wait(int sync, long timeout)
+long congestion_wait(int rw, long timeout)
 {
 	struct task_struct *krg_cur;
 	long ret;
 
 	krg_cur = krg_current;
 	krg_current = NULL;
-	ret = __congestion_wait(sync, timeout);
+	ret = __congestion_wait(rw, timeout);
 	krg_current = krg_cur;
 
 	return ret;

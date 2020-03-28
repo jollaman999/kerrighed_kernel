@@ -108,6 +108,9 @@ enum zone_stat_item {
 	NR_WRITEBACK_TEMP,	/* Writeback using temporary buffers */
 	NR_ISOLATED_ANON,	/* Temporary isolated pages from anon lru */
 	NR_ISOLATED_FILE,	/* Temporary isolated pages from file lru */
+#ifdef CONFIG_KRG_MM
+	NR_ISOLATED_MIGR,	/* Temporary isolated pages from migr lru */
+#endif
 	NR_SHMEM,		/* shmem pages (included tmpfs/GEM pages) */
 #ifdef CONFIG_NUMA
 	NUMA_HIT,		/* allocated in intended node */
@@ -333,10 +336,7 @@ struct zone_reclaim_stat {
 };
 
 struct zone {
-#ifdef CONFIG_KRG_MM
 	/* Fields commonly accessed by the page allocator */
-	unsigned long		pages_min, pages_low, pages_high;
-#endif
 
 	/* zone watermarks, access with *_wmark_pages(zone) macros */
 	unsigned long watermark[NR_WMARK];
@@ -410,10 +410,6 @@ struct zone {
 #else
 	struct lruvec		lruvec;
 #endif
-	struct {
-		struct list_head list;
-		unsigned long nr_scan;
-	} lru[NR_LRU_LISTS];
 
 	struct zone_reclaim_stat reclaim_stat;
 

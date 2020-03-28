@@ -399,7 +399,7 @@ static int export_one_vma (struct epm_action *action,
 	/* Define and export the vm_ops type of the vma */
 
 	r = -EPERM;
-	vm_ops_type = krgsyms_export (vma->vm_ops);
+	vm_ops_type = krgsyms_export((void *)vma->vm_ops);
 	if (vma->vm_ops && vm_ops_type == KRGSYMS_UNDEF)
 		goto out;
 
@@ -408,7 +408,7 @@ static int export_one_vma (struct epm_action *action,
 	    && vma->vm_ops && vm_ops_type == KRGSYMS_VM_OPS_SHMEM)
 		goto out;
 
-	initial_vm_ops_type = krgsyms_export (vma->initial_vm_ops);
+	initial_vm_ops_type = krgsyms_export((void *)vma->initial_vm_ops);
 	if (vma->initial_vm_ops && initial_vm_ops_type == KRGSYMS_UNDEF)
 		goto out;
 
@@ -904,9 +904,9 @@ int reconcile_vmas(struct mm_struct *mm, struct vm_area_struct *vma,
                 if (vma->vm_flags & VM_EXECUTABLE)
                         added_exe_file_vma(mm);
 		old->initial_vm_ops = vma->initial_vm_ops;
-		anon_vma_lock(old->anon_vma);
+		vma_lock_anon_vma(old);
 		__vma_link_file(old);
-		anon_vma_unlock(old->anon_vma);
+		vma_unlock_anon_vma(old);
 	}
 
 	remove_vma(vma);
@@ -1152,6 +1152,7 @@ static int import_mm_counters(struct epm_action *action,
 	mm->reserved_vm = src_mm->reserved_vm;
 	mm->brk = src_mm->brk;
 	mm->flags = src_mm->flags;
+	mm->oom_disable_count = src_mm->oom_disable_count;
 
 	r = ghost_read(ghost, &mm->mm_tasks, sizeof(atomic_t));
 
@@ -1181,7 +1182,7 @@ static int cr_link_to_mm_struct(struct epm_action *action,
 		goto err;
 	}
 
-	/* the task is not yet hashed, no need to lock */
+        /* the task is not yet hashed, no need to lock */
 	atomic_inc(&mm->mm_users);
 
 	tsk->mm = mm;

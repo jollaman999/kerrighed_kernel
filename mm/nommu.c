@@ -96,9 +96,6 @@ static struct kmem_cache *vm_region_jar;
 struct rb_root nommu_region_tree = RB_ROOT;
 DECLARE_RWSEM(nommu_region_sem);
 
-#ifndef CONFIG_KRG_MM
-const 
-#endif
 struct vm_operations_struct generic_file_vm_ops = {
 };
 
