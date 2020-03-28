@@ -1026,8 +1026,13 @@ pid_t krg_get_real_parent_pid(struct task_struct *task)
 	struct children_kddm_object *parent_obj;
 	pid_t real_parent_pid, parent_pid, real_parent_tgid;
 
-	if (task->real_parent != baby_sitter)
-		return task_pid_vnr(task->real_parent);
+	if (task->real_parent != baby_sitter) {
+		rcu_read_lock();
+		real_parent_pid = task_pid_vnr(rcu_dereference(task->real_parent));
+		rcu_read_unlock();
+
+		return real_parent_pid;
+	}
 
 	BUG_ON(!is_krg_pid_ns_root(task_active_pid_ns(current)));
 	parent_obj = krg_parent_children_readlock(task, &real_parent_tgid);
