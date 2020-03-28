@@ -765,8 +765,6 @@ long krg_faf_fstatfs(struct file *file,
 
 	*statfsbuf = buffer;
 
-	if (copy_to_user(statfsbuf, &buffer, sizeof(buffer)))
-			return -EFAULT;
 exit:
 	return r;
 err_rpc:
