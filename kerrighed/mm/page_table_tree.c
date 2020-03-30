@@ -153,7 +153,7 @@ static inline struct kddm_obj *init_pte(struct mm_struct *mm,
 	if (!pte_present(*ptep))
 		return init_swap_pte(mm, ptep, set, objid, _obj_entry);
 
-	page = pfn_to_page(pte_pfn(*ptep));
+	page = pte_page(*ptep);
 
 	wait_lock_kddm_page(page);
 
@@ -201,8 +201,8 @@ struct kddm_obj *get_obj_entry_from_pte(struct mm_struct *mm,
 	struct kddm_obj *obj_entry = NULL;
 	struct page *page;
 
-        if (pte_present(*ptep)) {
-		page = pfn_to_page(pte_pfn(*ptep));
+	if (pte_present(*ptep)) {
+		page = pte_page(*ptep);
 		BUG_ON(!page);
 
 		if (!PageAnon(page)) {
@@ -398,8 +398,8 @@ int kddm_pt_invalidate (struct kddm_set *set,
 	if (!pte_present(*ptep))
 		goto done;
 
-	BUG_ON((pfn_to_page(pte_pfn(*ptep)) != NULL) &&
-	       (pfn_to_page(pte_pfn(*ptep)) != page));
+	BUG_ON((pte_page(*ptep) != NULL) &&
+	       (pte_page(*ptep) != page));
 
 	wait_lock_kddm_page(page);
 
@@ -863,7 +863,7 @@ void kcb_zap_pte(struct mm_struct *mm, unsigned long addr, pte_t *ptep)
 		}
 	}
 	else {
-		page = pfn_to_page(pte_pfn(*ptep));
+		page = pte_page(*ptep);
 		BUG_ON(!page);
 
 		wait_lock_kddm_page(page);
