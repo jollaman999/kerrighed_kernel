@@ -28,18 +28,16 @@
 
 /* If _PAGE_BIT_PRESENT is clear, we use these: */
 #ifdef CONFIG_KRG_MM
-
-/* | Offset | Swap device (5 bits) | FILE    | PROT_NONE     | OBJ_ENTRY = 0| PRESENT = 0| */
-/* | ObjEntry address              | FILE = 0| PROT_NONE = 0 | OBJ_ENTRY = 1| PRESENT = 0| */
 #define _PAGE_BIT_OBJ_ENTRY	1
-#define _PAGE_BIT_PROTNONE	2
-#define _PAGE_BIT_FILE		3
-#else
+#endif /* CONFIG_KRG_MM */
 /* - if the user mapped it with PROT_NONE; pte_present gives true */
 #define _PAGE_BIT_PROTNONE	_PAGE_BIT_GLOBAL
 /* - set: nonlinear file mapping, saved PTE; unset:swap */
+#ifdef CONFIG_KRG_MM
+#define _PAGE_BIT_FILE		2
+#else /* CONFIG_KRG_MM */
 #define _PAGE_BIT_FILE		_PAGE_BIT_DIRTY
-#endif
+#endif /* CONFIG_KRG_MM */
 
 #define _PAGE_PRESENT	(_AT(pteval_t, 1) << _PAGE_BIT_PRESENT)
 #define _PAGE_RW	(_AT(pteval_t, 1) << _PAGE_BIT_RW)
