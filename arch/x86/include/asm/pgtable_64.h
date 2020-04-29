@@ -164,7 +164,13 @@ static inline int pgd_large(pgd_t pgd) { return 0; }
 /* PUD - Level3 access */
 
 /* PMD  - Level 2 access */
-#define pte_to_pgoff(pte) ((~pte_val((pte)) & PHYSICAL_PAGE_MASK) >> PAGE_SHIFT)
+#ifdef CONFIG_KRG_MM
+#define pte_to_pgoff(pte) ((pte_val((pte)) & PHYSICAL_PAGE_MASK) >> PAGE_SHIFT)
+#define pgoff_to_pte(off) ((pte_t) { .pte = ((off) << PAGE_SHIFT) |	\
+					    _PAGE_FILE })
+#define PTE_FILE_MAX_BITS __PHYSICAL_MASK_SHIFT
+#else /*CONFIG_KRG_MM */
+#define pte_to_pgoff(pte) ((pte_val((pte)) & PHYSICAL_PAGE_MASK) >> PAGE_SHIFT)
 #define pgoff_to_pte(off) ((pte_t) { .pte =				\
 				((~off & (PHYSICAL_PAGE_MASK>>PAGE_SHIFT)) \
 				 << PAGE_SHIFT) | _PAGE_FILE })
@@ -184,6 +190,7 @@ static inline int pte_file_max_bits(void)
 	 */
 	return min(__PHYSICAL_MASK_SHIFT, boot_cpu_data.x86_phys_bits - 1);
 }
+#endif /* CONFIG_KRG_MM */
 
 /* PTE - Level 1 access. */
 
@@ -202,8 +209,6 @@ static inline int pte_file_max_bits(void)
 #else
 #define SWP_OFFSET_SHIFT (_PAGE_BIT_PROTNONE + 1)
 #endif /* !CONFIG_KRG_MM */
-/*Inno SWP_OFFSET_FIRST_BIT Fix  */
-#define SWP_OFFSET_FIRST_BIT	(_PAGE_BIT_PROTNONE + 1)
 
 #define MAX_SWAPFILES_CHECK() BUILD_BUG_ON(MAX_SWAPFILES_SHIFT > SWP_TYPE_BITS)
 
