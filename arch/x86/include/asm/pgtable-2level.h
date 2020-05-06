@@ -50,34 +50,19 @@ static inline pte_t native_ptep_get_and_clear(pte_t *xp)
 #define native_ptep_get_and_clear(xp) native_local_ptep_get_and_clear(xp)
 #endif
 
-#ifdef CONFIG_KRG_MM
-/*
- * Bits _PAGE_BIT_PRESENT, _PAGE_BIT_FILE, _PAGE_BIT_PROTNONE and
- * _PAGE_BIT_OBJ_ENTRY are taken, split up the 28 bits of offset
- * into this range:
- */
-#define PTE_FILE_MAX_BITS	28
-
-#define PTE_FILE_SHIFT1		(_PAGE_BIT_FILE + 1)
-#define PTE_FILE_SHIFT2		(_PAGE_BIT_PROTNONE + 1)
-
-#define PTE_FILE_BITS1		(PTE_FILE_SHIFT2 - PTE_FILE_SHIFT1 - 1)
-
-#define pte_to_pgoff(pte)						\
-	 ((((pte).pte_low >> PTE_FILE_SHIFT1)				\
-	     & ((1U << PTE_FILE_BITS1) - 1)))				\
-	 + (((pte).pte_low >> PTE_FILE_SHIFT2) << (PTE_FILE_BITS1)))
-
-#define pgoff_to_pte(off)						\
-	((pte_t) { .pte_low =						\
-	 (((off) & ((1U << PTE_FILE_BITS1) - 1)) << PTE_FILE_SHIFT1)	\
-	 + (((off) >> (PTE_FILE_BITS1)) << PTE_FILE_SHIFT2)		\
-	 + _PAGE_FILE })
-#else /* CONFIG_KRG_MM */
 /*
  * Bits _PAGE_BIT_PRESENT, _PAGE_BIT_FILE and _PAGE_BIT_PROTNONE are taken,
  * split up the 29 bits of offset into this range:
  */
+#ifdef CONFIG_KRG_MM
+/* Bit _PAGE_OBJ_ENTRY is taken too */
+#define PTE_FILE_MAX_BITS	28
+
+#define pte_to_pgoff(pte) ((pte_val((pte)) & ~0xf) >> 4)	\
+
+#define pgoff_to_pte(off) ((pte_t) { .pte = ((off) << 4) |	\
+				            _PAGE_FILE })
+#else
 #define PTE_FILE_MAX_BITS	29
 #define PTE_FILE_SHIFT1		(_PAGE_BIT_PRESENT + 1)
 #if _PAGE_BIT_FILE < _PAGE_BIT_PROTNONE
@@ -87,7 +72,6 @@ static inline pte_t native_ptep_get_and_clear(pte_t *xp)
 #define PTE_FILE_SHIFT2		(_PAGE_BIT_PROTNONE + 1)
 #define PTE_FILE_SHIFT3		(_PAGE_BIT_FILE + 1)
 #endif
-
 #define PTE_FILE_BITS1		(PTE_FILE_SHIFT2 - PTE_FILE_SHIFT1 - 1)
 #define PTE_FILE_BITS2		(PTE_FILE_SHIFT3 - PTE_FILE_SHIFT2 - 1)
 
@@ -107,7 +91,7 @@ static inline pte_t native_ptep_get_and_clear(pte_t *xp)
 	 + (((off) >> (PTE_FILE_BITS1 + PTE_FILE_BITS2))		\
 	    << PTE_FILE_SHIFT3)						\
 	 + _PAGE_FILE })
-#endif /* CONFIG_KRG_MM */
+#endif /* ! CONFIG_KRG_MM */
 
 
 /* Encode and de-code a swap entry */
@@ -122,27 +106,27 @@ static inline pte_t native_ptep_get_and_clear(pte_t *xp)
 #define SWP_TYPE_BITS (_PAGE_BIT_PROTNONE - _PAGE_BIT_PRESENT - 1)
 #define SWP_OFFSET_SHIFT (_PAGE_BIT_FILE + 1)
 #endif
-#endif /* CONFIG_KRG_MM */
+#endif /* ! CONFIG_KRG_MM */
+
 
 #define MAX_SWAPFILES_CHECK() BUILD_BUG_ON(MAX_SWAPFILES_SHIFT > SWP_TYPE_BITS)
 #ifdef CONFIG_KRG_MM
 #define __swp_type(x)			(((x).val >> (_PAGE_BIT_FILE + 1)) \
 					 & ((1U << SWP_TYPE_BITS) - 1))
-#else /* CONFIG_KRG_MM */
+#else
 #define __swp_type(x)			(((x).val >> (_PAGE_BIT_PRESENT + 1)) \
 					 & ((1U << SWP_TYPE_BITS) - 1))
-#endif /* CONFIG_KRG_MM */
+#endif
 #define __swp_offset(x)			((x).val >> SWP_OFFSET_SHIFT)
 #ifdef CONFIG_KRG_MM
 #define __swp_entry(type, offset)	((swp_entry_t) { \
 					 ((type) << (_PAGE_BIT_FILE + 1)) \
 					 | ((offset) << SWP_OFFSET_SHIFT) })
-#else /* CONFIG_KRG_MM */
+#else
 #define __swp_entry(type, offset)	((swp_entry_t) { \
 					 ((type) << (_PAGE_BIT_PRESENT + 1)) \
 					 | ((offset) << SWP_OFFSET_SHIFT) })
-#endif /* CONFIG_KRG_MM */
-
+#endif
 #define __pte_to_swp_entry(pte)		((swp_entry_t) { (pte).pte_low })
 #define __swp_entry_to_pte(x)		((pte_t) { .pte = (x).val })
 
