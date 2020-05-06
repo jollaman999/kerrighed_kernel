@@ -484,7 +484,7 @@ unsigned long max_swapfile_size(void)
 		 * which makes the usable limit higher.
 		 */
 #ifdef CONFIG_X86_64
-		l1tf_limit <<= PAGE_SHIFT - SWP_OFFSET_FIRST_BIT;
+		l1tf_limit <<= PAGE_SHIFT - SWP_OFFSET_SHIFT;
 #endif
 		pages = min_t(unsigned long long, l1tf_limit, pages);
 	}
