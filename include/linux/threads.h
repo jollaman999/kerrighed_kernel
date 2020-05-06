@@ -34,20 +34,9 @@
 #define PID_MAX_LIMIT (CONFIG_BASE_SMALL ? PAGE_SIZE * 8 : \
 	(sizeof(long) > 4 ? 4 * 1024 * 1024 : PID_MAX_DEFAULT))
 
-/*
- * Define a minimum number of pids per cpu.  Heuristically based
- * on original pid max of 32k for 32 cpus.  Also, increase the
- * minimum settable value for pid_max on the running system based
- * on similar defaults.  See kernel/pid.c:pidmap_init() for details.
- */
-#define PIDS_PER_CPU_DEFAULT	1024
-#define PIDS_PER_CPU_MIN	8
-
 #else /* CONFIG_KRG_PROC */
 
 #include <kerrighed/sys/types.h>
-#define PIDS_PER_CPU_DEFAULT	1024
-#define PIDS_PER_CPU_MIN	8
 /* We need the number of bits for Kerrighed PIDs definitions. */
 #define NR_BITS_PID_MAX_DEFAULT (CONFIG_BASE_SMALL ? 12 : 15)
 #define PID_MAX_DEFAULT (1 << NR_BITS_PID_MAX_DEFAULT)
@@ -63,5 +52,14 @@
 #define PID_MAX_LIMIT (1 << NR_BITS_PID_MAX_LIMIT)
 
 #endif /* CONFIG_KRG_PROC */
+
+/*
+ * Define a minimum number of pids per cpu.  Heuristically based
+ * on original pid max of 32k for 32 cpus.  Also, increase the
+ * minimum settable value for pid_max on the running system based
+ * on similar defaults.  See kernel/pid.c:pidmap_init() for details.
+ */
+#define PIDS_PER_CPU_DEFAULT	1024
+#define PIDS_PER_CPU_MIN	8
 
 #endif
