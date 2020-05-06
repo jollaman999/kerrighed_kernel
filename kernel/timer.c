@@ -37,14 +37,15 @@
 #include <linux/delay.h>
 #include <linux/tick.h>
 #include <linux/kallsyms.h>
+#include <linux/irq_work.h>
+#include <linux/sched.h>
+
 #ifdef CONFIG_KRG_EPM
 #include <kerrighed/children.h>
 #endif
 #ifdef CONFIG_KRG_SCHED
 #include <kerrighed/scheduler/hooks.h>
 #endif
-#include <linux/irq_work.h>
-#include <linux/sched.h>
 
 #include <asm/uaccess.h>
 #include <asm/unistd.h>

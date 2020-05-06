@@ -113,12 +113,16 @@ static void __exit_signal(struct task_struct *tsk)
 	atomic_dec(&sig->count);
 
 	posix_cpu_timers_exit(tsk);
+#ifdef CONFIG_KRG_EPM
+	if (tsk->exit_state == EXIT_MIGRATION) {
+		atomic_inc(&sig->count);
+		BUG_ON(atomic_read(&sig->count) > 1);
+		posix_cpu_timers_exit_group(tsk);
+		sig->curr_target = NULL;
+	} else
+#endif
 	if (group_dead) {
 		posix_cpu_timers_exit_group(tsk);
-#ifdef CONFIG_KRG_EPM
-		if (tsk->exit_state == EXIT_MIGRATION)
-			sig->curr_target = NULL;
-#endif
 	} else {
 		/*
 		 * This can only happen if the caller is de_thread().
@@ -1462,6 +1466,7 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 	}
 
 	traced = ptrace_reparented(p);
+
 #ifdef CONFIG_KRG_EPM
 	/* remote call iff p->parent == baby_sitter */
 	if (p->parent != baby_sitter)
@@ -1899,10 +1904,7 @@ void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
 #endif
 }
 
-#ifndef CONFIG_KRG_EPM
-static
-#endif
-long do_wait(struct wait_opts *wo)
+static long do_wait(struct wait_opts *wo)
 {
 #ifdef CONFIG_KRG_EPM
 	DECLARE_WAITQUEUE(wait, current);
@@ -1914,9 +1916,7 @@ long do_wait(struct wait_opts *wo)
 
 #ifdef CONFIG_KRG_PROC
 	down_read(&kerrighed_init_sem);
-#endif
-#ifdef CONFIG_KRG_EPM
-	add_wait_queue(&current->signal->wait_chldexit,&wait);
+	add_wait_queue(&current->signal->wait_chldexit, &wait);
 #else
 	init_waitqueue_func_entry(&wo->child_wait, child_wait_callback);
 	wo->child_wait.private = current;
@@ -1941,6 +1941,7 @@ repeat:
 	if (current->children_obj)
 		__krg_children_readlock(current);
 #endif
+
 	set_current_state(TASK_INTERRUPTIBLE);
 	tasklist_read_lock();
 	tsk = current;
@@ -1989,12 +1990,10 @@ notask:
 end:
 	__set_current_state(TASK_RUNNING);
 #ifdef CONFIG_KRG_EPM
-	remove_wait_queue(&current->signal->wait_chldexit,&wait);
+	remove_wait_queue(&current->signal->wait_chldexit, &wait);
+	up_read(&kerrighed_init_sem);
 #else
 	remove_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
-#endif
-#ifdef CONFIG_KRG_PROC
-	up_read(&kerrighed_init_sem);
 #endif
 	return retval;
 }
@@ -2035,13 +2034,13 @@ SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
 
 	wo.wo_type	= type;
 	wo.wo_pid	= pid;
+#ifdef CONFIG_KRG_EPM
+	wo.wo_upid	= upid;
+#endif
 	wo.wo_flags	= options;
 	wo.wo_info	= infop;
 	wo.wo_stat	= NULL;
 	wo.wo_rusage	= ru;
-#ifdef CONFIG_KRG_EPM
-	wo.wo_upid = upid;
-#endif
 	ret = do_wait(&wo);
 
 	if (ret > 0) {
@@ -2106,16 +2105,15 @@ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 			upid = -upid;
 	}
 #endif
-
 	wo.wo_type	= type;
 	wo.wo_pid	= pid;
+#ifdef CONFIG_KRG_EPM
+	wo.wo_upid	= upid;
+#endif
 	wo.wo_flags	= options | WEXITED;
 	wo.wo_info	= NULL;
 	wo.wo_stat	= stat_addr;
 	wo.wo_rusage	= ru;
-#ifdef CONFIG_KRG_EPM
-	wo.wo_upid = upid;
-#endif
 	ret = do_wait(&wo);
 	put_pid(pid);
 

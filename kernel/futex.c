@@ -59,11 +59,12 @@
 #include <linux/magic.h>
 #include <linux/pid.h>
 #include <linux/nsproxy.h>
+#include <linux/bootmem.h>
+#include <linux/hugetlb.h>
+
 #ifdef CONFIG_KRG_EPM
 #include <kerrighed/krgsyms.h>
 #endif
-#include <linux/bootmem.h>
-#include <linux/hugetlb.h>
 
 #include <asm/futex.h>
 

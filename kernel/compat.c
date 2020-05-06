@@ -25,10 +25,11 @@
 #include <linux/posix-timers.h>
 #include <linux/times.h>
 #include <linux/ptrace.h>
+#include <linux/module.h>
+
 #ifdef CONFIG_KRG_EPM
 #include <kerrighed/krgsyms.h>
 #endif
-#include <linux/module.h>
 
 #include <asm/uaccess.h>
 

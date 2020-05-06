@@ -23,6 +23,7 @@
 #include <linux/uaccess.h>
 #include <linux/regset.h>
 #include <linux/utrace.h>
+
 #ifdef CONFIG_KRG_EPM
 #include <kerrighed/action.h>
 #include <kerrighed/krginit.h>
@@ -106,7 +107,6 @@ void krg_ptrace_reparent_ptraced(struct task_struct *real_parent,
 }
 
 #endif /* CONFIG_KRG_EPM */
-
 
 int __ptrace_may_access(struct task_struct *task, unsigned int mode)
 {
@@ -560,6 +560,16 @@ int ptrace_attach(struct task_struct *task)
 	task_unlock(task);
 	if (retval)
 		goto unlock_creds;
+#ifdef CONFIG_KRG_EPM
+	retval = krg_set_child_ptraced(parent_children_obj, task, 1);
+	if (retval)
+		goto unlock_creds;
+	retval = krg_ptrace_link(task, current);
+	if (retval) {
+		krg_set_child_ptraced(parent_children_obj, task, 0);
+		goto unlock_creds;
+	}
+#endif /* CONFIG_KRG_EPM */
 
 	write_lock_irq(&tasklist_lock);
 	retval = -EPERM;
@@ -567,17 +577,6 @@ int ptrace_attach(struct task_struct *task)
 		goto unlock_tasklist;
 	if (task->ptrace)
 		goto unlock_tasklist;
-
-#ifdef CONFIG_KRG_EPM
-	retval = krg_set_child_ptraced(parent_children_obj, task, 1);
-	if (retval)
-		goto unlock_tasklist;
-	retval = krg_ptrace_link(task, current);
-	if (retval) {
-		krg_set_child_ptraced(parent_children_obj, task, 0);
-		goto unlock_tasklist;
-	}
-#endif /* CONFIG_KRG_EPM */
 
 	task->ptrace = PT_PTRACED;
 	if (capable(CAP_SYS_PTRACE))
@@ -612,7 +611,6 @@ int ptrace_traceme(void)
 	struct children_kddm_object *parent_children_obj;
 	pid_t real_parent_tgid;
 #endif /* CONFIG_KRG_EPM */
-
 	int ret = -EPERM;
 
 #ifdef CONFIG_KRG_EPM
@@ -642,6 +640,7 @@ int ptrace_traceme(void)
 						      current, 0);
 		}
 #endif /* CONFIG_KRG_EPM */
+
 		/*
 		 * Check PF_EXITING to ensure ->real_parent has not passed
 		 * exit_ptrace(). Otherwise we don't report the error but
@@ -663,13 +662,13 @@ int ptrace_traceme(void)
 		}
 #endif /* CONFIG_KRG_EPM */
 	}
-
 	write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_KRG_EPM
 	if (parent_children_obj)
 		krg_children_unlock(parent_children_obj);
 	up_read(&kerrighed_init_sem);
 #endif /* CONFIG_KRG_EPM */
+
 	return ret;
 }
 

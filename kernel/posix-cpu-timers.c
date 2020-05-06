@@ -8,10 +8,11 @@
 #include <linux/math64.h>
 #include <asm/uaccess.h>
 #include <linux/kernel_stat.h>
+#include <trace/events/timer.h>
+
 #ifdef CONFIG_KRG_EPM
 #include <kerrighed/krgsyms.h>
 #endif
-#include <trace/events/timer.h>
 
 /*
  * Called after updating RLIMIT_CPU to set timer expiration if necessary.
