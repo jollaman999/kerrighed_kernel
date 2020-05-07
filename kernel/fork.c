@@ -1206,17 +1206,22 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 
 void __cleanup_signal(struct signal_struct *sig)
 {
-#ifdef CONFIG_KRG_EPM
-	struct signal_struct *locked_sig = krg_signal_exit(sig);
-#endif
 	thread_group_cputime_free(sig);
 	tty_kref_put(sig->tty);
 	sched_autogroup_exit(sig);
 	kmem_cache_free(signal_cachep, sig);
-#ifdef CONFIG_KRG_EPM
-	krg_signal_unlock(locked_sig);
-#endif
 }
+
+#ifdef CONFIG_KRG_EPM
+static void cleanup_signal(struct task_struct *tsk)
+{
+	struct signal_struct *sig = tsk->signal;
+	struct signal_struct *locked_sig = krg_signal_exit(sig);
+
+	__cleanup_signal(sig);
+	krg_signal_unlock(locked_sig);
+}
+#endif
 
 static void copy_flags(unsigned long clone_flags, struct task_struct *p)
 {
@@ -1824,7 +1829,11 @@ bad_fork_cleanup_signal:
 	if (!krg_current || in_krg_do_fork())
 #endif
 	if (!(clone_flags & CLONE_THREAD))
+#ifdef CONFIG_KRG_EPM
+		cleanup_signal(p);
+#else
 		__cleanup_signal(p->signal);
+#endif
 bad_fork_cleanup_sighand:
 #ifdef CONFIG_KRG_EPM
 	if (!krg_current || in_krg_do_fork())
