@@ -78,6 +78,7 @@ static struct signal_struct *signal_struct_alloc(void)
 	init_sigpending(&sig->shared_pending);
 
 	posix_cpu_timers_init_group(sig);
+	sched_autogroup_fork(sig);
 	INIT_LIST_HEAD(&sig->posix_timers);
 
 	hrtimer_init(&sig->real_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
@@ -332,6 +333,7 @@ static int signal_struct_remove_object(void *object,
 		BUG_ON(sig->tty_audit_buf);
 #endif
 		put_pid(sig->tty_old_pgrp);
+		sched_autogroup_exit(sig);
 		kmem_cache_free(signal_cachep, sig);
 	}
 	kmem_cache_free(signal_struct_kddm_obj_cachep, obj);
