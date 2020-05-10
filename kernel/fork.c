@@ -1416,6 +1416,9 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	p->vfork_done = NULL;
 	spin_lock_init(&p->alloc_lock);
 
+#ifdef CONFIG_KRG_EPM
+	clear_tsk_thread_flag(p, TIF_SIGPENDING);
+#endif
 	init_sigpending(&p->pending);
 
 	p->utime = cputime_zero;
@@ -1884,6 +1887,7 @@ fork_out:
 #ifdef CONFIG_KRG_HOTPLUG
 	current->create_krg_ns = saved_create_krg_ns;
 #endif
+#ifndef CONFIG_KRG_EPM
 	/*
 	 * HACK. A buggy subsystem can clear TIF_SIGPENDING in between.
 	 * In particular, there are a lot of sigprocmask() users, and
@@ -1891,6 +1895,7 @@ fork_out:
 	 */
 	if (unlikely(retval == -ERESTARTNOINTR))
 		set_thread_flag(TIF_SIGPENDING);
+#endif
 	return ERR_PTR(retval);
 }
 
