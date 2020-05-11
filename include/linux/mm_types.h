@@ -229,11 +229,9 @@ struct mm_struct {
 	unsigned long (*get_unmapped_area) (struct file *filp,
 				unsigned long addr, unsigned long len,
 				unsigned long pgoff, unsigned long flags);
-#ifndef CONFIG_KRG_MM
-	unsigned long (*get_unmapped_exec_area) (struct file *filp,
-			unsigned long addr, unsigned long len,
-			unsigned long pgoff, unsigned long flags);
-#endif
+       unsigned long (*get_unmapped_exec_area) (struct file *filp,
+				unsigned long addr, unsigned long len,
+				unsigned long pgoff, unsigned long flags);
 	void (*unmap_area) (struct mm_struct *mm, unsigned long addr);
 	unsigned long mmap_base;		/* base of mmap area */
 	unsigned long task_size;		/* size of task vm space */
@@ -353,10 +351,8 @@ struct mm_struct {
 		atomic_t oom_disable_count;
 	};
 
-#ifndef CONFIG_KRG_MM
 	/* base of lib map area (ASCII armour) */
 	unsigned long shlib_base;
-#endif
 #endif
 };
 

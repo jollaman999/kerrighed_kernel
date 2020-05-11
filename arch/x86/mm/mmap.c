@@ -94,9 +94,7 @@ static unsigned long mmap_base(unsigned long rnd)
 	return PAGE_ALIGN(TASK_SIZE - gap - rnd);
 }
 
-#ifndef CONFIG_KRG_MM
 #define SHLIB_BASE             0x00110000
-#endif
 
 /*
  * Bottom-up (legacy) layout on X86_32 did not support randomization, X86_64
@@ -118,9 +116,7 @@ void arch_pick_mmap_layout(struct mm_struct *mm)
 {
 	unsigned long random_factor = 0UL;
 
-#ifndef CONFIG_KRG_MM
 	mm->get_unmapped_exec_area = NULL;
-#endif
 
 	if (current->flags & PF_RANDOMIZE)
 		random_factor = arch_mmap_rnd();
@@ -132,13 +128,11 @@ void arch_pick_mmap_layout(struct mm_struct *mm)
 	} else {
 		mm->mmap_base = mmap_base(random_factor);
 		mm->get_unmapped_area = arch_get_unmapped_area_topdown;
-#ifndef CONFIG_KRG_MM
 		if (!(current->personality & READ_IMPLIES_EXEC)
 		    && mmap_is_ia32()) {
 			mm->get_unmapped_exec_area = arch_get_unmapped_exec_area;
 			mm->shlib_base = SHLIB_BASE + arch_mmap_rnd();
 		}
-#endif
 		mm->unmap_area = arch_unmap_area_topdown;
 	}
 }
