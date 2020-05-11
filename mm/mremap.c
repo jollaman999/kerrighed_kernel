@@ -576,10 +576,10 @@ unsigned long do_mremap(unsigned long addr,
 
 #ifdef CONFIG_KRG_MM
 		if (*_new_addr == 0) {
-			new_addr = get_unmapped_area_prot(vma->vm_file, 0,
+			new_addr = get_unmapped_area(vma->vm_file, 0,
 				     new_len, vma->vm_pgoff +
 					((addr - vma->vm_start) >> PAGE_SHIFT),
-					map_flags, vma->vm_flags & VM_EXEC);
+					map_flags);
 			*_new_addr = new_addr;
 		}
 		else

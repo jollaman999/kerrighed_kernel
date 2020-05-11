@@ -28,7 +28,9 @@
 #include <linux/rmap.h>
 #include <linux/mmu_notifier.h>
 #include <linux/perf_event.h>
+#ifndef CONFIG_KRG_MM
 #include <linux/random.h>
+#endif
 #include <linux/khugepaged.h>
 
 #include <asm/uaccess.h>
@@ -1173,8 +1175,12 @@ unsigned long do_mmap_pgoff(struct file *file, unsigned long addr,
 	/* Obtain the address to map to. we verify (or select) it and ensure
 	 * that it represents a valid section of the address space.
 	 */
+#ifdef CONFIG_KRG_MM
+	addr = get_unmapped_area(file, addr, len, pgoff, flags);
+#else
 	addr = get_unmapped_area_prot(file, addr, len, pgoff, flags,
 		prot & PROT_EXEC);
+#endif
 	if (addr & ~PAGE_MASK)
 		return addr;
 
@@ -1785,8 +1791,13 @@ void arch_unmap_area_topdown(struct mm_struct *mm, unsigned long addr)
 }
 
 unsigned long
+#ifdef CONFIG_KRG_MM
+get_unmapped_area(struct file *file, unsigned long addr, unsigned long len,
+		unsigned long pgoff, unsigned long flags)
+#else
 get_unmapped_area_prot(struct file *file, unsigned long addr, unsigned long len,
 		unsigned long pgoff, unsigned long flags, int exec)
+#endif
 {
 	unsigned long (*get_area)(struct file *, unsigned long,
 				  unsigned long, unsigned long, unsigned long);
@@ -1799,10 +1810,14 @@ get_unmapped_area_prot(struct file *file, unsigned long addr, unsigned long len,
 	if (len > TASK_SIZE)
 		return -ENOMEM;
 
+#ifdef CONFIG_KRG_MM
+	get_area = current->mm->get_unmapped_area;
+#else
 	if (exec && current->mm->get_unmapped_exec_area)
 		get_area = current->mm->get_unmapped_exec_area;
 	else
 		get_area = current->mm->get_unmapped_area;
+#endif
 
 	if (file && file->f_op && file->f_op->get_unmapped_area)
 		get_area = file->f_op->get_unmapped_area;
@@ -1817,6 +1832,7 @@ get_unmapped_area_prot(struct file *file, unsigned long addr, unsigned long len,
 
 	return arch_rebalance_pgtables(addr, len);
 }
+#ifndef CONFIG_KRG_MM
 EXPORT_SYMBOL(get_unmapped_area_prot);
 
 static bool should_randomize(void)
@@ -1891,7 +1907,9 @@ arch_get_unmapped_exec_area(struct file *filp, unsigned long addr0,
 failed:
 	return current->mm->get_unmapped_area(filp, addr0, len0, pgoff, flags);
 }
-
+#else
+EXPORT_SYMBOL(get_unmapped_area);
+#endif
 
 /* Look up the first VMA which satisfies  addr < vm_end,  NULL if none. */
 struct vm_area_struct *find_vma(struct mm_struct *mm, unsigned long addr)

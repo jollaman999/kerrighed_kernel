@@ -360,7 +360,11 @@ int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
 	if (compat)
 		addr = VDSO_HIGH_BASE;
 	else {
+#ifdef CONFIG_KRG_MM
+		addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, 0);
+#else
 		addr = get_unmapped_area_prot(NULL, 0, PAGE_SIZE, 0, 0, 1);
+#endif
 		if (IS_ERR_VALUE(addr)) {
 			ret = addr;
 			goto up_fail;
