@@ -769,19 +769,6 @@ static inline void clone_pgd_range(pgd_t *dst, pgd_t *src, int count)
 #endif
 }
 
-
-#define __HAVE_ARCH_PFN_MODIFY_ALLOWED 1
-extern bool pfn_modify_allowed(unsigned long pfn, pgprot_t prot);
-
-static inline bool arch_has_pfn_modify_check(void)
-{
-#ifdef CONFIG_KRG_EPM
-	return false;
-#else
-	return boot_cpu_has_bug(X86_BUG_L1TF);
-#endif
-}
-
 #ifdef CONFIG_KRG_MM
 struct kddm_obj;
 static inline void set_pte_obj_entry(pte_t *ptep, struct kddm_obj *obj)
@@ -818,6 +805,13 @@ static inline int swap_pte_obj_entry(pte_t *ptep)
 
 #endif /* KRG_MM */
 
+#define __HAVE_ARCH_PFN_MODIFY_ALLOWED 1
+extern bool pfn_modify_allowed(unsigned long pfn, pgprot_t prot);
+
+static inline bool arch_has_pfn_modify_check(void)
+{
+	return boot_cpu_has_bug(X86_BUG_L1TF);
+}
 
 #include <asm-generic/pgtable.h>
 #endif	/* __ASSEMBLY__ */
