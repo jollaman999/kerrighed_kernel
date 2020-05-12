@@ -142,24 +142,13 @@ static inline unsigned long pmd_pfn(pmd_t pmd)
 {
 	phys_addr_t pfn = pmd_val(pmd);
 	pfn ^= protnone_mask(pfn);
-#ifdef CONFIG_KRG_MM
-	return (pfn & PTE_PFN_MASK) >> PAGE_SHIFT;
-#else
 	return (pfn & pmd_pfn_mask(pmd)) >> PAGE_SHIFT;
-#endif
 }
 
-#ifdef CONFIG_KRG_MM
-static inline unsigned long pud_pfn(pud_t pud)
-{
-	return (pud_val(pud) & PTE_PFN_MASK) >> PAGE_SHIFT;
-}
-#else
 static inline unsigned long pud_pfn(pud_t pud)
 {
 	return (pud_val(pud) & pud_pfn_mask(pud)) >> PAGE_SHIFT;
 }
-#endif
 
 static inline unsigned long pgd_pfn(pgd_t pgd)
 {
@@ -476,17 +465,10 @@ static inline int pmd_none(pmd_t pmd)
 	return (unsigned long)native_pmd_val(pmd) == 0;
 }
 
-#ifdef CONFIG_KRG_MM
-static inline unsigned long pmd_page_vaddr(pmd_t pmd)
-{
-	return (unsigned long)__va(pmd_val(pmd) & PTE_PFN_MASK);
-}
-#else
 static inline unsigned long pmd_page_vaddr(pmd_t pmd)
 {
 	return (unsigned long)__va(pmd_val(pmd) & pmd_pfn_mask(pmd));
 }
-#endif
 
 /*
  * Currently stuck as a macro due to indirect forward reference to
@@ -554,17 +536,10 @@ static inline int pud_present(pud_t pud)
 	return pud_flags(pud) & _PAGE_PRESENT;
 }
 
-#ifdef CONFIG_KRG_MM
-static inline unsigned long pud_page_vaddr(pud_t pud)
-{
-	return (unsigned long)__va(pud_val(pud) & PTE_PFN_MASK);
-}
-#else
 static inline unsigned long pud_page_vaddr(pud_t pud)
 {
 	return (unsigned long)__va(pud_val(pud) & pud_pfn_mask(pud));
 }
-#endif
 
 /*
  * Currently stuck as a macro due to indirect forward reference to
