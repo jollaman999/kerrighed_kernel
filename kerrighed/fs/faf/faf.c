@@ -22,7 +22,7 @@
 
 extern struct kmem_cache *faf_client_data_cachep;
 
-void faf_error(const struct file *file, const char *function)
+void faf_error(struct file *file, const char *function)
 {
 	char *buffer, *filename;
 	filename = alloc_filename(file, &buffer);
