@@ -1839,7 +1839,6 @@ bad_fork_cleanup_signal:
 	}
 #endif
 
-#endif
 bad_fork_cleanup_sighand:
 #ifdef CONFIG_KRG_EPM
 	if (!krg_current || in_krg_do_fork())
