@@ -130,6 +130,9 @@ static inline pte_t native_ptep_get_and_clear(pte_t *xp)
 #define __pte_to_swp_entry(pte)		((swp_entry_t) { (pte).pte_low })
 #define __swp_entry_to_pte(x)		((pte_t) { .pte = (x).val })
 
+#ifdef CONFIG_KRG_MM
+#include <asm/pgtable-invert.h>
+#else /* CONFIG_KRG_MM */
 /* No inverted PFNs on 2 level page tables */
 
 static inline u64 protnone_mask(u64 val)
@@ -146,5 +149,6 @@ static inline bool __pte_needs_invert(u64 val)
 {
 	return false;
 }
+#endif /* CONFIG_KRG_MM */
 
 #endif /* _ASM_X86_PGTABLE_2LEVEL_H */
