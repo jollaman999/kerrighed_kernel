@@ -51,6 +51,8 @@ int init_kermm(void)
 	krgsyms_register (KRGSYMS_ARCH_GET_UNMAP_AREA, arch_get_unmapped_area);
 	krgsyms_register (KRGSYMS_ARCH_GET_UNMAP_AREA_TOPDOWN,
 			  arch_get_unmapped_area_topdown);
+	krgsyms_register (KRGSYMS_ARCH_GET_UNMAP_EXEC_AREA, arch_get_unmapped_exec_area);
+
 	krgsyms_register (KRGSYMS_KDDM_PT_OPS, &kddm_pt_set_ops);
 
 	register_io_linker (MEMORY_LINKER, &memory_linker);
@@ -87,6 +89,7 @@ void cleanup_kermm (void)
 	krgsyms_unregister (KRGSYMS_ARCH_UNMAP_AREA_TOPDOWN);
 	krgsyms_unregister (KRGSYMS_ARCH_GET_UNMAP_AREA);
 	krgsyms_unregister (KRGSYMS_ARCH_GET_UNMAP_AREA_TOPDOWN);
+	krgsyms_unregister (KRGSYMS_ARCH_GET_UNMAP_EXEC_AREA);
 
 	printk ("KerMM termination done\n");
 }
