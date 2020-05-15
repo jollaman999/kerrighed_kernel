@@ -34,6 +34,9 @@
 #define _PAGE_BIT_OBJ_ENTRY	1
 #define _PAGE_BIT_PROTNONE	2
 #define _PAGE_BIT_FILE		3
+
+/* while standard Linux is */
+/* | Offset                   |PROT_NONE  |  FILE    | Swap device (6 bits) | PRESENT = 0| */
 #else
 /* - if the user mapped it with PROT_NONE; pte_present gives true */
 #define _PAGE_BIT_PROTNONE	_PAGE_BIT_GLOBAL
