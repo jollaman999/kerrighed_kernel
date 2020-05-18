@@ -1351,6 +1351,11 @@ extern int install_special_mapping(struct mm_struct *mm,
 
 extern unsigned long get_unmapped_area_prot(struct file *, unsigned long, unsigned long, unsigned long, unsigned long, int);
 
+#ifdef CONFIG_KRG_MM
+extern unsigned long __get_unmapped_area_prot(struct mm_struct *, struct file *, unsigned long,
+											unsigned long, unsigned long, unsigned long, int);
+#endif
+
 static inline unsigned long get_unmapped_area(struct file *file, unsigned long addr,
 		unsigned long len, unsigned long pgoff, unsigned long flags)
 {

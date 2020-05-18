@@ -1784,9 +1784,23 @@ void arch_unmap_area_topdown(struct mm_struct *mm, unsigned long addr)
 	}
 }
 
+#ifdef CONFIG_KRG_MM
+unsigned long
+get_unmapped_area_prot(struct file *file, unsigned long addr, unsigned long len,
+		  unsigned long pgoff, unsigned long flags, int exec)
+{
+	return __get_unmapped_area_prot(current->mm, file, addr, len, pgoff, flags, exec);
+}
+
+unsigned long
+	__get_unmapped_area_prot(struct mm_struct *mm, struct file *file,
+			    unsigned long addr, unsigned long len,
+			    unsigned long pgoff, unsigned long flags, int exec)
+#else
 unsigned long
 get_unmapped_area_prot(struct file *file, unsigned long addr, unsigned long len,
 		unsigned long pgoff, unsigned long flags, int exec)
+#endif
 {
 	unsigned long (*get_area)(struct file *, unsigned long,
 				  unsigned long, unsigned long, unsigned long);
@@ -1799,10 +1813,17 @@ get_unmapped_area_prot(struct file *file, unsigned long addr, unsigned long len,
 	if (len > TASK_SIZE)
 		return -ENOMEM;
 
+#ifdef CONFIG_KRG_MM
+	if (exec && mm->get_unmapped_exec_area)
+		get_area = mm->get_unmapped_exec_area;
+	else
+		get_area = mm->get_unmapped_area;
+#else
 	if (exec && current->mm->get_unmapped_exec_area)
 		get_area = current->mm->get_unmapped_exec_area;
 	else
 		get_area = current->mm->get_unmapped_area;
+#endif
 
 	if (file && file->f_op && file->f_op->get_unmapped_area)
 		get_area = file->f_op->get_unmapped_area;
