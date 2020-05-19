@@ -217,7 +217,8 @@ int anon_memory_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 		 * load it */
 
 		ret = vma->initial_vm_ops->fault(vma, vmf);
-		if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE)))
+		if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE |
+				    VM_FAULT_RETRY)))
 			goto exit_error;
 
 		if (unlikely(PageHWPoison(vmf->page))) {
