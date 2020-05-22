@@ -927,7 +927,7 @@ static void faf_polled_fd_node_free(struct faf_polled_fd *polled_fd,
 }
 
 static int faf_polled_fd_add(kerrighed_node_t client,
-			     int server_fd,
+			     unsigned int server_fd,
 			     unsigned long dvfs_id)
 {
 	struct faf_polled_fd *polled_fd;
@@ -983,7 +983,7 @@ err_polled_fd:
 }
 
 static int faf_polled_fd_remove(kerrighed_node_t client,
-				int server_fd,
+				unsigned int server_fd,
 				unsigned long dvfs_id)
 {
 	struct dvfs_file_struct *dvfs_file;

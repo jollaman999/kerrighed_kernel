@@ -16,7 +16,7 @@
  *--------------------------------------------------------------------------*/
 
 struct faf_rw_msg {
-	int server_fd;
+	unsigned int server_fd;
 	size_t count;
 	loff_t pos;
 };
@@ -27,27 +27,27 @@ struct faf_rw_ret {
 };
 
 struct faf_d_path_msg {
-	int server_fd;
+	unsigned int server_fd;
 	int deleted;
 	size_t count;
 };
 
 struct faf_notify_msg {
-	int server_fd;
+	unsigned int server_fd;
 	unsigned long objid;
 };
 
 struct faf_stat_msg {
-	int server_fd;
+	unsigned int server_fd;
 	long flags;
 };
 
 struct faf_statfs_msg {
-	int server_fd;
+	unsigned int server_fd;
 };
 
 struct faf_ctl_msg {
-	int server_fd;
+	unsigned int server_fd;
 	unsigned int cmd;
 	union {
 		unsigned long arg;
@@ -60,37 +60,37 @@ struct faf_ctl_msg {
 };
 
 struct faf_seek_msg {
-	int server_fd;
+	unsigned int server_fd;
 	off_t offset;
 	unsigned int origin;
 };
 
 struct faf_llseek_msg {
-	int server_fd;
+	unsigned int server_fd;
 	unsigned long offset_high;
 	unsigned long offset_low;
 	unsigned int origin;
 };
 
 struct faf_bind_msg {
-	int server_fd;
+	unsigned int server_fd;
 	int addrlen;
 	struct sockaddr_storage sa;
 };
 
 struct faf_listen_msg {
-	int server_fd;
+	unsigned int server_fd;
 	int sub_chan;
 	int backlog;
 };
 
 struct faf_shutdown_msg {
-	int server_fd;
+	unsigned int server_fd;
 	int how;
 };
 
 struct faf_setsockopt_msg {
-	int server_fd;
+	unsigned int server_fd;
 	int level;
 	int optname;
 	char __user *optval;
@@ -98,7 +98,7 @@ struct faf_setsockopt_msg {
 };
 
 struct faf_getsockopt_msg {
-	int server_fd;
+	unsigned int server_fd;
 	int level;
 	int optname;
 	char __user *optval;
@@ -106,13 +106,13 @@ struct faf_getsockopt_msg {
 };
 
 struct faf_sendmsg_msg {
-	int server_fd;
+	unsigned int server_fd;
 	unsigned int flags;
 	size_t total_len;
 };
 
 struct faf_poll_wait_msg {
-	int server_fd;
+	unsigned int server_fd;
 	unsigned long objid;
 	int wait;
 };
