@@ -49,7 +49,7 @@ void faf_error(struct file *file, const char *function)
  */
 int setup_faf_file(struct file *file)
 {
-	int server_fd = 0;
+	unsigned int server_fd = 0;
 	int res = 0;
 	struct files_struct *files = first_krgrpc->files;
 

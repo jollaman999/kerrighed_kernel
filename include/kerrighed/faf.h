@@ -19,7 +19,7 @@ struct statfs;
 
 typedef struct faf_client_data {
 	kerrighed_node_t server_id;
-	int server_fd;
+	unsigned int server_fd;
 	unsigned long f_flags;
 	fmode_t f_mode;
 	loff_t f_pos;
