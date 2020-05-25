@@ -159,6 +159,8 @@ extern struct list_head waiting_desc;
 
 extern struct list_head list_synchro_head;
 
+extern struct rpc_communicator static_communicator;
+
 struct rpc_desc* rpc_desc_alloc(void);
 struct rpc_desc_send* rpc_desc_send_alloc(void);
 struct rpc_desc_recv* rpc_desc_recv_alloc(void);
