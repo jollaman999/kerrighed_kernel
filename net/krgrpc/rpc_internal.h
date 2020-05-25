@@ -5,7 +5,6 @@
 #include <linux/list.h>
 #include <linux/hash.h>
 #include <linux/spinlock.h>
-#include <linux/rcupdate.h>
 #include <linux/radix-tree.h>
 #include <linux/slab.h>
 #include <linux/kref.h>
@@ -55,10 +54,7 @@ struct rpc_connection {
 	spinlock_t desc_done_lock;
 	struct kref kref;
 	struct rpc_communicator *comm;
-	int id;
-	int peer_id;
 	kerrighed_node_t peer;
-	struct rcu_head rcu;
 };
 
 struct rpc_connection_set {
@@ -111,8 +107,6 @@ struct rpc_service {
 
 struct __rpc_header {
 	kerrighed_node_t from;
-	int source_conn_id;
-	int target_conn_id;
 	kerrighed_node_t client;
 	kerrighed_node_t server;
 	unsigned long desc_id;
@@ -236,7 +230,7 @@ struct rpc_connection *
 rpc_connection_alloc_ll(struct rpc_communicator *comm, kerrighed_node_t node);
 void rpc_connection_free_ll(struct rpc_connection *connection);
 
-int
+struct rpc_connection *
 rpc_connection_alloc(struct rpc_communicator *comm, kerrighed_node_t node);
 
 static inline void rpc_connection_get(struct rpc_connection *connection)
@@ -250,11 +244,23 @@ static inline void rpc_connection_put(struct rpc_connection *connection)
 	kref_put(&connection->kref, rpc_connection_release);
 }
 
-struct rpc_connection *rpc_find_get_connection(int id);
+static inline struct rpc_connection *rpc_find_get_connection(int id)
+{
+	struct rpc_connection *conn = static_communicator.conn[id];
 
+	rpc_connection_get(conn);
+	return conn;
+}
+
+static
+inline
 struct rpc_connection *
 rpc_communicator_get_connection(struct rpc_communicator *comm,
-				kerrighed_node_t node);
+				kerrighed_node_t node)
+{
+	rpc_connection_get(comm->conn[node]);
+	return comm->conn[node];
+}
 
 struct rpc_connection_set *__rpc_connection_set_alloc(void);
 struct rpc_connection_set *
