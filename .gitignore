@@ -9,3 +9,5 @@ config*
 *.cmd
 *.bak
 *.bakup
+*.rej
+*.orig
