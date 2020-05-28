@@ -412,7 +412,7 @@ static inline void tracehook_prepare_release_task(struct task_struct *task)
 static inline void tracehook_finish_release_task(struct task_struct *task)
 {
 	ptrace_release_task(task);
-	BUG_ON(task->exit_state != EXIT_DEAD);
+	BUG_ON(task->exit_state != EXIT_DEAD && task->exit_state != EXIT_MIGRATE);
 }
 
 /**

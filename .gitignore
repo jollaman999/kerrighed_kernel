@@ -7,3 +7,5 @@ cscope.*
 config*
 *.o
 *.cmd
+*.bak
+*.bakup
