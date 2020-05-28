@@ -413,7 +413,7 @@ static inline void tracehook_finish_release_task(struct task_struct *task)
 {
 	ptrace_release_task(task);
 #ifdef CONFIG_KRG_EPM
-	BUG_ON(task->exit_state != EXIT_DEAD && task->exit_state != EXIT_MIGRATE);
+	BUG_ON(task->exit_state != EXIT_DEAD && task->exit_state != EXIT_MIGRATION);
 #else
 	BUG_ON(task->exit_state != EXIT_DEAD);
 #endif
