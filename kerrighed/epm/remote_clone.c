@@ -120,7 +120,7 @@ int krg_do_fork(unsigned long clone_flags,
 out_release:
 	membership_online_release();
 
-	if (retval > 0 && (clone_flags & CLONE_VFORK)) {
+	if (retval > 0 && (clone_flags & CLONE_VFORK))
 		wait_for_vfork_done(task, &vfork);
 
 out_action_stop:
