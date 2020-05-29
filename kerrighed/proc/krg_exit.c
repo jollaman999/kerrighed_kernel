@@ -386,12 +386,15 @@ int krg_wait_task_zombie(struct wait_opts *wo,
 {
 	struct wait_task_request req;
 	kerrighed_node_t zombie_location;
+	pid_t pid;
 	int retval;
 	struct wait_task_result res;
 	struct rpc_desc *desc;
 	struct siginfo __user *infop;
 	bool noreap = wo->wo_flags & WNOWAIT;
 	int err;
+
+	pid = child->pid;
 
 	zombie_location = krg_lock_pid_location(pid);
 	if (zombie_location == KERRIGHED_NODE_ID_NONE)
@@ -405,7 +408,7 @@ int krg_wait_task_zombie(struct wait_opts *wo,
 		return -ENOMEM;
 	}
 
-	req.pid = child->pid;
+	req.pid = pid;
 	/* True as long as no remote ptrace is allowed */
 	req.real_parent_tgid = task_tgid_knr(current);
 	req.options = wo->wo_flags;
