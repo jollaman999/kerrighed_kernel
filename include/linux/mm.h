@@ -891,7 +891,7 @@ enum sgp_type {
 };
 
 inline int shmem_getpage(struct inode *inode, pgoff_t index,
-	struct page **pagep, enum sgp_type sgp, int *fault_type)
+	struct page **pagep, enum sgp_type sgp, int *fault_type);
 #endif
 
 #ifndef CONFIG_MMU
