@@ -357,7 +357,7 @@ static int handle_setpriority_process(struct rpc_desc *desc, void *msg,
 	}
 
 	retval = do_setpriority(PRIO_PROCESS, pid_knr(pid), niceval,
-				ns_of_pid(pid)->krg_ns_root);
+				krg_pid_ns_root(ns_of_pid(pid)));
 
 	krg_handle_remote_syscall_end(pid, old_cred);
 
@@ -605,7 +605,7 @@ static int handle_getpriority_process(struct rpc_desc *desc, void *msg,
 	}
 
 	retval = do_getpriority(PRIO_PROCESS, pid_knr(pid),
-				ns_of_pid(pid)->krg_ns_root);
+				krg_pid_ns_root(ns_of_pid(pid)));
 
 	krg_handle_remote_syscall_end(pid, old_cred);
 
