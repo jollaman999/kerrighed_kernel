@@ -447,9 +447,9 @@ int kddm_pt_swap_in (struct mm_struct *mm,
 	pgd = pgd_offset(mm, addr);
 	pud = pud_alloc(mm, pgd, addr);
 	pmd = pmd_alloc(mm, pud, addr);
+	pte = pte_alloc_map(mm, NULL, pmd, addr);
 
 	vma = find_vma(mm, addr);
-	pte = pte_alloc_map(mm, vma, pmd, addr);
 
 	if (!orig_pte)
 		orig_pte = pte;
