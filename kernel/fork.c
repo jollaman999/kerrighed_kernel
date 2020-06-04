@@ -717,14 +717,11 @@ static void complete_vfork_done(struct task_struct *tsk)
 	task_lock(tsk);
 	vfork = tsk->vfork_done;
 	if (likely(vfork)) {
-#ifdef CONFIG_KRG_EPM
-		if (tsk->remote_vfork_done) {
-			krg_vfork_done(tsk);
-		} else {
-#endif
 		tsk->vfork_done = NULL;
 #ifdef CONFIG_KRG_EPM
-		}
+		if (tsk->remote_vfork_done)
+			krg_vfork_done(vfork);
+		else
 #endif
 		complete(vfork);
 	}
@@ -738,6 +735,9 @@ int wait_for_vfork_done(struct task_struct *child,
 				struct completion *vfork)
 {
 	int killed;
+#ifdef CONFIG_KRG_EPM
+	struct completion *vfork_done;
+#endif
 
 	freezer_do_not_count();
 	killed = wait_for_completion_killable(vfork);
@@ -746,11 +746,15 @@ int wait_for_vfork_done(struct task_struct *child,
 	if (killed) {
 		task_lock(child);
 #ifdef CONFIG_KRG_EPM
-		if (child->remote_vfork_done)
-			krg_vfork_done(child);
-		else
+		vfork_done = child->vfork_done;
+		if (vfork_done) {
 #endif
 		child->vfork_done = NULL;
+#ifdef CONFIG_KRG_EPM
+		}
+		if (child->remote_vfork_done)
+			krg_vfork_done(vfork_done);
+#endif
 		task_unlock(child);
 	}
 

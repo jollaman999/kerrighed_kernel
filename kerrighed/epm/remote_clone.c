@@ -283,21 +283,18 @@ void cleanup_vfork_done(struct task_struct *task)
 
 static void handle_vfork_done(struct rpc_desc *desc, void *data, size_t size)
 {
-	struct task_struct *tsk = *(struct task_struct **)data;
+	struct completion *vfork_done = *(struct completion **)data;
 
-	task_lock(tsk);
-	complete(tsk->vfork_done);
-	tsk->vfork_done = NULL;
-	task_unlock(tsk);
+	complete(vfork_done);
 }
 
-void krg_vfork_done(struct task_struct *tsk)
+void krg_vfork_done(struct completion *vfork_done)
 {
-	struct vfork_done_proxy *proxy = (struct vfork_done_proxy *)tsk->vfork_done;
+	struct vfork_done_proxy *proxy = (struct vfork_done_proxy *)vfork_done;
 	struct krg_namespace *ns = find_get_krg_ns();
 
 	rpc_async(PROC_VFORK_DONE, ns->rpc_comm, proxy->waiter_node,
-		  &tsk, sizeof(struct task_struct));
+		  &proxy->waiter_vfork_done, sizeof(proxy->waiter_vfork_done));
 	put_krg_ns(ns);
 	vfork_done_proxy_free(proxy);
 }
