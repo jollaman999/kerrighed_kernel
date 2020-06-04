@@ -712,6 +712,53 @@ struct mm_struct *mm_access(struct task_struct *task, unsigned int mode)
 
 static void complete_vfork_done(struct task_struct *tsk)
 {
+#ifdef CONFIG_KRG_EPM
+	struct completion *vfork_done = tsk->vfork_done;
+#else
+	struct completion *vfork;
+#endif
+
+#ifdef CONFIG_KRG_EPM
+	if (tsk->remote_vfork_done)
+		krg_vfork_done(vfork_done);
+	else
+		complete(vfork_done);
+#else
+	task_lock(tsk);
+	vfork = tsk->vfork_done;
+	if (likely(vfork)) {
+		tsk->vfork_done = NULL;
+		complete(vfork);
+	}
+	task_unlock(tsk);
+#endif
+}
+
+#ifndef CONFIG_KRG_EPM
+static int wait_for_vfork_done(struct task_struct *child,
+				struct completion *vfork)
+{
+	int killed;
+
+	freezer_do_not_count();
+	killed = wait_for_completion_killable(vfork);
+	freezer_count();
+
+	if (killed) {
+		task_lock(child);
+		child->vfork_done = NULL;
+		task_unlock(child);
+	}
+
+	put_task_struct(child);
+	return killed;
+}
+#endif
+
+/* Kerrighed vfork killalble test - ish */
+/*
+static void complete_vfork_done(struct task_struct *tsk)
+{
 	struct completion *vfork;
 
 	task_lock(tsk);
@@ -758,6 +805,7 @@ static int wait_for_vfork_done(struct task_struct *child,
 	put_task_struct(child);
 	return killed;
 }
+*/
 
 /* Please note the differences between mmput and mm_release.
  * mmput is called whenever we stop holding onto a mm_struct,
@@ -2037,7 +2085,9 @@ long do_fork(unsigned long clone_flags,
 			p->remote_vfork_done = 0;
 #endif
 			init_completion(&vfork);
+#ifndef CONFIG_KRG_EPM
 			get_task_struct(p);
+#endif
 		}
 
 		audit_finish_fork(p);
@@ -2066,8 +2116,15 @@ long do_fork(unsigned long clone_flags,
 						clone_flags, nr, p);
 
 		if (clone_flags & CLONE_VFORK) {
+#ifdef CONFIG_KRG_EPM
+			freezer_do_not_count();
+			wait_for_completion(&vfork);
+			freezer_count();
+			tracehook_report_vfork_done(p, nr);
+#else
 			if (!wait_for_vfork_done(p, &vfork))
 				tracehook_report_vfork_done(p, nr);
+#endif
 		}
 	} else {
 		nr = PTR_ERR(p);
