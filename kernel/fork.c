@@ -728,10 +728,7 @@ static void complete_vfork_done(struct task_struct *tsk)
 	task_unlock(tsk);
 }
 
-#ifndef CONFIG_KRG_EPM
-static
-#endif
-int wait_for_vfork_done(struct task_struct *child,
+static int wait_for_vfork_done(struct task_struct *child,
 				struct completion *vfork)
 {
 	int killed;
@@ -761,9 +758,6 @@ int wait_for_vfork_done(struct task_struct *child,
 	put_task_struct(child);
 	return killed;
 }
-#ifdef CONFIG_KRG_EPM
-EXPORT_SYMBOL(wait_for_vfork_done);
-#endif
 
 /* Please note the differences between mmput and mm_release.
  * mmput is called whenever we stop holding onto a mm_struct,
