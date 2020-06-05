@@ -62,7 +62,7 @@ int reinit_mm(struct mm_struct *mm)
 	mm->map_count = 0;
 	cpus_clear (mm->cpu_vm_mask);
 	mm->mm_rb = RB_ROOT;
-	mm->nr_ptes = 0;
+	atomic_long_set(&mm->nr_ptes, 0);
 	mm->token_priority = 0;
 	mm->last_interval = 0;
 	/* Insert the new mm struct in the list of active mm */
