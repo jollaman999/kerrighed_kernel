@@ -269,12 +269,16 @@ void unimport_vfork_done(struct task_struct *task)
 /* Called after having successfuly migrated out task */
 void cleanup_vfork_done(struct task_struct *task)
 {
-	struct completion *vfork_done = task->vfork_done;
-	if (vfork_done) {
+	struct completion *vfork_done;
+
+	task_lock(task);
+	vfork_done = task->vfork_done;
+	if (likely(vfork_done)) {
 		task->vfork_done = NULL;
 		if (task->remote_vfork_done)
 			vfork_done_proxy_free((struct vfork_done_proxy *)vfork_done);
 	}
+	task_unlock(task);
 }
 
 static void handle_vfork_done(struct rpc_desc *desc, void *data, size_t size)
