@@ -32,6 +32,9 @@ static struct kmem_cache *vfork_done_proxy_cachep;
 
 static void *cluster_started;
 
+extern int wait_for_vfork_done(struct task_struct *child,
+				struct completion *vfork);
+
 int krg_do_fork(unsigned long clone_flags,
 		unsigned long stack_start,
 		struct pt_regs *regs,
@@ -103,8 +106,9 @@ int krg_do_fork(unsigned long clone_flags,
 	remote_clone.remote_clone.parent_tidptr = parent_tidptr;
 	remote_clone.remote_clone.child_tidptr = child_tidptr;
 	if (clone_flags & CLONE_VFORK) {
-		init_completion(&vfork);
 		remote_clone.remote_clone.vfork = &vfork;
+		init_completion(&vfork);
+		get_task_struct(task);
 	}
 
 	retval = send_task(desc, task, regs, &remote_clone);
@@ -116,11 +120,8 @@ int krg_do_fork(unsigned long clone_flags,
 out_release:
 	membership_online_release();
 
-	if (retval > 0 && (clone_flags & CLONE_VFORK)) {
-		freezer_do_not_count();
-		wait_for_completion(&vfork);
-		freezer_count();
-	}
+	if (retval > 0 && (clone_flags & CLONE_VFORK))
+		wait_for_vfork_done(task, &vfork);
 
 out_action_stop:
 	krg_action_stop(task, EPM_REMOTE_CLONE);
