@@ -2512,6 +2512,7 @@ int krg_do_fork(unsigned long clone_flags,
 bool in_krg_do_fork(void);
 /* vfork with remote child */
 void krg_vfork_done(struct completion *vfork_done);
+extern spinlock_t krg_vfork_done_lock;
 #endif /* CONFIG_KRG_EPM */
 
 extern void __set_task_comm(struct task_struct *tsk, char *from, bool exec);
