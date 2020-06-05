@@ -289,12 +289,6 @@ static inline pmdval_t native_pmd_val(pmd_t pmd)
 }
 #endif
 
-#ifdef CONFIG_KRG_MM
-static inline pudval_t pud_flags(pud_t pud)
-{
-	return native_pud_val(pud) & PTE_FLAGS_MASK;
-}
-#else
 static inline pudval_t pud_pfn_mask(pud_t pud)
 {
 	if (native_pud_val(pud) & _PAGE_PSE)
@@ -312,14 +306,7 @@ static inline pudval_t pud_flags(pud_t pud)
 {
 	return native_pud_val(pud) & pud_flags_mask(pud);
 }
-#endif
 
-#ifdef CONFIG_KRG_MM
-static inline pmdval_t pmd_flags(pmd_t pmd)
-{
-	return native_pmd_val(pmd) & PTE_FLAGS_MASK;
-}
-#else
 static inline pmdval_t pmd_pfn_mask(pmd_t pmd)
 {
 	if (native_pmd_val(pmd) & _PAGE_PSE)
@@ -337,7 +324,6 @@ static inline pmdval_t pmd_flags(pmd_t pmd)
 {
 	return native_pmd_val(pmd) & pmd_flags_mask(pmd);
 }
-#endif
 
 static inline pte_t native_make_pte(pteval_t val)
 {
