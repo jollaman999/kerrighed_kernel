@@ -714,7 +714,7 @@ retry:
 		return;
 	}
 
-	tasklist_read_lock();
+	read_lock(&tasklist_lock);
 	/*
 	 * Search in the children
 	 */
@@ -1960,7 +1960,7 @@ repeat:
 #endif
 
 	set_current_state(TASK_INTERRUPTIBLE);
-	tasklist_read_lock();
+	read_lock(&tasklist_lock);
 	tsk = current;
 	do {
 		retval = do_wait_thread(wo, tsk);
