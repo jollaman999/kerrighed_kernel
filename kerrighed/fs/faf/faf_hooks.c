@@ -586,6 +586,10 @@ long krg_faf_fcntl (struct file *file,
 	    && copy_from_user(&msg.flock,
 			      (struct flock __user *) arg, sizeof(msg.flock)))
 			goto out;
+	else if ((cmd == F_GETOWN_EX || cmd == F_SETOWN_EX)
+	    && copy_from_user(&msg.owner,
+			      (struct f_owner_ex __user *) arg, sizeof(msg.owner)))
+			goto out;
 	else
 		msg.arg = arg;
 
@@ -608,14 +612,24 @@ long krg_faf_fcntl (struct file *file,
 	if (unlikely(err))
 		goto cancel;
 
-	if (!r && cmd == F_GETLK) {
-		err = rpc_unpack_type(desc, msg.flock);
-		if (unlikely(err))
-			goto cancel;
-		r = -EFAULT;
-		if (!copy_to_user((struct flock __user *) arg,
-				  &msg.flock, sizeof(msg.flock)))
-			r = 0;
+	if (!r) {
+		if (cmd == F_GETLK) {
+			err = rpc_unpack_type(desc, msg.flock);
+			if (unlikely(err))
+				goto cancel;
+			r = -EFAULT;
+			if (!copy_to_user((struct flock __user *) arg,
+					&msg.flock, sizeof(msg.flock)))
+				r = 0;
+		} else if (cmd == F_GETOWN_EX) {
+			err = rpc_unpack_type(desc, msg.owner);
+			if (unlikely(err))
+				goto cancel;
+			r = -EFAULT;
+			if (!copy_to_user((struct f_owner_ex __user *) arg,
+					&msg.owner, sizeof(msg.owner)))
+				r = 0;
+		}
 	}
 
 out_end:
