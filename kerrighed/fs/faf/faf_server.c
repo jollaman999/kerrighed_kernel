@@ -615,6 +615,8 @@ void handle_faf_fcntl(struct rpc_desc *desc, void *msgIn, size_t size)
 
 	if (msg->cmd == F_GETLK || msg->cmd == F_SETLK || msg->cmd == F_SETLKW)
 		arg = (unsigned long) &msg->flock;
+	else if (msg->cmd == F_GETOWN_EX || msg->cmd == F_SETOWN_EX)
+		arg = (unsigned long) &msg->owner;
 	else
 		arg = msg->arg;
 
@@ -641,10 +643,16 @@ out_pack_res:
 	if (unlikely(err))
 		goto cancel;
 
-	if (!r && msg->cmd == F_GETLK) {
-		err = rpc_pack_type(desc, msg->flock);
-		if (unlikely(err))
-			goto cancel;
+	if (!r) {
+		if (msg->cmd == F_GETLK) {
+			err = rpc_pack_type(desc, msg->flock);
+			if (unlikely(err))
+				goto cancel;
+		} else if (msg->cmd == F_GETOWN_EX) {
+			err = rpc_pack_type(desc, msg->owner);
+			if (unlikely(err))
+				goto cancel;
+		}
 	}
 
 	return;
