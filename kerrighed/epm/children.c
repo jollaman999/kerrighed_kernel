@@ -728,10 +728,9 @@ static int krg_delay_group_leader(struct remote_child *child)
 }
 
 static
-bool krg_wait_consider_task(struct children_kddm_object *obj,
-			    struct remote_child *child,
-			    struct wait_opts *wo,
-			    int *tsk_result)
+bool krg_wait_consider_task(struct remote_child *child,
+			     struct wait_opts *wo,
+			     int *tsk_result)
 {
 	int ret;
 
@@ -828,7 +827,7 @@ retry:
 		 * Do not consider detached threads.
 		 */
 		if (item->exit_signal != -1) {
-			if (krg_wait_consider_task(obj, item, wo, &ret)) {
+			if (krg_wait_consider_task(item, wo, &ret)) {
 				if (ret)
 					goto out;
 				/* Raced with another thread. Retry. */
