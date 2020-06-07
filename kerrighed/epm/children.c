@@ -709,9 +709,8 @@ static int is_child(struct children_kddm_object *obj, pid_t pid)
 	return retval;
 }
 
-static int krg_eligible_child(struct children_kddm_object *obj,
-			      struct wait_opts *wo,
-			      struct remote_child *child)
+static int krg_eligible_child(struct wait_opts *wo,
+			       struct remote_child *child)
 {
 	int retval = 0;
 
@@ -759,7 +758,7 @@ bool krg_wait_consider_task(struct children_kddm_object *obj,
 {
 	int ret;
 
-	ret = krg_eligible_child(obj, wo, child);
+	ret = krg_eligible_child(wo, child);
 	if (!ret)
 		return false;
 
