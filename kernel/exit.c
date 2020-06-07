@@ -124,8 +124,7 @@ static void __exit_signal(struct task_struct *tsk)
 	posix_cpu_timers_exit(tsk);
 #ifdef CONFIG_KRG_EPM
 	if (tsk->exit_state == EXIT_MIGRATION) {
-		atomic_inc(&sig->count);
-		BUG_ON(atomic_read(&sig->count) > 1);
+		BUG_ON(atomic_read(&sig->count) >= 1);
 		posix_cpu_timers_exit_group(tsk);
 		sig->curr_target = NULL;
 	} else
