@@ -55,6 +55,7 @@ struct faf_ctl_msg {
 #if BITS_PER_LONG == 32
 		struct flock64 flock64;
 #endif
+		struct f_owner_ex owner;
 	};
 };
 
