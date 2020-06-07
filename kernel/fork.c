@@ -1704,7 +1704,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #endif /* CONFIG_KRG_SCHED */
 
 	/* Need tasklist lock for parent etc handling! */
-	tasklist_write_lock_irq();
+	write_lock_irq(&tasklist_lock);
 
 	/* CLONE_PARENT re-uses the old parent */
 	if (clone_flags & (CLONE_PARENT|CLONE_THREAD)) {

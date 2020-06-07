@@ -118,7 +118,7 @@ static int task_import_object(struct rpc_desc *desc,
 	if (retval)
 		return retval;
 
-	tasklist_write_lock_irq();
+	write_lock_irq(&tasklist_lock);
 
 	dest->state = src.state;
 	dest->flags = src.flags;
@@ -383,7 +383,7 @@ void __krg_task_unlink(struct task_kddm_object *obj, int need_update)
 
 void krg_task_unlink(struct task_kddm_object *obj, int need_update)
 {
-	tasklist_write_lock_irq();
+	write_lock_irq(&tasklist_lock);
 	__krg_task_unlink(obj, need_update);
 	write_unlock_irq(&tasklist_lock);
 }

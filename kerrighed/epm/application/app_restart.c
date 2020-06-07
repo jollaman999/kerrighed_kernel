@@ -908,7 +908,7 @@ static int local_restore_task_object(struct app_struct *app)
 
 			task->task_obj = __krg_task_writelock(task);
 
-			tasklist_write_lock_irq();
+			write_lock_irq(&tasklist_lock);
 
 			task->task_obj->parent = t->restart.parent;
 			task->task_obj->real_parent = t->restart.real_parent;

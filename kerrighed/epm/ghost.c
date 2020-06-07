@@ -2008,7 +2008,7 @@ int hide_process(struct task_struct *task)
 		dead = true;
 		goto unlock_obj;
 	}
-	tasklist_write_lock_irq();
+	write_lock_irq(&tasklist_lock);
 	dead = task->exit_state == EXIT_DEAD;
 	if (dead)
 		goto unlock_list;
@@ -2044,7 +2044,7 @@ void unhide_process(struct task_struct *task)
 	children_obj = __krg_children_readlock(task);
 	task_obj = __krg_task_writelock(task);
 	BUG_ON(!task_obj);
-	tasklist_write_lock_irq();
+	write_lock_irq(&tasklist_lock);
 
 	task_obj->task = task;
 	task->task_obj = task_obj;

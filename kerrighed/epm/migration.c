@@ -402,7 +402,7 @@ static void zombie_migration_work(struct work_struct *work)
 	task = m->task;
 
 	if (!__krg_task_migrate(task, task_pt_regs(task), m->target)) {
-		tasklist_write_lock_irq();
+		write_lock_irq(&tasklist_lock);
 		BUG_ON(task->exit_state != EXIT_ZOMBIE);
 		task->exit_state = EXIT_MIGRATION;
 		write_unlock_irq(&tasklist_lock);

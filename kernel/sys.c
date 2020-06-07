@@ -1381,7 +1381,7 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	/* From this point forward we keep holding onto the tasklist lock
 	 * so that our parent does not change from under us. -DaveM
 	 */
-	tasklist_write_lock_irq();
+	write_lock_irq(&tasklist_lock);
 
 	err = -ESRCH;
 #ifdef CONFIG_KRG_EPM
@@ -1789,7 +1789,7 @@ SYSCALL_DEFINE0(setsid)
 	if (rcu_dereference(current->parent_children_obj))
 		parent_children_obj = krg_parent_children_writelock(current);
 #endif /* CONFIG_KRG_EPM */
-	tasklist_write_lock_irq();
+	write_lock_irq(&tasklist_lock);
 	/* Fail if I am already a session leader */
 	if (group_leader->signal->leader)
 		goto out;

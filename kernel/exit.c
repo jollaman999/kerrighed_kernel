@@ -263,7 +263,7 @@ repeat:
 
 	proc_flush_task(p);
 
-	tasklist_write_lock_irq();
+	write_lock_irq(&tasklist_lock);
 	tracehook_finish_release_task(p);
 	__exit_signal(p);
 
@@ -461,7 +461,7 @@ static void reparent_to_kthreadd(void)
 	if (rcu_dereference(current->parent_children_obj))
 		parent_children_obj = krg_parent_children_writelock(current);
 #endif /* CONFIG_KRG_EPM */
-	tasklist_write_lock_irq();
+	write_lock_irq(&tasklist_lock);
 
 	ptrace_unlink(current);
 	/* Reparent to init */
@@ -506,7 +506,7 @@ void __set_special_pids(struct pid *pid)
 
 static void set_special_pids(struct pid *pid)
 {
-	tasklist_write_lock_irq();
+	write_lock_irq(&tasklist_lock);
 	__set_special_pids(pid);
 	write_unlock_irq(&tasklist_lock);
 }
@@ -862,7 +862,7 @@ static struct task_struct *find_new_reaper(struct task_struct *father)
 			panic("Attempted to kill init!");
 
 		zap_pid_ns_processes(pid_ns);
-		tasklist_write_lock_irq();
+		write_lock_irq(&tasklist_lock);
 	}
 
 	return pid_ns->child_reaper;
@@ -918,7 +918,7 @@ static void forget_original_parent(struct task_struct *father)
 	if (rcu_dereference(father->children_obj))
 		children_obj = __krg_children_writelock(father);
 #endif
-	tasklist_write_lock_irq();
+	write_lock_irq(&tasklist_lock);
 	reaper = find_new_reaper(father);
 
 	list_for_each_entry_safe(p, n, &father->children, sibling) {
@@ -981,7 +981,7 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 #ifdef CONFIG_KRG_PROC
 	krg_cookie = krg_prepare_exit_notify(tsk);
 #endif /* CONFIG_KRG_PROC */
-	tasklist_write_lock_irq();
+	write_lock_irq(&tasklist_lock);
 	if (group_dead)
 		kill_orphaned_pgrp(tsk->group_leader, NULL);
 
@@ -1611,7 +1611,7 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 			parent_children_obj =
 				krg_parent_children_writelock(saved_p);
 #endif
-		tasklist_write_lock_irq();
+		write_lock_irq(&tasklist_lock);
 		/* We dropped tasklist, ptracer could die and untrace */
 		ptrace_unlink(p);
 		/*
