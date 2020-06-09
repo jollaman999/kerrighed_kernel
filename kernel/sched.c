@@ -2471,13 +2471,6 @@ void kick_process(struct task_struct *p)
 EXPORT_SYMBOL_GPL(kick_process);
 #endif /* CONFIG_SMP */
 
-#if defined(CONFIG_KRG_SCHED) && defined(CONFIG_MODULE_HOOK)
-struct module_hook_desc kmh_process_on;
-EXPORT_SYMBOL(kmh_process_on);
-struct module_hook_desc kmh_process_off;
-EXPORT_SYMBOL(kmh_process_off);
-#endif
-
 /**
  * task_oncpu_function_call - call a function on the cpu on which a task runs
  * @p:		the task to evaluate

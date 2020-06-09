@@ -1230,11 +1230,6 @@ void update_process_times(int user_tick)
 	run_posix_cpu_timers(p);
 }
 
-#if defined(CONFIG_KRG_SCHED) && defined(CONFIG_MODULE_HOOK)
-struct module_hook_desc kmh_calc_load;
-EXPORT_SYMBOL(kmh_calc_load);
-#endif
-
 /*
  * This function runs timers and the timer-tq in bottom half context.
  */
