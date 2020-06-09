@@ -90,9 +90,6 @@
 #ifdef CONFIG_KRG_SCHED
 #include <kerrighed/scheduler/info.h>
 #endif
-#if defined(CONFIG_KRG_SCHED)
-#include <kerrighed/pid.h>
-#endif
 
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
@@ -224,11 +221,6 @@ EXPORT_SYMBOL_GPL(__put_task_struct);
  */
 #ifndef arch_task_cache_init
 #define arch_task_cache_init()
-#endif
-
-#if defined(CONFIG_KRG_SCHED)
-ATOMIC_NOTIFIER_HEAD(kmh_process_birth);
-EXPORT_SYMBOL(kmh_process_birth);
 #endif
 
 void __init fork_init(unsigned long mempages)
@@ -1322,9 +1314,6 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #ifdef CONFIG_KRG_HOTPLUG
 	int saved_create_krg_ns;
 #endif
-#if defined(CONFIG_KRG_SCHED)
-	struct nsproxy *nsp;
-#endif
 	int retval;
 	struct task_struct *p;
 	int cgroup_callbacks_done = 0;
@@ -1802,21 +1791,6 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #ifdef CONFIG_KRG_HOTPLUG
 	current->create_krg_ns = saved_create_krg_ns;
 #endif
-
-#ifdef CONFIG_KRG_SCHED
-	/* Only check if inside a remote clone() */
-	if (!krg_current || in_krg_do_fork()) {
-		/* Only notify about Kerrighed process */
-		nsp = task_nsproxy(p);
-		if (nsp && nsp->krg_ns)
-#ifdef CONFIG_KRG_CAP
-			if (can_use_krg_cap(p, CAP_CAN_MIGRATE)
-			    || can_use_krg_cap(p, CAP_DISTANT_FORK))
-#endif /* CONFIG_KRG_CAP */
-				atomic_notifier_call_chain(&kmh_process_birth, 0, p);
-	}
-#endif /* CONFIG_KRG_SCHED */
-
 	return p;
 
 #ifdef CONFIG_KRG_SCHED
