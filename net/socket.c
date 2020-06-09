@@ -2322,8 +2322,6 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 		fput_light(faf_file, fput_needed);
 		return err;
 	}
-
-	faf_file->f_flags = faf_file->f_flags & (~(O_FAF_SRV | O_FAF_CLT));
 #else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
@@ -2339,7 +2337,7 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 		if (MSG_CMSG_COMPAT & flags) {
 #ifdef CONFIG_KRG_FAF
 			err = __sys_sendmsg(sock, (struct msghdr __user *)compat_entry,
-					    &msg_sys, flags, &used_address, NULL);
+					    &msg_sys, flags, &used_address, faf_file);
 #else
 			err = __sys_sendmsg(sock, (struct msghdr __user *)compat_entry,
 					    &msg_sys, flags, &used_address);
@@ -2351,7 +2349,7 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 		} else {
 #ifdef CONFIG_KRG_FAF
 			err = __sys_sendmsg(sock, (struct msghdr __user *)entry,
-					    &msg_sys, flags, &used_address, NULL);
+					    &msg_sys, flags, &used_address, faf_file);
 #else
 			err = __sys_sendmsg(sock, (struct msghdr __user *)entry,
 					    &msg_sys, flags, &used_address);
@@ -2580,8 +2578,6 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 	err = -ENOSYS;
 	if (faf_file && (flags & MSG_CMSG_COMPAT))
 		goto out_put;
-
-	faf_file->f_flags = faf_file->f_flags & (~(O_FAF_SRV | O_FAF_CLT));
 #else
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
@@ -2602,7 +2598,7 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 		if (MSG_CMSG_COMPAT & flags) {
 #ifdef CONFIG_KRG_FAF
 			err = __sys_recvmsg(sock, (struct msghdr __user *)compat_entry,
-					    &msg_sys, flags, datagrams, NULL);
+					    &msg_sys, flags, datagrams, faf_file);
 #else
 			err = __sys_recvmsg(sock, (struct msghdr __user *)compat_entry,
 					    &msg_sys, flags, datagrams);
@@ -2614,7 +2610,7 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 		} else {
 #ifdef CONFIG_KRG_FAF
 			err = __sys_recvmsg(sock, (struct msghdr __user *)entry,
-					    &msg_sys, flags, datagrams, NULL);
+					    &msg_sys, flags, datagrams, faf_file);
 #else
 			err = __sys_recvmsg(sock, (struct msghdr __user *)entry,
 					    &msg_sys, flags, datagrams);
