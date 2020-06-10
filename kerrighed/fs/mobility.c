@@ -1135,11 +1135,12 @@ int import_files_struct (struct epm_action *action,
 	}
 	else {
 		fdt = &files->fdtab;
-		INIT_RCU_HEAD(&fdt->rcu);
-		fdt->next = NULL;
+		fdt->max_fds = NR_OPEN_DEFAULT;
 		fdt->close_on_exec = (fd_set *)&files->close_on_exec_init;
 		fdt->open_fds = (fd_set *)&files->open_fds_init;
 		fdt->fd = &files->fd_array[0];
+		INIT_RCU_HEAD(&fdt->rcu);
+		fdt->next = NULL;
 	}
 
 	rcu_assign_pointer(files->fdt, fdt);
