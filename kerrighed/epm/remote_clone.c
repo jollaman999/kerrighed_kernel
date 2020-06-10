@@ -53,6 +53,7 @@ int krg_do_fork(unsigned long clone_flags,
 	struct completion vfork;
 	pid_t remote_pid = -1;
 	int retval = -ENOSYS;
+	kernel_krg_cap_t pcap;
 
 	if (!cluster_started)
 		goto out;
@@ -69,6 +70,15 @@ int krg_do_fork(unsigned long clone_flags,
 	    || !task->task_obj || !task->children_obj) {
 		retval = -EPERM;
 		goto out;
+	}
+
+	krg_get_father_cap(current, &pcap);
+	if (cap_raised(pcap.effective, CAP_DISTANT_FORK)){
+		krg_get_father_cap(current->parent, &pcap);
+		if (cap_raised(pcap.effective, CAP_DISTANT_FORK)){
+			cap_lower(current->krg_caps.effective, CAP_DISTANT_FORK);
+			goto out;
+		}
 	}
 
 	retval = krg_action_start(task, EPM_REMOTE_CLONE);
