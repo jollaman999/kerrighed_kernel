@@ -9,6 +9,7 @@
 #include <linux/magic.h>
 #include <linux/socket.h>
 #include <linux/sched.h>
+#include <linux/nospec.h>
 
 #include <net/krgrpc/rpc.h>
 #include <kddm/name_space.h>
@@ -96,6 +97,7 @@ static int __close_faf_file(struct file *file)
 	spin_lock(&files->file_lock);
 
         fdt = files_fdtable(files);
+        fd = array_index_nospec(fd, fdt->max_fds);
         if (fd >= fdt->max_fds)
                 BUG();
         faf_file = fdt->fd[fd];
