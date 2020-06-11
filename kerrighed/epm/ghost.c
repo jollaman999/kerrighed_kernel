@@ -1408,6 +1408,7 @@ static struct task_struct *import_task(struct epm_action *action,
 {
 	struct task_struct *task;
 	int retval;
+	int node = numa_node_id();
 
 	/* No-op calls, here for symmetry */
 	BUG_ON(import_preempt_notifiers(action, ghost, NULL)
@@ -1421,7 +1422,7 @@ static struct task_struct *import_task(struct epm_action *action,
 	       || import_mempolicy(action, ghost, NULL));
 
 	/* Import the task struct, and registers */
-	task = alloc_task_struct();
+	task = alloc_task_struct_node(node);
 	if (!task) {
 		retval = -ENOMEM;
 		goto err_alloc_task;

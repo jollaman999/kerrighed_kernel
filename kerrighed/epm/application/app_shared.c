@@ -370,8 +370,9 @@ struct task_struct *alloc_shared_fake_task_struct(struct app_struct *app)
 {
 	struct task_struct *fake;
 	struct krg_namespace *krg_ns;
+	int node = numa_node_id();
 
-	fake = alloc_task_struct();
+	fake = alloc_task_struct_node(node);
 	if (!fake) {
 		fake = ERR_PTR(-ENOMEM);
 		goto exit;
