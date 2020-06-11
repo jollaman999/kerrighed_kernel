@@ -1282,7 +1282,10 @@ void mm_init_owner(struct mm_struct *mm, struct task_struct *p)
 /*
  * Initialize POSIX timer handling for a single task.
  */
-static void posix_cpu_timers_init(struct task_struct *tsk)
+#ifndef CONFIG_KRG_EPM
+static
+#endif
+void posix_cpu_timers_init(struct task_struct *tsk)
 {
 	tsk->cputime_expires.prof_exp = cputime_zero;
 	tsk->cputime_expires.virt_exp = cputime_zero;

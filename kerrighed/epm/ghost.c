@@ -1446,11 +1446,11 @@ static struct task_struct *import_task(struct epm_action *action,
 	INIT_LIST_HEAD(&task->tasks);
 	INIT_LIST_HEAD(&task->ptraced);
 	INIT_LIST_HEAD(&task->ptrace_entry);
-	task->real_parent = NULL;
-	task->parent = NULL;
+	task->real_parent = task;
+	task->parent = task;
 	INIT_LIST_HEAD(&task->children);
 	INIT_LIST_HEAD(&task->sibling);
-	task->group_leader = NULL;
+	task->group_leader = task;
 	INIT_LIST_HEAD(&task->ptraced);
 	INIT_LIST_HEAD(&task->ptrace_entry);
 #ifdef CONFIG_X86_PTRACE_BTS
@@ -1458,9 +1458,7 @@ static struct task_struct *import_task(struct epm_action *action,
 	BUG_ON(task->bts_buffer);
 #endif
 	INIT_LIST_HEAD(&task->thread_group);
-	INIT_LIST_HEAD(&task->cpu_timers[0]);
-	INIT_LIST_HEAD(&task->cpu_timers[1]);
-	INIT_LIST_HEAD(&task->cpu_timers[2]);
+	posix_cpu_timers_init(task);
 	mutex_init(&task->cred_guard_mutex);
 #ifndef CONFIG_KRG_IPC
 	if (task->exit_state)
@@ -1487,7 +1485,11 @@ static struct task_struct *import_task(struct epm_action *action,
 	 * fooling this node with traces from the exporting node */
 #ifdef CONFIG_TRACE_IRQFLAGS
 	task->irq_events = 0;
+#ifdef __ARCH_WANT_INTERRUPTS_ON_CTXSW
 	task->hardirqs_enabled = 1;
+#else
+	task->hardirqs_enabled = 0;
+#endif
 	task->hardirq_enable_ip = _THIS_IP_;
 	task->hardirq_enable_event = 0;
 	task->hardirq_disable_ip = 0;
@@ -1504,6 +1506,14 @@ static struct task_struct *import_task(struct epm_action *action,
 	task->lockdep_depth = 0; /* no locks held yet */
 	task->curr_chain_key = 0;
 	task->lockdep_recursion = 0;
+#endif
+
+#ifdef CONFIG_DEBUG_MUTEXES
+	task->blocked_on = NULL; /* not blocked yet */
+#endif
+#ifdef CONFIG_CGROUP_MEM_RES_CTLR
+	task->memcg_batch.do_batch = 0;
+	task->memcg_batch.memcg = NULL;
 #endif
 	/* End of lock debugging stuff */
 	if (action->type == EPM_RESTART)

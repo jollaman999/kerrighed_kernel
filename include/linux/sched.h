@@ -2491,6 +2491,7 @@ extern int do_execve(const char *, char __user * __user *, char __user * __user 
 extern long do_fork(unsigned long, unsigned long, struct pt_regs *, unsigned long, int __user *, int __user *);
 struct task_struct *fork_idle(int);
 #ifdef CONFIG_KRG_EPM
+void posix_cpu_timers_init(struct task_struct *tsk);
 struct task_struct *copy_process(unsigned long clone_flags,
 				 unsigned long stack_start,
 				 struct pt_regs *regs,
