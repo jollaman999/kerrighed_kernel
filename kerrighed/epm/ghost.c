@@ -39,6 +39,7 @@
 #include <kerrighed/action.h>
 #include <kerrighed/debug.h>
 #include <asm/ptrace.h>
+#include <asm/current.h>
 #include "epm_internal.h"
 
 /* Export */
@@ -1840,10 +1841,14 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 
 	obj = __krg_task_writelock(tskRecv);
 
+	spin_lock(&krg_current_write_lock);
 	krg_current = tskRecv;
+	spin_unlock(&krg_current_write_lock);
 	newTsk = copy_process(flags, stack_start, l_regs, stack_size,
 			      child_tidptr, pid, 0);
+	spin_lock(&krg_current_write_lock);
 	krg_current = NULL;
+	spin_unlock(&krg_current_write_lock);
 
 	if (IS_ERR(newTsk)) {
 		__krg_task_unlock(tskRecv);
