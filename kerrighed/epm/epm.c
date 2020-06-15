@@ -13,10 +13,7 @@
 #include <kerrighed/krgsyms.h>
 #include <kerrighed/debug.h>
 #include <kerrighed/pid.h>
-#include <asm/current.h>
 #include "epm_internal.h"
-
-spinlock_t krg_current_write_lock;
 
 struct task_struct *baby_sitter;
 
@@ -205,8 +202,6 @@ int init_epm(void)
 	restart_block_krgsyms_register();
 
 	init_baby_sitter();
-
-	spin_lock_init(&krg_current_write_lock);
 
 	epm_signal_start();
 	epm_sighand_start();
