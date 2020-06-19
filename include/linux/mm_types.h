@@ -124,7 +124,11 @@ struct page {
  */
 struct vm_region {
 	struct rb_node	vm_rb;		/* link in global region tree */
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags;	/* VMA vm_flags */
+#else
 	unsigned long	vm_flags;	/* VMA vm_flags */
+#endif
 	unsigned long	vm_start;	/* start address of region */
 	unsigned long	vm_end;		/* region initialised to here */
 	unsigned long	vm_top;		/* region allocated to here */
@@ -150,7 +154,11 @@ struct vm_area_struct {
 	struct vm_area_struct *vm_next, *vm_prev;
 
 	pgprot_t vm_page_prot;		/* Access permissions of this VMA. */
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags;	/* Flags, see mm.h. */
+#else
 	unsigned long vm_flags;		/* Flags, see mm.h. */
+#endif
 #ifdef CONFIG_KRG_MM
 	struct vm_operations_struct * initial_vm_ops;
 #endif
@@ -252,6 +260,8 @@ struct mm_struct {
 #endif
 	atomic_t mm_users;			/* How many users with user space? */
 	atomic_t mm_count;			/* How many references to "struct mm_struct" (users count as 1) */
+	atomic_long_t nr_ptes;			/* PTE page table pages */
+	atomic_long_t nr_pmds;			/* PMD page table pages */
 	int map_count;				/* number of VMAs */
 	struct rw_semaphore mmap_sem;
 	spinlock_t page_table_lock;		/* Protects page tables and some counters */
@@ -272,7 +282,7 @@ struct mm_struct {
 	unsigned long hiwater_vm;	/* High-water virtual memory usage */
 
 	unsigned long total_vm, locked_vm, shared_vm, exec_vm;
-	unsigned long stack_vm, reserved_vm, def_flags, nr_ptes;
+	unsigned long stack_vm, reserved_vm, def_flags;
 	unsigned long start_code, end_code, start_data, end_data;
 	unsigned long start_brk, brk, start_stack;
 	unsigned long arg_start, arg_end, env_start, env_end;

@@ -84,7 +84,7 @@ int mm_export_object (struct rpc_desc *desc,
 		      int flags)
 {
 	struct mm_struct *mm;
-	krgsyms_val_t unmap_id, get_unmap_id;
+	krgsyms_val_t unmap_id, get_unmap_id, get_unmap_exec_id;
 
 	mm = obj_entry->object;
 
@@ -94,6 +94,10 @@ int mm_export_object (struct rpc_desc *desc,
 	rpc_pack(desc, 0, &mm->anon_vma_kddm_id, sizeof(unique_id_t));
 	rpc_pack(desc, 0, &mm->context.vdso, sizeof(void*));
 	rpc_pack(desc, 0, &mm->copyset, sizeof(krgnodemask_t));
+
+	get_unmap_exec_id = krgsyms_export(mm->get_unmapped_exec_area);
+	BUG_ON(mm->get_unmapped_exec_area && get_unmap_exec_id == KRGSYMS_UNDEF);
+	rpc_pack_type(desc, get_unmap_exec_id);
 
 	get_unmap_id = krgsyms_export(mm->get_unmapped_area);
 	BUG_ON(mm->get_unmapped_area && get_unmap_id == KRGSYMS_UNDEF);
@@ -121,7 +125,7 @@ int mm_import_object (struct rpc_desc *desc,
 		      int flags)
 {
 	struct mm_struct *mm;
-	krgsyms_val_t unmap_id, get_unmap_id;
+	krgsyms_val_t unmap_id, get_unmap_id, get_unmap_exec_id;
 	struct kddm_set *set;
 	unique_id_t mm_id, kddm_id;
 	void *context_vdso;
@@ -158,10 +162,14 @@ int mm_import_object (struct rpc_desc *desc,
 	if (r)
 		return r;
 
+	r = rpc_unpack_type(desc, get_unmap_exec_id);
+	if (r)
+		return r;
+	mm->get_unmapped_exec_area = krgsyms_import (get_unmap_exec_id);
+
 	r = rpc_unpack_type(desc, get_unmap_id);
 	if (r)
 		return r;
-
 	mm->get_unmapped_area = krgsyms_import (get_unmap_id);
 
 	r = rpc_unpack_type(desc, unmap_id);

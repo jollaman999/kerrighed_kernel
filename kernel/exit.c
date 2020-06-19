@@ -113,12 +113,15 @@ static void __exit_signal(struct task_struct *tsk)
 	atomic_dec(&sig->count);
 
 	posix_cpu_timers_exit(tsk);
+#ifdef CONFIG_KRG_EPM
+	if (tsk->exit_state == EXIT_MIGRATION) {
+		BUG_ON(atomic_read(&sig->count) >= 1);
+		posix_cpu_timers_exit_group(tsk);
+		sig->curr_target = NULL;
+	} else
+#endif
 	if (group_dead) {
 		posix_cpu_timers_exit_group(tsk);
-#ifdef CONFIG_KRG_EPM
-		if (tsk->exit_state == EXIT_MIGRATION)
-			sig->curr_target = NULL;
-#endif
 	} else {
 		/*
 		 * This can only happen if the caller is de_thread().
@@ -1347,22 +1350,6 @@ SYSCALL_DEFINE1(exit_group, int, error_code)
 	return 0;
 }
 
-struct wait_opts {
-	enum pid_type		wo_type;
-	int			wo_flags;
-	struct pid		*wo_pid;
-#ifdef CONFIG_KRG_EPM
-	pid_t	wo_upid;
-#endif
-
-	struct siginfo __user	*wo_info;
-	int __user		*wo_stat;
-	struct rusage __user	*wo_rusage;
-
-	wait_queue_t		child_wait;
-	int			notask_error;
-};
-
 static inline
 struct pid *task_pid_type(struct task_struct *task, enum pid_type type)
 {
@@ -1430,20 +1417,18 @@ static int wait_noreap_copyout(struct wait_opts *wo, struct task_struct *p,
 #ifndef CONFIG_KRG_EPM
 static
 #endif
-int wait_task_zombie(struct task_struct *p, int options,
-				   struct siginfo __user *infop,
-				   int __user *stat_addr, struct rusage __user *ru)
+int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 {
 	unsigned long state;
 	int retval, status, traced;
 	pid_t pid = task_pid_vnr(p);
 	uid_t uid = __task_cred(p)->uid;
-	struct wait_opts wo;
+	struct siginfo __user *infop;
 
-	if (!likely(options & WEXITED))
+	if (!likely(wo->wo_flags & WEXITED))
 		return 0;
 
-	if (unlikely(options & WNOWAIT)) {
+	if (unlikely(wo->wo_flags & WNOWAIT)) {
 		int exit_code = p->exit_code;
 		int why, status;
 
@@ -1461,13 +1446,7 @@ int wait_task_zombie(struct task_struct *p, int options,
 			why = (exit_code & 0x80) ? CLD_DUMPED : CLD_KILLED;
 			status = exit_code & 0x7f;
 		}
-
-		wo.wo_flags	= options;
-		wo.wo_info	= infop;
-		wo.wo_stat	= stat_addr;
-		wo.wo_rusage	= ru;
-
-		return wait_noreap_copyout(&wo, p, pid, uid, why, status);
+		return wait_noreap_copyout(wo, p, pid, uid, why, status);
 	}
 
 #ifdef CONFIG_KRG_EPM
@@ -1486,6 +1465,7 @@ int wait_task_zombie(struct task_struct *p, int options,
 	}
 
 	traced = ptrace_reparented(p);
+
 #ifdef CONFIG_KRG_EPM
 	/* remote call iff p->parent == baby_sitter */
 	if (p->parent != baby_sitter)
@@ -1568,11 +1548,14 @@ int wait_task_zombie(struct task_struct *p, int options,
 		krg_children_unlock(current->children_obj);
 #endif
 
-	retval = ru ? getrusage(p, RUSAGE_BOTH, ru) : 0;
+	retval = wo->wo_rusage
+		? getrusage(p, RUSAGE_BOTH, wo->wo_rusage) : 0;
 	status = (p->signal->flags & SIGNAL_GROUP_EXIT)
 		? p->signal->group_exit_code : p->exit_code;
-	if (!retval && stat_addr)
-		retval = put_user(status, stat_addr);
+	if (!retval && wo->wo_stat)
+		retval = put_user(status, wo->wo_stat);
+
+	infop = wo->wo_info;
 	if (!retval && infop)
 		retval = put_user(SIGCHLD, &infop->si_signo);
 	if (!retval && infop)
@@ -1838,7 +1821,7 @@ static int wait_consider_task(struct wait_opts *wo, int ptrace,
 	 * We don't reap group leaders with subthreads.
 	 */
 	if (p->exit_state == EXIT_ZOMBIE && !delay_group_leader(p))
-		return wait_task_zombie(p, wo->wo_flags, wo->wo_info, wo->wo_stat, wo->wo_rusage);
+		return wait_task_zombie(wo, p);
 
 	/*
 	 * It's stopped or running now, so it might
@@ -1892,6 +1875,7 @@ static int ptrace_do_wait(struct wait_opts *wo, struct task_struct *tsk)
 	return 0;
 }
 
+#ifndef CONFIG_KRG_EPM
 static int child_wait_callback(wait_queue_t *wait, unsigned mode,
 				int sync, void *key)
 {
@@ -1907,29 +1891,36 @@ static int child_wait_callback(wait_queue_t *wait, unsigned mode,
 
 	return default_wake_function(wait, mode, sync, key);
 }
+#endif
 
 void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
 {
+#ifdef CONFIG_KRG_EPM
+	wake_up_interruptible_sync(&parent->signal->wait_chldexit);
+#else
 	__wake_up_sync_key(&parent->signal->wait_chldexit,
 				TASK_INTERRUPTIBLE, 1, p);
+#endif
 }
 
-#ifndef CONFIG_KRG_EPM
-static
-#endif
-long do_wait(struct wait_opts *wo)
+static long do_wait(struct wait_opts *wo)
 {
+#ifdef CONFIG_KRG_EPM
+	DECLARE_WAITQUEUE(wait, current);
+#endif
 	struct task_struct *tsk;
 	int retval;
 
 	trace_sched_process_wait(wo->wo_pid);
 
-	init_waitqueue_func_entry(&wo->child_wait, child_wait_callback);
-	wo->child_wait.private = current;
 #ifdef CONFIG_KRG_PROC
 	down_read(&kerrighed_init_sem);
-#endif
+	add_wait_queue(&current->signal->wait_chldexit, &wait);
+#else
+	init_waitqueue_func_entry(&wo->child_wait, child_wait_callback);
+	wo->child_wait.private = current;
 	add_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
+#endif
 repeat:
 	/*
 	 * If there is nothing that can match our critiera just get out.
@@ -1949,6 +1940,7 @@ repeat:
 	if (current->children_obj)
 		__krg_children_readlock(current);
 #endif
+
 	set_current_state(TASK_INTERRUPTIBLE);
 	tasklist_read_lock();
 	tsk = current;
@@ -1967,13 +1959,15 @@ repeat:
 	read_unlock(&tasklist_lock);
 #ifdef CONFIG_KRG_EPM
 	if (current->children_obj) {
+		int tsk_result;
+
+		wo->notask_error = retval;
+
 		/* Try all children, even remote ones but don't wait yet */
 		/* Releases children lock */
-		int tsk_result = krg_do_wait(current->children_obj, &retval,
-					     wo->wo_type, wo->wo_upid, wo->wo_flags,
-					     wo->wo_info, wo->wo_stat, wo->wo_rusage);
+		tsk_result = krg_do_wait(current->children_obj, wo);
 		if (tsk_result)
-			retval = tsk_result;
+			wo->notask_error = tsk_result;
 	}
 #endif
 
@@ -1994,9 +1988,11 @@ notask:
 	}
 end:
 	__set_current_state(TASK_RUNNING);
-	remove_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_KRG_EPM
+	remove_wait_queue(&current->signal->wait_chldexit, &wait);
 	up_read(&kerrighed_init_sem);
+#else
+	remove_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
 #endif
 	return retval;
 }
@@ -2037,13 +2033,13 @@ SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
 
 	wo.wo_type	= type;
 	wo.wo_pid	= pid;
+#ifdef CONFIG_KRG_EPM
+	wo.wo_upid	= upid;
+#endif
 	wo.wo_flags	= options;
 	wo.wo_info	= infop;
 	wo.wo_stat	= NULL;
 	wo.wo_rusage	= ru;
-#ifdef CONFIG_KRG_EPM
-	wo.wo_upid = upid;
-#endif
 	ret = do_wait(&wo);
 
 	if (ret > 0) {
@@ -2100,12 +2096,6 @@ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 		pid = find_get_pid(upid);
 	}
 
-	wo.wo_type	= type;
-	wo.wo_pid	= pid;
-	wo.wo_flags	= options | WEXITED;
-	wo.wo_info	= NULL;
-	wo.wo_stat	= stat_addr;
-	wo.wo_rusage	= ru;
 #ifdef CONFIG_KRG_EPM
 	if (type == PIDTYPE_PGID) {
 		if (upid == 0)
@@ -2113,8 +2103,16 @@ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 		else /* upid < 0 */
 			upid = -upid;
 	}
-	wo.wo_upid = upid;
 #endif
+	wo.wo_type	= type;
+	wo.wo_pid	= pid;
+#ifdef CONFIG_KRG_EPM
+	wo.wo_upid	= upid;
+#endif
+	wo.wo_flags	= options | WEXITED;
+	wo.wo_info	= NULL;
+	wo.wo_stat	= stat_addr;
+	wo.wo_rusage	= ru;
 	ret = do_wait(&wo);
 	put_pid(pid);
 

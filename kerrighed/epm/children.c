@@ -24,21 +24,6 @@
 #include <kerrighed/krg_exit.h>	/* For remote zombies handling */
 #include <kerrighed/libproc.h>
 
-struct remote_child {
-	struct list_head sibling;
-	struct list_head thread_group;
-	pid_t pid;
-	pid_t tgid;
-	pid_t pgid;
-	pid_t sid;
-	pid_t parent;
-	pid_t real_parent;
-	int ptraced;
-	int exit_signal;
-	long exit_state;
-	kerrighed_node_t node;
-};
-
 struct children_kddm_object {
 	pid_t tgid;
 	struct list_head children;
@@ -701,19 +686,18 @@ static int is_child(struct children_kddm_object *obj, pid_t pid)
 	return retval;
 }
 
-static int krg_eligible_child(struct children_kddm_object *obj,
-			      enum pid_type type, pid_t pid, int options,
-			      struct remote_child *child)
+static int krg_eligible_child(struct wait_opts *wo,
+			       struct remote_child *child)
 {
 	int retval = 0;
 
-	switch (type) {
+	switch (wo->wo_type) {
 	case PIDTYPE_PID:
-		if (child->pid != pid)
+		if (child->pid != wo->wo_upid)
 			goto out;
 		break;
 	case PIDTYPE_PGID:
-		if (child->pgid != pid)
+		if (child->pgid != wo->wo_upid)
 			goto out;
 		break;
 	case PIDTYPE_MAX:
@@ -727,12 +711,11 @@ static int krg_eligible_child(struct children_kddm_object *obj,
 	 * set; otherwise, wait for non-clone children *only*.  (Note:
 	 * A "clone" child here is one that reports to its parent
 	 * using a signal other than SIGCHLD.) */
-	if (((child->exit_signal != SIGCHLD) ^ ((options & __WCLONE) != 0))
-	    && !(options & __WALL))
+	if (((child->exit_signal != SIGCHLD) ^ !!(wo->wo_flags & __WCLONE))
+	    && !(wo->wo_flags & __WALL))
 		goto out;
 
 	/* No support for remote LSM check */
-
 	retval = 1;
 
 out:
@@ -745,20 +728,17 @@ static int krg_delay_group_leader(struct remote_child *child)
 }
 
 static
-bool krg_wait_consider_task(struct children_kddm_object *obj,
-			    struct remote_child *child,
-			    int *notask_error,
-			    enum pid_type type, pid_t pid, int options,
-			    struct siginfo __user *infop, int __user *stat_addr,
-			    struct rusage __user *ru,
-			    int *tsk_result)
+bool krg_wait_consider_task(struct remote_child *child,
+			     struct wait_opts *wo,
+			     int *tsk_result)
 {
 	int ret;
 
-	ret = krg_eligible_child(obj, type, pid, options, child);
+	ret = krg_eligible_child(wo, child);
 	if (!ret)
 		return false;
 
+/*         ret = security_task_wait(child); */
 /*         if (unlikely(ret < 0)) { */
 /*                 |+ */
 /*                  * If we have not yet seen any eligible child, */
@@ -767,8 +747,8 @@ bool krg_wait_consider_task(struct children_kddm_object *obj,
 /*                  * to look for security policy problems, rather */
 /*                  * than for mysterious wait bugs. */
 /*                  +| */
-/*                 if (*notask_error) */
-/*                         *notask_error = ret; */
+/*                 if (wo->notask_error) */
+/*                         wo->notask_error = ret; */
 /*         } */
 
 	if (unlikely(child->ptraced)) {
@@ -776,7 +756,7 @@ bool krg_wait_consider_task(struct children_kddm_object *obj,
 		 * This child is hidden by ptrace.
 		 * We aren't allowed to see it now, but eventually we will.
 		 */
-		*notask_error = 0;
+		wo->notask_error = 0;
 		return false;
 	}
 
@@ -794,13 +774,11 @@ bool krg_wait_consider_task(struct children_kddm_object *obj,
 	if (child->exit_state == EXIT_ZOMBIE
 	    && !krg_delay_group_leader(child)) {
 		/* Avoid doing an RPC when we already know the result */
-		if (!likely(options & WEXITED))
+		if (!likely(wo->wo_flags & WEXITED))
 			return false;
 
 		krg_children_unlock(current->children_obj);
-		*tsk_result = krg_wait_task_zombie(child->pid, child->node,
-						   options,
-						   infop, stat_addr, ru);
+		*tsk_result = krg_wait_task_zombie(wo, child);
 		return true;
 	}
 
@@ -808,7 +786,7 @@ bool krg_wait_consider_task(struct children_kddm_object *obj,
 	 * It's stopped or running now, so it might
 	 * later continue, exit, or stop again.
 	 */
-	*notask_error = 0;
+	wo->notask_error = 0;
 
 	/* Check for stopped and continued task is not implemented right now. */
 	return false;
@@ -824,10 +802,7 @@ bool krg_wait_consider_task(struct children_kddm_object *obj,
  *		 negative error code in *notask_error if an error occurs when
  *			reaping a task (do_wait() should abort)
  */
-int krg_do_wait(struct children_kddm_object *obj, int *notask_error,
-		enum pid_type type, pid_t pid, int options,
-		struct siginfo __user *infop, int __user *stat_addr,
-		struct rusage __user *ru)
+int krg_do_wait(struct children_kddm_object *obj, struct wait_opts *wo)
 {
 	struct remote_child *item;
 	pid_t current_pid = task_pid_knr(current);
@@ -844,7 +819,7 @@ int krg_do_wait(struct children_kddm_object *obj, int *notask_error,
 retry:
 	/* Remote version of do_wait_thread() */
 	list_for_each_entry(item, &obj->children, sibling) {
-		if ((options & __WNOTHREAD)
+		if ((wo->wo_flags & __WNOTHREAD)
 		    && item->real_parent != current_pid)
 			continue;
 
@@ -852,10 +827,7 @@ retry:
 		 * Do not consider detached threads.
 		 */
 		if (item->exit_signal != -1) {
-			if (krg_wait_consider_task(obj, item, notask_error,
-						     type, pid, options,
-						     infop, stat_addr, ru,
-						     &ret)) {
+			if (krg_wait_consider_task(item, wo, &ret)) {
 				if (ret)
 					goto out;
 				/* Raced with another thread. Retry. */
@@ -1052,8 +1024,13 @@ pid_t krg_get_real_parent_pid(struct task_struct *task)
 	struct children_kddm_object *parent_obj;
 	pid_t real_parent_pid, parent_pid, real_parent_tgid;
 
-	if (task->real_parent != baby_sitter)
-		return task_pid_vnr(task->real_parent);
+	if (task->real_parent != baby_sitter) {
+		rcu_read_lock();
+		real_parent_pid = task_pid_vnr(rcu_dereference(task->real_parent));
+		rcu_read_unlock();
+
+		return real_parent_pid;
+	}
 
 	BUG_ON(!is_krg_pid_ns_root(task_active_pid_ns(current)));
 	parent_obj = krg_parent_children_readlock(task, &real_parent_tgid);
@@ -1244,7 +1221,7 @@ static void update_relatives(struct task_struct *task)
 void join_local_relatives(struct task_struct *orphan)
 {
 	__krg_children_readlock(orphan);
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 
 	/*
 	 * Need to do it early to avoid a group leader task to consider itself
@@ -1299,7 +1276,7 @@ void leave_all_relatives(struct task_struct *tsk)
 {
 	struct task_struct *child, *tmp;
 
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 
 	tsk->flags |= PF_AWAY;
 
@@ -1499,7 +1476,7 @@ krg_children_prepare_de_thread(struct task_struct *task)
 
 	if (rcu_dereference(task->parent_children_obj)) {
 		obj = krg_parent_children_writelock(task, &real_parent_tgid);
-		write_lock_irq(&tasklist_lock);
+		tasklist_write_lock_irq();
 		/*
 		 * leader should not be considered as a child after the PID
 		 * switch.
@@ -1537,7 +1514,7 @@ void krg_children_finish_de_thread(struct children_kddm_object *obj,
 	if (rcu_dereference(task->children_obj))
 		krg_children_unlock(task->children_obj);
 	if (obj) {
-		write_lock_irq(&tasklist_lock);
+		tasklist_write_lock_irq();
 		krg_children_relink_krg_parent(task);
 		write_unlock_irq(&tasklist_lock);
 		krg_set_child_exit_signal(obj, task);
@@ -1628,7 +1605,7 @@ void krg_unhash_process(struct task_struct *tsk)
 	 */
 	/* Won't do anything if obj is NULL. */
 	krg_remove_child(obj, tsk);
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 	if (tsk->real_parent == baby_sitter) {
 		remove_from_krg_parent(tsk, tsk->task_obj->real_parent);
 		list_add_tail(&tsk->sibling, &baby_sitter->children);

@@ -1348,6 +1348,7 @@ out:
 	rcu_read_unlock();
 	return retval;
 }
+
 #ifdef CONFIG_KRG_PROC
 static int handle_getsid(struct rpc_desc *desc, void *msg, size_t size)
 {
@@ -1406,6 +1407,7 @@ SYSCALL_DEFINE0(setsid)
 	pid_t real_parent_tgid;
 #endif /* CONFIG_KRG_EPM */
 	int err = -EPERM;
+
 #ifdef CONFIG_KRG_EPM
 	down_read(&kerrighed_init_sem);
 	if (rcu_dereference(current->parent_children_obj))

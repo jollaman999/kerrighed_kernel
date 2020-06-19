@@ -107,7 +107,7 @@ static int export_binfmt(struct epm_action *action,
 {
 	int binfmt_id;
 
-	binfmt_id = krgsyms_export(task->binfmt);
+	binfmt_id = krgsyms_export(task->mm->binfmt);
 	if (binfmt_id == KRGSYMS_UNDEF)
 		return -EPERM;
 
@@ -919,7 +919,7 @@ static int import_binfmt(struct epm_action *action,
 	err = ghost_read(ghost, &binfmt_id, sizeof(int));
 	if (err)
 		goto out;
-	task->binfmt = krgsyms_import(binfmt_id);
+	task->mm->binfmt = krgsyms_import(binfmt_id);
 out:
 	return err;
 }
@@ -1417,7 +1417,7 @@ static struct task_struct *import_task(struct epm_action *action,
 	INIT_LIST_HEAD(&task->cpu_timers[0]);
 	INIT_LIST_HEAD(&task->cpu_timers[1]);
 	INIT_LIST_HEAD(&task->cpu_timers[2]);
-	mutex_init(&task->cred_exec_mutex);
+	mutex_init(&task->cred_guard_mutex);
 #ifndef CONFIG_KRG_IPC
 	BUG_ON(task->sysvsem.undo_list);
 #endif
@@ -1841,7 +1841,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 
 	BUG_ON(newTsk->task_obj);
 	BUG_ON(obj->task);
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 	newTsk->task_obj = obj;
 	obj->task = newTsk;
 	write_unlock_irq(&tasklist_lock);

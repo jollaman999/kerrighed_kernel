@@ -649,7 +649,11 @@ int setup_arg_pages(struct linux_binprm *bprm,
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma = bprm->vma;
 	struct vm_area_struct *prev = NULL;
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags;
+#else
 	unsigned long vm_flags;
+#endif
 	unsigned long stack_base;
 	unsigned long stack_size;
 	unsigned long stack_expand;

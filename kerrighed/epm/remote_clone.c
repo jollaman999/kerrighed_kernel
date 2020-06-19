@@ -9,7 +9,6 @@
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/completion.h>
-#include <linux/freezer.h>
 #include <kerrighed/krginit.h>
 #include <kerrighed/sys/types.h>
 #include <kerrighed/pid.h>
@@ -31,6 +30,9 @@ struct vfork_done_proxy {
 static struct kmem_cache *vfork_done_proxy_cachep;
 
 static void *cluster_started;
+
+extern int wait_for_vfork_done(struct task_struct *child,
+				struct completion *vfork);
 
 int krg_do_fork(unsigned long clone_flags,
 		unsigned long stack_start,
@@ -98,8 +100,9 @@ int krg_do_fork(unsigned long clone_flags,
 	remote_clone.remote_clone.parent_tidptr = parent_tidptr;
 	remote_clone.remote_clone.child_tidptr = child_tidptr;
 	if (clone_flags & CLONE_VFORK) {
-		init_completion(&vfork);
 		remote_clone.remote_clone.vfork = &vfork;
+		init_completion(&vfork);
+		get_task_struct(task);
 	}
 
 	remote_pid = send_task(desc, task, regs, &remote_clone);
@@ -108,11 +111,8 @@ int krg_do_fork(unsigned long clone_flags,
 		rpc_cancel(desc);
 	rpc_end(desc, 0);
 
-	if (remote_pid > 0 && (clone_flags & CLONE_VFORK)) {
-		freezer_do_not_count();
-		wait_for_completion(&vfork);
-		freezer_count();
-	}
+	if (remote_pid > 0 && (clone_flags & CLONE_VFORK))
+		wait_for_vfork_done(task, &vfork);
 
 out_action_stop:
 	krg_action_stop(task, EPM_REMOTE_CLONE);
@@ -252,19 +252,28 @@ void unimport_vfork_done(struct task_struct *task)
 /* Called after having successfuly migrated out task */
 void cleanup_vfork_done(struct task_struct *task)
 {
-	struct completion *vfork_done = task->vfork_done;
-	if (vfork_done) {
+	struct completion *vfork_done;
+
+	spin_lock(&krg_vfork_done_lock);
+	vfork_done = task->vfork_done;
+	if (likely(vfork_done)) {
 		task->vfork_done = NULL;
 		if (task->remote_vfork_done)
 			vfork_done_proxy_free((struct vfork_done_proxy *)vfork_done);
 	}
+	spin_unlock(&krg_vfork_done_lock);
 }
 
 static void handle_vfork_done(struct rpc_desc *desc, void *data, size_t size)
 {
 	struct completion *vfork_done = *(struct completion **)data;
+	int krg_vfork_done_locked = spin_is_locked(&krg_vfork_done_lock);
 
+	if (!krg_vfork_done_locked)
+		spin_lock(&krg_vfork_done_lock);
 	complete(vfork_done);
+	if (!krg_vfork_done_locked)
+		spin_unlock(&krg_vfork_done_lock);
 }
 
 void krg_vfork_done(struct completion *vfork_done)

@@ -71,7 +71,7 @@ int __rpc_send(struct rpc_desc* desc,
 			}
 
 			/* Calls rpc_new_desc_id_unlock() on success */
-			printk("===__rpc_send seq_id %u \n",seq_id);
+			// printk("===__rpc_send seq_id %u \n",seq_id);
 			err = __rpc_send_ll(desc, &desc->nodes,
 					    seq_id,
 					    __flags, data, size,
@@ -115,8 +115,6 @@ struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
 {
 	struct rpc_desc* desc;
 	int i;
-
-	printk("krgrpc: rpc_begin_m - rpcid : %u \n", rpcid);
 
 	desc = rpc_desc_alloc();
 	if(!desc)

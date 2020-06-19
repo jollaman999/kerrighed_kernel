@@ -6,6 +6,8 @@
  */
 
 #include <linux/sched.h>
+#include <linux/kthread.h>
+#include <linux/mm.h>
 #include <asm/processor.h>
 #include <asm/system.h>
 #include <asm/uaccess.h>
@@ -51,8 +53,9 @@ int import_thread_info(struct epm_action *action,
 {
 	struct thread_info *p;
 	int r;
+	int node = tsk_fork_get_node(task);
 
-	p = alloc_thread_info(task);
+	p = alloc_thread_info_node(task, node);
 	if (!p) {
 		r = -ENOMEM;
 		goto exit;

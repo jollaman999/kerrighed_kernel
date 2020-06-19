@@ -192,8 +192,8 @@ unsigned int oom_badness(struct task_struct *p, struct mem_cgroup *mem,
 	 * The baseline for the badness score is the proportion of RAM that each
 	 * task's rss, pagetable and swap space use.
 	 */
-	points = get_mm_rss(p->mm) + p->mm->nr_ptes;
-	points += get_mm_counter(p->mm, swap_usage);
+	points = get_mm_rss(p->mm) + atomic_long_read(&p->mm->nr_ptes);
+	points += get_mm_counter(p->mm, swap_usage) + mm_nr_pmds(p->mm);
 
 	points *= 1000;
 	points /= totalpages;
@@ -365,8 +365,8 @@ static struct task_struct *select_bad_process(unsigned int *ppoints,
  * Dumps the current memory state of all eligible tasks.  Tasks not in the same
  * memcg, not in the same cpuset, or bound to a disjoint set of mempolicy nodes
  * are not shown.
- * State information includes task's pid, uid, tgid, vm size, rss, cpu, oom_adj
- * value, oom_score_adj value, and name.
+ * State information includes task's pid, uid, tgid, vm size, rss, nr_ptes,
+ * swapents, oom_score_adj value, and name.
  *
  * Call with tasklist_lock read-locked.
  */
@@ -375,7 +375,7 @@ static void dump_tasks(const struct mem_cgroup *mem, const nodemask_t *nodemask)
 	struct task_struct *p;
 	struct task_struct *task;
 
-	pr_info("[ pid ]   uid  tgid total_vm      rss cpu oom_adj oom_score_adj name\n");
+	pr_info("[ pid ]   uid  tgid total_vm      rss nr_ptes nr_pmds swapents oom_score_adj name\n");
 	for_each_process(p) {
 		if (oom_unkillable_task(p, mem, nodemask))
 			continue;
@@ -390,10 +390,12 @@ static void dump_tasks(const struct mem_cgroup *mem, const nodemask_t *nodemask)
 			continue;
 		}
 
-		pr_info("[%5d] %5d %5d %8lu %8lu %3u     %3d         %5d %s\n",
+		pr_info("[%5d] %5d %5d %8lu %8lu %7ld %7ld %8lu         %5hd %s\n",
 			task->pid, task_uid(task), task->tgid,
 			task->mm->total_vm, get_mm_rss(task->mm),
-			task_cpu(task), task->signal->oom_adj,
+			atomic_long_read(&task->mm->nr_ptes),
+			mm_nr_pmds(task->mm),
+			get_mm_counter(task->mm, swap_usage),
 			task->signal->oom_score_adj, task->comm);
 		task_unlock(task);
 	}

@@ -100,6 +100,10 @@
 
 #include <trace/events/sched.h>
 
+#ifdef CONFIG_KRG_EPM
+spinlock_t krg_vfork_done_lock;
+#endif
+
 /*
  * Protected counters by tasklist_write_lock_irq()
  */
@@ -257,6 +261,10 @@ void __init fork_init(unsigned long mempages)
 	task_struct_cachep =
 		kmem_cache_create("task_struct", sizeof(struct task_struct),
 			ARCH_MIN_TASKALIGN, SLAB_PANIC | SLAB_NOTRACK, NULL);
+#endif
+
+#ifdef CONFIG_KRG_EPM
+	spin_lock_init(&krg_vfork_done_lock);
 #endif
 
 	/* do the arch specific task caches init */
@@ -570,7 +578,10 @@ struct mm_struct * mm_init(struct mm_struct * mm, struct task_struct *p)
 	mm->flags = (current->mm) ?
 		(current->mm->flags & MMF_INIT_MASK) : default_dump_filter;
 	mm->core_state = NULL;
-	mm->nr_ptes = 0;
+	atomic_long_set(&mm->nr_ptes, 0);
+#ifndef __PAGETABLE_PMD_FOLDED
+	atomic_long_set(&mm->nr_pmds, 0);
+#endif
 #ifdef CONFIG_KRG_MM
 	mm->mm_id = 0;
 #endif
@@ -646,11 +657,11 @@ void mmput(struct mm_struct *mm)
 			spin_unlock(&mmlist_lock);
 		}
 		put_swap_token(mm);
-		if (mm->binfmt)
-			module_put(mm->binfmt->module);
 #ifdef CONFIG_KRG_EPM
 		BUG_ON(atomic_read(&mm->mm_ltasks) != 0);
 #endif
+		if (mm->binfmt)
+			module_put(mm->binfmt->module);
 		mmdrop(mm);
 	}
 }
@@ -706,7 +717,11 @@ static void complete_vfork_done(struct task_struct *tsk)
 {
 	struct completion *vfork;
 
+#ifdef CONFIG_KRG_EPM
+	spin_lock(&krg_vfork_done_lock);
+#else
 	task_lock(tsk);
+#endif
 	vfork = tsk->vfork_done;
 	if (likely(vfork)) {
 		tsk->vfork_done = NULL;
@@ -717,27 +732,57 @@ static void complete_vfork_done(struct task_struct *tsk)
 #endif
 		complete(vfork);
 	}
+#ifdef CONFIG_KRG_EPM
+	spin_unlock(&krg_vfork_done_lock);
+#else
 	task_unlock(tsk);
+#endif
 }
 
-static int wait_for_vfork_done(struct task_struct *child,
+#ifndef CONFIG_KRG_EPM
+static
+#endif
+int wait_for_vfork_done(struct task_struct *child,
 				struct completion *vfork)
 {
 	int killed;
+#ifdef CONFIG_KRG_EPM
+	struct completion *vfork_done;
+#endif
 
 	freezer_do_not_count();
 	killed = wait_for_completion_killable(vfork);
 	freezer_count();
 
 	if (killed) {
+#ifdef CONFIG_KRG_EPM
+		spin_lock(&krg_vfork_done_lock);
+#else
 		task_lock(child);
+#endif
+#ifdef CONFIG_KRG_EPM
+		vfork_done = child->vfork_done;
+		if (vfork_done) {
+#endif
 		child->vfork_done = NULL;
+#ifdef CONFIG_KRG_EPM
+		}
+		if (child->remote_vfork_done)
+			krg_vfork_done(vfork_done);
+#endif
+#ifdef CONFIG_KRG_EPM
+		spin_lock(&krg_vfork_done_lock);
+#else
 		task_unlock(child);
+#endif
 	}
 
 	put_task_struct(child);
 	return killed;
 }
+#ifdef CONFIG_KRG_EPM
+EXPORT_SYMBOL(wait_for_vfork_done);
+#endif
 
 /* Please note the differences between mmput and mm_release.
  * mmput is called whenever we stop holding onto a mm_struct,
@@ -1112,7 +1157,24 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	if (!krg_current)
 #endif
 	if (clone_flags & CLONE_THREAD)
+#ifdef CONFIG_KRG_EPM
+	{
+		if (current->signal->kddm_obj)
+			krg_signal_writelock(current->signal);
+
+		atomic_inc(&current->signal->count);
+		atomic_inc(&current->signal->live);
+
+		if (current->signal->kddm_obj) {
+			krg_signal_share(current->signal);
+			krg_signal_unlock(current->signal);
+		}
+
 		return 0;
+	}
+#else
+		return 0;
+#endif
 
 	sig = kmem_cache_alloc(signal_cachep, GFP_KERNEL);
 	tsk->signal = sig;
@@ -1167,14 +1229,6 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	tty_audit_fork(sig);
 	sched_autogroup_fork(sig);
 
-#ifdef CONFIG_CGROUPS
-	init_rwsem(&sig->group_rwsem);
-#endif
-
-	sig->oom_adj = current->signal->oom_adj;
-	sig->oom_score_adj = current->signal->oom_score_adj;
-	sig->oom_score_adj_min = current->signal->oom_score_adj_min;
-
 #ifdef CONFIG_KRG_EPM
 	/*
 	 * Too early to allocate the KDDM object, will do it once the tgid is
@@ -1183,6 +1237,14 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	sig->krg_objid = 0;
 	sig->kddm_obj = NULL;
 #endif
+#ifdef CONFIG_CGROUPS
+	init_rwsem(&sig->group_rwsem);
+#endif
+
+	sig->oom_adj = current->signal->oom_adj;
+	sig->oom_score_adj = current->signal->oom_score_adj;
+	sig->oom_score_adj_min = current->signal->oom_score_adj_min;
+
 	return 0;
 }
 
@@ -1194,17 +1256,7 @@ void __cleanup_signal(struct signal_struct *sig)
 	kmem_cache_free(signal_cachep, sig);
 }
 
-static void cleanup_signal(struct task_struct *tsk)
-{
-	struct signal_struct *sig = tsk->signal;
-#ifdef CONFIG_KRG_EPM
-	struct signal_struct *locked_sig = krg_signal_exit(sig);
 
-	if (locked_sig)
-		krg_signal_unlock(locked_sig);
-#endif
-	__cleanup_signal(sig);
-}
 
 static void copy_flags(unsigned long clone_flags, struct task_struct *p)
 {
@@ -1308,14 +1360,12 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		return ERR_PTR(-EINVAL);
 
 	/*
-	 * If the new process will be in a different pid namespace
-	 * don't allow the creation of threads.
+	 * If the new process will be in a different pid namespace don't
+	 * allow it to share a thread group or signal handlers with the
+	 * forking task.
 	 */
-#ifdef CONFIG_KRG_EPM
-	if (!krg_current)
-#endif
-	if ((clone_flags & (CLONE_VM|CLONE_NEWPID)) &&
-	    (task_active_pid_ns(current) != current->nsproxy->pid_ns))
+	if ((clone_flags & CLONE_SIGHAND) && (task_active_pid_ns(current) !=
+					current->nsproxy->pid_ns))
 		return ERR_PTR(-EINVAL);
 
 #ifdef CONFIG_KRG_HOTPLUG
@@ -1332,13 +1382,12 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	if (!p)
 		goto fork_out;
 
-	tracehook_init_task(p);
-
-	ftrace_graph_init_task(p);
-
 #ifdef CONFIG_KRG_HOTPLUG
 	p->create_krg_ns = 0;
 #endif
+	tracehook_init_task(p);
+
+	ftrace_graph_init_task(p);
 
 	rt_mutex_init_task(p);
 
@@ -1385,6 +1434,9 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	p->vfork_done = NULL;
 	spin_lock_init(&p->alloc_lock);
 
+#ifdef CONFIG_KRG_EPM
+	clear_tsk_thread_flag(p, TIF_SIGPENDING);
+#endif
 	init_sigpending(&p->pending);
 
 	p->utime = cputime_zero;
@@ -1475,14 +1527,14 @@ struct task_struct *copy_process(unsigned long clone_flags,
 
 	retval = perf_event_init_task(p);
 	if (retval)
-		goto bad_fork_cleanup_policy;
-
-	if ((retval = audit_alloc(p)))
 #ifdef CONFIG_KRG_KDDM
 		goto bad_fork_cleanup_kddm_info;
 #else
+		goto bad_fork_cleanup_policy;
+#endif /* CONFIG_KRG_KDDM */
+	if ((retval = audit_alloc(p)))
 		goto bad_fork_cleanup_perf;
-#endif
+
 	/* copy all the process information */
 	if ((retval = copy_semundo(clone_flags, p)))
 		goto bad_fork_cleanup_audit;
@@ -1689,28 +1741,16 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	}
 #endif /* CONFIG_KRG_EPM */
 
-	if (clone_flags & CLONE_THREAD) {
 #ifdef CONFIG_KRG_EPM
-		if (!krg_current) {
-			if (current->signal->kddm_obj)
-				krg_signal_writelock(current->signal);
+	if (!krg_current || !thread_group_leader(krg_current))
 #endif
+	if (clone_flags & CLONE_THREAD) {
+#ifndef CONFIG_KRG_EPM
 		atomic_inc(&current->signal->count);
 		atomic_inc(&current->signal->live);
-#ifdef CONFIG_KRG_EPM
-			if (current->signal->kddm_obj) {
-				krg_signal_share(current->signal);
-				krg_signal_unlock(current->signal);
-			}
-		}
-
-		if (!krg_current || !thread_group_leader(krg_current)) {
 #endif
 		p->group_leader = current->group_leader;
 		list_add_tail_rcu(&p->thread_group, &p->group_leader->thread_group);
-#ifdef CONFIG_KRG_EPM
-		}
-#endif
 	}
 
 	if (likely(p->pid)) {
@@ -1758,12 +1798,12 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	proc_new_task(p);
 	proc_fork_connector(p);
 	cgroup_post_fork(p);
-#ifdef CONFIG_KRG_HOTPLUG
-	current->create_krg_ns = saved_create_krg_ns;
-#endif
 	if (clone_flags & CLONE_THREAD)
 		threadgroup_change_end(current);
 	perf_event_fork(p);
+#ifdef CONFIG_KRG_HOTPLUG
+	current->create_krg_ns = saved_create_krg_ns;
+#endif
 	return p;
 
 #ifdef CONFIG_KRG_SCHED
@@ -1815,8 +1855,17 @@ bad_fork_cleanup_signal:
 #ifdef CONFIG_KRG_EPM
 	if (!krg_current || in_krg_do_fork())
 #endif
-	if (!(clone_flags & CLONE_THREAD))
-		cleanup_signal(p);
+ 	if (!(clone_flags & CLONE_THREAD))
+#ifdef CONFIG_KRG_EPM
+	{
+	    struct signal_struct *locked_sig = krg_signal_exit(p->signal);
+#endif
+		__cleanup_signal(p->signal);
+#ifdef CONFIG_KRG_EPM
+		krg_signal_unlock(locked_sig);
+	}
+#endif
+
 bad_fork_cleanup_sighand:
 #ifdef CONFIG_KRG_EPM
 	if (!krg_current || in_krg_do_fork())
@@ -1836,9 +1885,8 @@ bad_fork_cleanup_audit:
 bad_fork_cleanup_kddm_info:
 	if (p->kddm_info)
 		kmem_cache_free(kddm_info_cachep, p->kddm_info);
-#else
-bad_fork_cleanup_perf:
 #endif
+bad_fork_cleanup_perf:
 	perf_event_free_task(p);
 bad_fork_cleanup_policy:
 #ifdef CONFIG_NUMA
@@ -1859,6 +1907,10 @@ bad_fork_cleanup_count:
 bad_fork_free:
 	free_task(p);
 fork_out:
+#ifdef CONFIG_KRG_HOTPLUG
+	current->create_krg_ns = saved_create_krg_ns;
+#endif
+#ifndef CONFIG_KRG_EPM
 	/*
 	 * HACK. A buggy subsystem can clear TIF_SIGPENDING in between.
 	 * In particular, there are a lot of sigprocmask() users, and
@@ -1866,8 +1918,6 @@ fork_out:
 	 */
 	if (unlikely(retval == -ERESTARTNOINTR))
 		set_thread_flag(TIF_SIGPENDING);
-#ifdef CONFIG_KRG_HOTPLUG
-	current->create_krg_ns = saved_create_krg_ns;
 #endif
 	return ERR_PTR(retval);
 }
@@ -2142,6 +2192,11 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 #endif
 	int err;
 
+#ifdef CONFIG_KRG_HOTPLUG
+	saved_create_krg_ns = current->create_krg_ns;
+	current->create_krg_ns = 0;
+#endif
+
 	/*
 	 * If unsharing a pid namespace must also unshare the thread.
 	 */
@@ -2163,15 +2218,9 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 	if (unshare_flags & CLONE_NEWNS)
 		unshare_flags |= CLONE_FS;
 
-#ifdef CONFIG_KRG_HOTPLUG
-	saved_create_krg_ns = current->create_krg_ns;
-	current->create_krg_ns = 0;
-#endif
-
 	err = check_unshare_flags(unshare_flags);
 	if (err)
 		goto bad_unshare_out;
-
 	/*
 	 * CLONE_NEWIPC must also detach from the undolist: after switching
 	 * to a new ipc namespace, the semaphore arrays from the old

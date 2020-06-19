@@ -28,8 +28,7 @@ void detach_vmas_to_be_unmapped(struct mm_struct *mm,
 				struct vm_area_struct *vma,
 				struct vm_area_struct *prev,
 				unsigned long end);
-
-void inno_unmap_region(struct mm_struct *mm, struct vm_area_struct *vma,
+void unmap_region(struct mm_struct *mm, struct vm_area_struct *vma,
 		  struct vm_area_struct *prev, unsigned long start,
 		  unsigned long end);
 
@@ -38,11 +37,7 @@ void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma);
 /** Exported Variables **/
 
 extern struct kmem_cache *mm_cachep;
-extern
-#ifndef CONFIG_KERRIGHED
-const 
-#endif
-struct vm_operations_struct generic_file_vm_ops ;
+extern struct vm_operations_struct generic_file_vm_ops;
 
 int special_mapping_vm_ops_krgsyms_register(void);
 int special_mapping_vm_ops_krgsyms_unregister(void);
@@ -54,7 +49,7 @@ static inline void dump_vma(struct task_struct *tsk)
 	vma = tsk->mm->mmap;
 
 	while(vma) {
-		printk ("[0x%08lx:0x%08lx] - flags 0x%08lx - offset 0x%08lx - "
+		printk ("[0x%08lx:0x%08lx] - flags 0x%08llx - offset 0x%08lx - "
 			"file %p\n", vma->vm_start, vma->vm_end, vma->vm_flags,
 			vma->vm_pgoff, vma->vm_file);
 
@@ -72,11 +67,6 @@ static inline int anon_vma(struct vm_area_struct *vma)
 
 	return (vma->anon_vma || vma->vm_flags & VM_KDDM);
 }
-
-#ifdef CONFIG_KRG_FAF
-void use_mm(struct mm_struct *mm);
-void unuse_mm(struct mm_struct *mm);
-#endif
 
 void mm_struct_pin(struct mm_struct *mm);
 void mm_struct_unpin(struct mm_struct *mm);
@@ -103,7 +93,7 @@ void krg_notify_mem(int mem_usage);
 void krg_check_vma_link(struct vm_area_struct *vma);
 
 void krg_do_mmap_region(struct vm_area_struct *vma, unsigned long flags,
-			unsigned int vm_flags);
+			unsigned long long vm_flags);
 
 void krg_do_munmap(struct mm_struct *mm, unsigned long start, size_t len);
 

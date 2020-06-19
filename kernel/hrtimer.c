@@ -45,9 +45,11 @@
 #include <linux/debugobjects.h>
 #include <linux/sched.h>
 #include <linux/timer.h>
+
 #ifdef CONFIG_KRG_EPM
 #include <kerrighed/krgsyms.h>
 #endif
+
 #include <asm/uaccess.h>
 
 #include <trace/events/timer.h>

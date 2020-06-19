@@ -30,7 +30,7 @@ typedef struct mm_mmap_msg {
 	};
 	union {
 		unsigned long new_len;
-		unsigned int vm_flags;
+		unsigned long long vm_flags;
 		unsigned long prot;
 	};
 	union {

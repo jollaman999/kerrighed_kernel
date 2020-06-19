@@ -299,10 +299,7 @@ out:
 	}
 }
 
-#ifndef CONFIG_KERRIGHED
-static const
-#endif
-struct vm_operations_struct xip_file_vm_ops = {
+static struct vm_operations_struct xip_file_vm_ops = {
 	.fault	= xip_file_fault,
 	.page_mkwrite	= filemap_page_mkwrite,
 };

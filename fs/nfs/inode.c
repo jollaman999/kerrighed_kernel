@@ -40,6 +40,7 @@
 #include <linux/compat.h>
 #include <linux/freezer.h>
 #include <linux/crc32.h>
+
 #ifdef CONFIG_KRG_MM
 #include <kerrighed/krgsyms.h>
 #endif
@@ -1722,8 +1723,7 @@ static int __init init_nfs_fs(void)
 	if (err)
 		goto out10;
 #endif
-
-#ifdef CONFIG_NFS_V4
+#ifdef CONFIG_KEYS
 	err = nfs_idmap_init();
 	if (err < 0)
 		goto out9;
@@ -1793,7 +1793,7 @@ out6:
 out7:
 	nfs_dns_resolver_destroy();
 out8:
-#ifdef CONFIG_NFS_V4
+#ifdef CONFIG_KEYS
 	nfs_idmap_quit();
 out9:
 #endif
@@ -1813,7 +1813,7 @@ static void __exit exit_nfs_fs(void)
 	nfs_destroy_nfspagecache();
 	nfs_fscache_unregister();
 	nfs_dns_resolver_destroy();
-#ifdef CONFIG_NFS_V4
+#ifdef CONFIG_KEYS
 	nfs_idmap_quit();
 #endif
 #ifdef CONFIG_PROC_FS

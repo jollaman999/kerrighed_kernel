@@ -37,6 +37,7 @@
 #include <linux/init_task.h>
 #include <linux/syscalls.h>
 #include <linux/proc_fs.h>
+
 #ifdef CONFIG_KRG_PROC
 #include <kerrighed/pid.h>
 #include <kerrighed/krginit.h>
@@ -83,11 +84,11 @@ struct pid_namespace init_pid_ns = {
 	.last_pid = 0,
 	.level = 0,
 	.child_reaper = &init_task,
-	.proc_inum = PROC_PID_INIT_INO,
 #ifdef CONFIG_KRG_PROC
 	.krg_ns_root = NULL,
 	.global = 0,
 #endif
+	.proc_inum = PROC_PID_INIT_INO,
 };
 EXPORT_SYMBOL_GPL(init_pid_ns);
 
@@ -140,6 +141,35 @@ static void free_pidmap(struct upid *upid)
 	atomic_inc(&map->nr_free);
 }
 
+#ifdef CONFIG_KRG_EPM
+static void free_pidmap(struct upid *upid)
+{
+	if ((upid->nr & GLOBAL_PID_MASK)
+	    && ORIG_NODE(upid->nr) != kerrighed_node_id)
+		krg_free_pidmap(upid);
+	else
+		__free_pidmap(upid);
+}
+
+int alloc_pidmap_page(struct pidmap *map)
+{
+	void *page = kzalloc(PAGE_SIZE, GFP_KERNEL);
+	/*
+	 * Free the page if someone raced with us
+	 * installing it:
+	 */
+	spin_lock_irq(&pidmap_lock);
+	if (map->page)
+		kfree(page);
+	else
+		map->page = page;
+	spin_unlock_irq(&pidmap_lock);
+	if (unlikely(!map->page))
+		return -ENOMEM;
+	return 0;
+}
+#endif /* CONFIG_KRG_EPM */
+
 /*
  * If we started walking pids at 'base', is 'a' seen before 'b'?
  */
@@ -176,35 +206,6 @@ static void set_last_pid(struct pid_namespace *pid_ns, int base, int pid)
 		last_write = cmpxchg(&pid_ns->last_pid, prev, pid);
 	} while ((prev != last_write) && (pid_before(base, last_write, pid)));
 }
-
-#ifdef CONFIG_KRG_EPM
-static void free_pidmap(struct upid *upid)
-{
-	if ((upid->nr & GLOBAL_PID_MASK)
-	    && ORIG_NODE(upid->nr) != kerrighed_node_id)
-		krg_free_pidmap(upid);
-	else
-		__free_pidmap(upid);
-}
-
-int alloc_pidmap_page(struct pidmap *map)
-{
-	void *page = kzalloc(PAGE_SIZE, GFP_KERNEL);
-	/*
-	 * Free the page if someone raced with us
-	 * installing it:
-	 */
-	spin_lock_irq(&pidmap_lock);
-	if (map->page)
-		kfree(page);
-	else
-		map->page = page;
-	spin_unlock_irq(&pidmap_lock);
-	if (unlikely(!map->page))
-		return -ENOMEM;
-	return 0;
-}
-#endif /* CONFIG_KRG_EPM */
 
 static int alloc_pidmap(struct pid_namespace *pid_ns)
 {

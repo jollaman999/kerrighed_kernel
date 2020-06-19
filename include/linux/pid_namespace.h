@@ -30,6 +30,10 @@ struct pid_namespace {
 #ifdef CONFIG_BSD_PROCESS_ACCT
 	struct bsd_acct_struct *bacct;
 #endif
+#ifdef CONFIG_KRG_PROC
+	struct pid_namespace *krg_ns_root;
+	unsigned global:1;
+#endif
 #ifndef __GENKSYMS__
 	gid_t pid_gid;
 	int hide_pid;
@@ -37,10 +41,6 @@ struct pid_namespace {
 	struct work_struct proc_work;
 	int reboot;	/* group exit code if this pidns was rebooted */
 	unsigned int proc_inum;
-#endif
-#ifdef CONFIG_KRG_PROC
-	struct pid_namespace *krg_ns_root;
-	unsigned global:1;
 #endif
 };
 
@@ -77,8 +77,7 @@ struct pid_namespace *find_get_krg_pid_ns(void);
 #endif
 
 #ifdef CONFIG_KRG_EPM
-struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns);
-
+struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns, bool accept_parent);
 #endif
 
 #else /* !CONFIG_PID_NS */
@@ -106,11 +105,6 @@ static inline void zap_pid_ns_processes(struct pid_namespace *ns)
 	BUG();
 }
 
-static inline int reboot_pid_ns(struct pid_namespace *pid_ns, int cmd)
-{
-	return 0;
-}
-
 #ifdef CONFIG_KRG_PROC
 static inline bool is_krg_pid_ns_root(struct pid_namespace *ns)
 {
@@ -122,6 +116,11 @@ static inline struct pid_namespace *find_get_krg_pid_ns(void)
 	return &init_pid_ns;
 }
 #endif
+
+static inline int reboot_pid_ns(struct pid_namespace *pid_ns, int cmd)
+{
+	return 0;
+}
 #endif /* CONFIG_PID_NS */
 
 extern struct pid_namespace *task_active_pid_ns(struct task_struct *tsk);

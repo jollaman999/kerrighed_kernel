@@ -235,7 +235,7 @@ int krg_delayed_notify_parent(struct task_struct *leader)
 				&parent_node);
 	__krg_task_writelock_nested(leader);
 
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 	BUG_ON(task_detached(leader));
 	/*
 	 * Needed to check whether we were reparented to init, and to
@@ -291,23 +291,8 @@ struct wait_task_result {
 	unsigned long cmin_flt, cmaj_flt;
 	unsigned long cnvcsw, cnivcsw;
 	unsigned long cinblock, coublock;
+	unsigned long cmaxrss;
 	struct task_io_accounting ioac;
-};
-
-//For Wait Task zombie
-struct wait_opts {
-	enum pid_type		wo_type;
-	int			wo_flags;
-	struct pid		*wo_pid;
-#ifdef CONFIG_KRG_EPM
-	pid_t	wo_upid;
-#endif
-	struct siginfo __user	*wo_info;
-	int __user		*wo_stat;
-	struct rusage __user	*wo_rusage;
-
-	wait_queue_t		child_wait;
-	int			notask_error;
 };
 
 static void handle_wait_task_zombie(struct rpc_desc *desc,
@@ -316,8 +301,8 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 	struct wait_task_request *req = _msg;
 	struct task_struct *p;
 	struct signal_struct *sig;
-	struct task_cputime cputime;
 	struct wait_task_result res;
+	struct wait_opts wo;
 	int retval;
 	int err = -ENOMEM;
 
@@ -342,11 +327,14 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 	 * Sample resource counters now since wait_task_zombie() may release p.
 	 */
 	if (!(req->options & WNOWAIT)) {
+		unsigned long maxrss;
+		cputime_t tgutime, tgstime;
+
 		sig = p->signal;
 
-		thread_group_cputime(p, &cputime);
-		res.cutime = cputime_add(cputime.utime, sig->cutime);
-		res.cstime = cputime_add(cputime.stime, sig->cstime);
+		thread_group_times(p, &tgutime, &tgstime);
+		res.cutime = cputime_add(tgutime, sig->cutime);
+		res.cstime = cputime_add(tgstime, sig->cstime);
 		res.cgtime = cputime_add(p->gtime,
 					 cputime_add(sig->gtime, sig->cgtime));
 		res.cmin_flt = p->min_flt + sig->min_flt + sig->cmin_flt;
@@ -357,13 +345,17 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 				sig->inblock + sig->cinblock;
 		res.coublock = task_io_get_oublock(p) +
 				sig->oublock + sig->coublock;
+		maxrss = max(sig->maxrss, sig->cmaxrss);
+		res.cmaxrss = maxrss;
 		res.ioac = p->ioac;
 		task_io_accounting_add(&res.ioac, &sig->ioac);
 	}
 
-	retval = wait_task_zombie(p, req->options,
-				  &res.info,
-				  &res.status, &res.ru);
+	wo.wo_flags	= req->options;
+	wo.wo_info	= &res.info;
+	wo.wo_stat	= &res.status;
+	wo.wo_rusage	= &res.ru;
+	retval = wait_task_zombie(&wo, p);
 	if (!retval)
 		read_unlock(&tasklist_lock);
 
@@ -384,16 +376,15 @@ err_cancel:
 	rpc_cancel(desc);
 }
 
-int krg_wait_task_zombie(pid_t pid, kerrighed_node_t zombie_location,
-			 int options,
-			 struct siginfo __user *infop,
-			 int __user *stat_addr, struct rusage __user *ru)
+int krg_wait_task_zombie(struct wait_opts *wo,
+			 struct remote_child *child)
 {
 	struct wait_task_request req;
 	int retval;
 	struct wait_task_result res;
 	struct rpc_desc *desc;
-	bool noreap = options & WNOWAIT;
+	struct siginfo __user *infop;
+	bool noreap = wo->wo_flags & WNOWAIT;
 	int err;
 
 	/*
@@ -401,16 +392,16 @@ int krg_wait_task_zombie(pid_t pid, kerrighed_node_t zombie_location,
 	 * change afterwards, but this will be needed to support hot removal of
 	 * nodes with zombie migration.
 	 */
-	BUG_ON(!krgnode_online(zombie_location));
+	BUG_ON(!krgnode_online(child->node));
 
-	desc = rpc_begin(PROC_WAIT_TASK_ZOMBIE, zombie_location);
+	desc = rpc_begin(PROC_WAIT_TASK_ZOMBIE, child->node);
 	if (!desc)
 		return -ENOMEM;
 
-	req.pid = pid;
+	req.pid = child->pid;
 	/* True as long as no remote ptrace is allowed */
 	req.real_parent_tgid = task_tgid_knr(current);
-	req.options = options;
+	req.options = wo->wo_flags;
 	err = rpc_pack_type(desc, req);
 	if (err)
 		goto err_cancel;
@@ -441,16 +432,19 @@ int krg_wait_task_zombie(pid_t pid, kerrighed_node_t zombie_location,
 			psig->cnivcsw += res.cnivcsw;
 			psig->cinblock += res.cinblock;
 			psig->coublock += res.coublock;
+			psig->cmaxrss = res.cmaxrss;
 			task_io_accounting_add(&psig->ioac, &res.ioac);
 			spin_unlock_irq(&current->sighand->siglock);
 		}
 
 		retval = 0;
-		if (ru)
-			retval = copy_to_user(ru, &res.ru, sizeof(res.ru)) ?
+		if (wo->wo_rusage)
+			retval = copy_to_user(wo->wo_rusage, &res.ru, sizeof(res.ru)) ?
 				-EFAULT : 0;
-		if (!retval && stat_addr && likely(!noreap))
-			retval = put_user(res.status, stat_addr);
+		if (!retval && wo->wo_stat && likely(!noreap))
+			retval = put_user(res.status, wo->wo_stat);
+
+		infop = wo->wo_info;
 		if (!retval && infop) {
 			retval = put_user(res.info.si_signo, &infop->si_signo);
 			if (!retval)
@@ -470,7 +464,7 @@ int krg_wait_task_zombie(pid_t pid, kerrighed_node_t zombie_location,
 						  &infop->si_uid);
 		}
 		if (!retval)
-			retval = pid;
+			retval = child->pid;
 	}
 out:
 	rpc_end(desc, 0);
@@ -514,7 +508,7 @@ krg_prepare_exit_ptrace_task(struct task_struct *tracer,
 
 	krg_set_child_ptraced(obj, task, 0);
 
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 	BUG_ON(!task->ptrace);
 
 	if (obj && task->task_obj) {
@@ -578,7 +572,7 @@ void *krg_prepare_exit_notify(struct task_struct *task)
 			__krg_task_writelock(task);
 
 #ifdef CONFIG_KRG_EPM
-		write_lock_irq(&tasklist_lock);
+		tasklist_write_lock_irq();
 		if (cookie) {
 			/* Make sure that task_obj is up to date */
 			krg_update_parents(task, parent_pid, real_parent_pid);
@@ -705,7 +699,7 @@ static void handle_notify_remote_child_reaper(struct rpc_desc *desc,
 	bool release = false;
 
 	krg_task_writelock(msg->zombie_pid);
-	write_lock_irq(&tasklist_lock);
+	tasklist_write_lock_irq();
 
 	zombie = find_task_by_kpid(msg->zombie_pid);
 	BUG_ON(!zombie);

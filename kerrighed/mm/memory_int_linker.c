@@ -75,7 +75,6 @@ link:
 		return r;
 
 	/*** Make the VMA a kddm set VMA ***/
-
 	BUG_ON(vma->initial_vm_ops == &anon_memory_kddm_vmops);
 	if (vma->vm_ops == NULL)
 		vma->initial_vm_ops = &null_vm_ops;
@@ -139,14 +138,6 @@ do_prefetch:
 /*                    MEMORY INTERFACE LINKER OPERATIONS                     */
 /*                                                                           */
 /*****************************************************************************/
-
-//Codex Function Duplicate include/linux/mm.h:480
-// static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
-// {
-// 	if (likely(vma->vm_flags & VM_WRITE))
-// 		pte = pte_mkwrite(pte);
-// 	return pte;
-// }
 
 void map_kddm_page(struct vm_area_struct *vma,
 		   unsigned long address,
@@ -226,8 +217,16 @@ int anon_memory_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 		 * load it */
 
 		ret = vma->initial_vm_ops->fault(vma, vmf);
-		if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE)))
+		if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE |
+				    VM_FAULT_RETRY)))
 			goto exit_error;
+
+		if (unlikely(PageHWPoison(vmf->page))) {
+			if (ret & VM_FAULT_LOCKED)
+				unlock_page(vmf->page);
+			ret = VM_FAULT_HWPOISON;
+			goto exit_error;
+		}
 
 		/* Copy the cache page into an anonymous page (copy on write
 		 * will be done later on)

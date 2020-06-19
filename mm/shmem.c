@@ -68,6 +68,31 @@ static struct vfsmount *shm_mnt;
 #include <asm/uaccess.h>
 #include <asm/pgtable.h>
 
+#ifdef CONFIG_KRG_EPM
+#include <kerrighed/krgsyms.h>
+#endif
+
+/*
+ * The maximum size of a shmem/tmpfs file is limited by the maximum size of
+ * its triple-indirect swap vector - see illustration at shmem_swp_entry().
+ *
+ * With 4kB page size, maximum file size is just over 2TB on a 32-bit kernel,
+ * but one eighth of that on a 64-bit kernel.  With 8kB page size, maximum
+ * file size is just over 4TB on a 64-bit kernel, but 16TB on a 32-bit kernel,
+ * MAX_LFS_FILESIZE being then more restrictive than swap vector layout.
+ *
+ * We use / and * instead of shifts in the definitions below, so that the swap
+ * vector can be tested with small even values (e.g. 20) for ENTRIES_PER_PAGE.
+ */
+#define ENTRIES_PER_PAGE (PAGE_CACHE_SIZE/sizeof(unsigned long))
+#define ENTRIES_PER_PAGEPAGE ((unsigned long long)ENTRIES_PER_PAGE*ENTRIES_PER_PAGE)
+
+#define SHMSWP_MAX_INDEX (SHMEM_NR_DIRECT + (ENTRIES_PER_PAGEPAGE/2) * (ENTRIES_PER_PAGE+1))
+#define SHMSWP_MAX_BYTES (SHMSWP_MAX_INDEX << PAGE_CACHE_SHIFT)
+
+#define SHMEM_MAX_BYTES  min_t(unsigned long long, SHMSWP_MAX_BYTES, MAX_LFS_FILESIZE)
+#define SHMEM_MAX_INDEX  ((unsigned long)((SHMEM_MAX_BYTES+1) >> PAGE_CACHE_SHIFT))
+
 #define BLOCKS_PER_PAGE  (PAGE_CACHE_SIZE/512)
 #define VM_ACCT(size)    (PAGE_CACHE_ALIGN(size) >> PAGE_SHIFT)
 
@@ -111,10 +136,6 @@ static inline struct shmem_sb_info *SHMEM_SB(struct super_block *sb)
 {
 	return sb->s_fs_info;
 }
-
-#ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
-#endif
 
 /*
  * shmem_file_setup pre-accounts the whole fixed size of a VM object,
@@ -161,11 +182,7 @@ const struct file_operations shmem_file_operations;
 static const struct inode_operations shmem_inode_operations;
 static const struct inode_operations shmem_dir_inode_operations;
 static const struct inode_operations shmem_special_inode_operations;
-#ifdef CONFIG_KRG_EPM
 static struct vm_operations_struct shmem_vm_ops;
-#else
-static const struct vm_operations_struct shmem_vm_ops;
-#endif
 
 static struct backing_dev_info shmem_backing_dev_info  __read_mostly = {
 	.ra_pages	= 0,	/* No readahead */
@@ -2264,11 +2281,7 @@ static const struct super_operations shmem_ops = {
 	.put_super	= shmem_put_super,
 };
 
-#ifdef CONFIG_KRG_EPM
 static struct vm_operations_struct shmem_vm_ops = {
-#else
-static const struct vm_operations_struct shmem_vm_ops = {
-#endif
 	.fault		= shmem_fault,
 #ifdef CONFIG_NUMA
 	.set_policy     = shmem_set_policy,
@@ -2309,7 +2322,7 @@ int __init shmem_init(void)
 	}
 
 #ifdef CONFIG_KRG_EPM
-	error = krgsyms_register(KRGSYMS_VM_OPS_SHMEM, &shmem_vm_ops);
+	error = krgsyms_register(KRGSYMS_VM_OPS_SHMEM, (void *)&shmem_vm_ops);
 	if (error) {
 		printk(KERN_ERR "Could not register shmem_vm_ops\n");
 		goto out1_1;
@@ -2317,7 +2330,7 @@ int __init shmem_init(void)
 #endif
 
 	shm_mnt = vfs_kern_mount(&shmem_fs_type, MS_NOUSER,
-				 shmem_fs_type.name, NULL);
+				shmem_fs_type.name, NULL);
 	if (IS_ERR(shm_mnt)) {
 		error = PTR_ERR(shm_mnt);
 		printk(KERN_ERR "Could not kern_mount tmpfs\n");

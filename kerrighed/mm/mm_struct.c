@@ -10,6 +10,7 @@
 #include <linux/swap.h>
 #include <linux/swapops.h>
 #include <linux/proc_fs.h>
+#include <linux/binfmts.h>
 #include <asm/mmu_context.h>
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
@@ -61,7 +62,7 @@ int reinit_mm(struct mm_struct *mm)
 	mm->map_count = 0;
 	cpus_clear (mm->cpu_vm_mask);
 	mm->mm_rb = RB_ROOT;
-	mm->nr_ptes = 0;
+	atomic_long_set(&mm->nr_ptes, 0);
 	mm->token_priority = 0;
 	mm->last_interval = 0;
 	/* Insert the new mm struct in the list of active mm */
@@ -195,12 +196,15 @@ struct mm_struct *krg_dup_mm(struct task_struct *tsk, struct mm_struct *src_mm)
 	/* The duplicated mm does not yet belong to any real process */
 	atomic_set(&mm->mm_ltasks, 0);
 
-        err = __dup_mmap(mm, src_mm, 1);
-        if (err)
-                goto exit_put_mm;
+	err = __dup_mmap(mm, src_mm, 1);
+	if (err)
+		goto exit_put_mm;
 
-        mm->hiwater_rss = get_mm_rss(mm);
-        mm->hiwater_vm = mm->total_vm;
+	mm->hiwater_rss = get_mm_rss(mm);
+	mm->hiwater_vm = mm->total_vm;
+
+	if (mm->binfmt && !try_module_get(mm->binfmt->module))
+		goto exit_put_mm;
 
 	err = init_anon_vma_kddm_set(tsk, mm);
 	if (err)
@@ -220,22 +224,24 @@ struct mm_struct *krg_dup_mm(struct task_struct *tsk, struct mm_struct *src_mm)
 	 * create_mm_struct_object) */
 	atomic_dec(&mm->mm_users);
 
-        return mm;
+	return mm;
 
 exit_put_mm:
-        mmput(mm);
+	/* don't put binfmt in mmput, we haven't got module yet */
+	mm->binfmt = NULL;
+	mmput(mm);
 
 fail_nomem:
-        return ERR_PTR(err);
+	return ERR_PTR(err);
 
 fail_nocontext:
-        /*
-         * If init_new_context() failed, we cannot use mmput() to free the mm
-         * because it calls destroy_context()
-         */
+	/*
+	 * If init_new_context() failed, we cannot use mmput() to free the mm
+	 * because it calls destroy_context()
+	 */
 	pgd_free(mm, mm->pgd);
-        free_mm(mm);
-        return ERR_PTR(err);
+	free_mm(mm);
+	return ERR_PTR(err);
 }
 
 
@@ -373,7 +379,7 @@ void clean_up_mm_struct (struct mm_struct *mm)
 
 		if (!anon_vma(vma)) {
 			detach_vmas_to_be_unmapped(mm, vma, prev, vma->vm_end);
-			inno_unmap_region(mm, vma, prev, vma->vm_start,
+			unmap_region(mm, vma, prev, vma->vm_start,
 				     vma->vm_end);
 			remove_vma_list(mm, vma);
 		}
@@ -421,7 +427,7 @@ static void kcb_mm_release(struct mm_struct *mm, int notify)
 
 void krg_do_mmap_region(struct vm_area_struct *vma,
 			unsigned long flags,
-			unsigned int vm_flags)
+			unsigned long long vm_flags)
 {
 	struct mm_struct *mm = vma->vm_mm;
 	struct mm_mmap_msg msg;

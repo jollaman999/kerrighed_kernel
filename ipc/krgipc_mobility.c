@@ -126,7 +126,7 @@ struct file *reopen_shm_file_entry_from_krg_desc(struct task_struct *task,
 		err = -ENOMEM;
 		goto out_free;
 	}
-	ima_shm_check(file);
+	ima_counts_get(file);
 
 	file->private_data = sfd;
 	file->f_mapping = shp->shm_file->f_mapping;
@@ -1204,7 +1204,7 @@ int export_full_sysv_shm(ghost_t *ghost, int shmid)
 
 	flag = shp->shm_perm.mode;
 #ifdef CONFIG_HUGETLB_PAGE
-	if (is_file_shm_hugepages(shp->shm_file))
+	if (shp->shm_file->f_op == &hugetlbfs_file_operations)
 		flag |= SHM_HUGETLB;
 #endif
 	/* SHM_NORESERVE not handled */

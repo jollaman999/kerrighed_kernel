@@ -399,7 +399,7 @@ static int export_one_vma (struct epm_action *action,
 	/* Define and export the vm_ops type of the vma */
 
 	r = -EPERM;
-	vm_ops_type = krgsyms_export (vma->vm_ops);
+	vm_ops_type = krgsyms_export((void *)vma->vm_ops);
 	if (vma->vm_ops && vm_ops_type == KRGSYMS_UNDEF)
 		goto out;
 
@@ -408,7 +408,7 @@ static int export_one_vma (struct epm_action *action,
 	    && vma->vm_ops && vm_ops_type == KRGSYMS_VM_OPS_SHMEM)
 		goto out;
 
-	initial_vm_ops_type = krgsyms_export (vma->initial_vm_ops);
+	initial_vm_ops_type = krgsyms_export((void *)vma->initial_vm_ops);
 	if (vma->initial_vm_ops && initial_vm_ops_type == KRGSYMS_UNDEF)
 		goto out;
 
@@ -904,9 +904,9 @@ int reconcile_vmas(struct mm_struct *mm, struct vm_area_struct *vma,
                 if (vma->vm_flags & VM_EXECUTABLE)
                         added_exe_file_vma(mm);
 		old->initial_vm_ops = vma->initial_vm_ops;
-		anon_vma_lock(old->anon_vma);
+		vma_lock_anon_vma(old);
 		__vma_link_file(old);
-		anon_vma_unlock(old->anon_vma);
+		vma_unlock_anon_vma(old);
 	}
 
 	remove_vma(vma);
@@ -940,12 +940,12 @@ static int import_one_vma (struct epm_action *action,
 	krgsyms_val_t vm_ops_type, initial_vm_ops_type;
 	int r;
 
-	vma = kmem_cache_alloc (vm_area_cachep, GFP_KERNEL);
+	vma = kmem_cache_alloc(vm_area_cachep, GFP_KERNEL);
 	if (!vma)
 		return -ENOMEM;
 
 	/* Import the vm_area_struct */
-	r = ghost_read (ghost, vma, sizeof (struct vm_area_struct));
+	r = ghost_read(ghost, vma, sizeof (struct vm_area_struct));
 	if (r)
 		goto err_vma;
 
@@ -953,20 +953,20 @@ static int import_one_vma (struct epm_action *action,
 
 #ifdef CONFIG_KRG_DVFS
 	/* Import the associated file */
-	r = import_vma_file (action, ghost, tsk, vma, file_table);
+	r = import_vma_file(action, ghost, tsk, vma, file_table);
 	if (r)
 		goto err_vma;
 #endif
 
 	/* Import the vm_ops type of the vma */
-	r = ghost_read (ghost, &vm_ops_type, sizeof (krgsyms_val_t));
+	r = ghost_read(ghost, &vm_ops_type, sizeof (krgsyms_val_t));
 	if (r)
 		goto err_vm_ops;
-	r = ghost_read (ghost, &initial_vm_ops_type, sizeof (krgsyms_val_t));
+	r = ghost_read(ghost, &initial_vm_ops_type, sizeof (krgsyms_val_t));
 	if (r)
 		goto err_vm_ops;
 
-	vma->vm_ops = krgsyms_import (vm_ops_type);
+	vma->vm_ops = krgsyms_import(vm_ops_type);
 	vma->initial_vm_ops = krgsyms_import (initial_vm_ops_type);
 
 	BUG_ON (vma->vm_ops == &generic_file_vm_ops && vma->vm_file == NULL);
@@ -1046,7 +1046,7 @@ static int import_vmas (struct epm_action *action,
 		goto exit;
 
 	for (i = 0; i < nr_vma; i++) {
-		r = import_one_vma (action, ghost, tsk, &last_end, file_table);
+		r = import_one_vma(action, ghost, tsk, &last_end, file_table);
 		if (r)
 			/* import_mm_struct will cleanup */
 			goto exit;
@@ -1152,6 +1152,7 @@ static int import_mm_counters(struct epm_action *action,
 	mm->reserved_vm = src_mm->reserved_vm;
 	mm->brk = src_mm->brk;
 	mm->flags = src_mm->flags;
+	mm->oom_disable_count = src_mm->oom_disable_count;
 
 	r = ghost_read(ghost, &mm->mm_tasks, sizeof(atomic_t));
 
@@ -1291,7 +1292,7 @@ int import_mm_struct (struct epm_action *action,
 		goto err;
 #endif
 
-	r = import_vmas (action, ghost, tsk);
+	r = import_vmas(action, ghost, tsk);
 	if (r < 0)
 		goto err;
 

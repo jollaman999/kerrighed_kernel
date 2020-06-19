@@ -934,10 +934,12 @@ static void __init cpu_set_bug_bits(struct cpuinfo_x86 *c)
 	setup_force_cpu_bug(X86_BUG_CPU_MELTDOWN);
 	kernel_page_global = 0;
 
+#ifndef CONFIG_KRG_EPM
 	if (cpu_matches(NO_L1TF))
 		return;
 
 	setup_force_cpu_bug(X86_BUG_L1TF);
+#endif
 }
 
 /*

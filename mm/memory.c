@@ -63,10 +63,12 @@
 #include <asm/tlb.h>
 #include <asm/tlbflush.h>
 #include <asm/pgtable.h>
+
+#include <trace/events/kmem.h>
+
 #ifdef CONFIG_KRG_MM
 #include <kerrighed/page_table_tree.h>
 #endif
-#include <trace/events/kmem.h>
 
 #include "internal.h"
 
@@ -159,7 +161,7 @@ static void free_pte_range(struct mmu_gather *tlb, pmd_t *pmd,
 	pgtable_t token = pmd_pgtable(*pmd);
 	pmd_clear(pmd);
 	pte_free_tlb(tlb, token, addr);
-	tlb->mm->nr_ptes--;
+	atomic_long_dec(&tlb->mm->nr_ptes);
 }
 
 static inline void free_pmd_range(struct mmu_gather *tlb, pud_t *pud,
@@ -193,6 +195,7 @@ static inline void free_pmd_range(struct mmu_gather *tlb, pud_t *pud,
 	pmd = pmd_offset(pud, start);
 	pud_clear(pud);
 	pmd_free_tlb(tlb, pmd, start);
+	mm_dec_nr_pmds(tlb->mm);
 }
 
 static inline void free_pud_range(struct mmu_gather *tlb, pgd_t *pgd,
@@ -354,7 +357,7 @@ int __pte_alloc(struct mm_struct *mm, struct vm_area_struct *vma,
 	spin_lock(&mm->page_table_lock);
 	wait_split_huge_page = 0;
 	if (likely(pmd_none(*pmd))) {	/* Has another populated it ? */
-		mm->nr_ptes++;
+		atomic_long_inc(&mm->nr_ptes);
 		pmd_populate(mm, pmd, new);
 		new = NULL;
 	} else if (unlikely(pmd_trans_splitting(*pmd)))
@@ -450,9 +453,15 @@ static void print_bad_pte(struct vm_area_struct *vma, unsigned long addr,
 		page, (void *)page->flags, page_count(page),
 		page_mapcount(page), page->mapping, page->index);
 	}
+#ifdef CONFIG_KRG_MM
+	printk(KERN_ALERT
+		"addr:%p vm_flags:%08llx anon_vma:%p mapping:%p index:%lx\n",
+		(void *)addr, vma->vm_flags, vma->anon_vma, mapping, index);
+#else
 	printk(KERN_ALERT
 		"addr:%p vm_flags:%08lx anon_vma:%p mapping:%p index:%lx\n",
 		(void *)addr, vma->vm_flags, vma->anon_vma, mapping, index);
+#endif
 	/*
 	 * Choose text because data symbols depend on CONFIG_KALLSYMS_ALL=y
 	 */
@@ -582,9 +591,12 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,
 		unsigned long addr, int *rss)
 #endif
-
 {
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags = vma->vm_flags;
+#else
 	unsigned long vm_flags = vma->vm_flags;
+#endif
 	pte_t pte = *src_pte;
 	struct page *page;
 
@@ -662,15 +674,14 @@ out_set_pte:
 }
 
 #ifdef CONFIG_KRG_MM
-static int copy_pte_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
-		   pmd_t *dst_pmd, pmd_t *src_pmd, struct vm_area_struct *vma,
-		   unsigned long addr, unsigned long end,int anon_only)
+int copy_pte_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pmd_t *dst_pmd, pmd_t *src_pmd, struct vm_area_struct *vma,
+		unsigned long addr, unsigned long end, int anon_only)
 #else
-static int copy_pte_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
-		   pmd_t *dst_pmd, pmd_t *src_pmd, struct vm_area_struct *vma,
-		   unsigned long addr, unsigned long end)
+int copy_pte_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pmd_t *dst_pmd, pmd_t *src_pmd, struct vm_area_struct *vma,
+		unsigned long addr, unsigned long end)
 #endif
-
 {
 	pte_t *orig_src_pte, *orig_dst_pte;
 	pte_t *src_pte, *dst_pte;
@@ -707,12 +718,12 @@ again:
 			continue;
 		}
 #ifdef CONFIG_KRG_MM
-		entry.val = copy_one_pte(dst_mm, src_mm, dst_pte, src_pte, vma, addr, rss,
-			     anon_only);
+		entry.val = copy_one_pte(dst_mm, src_mm, dst_pte, src_pte,
+						vma, addr, rss, anon_only);
 #else
-		entry.val = copy_one_pte(dst_mm, src_mm, dst_pte, src_pte,vma, addr, rss);
+		entry.val = copy_one_pte(dst_mm, src_mm, dst_pte, src_pte,
+							vma, addr, rss);
 #endif
-
 		if (entry.val)
 			break;
 		progress += 8;
@@ -1464,7 +1475,11 @@ int __get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
 		     struct page **pages, struct vm_area_struct **vmas)
 {
 	int i;
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags;
+#else
 	unsigned long vm_flags;
+#endif
 
 	if (nr_pages <= 0)
 		return 0;
@@ -2831,14 +2846,13 @@ EXPORT_SYMBOL(unmap_mapping_range);
  */
 #ifdef CONFIG_KRG_MM
 int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
-		unsigned long address, pte_t *page_table, pmd_t *pmd,
-		unsigned int flags, pte_t orig_pte)
+		 unsigned long address, pte_t *page_table, pmd_t *pmd,
+		 unsigned int flags, pte_t orig_pte)
 #else
 static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 		unsigned long address, pte_t *page_table, pmd_t *pmd,
 		unsigned int flags, pte_t orig_pte)
 #endif
-
 {
 	spinlock_t *ptl;
 	struct page *page = NULL, *swapcache = NULL;
@@ -3155,12 +3169,17 @@ static int __do_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 			krg_check_vma_link(vma);
 	}
 #endif
-
 	ret = vma->vm_ops->fault(vma, &vmf);
 	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE |
 			    VM_FAULT_RETRY)))
 		return ret;
-		
+
+	if (unlikely(PageHWPoison(vmf.page))) {
+		if (ret & VM_FAULT_LOCKED)
+			unlock_page(vmf.page);
+		return VM_FAULT_HWPOISON;
+	}
+
 #ifdef CONFIG_KRG_MM
 	/*
 	 * If we are in a KDDM linked VMA, all the mapping job has been done
@@ -3169,12 +3188,6 @@ static int __do_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 	if (vma->vm_flags & VM_KDDM)
 		return ret;
 #endif
-
-	if (unlikely(PageHWPoison(vmf.page))) {
-		if (ret & VM_FAULT_LOCKED)
-			unlock_page(vmf.page);
-		return VM_FAULT_HWPOISON;
-	}
 
 	/*
 	 * For consistency in subsequent calls, make the faulted page always
@@ -3598,15 +3611,17 @@ int __pmd_alloc(struct mm_struct *mm, pud_t *pud, unsigned long address)
 
 	spin_lock(&mm->page_table_lock);
 #ifndef __ARCH_HAS_4LEVEL_HACK
-	if (pud_present(*pud))		/* Another has populated it */
-		pmd_free(mm, new);
-	else
+	if (!pud_present(*pud)) {
+		mm_inc_nr_pmds(mm);
 		pud_populate(mm, pud, new);
-#else
-	if (pgd_present(*pud))		/* Another has populated it */
+	} else	/* Another has populated it */
 		pmd_free(mm, new);
-	else
+#else
+	if (!pgd_present(*pud)) {
+		mm_inc_nr_pmds(mm);
 		pgd_populate(mm, pud, new);
+	} else /* Another has populated it */
+		pmd_free(mm, new);
 #endif /* __ARCH_HAS_4LEVEL_HACK */
 	spin_unlock(&mm->page_table_lock);
 	return 0;

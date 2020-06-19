@@ -27,8 +27,13 @@ static unsigned long page_table_shareable(struct vm_area_struct *svma,
 	unsigned long s_end = sbase + PUD_SIZE;
 
 	/* Allow segments to share if only one is marked locked */
+#ifdef CONFIG_KRG_MM
+	unsigned long long vm_flags = vma->vm_flags & ~VM_LOCKED;
+	unsigned long long svm_flags = svma->vm_flags & ~VM_LOCKED;
+#else
 	unsigned long vm_flags = vma->vm_flags & ~VM_LOCKED;
 	unsigned long svm_flags = svma->vm_flags & ~VM_LOCKED;
+#endif
 
 	/*
 	 * match the virtual addresses, permission and the alignment of the
@@ -83,6 +88,7 @@ static void huge_pmd_share(struct mm_struct *mm, unsigned long addr, pud_t *pud,
 		if (saddr) {
 			spte = huge_pte_offset(svma->vm_mm, saddr);
 			if (spte) {
+				mm_inc_nr_pmds(mm);
 				get_page(virt_to_page(spte));
 				break;
 			}
@@ -96,8 +102,10 @@ static void huge_pmd_share(struct mm_struct *mm, unsigned long addr, pud_t *pud,
 	if (pud_none(*pud)) {
 		pud_populate(mm, pud, (pmd_t *)((unsigned long)spte & PAGE_MASK));
 		*shared = true;
-	} else
+	} else {
 		put_page(virt_to_page(spte));
+		mm_inc_nr_pmds(mm);
+	}
 	spin_unlock(&mm->page_table_lock);
 out:
 	spin_unlock(&mapping->i_mmap_lock);
@@ -126,6 +134,7 @@ int huge_pmd_unshare(struct mm_struct *mm, unsigned long *addr, pte_t *ptep)
 
 	pud_clear(pud);
 	put_page(virt_to_page(ptep));
+	mm_dec_nr_pmds(mm);
 	*addr = ALIGN(*addr, HPAGE_SIZE * PTRS_PER_PTE) - HPAGE_SIZE;
 	return 1;
 }

@@ -512,7 +512,8 @@ static void lru_deactivate(struct page *page, struct zone *zone)
 	if (active)
 		__count_vm_event(PGDEACTIVATE);
 #ifdef CONFIG_KRG_MM
-	update_page_reclaim_stat(zone, page, file,  is_kddm_lru(lru), 0);
+	update_page_reclaim_stat(zone, page, file,
+				 page_is_migratable(page), 0);
 #else
 	update_page_reclaim_stat(zone, page, file, 0);
 #endif
@@ -799,7 +800,8 @@ void lru_add_page_tail(struct zone* zone,
 			lru = LRU_INACTIVE_ANON;
 		}
 #ifdef CONFIG_KRG_MM
-		update_page_reclaim_stat(zone, page_tail, file, is_kddm_lru(lru), active);
+		update_page_reclaim_stat(zone, page_tail, file,
+					page_is_migratable(page), active);
 #else
 		update_page_reclaim_stat(zone, page_tail, file, active);
 #endif
@@ -841,6 +843,9 @@ void ____pagevec_lru_add(struct pagevec *pvec, enum lru_list lru)
 		struct page *page = pvec->pages[i];
 		struct zone *pagezone = page_zone(page);
 		int file;
+#ifdef CONFIG_KRG_MM
+		int kddm;
+#endif
 		int active;
 
 		if (pagezone != zone) {
@@ -858,11 +863,14 @@ void ____pagevec_lru_add(struct pagevec *pvec, enum lru_list lru)
 		SetPageLRU(page);
 		active = is_active_lru(lru);
 		file = is_file_lru(lru);
+#ifdef CONFIG_KRG_MM
+		kddm = is_kddm_lru(lru);
+#endif
 		if (active)
 			SetPageActive(page);
 #ifdef CONFIG_KRG_MM
 		update_page_reclaim_stat(zone, page, file,
-					 is_kddm_lru(lru), active);
+					 kddm, active);
 #else
 		update_page_reclaim_stat(zone, page, file, active);
 #endif

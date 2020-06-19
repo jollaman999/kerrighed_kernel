@@ -634,11 +634,6 @@ struct signal_struct {
 	 */
 	struct cpu_itimer it[2];
 
-#ifdef CONFIG_KRG_PROC
-	cputime_t it_prof_expires, it_virt_expires;
-	cputime_t it_prof_incr, it_virt_incr;
-#endif
-
 	/*
 	 * Thread group totals for process CPU timers.
 	 * See thread_group_cputimer(), et al, for details.
@@ -1369,13 +1364,25 @@ enum perf_event_task_context {
 	perf_nr_task_contexts,
 };
 
-struct task_struct {
+struct wait_opts {
+	enum pid_type		wo_type;
+	int			wo_flags;
+	struct pid		*wo_pid;
 #ifdef CONFIG_KRG_EPM
-	struct linux_binfmt *binfmt;
-	struct mutex cred_exec_mutex;	/* execve vs ptrace cred calculation mutex */
-
+	pid_t			wo_upid;
 #endif
 
+	struct siginfo __user	*wo_info;
+	int __user		*wo_stat;
+	struct rusage __user	*wo_rusage;
+
+#ifndef CONFIG_KRG_EPM
+	wait_queue_t		child_wait;
+#endif
+	int			notask_error;
+};
+
+struct task_struct {
 	volatile long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
 	void *stack;
 	atomic_t usage;
@@ -2478,9 +2485,7 @@ extern void exit_itimers(struct signal_struct *);
 extern void flush_itimer_signals(void);
 
 #ifdef CONFIG_KRG_EPM
-int wait_task_zombie(struct task_struct *p, int options,
-				    struct siginfo __user *infop,
-				    int __user *stat_addr, struct rusage __user *ru);
+int wait_task_zombie(struct wait_opts *wo, struct task_struct *p);
 #endif
 extern NORET_TYPE void do_group_exit(int);
 
@@ -2510,6 +2515,7 @@ int krg_do_fork(unsigned long clone_flags,
 bool in_krg_do_fork(void);
 /* vfork with remote child */
 void krg_vfork_done(struct completion *vfork_done);
+extern spinlock_t krg_vfork_done_lock;
 #endif /* CONFIG_KRG_EPM */
 
 extern void __set_task_comm(struct task_struct *tsk, char *from, bool exec);

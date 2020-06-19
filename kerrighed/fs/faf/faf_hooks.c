@@ -391,7 +391,7 @@ ssize_t krg_faf_readv(struct file *file, const struct iovec __user *vec,
 	int err;
 
 	ret.ret = rw_copy_check_uvector(READ, vec, vlen,
-					ARRAY_SIZE(iovstack), iovstack, &iov,1);
+					ARRAY_SIZE(iovstack), iovstack, &iov, 1);
 	if (ret.ret < 0)
 		return ret.ret;
 	iovcnt = vlen;
@@ -455,7 +455,7 @@ ssize_t krg_faf_writev(struct file *file, const struct iovec __user *vec,
 	int err;
 
 	ret.ret = rw_copy_check_uvector(WRITE, vec, vlen,
-					ARRAY_SIZE(iovstack), iovstack, &iov,1);
+					ARRAY_SIZE(iovstack), iovstack, &iov, 1);
 	if (ret.ret < 0)
 		return ret.ret;
 	iovcnt = vlen;
@@ -586,6 +586,10 @@ long krg_faf_fcntl (struct file *file,
 	    && copy_from_user(&msg.flock,
 			      (struct flock __user *) arg, sizeof(msg.flock)))
 			goto out;
+	else if ((cmd == F_GETOWN_EX || cmd == F_SETOWN_EX)
+	    && copy_from_user(&msg.owner,
+			      (struct f_owner_ex __user *) arg, sizeof(msg.owner)))
+			goto out;
 	else
 		msg.arg = arg;
 
@@ -608,14 +612,24 @@ long krg_faf_fcntl (struct file *file,
 	if (unlikely(err))
 		goto cancel;
 
-	if (!r && cmd == F_GETLK) {
-		err = rpc_unpack_type(desc, msg.flock);
-		if (unlikely(err))
-			goto cancel;
-		r = -EFAULT;
-		if (!copy_to_user((struct flock __user *) arg,
-				  &msg.flock, sizeof(msg.flock)))
-			r = 0;
+	if (!r) {
+		if (cmd == F_GETLK) {
+			err = rpc_unpack_type(desc, msg.flock);
+			if (unlikely(err))
+				goto cancel;
+			r = -EFAULT;
+			if (!copy_to_user((struct flock __user *) arg,
+					&msg.flock, sizeof(msg.flock)))
+				r = 0;
+		} else if (cmd == F_GETOWN_EX) {
+			err = rpc_unpack_type(desc, msg.owner);
+			if (unlikely(err))
+				goto cancel;
+			r = -EFAULT;
+			if (!copy_to_user((struct f_owner_ex __user *) arg,
+					&msg.owner, sizeof(msg.owner)))
+				r = 0;
+		}
 	}
 
 out_end:
@@ -765,8 +779,6 @@ long krg_faf_fstatfs(struct file *file,
 
 	*statfsbuf = buffer;
 
-	if (copy_to_user(statfsbuf, &buffer, sizeof(buffer)))
-			return -EFAULT;
 exit:
 	return r;
 err_rpc:

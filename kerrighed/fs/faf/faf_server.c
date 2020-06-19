@@ -506,6 +506,8 @@ void handle_faf_fcntl (struct rpc_desc* desc,
 
 	if (msg->cmd == F_GETLK || msg->cmd == F_SETLK || msg->cmd == F_SETLKW)
 		arg = (unsigned long) &msg->flock;
+	else if (msg->cmd == F_GETOWN_EX || msg->cmd == F_SETOWN_EX)
+		arg = (unsigned long) &msg->owner;
 	else
 		arg = msg->arg;
 
@@ -527,10 +529,16 @@ void handle_faf_fcntl (struct rpc_desc* desc,
 	if (unlikely(err))
 		goto cancel;
 
-	if (!r && msg->cmd == F_GETLK) {
-		err = rpc_pack_type(desc, msg->flock);
-		if (unlikely(err))
-			goto cancel;
+	if (!r) {
+		if (msg->cmd == F_GETLK) {
+			err = rpc_pack_type(desc, msg->flock);
+			if (unlikely(err))
+				goto cancel;
+		} else if (msg->cmd == F_GETOWN_EX) {
+			err = rpc_pack_type(desc, msg->owner);
+			if (unlikely(err))
+				goto cancel;
+		}
 	}
 
 	return;
@@ -919,7 +927,7 @@ static void faf_polled_fd_node_free(struct faf_polled_fd *polled_fd,
 }
 
 static int faf_polled_fd_add(kerrighed_node_t client,
-			     int server_fd,
+			     unsigned int server_fd,
 			     unsigned long dvfs_id)
 {
 	struct faf_polled_fd *polled_fd;
@@ -975,7 +983,7 @@ err_polled_fd:
 }
 
 static int faf_polled_fd_remove(kerrighed_node_t client,
-				int server_fd,
+				unsigned int server_fd,
 				unsigned long dvfs_id)
 {
 	struct dvfs_file_struct *dvfs_file;
@@ -1515,17 +1523,20 @@ int handle_faf_notify_close (struct rpc_desc* desc,
 	struct faf_notify_msg *msg = msgIn;
 	struct file *file;
 
+	spin_lock(&current->files->file_lock);
 	file = fcheck_files(current->files, msg->server_fd);
 	/* Check if the file has been closed locally before we receive the
 	 * notification message.
 	 */
-	if (file == NULL)
-		return 0;
-	if (file->f_objid != msg->objid)
-		return 0;
-	BUG_ON (!(file->f_flags & O_FAF_SRV));
+	if (file && file->f_objid != msg->objid)
+		file = NULL;
+	if (file) {
+		BUG_ON(!(file->f_flags & O_FAF_SRV));
+	}
+	spin_unlock(&current->files->file_lock);
 
-	check_close_faf_srv_file(file);
+	if (file)
+		check_close_faf_srv_file(file);
 
 	return 0;
 }

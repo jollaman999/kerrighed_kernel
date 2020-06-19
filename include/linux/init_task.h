@@ -17,19 +17,6 @@
 
 extern struct files_struct init_files;
 extern struct fs_struct init_fs;
-#ifdef CONFIG_KRG_EPM
-#define INIT_MM_EPM						\
-	.mm_ltasks      = ATOMIC_INIT(1),
-#else
-#define INIT_MM_EPM
-#endif
-
-#ifdef CONFIG_KRG_MM
-#define INIT_MM_MM                                              \
-        .mm_tasks       = ATOMIC_INIT(1),
-#else
-#define INIT_MM_MM
-#endif
 
 #ifdef CONFIG_CGROUPS
 #define INIT_GROUP_RWSEM(sig)						\

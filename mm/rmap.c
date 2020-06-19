@@ -66,6 +66,7 @@
 #include <kddm/object.h>
 #include <kddm/kddm_types.h>
 #endif
+
 #include "internal.h"
 
 #ifndef CONFIG_KRG_MM
@@ -640,7 +641,11 @@ int page_mapped_in_vma(struct page *page, struct vm_area_struct *vma)
  */
 int page_referenced_one(struct page *page, struct vm_area_struct *vma,
 			unsigned long address, unsigned int *mapcount,
+#ifdef CONFIG_KRG_MM
+			unsigned long long *vm_flags)
+#else
 			unsigned long *vm_flags)
+#endif
 {
 	struct mm_struct *mm = vma->vm_mm;
 	int referenced = 0;
@@ -720,7 +725,11 @@ out:
 
 static int page_referenced_anon(struct page *page,
 				struct mem_cgroup *mem_cont,
+#ifdef CONFIG_KRG_MM
+				unsigned long long *vm_flags)
+#else
 				unsigned long *vm_flags)
+#endif
 {
 	unsigned int mapcount;
 	struct anon_vma *anon_vma;
@@ -769,7 +778,11 @@ static int page_referenced_anon(struct page *page,
  */
 static int page_referenced_file(struct page *page,
 				struct mem_cgroup *mem_cont,
+#ifdef CONFIG_KRG_MM
+				unsigned long long *vm_flags)
+#else
 				unsigned long *vm_flags)
+#endif
 {
 	unsigned int mapcount;
 	struct address_space *mapping = page->mapping;
@@ -835,7 +848,11 @@ static int page_referenced_file(struct page *page,
 int page_referenced(struct page *page,
 		    int is_locked,
 		    struct mem_cgroup *mem_cont,
+#ifdef CONFIG_KRG_MM
+		    unsigned long long *vm_flags)
+#else
 		    unsigned long *vm_flags)
+#endif
 {
 	int referenced = 0;
 	int we_locked = 0;
@@ -1242,9 +1259,7 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 			ret = SWAP_FAIL;
 			goto out_unmap;
 		}
-	}
 #ifdef CONFIG_KRG_MM
-	if (TTU_ACTION(flags) != TTU_MIGRATION) {
 		/* Avoid unmap of a page in an address space being inserted in
 		 * a KDDM or in use in the KDDM layer */
 		obj_entry = page->obj_entry;
@@ -1260,8 +1275,8 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 				goto out_unmap;
 			}
 		}
-	}
 #endif
+  	}
 
 	/* Nuke the page table entry. */
 	flush_cache_page(vma, address, page_to_pfn(page));
@@ -1330,10 +1345,12 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 		set_pte_at(mm, address, pte, swp_entry_to_pte(entry));
 	} else
 		dec_mm_counter(mm, file_rss);
+
 #ifdef CONFIG_KRG_MM
 	if (obj_entry)
 		CLEAR_OBJECT_LOCKED(obj_entry);
 #endif
+
 	page_remove_rmap(page);
 	page_cache_release(page);
 
