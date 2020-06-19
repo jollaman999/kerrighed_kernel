@@ -424,20 +424,16 @@ int sys_vfork(struct pt_regs *regs)
 #ifdef CONFIG_KRG_CAP
 	if (can_use_krg_cap(current, CAP_DISTANT_FORK))
 	{
-		restore = can_parent_inherite_krg_cap(current, CAP_DISTANT_FORK);
-		if (restore) {
+		restore = can_parent_use_krg_cap(current, CAP_DISTANT_FORK);
+		if (restore)
 			cap_lower(current->krg_caps.effective, CAP_DISTANT_FORK);
-			cap_lower(current->krg_caps.inheritable_effective, CAP_DISTANT_FORK);
-		}
 #endif
 		retval = krg_do_fork(CLONE_VFORK | SIGCHLD,
 					 regs->sp, regs, 0,
 					 NULL, NULL, 0);
 #ifdef CONFIG_KRG_CAP
-		if (restore) {
+		if (restore)
 			cap_raise(current->krg_caps.effective, CAP_DISTANT_FORK);
-			cap_raise(current->krg_caps.inheritable_effective, CAP_DISTANT_FORK);
-		}
 #endif
 		if (retval > 0)
 			return retval;
