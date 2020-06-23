@@ -67,6 +67,7 @@ struct task_struct;
 struct linux_binprm;
 
 int can_use_krg_cap(struct task_struct *task, int cap);
+int can_parent_inherite_krg_cap(struct task_struct *task, int cap);
 
 void krg_cap_fork(struct task_struct *task, unsigned long clone_flags);
 int krg_cap_prepare_binprm(struct linux_binprm *bprm);

@@ -1,2 +1,13 @@
 *-workspace
 .vscode
+tags
+cscope.*
+.config.old
+.version
+config*
+*.o
+*.cmd
+*.bak
+*.bakup
+*.rej
+*.orig

@@ -312,6 +312,24 @@ static int krg_get_father_cap(struct task_struct *son,
 	return retval;
 }
 
+int can_parent_inherite_krg_cap(struct task_struct *son, int cap)
+{
+	int retval = 0;
+
+	if (son->real_parent != baby_sitter) {
+		retval = (cap_raised(son->real_parent->krg_caps.effective, cap) &
+			cap_raised(son->real_parent->krg_caps.inheritable_effective, cap));
+	} else {
+		kernel_krg_cap_t pcap;
+
+		krg_get_father_cap(son, &pcap);
+		retval = (cap_raised(pcap.effective, cap) &
+			cap_raised(pcap.inheritable_effective, cap));
+	}
+
+	return retval;
+}
+
 static int krg_get_pid_cap(pid_t pid, kernel_krg_cap_t *resulting_cap)
 {
 	struct task_struct *tsk;
