@@ -1235,7 +1235,8 @@ int comlayer_enable_dev(const char *name)
 
 	snprintf(buf, sizeof(buf), "eth:%s", name);
 
-	res = tipc_enable_bearer(buf, tipc_addr(1, 1, 0), TIPC_MEDIA_LINK_PRI);
+    tipc_net_id = kerrighed_session_id;
+	res = tipc_enable_bearer(buf, tipc_addr(tipc_net_id, 1, 0), TIPC_MEDIA_LINK_PRI);
 	if (res)
 		printk("failed\n");
 	else
@@ -1362,7 +1363,7 @@ int comlayer_init(void)
 
 	lockdep_off();
 
-	tipc_core_start_net(tipc_addr(1, 1, kerrighed_node_id+1));
+	tipc_core_start_net(tipc_addr(tipc_net_id, 1, kerrighed_node_id+1));
 
 	res = tipc_attach(&tipc_user_ref, NULL, NULL);
 	if (res)
