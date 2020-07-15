@@ -179,7 +179,7 @@ config KRG_PROCFS
 
 config KRG_MM
 	bool "KerMM"
-	depends on KERRIGHED && KRG_KDDM && !TRACK_DIRTY_PAGES
+	depends on KERRIGHED && KRG_KDDM && !TRACK_DIRTY_PAGES && !COMPACTION
 	help
 	  Kerrighed's global memory management
 
