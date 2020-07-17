@@ -560,10 +560,6 @@ redo:
 		 * We know how to handle that.
 		 */
 		lru = active + page_lru_base_type(page);
-#ifdef CONFIG_KRG_MM
-		BUG_ON(page_is_migratable(page) && page_is_file_cache(page));
-		lru += page_is_migratable(page);
-#endif
 		lru_cache_add_lru(page, lru);
 	} else {
 		/*
@@ -1291,10 +1287,6 @@ static unsigned long clear_active_flags(struct list_head *page_list,
 	list_for_each_entry(page, page_list, lru) {
 		int numpages = hpage_nr_pages(page);
 		lru = page_lru_base_type(page);
-#ifdef CONFIG_KRG_MM
-		BUG_ON(page_is_migratable(page) && page_is_file_cache(page));
-		lru += page_is_migratable(page);
-#endif
 		if (PageActive(page)) {
 			lru += LRU_ACTIVE;
 			ClearPageActive(page);
@@ -3599,10 +3591,6 @@ retry:
 	if (page_evictable(page, NULL)) {
 		enum lru_list l = page_lru_base_type(page);
 
-#ifdef CONFIG_KRG_MM
-		BUG_ON(page_is_migratable(page) && page_is_file_cache(page));
-		l += page_is_migratable(page);
-#endif
 		__dec_zone_state(zone, NR_UNEVICTABLE);
 		lruvec = mem_cgroup_lru_move_lists(zone, page,
 						   LRU_UNEVICTABLE, l);
