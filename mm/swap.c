@@ -319,10 +319,11 @@ void  rotate_reclaimable_page(struct page *page)
 	}
 }
 
-static void update_page_reclaim_stat(struct zone *zone, struct page *page,
 #ifdef CONFIG_KRG_MM
+static void update_page_reclaim_stat(struct zone *zone, struct page *page,
 				     int file, int kddm, int rotated)
 #else
+static void update_page_reclaim_stat(struct zone *zone, struct page *page,
 				     int file, int rotated)
 #endif
 {
@@ -400,6 +401,7 @@ void __lru_cache_add(struct page *page, enum lru_list lru)
 	struct pagevec *pvec = &get_cpu_var(lru_add_pvecs)[lru];
 
 	page_cache_get(page);
+
 	if (!pagevec_add(pvec, page) || PageCompound(page))
 		____pagevec_lru_add(pvec, lru);
 	put_cpu_var(lru_add_pvecs);

@@ -775,7 +775,11 @@ do_migrate_range(unsigned long start_pfn, unsigned long end_pfn)
 			list_add_tail(&page->lru, &source);
 			move_pages--;
 			inc_zone_page_state(page, NR_ISOLATED_ANON +
-					    page_is_file_cache(page));
+					    page_is_file_cache(page)
+#ifdef CONFIG_KRG_MM
+					    + page_is_migratable(page)*2
+#endif
+					    );
 
 		} else {
 			/* Becasue we don't have big zone->lock. we should
