@@ -216,9 +216,6 @@ struct kddm_obj *get_obj_entry_from_pte(struct mm_struct *mm,
 		wait_lock_kddm_page(page);
 
 		if (new_obj) {
-			if (page->obj_entry != NULL)
-				printk ("WARN: entry %p in page %p\n",
-					page->obj_entry, page);
 			if (page->obj_entry == NULL) {
 				atomic_inc(&page->_kddm_count);
 				page->obj_entry = new_obj;
@@ -440,9 +437,9 @@ int kddm_pt_swap_in (struct mm_struct *mm,
 	pgd = pgd_offset(mm, addr);
 	pud = pud_alloc(mm, pgd, addr);
 	pmd = pmd_alloc(mm, pud, addr);
+	pte = pte_alloc_map(mm, NULL, pmd, addr);
 
 	vma = find_vma(mm, addr);
-	pte = pte_alloc_map(mm, vma, pmd, addr);
 
 	if (!orig_pte)
 		orig_pte = pte;

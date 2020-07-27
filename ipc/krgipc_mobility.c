@@ -1204,7 +1204,7 @@ int export_full_sysv_shm(ghost_t *ghost, int shmid)
 
 	flag = shp->shm_perm.mode;
 #ifdef CONFIG_HUGETLB_PAGE
-	if (is_file_shm_hugepages(shp->shm_file))
+	if (shp->shm_file->f_op == &hugetlbfs_file_operations)
 		flag |= SHM_HUGETLB;
 #endif
 	/* SHM_NORESERVE not handled */
