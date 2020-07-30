@@ -1677,7 +1677,11 @@ static int __soft_offline_page(struct page *page, int flags)
 	if (!ret) {
 		LIST_HEAD(pagelist);
 		inc_zone_page_state(page, NR_ISOLATED_ANON +
-					    page_is_file_cache(page));
+					page_is_file_cache(page)
+#ifdef CONFIG_KRG_MM
+					+ page_is_migratable(page)*2
+#endif
+					);
 		list_add(&page->lru, &pagelist);
 		ret = migrate_pages(&pagelist, new_page, MPOL_MF_MOVE_ALL,
 							false, MIGRATE_SYNC);
