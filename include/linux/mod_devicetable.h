@@ -208,6 +208,7 @@ struct pnp_card_device_id {
 
 #define SERIO_ANY	0xff
 
+#define rapidio_device_id rio_device_id
 struct serio_device_id {
 	__u8 type;
 	__u8 extra;
@@ -410,6 +411,7 @@ struct virtio_device_id {
 /*
  * For Hyper-V devices we use the device guid as the id.
  */
+#define vmbus_device_id hv_vmbus_device_id
 struct hv_vmbus_device_id {
 	__u8 guid[16];
 	kernel_ulong_t driver_data	/* Data private to the driver */
