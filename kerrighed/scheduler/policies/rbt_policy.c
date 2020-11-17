@@ -330,9 +330,9 @@ out:
 struct task_struct * rbt_find_a_task(struct scheduler_policy *policy_ptr)
 {
 	int err;
-	struct task_struct *p, *max_p;
+	struct task_struct *p, *max_p = NULL;
 	pid_t process;
-	unsigned long total_vm, lowest_vm;
+	unsigned long total_vm, lowest_vm = 0;
 	unsigned int jiffies;
 	struct rbt_policy *pol = container_of(policy_ptr, struct rbt_policy, policy);
 	struct scheduler *scheduler = scheduler_policy_get_scheduler(policy_ptr);
