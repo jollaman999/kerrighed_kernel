@@ -179,7 +179,7 @@ static void init_cpu_info_seq_struct(struct cpu_info_seq_struct *seq_data)
 static void go_to_selected_cpu(struct cpu_info_seq_struct *seq_data,
 			       loff_t pos)
 {
-	krg_static_node_info_t *static_node_info;
+	krg_static_node_info_t *static_node_info = NULL;
 	int i;
 
 	for (i = seq_data->last_pos; i < pos; i++) {
