@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32-krg_xeon
-# Fri Jul 31 07:05:13 2020
+# Thu Nov 12 11:37:39 2020
 #
 CONFIG_64BIT=y
 # CONFIG_X86_32 is not set
@@ -251,7 +251,7 @@ CONFIG_X86_X2APIC=y
 CONFIG_SPARSE_IRQ=y
 CONFIG_NUMA_IRQ_DESC=y
 CONFIG_X86_MPPARSE=y
-CONFIG_RETPOLINE=y
+# CONFIG_RETPOLINE is not set
 CONFIG_X86_EXTENDED_PLATFORM=y
 # CONFIG_X86_VSMP is not set
 CONFIG_X86_UV=y
@@ -400,7 +400,7 @@ CONFIG_ARCH_USES_PG_UNCACHED=y
 CONFIG_ARCH_RANDOM=y
 CONFIG_EFI=y
 # CONFIG_SECCOMP is not set
-CONFIG_CC_STACKPROTECTOR=y
+# CONFIG_CC_STACKPROTECTOR is not set
 # CONFIG_HZ_100 is not set
 # CONFIG_HZ_250 is not set
 # CONFIG_HZ_300 is not set
