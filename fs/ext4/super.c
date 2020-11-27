@@ -148,7 +148,7 @@ ext4_fsblk_t ext4_inode_table(struct super_block *sb,
 		 (ext4_fsblk_t)le32_to_cpu(bg->bg_inode_table_hi) << 32 : 0);
 }
 
-__u32 ext4_free_blks_count(struct super_block *sb,
+__u32 ext4_free_group_clusters(struct super_block *sb,
 			      struct ext4_group_desc *bg)
 {
 	return le16_to_cpu(bg->bg_free_blocks_count_lo) |
@@ -204,7 +204,7 @@ void ext4_inode_table_set(struct super_block *sb,
 		bg->bg_inode_table_hi = cpu_to_le32(blk >> 32);
 }
 
-void ext4_free_blks_set(struct super_block *sb,
+void ext4_free_group_clusters_set(struct super_block *sb,
 			  struct ext4_group_desc *bg, __u32 count)
 {
 	bg->bg_free_blocks_count_lo = cpu_to_le16((__u16)count);
@@ -1875,7 +1875,7 @@ static int ext4_fill_flex_info(struct super_block *sb)
 		flex_group = ext4_flex_group(sbi, i);
 		atomic_add(ext4_free_inodes_count(sb, gdp),
 			   &sbi->s_flex_groups[flex_group].free_inodes);
-		atomic_add(ext4_free_blks_count(sb, gdp),
+		atomic_add(ext4_free_group_clusters(sb, gdp),
 			   &sbi->s_flex_groups[flex_group].free_blocks);
 		atomic_add(ext4_used_dirs_count(sb, gdp),
 			   &sbi->s_flex_groups[flex_group].used_dirs);

@@ -206,40 +206,8 @@ TRACE_EVENT(jbd2_checkpoint_stats,
 		  __entry->forced_to_close, __entry->written, __entry->dropped)
 );
 
-<<<<<<< HEAD
-TRACE_EVENT(jbd2_update_superblock_end,
-=======
-TRACE_EVENT(jbd2_cleanup_journal_tail,
-
-	TP_PROTO(journal_t *journal, tid_t first_tid,
-		 unsigned long block_nr, unsigned long freed),
-
-	TP_ARGS(journal, first_tid, block_nr, freed),
-
-	TP_STRUCT__entry(
-		__field(	dev_t,	dev			)
-		__field(	tid_t,	tail_sequence		)
-		__field(	tid_t,	first_tid		)
-		__field(unsigned long,	block_nr		)
-		__field(unsigned long,	freed			)
-	),
-
-	TP_fast_assign(
-		__entry->dev		= journal->j_fs_dev->bd_dev;
-		__entry->tail_sequence	= journal->j_tail_sequence;
-		__entry->first_tid	= first_tid;
-		__entry->block_nr	= block_nr;
-		__entry->freed		= freed;
-	),
-
-	TP_printk("dev %d,%d from %u to %u offset %lu freed %lu",
-		  MAJOR(__entry->dev), MINOR(__entry->dev),
-		  __entry->tail_sequence, __entry->first_tid,
-		  __entry->block_nr, __entry->freed)
-);
 
 TRACE_EVENT(jbd2_write_superblock,
->>>>>>> 24bcc89c7e7c... jbd2: split updating of journal superblock and marking journal empty
 
 	TP_PROTO(journal_t *journal),
 

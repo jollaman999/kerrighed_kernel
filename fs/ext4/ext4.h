@@ -812,7 +812,6 @@ struct ext4_inode_info {
 	 * near to their parent directory's inode.
 	 */
 	ext4_group_t	i_block_group;
-	ext4_lblk_t	i_dir_start_lookup;
 #if (BITS_PER_LONG < 64)
 	unsigned long	i_state_flags;		/* Dynamic state flags */
 #endif

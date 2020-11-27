@@ -624,7 +624,7 @@ int jbd2_trans_will_send_data_barrier(journal_t *journal, tid_t tid)
 
 	if (!(journal->j_flags & JBD2_BARRIER))
 		return 0;
-	spin_lock(&journal->j_state_lock);
+	read_lock(&journal->j_state_lock);
 	/* Transaction already committed? */
 	if (tid_geq(journal->j_commit_sequence, tid))
 		goto out;
@@ -647,7 +647,7 @@ int jbd2_trans_will_send_data_barrier(journal_t *journal, tid_t tid)
 	}
 	ret = 1;
 out:
-	spin_unlock(&journal->j_state_lock);
+	read_unlock(&journal->j_state_lock);
 	return ret;
 }
 EXPORT_SYMBOL(jbd2_trans_will_send_data_barrier);
@@ -697,19 +697,19 @@ int jbd2_complete_transaction(journal_t *journal, tid_t tid)
 {
 	int	need_to_wait = 1;
 
-	spin_lock(&journal->j_state_lock);
+	read_lock(&journal->j_state_lock);
 	if (journal->j_running_transaction &&
 	    journal->j_running_transaction->t_tid == tid) {
 		if (journal->j_commit_request != tid) {
 			/* transaction not yet started, so request it */
-			spin_unlock(&journal->j_state_lock);
+			read_unlock(&journal->j_state_lock);
 			jbd2_log_start_commit(journal, tid);
 			goto wait_commit;
 		}
 	} else if (!(journal->j_committing_transaction &&
 		     journal->j_committing_transaction->t_tid == tid))
 		need_to_wait = 0;
-	spin_unlock(&journal->j_state_lock);
+	read_unlock(&journal->j_state_lock);
 	if (!need_to_wait)
 		return 0;
 wait_commit:

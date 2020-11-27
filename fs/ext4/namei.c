@@ -1248,6 +1248,8 @@ static struct buffer_head * ext4_dx_find_entry(struct inode *dir, const struct q
 	struct buffer_head *bh;
 	ext4_lblk_t block;
 	int retval;
+	int namelen = d_name->len;
+	const u8 *name = d_name->name;
 
 	sb = dir->i_sb;
 	/* NFS may look up ".." - look at dx_root directory block */
