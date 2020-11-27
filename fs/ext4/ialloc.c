@@ -205,7 +205,7 @@ void ext4_free_inode(handle_t *handle, struct inode *inode)
 	struct buffer_head *bh2;
 	ext4_group_t block_group;
 	unsigned long bit;
-	struct ext4_group_desc *gdp;
+	struct ext4_group_desc *gdp = NULL;
 	struct ext4_super_block *es;
 	struct ext4_sb_info *sbi;
 	int fatal = 0, err, count, cleared;
@@ -839,7 +839,7 @@ repeat_in_this_group:
 			continue;
 		}
 		ext4_lock_group(sb, group);
-		ret2 = ext4_test_and_set_bit(ino, inode_bitmap_bh->b_data);
+		ret2 = ext4_set_bit(ino, inode_bitmap_bh->b_data);
 		ext4_unlock_group(sb, group);
 		ino++;		/* the inode bitmap is zero-based */
 		if (!ret2)

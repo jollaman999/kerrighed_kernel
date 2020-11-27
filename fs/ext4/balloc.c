@@ -383,7 +383,8 @@ ext4_read_block_bitmap(struct super_block *sb, ext4_group_t block_group)
 		return NULL;
 	}
 verify:
-	if (ext4_validate_block_bitmap(sb, desc, block_group, bh))
+	ext4_validate_block_bitmap(sb, desc, block_group, bh);
+	if (buffer_verified(bh))
 		return bh;
 	/*
 	 * file system mounted not to panic on error,

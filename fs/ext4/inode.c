@@ -4767,7 +4767,7 @@ no_top:
  * We release `count' blocks on disk, but (last - first) may be greater
  * than `count' because there can be holes in there.
  */
-static void ext4_clear_blocks(handle_t *handle, struct inode *inode,
+static int ext4_clear_blocks(handle_t *handle, struct inode *inode,
 			      struct buffer_head *bh,
 			      ext4_fsblk_t block_to_free,
 			      unsigned long count, __le32 *first,
@@ -4831,6 +4831,7 @@ static void ext4_clear_blocks(handle_t *handle, struct inode *inode,
 	}
 
 	ext4_free_blocks(handle, inode, block_to_free, count, flags);
+	return 0;
 }
 
 /**

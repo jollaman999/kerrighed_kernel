@@ -912,7 +912,7 @@ int ext4_group_add(struct super_block *sb, struct ext4_new_group_data *input)
 	memset(gdp, 0, EXT4_DESC_SIZE(sb));
 	ext4_block_bitmap_set(sb, gdp, input->block_bitmap); /* LV FIXME */
 	ext4_inode_bitmap_set(sb, gdp, input->inode_bitmap); /* LV FIXME */
-	err = ext4_set_bitmap_checksums(sb, group, gdp, group_data);
+	err = ext4_set_bitmap_checksums(sb, input->group, gdp, input);
 	if (err) {
 		ext4_std_error(sb, err);
 		goto exit_journal;
@@ -922,7 +922,7 @@ int ext4_group_add(struct super_block *sb, struct ext4_new_group_data *input)
 	ext4_free_group_clusters_set(sb, gdp, input->free_blocks_count);
 	ext4_free_inodes_set(sb, gdp, EXT4_INODES_PER_GROUP(sb));
 	gdp->bg_flags = cpu_to_le16(EXT4_BG_INODE_ZEROED);
-	ext4_group_desc_csum_set(sb, group, gdp);
+	ext4_group_desc_csum_set(sb, input->group, gdp);
 
 	/*
 	 * We can allocate memory for mb_alloc based on the new group
