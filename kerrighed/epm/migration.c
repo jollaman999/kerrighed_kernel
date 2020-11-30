@@ -45,18 +45,11 @@
 #include <kerrighed/action.h>
 #include <kerrighed/migration.h>
 #include <kerrighed/hotplug.h>
-#include <kerrighed/workqueue.h>
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
 #include "remote_clone.h"
 #include "network_ghost.h"
 #include "epm_internal.h"
-
-struct zombie_migration {
-	struct work_struct work;
-	struct task_struct *task;
-	kerrighed_node_t target;
-};
 
 enum {
 	MIGRATION_WAIT_HASH_BITS = 9,
@@ -143,14 +136,10 @@ static void migration_wait_wake(struct task_struct *task, int ret)
 
 static int migration_implemented(struct task_struct *task)
 {
-	bool zombie = task->exit_state == EXIT_ZOMBIE;
 	int ret = 0;
 
-	if (!zombie && task->exit_state)
-		goto out;
-
 	if (!task->sighand->krg_objid || !task->signal->krg_objid
-	    || !task->task_obj || (!zombie && !task->children_obj)
+	    || !task->task_obj || !task->children_obj
 	    || (task->real_parent != baby_sitter
 		&& !is_container_init(task->real_parent)
 		&& !task->parent_children_obj))
@@ -167,8 +156,8 @@ static int migration_implemented(struct task_struct *task)
 
 	/* No kernel thread, no task sharing its VM */
 	if ((task->flags & PF_KTHREAD)
-	    || (!zombie
-		&& (!task->mm || atomic_read(&task->mm->mm_ltasks) > 1)))
+	    || !task->mm
+	    || atomic_read(&task->mm->mm_ltasks) > 1)
 		goto out_unlock;
 
 	/* No task sharing its signal handlers */
@@ -180,13 +169,11 @@ static int migration_implemented(struct task_struct *task)
 		goto out_unlock;
 
 	/* No task sharing its file descriptors table */
-	if (!zombie
-	    && (!task->files || atomic_read(&task->files->count) > 1))
+	if (!task->files || atomic_read(&task->files->count) > 1)
 		goto out_unlock;
 
 	/* No task sharing its fs_struct */
-	if (!zombie
-	    && (!task->fs || task->fs->users > 1))
+	if (!task->fs || task->fs->users > 1)
 		goto out_unlock;
 
 	ret = 1;
@@ -245,16 +232,14 @@ static int prepare_migrate(struct task_struct *task)
 	 */
 	krg_sighand_pin(task->sighand);
 	krg_signal_pin(task->signal);
-	if (!task->exit_state)
-		mm_struct_pin(task->mm);
+	mm_struct_pin(task->mm);
 
 	return err;
 }
 
 static void undo_migrate(struct task_struct *task)
 {
-	if (!task->exit_state)
-		mm_struct_unpin(task->mm);
+	mm_struct_unpin(task->mm);
 
 	krg_signal_writelock(task->signal);
 	krg_signal_unlock(task->signal);
@@ -393,44 +378,6 @@ static void handle_migrate(struct rpc_desc *desc, void *msg, size_t size)
 		wake_up_new_task(task, CLONE_VM);
 }
 
-static void zombie_migration_work(struct work_struct *work)
-{
-	struct zombie_migration *m;
-	struct task_struct *task;
-
-	m = container_of(work, struct zombie_migration, work);
-	task = m->task;
-
-	if (!__krg_task_migrate(task, task_pt_regs(task), m->target)) {
-		write_lock_irq(&tasklist_lock);
-		BUG_ON(task->exit_state != EXIT_ZOMBIE);
-		task->exit_state = EXIT_MIGRATION;
-		write_unlock_irq(&tasklist_lock);
-
-		release_task(task);
-	}
-
-	put_task_struct(task);
-	kfree(m);
-}
-
-static int do_migrate_zombie(struct task_struct *task, kerrighed_node_t target)
-{
-	struct zombie_migration *work;
-
-	work = kmalloc(sizeof(*work), GFP_ATOMIC);
-	if (!work)
-		return -ENOMEM;
-
-	INIT_WORK(&work->work, zombie_migration_work);
-	get_task_struct(task);
-	work->task = task;
-	work->target = target;
-	queue_work(krg_wq, &work->work);
-
-	return 0;
-}
-
 static int do_migrate_live(struct task_struct *task, kerrighed_node_t target)
 {
 	struct siginfo info;
@@ -469,10 +416,7 @@ static int do_migrate_process(struct task_struct *task,
 	atomic_notifier_call_chain(&kmh_migration_send_start, 0, task);
 #endif
 
-	if (task->exit_state)
-		retval = do_migrate_zombie(task, destination_node_id);
-	else
-		retval = do_migrate_live(task, destination_node_id);
+	retval = do_migrate_live(task, destination_node_id);
 	if (retval)
 		migration_aborted(task, retval);
 
