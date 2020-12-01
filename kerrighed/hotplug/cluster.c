@@ -322,14 +322,7 @@ void krg_ns_root_exit(struct krg_namespace *ns)
 	if (ns == cluster_init_helper_ns)
 		krg_container_abort(-EAGAIN);
 
-#ifdef CONFIG_KRG_HOTPLUG_DEL
-	/* TODO: Make it race-free */
-	if (!IS_KERRIGHED_NODE(KRGFLAGS_STOPPING)
-	    && IS_KERRIGHED_NODE(KRGFLAGS_RUNNING))
-		self_remove(ns);
-#else
 	printk(KERN_WARNING "kerrighed: Root task exiting! Leaking zombies.\n");
-#endif
 
 	complete_all(&ns->root_task_in_exit);
 	wait_for_completion(&ns->root_task_continue_exit);
