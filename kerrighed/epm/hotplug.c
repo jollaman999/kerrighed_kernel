@@ -33,6 +33,9 @@ static void expel_all(struct hotplug_context *ctx)
 	target = krgnode_next_online_in_ring(kerrighed_node_id);
 	read_lock(&tasklist_lock);
 	for_each_process(tsk) {
+		if (task_pid_knr(tsk) == 1)
+			continue;
+
 		if (task_active_pid_ns(tsk)->krg_ns != ctx->ns)
 			continue;
 
@@ -60,6 +63,9 @@ static void expel_all(struct hotplug_context *ctx)
 		tsk = NULL;
 		read_lock(&tasklist_lock);
 		for_each_process(tmp) {
+			if (task_pid_knr(tmp) == 1)
+				continue;
+
 			if (task_active_pid_ns(tmp)->krg_ns != ctx->ns)
 				continue;
 
@@ -87,6 +93,9 @@ static void expel_all(struct hotplug_context *ctx)
 
 	read_lock(&tasklist_lock);
 	for_each_process(tsk) {
+		if (task_pid_knr(tsk) == 1)
+			continue;
+
 		if (task_active_pid_ns(tsk)->krg_ns != ctx->ns)
 			continue;
 

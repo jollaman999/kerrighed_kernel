@@ -268,6 +268,9 @@ static void __expell_all(struct mosix_load_balancer *lb,
 	process_set_prepare_do_each_process(processes);
 
 	process_set_do_each_process(t, processes) {
+		if (task_pid_knr(t) == 1)
+			continue;
+
 		if (!may_migrate(t)) {
 			printk(KERN_WARNING "mosix_load_balancer:"
 			       " task %d(%s) is not migratable!\n",
