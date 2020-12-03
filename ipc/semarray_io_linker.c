@@ -292,8 +292,6 @@ int semarray_remove_object(void *object, struct kddm_set * set,
 		sma = sem_object->local_sem;
 
 		rcu_read_lock();
-		sma = sem_obtain_object(ns, sma->sem_perm.id);
-
 		sem_lock(sma, NULL, -1);
 		/* sem_unlock() and rcu_read_ulock() will be called in local_freeary() */
 		local_freeary(ns, &sma->sem_perm);
