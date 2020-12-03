@@ -80,8 +80,9 @@ static int ipc_remove_advert(struct hotplug_context *ctx)
 	err = cluster_barrier(barrier, &nodes,
 			      first_krgnode(nodes));
 
-	up_write(&krgipcmsg_rwsem);
 out:
+	up_write(&krgipcmsg_rwsem);
+
 	return err;
 }
 
