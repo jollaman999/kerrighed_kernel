@@ -283,6 +283,8 @@ void handle_ipcsem_wakeup_process(struct rpc_desc *desc, void *_msg,
 	BUG_ON(IS_ERR(sma));
 
 	sem_lock(sma, NULL, -1);
+	if (sma->sem_perm.deleted)
+		goto out_unlock;
 	list_for_each_entry_safe(q, tq, &sma->sem_pending, list) {
 		/* compare to q->sleeper's pid instead of q->pid
 		   because q->pid == q->sleeper's tgid */
@@ -318,6 +320,7 @@ found:
 	smp_wmb();
 	q->status = msg->error;
 
+out_unlock:
 	sem_unlock(sma, -1);
 	rcu_read_unlock();
 
@@ -648,6 +651,8 @@ static inline void __remove_semundo_from_sem_list(struct ipc_namespace *ns,
 	}
 
 	sem_lock(sma, NULL, -1);
+	if (sma->sem_perm.deleted)
+		goto exit_unlock;
 	list_for_each_entry_safe(un, tu, &sma->list_id, list_id) {
 		if (un->proc_list_id == undo_list_id) {
 			list_del(&un->list_id);
