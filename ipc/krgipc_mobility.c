@@ -230,46 +230,49 @@ static int cr_export_semundos(ghost_t *ghost, struct task_struct *task)
 		if (IS_ERR(sma)) {
 			BUG();
 			r = PTR_ERR(sma);
-			goto exit_put;
+			goto break_rcu_wakeup;
 		}
 
 		sem_lock(sma, NULL, -1);
+		if (sma->sem_perm.deleted) {
+			r = -EIDRM;
+			goto break_unlock;
+		}
 		list_for_each_entry(undo, &sma->list_id, list_id) {
 			if (undo->proc_list_id == task->sysvsem.undo_list_id) {
 				int size;
 
 				r = ghost_write(ghost,
 						&sma->sem_perm.id, sizeof(int));
-				if (r) {
-					sem_unlock(sma, -1);
-					goto exit_put;
-				}
+				if (r)
+					goto break_unlock;
 
 				size = sizeof(struct sem_undo) +
 					sma->sem_nsems * sizeof(short);
 				r = ghost_write(ghost, &size, sizeof(int));
-				if (r) {
-					sem_unlock(sma, -1);
-					goto exit_put;
-				}
+				if (r)
+					goto break_unlock;
 
 				r = ghost_write(ghost, undo, size);
-				if (r) {
-					sem_unlock(sma, -1);
-					goto exit_put;
-				}
+				if (r)
+					goto break_unlock;
 
 				goto next_sma;
 			}
 		}
 		BUG();
+	break_unlock:
+		sem_unlock(sma, -1);
+	break_rcu_wakeup:
+		rcu_read_unlock();
+		break;
 	next_sma:
 		sem_unlock(sma, -1);
+		rcu_read_unlock();
 	}
 
 exit_put:
-	rcu_read_unlock();
-	 _kddm_put_object(undo_list_kddm_set, task->sysvsem.undo_list_id);
+	_kddm_put_object(undo_list_kddm_set, task->sysvsem.undo_list_id);
 exit:
 	return r;
 }
