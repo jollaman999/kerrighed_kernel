@@ -352,19 +352,6 @@ struct sem_array *sem_obtain_object_check(struct ipc_namespace *ns,
 	return container_of(ipcp, struct sem_array, sem_perm);
 }
 
-#ifdef CONFIG_KRG_IPC
-static struct sem_array *sem_lock_check(struct ipc_namespace *ns,
-						int id)
-{
-	struct kern_ipc_perm *ipcp = ipc_lock_check(&sem_ids(ns), id);
-
-	if (IS_ERR(ipcp))
-		return (struct sem_array *)ipcp;
-
-	return container_of(ipcp, struct sem_array, sem_perm);
-}
-#endif
-
 #ifndef CONFIG_KRG_IPC
 static inline void sem_lock_and_putref(struct sem_array *sma)
 {
@@ -1254,15 +1241,11 @@ static int semctl_setval(struct ipc_namespace *ns, int semid, int semnum,
 
 	sem_lock(sma, NULL, -1);
 
-#ifdef CONFIG_KRG_IPC
-	BUG_ON(sma->sem_perm.deleted);
-#else
 	if (sma->sem_perm.deleted) {
 		sem_unlock(sma, -1);
 		rcu_read_unlock();
 		return -EIDRM;
 	}
-#endif
 
 	semnum = array_index_nospec(semnum, sma->sem_nsems);
 	curr = &sma->sem_base[semnum];
@@ -1297,27 +1280,15 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 		return PTR_ERR(sma);
 	}
 
-#ifdef CONFIG_KRG_IPC
-	sem_lock(sma, NULL, -1);
-#endif
-
 	nsems = sma->sem_nsems;
 
 	err = -EACCES;
 	if (ipcperms(&sma->sem_perm, cmd == SETALL ? S_IWUGO : S_IRUGO))
-#ifdef CONFIG_KRG_IPC
-		goto out_unlock;
-#else
 		goto out_rcu_wakeup;
-#endif
 
 	err = security_sem_semctl(sma, cmd);
 	if (err)
-#ifdef CONFIG_KRG_IPC
-		goto out_unlock;
-#else
 		goto out_rcu_wakeup;
-#endif
 
 	err = -EACCES;
 	switch (cmd) {
@@ -1326,9 +1297,7 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 		ushort __user *array = p;
 		int i;
 
-#ifdef CONFIG_KRG_IPC
-		BUG_ON(sma->sem_perm.deleted);
-#else
+#ifndef CONFIG_KRG_IPC
 		sem_lock(sma, NULL, -1);
 		if (sma->sem_perm.deleted) {
 			err = -EIDRM;
@@ -1346,16 +1315,13 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 #endif
 			sem_io = ipc_alloc(sizeof(ushort)*nsems);
 			if(sem_io == NULL) {
-#ifdef CONFIG_KRG_IPC
-				err = -ENOMEM;
-				goto out_unlock;
-			}
-			BUG_ON(sma->sem_perm.deleted);
-#else
 				ipc_rcu_putref(sma, ipc_rcu_free);
 				return -ENOMEM;
 			}
-
+#ifdef CONFIG_KRG_IPC
+			BUG_ON(sma->sem_perm.deleted);
+#endif
+#ifndef CONFIG_KRG_IPC
 			rcu_read_lock();
 			sem_lock_and_putref(sma);
 			if (sma->sem_perm.deleted) {
@@ -1421,12 +1387,11 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 #endif
 			}
 		}
-#ifndef CONFIG_KRG_IPC
-		rcu_read_lock();
-#endif
 #ifdef CONFIG_KRG_IPC
 		BUG_ON(sma->sem_perm.deleted);
-#else
+#endif
+#ifndef CONFIG_KRG_IPC
+		rcu_read_lock();
 		sem_lock_and_putref(sma);
 		if (sma->sem_perm.deleted) {
 			err = -EIDRM;
@@ -1452,21 +1417,13 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 	}
 	err = -EINVAL;
 	if (semnum < 0 || semnum >= nsems)
-#ifdef CONFIG_KRG_IPC
-		goto out_unlock;
-#else
 		goto out_rcu_wakeup;
-#endif
 
-#ifdef CONFIG_KRG_IPC
-	BUG_ON(sma->sem_perm.deleted);
-#else
 	sem_lock(sma, NULL, -1);
 	if (sma->sem_perm.deleted) {
 		err = -EIDRM;
 		goto out_unlock;
 	}
-#endif
 
 	semnum = array_index_nospec(semnum, nsems);
 	curr = &sma->sem_base[semnum];
@@ -1488,9 +1445,7 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 
 out_unlock:
 	sem_unlock(sma, -1);
-#ifndef CONFIG_KRG_IPC
 out_rcu_wakeup:
-#endif
 	rcu_read_unlock();
 out_free:
 	if(sem_io != fast_sem_io)
@@ -1705,11 +1660,7 @@ static struct sem_undo *find_alloc_undo(struct ipc_namespace *ns, int semid)
 
 	/* no undo structure around - allocate one. */
 	/* step 1: figure out the size of the semaphore array */
-#ifdef CONFIG_KRG_IPC
-	sma = sem_lock_check(ns, semid);
-#else
 	sma = sem_obtain_object_check(ns, semid);
-#endif
 	if (IS_ERR(sma)) {
 		rcu_read_unlock();
 		return ERR_PTR(PTR_ERR(sma));
@@ -1893,24 +1844,6 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 	if (error)
 		goto out_rcu_wakeup;
 
-	locknum = sem_lock(sma, sops, nsops);
-#ifdef CONFIG_KRG_IPC
-	BUG_ON(sma->sem_perm.deleted);
-#else
-	error = -EIDRM;
-	if (sma->sem_perm.deleted)
-		goto out_unlock_free;
-#endif
-	/*
-	 * semid identifiers are not unique - find_alloc_undo may have
-	 * allocated an undo structure, it was invalidated by an RMID
-	 * and now a new array with received the same id. Check and fail.
-	 * This case can be detected checking un->semid. The existance of
-	 * "un" itself is guaranteed by rcu.
-	 */
-	if (un && un->semid == -1)
-		goto out_unlock_free;
-
 #ifdef CONFIG_KRG_IPC
 	if (undos && sma->sem_perm.krgops) {
 		un = krg_ipc_sem_find_undo(sma);
@@ -1920,6 +1853,20 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 		}
 	}
 #endif
+
+	error = -EIDRM;
+	locknum = sem_lock(sma, sops, nsops);
+	if (sma->sem_perm.deleted)
+		goto out_unlock_free;
+	/*
+	 * semid identifiers are not unique - find_alloc_undo may have
+	 * allocated an undo structure, it was invalidated by an RMID
+	 * and now a new array with received the same id. Check and fail.
+	 * This case can be detected checking un->semid. The existance of
+	 * "un" itself is guaranteed by rcu.
+	 */
+	if (un && un->semid == -1)
+		goto out_unlock_free;
 
 	error = try_atomic_semop (sma, sops, nsops, un, task_tgid_vnr(current));
 	if (error == 0) {
