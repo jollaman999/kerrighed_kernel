@@ -64,6 +64,8 @@ static struct kern_ipc_perm *kcb_ipc_sem_lock(struct ipc_ids *ids, int id)
 	struct sem_array *sma;
 	int index ;
 
+	rcu_read_lock();
+
 	index = ipcid_to_idx(id);
 
 	sem_object = _kddm_grab_object_no_ft(ids->krgops->data_kddm_set, index);
@@ -77,19 +79,23 @@ static struct kern_ipc_perm *kcb_ipc_sem_lock(struct ipc_ids *ids, int id)
 
 	spin_lock(&sma->sem_perm.lock);
 
-	BUG_ON(sma->sem_perm.deleted);
+	if (sma->sem_perm.deleted) {
+		spin_unlock(&sma->sem_perm.lock);
+		goto error;
+	}
 
 	return &(sma->sem_perm);
 
 error:
 	_kddm_put_object(ids->krgops->data_kddm_set, index);
+	rcu_read_unlock();
 
 	return ERR_PTR(-EINVAL);
 }
 
 static void kcb_ipc_sem_unlock(struct kern_ipc_perm *ipcp)
 {
-	int index;
+	int index, deleted = 0;
 	long task_state;
 
 	/*
@@ -102,13 +108,17 @@ static void kcb_ipc_sem_unlock(struct kern_ipc_perm *ipcp)
 
 	index = ipcid_to_idx(ipcp->id);
 
-	BUG_ON(ipcp->deleted);
+	if (ipcp->deleted)
+		deleted = 1;
 
 	_kddm_put_object(ipcp->krgops->data_kddm_set, index);
 
 	__set_current_state(task_state);
 
-	spin_unlock(&ipcp->lock);
+	if (!deleted)
+		spin_unlock(&ipcp->lock);
+
+	rcu_read_unlock();
 }
 
 static struct kern_ipc_perm *kcb_ipc_sem_findkey(struct ipc_ids *ids, key_t key)
