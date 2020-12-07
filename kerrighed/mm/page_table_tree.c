@@ -6,7 +6,6 @@
 
 #include <linux/mm.h>
 #include <linux/hugetlb.h>
-#include <linux/ksm.h>
 #include <linux/rmap.h>
 #include <linux/pagemap.h>
 #include <linux/delayacct.h>
@@ -612,11 +611,6 @@ struct kddm_obj *kddm_pt_break_cow_object(struct kddm_set *set,
 	}
 
 	BUG_ON(obj_entry_mapcount(obj_entry) == 0);
-
-	if (unlikely(PageKsm(old_page))) {
-		unlock_kddm_page(old_page);
-		return obj_entry;
-	}
 
 	if (page_kddm_count(old_page) == 1) {
 		count = page_mapcount(old_page);

@@ -14,7 +14,6 @@
 #include <linux/rmap.h>
 #include <linux/swapops.h>
 #include <linux/pagemap.h>
-#include <linux/ksm.h>
 #include <linux/mm_inline.h>
 #include <asm/tlbflush.h>
 
@@ -182,10 +181,6 @@ void memory_change_state (struct kddm_obj * obj_entry,
 
 	/* If the page is not mapped, we have nothing to do */
 	if (swap_pte_page(page))
-		return;
-
-	/* Skip for KSM - 2020-02-18 by ish */
-	if (PageKsm(page))
 		return;
 
 	/* Page to be swap are no more mapped. Nothing to do here. */
