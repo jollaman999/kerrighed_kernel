@@ -201,45 +201,6 @@ static int nodes_poweroff(void __user *arg)
 	return 0;
 }
 
-/* Currently unused... Commented to avoid compilation warning.
-static void handle_node_reboot(struct rpc_desc *desc, void *data, size_t size)
-{
-	emergency_sync();
-	emergency_remount();
-
-	set_current_state(TASK_INTERRUPTIBLE);
-	schedule_timeout(5 * HZ);
-
-	local_irq_enable();
-	machine_restart(NULL);
-
-	// should never be reached
-	BUG();
-
-}
-*/
-
-static int nodes_reboot(void __user *arg)
-{
-	struct __hotplug_node_set __node_set;
-	struct hotplug_node_set node_set;
-	int unused;
-	
-	if (copy_from_user(&__node_set, arg, sizeof(__node_set)))
-		return -EFAULT;
-
-	node_set.subclusterid = __node_set.subclusterid;
-	
-	err = krgnodemask_copy_from_user(&node_set.v, &__node_set.v);
-	if (err)
-		return err;
-
-	rpc_async_m(NODE_REBOOT, &node_set.v,
-		    &unused, sizeof(unused));
-	
-	return 0;
-}
-
 
 int hotplug_remove_init(void)
 {
@@ -251,7 +212,6 @@ int hotplug_remove_init(void)
 	
 	register_proc_service(KSYS_HOTPLUG_REMOVE, nodes_remove);
 	register_proc_service(KSYS_HOTPLUG_POWEROFF, nodes_poweroff);
-	register_proc_service(KSYS_HOTPLUG_REBOOT, nodes_reboot);
 
 	return 0;
 }
