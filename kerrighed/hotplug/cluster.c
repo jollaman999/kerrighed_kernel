@@ -1007,7 +1007,7 @@ static int cluster_stop(void *arg)
 	if (!capable(CAP_SYS_BOOT))
 		return -EPERM;
 
-	rpc_async_m(NODE_FAIL,
+	rpc_async_m(NODE_POWEROFF,
 		    current->nsproxy->krg_ns->rpc_comm, &krgnode_online_map,
 		    &unused, sizeof(unused));
 	
