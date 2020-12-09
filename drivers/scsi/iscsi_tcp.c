@@ -45,6 +45,11 @@
 
 #include "iscsi_tcp.h"
 
+#ifdef CONFIG_KRG_HOTPLUG
+struct iscsi_cls_conn *krg_iscsi_cls_conn = NULL;
+EXPORT_SYMBOL(krg_iscsi_cls_conn);
+#endif
+
 MODULE_AUTHOR("Mike Christie <michaelc@cs.wisc.edu>, "
 	      "Dmitry Yusupov <dmitry_yus@yahoo.com>, "
 	      "Alex Aizman <itn780@yahoo.com>");
@@ -556,6 +561,10 @@ iscsi_sw_tcp_conn_create(struct iscsi_cls_session *cls_session,
 		goto free_tx_tfm;
 	tcp_conn->rx_hash = &tcp_sw_conn->rx_hash;
 
+#ifdef CONFIG_KRG_HOTPLUG
+	krg_iscsi_cls_conn = cls_conn;
+#endif
+
 	return cls_conn;
 
 free_tx_tfm:
@@ -590,7 +599,10 @@ static void iscsi_sw_tcp_release_conn(struct iscsi_conn *conn)
 	sockfd_put(sock);
 }
 
-static void iscsi_sw_tcp_conn_destroy(struct iscsi_cls_conn *cls_conn)
+#ifndef CONFIG_KRG_HOTPLUG
+static
+#endif
+void iscsi_sw_tcp_conn_destroy(struct iscsi_cls_conn *cls_conn)
 {
 	struct iscsi_conn *conn = cls_conn->dd_data;
 	struct iscsi_tcp_conn *tcp_conn = conn->dd_data;
@@ -605,6 +617,9 @@ static void iscsi_sw_tcp_conn_destroy(struct iscsi_cls_conn *cls_conn)
 
 	iscsi_tcp_conn_teardown(cls_conn);
 }
+#ifdef CONFIG_KRG_HOTPLUG
+EXPORT_SYMBOL(iscsi_sw_tcp_conn_destroy);
+#endif
 
 static void iscsi_sw_tcp_conn_stop(struct iscsi_cls_conn *cls_conn, int flag)
 {

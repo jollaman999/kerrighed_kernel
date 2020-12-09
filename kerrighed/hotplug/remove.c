@@ -344,6 +344,13 @@ static void handle_node_poweroff(struct rpc_desc *desc)
 	emergency_sync();
 	emergency_remount();
 
+#ifdef CONFIG_ISCSI_TCP
+	if (krg_iscsi_cls_conn) {
+		printk("Destroying iSCSI connection...\n");
+		iscsi_sw_tcp_conn_destroy(krg_iscsi_cls_conn);
+	}
+#endif
+
 	set_current_state(TASK_INTERRUPTIBLE);
 	schedule_timeout(5 * HZ);
 
