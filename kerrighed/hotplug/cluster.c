@@ -846,6 +846,23 @@ static int cluster_restart(void *arg)
 	return 0;
 }
 
+#ifndef CONFIG_KRG_HOTPLUG_DEL
+static void handle_node_poweroff(struct rpc_desc *desc)
+{
+	emergency_sync();
+	emergency_remount();
+
+	set_current_state(TASK_INTERRUPTIBLE);
+	schedule_timeout(5 * HZ);
+
+	local_irq_enable();
+	kernel_power_off();
+
+	// should never be reached
+	BUG();
+}
+#endif
+
 static int cluster_stop(void *arg)
 {
 	int unused;
@@ -936,6 +953,9 @@ int hotplug_cluster_init(void)
 	}
 
 	rpc_register_void(CLUSTER_START, handle_cluster_start, 0);
+#ifndef CONFIG_KRG_HOTPLUG_DEL
+	rpc_register(NODE_POWEROFF, handle_node_poweroff, 0);
+#endif
 
 	register_proc_service(KSYS_HOTPLUG_READY, node_ready);
 	register_proc_service(KSYS_HOTPLUG_SHUTDOWN, cluster_stop);
