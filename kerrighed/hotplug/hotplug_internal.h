@@ -49,10 +49,7 @@ int hotplug_membership_init(void);
 void hotplug_membership_cleanup(void);
 
 #ifdef CONFIG_ISCSI_TCP
-#include <scsi/scsi_transport_iscsi.h>
-
-extern struct iscsi_cls_conn *krg_iscsi_cls_conn;
-extern void iscsi_sw_tcp_conn_destroy(struct iscsi_cls_conn *cls_conn);
+extern void krg_destroy_iscsi_tcp_conn(void);
 #endif
 
 #endif
