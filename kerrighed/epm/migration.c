@@ -34,7 +34,7 @@
 #include <kerrighed/capabilities.h>
 #endif
 #ifdef CONFIG_KRG_SYSCALL_EXIT_HOOK
-#include <kerrighed/syscalls.h>
+#include <kerrighed/krg_syscalls.h>
 #endif
 #include <kerrighed/task.h>
 #include <kerrighed/pid.h>
