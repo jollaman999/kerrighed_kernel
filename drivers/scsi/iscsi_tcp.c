@@ -46,7 +46,8 @@
 #include "iscsi_tcp.h"
 
 #ifdef CONFIG_KRG_HOTPLUG
-static struct iscsi_cls_conn *krg_iscsi_cls_conn = NULL;
+struct iscsi_cls_conn *krg_iscsi_cls_conn = NULL;
+EXPORT_SYMBOL(krg_iscsi_cls_conn);
 #endif
 
 MODULE_AUTHOR("Mike Christie <michaelc@cs.wisc.edu>, "
@@ -598,7 +599,10 @@ static void iscsi_sw_tcp_release_conn(struct iscsi_conn *conn)
 	sockfd_put(sock);
 }
 
-static void iscsi_sw_tcp_conn_destroy(struct iscsi_cls_conn *cls_conn)
+#ifndef CONFIG_KRG_HOTPLUG
+static
+#endif
+void iscsi_sw_tcp_conn_destroy(struct iscsi_cls_conn *cls_conn)
 {
 	struct iscsi_conn *conn = cls_conn->dd_data;
 	struct iscsi_tcp_conn *tcp_conn = conn->dd_data;
@@ -613,16 +617,8 @@ static void iscsi_sw_tcp_conn_destroy(struct iscsi_cls_conn *cls_conn)
 
 	iscsi_tcp_conn_teardown(cls_conn);
 }
-
 #ifdef CONFIG_KRG_HOTPLUG
-void krg_destroy_iscsi_tcp_conn(void)
-{
-	if (krg_iscsi_cls_conn) {
-		printk("Destroying iSCSI connection...\n");
-		iscsi_sw_tcp_conn_destroy(krg_iscsi_cls_conn);
-	}
-}
-EXPORT_SYMBOL(krg_destroy_iscsi_tcp_conn);
+EXPORT_SYMBOL(iscsi_sw_tcp_conn_destroy);
 #endif
 
 static void iscsi_sw_tcp_conn_stop(struct iscsi_cls_conn *cls_conn, int flag)
