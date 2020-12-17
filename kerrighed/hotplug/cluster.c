@@ -1009,7 +1009,6 @@ static void handle_node_poweroff(struct rpc_desc *desc)
 	set_current_state(TASK_INTERRUPTIBLE);
 	schedule_timeout(5 * HZ);
 
-	local_irq_enable();
 	kernel_power_off();
 
 	// should never be reached
