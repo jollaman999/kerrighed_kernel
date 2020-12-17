@@ -64,7 +64,6 @@ static void handle_node_fail(struct rpc_desc *desc, void *data, size_t size)
 	set_current_state(TASK_INTERRUPTIBLE);
 	schedule_timeout(5 * HZ);
 
-	local_irq_enable();
 	machine_restart(NULL);
 
 	// should never be reached
