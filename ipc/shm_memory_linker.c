@@ -64,7 +64,7 @@ int shm_memory_insert_page(struct kddm_obj *objEntry, struct kddm_set *kddm,
 	struct page *page;
 	struct shmid_kernel *shp;
 	struct address_space *mapping = NULL;
-	int ret = 0, shm_id;
+	int ret, shm_id;
 	struct ipc_namespace *ns;
 
 	ns = find_get_krg_ipcns();
@@ -96,8 +96,6 @@ int shm_memory_insert_page(struct kddm_obj *objEntry, struct kddm_set *kddm,
 		       ret);
 		BUG();
 	}
-	add_page_to_unevictable_list(page);
-
 	unlock_page(page);
 
 error:
