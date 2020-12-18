@@ -705,13 +705,20 @@ void kernel_restart(char *cmd)
 }
 EXPORT_SYMBOL_GPL(kernel_restart);
 
-static void kernel_shutdown_prepare(enum system_states state)
+#ifndef CONFIG_KRG_HOTPLUG
+static
+#endif
+void kernel_shutdown_prepare(enum system_states state)
 {
 	blocking_notifier_call_chain(&reboot_notifier_list,
 		(state == SYSTEM_HALT)?SYS_HALT:SYS_POWER_OFF, NULL);
 	system_state = state;
 	device_shutdown();
 }
+#ifdef CONFIG_KRG_HOTPLUG
+EXPORT_SYMBOL_GPL(kernel_shutdown_prepare);
+#endif
+
 /**
  *	kernel_halt - halt the system
  *

@@ -18,6 +18,7 @@
 #include <linux/sysfs.h>
 #include <linux/kobject.h>
 #include <linux/ipc.h>
+#include <linux/device.h>
 #include <asm/uaccess.h>
 #include <asm/ioctl.h>
 #include <kerrighed/sys/types.h>
@@ -1006,7 +1007,13 @@ static void handle_node_poweroff(struct rpc_desc *desc)
 	emergency_sync();
 	emergency_remount();
 
-	kernel_power_off();
+	kernel_shutdown_prepare(SYSTEM_POWER_OFF);
+	if (pm_power_off_prepare)
+		pm_power_off_prepare();
+	sysdev_shutdown();
+
+	printk(KERN_EMERG "Powering off the node...\n");
+	machine_power_off();
 
 	// should never be reached
 	BUG();
