@@ -168,9 +168,6 @@ static void handle_node_poweroff(struct rpc_desc *desc)
 	emergency_sync();
 	emergency_remount();
 
-	set_current_state(TASK_INTERRUPTIBLE);
-	schedule_timeout(5 * HZ);
-
 	kernel_power_off();
 
 	// should never be reached
