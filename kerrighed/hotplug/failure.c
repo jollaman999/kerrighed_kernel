@@ -62,9 +62,6 @@ static void handle_node_fail(struct rpc_desc *desc, void *data, size_t size)
 	emergency_sync();
 	emergency_remount();
 
-	set_current_state(TASK_INTERRUPTIBLE);
-	schedule_timeout(5 * HZ);
-
 	machine_restart(NULL);
 
 	// should never be reached
