@@ -28,7 +28,6 @@ static void init_baby_sitter(void)
 	INIT_LIST_HEAD(&baby_sitter->children);
 	baby_sitter->real_parent = baby_sitter;
 	baby_sitter->parent = baby_sitter;
-	baby_sitter->signal->oom_adj =  1000;
 	strncpy(baby_sitter->comm, "baby sitter", 15);
 }
 
