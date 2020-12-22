@@ -351,10 +351,14 @@ retry:
 		kddm_lock_obj_table(set);
 
 	obj_entry = set->ops->get_obj_entry(set, objid, new_obj);
-	if (obj_entry != new_obj)
+
+	if (!obj_entry && obj_entry != new_obj)
 		free_obj_entry_struct (new_obj);
-	else
+	else {
+		if (!obj_entry)
+			obj_entry = new_obj;
 		inc_obj_entry_mapcount(obj_entry);
+	}
 
 	if (do_get_kddm_obj_entry(_set, obj_entry, objid) == -EAGAIN)
 		goto retry;
