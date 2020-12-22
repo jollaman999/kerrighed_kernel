@@ -1602,9 +1602,6 @@ void krg_update_parents(struct task_struct *task,
 			pid_t parent, pid_t real_parent,
 			kerrighed_node_t node)
 {
-	if (node == KERRIGHED_NODE_ID_NONE)
-		return;
-
 	if (parent_children_obj && task->task_obj) {
 		/* Make sure that task_obj is up to date */
 		update_parents(task, parent, real_parent);
