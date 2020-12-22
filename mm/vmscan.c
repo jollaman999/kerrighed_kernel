@@ -2015,7 +2015,7 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 	fp /= reclaim_stat->recent_rotated[1] + 1;
 
 #ifdef CONFIG_KRG_MM
-	kp = (kddm_prio + 1) * (reclaim_stat->recent_scanned[2] + 1);
+	kp = kddm_prio * (reclaim_stat->recent_scanned[2] + 1);
 	kp /= reclaim_stat->recent_rotated[2] + 1;
 
 	/* Normalize to percentages */
@@ -2071,18 +2071,17 @@ static void shrink_mem_cgroup_zone(int priority, struct mem_cgroup_zone *mz,
 #endif
 	struct zone_reclaim_stat *reclaim_stat = get_reclaim_stat(mz);
 
-#ifdef CONFIG_KRG_MM
-	if (sc->may_swap && (get_nr_swap_pages > 0))
-		get_scan_ratio(mz, sc, percent);
-#else
+#ifndef CONFIG_KRG_MM
 	/* If we have no swap space, do not bother scanning anon pages. */
 	if (!sc->may_swap || (get_nr_swap_pages() <= 0)) {
 		noswap = 1;
 		percent[0] = 0;
 		percent[1] = 100;
 	} else
-		get_scan_ratio(mz, sc, percent);
 #endif
+	{
+		get_scan_ratio(mz, sc, percent);
+	}
 
 	for_each_evictable_lru(l) {
 #ifdef CONFIG_KRG_MM
