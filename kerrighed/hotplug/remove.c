@@ -41,9 +41,7 @@ static void do_local_node_remove(struct rpc_desc *desc,
 	printk("do_local_node_remove\n");
 
 	krgnodes_copy(prev_online, krgnode_online_map);
-
 	krgnodes_andnot(new_online, krgnode_online_map, ctx->node_set.v);
-	atomic_set(&nr_to_wait, krgnodes_weight(new_online));
 
 	printk("...notify local\n");
 	hotplug_remove_notify(ctx, HOTPLUG_NOTIFY_REMOVE_LOCAL);
@@ -56,9 +54,6 @@ static void do_local_node_remove(struct rpc_desc *desc,
 	printk("...confirm\n");
 	rpc_sync_m(NODE_REMOVE_CONFIRM, comm, &new_online,
 		   &ctx->node_set, sizeof(ctx->node_set));
-
-	printk("...wait ack\n");
-	wait_event(all_removed_wqh, atomic_read(&nr_to_wait) == 0);
 
 	rpc_disable_all();
 	rpc_enable(HOTPLUG_FINISH_REQ);
@@ -88,14 +83,6 @@ static void do_local_node_remove(struct rpc_desc *desc,
 	rpc_enable(CLUSTER_START);
 }
 
-/* we receive the ack from cluster about our remove operation */
-static void handle_node_remove_ack(struct rpc_desc *desc, void *data, size_t size)
-{
-	BUG_ON(desc->client == kerrighed_node_id);
-	if (atomic_dec_and_test(&nr_to_wait))
-		wake_up(&all_removed_wqh);
-}
-
 static void do_other_node_remove(struct rpc_desc *desc,
 				 struct hotplug_context *ctx)
 {
@@ -104,7 +91,8 @@ static void do_other_node_remove(struct rpc_desc *desc,
 	printk("do_other_node_remove\n");
 	atomic_set(&nr_to_wait, krgnodes_weight(ctx->node_set.v));
 	hotplug_remove_notify(ctx, HOTPLUG_NOTIFY_REMOVE_ADVERT);
-	rpc_async_m(NODE_REMOVE_ACK, ctx->ns->rpc_comm, &ctx->node_set.v, NULL, 0);
+
+	printk("...wait confirm\n");
 	wait_event(all_removed_wqh, atomic_read(&nr_to_wait) == 0);
 
 	ret = 0;
@@ -384,7 +372,6 @@ int hotplug_remove_init(void)
 {
 	rpc_register(NODE_POWEROFF, handle_node_poweroff, 0);
 	rpc_register_void(NODE_REMOVE, handle_node_remove, 0);
-	rpc_register_void(NODE_REMOVE_ACK, handle_node_remove_ack, 0);
 	rpc_register_void(NODE_REMOVE_CONFIRM, handle_node_remove_confirm, 0);
 
 	register_proc_service(KSYS_HOTPLUG_REMOVE, nodes_remove);
