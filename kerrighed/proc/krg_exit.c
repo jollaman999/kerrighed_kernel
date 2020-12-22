@@ -193,10 +193,7 @@ parent_children_writelock_pid_location_lock(struct task_struct *task,
 		krg_get_parent(children_obj, task,
 			       &parent_pid, &real_parent_pid);
 		obj = krg_task_readlock(parent_pid);
-		if (!obj) {
-			krg_task_unlock(parent_pid);
-			break;
-		}
+		BUG_ON(!obj);
 		parent_node = obj->node;
 		if (parent_node != KERRIGHED_NODE_ID_NONE)
 			break;
@@ -206,6 +203,7 @@ parent_children_writelock_pid_location_lock(struct task_struct *task,
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule_timeout(timespec_to_jiffies(&backoff_time) + 1);
 	}
+	BUG_ON(children_obj && parent_node == KERRIGHED_NODE_ID_NONE);
 
 	/*
 	 * If children_obj is not NULL, then children_obj is write-locked and
