@@ -105,6 +105,21 @@ static int export_sched_info(struct epm_action *action,
 
 /* export_mm() is located in kerrighed/mm/mobility.c */
 
+static int export_binfmt(struct epm_action *action,
+			 ghost_t *ghost, struct task_struct *task)
+{
+	int binfmt_id;
+
+	if (task->exit_state)
+		return 0;
+
+	binfmt_id = krgsyms_export(task->mm->binfmt);
+	if (binfmt_id == KRGSYMS_UNDEF)
+		return -EPERM;
+
+	return ghost_write(ghost, &binfmt_id, sizeof(int));
+}
+
 static int export_children(struct epm_action *action,
 			   ghost_t *ghost, struct task_struct *task)
 {
@@ -525,6 +540,10 @@ static int export_task(struct epm_action *action,
 		GOTO_ERROR;
 #endif
 
+	r = export_binfmt(action, ghost, task);
+	if (r)
+		GOTO_ERROR;
+
 	r = export_vfork_done(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
@@ -784,6 +803,11 @@ void unimport_children(struct epm_action *action, struct task_struct *task)
 	}
 }
 
+static void unimport_binfmt(struct task_struct *task)
+{
+	/* Nothing to do... */
+}
+
 /* unimport_mm() is located in kerrighed/mm/mobility.c */
 
 static void unimport_sched_info(struct task_struct *task)
@@ -828,6 +852,7 @@ static void unimport_task(struct epm_action *action,
 	unimport_thread_struct(ghost_task);
 	unimport_audit_context(ghost_task);
 	unimport_cred(ghost_task);
+	unimport_binfmt(ghost_task);
 #ifdef CONFIG_KRG_MM
 	unimport_mm_struct(ghost_task);
 #endif
@@ -908,6 +933,23 @@ static int import_sched_info(struct epm_action *action,
 }
 
 /* import_mm() is located in kerrighed/mm/mobility.c */
+
+static int import_binfmt(struct epm_action *action,
+			 ghost_t *ghost, struct task_struct *task)
+{
+	int binfmt_id;
+	int err;
+
+	if (task->exit_state)
+		return 0;
+
+	err = ghost_read(ghost, &binfmt_id, sizeof(int));
+	if (err)
+		goto out;
+	task->mm->binfmt = krgsyms_import(binfmt_id);
+out:
+	return err;
+}
 
 static int import_children(struct epm_action *action,
 			   ghost_t *ghost, struct task_struct *task)
@@ -1540,6 +1582,10 @@ static struct task_struct *import_task(struct epm_action *action,
 		goto err_mm_struct;
 #endif
 
+	retval = import_binfmt(action, ghost, task);
+	if (retval)
+		goto err_binfmt;
+
 	retval = import_vfork_done(action, ghost, task);
 	if (retval)
 		goto err_vfork_done;
@@ -1653,6 +1699,8 @@ err_audit_context:
 err_cred:
 	unimport_vfork_done(task);
 err_vfork_done:
+	unimport_binfmt(task);
+err_binfmt:
 #ifdef CONFIG_KRG_MM
 	unimport_mm_struct(task);
 err_mm_struct:
