@@ -1405,11 +1405,11 @@ static struct task_struct *import_task(struct epm_action *action,
 	INIT_LIST_HEAD(&task->tasks);
 	INIT_LIST_HEAD(&task->ptraced);
 	INIT_LIST_HEAD(&task->ptrace_entry);
-	task->real_parent = task;
-	task->parent = task;
+	task->real_parent = NULL;
+	task->parent = NULL;
 	INIT_LIST_HEAD(&task->children);
 	INIT_LIST_HEAD(&task->sibling);
-	task->group_leader = task;
+	task->group_leader = NULL;
 	INIT_LIST_HEAD(&task->ptraced);
 	INIT_LIST_HEAD(&task->ptrace_entry);
 #ifdef CONFIG_X86_PTRACE_BTS
