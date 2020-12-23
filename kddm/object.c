@@ -352,7 +352,7 @@ retry:
 
 	obj_entry = set->ops->get_obj_entry(set, objid, new_obj);
 
-	if (!obj_entry && obj_entry != new_obj)
+	if (obj_entry && obj_entry != new_obj)
 		free_obj_entry_struct (new_obj);
 	else {
 		if (!obj_entry)
