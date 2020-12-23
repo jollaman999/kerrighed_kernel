@@ -19,9 +19,7 @@ struct task_struct *baby_sitter;
 
 static void init_baby_sitter(void)
 {
-	int node = numa_node_id();
-
-	baby_sitter = alloc_task_struct_node(node);
+	baby_sitter = alloc_task_struct();
 	if (!baby_sitter)
 		OOM;
 
