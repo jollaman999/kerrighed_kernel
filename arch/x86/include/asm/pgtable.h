@@ -170,7 +170,12 @@ static inline unsigned long pgd_pfn(pgd_t pgd)
 
 static inline int pmd_large(pmd_t pte)
 {
+#ifdef CONFIG_KRG_MM
+	return (pmd_flags(pte) & (_PAGE_PSE | _PAGE_PRESENT)) ==
+		(_PAGE_PSE | _PAGE_PRESENT);
+#else
 	return pmd_flags(pte) & _PAGE_PSE;
+#endif
 }
 
 static inline pte_t pte_set_flags(pte_t pte, pteval_t set)
@@ -460,6 +465,9 @@ static inline int pte_hidden(pte_t pte)
 
 static inline int pmd_present(pmd_t pmd)
 {
+#ifdef CONFIG_KRG_MM
+	return pmd_flags(pmd) & _PAGE_PRESENT;
+#else
 	/*
 	 * Checking for _PAGE_PSE is needed too because
 	 * split_huge_page will temporarily clear the present bit (but
@@ -467,6 +475,7 @@ static inline int pmd_present(pmd_t pmd)
 	 * _PAGE_PRESENT bit is clear).
 	 */
 	return pmd_flags(pmd) & (_PAGE_PRESENT | _PAGE_PROTNONE | _PAGE_PSE);
+#endif
 }
 
 static inline int pmd_none(pmd_t pmd)
