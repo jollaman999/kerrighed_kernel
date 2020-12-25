@@ -1813,7 +1813,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	struct children_kddm_object *parent_children_obj;
 	pid_t real_parent_tgid;
 	int retval;
-	bool zombie = tskRecv->exit_state;
+	bool zombie = tskRecv->exit_state == EXIT_ZOMBIE;
 
 	BUG_ON(!l_regs || !tskRecv);
 	BUG_ON(action->type == EPM_CHECKPOINT);
