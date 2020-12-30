@@ -100,10 +100,6 @@
 
 #include <trace/events/sched.h>
 
-#ifdef CONFIG_KRG_EPM
-spinlock_t krg_vfork_done_lock;
-#endif
-
 /*
  * Protected counters by write_lock_irq(&tasklist_lock)
  */
@@ -233,10 +229,6 @@ void __init fork_init(unsigned long mempages)
 	task_struct_cachep =
 		kmem_cache_create("task_struct", sizeof(struct task_struct),
 			ARCH_MIN_TASKALIGN, SLAB_PANIC | SLAB_NOTRACK, NULL);
-#endif
-
-#ifdef CONFIG_KRG_EPM
-	spin_lock_init(&krg_vfork_done_lock);
 #endif
 
 	/* do the arch specific task caches init */
@@ -689,11 +681,7 @@ static void complete_vfork_done(struct task_struct *tsk)
 {
 	struct completion *vfork;
 
-#ifdef CONFIG_KRG_EPM
-	spin_lock(&krg_vfork_done_lock);
-#else
 	task_lock(tsk);
-#endif
 	vfork = tsk->vfork_done;
 	if (likely(vfork)) {
 		tsk->vfork_done = NULL;
@@ -704,11 +692,7 @@ static void complete_vfork_done(struct task_struct *tsk)
 #endif
 		complete(vfork);
 	}
-#ifdef CONFIG_KRG_EPM
-	spin_unlock(&krg_vfork_done_lock);
-#else
 	task_unlock(tsk);
-#endif
 }
 
 #ifndef CONFIG_KRG_EPM
@@ -724,17 +708,9 @@ int wait_for_vfork_done(struct task_struct *child,
 	freezer_count();
 
 	if (killed) {
-#ifdef CONFIG_KRG_EPM
-		spin_lock(&krg_vfork_done_lock);
-#else
 		task_lock(child);
-#endif
 		child->vfork_done = NULL;
-#ifdef CONFIG_KRG_EPM
-		spin_lock(&krg_vfork_done_lock);
-#else
 		task_unlock(child);
-#endif
 	}
 
 	put_task_struct(child);
