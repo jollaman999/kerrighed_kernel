@@ -1958,19 +1958,13 @@ repeat:
 	if (current->children_obj) {
 		/* Try all children, even remote ones but don't wait yet */
 		/* Releases children lock */
-		int tsk_result = krg_do_wait(current->children_obj, wo);
-
-		if (tsk_result)
-			retval = tsk_result;
-		else
-			retval = wo->notask_error;
+		retval = krg_do_wait(current->children_obj, wo);
+		if (retval)
+			goto end;
 	}
 #endif
 
 notask:
-#ifdef CONFIG_KRG_EPM
-	if (!current->children_obj)
-#endif
 	retval = wo->notask_error;
 	if (!retval && !(wo->wo_flags & WNOHANG)) {
 		retval = -ERESTARTSYS;
