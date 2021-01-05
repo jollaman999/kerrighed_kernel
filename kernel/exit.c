@@ -1882,7 +1882,6 @@ static int ptrace_do_wait(struct wait_opts *wo, struct task_struct *tsk)
 	return 0;
 }
 
-#ifndef CONFIG_KRG_EPM
 static int child_wait_callback(wait_queue_t *wait, unsigned mode,
 				int sync, void *key)
 {
@@ -1898,23 +1897,15 @@ static int child_wait_callback(wait_queue_t *wait, unsigned mode,
 
 	return default_wake_function(wait, mode, sync, key);
 }
-#endif
 
 void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
 {
-#ifdef CONFIG_KRG_EPM
-	wake_up_interruptible_sync(&parent->signal->wait_chldexit);
-#else
 	__wake_up_sync_key(&parent->signal->wait_chldexit,
 				TASK_INTERRUPTIBLE, 1, p);
-#endif
 }
 
 static long do_wait(struct wait_opts *wo)
 {
-#ifdef CONFIG_KRG_EPM
-	DECLARE_WAITQUEUE(wait, current);
-#endif
 	struct task_struct *tsk;
 	int retval;
 
@@ -1922,12 +1913,10 @@ static long do_wait(struct wait_opts *wo)
 
 #ifdef CONFIG_KRG_PROC
 	down_read(&kerrighed_init_sem);
-	add_wait_queue(&current->signal->wait_chldexit, &wait);
-#else
+#endif
 	init_waitqueue_func_entry(&wo->child_wait, child_wait_callback);
 	wo->child_wait.private = current;
 	add_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
-#endif
 repeat:
 	/*
 	 * If there is nothing that can match our critiera just get out.
@@ -1998,11 +1987,9 @@ notask:
 	}
 end:
 	__set_current_state(TASK_RUNNING);
-#ifdef CONFIG_KRG_EPM
-	remove_wait_queue(&current->signal->wait_chldexit, &wait);
-	up_read(&kerrighed_init_sem);
-#else
 	remove_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
+#ifdef CONFIG_KRG_EPM
+	up_read(&kerrighed_init_sem);
 #endif
 	return retval;
 }
