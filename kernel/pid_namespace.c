@@ -80,11 +80,10 @@ static void proc_cleanup_work(struct work_struct *work)
 	pid_ns_release_proc(ns);
 }
 
-#ifdef CONFIG_KRG_EPM
-struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns, bool accept_parent)
-#else
-static struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns)
+#ifndef CONFIG_KRG_EPM
+static
 #endif
+struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns)
 {
 	struct pid_namespace *ns;
 #ifdef CONFIG_KRG_EPM
@@ -95,7 +94,7 @@ static struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_p
 	int i, err = -ENOMEM;
 
 #ifdef CONFIG_KRG_EPM
-	if (accept_parent)
+	if (parent_pid_ns)
 		level = parent_pid_ns->level + 1;
 #endif
 
@@ -118,7 +117,7 @@ static struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_p
 	kref_init(&ns->kref);
 	ns->level = level;
 #ifdef CONFIG_KRG_PROC
-	if (accept_parent) {
+	if (parent_pid_ns) {
 		ns->global = parent_pid_ns->global;
 		ns->global |= current->create_krg_ns;
 		if (parent_pid_ns->krg_ns)
@@ -168,11 +167,7 @@ struct pid_namespace *copy_pid_ns(unsigned long flags, struct pid_namespace *old
 		return get_pid_ns(old_ns);
 	if (task_active_pid_ns(current) != old_ns)
 		return ERR_PTR(-EINVAL);
-#ifdef CONFIG_KRG_EPM
-	return create_pid_namespace(old_ns, true);
-#else
 	return create_pid_namespace(old_ns);
-#endif
 }
 
 void free_pid_ns(struct kref *kref)
