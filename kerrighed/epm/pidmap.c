@@ -139,7 +139,7 @@ static struct pid_namespace *pidmap_alloc(void)
 {
 	struct pid_namespace *pidmap_ns;
 
-	pidmap_ns = create_pid_namespace(NULL, false);
+	pidmap_ns = create_pid_namespace(NULL);
 	if (IS_ERR(pidmap_ns))
 		return pidmap_ns;
 

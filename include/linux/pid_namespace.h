@@ -77,7 +77,7 @@ struct pid_namespace *find_get_krg_pid_ns(void);
 #endif
 
 #ifdef CONFIG_KRG_EPM
-struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns, bool accept_parent);
+struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns);
 #endif
 
 #else /* !CONFIG_PID_NS */
