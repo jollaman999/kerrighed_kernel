@@ -1273,7 +1273,7 @@ last_component:
 			if (err)
 				goto return_err;
 #ifdef CONFIG_KRG_FAF
-                        if (nd->path.dentry)
+			if (nd->path.dentry)
 #endif
 			inode = nd->path.dentry->d_inode;
 		} else
