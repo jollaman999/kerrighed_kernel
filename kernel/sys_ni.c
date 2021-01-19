@@ -185,5 +185,10 @@ cond_syscall(compat_sys_timerfd_gettime);
 cond_syscall(sys_eventfd);
 cond_syscall(sys_eventfd2);
 
+/* open by handle */
+cond_syscall(sys_name_to_handle_at);
+cond_syscall(sys_open_by_handle_at);
+cond_syscall(compat_sys_open_by_handle_at);
+
 /* performance counters: */
 cond_syscall(sys_perf_event_open);
