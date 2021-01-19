@@ -102,3 +102,6 @@ extern int do_remount_sb(struct super_block *, int, void *, int);
 struct nameidata;
 extern struct file *nameidata_to_filp(struct nameidata *);
 extern void release_open_intent(struct nameidata *);
+
+extern long do_handle_open(int mountdirfd,
+			   struct file_handle __user *ufh, int open_flag);

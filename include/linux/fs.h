@@ -1051,6 +1051,18 @@ struct file {
 	struct mutex		f_pos_lock;
 #endif
 };
+
+struct file_handle {
+	__u32 handle_bytes;
+	int handle_type;
+	/* file identifier */
+	unsigned char f_handle[0];
+};
+
+extern int vfs_inode_fhandle(struct inode *, struct file_handle *, int size);
+extern struct dentry *vfs_fhandle_to_dentry(struct super_block *,
+					    struct file_handle *);
+
 extern spinlock_t files_lock;
 #define file_list_lock() spin_lock(&files_lock);
 #define file_list_unlock() spin_unlock(&files_lock);

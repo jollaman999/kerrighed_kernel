@@ -148,8 +148,8 @@ static int do_getname(const char __user *filename, char *page,
 
 #define EMBEDDED_NAME_MAX      (PATH_MAX - sizeof(struct filename))
 
-struct filename *
-getname(const char __user * filename)
+static struct filename *
+getname_flags(const char __user * filename, int flags, int *empty)
 {
 	int len;
 	struct filename *result, *err;
@@ -160,6 +160,7 @@ getname(const char __user * filename)
 	if (result)
 		return result;
 
+	/*ub_dentry_checkup();*/
 	result = __getname();
 	if (unlikely(!result))
 		return ERR_PTR(-ENOMEM);
@@ -198,8 +199,12 @@ recopy:
 	}
 
 	err = ERR_PTR(-ENOENT);
-	if (unlikely(!len))
-		goto error;
+	if (unlikely(!len)) {
+		if (empty)
+			*empty = 1;
+		if (!(flags & LOOKUP_EMPTY))
+			goto error;
+	}
 
 	err = ERR_PTR(-ENAMETOOLONG);
 	if (unlikely(len >= PATH_MAX))
@@ -212,6 +217,12 @@ recopy:
 error:
 	final_putname(result);
 	return err;
+}
+
+struct filename *
+getname(const char __user * filename)
+{
+	return getname_flags(filename, 0, 0);
 }
 EXPORT_SYMBOL(getname);
 
@@ -1385,6 +1396,9 @@ static int path_init(int dfd, const char *name, unsigned int flags, struct namei
 #endif
 		dentry = file->f_path.dentry;
 
+		if ((flags & LOOKUP_EMPTY) && *name == '\0')
+			goto skip_checks;
+
 		retval = -ENOTDIR;
 		if (!S_ISDIR(dentry->d_inode->i_mode))
 			goto fput_fail;
@@ -1398,7 +1412,7 @@ static int path_init(int dfd, const char *name, unsigned int flags, struct namei
 			if (retval)
 				goto fput_fail;
 		}
-
+skip_checks:
 		nd->path = file->f_path;
 		path_get(&file->f_path);
 
@@ -1631,11 +1645,11 @@ struct dentry *lookup_one_noperm(const char *name, struct dentry *base)
 	return __lookup_hash(&this, base, NULL);
 }
 
-int user_path_at(int dfd, const char __user *name, unsigned flags,
-		 struct path *path)
+int user_path_at_empty(int dfd, const char __user *name, unsigned flags,
+		 struct path *path, int *empty)
 {
 	struct nameidata nd;
-	struct filename *tmp = getname(name);
+	struct filename *tmp = getname_flags(name, flags, empty);
 	int err = PTR_ERR(tmp);
 	if (!IS_ERR(tmp)) {
 
@@ -1647,6 +1661,12 @@ int user_path_at(int dfd, const char __user *name, unsigned flags,
 			*path = nd.path;
 	}
 	return err;
+}
+
+int user_path_at(int dfd, const char __user *name, unsigned flags,
+		 struct path *path)
+{
+	return user_path_at_empty(dfd, name, flags, path, 0);
 }
 
 static struct filename *
