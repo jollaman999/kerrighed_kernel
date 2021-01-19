@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32-hcc
-# Tue Jan 19 14:32:32 2021
+# Tue Jan 19 14:33:20 2021
 #
 CONFIG_64BIT=y
 # CONFIG_X86_32 is not set
@@ -82,7 +82,7 @@ CONFIG_POSIX_MQUEUE=y
 CONFIG_POSIX_MQUEUE_SYSCTL=y
 CONFIG_BSD_PROCESS_ACCT=y
 CONFIG_BSD_PROCESS_ACCT_V3=y
-# CONFIG_FHANDLE is not set
+CONFIG_FHANDLE=y
 CONFIG_TASKSTATS=y
 CONFIG_TASK_DELAY_ACCT=y
 CONFIG_TASK_XACCT=y
