@@ -137,7 +137,7 @@ config MOUSE_PS2_OLPC
 
 config MOUSE_PS2_VMMOUSE
 	bool "Virtual mouse (vmmouse)"
-	depends on MOUSE_PS2 && X86 && HYPERVISOR_GUEST
+	depends on MOUSE_PS2 && X86 && PARAVIRT_GUEST
 	help
 	  Say Y here if you are running under control of VMware hypervisor
 	  (ESXi, Workstation or Fusion). Also make sure that when you enable
