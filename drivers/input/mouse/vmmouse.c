@@ -157,7 +157,7 @@ static psmouse_ret_t vmmouse_report_events(struct psmouse *psmouse)
 		VMMOUSE_CMD(ABSPOINTER_STATUS, 0,
 			    status, dummy1, dummy2, dummy3);
 		if ((status & VMMOUSE_ERROR) == VMMOUSE_ERROR) {
-			psmouse_err(psmouse, "failed to fetch status data\n");
+			pr_err("vmmouse: failed to fetch status data\n");
 			/*
 			 * After a few attempts this will result in
 			 * reconnect.
@@ -170,7 +170,7 @@ static psmouse_ret_t vmmouse_report_events(struct psmouse *psmouse)
 			break;
 
 		if (queue_length % 4) {
-			psmouse_err(psmouse, "invalid queue length\n");
+			pr_err("vmmouse: invalid queue length\n");
 			return PSMOUSE_BAD_DATA;
 		}
 
@@ -259,7 +259,7 @@ static void vmmouse_disable(struct psmouse *psmouse)
 		    status, dummy1, dummy2, dummy3);
 
 	if ((status & VMMOUSE_ERROR) != VMMOUSE_ERROR)
-		psmouse_warn(psmouse, "failed to disable vmmouse device\n");
+		printk(KERN_WARNING "vmmouse: failed to disable vmmouse device\n");
 }
 
 /**
@@ -288,14 +288,14 @@ static int vmmouse_enable(struct psmouse *psmouse)
 	 */
 	VMMOUSE_CMD(ABSPOINTER_STATUS, 0, status, dummy1, dummy2, dummy3);
 	if ((status & 0x0000ffff) == 0) {
-		psmouse_dbg(psmouse, "empty flags - assuming no device\n");
+		pr_debug("vmmouse: empty flags - assuming no device\n");
 		return -ENXIO;
 	}
 
 	VMMOUSE_CMD(ABSPOINTER_DATA, 1 /* single item */,
 		    version, dummy1, dummy2, dummy3);
 	if (version != VMMOUSE_VERSION_ID) {
-		psmouse_dbg(psmouse, "Unexpected version value: %u vs %u\n",
+		pr_debug("vmmouse: Unexpected version value: %u vs %u\n",
 			    (unsigned) version, VMMOUSE_VERSION_ID);
 		vmmouse_disable(psmouse);
 		return -ENXIO;
@@ -350,8 +350,7 @@ int vmmouse_detect(struct psmouse *psmouse, bool set_properties)
 	u32 response, version, dummy1, dummy2;
 
 	if (!vmmouse_check_hypervisor()) {
-		psmouse_dbg(psmouse,
-			    "VMMouse not running on supported hypervisor.\n");
+		pr_debug("vmmouse: VMMouse not running on supported hypervisor.\n");
 		return -ENXIO;
 	}
 
@@ -403,8 +402,7 @@ static int vmmouse_reconnect(struct psmouse *psmouse)
 	vmmouse_disable(psmouse);
 	error = vmmouse_enable(psmouse);
 	if (error) {
-		psmouse_err(psmouse,
-			    "Unable to re-enable mouse when reconnecting, err: %d\n",
+		pr_err("vmmouse: Unable to re-enable mouse when reconnecting, err: %d\n",
 			    error);
 		return error;
 	}

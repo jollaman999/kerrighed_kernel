@@ -609,7 +609,7 @@ static int psmouse_extensions(struct psmouse *psmouse,
 		}
 	}
 
-	if (psmouse_do_detect(vmmouse_detect, psmouse, set_properties) == 0) {
+	if (vmmouse_detect(psmouse, set_properties) == 0) {
 		if (max_proto > PSMOUSE_IMEX) {
 			if (!set_properties || vmmouse_init(psmouse) == 0)
 				return PSMOUSE_VMMOUSE;
