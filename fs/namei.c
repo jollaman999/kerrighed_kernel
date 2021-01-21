@@ -1145,7 +1145,8 @@ fail:
 static inline int follow_on_final(struct inode *inode, unsigned lookup_flags)
 {
 	return inode && unlikely(inode->i_op->follow_link) &&
-		((lookup_flags & LOOKUP_FOLLOW) || S_ISDIR(inode->i_mode));
+		((lookup_flags & LOOKUP_FOLLOW) || S_ISDIR(inode->i_mode) ||
+		 (lookup_flags & LOOKUP_OPATH));
 }
 
 /*
@@ -1992,6 +1993,9 @@ static inline int lookup_flags(unsigned int f)
 	
 	if (f & O_DIRECTORY)
 		retval |= LOOKUP_DIRECTORY;
+
+	if (f & O_PATH)
+		retval |= LOOKUP_OPATH;
 
 	return retval;
 }
