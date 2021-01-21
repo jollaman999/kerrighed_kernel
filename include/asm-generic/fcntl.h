@@ -61,6 +61,9 @@
 #ifndef O_CLOEXEC
 #define O_CLOEXEC	02000000	/* set close_on_exec */
 #endif
+#ifndef O_PATH
+#define O_PATH		010000000
+#endif
 
 /*
  * Before Linux 2.6.32 only O_DSYNC semantics were implemented, but using
