@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32-krg_xeon
-# Thu Nov 12 11:37:39 2020
+# Fri Jan 22 18:17:00 2021
 #
 CONFIG_64BIT=y
 # CONFIG_X86_32 is not set
@@ -4149,6 +4149,7 @@ CONFIG_PROC_KCORE=y
 CONFIG_PROC_VMCORE=y
 CONFIG_PROC_SYSCTL=y
 CONFIG_PROC_PAGE_MONITOR=y
+CONFIG_PROC_HCC_VERSION=y
 CONFIG_SYSFS=y
 CONFIG_TMPFS=y
 CONFIG_TMPFS_POSIX_ACL=y
