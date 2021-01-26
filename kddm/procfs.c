@@ -8,6 +8,7 @@
 #include <linux/mmzone.h>
 #include <linux/proc_fs.h>
 #include <asm/uaccess.h>
+#include <linux/mm.h>
 #include <linux/swap.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
@@ -30,70 +31,6 @@ static struct proc_dir_entry *procfs_setstat;
 
 /*  /proc/kerrighed/kddm/bench */
 static struct proc_dir_entry *procfs_bench;
-
-
-
-void check_pages(void)
-{
-        struct page *page;
-        pg_data_t *pgdat;
-        unsigned long i, pb;
-	unsigned long flags;
-
-        for_each_online_pgdat(pgdat) {
-                pgdat_resize_lock(pgdat, &flags);
-                for (i = 0; i < pgdat->node_spanned_pages; ++i) {
-			pb = 0;
-                        page = pgdat_page_nr(pgdat, i);
-			if (page_count(page) < 0) {
-				printk ("Negative count\n");
-				pb = 1;
-			}
-			if (page_mapcount(page) < 0) {
-				printk ("Negative mapcount\n");
-				pb = 1;
-			}
-			if (page_mapcount(page) > page_count(page)) {
-				printk ("Count problem\n");
-				pb = 1;
-			}
-			if (page_count(page) == 0) {
-				if (page_mapcount(page) != 0) {
-					printk ("Non null map count\n");
-					pb = 1;
-				}
-				if (page->mapping != NULL) {
-					printk ("Non null mapping\n");
-					pb = 1;
-				}
-			}
-			else {
-				if (page_mapcount(page)) {
-					if (page->mapping == NULL) {
-						printk ("Null mapping\n");
-						pb = 1;
-					}
-				}
-				if (page->mapping) {
-					if ((page_mapcount(page) == 0) &&
-					    (PageAnon(page))) {
-						printk ("Null mapcount\n");
-						pb = 1;
-					}
-				}
-			}
-			if (pb)
-				printk ("Page %p - count %d - map count %d - "
-					"mapping %p - flags 0x%08lx\n", page,
-					page_count(page),
-					page_mapcount(page),
-					page->mapping,
-					page->flags);
-                }
-		printk ("%ld pages checked\n", i);
-                pgdat_resize_unlock(pgdat, &flags);
-        }
-}
 
 
 
@@ -217,7 +154,7 @@ int read_meminfo (char *buffer,
                           "%s: \t %d\n", STATE_NAME (i),
 			  atomic_read(&nr_OBJ_STATE[i]));
         }
-      check_pages();
+      show_mem(0);
     }
 
   if (offset + count >= len)
