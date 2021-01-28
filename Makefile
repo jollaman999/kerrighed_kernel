@@ -317,7 +317,7 @@ include $(srctree)/scripts/Kbuild.include
 
 # Make variables (CC, etc...)
 
-AS		= $(CROSS_COMPILE)as
+AS		= $(CCACHE) $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
 CC		= $(CCACHE) $(CROSS_COMPILE)gcc
 CPP		= $(CC) -E
