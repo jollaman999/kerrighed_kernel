@@ -354,15 +354,14 @@ LINUXINCLUDE    := -Iinclude \
 		   -Iarch$(hd-arch)/include/generated -Iinclude        \
                    -include $(srctree)/include/linux/kconfig.h
 
-KBUILD_CPPFLAGS := -D__KERNEL__ -fno-pie
+KBUILD_CPPFLAGS := -D__KERNEL__
 
 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -fno-delete-null-pointer-checks \
-		   -std=gnu89 \
-		   -fno-pie -no-pie
+		   -std=gnu89
 
 ifneq (,$(filter $(ARCH), i386 x86_64))
 CPP_MAJOR       := $(shell $(CPP) -dumpversion 2>&1 | cut -d'.' -f1)
@@ -383,7 +382,7 @@ KBUILD_CFLAGS   += $(shell if [ $(CPP_MAJOR) -eq 4 -a $(CPP_MINOR) -eq 4  ] ; th
 endif ##($(KBUILD_EXTMOD),)
 endif #(,$(filter $(ARCH), i386 x86_64))
 
-KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-pie
+KBUILD_AFLAGS   := -D__ASSEMBLY__
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
 KERNELRELEASE = $(shell cat include/config/kernel.release 2> /dev/null)
