@@ -362,8 +362,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Wno-format-security \
 		   -fno-delete-null-pointer-checks \
 		   -std=gnu89 \
-		   -fno-pie -no-pie \
-		   -Wno-unused-const-variable
+		   -fno-pie -no-pie
 
 ifneq (,$(filter $(ARCH), i386 x86_64))
 CPP_MAJOR       := $(shell $(CPP) -dumpversion 2>&1 | cut -d'.' -f1)
