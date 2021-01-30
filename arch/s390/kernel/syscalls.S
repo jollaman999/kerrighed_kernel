@@ -343,8 +343,8 @@ SYSCALL(sys_perf_event_open,sys_perf_event_open,sys_perf_event_open_wrapper)
 NI_SYSCALL	/* fanotify_init */
 NI_SYSCALL	/* fanotify_mark */
 NI_SYSCALL	/* prlimit64 */
-NI_SYSCALL	/* name_to_handle_at */
-NI_SYSCALL	/* open_by_handle_at */
+SYSCALL(name_to_handle_at)
+SYSCALL(open_by_handle_at)
 NI_SYSCALL	/* clock_adjtime */
 SYSCALL(sys_syncfs,sys_syncfs,sys_syncfs_wrapper)
 SYSCALL(sys_setns,sys_setns,sys_setns_wrapper)
