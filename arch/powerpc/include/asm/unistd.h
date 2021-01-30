@@ -367,8 +367,8 @@
 /* #define __NR_recvmsg		342 */
 /* #define __NR_recvmmsg	343 */
 /* #define __NR_accept4		344 */
-/* #define __NR_name_to_handle_at	345 */
-/* #define __NR_open_by_handle_at	346 */
+#define __NR_name_to_handle_at	345
+#define __NR_open_by_handle_at	346
 #define __NR_clock_adjtime	347
 #define __NR_syncfs		348
 #define __NR_sendmmsg		349
