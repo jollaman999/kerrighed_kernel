@@ -2094,9 +2094,23 @@ static int attach_task_by_pid(struct cgroup *cgrp, u64 pid, bool threadgroup)
 	struct task_struct *tsk;
 	const struct cred *cred = current_cred(), *tcred;
 	int ret;
+#ifdef CONFIG_KRG_EPM
+	char *cgrp_root_name = cgrp->root->name;
+#endif
 
 	if (!cgroup_lock_live_group(cgrp))
 		return -ENODEV;
+
+#ifdef CONFIG_KRG_EPM
+	/* Prevent 'systemd' like daemons to set cgroup */
+	if (threadgroup && strlen(cgrp_root_name)) {
+		if ((!strcmp("systemd", cgrp_root_name)) ||
+		    (!strcmp("elogind", cgrp_root_name))) {
+			cgroup_unlock();
+			return 0;
+		}
+	}
+#endif
 
 	if (pid) {
 		rcu_read_lock();
