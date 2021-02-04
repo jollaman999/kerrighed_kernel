@@ -33,7 +33,7 @@ extern struct kddm_set *mm_struct_kddm_set;
  *--------------------------------------------------------------------------*/
 
 
-struct mm_struct *alloc_fake_mm(struct mm_struct *src_mm);
+struct mm_struct *alloc_fake_mm();
 int reinit_mm(struct mm_struct *mm);
 
 
