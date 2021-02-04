@@ -82,27 +82,17 @@ int reinit_mm(struct mm_struct *mm)
 
 
 
-struct mm_struct *alloc_fake_mm(struct mm_struct *src_mm)
+struct mm_struct *alloc_fake_mm()
 {
 	struct mm_struct *mm;
-	int r;
 
 	mm = allocate_mm();
 	if (!mm)
 		return NULL;
 
-	if (src_mm == NULL) {
-		memset(mm, 0, sizeof(*mm));
-		if (!mm_init(mm, NULL))
-			goto err_put_mm;
-	}
-	else {
-		*mm = *src_mm;
-
-		r = reinit_mm(mm);
-		if (r)
-			goto err_put_mm;
-	}
+	memset(mm, 0, sizeof(*mm));
+	if (!mm_init(mm, NULL))
+		goto err_put_mm;
 
 	atomic_set(&mm->mm_ltasks, 0);
 

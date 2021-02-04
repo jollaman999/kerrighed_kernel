@@ -36,7 +36,7 @@ extern unique_id_root_t mm_struct_unique_id_root;
  *--------------------------------------------------------------------------*/
 
 
-struct mm_struct *alloc_fake_mm(struct mm_struct *src_mm);
+struct mm_struct *alloc_fake_mm();
 int reinit_mm(struct mm_struct *mm);
 
 
