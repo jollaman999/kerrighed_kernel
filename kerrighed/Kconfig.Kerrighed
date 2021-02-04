@@ -163,7 +163,7 @@ config KRG_PROCFS
 
 config KRG_MM
 	bool "KerMM"
-	depends on KERRIGHED && KRG_KDDM && !TRACK_DIRTY_PAGES && !COMPACTION && !KSM
+	depends on KERRIGHED && KRG_KDDM && !TRACK_DIRTY_PAGES && !COMPACTION && !KSM  && !TRANSPARENT_HUGEPAGE
 	help
 	  Kerrighed's global memory management
 
@@ -204,7 +204,7 @@ config KRG_PROC
 
 config KRG_EPM
 	bool "KerEPM"
-	depends on KERRIGHED && KRG_PROC && KRG_CAP && KRG_MM && (KRG_DVFS || KRG_FAF) && !TRANSPARENT_HUGEPAGE
+	depends on KERRIGHED && KRG_PROC && KRG_CAP && KRG_MM && (KRG_DVFS || KRG_FAF)
 	help
 	  Enhanced Process Management:
 	    process migration, checkpoint/restart, remote clone.
