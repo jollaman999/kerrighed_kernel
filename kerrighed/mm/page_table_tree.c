@@ -783,7 +783,7 @@ static void *kddm_pt_alloc (struct kddm_set *set, void *_data)
 	struct kddm_obj_iterator iterator;
 
 	if (mm == NULL) {
-		mm = alloc_fake_mm(NULL);
+		mm = alloc_fake_mm();
 
 		if (!mm)
 			return NULL;
