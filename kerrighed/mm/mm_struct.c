@@ -80,29 +80,6 @@ int reinit_mm(struct mm_struct *mm)
 	return 0;
 }
 
-
-
-struct mm_struct *alloc_fake_mm()
-{
-	struct mm_struct *mm;
-
-	mm = allocate_mm();
-	if (!mm)
-		return NULL;
-
-	memset(mm, 0, sizeof(*mm));
-	if (!mm_init(mm, NULL))
-		goto err_put_mm;
-
-	atomic_set(&mm->mm_ltasks, 0);
-
-	return mm;
-
-err_put_mm:
-	mmput(mm);
-	return NULL;
-}
-
 void mm_struct_pin(struct mm_struct *mm)
 {
 	down_read(&mm->remove_sem);

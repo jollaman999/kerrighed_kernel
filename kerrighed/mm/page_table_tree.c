@@ -776,6 +776,27 @@ static void kddm_pt_unlock_obj_table (struct kddm_set *set)
 	/* We don't need any global table lock for most operations */
 }
 
+static struct mm_struct *alloc_mm(void)
+{
+	struct mm_struct *mm;
+
+	mm = allocate_mm();
+	if (!mm)
+		return NULL;
+
+	memset(mm, 0, sizeof(*mm));
+	if (!mm_init(mm, NULL))
+		goto err_put_mm;
+
+	atomic_set(&mm->mm_ltasks, 0);
+
+	return mm;
+
+err_put_mm:
+	mmput(mm);
+	return NULL;
+}
+
 static void *kddm_pt_alloc (struct kddm_set *set, void *_data)
 {
 	struct mm_struct *mm = _data;
@@ -783,7 +804,7 @@ static void *kddm_pt_alloc (struct kddm_set *set, void *_data)
 	struct kddm_obj_iterator iterator;
 
 	if (mm == NULL) {
-		mm = alloc_fake_mm();
+		mm = alloc_mm();
 
 		if (!mm)
 			return NULL;
