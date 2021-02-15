@@ -1355,7 +1355,9 @@ struct wait_opts {
 	int __user		*wo_stat;
 	struct rusage __user	*wo_rusage;
 
+#ifndef CONFIG_KRG_EPM
 	wait_queue_t		child_wait;
+#endif
 	int			notask_error;
 };
 
