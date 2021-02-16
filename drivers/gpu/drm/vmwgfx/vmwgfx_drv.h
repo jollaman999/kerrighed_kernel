@@ -1213,32 +1213,6 @@ static inline void vmw_fifo_resource_dec(struct vmw_private *dev_priv)
 }
 
 /**
- * vmw_mmio_read - Perform a MMIO read from volatile memory
- *
- * @addr: The address to read from
- *
- * This function is intended to be equivalent to ioread32() on
- * memremap'd memory, but without byteswapping.
- */
-static inline u32 vmw_mmio_read(u32 *addr)
-{
-	return READ_ONCE(*addr);
-}
-
-/**
- * vmw_mmio_write - Perform a MMIO write to volatile memory
- *
- * @addr: The address to write to
- *
- * This function is intended to be equivalent to iowrite32 on
- * memremap'd memory, but without byteswapping.
- */
-static inline void vmw_mmio_write(u32 value, u32 *addr)
-{
-	WRITE_ONCE(*addr, value);
-}
-
-/**
  * Add vmw_msg module function
  */
 extern int vmw_host_log(const char *log);
