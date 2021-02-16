@@ -2101,7 +2101,7 @@ static int attach_task_by_pid(struct cgroup *cgrp, u64 pid, bool threadgroup)
 
 #ifdef CONFIG_KRG_EPM
 	/* Prevent 'systemd' like daemons to set cgroup */
-	if (threadgroup && strlen(cgrp_root_name)) {
+	if (strlen(cgrp_root_name)) {
 		if ((!strcmp("systemd", cgrp_root_name)) ||
 		    (!strcmp("elogind", cgrp_root_name))) {
 			cgroup_unlock();
