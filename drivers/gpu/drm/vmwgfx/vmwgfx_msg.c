@@ -59,7 +59,7 @@
 
 static u32 vmw_msg_enabled = 1;
 
-enum rpc_msg_type {
+enum vmwgfx_msg_type {
 	MSG_TYPE_OPEN,
 	MSG_TYPE_SENDSIZE,
 	MSG_TYPE_SENDPAYLOAD,
