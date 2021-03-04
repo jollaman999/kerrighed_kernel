@@ -51,6 +51,7 @@ struct epm_action {
 		struct {
 			pid_t from_pid;
 			pid_t from_tgid;
+			kerrighed_node_t source;
 			kerrighed_node_t target;
 			unsigned long clone_flags;
 			unsigned long stack_start;
