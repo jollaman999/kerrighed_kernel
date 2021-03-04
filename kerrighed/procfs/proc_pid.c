@@ -408,6 +408,11 @@ static struct krg_pid_entry krg_tgid_base_stuff[] = {
 	INF("cmdline",    S_IRUGO, pid_cmdline),
 	ONE("stat",       S_IRUGO, tgid_stat),
 	ONE("statm",      S_IRUGO, pid_statm),
+#ifdef CONFIG_KRG_EPM
+	INF("epm_type",  S_IRUGO, epm_type_show),
+	INF("epm_source",S_IRUGO, epm_source_show),
+	INF("epm_target",S_IRUGO, epm_target_show),
+#endif
 /* 	REG("maps",       S_IRUGO, maps), */
 /* #ifdef CONFIG_NUMA */
 /* 	REG("numa_maps",  S_IRUGO, numa_maps), */

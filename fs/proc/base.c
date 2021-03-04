@@ -82,6 +82,9 @@
 #include <linux/elf.h>
 #include <linux/pid_namespace.h>
 #include <linux/fs_struct.h>
+#ifdef CONFIG_KRG_EPM
+#include <kerrighed/action.h>
+#endif
 #ifdef CONFIG_KRG_KDDM
 #include <kerrighed/krgnodemask.h>
 #include <kddm/kddm.h>
@@ -911,6 +914,55 @@ int proc_pid_syscall(struct task_struct *task, char *buffer)
 	return res;
 }
 #endif /* CONFIG_HAVE_ARCH_TRACEHOOK */
+
+#ifdef CONFIG_KRG_EPM
+int epm_type_show(struct task_struct *task, char *buffer)
+{
+	int res = 0;
+
+	task_lock(task);
+	switch (task->epm_type)
+	{
+	case EPM_NO_ACTION:
+		res = sprintf(buffer, "EPM_NO_ACTION\n");
+		break;
+	case EPM_MIGRATE:
+		res = sprintf(buffer, "EPM_MIGRATE\n");
+		break;
+	case EPM_REMOTE_CLONE:
+		res = sprintf(buffer, "EPM_REMOTE_CLONE\n");
+		break;
+	default:
+		res = -EINVAL;
+		break;
+	}
+	task_unlock(task);
+
+	return res;
+}
+
+int epm_source_show(struct task_struct *task, char *buffer)
+{
+	int res = 0;
+
+	task_lock(task);
+	res = sprintf(buffer, "%d\n", task->epm_source);
+	task_unlock(task);
+
+	return res;
+}
+
+int epm_target_show(struct task_struct *task, char *buffer)
+{
+	int res = 0;
+
+	task_lock(task);
+	res = sprintf(buffer, "%d\n", task->epm_target);
+	task_unlock(task);
+
+	return res;
+}
+#endif
 
 #ifdef CONFIG_KRG_KDDM
 
@@ -3360,6 +3412,11 @@ static const struct pid_entry tgid_base_stuff[] = {
 #endif
 	ONE("stat",       S_IRUGO, proc_tgid_stat),
 	ONE("statm",      S_IRUGO, proc_pid_statm),
+#ifdef CONFIG_KRG_EPM
+	INF("epm_type",  S_IRUGO, epm_type_show),
+	INF("epm_source",S_IRUGO, epm_source_show),
+	INF("epm_target",S_IRUGO, epm_target_show),
+#endif
 	REG("maps",       S_IRUGO, proc_maps_operations),
 #ifdef CONFIG_NUMA
 	REG("numa_maps",  S_IRUGO, proc_numa_maps_operations),
@@ -3780,6 +3837,11 @@ static const struct pid_entry tid_base_stuff[] = {
 #endif
 	ONE("stat",      S_IRUGO, proc_tid_stat),
 	ONE("statm",     S_IRUGO, proc_pid_statm),
+#ifdef CONFIG_KRG_EPM
+	INF("epm_type",  S_IRUGO, epm_type_show),
+	INF("epm_source",S_IRUGO, epm_source_show),
+	INF("epm_target",S_IRUGO, epm_target_show),
+#endif
 #ifdef CONFIG_KRG_KDDM
 	INF("kddm",      S_IRUGO, proc_tid_kddm),
 #endif

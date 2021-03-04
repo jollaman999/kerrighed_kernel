@@ -299,6 +299,10 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 		rpc_cancel_sync(desc);
 	} else {
 		BUG_ON(retval != task_pid_knr(tsk));
+
+		tsk->epm_type = EPM_MIGRATE;
+		tsk->epm_target = target;
+
 		retval = 0;
 	}
 
@@ -365,6 +369,10 @@ static void handle_migrate(struct rpc_desc *desc, void *msg, size_t size)
 		rpc_cancel(desc);
 		return;
 	}
+
+	task->epm_type = action->type;
+	task->epm_source = action->migrate.source;
+	task->epm_target = action->migrate.target;
 
 #ifdef CONFIG_KRG_SCHED
 	action->migrate.end_date = current_kernel_time();

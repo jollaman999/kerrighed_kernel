@@ -97,6 +97,7 @@ int krg_do_fork(unsigned long clone_flags,
 		goto out_release;
 
 	remote_clone.type = EPM_REMOTE_CLONE;
+	remote_clone.remote_clone.source = kerrighed_node_id;
 	remote_clone.remote_clone.target = distant_node;
 	remote_clone.remote_clone.clone_flags = clone_flags;
 	remote_clone.remote_clone.stack_start = stack_start;
@@ -115,6 +116,10 @@ int krg_do_fork(unsigned long clone_flags,
 
 	if (retval < 0)
 		rpc_cancel_sync(desc);
+	else {
+		task->epm_type = EPM_REMOTE_CLONE;
+		task->epm_target = distant_node;
+	}
 	rpc_end(desc, 0);
 
 out_release:
@@ -140,6 +145,10 @@ static void handle_remote_clone(struct rpc_desc *desc, void *msg, size_t size)
 		rpc_cancel(desc);
 		return;
 	}
+
+	task->epm_type = action->type;
+	task->epm_source = action->remote_clone.source;
+	task->epm_target = action->remote_clone.target;
 
 	wake_up_new_task(task, CLONE_VM);
 }
