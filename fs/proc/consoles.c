@@ -8,6 +8,7 @@
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
+#include <linux/tty.h>
 #include <linux/tty_driver.h>
 
 /*
