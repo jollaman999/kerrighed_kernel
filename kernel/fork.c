@@ -83,6 +83,7 @@
 #include <kerrighed/krginit.h>
 #endif
 #ifdef CONFIG_KRG_EPM
+#include <kerrighed/action.h>
 #include <kerrighed/signal.h>
 #include <kerrighed/children.h>
 #include <kerrighed/application.h>
@@ -1546,6 +1547,12 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	p->tgid = p->pid;
 	if (clone_flags & CLONE_THREAD)
 		p->tgid = current->tgid;
+
+#ifdef CONFIG_KRG_EPM
+	p->epm_type = EPM_NO_ACTION;
+	p->epm_source = kerrighed_node_id;
+	p->epm_target = kerrighed_node_id;
+#endif
 
 	if (current->nsproxy != p->nsproxy) {
 		retval = ns_cgroup_clone(p, pid);

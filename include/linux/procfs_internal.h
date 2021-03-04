@@ -64,6 +64,12 @@ extern int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
 extern int proc_pid_statm(struct seq_file *m, struct pid_namespace *ns,
 				struct pid *pid, struct task_struct *task);
 
+#ifdef CONFIG_KRG_EPM
+int epm_type_show(struct task_struct *task, char *buffer);
+int epm_source_show(struct task_struct *task, char *buffer);
+int epm_target_show(struct task_struct *task, char *buffer);
+#endif
+
 extern struct dentry *krg_proc_pid_lookup(struct inode *dir,
 					  struct dentry *dentry, pid_t pid);
 extern int krg_proc_pid_readdir(struct file *filp,

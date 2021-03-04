@@ -224,6 +224,10 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 		krg_set_pid_location(tsk);
 	} else {
 		BUG_ON(remote_pid != task_pid_knr(tsk));
+
+		tsk->epm_type = EPM_MIGRATE;
+		tsk->epm_target = target;
+
 		/* Do not notify a task having done vfork() */
 		cleanup_vfork_done(tsk);
 	}
@@ -267,6 +271,10 @@ static void handle_migrate(struct rpc_desc *desc, void *msg, size_t size)
 		rpc_cancel(desc);
 		return;
 	}
+
+	task->epm_type = action->type;
+	task->epm_source = action->migrate.source;
+	task->epm_target = action->migrate.target;
 
 #ifdef CONFIG_KRG_SCHED
 	action->migrate.end_date = current_kernel_time();
