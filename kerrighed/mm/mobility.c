@@ -829,6 +829,7 @@ static void __rebuild_pte(struct mm_struct *mm, unsigned long address,
 	BUG_ON(!pte);
 
 	set_pte(pte, mk_pte(page, prot));
+	pte_unmap(pte);
 }
 
 int cr_import_vma_pages(ghost_t *ghost,
