@@ -304,11 +304,8 @@ retry:
 			priv,new_obj);
 
 			/* The object has been used, allocate a new one */
-			if (!new_obj) {
-				pte_unmap_unlock(ptep, ptl);
+			if (!new_obj)
 				new_obj = alloc_kddm_obj_entry(set, 0);
-				ptep = pte_offset_map_lock(mm, pmd, addr,&ptl);
-			}
 		}
 
 		ptep++;
