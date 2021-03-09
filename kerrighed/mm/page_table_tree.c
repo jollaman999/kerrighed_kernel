@@ -299,8 +299,6 @@ retry:
 							  objid) == -EAGAIN)
 					goto retry;
 
-				pte_unmap_unlock(ptep, ptl);
-
 				ret = iterator->f(objid, obj_entry, iterator->data, iterator->dead_list);
 				if (ret == KDDM_OBJ_REMOVED
 				    || ret == KDDM_OBJ_CLEARED)
@@ -308,19 +306,14 @@ retry:
 				else
 					put_kddm_obj_entry(set, obj_entry,
 							   objid);
-				ptep = pte_offset_map_lock(mm, pmd, addr, &ptl);
 			}
-		}
-		else {
+		} else {
 			obj_entry = init_pte(mm, ptep, set, objid, iterator->data,
 					     new_obj);
 
 			/* The object has been used, allocate a new one */
-			if (obj_entry == new_obj) {
-				pte_unmap_unlock(ptep, ptl);
+			if (obj_entry == new_obj)
 				new_obj = alloc_kddm_obj_entry(set, 0);
-				ptep = pte_offset_map_lock(mm, pmd, addr, &ptl);
-			}
 		}
 
 		objid++;
