@@ -626,7 +626,7 @@ static int __do_huge_pmd_anonymous_page(struct mm_struct *mm,
 		set_pmd_at(mm, haddr, pmd, entry);
 		prepare_pmd_huge_pte(pgtable, mm);
 		add_mm_counter(mm, anon_rss, HPAGE_PMD_NR);
-		atomic_long_inc(&mm->nr_ptes);
+		mm->nr_ptes++;
 		spin_unlock(&mm->page_table_lock);
 	}
 
@@ -738,7 +738,7 @@ int copy_huge_pmd(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 	pmd = pmd_mkold(pmd_wrprotect(pmd));
 	set_pmd_at(dst_mm, addr, dst_pmd, pmd);
 	prepare_pmd_huge_pte(pgtable, dst_mm);
-	atomic_long_inc(&dst_mm->nr_ptes);
+	dst_mm->nr_ptes++;
 
 	ret = 0;
 out_unlock:
@@ -995,7 +995,7 @@ int zap_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
 			VM_BUG_ON(page_mapcount(page) < 0);
 			add_mm_counter(tlb->mm, anon_rss, -HPAGE_PMD_NR);
 			VM_BUG_ON(!PageHead(page));
-			atomic_long_dec(&tlb->mm->nr_ptes);
+			tlb->mm->nr_ptes--;
 			spin_unlock(&tlb->mm->page_table_lock);
 			tlb_remove_page(tlb, page);
 			pte_free(tlb->mm, pgtable);

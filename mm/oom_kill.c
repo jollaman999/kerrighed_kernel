@@ -192,7 +192,7 @@ unsigned int oom_badness(struct task_struct *p, struct mem_cgroup *mem,
 	 * The baseline for the badness score is the proportion of RAM that each
 	 * task's rss, pagetable and swap space use.
 	 */
-	points = get_mm_rss(p->mm) + atomic_long_read(&p->mm->nr_ptes);
+	points = get_mm_rss(p->mm) + p->mm->nr_ptes;
 	points += get_mm_counter(p->mm, swap_usage);
 
 	points *= 1000;
@@ -393,7 +393,7 @@ static void dump_tasks(const struct mem_cgroup *mem, const nodemask_t *nodemask)
 		pr_info("[%5d] %5d %5d %8lu %8lu %7lu %8lu         %5d %s\n",
 			task->pid, task_uid(task), task->tgid,
 			task->mm->total_vm, get_mm_rss(task->mm),
-			atomic_long_read(&task->mm->nr_ptes),
+			task->mm->nr_ptes,
 			get_mm_counter(task->mm, swap_usage),
 			task->signal->oom_score_adj, task->comm);
 		task_unlock(task);

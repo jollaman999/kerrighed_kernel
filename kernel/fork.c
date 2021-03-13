@@ -543,7 +543,7 @@ struct mm_struct * mm_init(struct mm_struct * mm, struct task_struct *p)
 	mm->flags = (current->mm) ?
 		(current->mm->flags & MMF_INIT_MASK) : default_dump_filter;
 	mm->core_state = NULL;
-	atomic_long_set(&mm->nr_ptes, 0);
+	mm->nr_ptes = 0;
 #ifdef CONFIG_KRG_MM
 	mm->mm_id = 0;
 #endif
