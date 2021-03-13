@@ -561,7 +561,7 @@ redo:
 		 */
 		lru = active + page_lru_base_type(page);
 #ifdef CONFIG_KRG_MM
-		BUG_ON(page_is_migratable(page) && page_is_file_cache(page));
+		BUG_ON(page_is_migratable(page) && page_lru_base_type(page));
 		lru += page_is_migratable(page);
 #endif
 		lru_cache_add_lru(page, lru);
@@ -1292,7 +1292,7 @@ static unsigned long clear_active_flags(struct list_head *page_list,
 		int numpages = hpage_nr_pages(page);
 		lru = page_lru_base_type(page);
 #ifdef CONFIG_KRG_MM
-		BUG_ON(page_is_migratable(page) && page_is_file_cache(page));
+		BUG_ON(page_is_migratable(page) && page_lru_base_type(page));
 		lru += page_is_migratable(page);
 #endif
 		if (PageActive(page)) {
