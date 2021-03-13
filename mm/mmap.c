@@ -2753,9 +2753,7 @@ void exit_mmap(struct mm_struct *mm)
 		vma = remove_vma(vma);
 
 	WARN_ON(atomic_long_read(&mm->nr_ptes) >
-			round_up(FIRST_USER_ADDRESS, PMD_SIZE) >> PMD_SHIFT);
-	WARN_ON(mm_nr_pmds(mm) >
-			round_up(FIRST_USER_ADDRESS, PUD_SIZE) >> PUD_SHIFT);
+			(FIRST_USER_ADDRESS+PMD_SIZE-1)>>PMD_SHIFT);
 }
 
 /* Insert vm structure into process list sorted by address
