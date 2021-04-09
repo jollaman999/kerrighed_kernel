@@ -279,7 +279,6 @@ void handle_ipcsem_wakeup_process(struct rpc_desc *desc, void *_msg,
 	struct sem_queue *q, *tq;
 	struct ipc_namespace *ns;
 	int i;
-	int end = 0;
 
 	ns = find_get_krg_ipcns();
 	BUG_ON(!ns);
@@ -302,15 +301,13 @@ void handle_ipcsem_wakeup_process(struct rpc_desc *desc, void *_msg,
 		}
 	}
 
-sem_base:
 	for (i = 0; i < sma->sem_nsems; i++) {
 		struct sem *sem = sma->sem_base + i;
 		list_for_each_entry_safe(q, tq, &sem->sem_pending, list) {
 			/* compare to q->sleeper's pid instead of q->pid
 			because q->pid == q->sleeper's tgid */
 			if (task_pid_knr(q->sleeper) == msg->pid) {
-				unlink_queue(sma, q);
-				end = 1;
+				list_del(&q->list);
 				goto found;
 			}
 		}
@@ -335,9 +332,6 @@ out_unlock:
 	rpc_pack_type(desc, msg->error);
 
 	put_ipc_ns(ns);
-
-	if (!end)
-		goto sem_base;
 }
 
 void krg_ipc_sem_wakeup_process(struct sem_queue *q, int error)
