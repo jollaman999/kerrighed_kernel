@@ -5,6 +5,10 @@
 #include <linux/uidgid.h>
 #include <uapi/linux/ipc.h>
 
+#ifdef CONFIG_KRG_IPC
+struct krgipc_ops;
+#endif
+
 /* used by in-kernel data structures */
 struct kern_ipc_perm
 {
@@ -19,6 +23,16 @@ struct kern_ipc_perm
 	umode_t		mode; 
 	unsigned long	seq;
 	void		*security;
+#ifdef CONFIG_KRG_IPC
+	struct krgipc_ops *krgops;
+#endif
 };
+
+#ifdef CONFIG_KRG_IPC
+struct ipc_namespace;
+
+bool ipc_used(struct ipc_namespace *ns);
+void cleanup_ipc_objects (void);
+#endif
 
 #endif /* _LINUX_IPC_H */

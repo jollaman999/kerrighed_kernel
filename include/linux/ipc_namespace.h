@@ -9,11 +9,18 @@
 
 struct user_namespace;
 
+#ifdef CONFIG_KRG_IPC
+struct krgipc_ops;
+#endif
+
 struct ipc_ids {
 	int in_use;
 	unsigned short seq;
 	struct rw_semaphore rwsem;
 	struct idr ipcs_idr;
+#ifdef CONFIG_KRG_IPC
+	struct krgipc_ops *krgops;
+#endif
 	int max_idx;
 	int last_idx;	/* For wrap around detection */
 #ifdef CONFIG_CHECKPOINT_RESTORE
