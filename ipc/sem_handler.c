@@ -315,6 +315,7 @@ void handle_ipcsem_wakeup_process(struct rpc_desc *desc, void *_msg,
 
 	BUG();
 found:
+	preempt_disable();
 	q->status = 1; /* IN_WAKEUP; */
 
 	BUG_ON(!q->sleeper);
@@ -324,6 +325,7 @@ found:
 	wake_up_process(q->sleeper);
 	smp_wmb();
 	q->status = msg->error;
+	preempt_enable();
 
 out_unlock:
 	sem_unlock(sma, -1);
