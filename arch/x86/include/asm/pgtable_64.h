@@ -309,7 +309,13 @@ static inline int pgd_large(pgd_t pgd) { return 0; }
 /* PUD - Level3 access */
 
 /* PMD  - Level 2 access */
-#define pte_to_pgoff(pte) ((~pte_val((pte)) & PHYSICAL_PAGE_MASK) >> PAGE_SHIFT)
+#ifdef CONFIG_KRG_MM
+#define pte_to_pgoff(pte) ((pte_val((pte)) & PHYSICAL_PAGE_MASK) >> PAGE_SHIFT)
+#define pgoff_to_pte(off) ((pte_t) { .pte = ((off) << PAGE_SHIFT) |	\
+					    _PAGE_FILE })
+#define PTE_FILE_MAX_BITS __PHYSICAL_MASK_SHIFT
+#else /*CONFIG_KRG_MM */
+#define pte_to_pgoff(pte) ((pte_val((pte)) & PHYSICAL_PAGE_MASK) >> PAGE_SHIFT)
 #define pgoff_to_pte(off) ((pte_t) { .pte =				\
 				((~off & (PHYSICAL_PAGE_MASK>>PAGE_SHIFT)) \
 				 << PAGE_SHIFT) | _PAGE_FILE })
@@ -329,6 +335,7 @@ static inline int pte_file_max_bits(void)
 	 */
 	return min(__PHYSICAL_MASK_SHIFT, boot_cpu_data.x86_phys_bits - 1);
 }
+#endif /* CONFIG_KRG_MM */
 
 /* PTE - Level 1 access. */
 
@@ -336,9 +343,11 @@ static inline int pte_file_max_bits(void)
 #define pte_offset_map(dir, address) pte_offset_kernel((dir), (address))
 #define pte_unmap(pte) ((void)(pte))/* NOP */
 
+#ifndef CONFIG_KRG_MM
 /* Encode and de-code a swap entry */
 #if _PAGE_BIT_FILE > _PAGE_BIT_PROTNONE
 #error unsupported PTE bit arrangement
+#endif
 #endif
 
 /*
@@ -359,13 +368,27 @@ static inline int pte_file_max_bits(void)
  */
 #define SWP_TYPE_BITS		5
 
+#ifdef CONFIG_KRG_MM
+#define SWP_OFFSET_SHIFT	9
+#else /* CONFIG_KRG_MM */
 #define SWP_OFFSET_FIRST_BIT	(_PAGE_BIT_PROTNONE + 1)
 
 /* We always extract/encode the offset by shifting it all the way up, and then down again */
 #define SWP_OFFSET_SHIFT	(SWP_OFFSET_FIRST_BIT+SWP_TYPE_BITS)
+#endif /* CONFIG_KRG_MM */
 
 #define MAX_SWAPFILES_CHECK() BUILD_BUG_ON(MAX_SWAPFILES_SHIFT > SWP_TYPE_BITS)
 
+#ifdef CONFIG_KRG_MM
+#define __swp_type(x)			(((x).val >> (_PAGE_BIT_FILE + 1)) \
+					 & ((1U << SWP_TYPE_BITS) - 1))
+
+#define __swp_offset(x)			((x).val >> SWP_OFFSET_SHIFT)
+
+#define __swp_entry(type, offset)	((swp_entry_t) { \
+					 ((type) << (_PAGE_BIT_FILE + 1)) \
+					 | ((offset) << SWP_OFFSET_SHIFT) })
+#else /* CONFIG_KRG_MM */
 /* Extract the high bits for type */
 #define __swp_type(x) ((x).val >> (64 - SWP_TYPE_BITS))
 
@@ -380,6 +403,7 @@ static inline int pte_file_max_bits(void)
 #define __swp_entry(type, offset) ((swp_entry_t) { \
 	(~(unsigned long)(offset) << SWP_OFFSET_SHIFT >> SWP_TYPE_BITS) \
 	| ((unsigned long)(type) << (64-SWP_TYPE_BITS)) })
+#endif /* CONFIG_KRG_MM */
 
 #define __pte_to_swp_entry(pte)		((swp_entry_t) { pte_val((pte)) })
 #define __swp_entry_to_pte(x)		((pte_t) { .pte = (x).val })

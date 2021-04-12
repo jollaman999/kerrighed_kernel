@@ -35,6 +35,17 @@
 #define _PAGE_BIT_DEVMAP	_PAGE_BIT_SOFTW4
 
 /* If _PAGE_BIT_PRESENT is clear, we use these: */
+#ifdef CONFIG_KRG_MM
+
+/* | Offset | Swap device (5 bits) | FILE    | PROT_NONE     | OBJ_ENTRY = 0| PRESENT = 0| */
+/* | ObjEntry address              | FILE = 0| PROT_NONE = 0 | OBJ_ENTRY = 1| PRESENT = 0| */
+#define _PAGE_BIT_OBJ_ENTRY	1
+#define _PAGE_BIT_PROTNONE	2
+#define _PAGE_BIT_FILE		3
+
+/* while standard Linux is */
+/* | Offset                   |PROT_NONE  |  FILE    | Swap device (6 bits) | PRESENT = 0| */
+#else /* CONFIG_KRG_MM */
 /* - if the user mapped it with PROT_NONE; pte_present gives true */
 #define _PAGE_BIT_PROTNONE	_PAGE_BIT_GLOBAL
 /* - set: nonlinear file mapping, saved PTE; unset:swap */
@@ -44,6 +55,7 @@
 #else
 #define _PAGE_BIT_FILE		_PAGE_BIT_DIRTY
 #endif
+#endif /* CONFIG_KRG_MM */
 
 #define _PAGE_PRESENT	(_AT(pteval_t, 1) << _PAGE_BIT_PRESENT)
 #define _PAGE_RW	(_AT(pteval_t, 1) << _PAGE_BIT_RW)
@@ -162,6 +174,9 @@
 
 #define _PAGE_FILE	(_AT(pteval_t, 1) << _PAGE_BIT_FILE)
 #define _PAGE_PROTNONE	(_AT(pteval_t, 1) << _PAGE_BIT_PROTNONE)
+#ifdef CONFIG_KRG_MM
+#define _PAGE_OBJ_ENTRY (_AT(pteval_t, 1) << _PAGE_BIT_OBJ_ENTRY)
+#endif
 
 /*
  * _PAGE_NUMA indicates that this page will trigger a numa hinting
@@ -444,6 +459,12 @@ static inline pmdval_t native_pmd_val(pmd_t pmd)
 }
 #endif
 
+#ifdef CONFIG_KRG_MM
+static inline pudval_t pud_flags(pud_t pud)
+{
+	return native_pud_val(pud) & PTE_FLAGS_MASK;
+}
+#else
 static inline pudval_t pud_pfn_mask(pud_t pud)
 {
 	if (native_pud_val(pud) & _PAGE_PSE)
@@ -461,7 +482,14 @@ static inline pudval_t pud_flags(pud_t pud)
 {
 	return native_pud_val(pud) & pud_flags_mask(pud);
 }
+#endif
 
+#ifdef CONFIG_KRG_MM
+static inline pmdval_t pmd_flags(pmd_t pmd)
+{
+	return native_pmd_val(pmd) & PTE_FLAGS_MASK;
+}
+#else
 static inline pmdval_t pmd_pfn_mask(pmd_t pmd)
 {
 	if (native_pmd_val(pmd) & _PAGE_PSE)
@@ -479,6 +507,7 @@ static inline pmdval_t pmd_flags(pmd_t pmd)
 {
 	return native_pmd_val(pmd) & pmd_flags_mask(pmd);
 }
+#endif
 
 static inline pte_t native_make_pte(pteval_t val)
 {

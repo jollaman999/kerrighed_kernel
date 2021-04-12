@@ -1051,6 +1051,9 @@ static void override_cache_bits(struct cpuinfo_x86 *c)
 
 static void __init l1tf_select_mitigation(void)
 {
+#ifdef CONFIG_KRG_EPM
+	return;
+#else
 	u64 half_pa;
 
 	if (!boot_cpu_has_bug(X86_BUG_L1TF))
@@ -1089,10 +1092,14 @@ static void __init l1tf_select_mitigation(void)
 	}
 
 	setup_force_cpu_cap(X86_FEATURE_L1TF_PTEINV);
+#endif
 }
 
 static int __init l1tf_cmdline(char *str)
 {
+#ifdef CONFIG_KRG_EPM
+	return 0;
+#else
 	if (!boot_cpu_has_bug(X86_BUG_L1TF))
 		return 0;
 
@@ -1113,6 +1120,7 @@ static int __init l1tf_cmdline(char *str)
 		l1tf_mitigation = L1TF_MITIGATION_FULL_FORCE;
 
 	return 0;
+#endif
 }
 early_param("l1tf", l1tf_cmdline);
 
