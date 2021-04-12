@@ -69,10 +69,7 @@
 
 #include "internal.h"
 
-#ifndef CONFIG_KRG_MM
-static
-#endif
-struct kmem_cache *anon_vma_cachep;
+static struct kmem_cache *anon_vma_cachep;
 static struct kmem_cache *anon_vma_chain_cachep;
 
 static inline struct anon_vma *anon_vma_alloc(void)
