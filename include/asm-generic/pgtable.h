@@ -477,13 +477,18 @@ static inline void ptep_modify_prot_commit(struct mm_struct *mm,
 #define arch_start_context_switch(prev)	do {} while (0)
 #endif
 
-#ifndef CONFIG_HAVE_ARCH_SOFT_DIRTY
+#if !defined(CONFIG_HAVE_ARCH_SOFT_DIRTY) || defined(CONFIG_KRG_MM)
 static inline int pte_soft_dirty(pte_t pte)
 {
 	return 0;
 }
 
 static inline int pmd_soft_dirty(pmd_t pmd)
+{
+	return 0;
+}
+
+static inline int pud_soft_dirty(pud_t pud)
 {
 	return 0;
 }
@@ -496,6 +501,11 @@ static inline pte_t pte_mksoft_dirty(pte_t pte)
 static inline pmd_t pmd_mksoft_dirty(pmd_t pmd)
 {
 	return pmd;
+}
+
+static inline pud_t pud_mksoft_dirty(pud_t pud)
+{
+	return pud;
 }
 
 static inline pte_t pte_swp_mksoft_dirty(pte_t pte)

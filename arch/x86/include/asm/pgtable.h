@@ -468,6 +468,7 @@ static inline pud_t pud_mknotpresent(pud_t pud)
 	return pud_clear_flags(pud, _PAGE_PRESENT | _PAGE_PROTNONE);
 }
 
+#ifndef CONFIG_KRG_MM
 static inline int pte_soft_dirty(pte_t pte)
 {
 	return pte_flags(pte) & _PAGE_SOFT_DIRTY;
@@ -527,6 +528,7 @@ static inline int pte_file_soft_dirty(pte_t pte)
 {
 	return pte_flags(pte) & _PAGE_SOFT_DIRTY;
 }
+#endif
 
 /*
  * Mask out unsupported bits in a present pgprot.  Non-present pgprots

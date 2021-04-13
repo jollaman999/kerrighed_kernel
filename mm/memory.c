@@ -3043,6 +3043,10 @@ static int do_swap_page(struct vm_fault *vmf, pte_t orig_pte)
 	swap_free(entry);
 	if (vm_swap_full() || (vmf->vma->vm_flags & VM_LOCKED) || PageMlocked(page))
 		try_to_free_swap(page);
+#ifdef CONFIG_KRG_MM
+	if (mm->anon_vma_kddm_set)
+		KRGFCT(kh_fill_pte)(mm, address, page_table);
+#endif
 	unlock_page(page);
 	if (page != swapcache) {
 		/*
@@ -3219,6 +3223,10 @@ static void do_set_pte(struct vm_area_struct *vma, unsigned long address,
 	entry = mk_pte(page, vma->vm_page_prot);
 	if (write)
 		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+#ifdef CONFIG_KRG_MM
+	else if (vma->vm_flags & VM_KDDM)
+		entry = pte_wrprotect(entry);
+#endif
 	else if (pte_file(*pte) && pte_file_soft_dirty(*pte))
 		pte_mksoft_dirty(entry);
 	if (anon) {
@@ -3269,7 +3277,14 @@ int finish_fault(struct vm_fault *vmf)
 		pte_unmap_unlock(pte, ptl);
 		return VM_FAULT_NOPAGE;
 	}
+#ifdef CONFIG_KRG_MM
+	if (pte_same(*pte, vmf->orig_pte) || pte_obj_entry(pte) ||
+	   (pfn_to_page(pte_pfn(*pte)) == page)) {
+#endif
 	do_set_pte(vmf->vma, address, page, pte, write, anon);
+#ifdef CONFIG_KRG_MM
+	}
+#endif
 	pte_unmap_unlock(pte, ptl);
 	return 0;
 }
@@ -3285,6 +3300,13 @@ static int do_read_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 
 	ret = __do_fault(vma, address, pgoff, flags, NULL, &fault_page, NULL,
 			pmd, orig_pte);
+#ifdef CONFIG_KRG_MM
+	if ((vma->vm_flags & VM_KDDM) &&
+	    (!fault_page->mapping || PageAnon(fault_page))) {
+		if (unlikely(anon_vma_prepare(vma)))
+			return VM_FAULT_OOM;
+	}
+#endif
 	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
 		return ret;
 
@@ -3295,7 +3317,14 @@ static int do_read_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 		page_cache_release(fault_page);
 		return ret;
 	}
+#ifdef CONFIG_KRG_MM
+	if (pte_same(*pte, orig_pte) || pte_obj_entry(pte) ||
+	   (pfn_to_page(pte_pfn(*pte)) == page)) {
+#endif
 	do_set_pte(vma, address, fault_page, pte, false, false);
+#ifdef CONFIG_KRG_MM
+	}
+#endif
 	pte_unmap_unlock(pte, ptl);
 	unlock_page(fault_page);
 	return ret;
@@ -3311,6 +3340,17 @@ static int do_cow_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 	pte_t *pte;
 	int ret;
 
+#ifdef CONFIG_KRG_MM
+	if (!vma->anon_vma) {
+		if (unlikely(anon_vma_prepare(vma)))
+			return VM_FAULT_OOM;
+		KRGFCT(kh_do_mmap)(vma);
+	}
+#endif
+
+#ifdef CONFIG_KRG_MM
+	if (!vma->vm_flags & VM_KDDM) {
+#endif
 	if (unlikely(anon_vma_prepare(vma)))
 		return VM_FAULT_OOM;
 
@@ -3322,9 +3362,21 @@ static int do_cow_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 		page_cache_release(new_page);
 		return VM_FAULT_OOM;
 	}
-
+#ifdef CONFIG_KRG_MM
+	}
+#endif
 	ret = __do_fault(vma, address, pgoff, flags, new_page, &fault_page,
 			 &fault_entry, pmd, orig_pte);
+#ifdef CONFIG_KRG_MM
+	if ((vma->vm_flags & VM_KDDM) &&
+	    (!fault_page->mapping || PageAnon(fault_page))) {
+		if (unlikely(anon_vma_prepare(vma)))
+			return VM_FAULT_OOM;
+	}
+
+	if (vma->vm_flags & VM_KDDM)
+		return ret;
+#endif
 	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
 		goto uncharge_out;
 	if (ret & VM_FAULT_DONE_COW)
@@ -3340,7 +3392,14 @@ static int do_cow_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 		page_cache_release(fault_page);
 		goto uncharge_out;
 	}
+#ifdef CONFIG_KRG_MM
+	if (pte_same(*pte, orig_pte) || pte_obj_entry(pte) ||
+	   (pfn_to_page(pte_pfn(*pte)) == page)) {
+#endif
 	do_set_pte(vma, address, new_page, pte, true, true);
+#ifdef CONFIG_KRG_MM
+	}
+#endif
 	pte_unmap_unlock(pte, ptl);
 	unlock_page(fault_page);
 	page_cache_release(fault_page);
@@ -3364,6 +3423,16 @@ static int do_shared_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 
 	ret = __do_fault(vma, address, pgoff, flags, NULL, &fault_page, NULL,
 			pmd, orig_pte);
+#ifdef CONFIG_KRG_MM
+	if ((vma->vm_flags & VM_KDDM) &&
+	    (!fault_page->mapping || PageAnon(fault_page))) {
+		if (unlikely(anon_vma_prepare(vma)))
+			return VM_FAULT_OOM;
+	}
+
+	if (vma->vm_flags & VM_KDDM)
+		return ret;
+#endif
 	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
 		return ret;
 
@@ -3388,7 +3457,14 @@ static int do_shared_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 		page_cache_release(fault_page);
 		return ret;
 	}
+#ifdef CONFIG_KRG_MM
+	if (pte_same(*pte, orig_pte) || pte_obj_entry(pte) ||
+	   (pfn_to_page(pte_pfn(*pte)) == page)) {
+#endif
 	do_set_pte(vma, address, fault_page, pte, true, false);
+#ifdef CONFIG_KRG_MM
+	}
+#endif
 	pte_unmap_unlock(pte, ptl);
 
 	if (set_page_dirty(fault_page))
