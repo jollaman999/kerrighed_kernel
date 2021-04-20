@@ -1957,7 +1957,7 @@ long do_fork(unsigned long clone_flags,
 	struct task_struct *p;
 	int trace = 0;
 	long nr;
-	int restore;
+//	int restore;
 
 	/*
 	 * Do some preliminary argument and permissions checking before we
@@ -2004,20 +2004,10 @@ long do_fork(unsigned long clone_flags,
 	nr = 0;
 	if (can_use_krg_cap(current, CAP_DISTANT_FORK))
 	{
-		restore = can_parent_inherite_krg_cap(current, CAP_DISTANT_FORK);
-		if (restore) {
-			cap_lower(current->krg_caps.effective, CAP_DISTANT_FORK);
-			cap_lower(current->krg_caps.inheritable_effective, CAP_DISTANT_FORK);
-		}
 #endif
 		nr = krg_do_fork(clone_flags, stack_start, regs, stack_size,
 				 parent_tidptr, child_tidptr, trace);
-#ifdef CONFIG_KRG_CAP
-		if (restore) {
-			cap_raise(current->krg_caps.effective, CAP_DISTANT_FORK);
-			cap_raise(current->krg_caps.inheritable_effective, CAP_DISTANT_FORK);
-		}
-#endif
+
 		if (nr > 0)
 			return nr;
 #ifdef CONFIG_KRG_CAP
