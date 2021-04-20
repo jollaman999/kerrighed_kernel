@@ -30,9 +30,26 @@
 
 int can_use_krg_cap(struct task_struct *task, int cap)
 {
-	return (cap_raised(task->krg_caps.effective, cap)
+	int have_effect;
+	int have_limit = 1;
+	int idx;
+	char *depth;
+
+	have_effect =  (cap_raised(task->krg_caps.effective, cap)
 		&& !atomic_read(&task->krg_cap_unavailable[cap])
 		&& !atomic_read(&task->krg_cap_unavailable_private[cap]));
+
+	if (have_effect && cap == CAP_DISTANT_FORK) {
+		depth = task->krg_caps.effective_depth;
+
+		for (idx = 1; idx < 16; idx++) {
+			if (depth[idx] == depth[0])
+				goto out;
+		}
+		have_limit = 0;
+	}
+out:
+	return (have_effect & have_limit);
 }
 
 void krg_cap_fork(struct task_struct *task, unsigned long clone_flags)
@@ -57,6 +74,7 @@ void krg_cap_fork(struct task_struct *task, unsigned long clone_flags)
 
 	new_caps->permitted = caps->inheritable_permitted;
 	new_caps->effective = new_krg_effective;
+	new_caps->effective_depth[0]++;
 
 	for (i = 0; i < CAP_SIZE; i++)
 		atomic_set(&task->krg_cap_unavailable_private[i], 0);
@@ -156,6 +174,8 @@ static int krg_set_cap(struct task_struct *tsk,
 	tmp_cap = cap_intersect(caps->permitted,
 				requested_cap->inheritable_permitted);
 	caps->inheritable_permitted = tmp_cap;
+
+	memcpy(caps->effective_depth, requested_cap->effective_depth, 16);
 
 	res = 0;
 
@@ -433,6 +453,7 @@ static int user_to_kernel_krg_cap(const krg_cap_t __user *user_caps,
 
 	caps->permitted = (kernel_cap_t){{ ucaps.krg_cap_permitted, 0 }};
 	caps->effective = (kernel_cap_t){{ ucaps.krg_cap_effective, 0 }};
+	memcpy(caps->effective_depth, ucaps.krg_cap_effective_depth, 16);
 	caps->inheritable_permitted =
 		(kernel_cap_t){{ ucaps.krg_cap_inheritable_permitted, 0 }};
 	caps->inheritable_effective =
@@ -495,6 +516,8 @@ static int kernel_to_user_krg_cap(const kernel_krg_cap_t *caps,
 		caps->inheritable_permitted.cap[0];
 	ucaps.krg_cap_inheritable_effective =
 		caps->inheritable_effective.cap[0];
+
+	memcpy(ucaps.krg_cap_effective_depth, caps->effective_depth, 16);
 
 	if (copy_to_user(user_caps, &ucaps, sizeof(ucaps)))
 		r = -EFAULT;
