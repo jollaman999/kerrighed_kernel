@@ -764,6 +764,7 @@ int cr_import_vma_pages(ghost_t *ghost,
 		pte = pte_alloc_map(mm, vma, pmd, address);
 		BUG_ON(!pte);
 		set_pte (pte, mk_pte(new_page, prot));
+		pte_unmap(pte);
 
 		BUG_ON(unlikely(anon_vma_prepare(vma)));
 
