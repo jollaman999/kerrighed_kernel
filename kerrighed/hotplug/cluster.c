@@ -18,6 +18,9 @@
 #include <linux/kobject.h>
 #include <linux/ipc.h>
 #include <linux/device.h>
+#ifndef CONFIG_KRG_HOTPLUG_DEL
+#include <linux/reboot.h>
+#endif
 #include <asm/uaccess.h>
 #include <asm/ioctl.h>
 #include <kerrighed/sys/types.h>
