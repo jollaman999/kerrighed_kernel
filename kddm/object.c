@@ -326,18 +326,15 @@ retry:
 	kddm_obj_path_lock(set, objid);
 
 	obj_entry = set->ops->get_obj_entry(set, objid, new_obj);
-	if (obj_entry) {
-		if (obj_entry != new_obj)
-			put_obj_entry_count(set, new_obj, objid);
+	if (obj_entry != new_obj)
+		put_obj_entry_count(set, new_obj, objid);
 
-		if (TEST_AND_SET_OBJECT_LOCKED (obj_entry)) {
-			kddm_obj_path_unlock(set, objid);
-			while (TEST_OBJECT_LOCKED (obj_entry))
-				cpu_relax();
-			goto retry;
-		}
+	if (TEST_AND_SET_OBJECT_LOCKED (obj_entry)) {
+		kddm_obj_path_unlock(set, objid);
+		while (TEST_OBJECT_LOCKED (obj_entry))
+			cpu_relax();
+		goto retry;
 	}
-
 
 	return obj_entry;
 }
