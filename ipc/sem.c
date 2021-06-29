@@ -1844,16 +1844,6 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 	if (error)
 		goto out_rcu_wakeup;
 
-#ifdef CONFIG_KRG_IPC
-	if (undos && sma->sem_perm.krgops) {
-		un = krg_ipc_sem_find_undo(sma);
-		if (IS_ERR(un)) {
-			error = PTR_ERR(un);
-			goto out_unlock_free;
-		}
-	}
-#endif
-
 	error = -EIDRM;
 	locknum = sem_lock(sma, sops, nsops);
 	if (sma->sem_perm.deleted)
@@ -1867,6 +1857,17 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 	 */
 	if (un && un->semid == -1)
 		goto out_unlock_free;
+
+#ifdef CONFIG_KRG_IPC
+	if (undos && sma->sem_perm.krgops) {
+		un = krg_ipc_sem_find_undo(sma);
+		if (IS_ERR(un)) {
+			error = PTR_ERR(un);
+			goto out_unlock_free;
+		}
+	}
+#endif
+
 
 	error = try_atomic_semop (sma, sops, nsops, un, task_tgid_vnr(current));
 	if (error == 0) {
