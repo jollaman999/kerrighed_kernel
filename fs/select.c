@@ -28,10 +28,10 @@
 #include <linux/hrtimer.h>
 #include <net/busy_poll.h>
 #ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#include <hcc/faf.h>
 #endif
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
+#include <hcc/krgsyms.h>
 #endif
 
 #include <asm/uaccess.h>

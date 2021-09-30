@@ -29,7 +29,7 @@
 #include <linux/syscalls.h>
 #include <linux/fs.h>
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
+#include <hcc/krgsyms.h>
 #endif
 
 #include <asm/uaccess.h>

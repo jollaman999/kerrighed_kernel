@@ -111,7 +111,7 @@ static void change_object_state (struct kddm_set *set,
 	}
 
 	if (new_state & KDDM_OWNER_OBJ)
-		change_prob_owner(obj_entry, kerrighed_node_id);
+		change_prob_owner(obj_entry, hcc_node_id);
 }
 
 
@@ -169,7 +169,7 @@ struct kddm_obj *alloc_kddm_obj_entry(struct kddm_set *set,
 
 	change_prob_owner(obj_entry, kddm_io_default_owner(set, objid));
 
-	if (get_prob_owner(obj_entry) == kerrighed_node_id)
+	if (get_prob_owner(obj_entry) == hcc_node_id)
 		set_object_state(set, obj_entry, INV_OWNER);
 	else
 		set_object_state(set, obj_entry, INV_COPY);
@@ -237,7 +237,7 @@ int destroy_kddm_obj_entry (struct kddm_set *set,
 			    objid_t objid,
 			    int cluster_wide_remove)
 {
-	kerrighed_node_t default_owner = kddm_io_default_owner(set, objid);
+	hcc_node_t default_owner = kddm_io_default_owner(set, objid);
 	BUG_ON (object_frozen(obj_entry, set));
 
 	ASSERT_OBJ_PATH_LOCKED(set, objid);
@@ -249,7 +249,7 @@ int destroy_kddm_obj_entry (struct kddm_set *set,
 	if ((!cluster_wide_remove) ||
 	    atomic_read (&obj_entry->sleeper_count)) {
 
-		if (cluster_wide_remove && (default_owner == kerrighed_node_id))
+		if (cluster_wide_remove && (default_owner == hcc_node_id))
 			kddm_change_obj_state(set, obj_entry, objid, INV_OWNER);
 		else {
 			kddm_change_obj_state(set, obj_entry, objid, INV_COPY);
@@ -365,8 +365,8 @@ void kddm_insert_object(struct kddm_set * set,
 
 	if (objectState & KDDM_OWNER_OBJ) {
 		CLEAR_SET(COPYSET(obj_entry));
-		ADD_TO_SET(COPYSET(obj_entry), kerrighed_node_id);
-		ADD_TO_SET(RMSET(obj_entry), kerrighed_node_id);
+		ADD_TO_SET(COPYSET(obj_entry), hcc_node_id);
+		ADD_TO_SET(RMSET(obj_entry), hcc_node_id);
 	}
 	if (OBJ_STATE(obj_entry) != WAIT_ACK_INV)
 		wake_up_on_wait_object(obj_entry, set);

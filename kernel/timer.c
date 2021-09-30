@@ -41,10 +41,10 @@
 #include <linux/sched.h>
 
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/children.h>
+#include <hcc/children.h>
 #endif
 #ifdef CONFIG_KRG_SCHED
-#include <kerrighed/scheduler/hooks.h>
+#include <hcc/scheduler/hooks.h>
 #endif
 
 #include <asm/uaccess.h>

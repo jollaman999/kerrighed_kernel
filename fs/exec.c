@@ -57,14 +57,14 @@
 #include <linux/pipe_fs_i.h>
 #include <linux/oom.h>
 #ifdef CONFIG_KRG_CAP
-#include <kerrighed/capabilities.h>
+#include <hcc/capabilities.h>
 #endif
 #ifdef CONFIG_KRG_PROC
-#include <kerrighed/task.h>
-#include <kerrighed/krginit.h>
+#include <hcc/task.h>
+#include <hcc/krginit.h>
 #endif
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/signal.h>
+#include <hcc/signal.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -922,7 +922,7 @@ static int de_thread(struct task_struct *tsk)
 #endif
 
 #ifdef CONFIG_KRG_PROC
-		down_read(&kerrighed_init_sem);
+		down_read(&hcc_init_sem);
 #endif
 		sig->notify_count = -1;	/* for exit_notify() */
 		for (;;) {
@@ -1022,7 +1022,7 @@ static int de_thread(struct task_struct *tsk)
 
 		release_task(leader);
 #ifdef CONFIG_KRG_PROC
-		up_read(&kerrighed_init_sem);
+		up_read(&hcc_init_sem);
 #endif
 	}
 
@@ -1050,7 +1050,7 @@ no_thread_group:
 		memcpy(newsighand->action, oldsighand->action,
 		       sizeof(newsighand->action));
 #ifdef CONFIG_KRG_EPM
-		down_read(&kerrighed_init_sem);
+		down_read(&hcc_init_sem);
 
 		krg_sighand_alloc_unshared(tsk, newsighand);
 #endif
@@ -1064,7 +1064,7 @@ no_thread_group:
 #ifdef CONFIG_KRG_EPM
 		krg_sighand_cleanup(oldsighand);
 
-		up_read(&kerrighed_init_sem);
+		up_read(&hcc_init_sem);
 #else
 		__cleanup_sighand(oldsighand);
 #endif

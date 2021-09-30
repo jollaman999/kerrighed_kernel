@@ -8,9 +8,9 @@
 #ifndef __IO_LINKER__
 #define __IO_LINKER__
 
-#include <kerrighed/krgnodemask.h>
-#include <kerrighed/krginit.h>
-#include <kerrighed/sys/types.h>
+#include <hcc/krgnodemask.h>
+#include <hcc/krginit.h>
+#include <hcc/sys/types.h>
 
 #include <kddm/kddm_types.h>
 #include <kddm/object.h>
@@ -113,7 +113,7 @@ struct iolinker_struct {
 			struct kddm_obj *obj_entry, objid_t objid, int flags);
   int (*export_object) (struct rpc_desc *desc, struct kddm_set *set,
 			struct kddm_obj *obj_entry, objid_t objid, int flags);
-  kerrighed_node_t (*default_owner) (struct kddm_set * set, objid_t objid,
+  hcc_node_t (*default_owner) (struct kddm_set * set, objid_t objid,
                                      const krgnodemask_t * nodes, int nr_nodes);
   char linker_name[16];
   iolinker_id_t linker_id;
@@ -157,7 +157,7 @@ int register_io_linker (int linker_id, struct iolinker_struct *io_linker);
  *
  *  @return error code or 0 if everything ok.
  */
-int kddm_io_instantiate (struct kddm_set * set, kerrighed_node_t link,
+int kddm_io_instantiate (struct kddm_set * set, hcc_node_t link,
 			 iolinker_id_t iolinker_id, void *private_data,
 			 int data_size, int master);
 
@@ -284,7 +284,7 @@ int kddm_io_import_object (struct rpc_desc *desc, struct kddm_set *set,
 int kddm_io_export_object (struct rpc_desc *desc, struct kddm_set *set,
 			   struct kddm_obj *obj_entry, objid_t objid,
 			   int flags);
-kerrighed_node_t kddm_io_default_owner (struct kddm_set * set, objid_t objid);
+hcc_node_t kddm_io_default_owner (struct kddm_set * set, objid_t objid);
 
 /** Request an IO linker to allocate an object.
  *  @author Renaud Lottiaux

@@ -9,9 +9,9 @@
 #define __KDDM_SET__
 
 #include <linux/socket.h>
-#include <kerrighed/sys/types.h>
-#include <kerrighed/krginit.h>
-#include <kerrighed/krgsyms.h>
+#include <hcc/sys/types.h>
+#include <hcc/krginit.h>
+#include <hcc/krgsyms.h>
 
 #include <kddm/kddm_types.h>
 #include <kddm/name_space.h>
@@ -45,7 +45,7 @@ enum
 
 
 /** Return the manager id of the given kddm set */
-#define KDDM_SET_MGR(set) ((kerrighed_node_t)(set->id >> UNIQUE_ID_NODE_SHIFT))
+#define KDDM_SET_MGR(set) ((hcc_node_t)(set->id >> UNIQUE_ID_NODE_SHIFT))
 
 #define MAX_PRIVATE_DATA_SIZE (PAGE_SIZE-sizeof(msg_kddm_set_t))
 
@@ -56,16 +56,16 @@ enum
 #define DEFAULT_READAHEAD_WINDOW_SIZE 8
 
 /* Kddm set with round robin distributed default owner */
-#define KDDM_RR_DEF_OWNER ((kerrighed_node_t)(KERRIGHED_MAX_NODES + 1))
+#define KDDM_RR_DEF_OWNER ((hcc_node_t)(KERRIGHED_MAX_NODES + 1))
 
 /* Kddm set with default owner based on unique ID */
-#define KDDM_UNIQUE_ID_DEF_OWNER ((kerrighed_node_t)(KERRIGHED_MAX_NODES + 2))
+#define KDDM_UNIQUE_ID_DEF_OWNER ((hcc_node_t)(KERRIGHED_MAX_NODES + 2))
 
 /* Kddm set with a custom default owner policy */
-#define KDDM_CUSTOM_DEF_OWNER ((kerrighed_node_t)(KERRIGHED_MAX_NODES + 3))
+#define KDDM_CUSTOM_DEF_OWNER ((hcc_node_t)(KERRIGHED_MAX_NODES + 3))
 
 /* MUST ALWAYS BE THE LAST ONE and equal to the highest possible value */
-#define KDDM_MAX_DEF_OWNER ((kerrighed_node_t)(KERRIGHED_MAX_NODES + 4))
+#define KDDM_MAX_DEF_OWNER ((hcc_node_t)(KERRIGHED_MAX_NODES + 4))
 
 /* Kddm set id reserved for internal system usage (sys_kddm_ns name space). */
 enum
@@ -120,7 +120,7 @@ typedef struct {
 	int kddm_ns;               /**< KDDM name space identifier */
 	kddm_set_id_t kddm_set_id; /**< KDDM set identifier */
 	unsigned long flags;       /**< Kddm Set flags */
-	kerrighed_node_t link;     /**< Node linked to the kddm set */
+	hcc_node_t link;     /**< Node linked to the kddm set */
 	int obj_size;              /**< Size of objects stored in kddm set */
 	iolinker_id_t linker_id;   /**< Identifier of the io linker  */
 	unsigned long data_size;   /**< Size of set private data to receive */
@@ -153,7 +153,7 @@ struct kddm_set *__create_new_kddm_set(struct kddm_ns *ns,
 				       struct kddm_set_ops *set_ops,
 				       void *tree_init_data,
 				       iolinker_id_t linker_id,
-				       kerrighed_node_t def_owner,
+				       hcc_node_t def_owner,
 				       int obj_size,
 				       void *private_data,
 				       unsigned long data_size,
@@ -162,7 +162,7 @@ struct kddm_set *__create_new_kddm_set(struct kddm_ns *ns,
 static inline struct kddm_set *_create_new_kddm_set(struct kddm_ns *ns,
 				       kddm_set_id_t kddm_set_id,
 				       iolinker_id_t linker_id,
-				       kerrighed_node_t def_owner,
+				       hcc_node_t def_owner,
 				       int obj_size,
 				       void *private_data,
 				       unsigned long data_size,
@@ -179,7 +179,7 @@ static inline struct kddm_set *_create_new_kddm_set(struct kddm_ns *ns,
 static inline struct kddm_set *create_new_kddm_set(struct kddm_ns *ns,
 				       kddm_set_id_t kddm_set_id,
 				       iolinker_id_t linker_id,
-				       kerrighed_node_t def_owner,
+				       hcc_node_t def_owner,
 				       int obj_size,
 				       unsigned long flags)
 {

@@ -33,17 +33,17 @@
 #ifdef CONFIG_KRG_PROC
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
-#include <kerrighed/pid.h>
-#include <kerrighed/remote_cred.h>
-#include <kerrighed/krgnodemask.h>
-#include <kerrighed/krginit.h>
-#include <kerrighed/remote_syscall.h>
+#include <hcc/pid.h>
+#include <hcc/remote_cred.h>
+#include <hcc/krgnodemask.h>
+#include <hcc/krginit.h>
+#include <hcc/remote_syscall.h>
 #endif
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/krg_exit.h>
-#include <kerrighed/action.h>
-#include <kerrighed/kerrighed_signal.h>
-#include <kerrighed/signal.h>
+#include <hcc/krg_exit.h>
+#include <hcc/action.h>
+#include <hcc/hcc_signal.h>
+#include <hcc/signal.h>
 #endif
 
 #include <asm/param.h>
@@ -1424,7 +1424,7 @@ static int krg_kill_pg_info(int sig, struct siginfo *info, pid_t pgid)
 	struct kill_info_msg msg;
 	struct rpc_desc *desc;
 	krgnodemask_t nodes;
-	kerrighed_node_t node;
+	hcc_node_t node;
 	int retval = -ESRCH;
 
 	if (!current->nsproxy->krg_ns)
@@ -1437,7 +1437,7 @@ static int krg_kill_pg_info(int sig, struct siginfo *info, pid_t pgid)
 		goto out;
 
 	krgnodes_copy(nodes, krgnode_online_map);
-	krgnode_clear(kerrighed_node_id, nodes);
+	krgnode_clear(hcc_node_id, nodes);
 	if (krgnodes_empty(nodes))
 		goto out;
 
@@ -1697,7 +1697,7 @@ ret:
 }
 
 #ifdef CONFIG_KRG_EPM
-int send_kerrighed_signal(int sig, struct siginfo *info, struct task_struct *t)
+int send_hcc_signal(int sig, struct siginfo *info, struct task_struct *t)
 {
 	struct sigqueue *q;
 	unsigned long flags;
@@ -1711,7 +1711,7 @@ int send_kerrighed_signal(int sig, struct siginfo *info, struct task_struct *t)
 	if (!q)
 		return -ENOMEM;
 
-	printk("send_kerrighed_signal: %d (%s) -> %d (%s)\n",
+	printk("send_hcc_signal: %d (%s) -> %d (%s)\n",
 	       current->pid, current->comm, t->pid, t->comm);
 
 	info->si_signo = sig;
@@ -1731,12 +1731,12 @@ int send_kerrighed_signal(int sig, struct siginfo *info, struct task_struct *t)
 	return 0;
 }
 
-kerrighed_handler_t *krg_handler[_NSIG];
+hcc_handler_t *krg_handler[_NSIG];
 
-static int handle_kerrighed_signal(int sig, struct siginfo *info,
+static int handle_hcc_signal(int sig, struct siginfo *info,
 				   struct pt_regs *regs)
 {
-	kerrighed_handler_t *kh = krg_handler[sig];
+	hcc_handler_t *kh = krg_handler[sig];
 	int released = 0;
 
 	if (kh) {
@@ -2231,7 +2231,7 @@ relock:
 				break; /* will return 0 */
 #ifdef CONFIG_KRG_EPM
 			if (info->si_code == SI_KERRIGHED) {
-				if (handle_kerrighed_signal(signr, info, regs))
+				if (handle_hcc_signal(signr, info, regs))
 					/* It released the siglock.  */
 					goto relock;
 				continue;
@@ -2832,7 +2832,7 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 	idx = array_index_nospec(sig - 1, _NSIG);
 	k = &t->sighand->action[idx];
 #ifdef CONFIG_KRG_EPM
-	down_read(&kerrighed_init_sem);
+	down_read(&hcc_init_sem);
 	sighand_id = current->sighand->krg_objid;
 	if (sighand_id)
 		krg_sighand_writelock(sighand_id);
@@ -2872,7 +2872,7 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 #ifdef CONFIG_KRG_EPM
 	if (sighand_id)
 		krg_sighand_unlock(sighand_id);
-	up_read(&kerrighed_init_sem);
+	up_read(&hcc_init_sem);
 #endif
 	return 0;
 }

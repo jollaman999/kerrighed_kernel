@@ -12,8 +12,8 @@
 #include <linux/errno.h>
 #include <kddm/kddm_types.h>
 
-#include <kerrighed/ghost.h>
-#include <kerrighed/action.h>
+#include <hcc/ghost.h>
+#include <hcc/action.h>
 
 
 int initialize_kddm_info_struct (struct task_struct *task);

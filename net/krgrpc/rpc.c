@@ -13,7 +13,7 @@
 #include <linux/spinlock.h>
 #include <linux/lockdep.h>
 #include <linux/string.h>
-#include <kerrighed/krgnodemask.h>
+#include <hcc/krgnodemask.h>
 #include <linux/krg_hashtable.h>
 
 #include <net/krgrpc/rpcid.h>

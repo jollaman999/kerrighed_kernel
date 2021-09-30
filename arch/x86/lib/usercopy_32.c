@@ -12,7 +12,7 @@
 #include <linux/backing-dev.h>
 #include <linux/interrupt.h>
 #ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#include <hcc/faf.h>
 #endif
 #include <asm/uaccess.h>
 #include <asm/mmx.h>

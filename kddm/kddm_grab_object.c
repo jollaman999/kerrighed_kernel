@@ -133,7 +133,7 @@ sleep_on_wait_page:
 			kddm_change_obj_state(set, obj_entry, objid,
 					      WAIT_ACK_WRITE);
 			request_copies_invalidation(set, obj_entry, objid,
-						    kerrighed_node_id);
+						    hcc_node_id);
 			if (flags & KDDM_ASYNC_REQ)
 				goto exit_no_freeze;
 			sleep_on_kddm_obj(set, obj_entry, objid, flags);

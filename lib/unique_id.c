@@ -10,7 +10,7 @@
 #include <linux/hardirq.h>
 #include <linux/module.h>
 #include <linux/unique_id.h>
-#include <kerrighed/krginit.h>
+#include <hcc/krginit.h>
 
 #define INITVAL 1
 
@@ -79,7 +79,7 @@ unique_id_t get_unique_id(unique_id_root_t *root)
 	/* Combine local unique id and local node id to generate a
 	   identifier which is unique cluster wide */
 
-	unique_id = unique_id | ((unsigned long)kerrighed_node_id << UNIQUE_ID_NODE_SHIFT);
+	unique_id = unique_id | ((unsigned long)hcc_node_id << UNIQUE_ID_NODE_SHIFT);
 
 	return unique_id;
 }

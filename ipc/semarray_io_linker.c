@@ -13,7 +13,7 @@
 #include <linux/ipc.h>
 #include <net/krgrpc/rpc.h>
 #include <kddm/kddm.h>
-#include <kerrighed/pid.h>
+#include <hcc/pid.h>
 
 #include "ipc_handler.h"
 #include "semarray_io_linker.h"

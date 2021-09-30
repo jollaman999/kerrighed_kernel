@@ -21,17 +21,17 @@
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
 #include <kddm/kddm.h>
-#include <kerrighed/namespace.h>
-#include <kerrighed/ghost.h>
-#include <kerrighed/ghost_helpers.h>
-#include <kerrighed/action.h>
-#include <kerrighed/application.h>
-#include <kerrighed/app_shared.h>
-#include <kerrighed/faf.h>
-#include <kerrighed/faf_file_mgr.h>
-#include <kerrighed/file.h>
-#include <kerrighed/regular_file_mgr.h>
-#include <kerrighed/pid.h>
+#include <hcc/namespace.h>
+#include <hcc/ghost.h>
+#include <hcc/ghost_helpers.h>
+#include <hcc/action.h>
+#include <hcc/application.h>
+#include <hcc/app_shared.h>
+#include <hcc/faf.h>
+#include <hcc/faf_file_mgr.h>
+#include <hcc/file.h>
+#include <hcc/regular_file_mgr.h>
+#include <hcc/pid.h>
 #include "ipc_handler.h"
 #include "krgipc_mobility.h"
 #include "krgshm.h"
@@ -43,7 +43,7 @@
 
 extern struct kddm_set *sem_undo_list_kddm_set;
 
-/** Return a kerrighed descriptor corresponding to the given file.
+/** Return a hcc descriptor corresponding to the given file.
  *  @author Renaud Lottiaux
  *
  *  @param file       The file to get a Kerrighed descriptor for.
@@ -790,7 +790,7 @@ int __sys_msgq_checkpoint(int msqid, int fd)
 	int r, index, err;
 	struct msgq_checkpoint_msg msg;
 	struct kddm_set *master_set;
-	kerrighed_node_t *master_node;
+	hcc_node_t *master_node;
 	struct ipc_namespace *ns;
 	struct file *file;
 	struct rpc_desc *desc;
@@ -808,7 +808,7 @@ int __sys_msgq_checkpoint(int msqid, int fd)
 		goto out;
 	}
 
-	if (*master_node == kerrighed_node_id) {
+	if (*master_node == hcc_node_id) {
 		_kddm_put_object(master_set, index);
 		r = local_sys_msgq_checkpoint(msqid, fd);
 		goto out;

@@ -42,7 +42,7 @@
 #include <linux/crc32.h>
 
 #ifdef CONFIG_KRG_MM
-#include <kerrighed/krgsyms.h>
+#include <hcc/krgsyms.h>
 #endif
 
 #include <asm/system.h>

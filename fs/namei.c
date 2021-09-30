@@ -36,7 +36,7 @@
 #include <linux/nospec.h>
 #include <asm/uaccess.h>
 #ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#include <hcc/faf.h>
 #endif
 
 #include "internal.h"

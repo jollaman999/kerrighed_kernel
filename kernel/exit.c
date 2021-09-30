@@ -55,19 +55,19 @@
 #include <kddm/kddm_info.h>
 #endif
 #ifdef CONFIG_KRG_HOTPLUG
-#include <kerrighed/namespace.h>
+#include <hcc/namespace.h>
 #endif
 #ifdef CONFIG_KRG_PROC
-#include <kerrighed/task.h>
-#include <kerrighed/krginit.h>
-#include <kerrighed/krg_exit.h>
+#include <hcc/task.h>
+#include <hcc/krginit.h>
+#include <hcc/krg_exit.h>
 #endif
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/signal.h>
-#include <kerrighed/children.h>
+#include <hcc/signal.h>
+#include <hcc/children.h>
 #endif
 #ifdef CONFIG_KRG_SCHED
-#include <kerrighed/scheduler/info.h>
+#include <hcc/scheduler/info.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -448,7 +448,7 @@ static void reparent_to_kthreadd(void)
 	struct children_kddm_object *parent_children_obj = NULL;
 	pid_t parent_tgid;
 
-	down_read(&kerrighed_init_sem);
+	down_read(&hcc_init_sem);
 
 	if (rcu_dereference(current->parent_children_obj))
 		parent_children_obj = krg_parent_children_writelock(
@@ -483,7 +483,7 @@ static void reparent_to_kthreadd(void)
 		krg_children_unlock(parent_children_obj);
 	}
 
-	up_read(&kerrighed_init_sem);
+	up_read(&hcc_init_sem);
 #endif /* CONFIG_KRG_EPM */
 }
 
@@ -1024,7 +1024,7 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 #ifdef CONFIG_KRG_PROC
 	krg_finish_exit_notify(tsk, signal, krg_cookie);
 	/*
-	 * No kerrighed structure should be accessed after this point,
+	 * No hcc structure should be accessed after this point,
 	 * since the task may have already been released by its reaper.
 	 * The exception of course is the case in which the task self-reaps.
 	 */
@@ -1148,7 +1148,7 @@ NORET_TYPE void do_exit(long code)
 #endif
 
 #ifdef CONFIG_KRG_PROC
-	down_read_non_owner(&kerrighed_init_sem);
+	down_read_non_owner(&hcc_init_sem);
 #endif
 	exit_signals(tsk);  /* sets PF_EXITING */
 	/*
@@ -1265,7 +1265,7 @@ NORET_TYPE void do_exit(long code)
 	/* causes final put_task_struct in finish_task_switch(). */
 	tsk->state = TASK_DEAD;
 #ifdef CONFIG_KRG_PROC
-	up_read_non_owner(&kerrighed_init_sem);
+	up_read_non_owner(&hcc_init_sem);
 #endif
 	schedule();
 	BUG();
@@ -1914,7 +1914,7 @@ static long do_wait(struct wait_opts *wo)
 	trace_sched_process_wait(wo->wo_pid);
 
 #ifdef CONFIG_KRG_PROC
-	down_read(&kerrighed_init_sem);
+	down_read(&hcc_init_sem);
 	add_wait_queue(&current->signal->wait_chldexit, &wait);
 #else
 	init_waitqueue_func_entry(&wo->child_wait, child_wait_callback);
@@ -1977,11 +1977,11 @@ notask:
 		retval = -ERESTARTSYS;
 		if (!signal_pending(current)) {
 #ifdef CONFIG_KRG_PROC
-			up_read(&kerrighed_init_sem);
+			up_read(&hcc_init_sem);
 #endif
 			schedule();
 #ifdef CONFIG_KRG_PROC
-			down_read(&kerrighed_init_sem);
+			down_read(&hcc_init_sem);
 #endif
 			goto repeat;
 		}
@@ -1990,7 +1990,7 @@ end:
 	__set_current_state(TASK_RUNNING);
 #ifdef CONFIG_KRG_EPM
 	remove_wait_queue(&current->signal->wait_chldexit, &wait);
-	up_read(&kerrighed_init_sem);
+	up_read(&hcc_init_sem);
 #else
 	remove_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
 #endif

@@ -15,9 +15,9 @@
 #include <linux/fs_struct.h>
 #include <linux/file.h>
 #include <linux/fdtable.h>
-#include <kerrighed/sys/types.h>
-#include <kerrighed/krginit.h>
-#include <kerrighed/workqueue.h>
+#include <hcc/sys/types.h>
+#include <hcc/krginit.h>
+#include <hcc/workqueue.h>
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
 
@@ -138,7 +138,7 @@ inline
 void do_krgrpc_handler(struct rpc_desc* desc,
 		       int thread_pool_id){
 	struct __rpc_synchro* __synchro;
-	kerrighed_node_t client;
+	hcc_node_t client;
 	struct waiting_desc *wd;
 
 	BUG_ON(desc->type != RPC_RQ_SRV);

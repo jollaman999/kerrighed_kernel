@@ -64,8 +64,8 @@
 #include <linux/kthread.h>
 
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/ghost.h>
-#include <kerrighed/action.h>
+#include <hcc/ghost.h>
+#include <hcc/action.h>
 #endif
 
 #include <asm/atomic.h>

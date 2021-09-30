@@ -28,10 +28,10 @@
 #include "internal.h"
 
 #ifdef CONFIG_KRG_DVFS
-#include <kerrighed/dvfs.h>
+#include <hcc/dvfs.h>
 #endif
 #ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#include <hcc/faf.h>
 #endif
 
 /* sysctl tunables... */

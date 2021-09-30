@@ -14,7 +14,7 @@
 #include <linux/err.h>
 #ifdef CONFIG_KRG_IPC
 #include <linux/security.h>
-#include <kerrighed/types.h>
+#include <hcc/types.h>
 #include <kddm/kddm_types.h>
 #endif
 
@@ -43,7 +43,7 @@ struct sem_queue {
 	int			alter;	 /* does *sops alter the array? */
 #ifdef CONFIG_KRG_IPC
 	int                     semid;
-	kerrighed_node_t        node;
+	hcc_node_t        node;
 #endif
 };
 

@@ -18,7 +18,7 @@
 
 #ifdef CONFIG_KRG_PROC
 #include <linux/module.h>
-#include <kerrighed/namespace.h>
+#include <hcc/namespace.h>
 #endif
 
 #define BITS_PER_PAGE		(PAGE_SIZE*8)

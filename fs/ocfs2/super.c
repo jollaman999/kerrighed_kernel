@@ -47,7 +47,7 @@
 #include <cluster/masklog.h>
 
 #ifdef CONFIG_KRG_MM
-#include <kerrighed/krgsyms.h>
+#include <hcc/krgsyms.h>
 #endif
 
 #include "ocfs2.h"

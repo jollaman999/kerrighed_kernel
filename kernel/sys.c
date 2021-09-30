@@ -45,13 +45,13 @@
 #ifdef CONFIG_KRG_PROC
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
-#include <kerrighed/remote_syscall.h>
+#include <hcc/remote_syscall.h>
 #endif
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/krginit.h>
-#include <kerrighed/pid.h>
-#include <kerrighed/task.h>
-#include <kerrighed/children.h>
+#include <hcc/krginit.h>
+#include <hcc/pid.h>
+#include <hcc/task.h>
+#include <hcc/children.h>
 #endif
 
 #include <linux/nospec.h>
@@ -1111,7 +1111,7 @@ int handle_forward_setpgid(struct rpc_desc *desc, void *_msg, size_t size)
 	return retval;
 }
 
-static int krg_forward_setpgid(kerrighed_node_t node, pid_t pid, pid_t pgid)
+static int krg_forward_setpgid(hcc_node_t node, pid_t pid, pid_t pgid)
 {
 	struct children_kddm_object *children_obj = current->children_obj;
 	pid_t parent, real_parent;
@@ -1133,18 +1133,18 @@ out:
 
 static
 struct children_kddm_object *
-krg_prepare_setpgid(pid_t pid, pid_t pgid, kerrighed_node_t *nodep)
+krg_prepare_setpgid(pid_t pid, pid_t pgid, hcc_node_t *nodep)
 {
 	struct children_kddm_object *parent_children_obj = NULL;
 	pid_t real_parent_tgid;
-	kerrighed_node_t node = KERRIGHED_NODE_ID_NONE;
+	hcc_node_t node = KERRIGHED_NODE_ID_NONE;
 	struct task_kddm_object *task_obj;
 	struct timespec backoff_time = {
 		.tv_sec = 1,
 		.tv_nsec = 0
 	};	/* 1 second */
 
-	down_read(&kerrighed_init_sem);
+	down_read(&hcc_init_sem);
 
 	if (!current->nsproxy->krg_ns
 	    || !is_krg_pid_ns_root(task_active_pid_ns(current))
@@ -1192,7 +1192,7 @@ out:
 static
 void krg_cleanup_setpgid(pid_t pid, pid_t pgid,
 			 struct children_kddm_object *parent_children_obj,
-			 kerrighed_node_t node,
+			 hcc_node_t node,
 			 bool success)
 {
 	if (parent_children_obj) {
@@ -1202,13 +1202,13 @@ void krg_cleanup_setpgid(pid_t pid, pid_t pgid,
 			__krg_set_child_pgid(parent_children_obj, pid, pgid);
 		krg_children_unlock(parent_children_obj);
 	}
-	up_read(&kerrighed_init_sem);
+	up_read(&hcc_init_sem);
 }
 
 SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 {
 	struct children_kddm_object *parent_children_obj;
-	kerrighed_node_t node;
+	hcc_node_t node;
 	int err;
 
 	if (!pid)
@@ -1219,7 +1219,7 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 		return -EINVAL;
 
 	parent_children_obj = krg_prepare_setpgid(pid, pgid, &node);
-	if (node != kerrighed_node_id && node != KERRIGHED_NODE_ID_NONE)
+	if (node != hcc_node_id && node != KERRIGHED_NODE_ID_NONE)
 		err = krg_forward_setpgid(node, pid, pgid);
 	else
 		err = do_setpgid(pid, pgid, -1, task_active_pid_ns(current));
@@ -1416,7 +1416,7 @@ SYSCALL_DEFINE0(setsid)
 	int err = -EPERM;
 
 #ifdef CONFIG_KRG_EPM
-	down_read(&kerrighed_init_sem);
+	down_read(&hcc_init_sem);
 	if (rcu_dereference(current->parent_children_obj))
 		parent_children_obj =
 			krg_parent_children_writelock(current,
@@ -1451,7 +1451,7 @@ out:
 			krg_set_child_pgid(parent_children_obj, current);
 		krg_children_unlock(parent_children_obj);
 	}
-	up_read(&kerrighed_init_sem);
+	up_read(&hcc_init_sem);
 #endif /* CONFIG_KRG_EPM */
 	return err;
 }

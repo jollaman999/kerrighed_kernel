@@ -26,7 +26,7 @@
 #include <linux/init.h>
 #include <linux/coredump.h>
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
+#include <hcc/krgsyms.h>
 #endif
 
 #include <asm/system.h>

@@ -84,17 +84,17 @@
 #include <linux/fs_struct.h>
 
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/action.h>
+#include <hcc/action.h>
 #endif
 #ifdef CONFIG_KRG_KDDM
-#include <kerrighed/krgnodemask.h>
+#include <hcc/krgnodemask.h>
 #include <kddm/kddm.h>
 #endif
 #if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
-#include <kerrighed/pid.h>
+#include <hcc/pid.h>
 #endif
 #ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#include <hcc/faf.h>
 #endif
 
 #include "internal.h"

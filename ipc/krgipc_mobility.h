@@ -1,4 +1,4 @@
-#include <kerrighed/ghost.h>
+#include <hcc/ghost.h>
 
 int __sys_msgq_checkpoint(int msqid, int fd);
 

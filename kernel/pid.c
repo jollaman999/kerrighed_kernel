@@ -39,8 +39,8 @@
 #include <linux/proc_fs.h>
 
 #ifdef CONFIG_KRG_PROC
-#include <kerrighed/pid.h>
-#include <kerrighed/krginit.h>
+#include <hcc/pid.h>
+#include <hcc/krginit.h>
 #endif
 
 #define pid_hashfn(nr, ns)	\
@@ -145,7 +145,7 @@ static void free_pidmap(struct upid *upid)
 static void free_pidmap(struct upid *upid)
 {
 	if ((upid->nr & GLOBAL_PID_MASK)
-	    && ORIG_NODE(upid->nr) != kerrighed_node_id)
+	    && ORIG_NODE(upid->nr) != hcc_node_id)
 		krg_free_pidmap(upid);
 	else
 		__free_pidmap(upid);
@@ -692,7 +692,7 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
 			break;
 #ifdef CONFIG_KRG_PROC
 		if (global) {
-			if (ORIG_NODE(nr) != kerrighed_node_id)
+			if (ORIG_NODE(nr) != hcc_node_id)
 				break;
 			nr = SHORT_PID(nr);
 		}
@@ -711,7 +711,7 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
 struct pid *krg_find_ge_pid(int nr, struct pid_namespace *pid_ns,
 			    struct pid_namespace *pidmap_ns)
 {
-	kerrighed_node_t node = ORIG_NODE(nr);
+	hcc_node_t node = ORIG_NODE(nr);
 	struct pid *pid;
 
 	BUG_ON(!pid_ns->global);

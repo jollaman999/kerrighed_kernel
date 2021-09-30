@@ -5,7 +5,7 @@
 #ifdef __KERNEL__
 
 #include <linux/proc_fs.h>
-#include <kerrighed/krg_services.h>
+#include <hcc/krg_services.h>
 #include <kddm/kddm_types.h>
 
 #endif // __KERNEL__
@@ -41,7 +41,7 @@ int procfs_kddm_init (void);
 int procfs_kddm_finalize (void);
 
 
-/** Create a /proc/kerrighed/kddm/<set_id> directory and sub-directories.
+/** Create a /proc/hcc/kddm/<set_id> directory and sub-directories.
  *  @author Gael Utard, Renaud Lottiaux
  *
  *  @param set_id   Id of the kddm set to create a proc entry for.
@@ -52,7 +52,7 @@ struct proc_dir_entry *create_kddm_proc (kddm_set_id_t set_id);
 
 
 
-/** Remove a /proc/kerrighed/kddm/<set_id> directory and sub-directories.
+/** Remove a /proc/hcc/kddm/<set_id> directory and sub-directories.
  *  @author Renaud Lottiaux
  *
  *  @param proc_entry    Struct of the proc entry to destroy.

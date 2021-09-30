@@ -45,7 +45,7 @@
 #ifdef CONFIG_KRG_IPC
 #include "krgmsg.h"
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/action.h>
+#include <hcc/action.h>
 #endif
 #endif
 
@@ -831,7 +831,7 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 #if defined(CONFIG_KRG_IPC) && defined(CONFIG_KRG_EPM)
 		if (krg_action_any_pending(current)) {
 #ifdef CONFIG_KRG_DEBUG
-			printk("%s:%d - action kerrighed! --> need replay!!\n",
+			printk("%s:%d - action hcc! --> need replay!!\n",
 			       __PRETTY_FUNCTION__, __LINE__);
 #endif
 			err = -ERESTARTSYS;
@@ -1097,7 +1097,7 @@ long do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 #if defined(CONFIG_KRG_IPC) && defined(CONFIG_KRG_EPM)
 		if (krg_action_any_pending(current)) {
 #ifdef CONFIG_KRG_DEBUG
-			printk("%s:%d - action kerrighed! --> need replay!!\n",
+			printk("%s:%d - action hcc! --> need replay!!\n",
 			       __PRETTY_FUNCTION__, __LINE__);
 #endif
 			msg = ERR_PTR(-ERESTARTSYS);

@@ -12,7 +12,7 @@
 #include <linux/securebits.h>
 #include <net/net_namespace.h>
 #ifdef CONFIG_KRG_CAP
-#include <kerrighed/capabilities.h>
+#include <hcc/capabilities.h>
 #endif
 
 extern struct files_struct init_files;

@@ -12,9 +12,9 @@
 #include <linux/list.h>
 #include <linux/spinlock.h>
 #include <linux/lockdep.h>
-#include <kerrighed/sys/types.h>
-#include <kerrighed/krginit.h>
-#include <kerrighed/krgnodemask.h>
+#include <hcc/sys/types.h>
+#include <hcc/krginit.h>
+#include <hcc/krgnodemask.h>
 #include <linux/krg_hashtable.h>
 
 #include <net/krgrpc/rpcid.h>
@@ -25,7 +25,7 @@
 /* In __rpc_send, unsure atomicity of rpc_link_seq_id and rpc_desc_set_id */
 static spinlock_t lock_id;
 
-kerrighed_node_t rpc_desc_get_client(struct rpc_desc *desc){
+hcc_node_t rpc_desc_get_client(struct rpc_desc *desc){
 	BUG_ON(!desc);
 	return desc->client;
 }
@@ -122,7 +122,7 @@ struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
 
 	__krgnodes_copy(&desc->nodes, nodes);
 	desc->type = RPC_RQ_CLT;
-	desc->client = kerrighed_node_id;
+	desc->client = hcc_node_id;
 	
 	desc->desc_send = rpc_desc_send_alloc();
 	if(!desc->desc_send)
@@ -136,7 +136,7 @@ struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
 
 	desc->rpcid = rpcid;
 	desc->service = rpc_services[rpcid];
-	desc->client = kerrighed_node_id;
+	desc->client = hcc_node_id;
 
 	if (__rpc_emergency_send_buf_alloc(desc, 0))
 		goto oom_free_desc_recv;
@@ -328,7 +328,7 @@ out:
 	return err;
 }
 
-void rpc_cancel_unpack_from(struct rpc_desc *desc, kerrighed_node_t node)
+void rpc_cancel_unpack_from(struct rpc_desc *desc, hcc_node_t node)
 {
 	struct rpc_desc_recv *desc_recv = desc->desc_recv[node];
 
@@ -338,7 +338,7 @@ void rpc_cancel_unpack_from(struct rpc_desc *desc, kerrighed_node_t node)
 
 void rpc_cancel_unpack(struct rpc_desc* desc)
 {
-	kerrighed_node_t node;
+	hcc_node_t node;
 
 	for_each_krgnode_mask(node, desc->nodes)
 		rpc_cancel_unpack_from(desc, node);
@@ -353,7 +353,7 @@ int rpc_cancel(struct rpc_desc* desc){
 	return err;
 }
 
-int rpc_forward(struct rpc_desc* desc, kerrighed_node_t node){
+int rpc_forward(struct rpc_desc* desc, hcc_node_t node){
 	return 0;
 }
 
@@ -490,7 +490,7 @@ __rpc_signal_dequeue_sigack(struct rpc_desc *desc,
 }
 
 inline
-int __rpc_unpack_from_node(struct rpc_desc* desc, kerrighed_node_t node,
+int __rpc_unpack_from_node(struct rpc_desc* desc, hcc_node_t node,
 			   int flags, void* data, size_t size)
 {
 
@@ -646,7 +646,7 @@ enum rpc_error
 rpc_unpack(struct rpc_desc* desc, int flags, void* data, size_t size){
 	switch(desc->type){
 	case RPC_RQ_CLT:{
-		kerrighed_node_t node;
+		hcc_node_t node;
 		// ASSUME that only one node is set in desc->nodes
 		// If it's not a single request, the result of this function (in this case)
 		// is UNDEFINED
@@ -670,10 +670,10 @@ rpc_unpack(struct rpc_desc* desc, int flags, void* data, size_t size){
 }
 
 enum rpc_error
-rpc_unpack_from(struct rpc_desc* desc, kerrighed_node_t node,
+rpc_unpack_from(struct rpc_desc* desc, hcc_node_t node,
 		int flags, void* data, size_t size)
 {
-	printk("rpc_unpack_from start kerrighed_node_t %d \n",node);
+	printk("rpc_unpack_from start hcc_node_t %d \n",node);
 	switch(desc->type){
 	case RPC_RQ_CLT:
 		printk("RPC_RQ_CLT ENTER\n");
@@ -691,9 +691,9 @@ rpc_unpack_from(struct rpc_desc* desc, kerrighed_node_t node,
 	return 0;
 }
 
-kerrighed_node_t rpc_wait_return(struct rpc_desc* desc, int* value)
+hcc_node_t rpc_wait_return(struct rpc_desc* desc, int* value)
 {
-	kerrighed_node_t node;
+	hcc_node_t node;
 
 	if (desc->type != RPC_RQ_CLT)
 		return -1;
@@ -726,7 +726,7 @@ kerrighed_node_t rpc_wait_return(struct rpc_desc* desc, int* value)
 	goto __restart;
 }
 
-int rpc_wait_return_from(struct rpc_desc* desc, kerrighed_node_t node)
+int rpc_wait_return_from(struct rpc_desc* desc, hcc_node_t node)
 {
 
 	if(desc->type != RPC_RQ_CLT)

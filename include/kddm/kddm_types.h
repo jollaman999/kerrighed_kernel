@@ -3,7 +3,7 @@
 
 #include <kddm/kddm_tree.h>
 #include <linux/wait.h>
-#include <kerrighed/types.h>
+#include <hcc/types.h>
 
 
 /*--------------------------------------------------------------------------*
@@ -225,9 +225,9 @@ typedef struct kddm_set {
 	atomic_t count;
 	unsigned int last_ra_start;  /**< Start of the last readahead window */
 	int ra_window_size;          /**< Size of the readahead window */
-	kerrighed_node_t def_owner;  /**< Id of default owner node */
+	hcc_node_t def_owner;  /**< Id of default owner node */
 	struct iolinker_struct *iolinker;    /**< IO linker ops */
-	struct proc_dir_entry *procfs_entry; /**< entry in /proc/kerrighed/kddm */
+	struct proc_dir_entry *procfs_entry; /**< entry in /proc/hcc/kddm */
 
 	void *private_data;                  /**< Data used to instantiate */
 	int private_data_size;               /**< Size of private data... */

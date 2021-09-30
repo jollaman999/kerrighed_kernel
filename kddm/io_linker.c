@@ -10,9 +10,9 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
-#include <kerrighed/sys/types.h>
-#include <kerrighed/krginit.h>
-#include <kerrighed/krgflags.h>
+#include <hcc/sys/types.h>
+#include <hcc/krginit.h>
+#include <hcc/krgflags.h>
 
 #include <net/krgrpc/rpc.h>
 #include <kddm/kddm.h>
@@ -22,7 +22,7 @@
 struct iolinker_struct *iolinker_list[MAX_IO_LINKER];
 
 krgnodemask_t krgnode_kddm_map;
-kerrighed_node_t kddm_nb_nodes;
+hcc_node_t kddm_nb_nodes;
 
 
 /*****************************************************************************/
@@ -44,7 +44,7 @@ kerrighed_node_t kddm_nb_nodes;
  *  @return  Structure of the requested kddm set or NULL if not found.
  */
 int kddm_io_instantiate (struct kddm_set * set,
-			 kerrighed_node_t def_owner,
+			 hcc_node_t def_owner,
 			 iolinker_id_t iolinker_id,
 			 void *private_data,
 			 int data_size,
@@ -407,17 +407,17 @@ int kddm_io_export_object (struct rpc_desc *desc,
 	return res;
 }
 
-kerrighed_node_t __kddm_io_default_owner (struct kddm_set *set,
+hcc_node_t __kddm_io_default_owner (struct kddm_set *set,
 					  objid_t objid,
 					  const krgnodemask_t *nodes,
 					  int nr_nodes)
 {
 	switch (set->def_owner) {
 	  case KDDM_RR_DEF_OWNER:
-		  if (likely(__krgnode_isset(kerrighed_node_id, nodes)))
+		  if (likely(__krgnode_isset(hcc_node_id, nodes)))
 			  return __nth_krgnode(objid % nr_nodes, nodes);
 		  else
-			  return kerrighed_node_id;
+			  return hcc_node_id;
 
 	  case KDDM_UNIQUE_ID_DEF_OWNER:
 		  return objid >> UNIQUE_ID_NODE_SHIFT;
@@ -431,7 +431,7 @@ kerrighed_node_t __kddm_io_default_owner (struct kddm_set *set,
 	}
 }
 
-kerrighed_node_t kddm_io_default_owner (struct kddm_set * set, objid_t objid)
+hcc_node_t kddm_io_default_owner (struct kddm_set * set, objid_t objid)
 {
 	return __kddm_io_default_owner (set, objid,
 					&krgnode_kddm_map,
@@ -472,7 +472,7 @@ void io_linker_init (void)
 {
 	int i;
 
-	kddm_nb_nodes = kerrighed_nb_nodes;
+	kddm_nb_nodes = hcc_nb_nodes;
 	krgnodes_copy(krgnode_kddm_map, krgnode_online_map);
 
 	for (i = 0; i < MAX_IO_LINKER; i++)

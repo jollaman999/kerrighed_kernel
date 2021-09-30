@@ -67,7 +67,7 @@
 #include <trace/events/kmem.h>
 
 #ifdef CONFIG_KRG_MM
-#include <kerrighed/page_table_tree.h>
+#include <hcc/page_table_tree.h>
 #endif
 
 #include "internal.h"

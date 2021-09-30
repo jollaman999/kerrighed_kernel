@@ -46,7 +46,7 @@ retry:
 
 	obj_entry->object = object;
 	atomic_inc(&set->nr_objects);
-	ADD_TO_SET (COPYSET(obj_entry), kerrighed_node_id);
+	ADD_TO_SET (COPYSET(obj_entry), hcc_node_id);
 	kddm_insert_object (set, objid, obj_entry, state);
 	put_kddm_obj_entry(set, obj_entry, objid);
 

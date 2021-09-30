@@ -19,7 +19,7 @@
 
 #include <asm/ioctls.h>
 #ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#include <hcc/faf.h>
 #endif
 
 /* So that the fiemap access checks can't overflow on 32 bit machines. */

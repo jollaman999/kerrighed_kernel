@@ -9,7 +9,7 @@
 #include <linux/uaccess.h>
 
 #ifdef CONFIG_KRG_IPC
-#include <kerrighed/faf.h>
+#include <hcc/faf.h>
 #endif
 
 static int flags_by_mnt(int mnt_flags)

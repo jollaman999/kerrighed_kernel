@@ -5,7 +5,7 @@
 #ifndef __ASSEMBLY__
 
 #ifdef CONFIG_KRG_MM
-/* No inverted PFNs for kerrighed */
+/* No inverted PFNs for hcc */
 
 static inline u64 protnone_mask(u64 val)
 {

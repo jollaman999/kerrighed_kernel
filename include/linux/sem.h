@@ -4,8 +4,8 @@
 #include <linux/ipc.h>
 #ifdef CONFIG_KRG_IPC
 #include <linux/unique_id.h>
-#include <kerrighed/krginit.h>
-#include <kerrighed/types.h>
+#include <hcc/krginit.h>
+#include <hcc/types.h>
 #endif
 
 /* semop flags */

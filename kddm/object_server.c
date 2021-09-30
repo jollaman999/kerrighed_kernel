@@ -6,8 +6,8 @@
  */
 
 #include <linux/kernel.h>
-#include <kerrighed/sys/types.h>
-#include <kerrighed/krginit.h>
+#include <hcc/sys/types.h>
+#include <hcc/krginit.h>
 
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
@@ -25,14 +25,14 @@ static inline void forward_object_server_msg (struct kddm_obj * obj_entry,
 					      void *_msg)
 {
 	msg_server_t *msg = (msg_server_t *)_msg;
-	kerrighed_node_t prob_owner;
+	hcc_node_t prob_owner;
 
 	if (obj_entry == NULL)
 		prob_owner = kddm_io_default_owner(set, msg->objid);
 	else
 		prob_owner = get_prob_owner(obj_entry);
 
-	BUG_ON(prob_owner == kerrighed_node_id);
+	BUG_ON(prob_owner == hcc_node_id);
 
 	msg->req_id = 0;
 	rpc_async(msg_type, prob_owner, _msg, sizeof(msg_server_t));
@@ -54,13 +54,13 @@ static inline void forward_object_server_msg (struct kddm_obj * obj_entry,
  *
  *  @param msg  Message received from the requesting node.
  */
-static inline int __handle_invalidation_ack (kerrighed_node_t sender,
+static inline int __handle_invalidation_ack (hcc_node_t sender,
 					     void *_msg)
 {
 	msg_server_t *msg = _msg;
 	struct kddm_obj *obj_entry;
 	struct kddm_set *set;
-	kerrighed_node_t dest;
+	hcc_node_t dest;
 
 	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
 
@@ -80,7 +80,7 @@ static inline int __handle_invalidation_ack (kerrighed_node_t sender,
 
 	switch (OBJ_STATE(obj_entry)) {
 	  case INV_FILLING:
-		  if (get_prob_owner(obj_entry) == kerrighed_node_id)
+		  if (get_prob_owner(obj_entry) == hcc_node_id)
 			  goto handle_ack;
 		  /* else fall through */
 	  case INV_COPY:
@@ -330,7 +330,7 @@ void handle_remove_done (struct rpc_desc* desc,
  *  @param msg  Message received from the requesting node.
  */
 static inline
-int __handle_object_invalidation (kerrighed_node_t sender,
+int __handle_object_invalidation (hcc_node_t sender,
 				  void *_msg)
 {
 	msg_server_t *msg = _msg;
@@ -405,7 +405,7 @@ void handle_object_invalidation (struct rpc_desc* desc,
  *
  *  @param msg  Message received from the requesting node.
  */
-static inline int __handle_object_remove_req (kerrighed_node_t sender,
+static inline int __handle_object_remove_req (hcc_node_t sender,
 					      void *_msg)
 {
 	msg_server_t *msg = _msg;
@@ -432,7 +432,7 @@ static inline int __handle_object_remove_req (kerrighed_node_t sender,
 		goto exit;
 	}
 
-	if (kddm_io_default_owner(set, msg->objid) == kerrighed_node_id)
+	if (kddm_io_default_owner(set, msg->objid) == hcc_node_id)
 		flag = KDDM_NEED_OBJ_RM_ACK2;
 
 	switch (OBJ_STATE(obj_entry)) {
@@ -497,7 +497,7 @@ void handle_object_remove_req (struct rpc_desc* desc,
  *  @param sender  Node sending the ownership.
  *  @param msg     Message received from the requesting node.
  */
-static inline int __handle_send_ownership_req (kerrighed_node_t sender,
+static inline int __handle_send_ownership_req (hcc_node_t sender,
 					       void *_msg)
 {
 	msg_injection_t *msg = _msg;
@@ -619,7 +619,7 @@ void handle_object_receive (struct rpc_desc* desc,
 	if (msg->object_state & KDDM_OWNER_OBJ) {
 		DUP2_SET(&master_info.rmset, &obj_entry->master_obj.rmset);
 		ADD_TO_SET(RMSET(obj_entry), desc->client);
-		ADD_TO_SET(RMSET(obj_entry), kerrighed_node_id);
+		ADD_TO_SET(RMSET(obj_entry), hcc_node_id);
 	}
 
 	switch (OBJ_STATE(obj_entry)) {
@@ -627,16 +627,16 @@ void handle_object_receive (struct rpc_desc* desc,
 		  if (msg->flags & KDDM_SYNC_OBJECT)
 			  obj_state = READ_COPY;
 		  else {
-			  change_prob_owner(obj_entry, kerrighed_node_id);
+			  change_prob_owner(obj_entry, hcc_node_id);
 			  obj_state = WRITE_GHOST;
 		  }
 		  break;
 
 	  case WAIT_OBJ_WRITE:
-		  change_prob_owner(obj_entry, kerrighed_node_id);
+		  change_prob_owner(obj_entry, hcc_node_id);
 		  ADD_TO_SET(COPYSET(obj_entry), desc->client);
 		  merge_ack_set(COPYSET(obj_entry), &master_info.copyset);
-		  ADD_TO_SET(COPYSET(obj_entry), kerrighed_node_id);
+		  ADD_TO_SET(COPYSET(obj_entry), hcc_node_id);
 		  if (OBJ_EXCLUSIVE2 (COPYSET(obj_entry)))
 			  obj_state = msg->object_state;
 		  else
@@ -717,7 +717,7 @@ void handle_object_receive (struct rpc_desc* desc,
  *  @param sender  Node sending the request.
  *  @param msg     Message received from the requesting node.
  */
-int __handle_no_object (kerrighed_node_t sender,
+int __handle_no_object (hcc_node_t sender,
 			void *_msg)
 {
 	msg_server_t *msg = _msg;
@@ -743,7 +743,7 @@ int __handle_no_object (kerrighed_node_t sender,
 	  case WAIT_OBJ_WRITE:
 		  if (msg->flags ||
 		      (kddm_io_default_owner(set, msg->objid) ==
-		       kerrighed_node_id))
+		       hcc_node_id))
 			  kddm_change_obj_state (set, obj_entry, msg->objid,
 						 INV_OWNER);
 		  else
@@ -803,7 +803,7 @@ void handle_receive_write_access (struct rpc_desc* desc,
 		  BUG_ON (obj_entry->object == NULL);
 		  ADD_TO_SET(COPYSET(obj_entry), desc->client);
 		  merge_ack_set(COPYSET(obj_entry), &msg->owner_info.copyset);
-		  ADD_TO_SET(COPYSET(obj_entry), kerrighed_node_id);
+		  ADD_TO_SET(COPYSET(obj_entry), hcc_node_id);
 		  if (OBJ_EXCLUSIVE2 (COPYSET(obj_entry))) {
 			  kddm_change_obj_state (set, obj_entry, msg->objid,
 						 WRITE_OWNER);
@@ -832,7 +832,7 @@ void handle_receive_write_access (struct rpc_desc* desc,
  *  @param sender    Node sending the request.
  *  @param msg       Message received from the requesting node.
  */
-static inline int __handle_object_copy_req (kerrighed_node_t sender,
+static inline int __handle_object_copy_req (hcc_node_t sender,
 					    void *_msg)
 {
 	msg_server_t *msg = _msg;
@@ -879,7 +879,7 @@ static inline int __handle_object_copy_req (kerrighed_node_t sender,
 	/* First checks if we are in a loop-back request. Some of them can be
 	 * valid requests due to some corner cases in the protocol.
 	 */
-	if (msg->reply_node != kerrighed_node_id)
+	if (msg->reply_node != hcc_node_id)
 		goto regular_case;
 
 	switch (OBJ_STATE(obj_entry)) {
@@ -1063,7 +1063,7 @@ exit_no_unlock:
 first_touch_error:
 	BUG_ON (r != ENODATA);
 
-	BUG_ON (msg->reply_node == kerrighed_node_id);
+	BUG_ON (msg->reply_node == hcc_node_id);
 	send_no_object (set, obj_entry, msg->objid, msg->reply_node,
 			0 /* send ownership */);
 	goto exit;
@@ -1081,7 +1081,7 @@ void handle_object_copy_req (struct rpc_desc* desc,
  *  @param msg       Message received from the requesting node.
  */
 static inline
-int __handle_object_remove_to_mgr_req (kerrighed_node_t sender,
+int __handle_object_remove_to_mgr_req (hcc_node_t sender,
 				       void *_msg)
 {
 	msg_server_t *msg = _msg;
@@ -1175,7 +1175,7 @@ void handle_send_back_first_touch_req (struct rpc_desc* desc,
 	switch (OBJ_STATE(obj_entry)) {
 	  case WAIT_OBJ_READ:
 	  case WAIT_OBJ_WRITE:
-		  BUG_ON (msg->reply_node == kerrighed_node_id);
+		  BUG_ON (msg->reply_node == hcc_node_id);
 
 		  ADD_TO_SET(RMSET(obj_entry), desc->client);
 		  if (object_first_touch(set, obj_entry, msg->objid,

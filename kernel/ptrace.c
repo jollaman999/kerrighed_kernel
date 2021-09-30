@@ -25,10 +25,10 @@
 #include <linux/utrace.h>
 
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/action.h>
-#include <kerrighed/krginit.h>
-#include <kerrighed/children.h>
-#include <kerrighed/krg_exit.h>
+#include <hcc/action.h>
+#include <hcc/krginit.h>
+#include <hcc/children.h>
+#include <hcc/krg_exit.h>
 #endif
 
 
@@ -548,7 +548,7 @@ int ptrace_attach(struct task_struct *task)
 	if (mutex_lock_interruptible(&task->cred_guard_mutex))
 		goto out;
 #ifdef CONFIG_KRG_EPM
-	down_read(&kerrighed_init_sem);
+	down_read(&hcc_init_sem);
 	parent_children_obj = rcu_dereference(task->parent_children_obj);
 	if (parent_children_obj)
 		parent_children_obj =
@@ -591,7 +591,7 @@ unlock_tasklist:
 #ifdef CONFIG_KRG_EPM
 	if (parent_children_obj)
 		krg_children_unlock(parent_children_obj);
-	up_read(&kerrighed_init_sem);
+	up_read(&hcc_init_sem);
 #endif /* CONFIG_KRG_EPM */
 unlock_creds:
 	mutex_unlock(&task->cred_guard_mutex);
@@ -614,7 +614,7 @@ int ptrace_traceme(void)
 	int ret = -EPERM;
 
 #ifdef CONFIG_KRG_EPM
-	down_read(&kerrighed_init_sem);
+	down_read(&hcc_init_sem);
 	parent_children_obj = rcu_dereference(current->parent_children_obj);
 	if (parent_children_obj)
 		parent_children_obj =
@@ -666,7 +666,7 @@ int ptrace_traceme(void)
 #ifdef CONFIG_KRG_EPM
 	if (parent_children_obj)
 		krg_children_unlock(parent_children_obj);
-	up_read(&kerrighed_init_sem);
+	up_read(&hcc_init_sem);
 #endif /* CONFIG_KRG_EPM */
 
 	return ret;
@@ -688,7 +688,7 @@ int ptrace_detach(struct task_struct *child, unsigned int data)
 	clear_tsk_thread_flag(child, TIF_SYSCALL_TRACE);
 
 #ifdef CONFIG_KRG_EPM
-	down_read(&kerrighed_init_sem);
+	down_read(&hcc_init_sem);
 	parent_children_obj = rcu_dereference(child->parent_children_obj);
 	if (parent_children_obj)
 		parent_children_obj =
@@ -717,7 +717,7 @@ int ptrace_detach(struct task_struct *child, unsigned int data)
 	if (unlikely(dead))
 		release_task(child);
 #ifdef CONFIG_KRG_EPM
-	up_read(&kerrighed_init_sem);
+	up_read(&hcc_init_sem);
 #endif
 
 	return 0;

@@ -14,7 +14,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 
-#include <kerrighed/hotplug.h>
+#include <hcc/hotplug.h>
 #include <kddm/kddm.h>
 #include <kddm/object_server.h>
 #include "procfs.h"
@@ -105,7 +105,7 @@ int init_kddm (void)
 	init_kddm_test ();
 
 	/*
-	  process_add(0, kerrighed_nb_nodes);
+	  process_add(0, hcc_nb_nodes);
 	  process_synchronize(0);
 	  process_remove(0);
 	*/

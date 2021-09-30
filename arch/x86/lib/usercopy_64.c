@@ -7,7 +7,7 @@
  */
 #include <linux/module.h>
 #ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#include <hcc/faf.h>
 #endif
 #include <asm/uaccess.h>
 

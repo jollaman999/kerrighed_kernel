@@ -27,9 +27,9 @@
  */
 int _kddm_flush_object(struct kddm_set *set,
 		       objid_t objid,
-		       kerrighed_node_t dest)
+		       hcc_node_t dest)
 {
-	kerrighed_node_t dest_from_copyset;
+	hcc_node_t dest_from_copyset;
 	struct kddm_obj *obj_entry;
 	int res = -ENOENT;
 
@@ -62,7 +62,7 @@ try_again:
 			goto try_again;
 		}
 
-		REMOVE_FROM_SET(COPYSET(obj_entry), kerrighed_node_id);
+		REMOVE_FROM_SET(COPYSET(obj_entry), hcc_node_id);
 		if (SET_IS_EMPTY(COPYSET(obj_entry))) {
 			/* I'm owner of the only existing object in the
 			 * cluster. Let's inject it ! */
@@ -134,7 +134,7 @@ EXPORT_SYMBOL(_kddm_flush_object);
 
 
 int kddm_flush_object(struct kddm_ns *ns, kddm_set_id_t set_id, objid_t objid,
-		      kerrighed_node_t dest)
+		      hcc_node_t dest)
 {
 	struct kddm_set *set;
 	int res;

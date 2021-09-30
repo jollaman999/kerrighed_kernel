@@ -109,7 +109,7 @@ try_again:
 		}
 
 		need_wait = request_copies_remove(set, obj_entry, objid,
-						  kerrighed_node_id);
+						  hcc_node_id);
 		if (need_wait)
 			wait_copies_remove_done(set, obj_entry, objid);
 

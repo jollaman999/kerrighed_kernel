@@ -34,7 +34,7 @@
 #include <linux/mutex.h>
 #include <linux/anon_inodes.h>
 #ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#include <hcc/faf.h>
 #endif
 #include <asm/uaccess.h>
 #include <asm/system.h>

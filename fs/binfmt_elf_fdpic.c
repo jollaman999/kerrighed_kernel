@@ -36,8 +36,8 @@
 #include <linux/elfcore.h>
 #include <linux/coredump.h>
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/children.h>
-#include <kerrighed/krgsyms.h>
+#include <hcc/children.h>
+#include <hcc/krgsyms.h>
 #endif
 
 #include <asm/uaccess.h>

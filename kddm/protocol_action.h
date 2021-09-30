@@ -7,7 +7,7 @@
 #ifndef __PROTOCOL_ACTION__
 #define __PROTOCOL_ACTION__
 
-typedef int (*queue_event_handler_t) (kerrighed_node_t sender, void* msg);
+typedef int (*queue_event_handler_t) (hcc_node_t sender, void* msg);
 
 
 
@@ -24,13 +24,13 @@ typedef int (*queue_event_handler_t) (kerrighed_node_t sender, void* msg);
  */
 void request_copies_invalidation (struct kddm_set *set,
 				  struct kddm_obj *obj_entry, objid_t objid,
-                                  kerrighed_node_t sender);
+                                  hcc_node_t sender);
 
 /** Send object remove requests.
  *  @author Renaud Lottiaux
  */
 int request_copies_remove (struct kddm_set * set, struct kddm_obj *obj_entry,
-			   objid_t objid, kerrighed_node_t sender);
+			   objid_t objid, hcc_node_t sender);
 
 /** Send object remove request to the object manager.
  *  @author Renaud Lottiaux
@@ -56,12 +56,12 @@ void request_object_on_read (struct kddm_set * set, struct kddm_obj *obj_entry,
  *  @author Renaud Lottiaux
  */
 void send_copy_on_write (struct kddm_set *set, struct kddm_obj *obj_entry,
-			 objid_t objid, kerrighed_node_t dest_node, int flags);
+			 objid_t objid, hcc_node_t dest_node, int flags);
 
 struct kddm_obj *send_copy_on_write_and_inv (struct kddm_set *set,
 					     struct kddm_obj *obj_entry,
 					     objid_t objid,
-					     kerrighed_node_t dest_node,
+					     hcc_node_t dest_node,
 					     int flags);
 
 
@@ -69,13 +69,13 @@ struct kddm_obj *send_copy_on_write_and_inv (struct kddm_set *set,
  *  @author Renaud Lottiaux
  */
 int send_copy_on_read (struct kddm_set *set, struct kddm_obj *obj_entry,
-		       objid_t objid, kerrighed_node_t dest_node, int flags);
+		       objid_t objid, hcc_node_t dest_node, int flags);
 
 /** Send a "no object" anwser to the given node.
  *  @author Renaud Lottiaux
  */
 void send_no_object (struct kddm_set * set, struct kddm_obj *obj_entry,
-		     objid_t objid, kerrighed_node_t dest_node,
+		     objid_t objid, hcc_node_t dest_node,
 		     int send_ownership);
 
 /** Send object write access to the given node.
@@ -84,7 +84,7 @@ void send_no_object (struct kddm_set * set, struct kddm_obj *obj_entry,
 void transfer_write_access_and_unlock (struct kddm_set *set,
                                        struct kddm_obj *obj_entry,
 				       objid_t objid,
-				       kerrighed_node_t dest_node,
+				       hcc_node_t dest_node,
 				       masterObj_t * master_info);
 
 void merge_ack_set(krgnodemask_t *obj_set, krgnodemask_t *recv_set);
@@ -93,21 +93,21 @@ void merge_ack_set(krgnodemask_t *obj_set, krgnodemask_t *recv_set);
  *  @author Renaud Lottiaux
  */
 void send_invalidation_ack (struct kddm_set *set, objid_t objid,
-			    kerrighed_node_t dest_node);
+			    hcc_node_t dest_node);
 
 /** Send an object remove ack to the given node.
  *  @author Renaud Lottiaux
  */
 void send_remove_ack (struct kddm_set *set, objid_t objid,
-		      kerrighed_node_t dest_node, int flags);
+		      hcc_node_t dest_node, int flags);
 void send_remove_ack2 (struct kddm_set *set, objid_t objid,
-		       kerrighed_node_t dest_node);
+		       hcc_node_t dest_node);
 
 /** Send a global objects remove ack from the manager node to the given node.
  *  @author Renaud Lottiaux
  */
 void send_remove_object_done (struct kddm_set *set, objid_t objid,
-			      kerrighed_node_t dest_node,
+			      hcc_node_t dest_node,
 			      krgnodemask_t *rmset);
 
 
@@ -127,20 +127,20 @@ int object_first_touch_no_wakeup (struct kddm_set *set,
  */
 void send_back_object_first_touch (struct kddm_set *set,
 				   struct kddm_obj * obj_entry,
-                                   objid_t objid, kerrighed_node_t dest_node,
+                                   objid_t objid, hcc_node_t dest_node,
                                    int flags, int req_type);
 
 void send_change_ownership_req (struct kddm_set * set,
 				struct kddm_obj *obj_entry, objid_t objid,
-				kerrighed_node_t dest_node,
+				hcc_node_t dest_node,
                                 masterObj_t * master_info);
 
 void ack_change_object_owner (struct kddm_set * set,
                               struct kddm_obj * obj_entry, objid_t objid,
-			      kerrighed_node_t dest_node,
+			      hcc_node_t dest_node,
 			      masterObj_t * master_info);
 
-void queue_event (queue_event_handler_t event, kerrighed_node_t sender,
+void queue_event (queue_event_handler_t event, hcc_node_t sender,
 		  struct kddm_set *set, struct kddm_obj * obj_entry,
 		  objid_t objid, void *dataIn, size_t data_size);
 
@@ -148,8 +148,8 @@ void flush_kddm_event(struct kddm_set *set, objid_t objid);
 void freeze_kddm_event(struct kddm_set *set);
 void unfreeze_kddm_event(struct kddm_set *set);
 
-kerrighed_node_t choose_injection_node_in_copyset (struct kddm_obj * object);
-kerrighed_node_t choose_injection_node (void);
+hcc_node_t choose_injection_node_in_copyset (struct kddm_obj * object);
+hcc_node_t choose_injection_node (void);
 
 
 int request_sync_object_and_unlock (struct kddm_set * set,
@@ -158,8 +158,8 @@ int request_sync_object_and_unlock (struct kddm_set * set,
 
 
 void request_change_prob_owner(struct kddm_set * set, objid_t objid,
-			       kerrighed_node_t dest_node,
-			       kerrighed_node_t new_owner);
+			       hcc_node_t dest_node,
+			       hcc_node_t new_owner);
 
 void start_run_queue_thread (void);
 void stop_run_queue_thread (void);

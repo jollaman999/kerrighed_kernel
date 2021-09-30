@@ -21,7 +21,7 @@
 #include <kddm/kddm_remove_object.h>
 #include <kddm/kddm_sync_object.h>
 
-#include <kerrighed/debug.h>
+#include <hcc/debug.h>
 
 
 

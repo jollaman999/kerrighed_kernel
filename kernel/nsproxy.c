@@ -26,7 +26,7 @@
 #include <linux/syscalls.h>
 
 #ifdef CONFIG_KRG_HOTPLUG
-#include <kerrighed/namespace.h>
+#include <hcc/namespace.h>
 #endif
 
 #ifndef CONFIG_KRG_EPM

@@ -100,7 +100,7 @@
 #include <linux/sched.h>		/* For struct task_struct.  */
 #include <linux/err.h>			/* for IS_ERR_VALUE */
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/children.h>
+#include <hcc/children.h>
 #endif
 
 extern void ptrace_notify_stop(struct task_struct *tracee);

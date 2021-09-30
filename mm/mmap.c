@@ -37,8 +37,8 @@
 #include <asm/mmu_context.h>
 
 #ifdef CONFIG_KRG_MM
-#include <kerrighed/krgsyms.h>
-#include <kerrighed/dynamic_node_info_linker.h>
+#include <hcc/krgsyms.h>
+#include <hcc/dynamic_node_info_linker.h>
 #endif
 
 #include "internal.h"
@@ -148,7 +148,7 @@ int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
 	long free, allowed;
 #ifdef CONFIG_KRG_MM
 	krg_dynamic_node_info_t *dyn_info;
-	kerrighed_node_t node;
+	hcc_node_t node;
 #endif
 
 	vm_acct_memory(pages);
@@ -214,7 +214,7 @@ int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
 			goto error;
 
 		for_each_online_krgnode(node) {
-			if (node == kerrighed_node_id)
+			if (node == hcc_node_id)
 				continue;
 			dyn_info = get_dynamic_node_info(node);
 			free += dyn_info->freeram - dyn_info->freeram / 32;

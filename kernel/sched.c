@@ -76,13 +76,13 @@
 #ifdef CONFIG_KRG_PROC
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
-#include <kerrighed/remote_syscall.h>
+#include <hcc/remote_syscall.h>
 #endif
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/ghost.h>
+#include <hcc/ghost.h>
 #endif
 #ifdef CONFIG_KRG_SCHED
-#include <kerrighed/scheduler/hooks.h>
+#include <hcc/scheduler/hooks.h>
 #endif
 
 #include <asm/tlb.h>

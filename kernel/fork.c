@@ -76,20 +76,20 @@
 #include <kddm/kddm_info.h>
 #endif
 #ifdef CONFIG_KRG_HOTPLUG
-#include <kerrighed/namespace.h>
+#include <hcc/namespace.h>
 #endif
 #ifdef CONFIG_KRG_PROC
-#include <kerrighed/task.h>
-#include <kerrighed/krginit.h>
+#include <hcc/task.h>
+#include <hcc/krginit.h>
 #endif
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/action.h>
-#include <kerrighed/signal.h>
-#include <kerrighed/children.h>
-#include <kerrighed/application.h>
+#include <hcc/action.h>
+#include <hcc/signal.h>
+#include <hcc/children.h>
+#include <hcc/application.h>
 #endif
 #ifdef CONFIG_KRG_SCHED
-#include <kerrighed/scheduler/info.h>
+#include <hcc/scheduler/info.h>
 #endif
 
 #include <asm/pgtable.h>
@@ -1550,8 +1550,8 @@ struct task_struct *copy_process(unsigned long clone_flags,
 
 #ifdef CONFIG_KRG_EPM
 	p->epm_type = EPM_NO_ACTION;
-	p->epm_source = kerrighed_node_id;
-	p->epm_target = kerrighed_node_id;
+	p->epm_source = hcc_node_id;
+	p->epm_target = hcc_node_id;
 #endif
 
 	if (current->nsproxy != p->nsproxy) {
@@ -2009,7 +2009,7 @@ long do_fork(unsigned long clone_flags,
 	/* Give a chance to local fork */
 #endif /* CONFIG_KRG_EPM */
 #ifdef CONFIG_KRG_PROC
-	down_read(&kerrighed_init_sem);
+	down_read(&hcc_init_sem);
 #endif
 	p = copy_process(clone_flags, stack_start, regs, stack_size,
 			 child_tidptr, NULL, trace);
@@ -2069,7 +2069,7 @@ long do_fork(unsigned long clone_flags,
 		nr = PTR_ERR(p);
 	}
 #ifdef CONFIG_KRG_PROC
-	up_read(&kerrighed_init_sem);
+	up_read(&hcc_init_sem);
 #endif
 	return nr;
 }

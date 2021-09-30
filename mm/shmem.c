@@ -73,7 +73,7 @@ static struct vfsmount *shm_mnt;
 #include <asm/pgtable.h>
 
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
+#include <hcc/krgsyms.h>
 #endif
 
 /*

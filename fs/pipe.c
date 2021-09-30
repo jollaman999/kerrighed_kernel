@@ -27,10 +27,10 @@
 
 #ifdef CONFIG_KRG_EPM
 #include <linux/splice.h>
-#include <kerrighed/app_shared.h>
-#include <kerrighed/ghost.h>
-#include <kerrighed/ghost_helpers.h>
-#include <kerrighed/regular_file_mgr.h>
+#include <hcc/app_shared.h>
+#include <hcc/ghost.h>
+#include <hcc/ghost_helpers.h>
+#include <hcc/regular_file_mgr.h>
 #endif
 
 /*
@@ -1435,7 +1435,7 @@ struct shared_object_operations cr_shared_pipe_inode_ops = {
 	.delete            = cr_delete_pipe_inode,
 };
 
-/** Return a kerrighed descriptor corresponding to the given file.
+/** Return a hcc descriptor corresponding to the given file.
  *  @author Matthieu Fertré
  *
  *  @param file       The file to get a Kerrighed descriptor for.

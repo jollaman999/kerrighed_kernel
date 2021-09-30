@@ -12,7 +12,7 @@
 #include <linux/shm.h>
 #include <linux/msg.h>
 #include <kddm/kddm.h>
-#include <kerrighed/hotplug.h>
+#include <hcc/hotplug.h>
 #include "krgshm.h"
 #include "ipc_handler.h"
 #include "shm_handler.h"
@@ -124,7 +124,7 @@ int krg_ipc_shm_newseg (struct ipc_namespace *ns, struct shmid_kernel *shp)
 
 	/* Create a KDDM set to host segment pages */
 	kddm = _create_new_kddm_set (kddm_def_ns, 0, SHM_MEMORY_LINKER,
-				     kerrighed_node_id, PAGE_SIZE,
+				     hcc_node_id, PAGE_SIZE,
 				     &shp->shm_perm.id, sizeof(int), 0);
 
 	if (IS_ERR(kddm)) {

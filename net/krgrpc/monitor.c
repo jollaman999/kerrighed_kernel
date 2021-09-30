@@ -6,10 +6,10 @@
 
 #include <linux/timer.h>
 #include <linux/workqueue.h>
-#include <kerrighed/krgnodemask.h>
-#include <kerrighed/krginit.h>
+#include <hcc/krgnodemask.h>
+#include <hcc/krginit.h>
 
-#include <kerrighed/workqueue.h>
+#include <hcc/workqueue.h>
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
 
@@ -61,7 +61,7 @@ int rpc_monitor_init(void){
 	init_timer(&rpc_timer);
 	rpc_timer.function = rpc_timer_cb;
 	rpc_timer.data = 0;
-	if(kerrighed_node_id != 0)
+	if(hcc_node_id != 0)
 		mod_timer(&rpc_timer, jiffies + 10*HZ);
 	INIT_WORK(&rpc_work, rpc_worker);
 

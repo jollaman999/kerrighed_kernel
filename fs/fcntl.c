@@ -23,7 +23,7 @@
 #include <linux/shmem_fs.h>
 #include <linux/nospec.h>
 #ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#include <hcc/faf.h>
 #endif
 
 #include <asm/poll.h>

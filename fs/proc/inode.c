@@ -22,7 +22,7 @@
 #include <linux/seq_file.h>
 #include <linux/mount.h>
 #if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
-#include <kerrighed/task.h>
+#include <hcc/task.h>
 #endif
 
 #include <asm/system.h>

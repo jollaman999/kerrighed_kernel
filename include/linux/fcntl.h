@@ -92,7 +92,7 @@
 #endif /* __KERNEL__ */
 
 #ifdef CONFIG_KRG_DVFS
-#include <kerrighed/fcntl.h>
+#include <hcc/fcntl.h>
 #endif
 
 #endif

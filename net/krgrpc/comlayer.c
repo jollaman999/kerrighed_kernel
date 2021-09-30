@@ -19,9 +19,9 @@
 #include <net/tipc/tipc.h>
 #include <net/tipc/tipc_port.h>
 #include <net/tipc/tipc_bearer.h>
-#include <kerrighed/krgnodemask.h>
-#include <kerrighed/sys/types.h>
-#include <kerrighed/krginit.h>
+#include <hcc/krgnodemask.h>
+#include <hcc/sys/types.h>
+#include <hcc/krginit.h>
 #include <linux/krg_hashtable.h>
 
 #include <net/krgrpc/rpcid.h>
@@ -57,7 +57,7 @@ static void tipc_send_ack_worker(struct work_struct *work);
 static DECLARE_DELAYED_WORK(tipc_ack_work, tipc_send_ack_worker);
 
 struct rx_engine {
-	kerrighed_node_t from;
+	hcc_node_t from;
 	struct sk_buff_head rx_queue;
 	struct delayed_work run_rx_queue_work;
 };
@@ -146,7 +146,7 @@ void __rpc_get_raw_data(void *data){
 }
 
 static
-inline int __send_iovec(kerrighed_node_t node, int nr_iov, struct iovec *iov)
+inline int __send_iovec(hcc_node_t node, int nr_iov, struct iovec *iov)
 {
 	struct tipc_name name = {
 		.type = TIPC_KRG_SERVER_TYPE,
@@ -169,7 +169,7 @@ inline int __send_iovec(kerrighed_node_t node, int nr_iov, struct iovec *iov)
 }
 
 static
-inline int send_iovec(kerrighed_node_t node, int nr_iov, struct iovec *iov)
+inline int send_iovec(hcc_node_t node, int nr_iov, struct iovec *iov)
 {
 	int err;
 
@@ -217,7 +217,7 @@ static void __rpc_tx_elem_free(struct rpc_tx_elem *elem)
 }
 
 static int __rpc_tx_elem_send(struct rpc_tx_elem *elem, int link_seq_index,
-			      kerrighed_node_t node)
+			      hcc_node_t node)
 {
 	int err = 0;
 
@@ -237,13 +237,13 @@ void tipc_send_ack_worker(struct work_struct *work)
 {
 	struct iovec iov[1];
 	struct __rpc_header h;
-	kerrighed_node_t node;
+	hcc_node_t node;
 	int err;
 
 	if (next_krgnode(0, nodes_requiring_ack) > KERRIGHED_MAX_NODES)
 		return;
 
-	h.from = kerrighed_node_id;
+	h.from = hcc_node_id;
 	h.rpcid = RPC_ACK;
 	h.flags = 0;
 
@@ -278,7 +278,7 @@ static void tipc_delayed_tx_worker(struct work_struct *work)
 	// browse the waiting list
 	list_for_each_entry_safe(iter, safe, &queue, tx_queue){
 		krgnodemask_t nodes;
-		kerrighed_node_t link_seq_index, node;
+		hcc_node_t link_seq_index, node;
 
 		link_seq_index = iter->link_seq_index;
 		if (link_seq_index) {
@@ -368,7 +368,7 @@ static void tipc_retx_worker(struct work_struct *work)
 	// browse the waiting list
 	list_for_each_entry_safe_continue(iter, safe, &queue, tx_queue){
 		krgnodemask_t nodes;
-		kerrighed_node_t link_seq_index, node;
+		hcc_node_t link_seq_index, node;
 
 		link_seq_index = iter->link_seq_index;
 		if (link_seq_index) {
@@ -559,7 +559,7 @@ int __rpc_send_ll(struct rpc_desc* desc,
 {
 	struct rpc_tx_elem* elem;
 	struct tx_engine *engine;
-	kerrighed_node_t node;
+	hcc_node_t node;
 	int link_seq_index;
 
 	elem = __rpc_tx_elem_alloc(size, __krgnodes_weight(nodes));
@@ -578,7 +578,7 @@ int __rpc_send_ll(struct rpc_desc* desc,
 	if (rpc_flags & RPC_FLAGS_NEW_DESC_ID)
 		rpc_new_desc_id_unlock();
 
-	elem->h.from = kerrighed_node_id;
+	elem->h.from = hcc_node_id;
 	elem->h.client = desc->client;
 	elem->h.desc_id = desc->desc_id;
 	elem->h.seq_id = seq_id;
@@ -1032,7 +1032,7 @@ out:
 	return err;
 }
 
-static inline int handle_one_packet(kerrighed_node_t node,
+static inline int handle_one_packet(hcc_node_t node,
 				    struct sk_buff *buf,
 				    unsigned char const *data,
 				    unsigned int size)
@@ -1041,7 +1041,7 @@ static inline int handle_one_packet(kerrighed_node_t node,
 
 	err = tipc_handler_ordered(buf, data, size);
 	if (!err) {
-		if (node == kerrighed_node_id)
+		if (node == hcc_node_id)
 			rpc_link_send_ack_id[node] = rpc_link_recv_seq_id[node];
 		rpc_link_recv_seq_id[node]++;
 	}
@@ -1053,7 +1053,7 @@ static void schedule_run_rx_queue(struct rx_engine *engine);
 static void run_rx_queue(struct rx_engine *engine)
 {
 	struct sk_buff_head *queue;
-	kerrighed_node_t node;
+	hcc_node_t node;
 	struct sk_buff *buf;
 	struct __rpc_header *h;
 
@@ -1235,7 +1235,7 @@ int comlayer_enable_dev(const char *name)
 
 	snprintf(buf, sizeof(buf), "eth:%s", name);
 
-    tipc_net_id = kerrighed_session_id;
+    tipc_net_id = hcc_session_id;
 	res = tipc_enable_bearer(buf, tipc_addr(tipc_net_id, 1, 0), TIPC_MEDIA_LINK_PRI);
 	if (res)
 		printk("failed\n");
@@ -1280,7 +1280,7 @@ void comlayer_disable(void)
 	read_unlock(&dev_base_lock);
 }
 
-void krg_node_reachable(kerrighed_node_t nodeid){
+void krg_node_reachable(hcc_node_t nodeid){
 	int cpuid;
 
 	queue_delayed_work(krgcom_wq, &tipc_ack_work, 0);
@@ -1292,17 +1292,17 @@ void krg_node_reachable(kerrighed_node_t nodeid){
 	}
 }
 
-void krg_node_unreachable(kerrighed_node_t nodeid){
+void krg_node_unreachable(hcc_node_t nodeid){
 }
 
-void rpc_enable_lowmem_mode(kerrighed_node_t nodeid){
+void rpc_enable_lowmem_mode(hcc_node_t nodeid){
 	max_consecutive_recv[nodeid] = MAX_CONSECUTIVE_RECV__LOWMEM_MODE;
 
 	krgnode_set(nodeid, nodes_requiring_ack);
 	queue_delayed_work(krgcom_wq, &tipc_ack_work, 0);
 }
 
-void rpc_disable_lowmem_mode(kerrighed_node_t nodeid){
+void rpc_disable_lowmem_mode(hcc_node_t nodeid){
 	max_consecutive_recv[nodeid] = MAX_CONSECUTIVE_RECV;
 }
 
@@ -1359,11 +1359,11 @@ int comlayer_init(void)
 		max_consecutive_recv[i] = MAX_CONSECUTIVE_RECV;
 	}
 
-	tipc_net_id = kerrighed_session_id;
+	tipc_net_id = hcc_session_id;
 
 	lockdep_off();
 
-	tipc_core_start_net(tipc_addr(tipc_net_id, 1, kerrighed_node_id+1));
+	tipc_core_start_net(tipc_addr(tipc_net_id, 1, hcc_node_id+1));
 
 	res = tipc_attach(&tipc_user_ref, NULL, NULL);
 	if (res)
@@ -1377,7 +1377,7 @@ int comlayer_init(void)
 		return res;
 
         tipc_seq.type = TIPC_KRG_SERVER_TYPE;
-        tipc_seq.lower = tipc_seq.upper = kerrighed_node_id;
+        tipc_seq.lower = tipc_seq.upper = hcc_node_id;
         res = tipc_publish(tipc_port_ref, TIPC_CLUSTER_SCOPE, &tipc_seq);
 
 	for_each_possible_cpu(i){

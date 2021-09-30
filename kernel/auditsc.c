@@ -67,8 +67,8 @@
 #include <linux/capability.h>
 #include <linux/fs_struct.h>
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/action.h>
-#include <kerrighed/ghost.h>
+#include <hcc/action.h>
+#include <hcc/ghost.h>
 #endif
 
 #include "audit.h"

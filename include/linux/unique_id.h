@@ -11,7 +11,7 @@
 
 
 #include <linux/spinlock.h>
-#include <kerrighed/types.h>
+#include <hcc/types.h>
 
 
 

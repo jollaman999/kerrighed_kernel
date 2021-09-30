@@ -35,8 +35,8 @@
  */
 
 #ifdef CONFIG_KRG_HOTPLUG
-#include <kerrighed/sys/types.h>
-#include <kerrighed/hotplug.h>
+#include <hcc/sys/types.h>
+#include <hcc/hotplug.h>
 #endif
 
 #include "core.h"

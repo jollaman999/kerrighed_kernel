@@ -12,8 +12,8 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
-#include <kerrighed/sys/types.h>
-#include <kerrighed/krgnodemask.h>
+#include <hcc/sys/types.h>
+#include <hcc/krgnodemask.h>
 #include <linux/krg_hashtable.h>
 #include <linux/unique_id.h>
 
@@ -96,7 +96,7 @@ int init_kddm_set (struct kddm_set *set,
 		   struct kddm_set_ops *set_ops,
 		   void *tree_init_data,
 		   unsigned long flags,
-		   kerrighed_node_t def_owner,
+		   hcc_node_t def_owner,
 		   int obj_size)
 {
 	int i, err = -ENOMEM;
@@ -130,7 +130,7 @@ int init_kddm_set (struct kddm_set *set,
 	if (!set->obj_set)
 		goto exit;
 
-	/* create /proc/kerrighed/kddm_set entry. */
+	/* create /proc/hcc/kddm_set entry. */
 	set->procfs_entry = create_kddm_proc(set->id);
 
 	err = 0;
@@ -269,7 +269,7 @@ struct kddm_set *generic_local_get_kddm_set(int ns_id,
  */
 int find_kddm_set_remotely(struct kddm_set *kddm_set)
 {
-	kerrighed_node_t kddm_set_mgr_node_id ;
+	hcc_node_t kddm_set_mgr_node_id ;
 	kddm_id_msg_t kddm_id;
 	msg_kddm_set_t *msg;
 	int msg_size;
@@ -451,7 +451,7 @@ struct kddm_set *__create_new_kddm_set(struct kddm_ns *ns,
 				       struct kddm_set_ops *set_ops,
 				       void *tree_init_data,
 				       iolinker_id_t linker_id,
-				       kerrighed_node_t def_owner,
+				       hcc_node_t def_owner,
 				       int obj_size,
 				       void *private_data,
 				       unsigned long data_size,
@@ -613,7 +613,7 @@ done:
  *  @param msg       Identifier of the kddm set to destroy.
  */
 static inline
-int __handle_req_kddm_set_destroy(kerrighed_node_t sender,
+int __handle_req_kddm_set_destroy(hcc_node_t sender,
 				void *msg)
 {
 	kddm_id_msg_t kddm_id = *((kddm_id_msg_t *) msg);

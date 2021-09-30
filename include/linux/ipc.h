@@ -6,7 +6,7 @@
 // #include <linux/mutex.h>
 /*
 *
-/usr/src/kerrighed-src/kernel/usr/include/linux/ipc.h:5: included file 'linux/mutex.h' is not exported
+/usr/src/hcc-src/kernel/usr/include/linux/ipc.h:5: included file 'linux/mutex.h' is not exported
 *
 */
 #define IPC_PRIVATE ((__kernel_key_t) 0)  

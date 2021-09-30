@@ -36,7 +36,7 @@
 #include <linux/flat.h>
 #include <linux/syscalls.h>
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
+#include <hcc/krgsyms.h>
 #endif
 
 #include <asm/byteorder.h>

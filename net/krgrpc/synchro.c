@@ -13,7 +13,7 @@
 #include <linux/spinlock.h>
 #include <linux/lockdep.h>
 #include <linux/string.h>
-#include <kerrighed/krgnodemask.h>
+#include <hcc/krgnodemask.h>
 
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
@@ -41,7 +41,7 @@ struct rpc_synchro* rpc_synchro_new(int max,
 				    char *label,
 				    int order){
 	struct rpc_synchro *ret;
-	kerrighed_node_t i;
+	hcc_node_t i;
 
 	ret = kmalloc(sizeof(*ret), GFP_KERNEL);
 	BUG_ON(!ret);

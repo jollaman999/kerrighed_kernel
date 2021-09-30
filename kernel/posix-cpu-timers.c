@@ -11,7 +11,7 @@
 #include <trace/events/timer.h>
 
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
+#include <hcc/krgsyms.h>
 #endif
 
 /*

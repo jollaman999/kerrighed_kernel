@@ -308,7 +308,7 @@ union proc_op {
 
 #if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
 #include <linux/types.h>
-#include <kerrighed/sys/types.h>
+#include <hcc/sys/types.h>
 
 struct proc_distant_pid_info;
 
@@ -324,7 +324,7 @@ struct task_kddm_object;
 struct proc_distant_pid_info {
 	struct task_kddm_object *task_obj;
 	pid_t pid;
-	kerrighed_node_t prob_node;
+	hcc_node_t prob_node;
 	int dumpable;
 	uid_t euid;
 	gid_t egid;

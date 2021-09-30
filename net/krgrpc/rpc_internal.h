@@ -6,8 +6,8 @@
 #include <linux/spinlock.h>
 #include <linux/radix-tree.h>
 #include <linux/slab.h>
-#include <kerrighed/sys/types.h>
-#include <kerrighed/krgnodemask.h>
+#include <hcc/sys/types.h>
+#include <hcc/krgnodemask.h>
 #include <net/krgrpc/rpc.h>
 
 #define __RPC_HEADER_FLAGS_SIGNAL    (1<<0)
@@ -89,8 +89,8 @@ struct rpc_service {
 };
 
 struct __rpc_header {
-	kerrighed_node_t from;
-	kerrighed_node_t client;
+	hcc_node_t from;
+	hcc_node_t client;
 	unsigned long desc_id;
 	unsigned long seq_id;
 	unsigned long link_seq_id;
@@ -110,8 +110,8 @@ struct rpc_desc_elem {
 
 struct rpc_tx_elem {
 	krgnodemask_t nodes;
-	kerrighed_node_t index;
-	kerrighed_node_t link_seq_index;
+	hcc_node_t index;
+	hcc_node_t link_seq_index;
 	void *data;
 	struct iovec iov[2];
 	struct __rpc_header h;

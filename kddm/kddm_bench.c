@@ -63,9 +63,9 @@ void kddm_test_barrier(void)
 {
 	int *val, done = 0;
 
-	if (kerrighed_node_id == 0) {
+	if (hcc_node_id == 0) {
 		val = _kddm_grab_object (kddm_test4_loc, BARRIER_ID);
-		*val = kerrighed_nb_nodes;
+		*val = hcc_nb_nodes;
 		_kddm_put_object (kddm_test4_loc, BARRIER_ID);
 	}
 	else {
@@ -179,12 +179,12 @@ void prepare_bench (struct kddm_set *set, int master_node)
 			break;
 
 		case 1:  /* Get - Fetch from node 1 */
-			if (kerrighed_node_id == master_node + 1)
+			if (hcc_node_id == master_node + 1)
 				do_grab(set, start, end);
 			break;
 
 		case 2:  /* Get - Fetch from node 2 */
-			if (kerrighed_node_id == master_node + 2)
+			if (hcc_node_id == master_node + 2)
 				do_grab(set, start, end);
 			break;
 
@@ -192,14 +192,14 @@ void prepare_bench (struct kddm_set *set, int master_node)
 			break;
 
 		case 4:  /* Grab - 1 local copy */
-			if (kerrighed_node_id == master_node)
+			if (hcc_node_id == master_node)
 				do_grab(set, start, end);
 			break;
 
 		case 5:  /* Grab - 1 remote copy */
 		case 6:  /* Grab - 2 remote copies */
 		case 7:  /* Grab - 3 remote copies */
-			if (kerrighed_node_id > master_node + (7 - test_nr))
+			if (hcc_node_id > master_node + (7 - test_nr))
 				do_get(set, start, end);
 			break;
 
@@ -208,15 +208,15 @@ void prepare_bench (struct kddm_set *set, int master_node)
 			break;
 
 		case 9:  /* Remove - 1 local copy */
-			if (kerrighed_node_id == master_node)
+			if (hcc_node_id == master_node)
 				do_get(set, start, end);
 			break;
 
 		case 10: /* Remove - 1 remote copy */
 		case 11: /* Remove - 2 remote copies */
 		case 12: /* Remove - 3 remote copies */
-			if ((kerrighed_node_id > master_node + (12 - test_nr))
-			    || (kerrighed_node_id == master_node))
+			if ((hcc_node_id > master_node + (12 - test_nr))
+			    || (hcc_node_id == master_node))
 				do_get(set, start, end);
 			break;
 		}
@@ -324,7 +324,7 @@ int do_bench (char *buff, int size, int master_node)
 
 	kddm_test_barrier();
 
-	if (kerrighed_node_id == master_node) {
+	if (hcc_node_id == master_node) {
 		index += snprintf (&buff[index], size - index, "----- KDDM "
 				   "BENCH - Local Manager   - Object size = "
 				   "4 -----\n");
@@ -358,10 +358,10 @@ int handle_kddm_bench (struct rpc_desc* desc, void *_msg, size_t size)
 
 int kddm_bench(char *buff, int size)
 {
-	int n, i, master_node = kerrighed_node_id;
+	int n, i, master_node = hcc_node_id;
 	krgnodemask_t nodes;
 
-	if (kerrighed_nb_nodes < 4) {
+	if (hcc_nb_nodes < 4) {
 		n = snprintf (buff, size, "Not enough nodes (min nodes: 4)\n");
 		return n;
 	}

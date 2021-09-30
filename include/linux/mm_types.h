@@ -16,7 +16,7 @@
 #include <asm/mmu.h>
 
 #ifdef CONFIG_KRG_MM
-#include <kerrighed/types.h>
+#include <hcc/types.h>
 #endif
 
 #ifndef AT_VECTOR_SIZE_ARCH

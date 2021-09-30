@@ -15,7 +15,7 @@
 #include <linux/err.h>
 #include <linux/fs.h>
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
+#include <hcc/krgsyms.h>
 #endif
 
 static int load_script(struct linux_binprm *bprm,struct pt_regs *regs)

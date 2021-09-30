@@ -62,7 +62,7 @@
 
 #include <asm/tlbflush.h>
 #ifdef CONFIG_KRG_MM
-#include <kerrighed/page_table_tree.h>
+#include <hcc/page_table_tree.h>
 #include <kddm/object.h>
 #include <kddm/kddm_types.h>
 #endif

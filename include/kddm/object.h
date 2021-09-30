@@ -70,10 +70,10 @@ typedef enum {
 #define SET_IS_EMPTY(set) __krgnodes_empty(set)
 
 /** Tests if the local node own the exclusive copy of the object */
-#define OBJ_EXCLUSIVE(obj_entry) (krgnode_is_unique(kerrighed_node_id, (obj_entry)->master_obj.copyset) || \
+#define OBJ_EXCLUSIVE(obj_entry) (krgnode_is_unique(hcc_node_id, (obj_entry)->master_obj.copyset) || \
 				  krgnode_is_unique(get_prob_owner(obj_entry), (obj_entry)->master_obj.copyset))
 
-#define OBJ_EXCLUSIVE2(set) (__krgnode_is_unique(kerrighed_node_id, set))
+#define OBJ_EXCLUSIVE2(set) (__krgnode_is_unique(hcc_node_id, set))
 
 /** Add a node in the copyset */
 #define ADD_TO_SET(set,nodeid) __krgnode_set(nodeid, set)
@@ -82,7 +82,7 @@ typedef enum {
 #define REMOVE_FROM_SET(set,nodeid) __krgnode_clear(nodeid, set)
 
 #define I_AM_DEFAULT_OWNER(set, objid) \
-        (kerrighed_node_id == kddm_io_default_owner(set, objid))
+        (hcc_node_id == kddm_io_default_owner(set, objid))
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -367,7 +367,7 @@ void object_clear_frozen (struct kddm_obj * obj_entry, struct kddm_set *set);
 
 
 static inline int change_prob_owner(struct kddm_obj * obj_entry,
-				     kerrighed_node_t new_owner)
+				     hcc_node_t new_owner)
 {
 	if (obj_entry)
 		obj_entry->flags = (obj_entry->flags & ~PROB_OWNER_MASK) |
@@ -377,7 +377,7 @@ static inline int change_prob_owner(struct kddm_obj * obj_entry,
 
 
 
-static inline kerrighed_node_t get_prob_owner (struct kddm_obj *obj_entry)
+static inline hcc_node_t get_prob_owner (struct kddm_obj *obj_entry)
 {
 	if (likely(obj_entry))
 		return (obj_entry->flags & PROB_OWNER_MASK) >>PROB_OWNER_SHIFT;

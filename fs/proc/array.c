@@ -86,10 +86,10 @@
 #include <linux/tracehook.h>
 #include <linux/utrace.h>
 #ifdef CONFIG_KRG_PROCFS
-#include <kerrighed/cpu_id.h>
+#include <hcc/cpu_id.h>
 #endif
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/children.h>
+#include <hcc/children.h>
 #endif
 
 #include <asm/pgtable.h>

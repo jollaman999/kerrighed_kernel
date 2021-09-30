@@ -130,7 +130,7 @@
 
 #include <asm/uaccess.h>
 #ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#include <hcc/faf.h>
 #endif
 
 #define IS_POSIX(fl)	(fl->fl_flags & FL_POSIX)

@@ -62,8 +62,8 @@ typedef struct {
 	MSG_HEADER
 	int request_type;
 	int flags;                   /**< No First Touch request ? */
-	kerrighed_node_t reply_node; /**< Identifier of the requesting node */
-	kerrighed_node_t new_owner;  /**< Identifier of the new object owner */
+	hcc_node_t reply_node; /**< Identifier of the requesting node */
+	hcc_node_t new_owner;  /**< Identifier of the new object owner */
 } msg_server_t;
 
 /** WARNING: in this structure, field order matter */
@@ -76,7 +76,7 @@ typedef struct {
 /** WARNING: in this structure, field order matter */
 typedef struct {
 	MSG_HEADER
-	kerrighed_node_t reply_node; /**< Identifier of the requesting node */
+	hcc_node_t reply_node; /**< Identifier of the requesting node */
 	masterObj_t owner_info;      /**< Object owner information */
 } msg_injection_t;
 

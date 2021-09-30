@@ -16,20 +16,20 @@
 #include <linux/seq_file.h>
 #include <linux/krg_hashtable.h>
 
-#include <kerrighed/procfs.h>
+#include <hcc/procfs.h>
 #include <kddm/kddm.h>
 #include "kddm_bench.h"
 
-/*  /proc/kerrighed/kddm          */
+/*  /proc/hcc/kddm          */
 static struct proc_dir_entry *procfs_kddm;
 
-/*  /proc/kerrighed/kddm/meminfo  */
+/*  /proc/hcc/kddm/meminfo  */
 static struct proc_dir_entry *procfs_meminfo;
 
-/*  /proc/kerrighed/kddm/kddmstat */
+/*  /proc/hcc/kddm/kddmstat */
 static struct proc_dir_entry *procfs_setstat;
 
-/*  /proc/kerrighed/kddm/bench */
+/*  /proc/hcc/kddm/bench */
 static struct proc_dir_entry *procfs_bench;
 
 
@@ -110,13 +110,13 @@ static struct file_operations proc_kddminfo_operations = {
 
 /****************************************************************************/
 /*                                                                          */
-/*                     /proc/kerrighed/kddm  Management                     */
+/*                     /proc/hcc/kddm  Management                     */
 /*                                                                          */
 /****************************************************************************/
 
 
 
-/** Read function for /proc/kerrighed/kddm/meminfo entry.
+/** Read function for /proc/hcc/kddm/meminfo entry.
  *  @author Renaud Lottiaux
  *
  *  @param buffer           Buffer to write data to.
@@ -172,7 +172,7 @@ int read_meminfo (char *buffer,
 
 
 
-/** Read function for /proc/kerrighed/kddm/setstat entry.
+/** Read function for /proc/hcc/kddm/setstat entry.
  *  @author Renaud Lottiaux
  *
  *  @param buffer           Buffer to write data to.
@@ -220,7 +220,7 @@ int read_setstat (char *buffer,
 
 
 
-/** Read function for /proc/kerrighed/kddm/bench entry.
+/** Read function for /proc/hcc/kddm/bench entry.
  *  @author Renaud Lottiaux
  *
  *  @param buffer           Buffer to write data to.
@@ -259,52 +259,52 @@ int read_bench (char *buffer,
 
 
 
-/** Create the /proc/kerrighed/kddm directory and sub-directories.
+/** Create the /proc/hcc/kddm directory and sub-directories.
  *  @author Renaud Lottiaux
  */
 void create_kddm_proc_dir (void)
 {
-  /* Create the /proc/kerrighed/kddm entry */
+  /* Create the /proc/hcc/kddm entry */
 
-  BUG_ON (proc_kerrighed == NULL);
+  BUG_ON (proc_hcc == NULL);
 
   procfs_kddm = create_proc_entry ("kddm", S_IFDIR | S_IRUGO | S_IWUGO |
-                                   S_IXUGO, proc_kerrighed);
+                                   S_IXUGO, proc_hcc);
 
   if (procfs_kddm == NULL)
     {
-      printk ("Cannot create /proc/kerrighed/kddm\n");
+      printk ("Cannot create /proc/hcc/kddm\n");
       return;
     }
 
-  /* Create the /proc/kerrighed/kddm/meminfo entry */
+  /* Create the /proc/hcc/kddm/meminfo entry */
 
   procfs_meminfo = create_proc_entry ("meminfo", S_IRUGO, procfs_kddm);
 
   if (procfs_meminfo == NULL)
     {
-      printk ("Cannot create /proc/kerrighed/kddm/memfinfo\n");
+      printk ("Cannot create /proc/hcc/kddm/memfinfo\n");
       return;
     }
 
   procfs_meminfo->read_proc = read_meminfo;
 
-  /* Create the /proc/kerrighed/kddm/setstat entry */
+  /* Create the /proc/hcc/kddm/setstat entry */
 
   procfs_setstat = create_proc_entry ("setstat", S_IRUGO, procfs_kddm);
   if (procfs_setstat == NULL)
     {
-      printk ("Cannot create /proc/kerrighed/kddm/setstat\n");
+      printk ("Cannot create /proc/hcc/kddm/setstat\n");
       return;
     }
 
   procfs_setstat->read_proc = read_setstat;
 
-  /* Create the /proc/kerrighed/kddm/bench entry */
+  /* Create the /proc/hcc/kddm/bench entry */
 
   procfs_bench = create_proc_entry ("bench", S_IRUGO, procfs_kddm);
   if (procfs_bench == NULL) {
-	  printk ("Cannot create /proc/kerrighed/kddm/bench\n");
+	  printk ("Cannot create /proc/hcc/kddm/bench\n");
 	  return;
   }
 
@@ -317,7 +317,7 @@ void create_kddm_proc_dir (void)
 
 
 
-/** Delete the /proc/kerrighed/kddm directory and sub-directories.
+/** Delete the /proc/hcc/kddm directory and sub-directories.
  *  @author Renaud Lottiaux
  */
 void remove_kddm_proc_dir (void)
@@ -329,14 +329,14 @@ void remove_kddm_proc_dir (void)
 
 /****************************************************************************/
 /*                                                                          */
-/*               /proc/kerrighed/kddm/<set_id>  Management                */
+/*               /proc/hcc/kddm/<set_id>  Management                */
 /*                                                                          */
 /****************************************************************************/
 
 
 
 
-/** Read function for /proc/kerrighed/kddm/<set_id>/setstat entry.
+/** Read function for /proc/hcc/kddm/<set_id>/setstat entry.
  *  @author Renaud Lottiaux
  *
  *  @param buffer           Buffer to write data to.
@@ -390,7 +390,7 @@ int read_set_id_setstat (char *buffer,
 
 
 
-/** Read function for /proc/kerrighed/kddm/<set_id>/setinfo entry.
+/** Read function for /proc/hcc/kddm/<set_id>/setinfo entry.
  *  @author Renaud Lottiaux
  *
  *  @param buffer           Buffer to write data to.
@@ -479,7 +479,7 @@ int read_set_id_setinfo (char *buffer,
 
 
 
-/** Read function for /proc/kerrighed/kddm/<set_id>/objectstates entry.
+/** Read function for /proc/hcc/kddm/<set_id>/objectstates entry.
  *  @author Gael Utard
  */
 int read_set_id_objectstates (char *buffer,
@@ -541,7 +541,7 @@ int read_set_id_objectstates (char *buffer,
 
 
 
-/* Create a /proc/kerrighed/kddm/<set_id> directory and sub-directories. */
+/* Create a /proc/hcc/kddm/<set_id> directory and sub-directories. */
 
 struct proc_dir_entry *create_kddm_proc (kddm_set_id_t set_id)
 {
@@ -550,7 +550,7 @@ struct proc_dir_entry *create_kddm_proc (kddm_set_id_t set_id)
 
 	BUG_ON (procfs_kddm == NULL);
 
-	/* Create the /proc/kerrighed/kddm/<set_id> entry */
+	/* Create the /proc/hcc/kddm/<set_id> entry */
 
 	snprintf (buffer, 24, "%ld", set_id);
 	entry = create_proc_entry (buffer, S_IFDIR|S_IRUGO|S_IWUGO|S_IXUGO,
@@ -559,7 +559,7 @@ struct proc_dir_entry *create_kddm_proc (kddm_set_id_t set_id)
 	if (entry == NULL)
 		return NULL;
 
-	/* Create the /proc/kerrighed/kddm/<set_id>/objectstates entry */
+	/* Create the /proc/hcc/kddm/<set_id>/objectstates entry */
 
 	objectstates = create_proc_entry ("objectstates", S_IRUGO, entry);
 
@@ -569,7 +569,7 @@ struct proc_dir_entry *create_kddm_proc (kddm_set_id_t set_id)
 	objectstates->data = (void *) set_id;
 	objectstates->read_proc = read_set_id_objectstates;
 
-	/* Create the /proc/kerrighed/kddm/<set_id>/setstat entry */
+	/* Create the /proc/hcc/kddm/<set_id>/setstat entry */
 
 	stat = create_proc_entry ("setstat", S_IRUGO, entry);
 	if (stat == NULL) {
@@ -581,7 +581,7 @@ struct proc_dir_entry *create_kddm_proc (kddm_set_id_t set_id)
 	stat->data = (void *) set_id;
 	stat->read_proc = read_set_id_setstat;
 
-	/* Create the /proc/kerrighed/kddm/<set_id>/setinfo entry */
+	/* Create the /proc/hcc/kddm/<set_id>/setinfo entry */
 
 	info = create_proc_entry ("setinfo", S_IRUGO, entry);
 	if (info == NULL)
@@ -595,7 +595,7 @@ struct proc_dir_entry *create_kddm_proc (kddm_set_id_t set_id)
 
 
 
-/* Remove a /proc/kerrighed/kddm/<set_id> directory and sub-directories. */
+/* Remove a /proc/hcc/kddm/<set_id> directory and sub-directories. */
 
 
 void remove_kddm_proc (struct proc_dir_entry *proc_entry)
@@ -608,7 +608,7 @@ void remove_kddm_proc (struct proc_dir_entry *proc_entry)
 
 /***********************************************************************/
 /*                                                                     */
-/*         Define Kddm services in the /proc/kerrighed/services        */
+/*         Define Kddm services in the /proc/hcc/services        */
 /*                                                                     */
 /***********************************************************************/
 

@@ -4,10 +4,10 @@
 
 #include <linux/notifier.h>
 #include <linux/kernel.h>
-#include <kerrighed/krgnodemask.h>
+#include <hcc/krgnodemask.h>
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
-#include <kerrighed/hotplug.h>
+#include <hcc/hotplug.h>
 
 #include "rpc_internal.h"
 

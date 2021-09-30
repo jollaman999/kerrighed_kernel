@@ -14,10 +14,10 @@
 #include <linux/nsproxy.h>
 #include <linux/msg.h>
 #include <kddm/kddm.h>
-#include <kerrighed/namespace.h>
-#include <kerrighed/krg_syscalls.h>
-#include <kerrighed/krg_services.h>
-#include <kerrighed/procfs.h>
+#include <hcc/namespace.h>
+#include <hcc/krg_syscalls.h>
+#include <hcc/krg_services.h>
+#include <hcc/procfs.h>
 #include "ipc_checkpoint.h"
 #include "ipcmap_io_linker.h"
 #include "ipc_handler.h"

@@ -1,5 +1,5 @@
 /*
- *  arch/x86/kerrighed/ghost.c
+ *  arch/x86/hcc/ghost.c
  *
  *  Copyright (C) 2006-2007 Arkadiusz Danilecki
  *                          Pascal Gallard - Kerlabs, Louis Rilling - Kerlabs
@@ -12,8 +12,8 @@
 #include <asm/system.h>
 #include <asm/uaccess.h>
 #include <asm/i387.h>
-#include <kerrighed/ghost.h>
-#include <kerrighed/ghost_helpers.h>
+#include <hcc/ghost.h>
+#include <hcc/ghost_helpers.h>
 
 struct epm_action;
 

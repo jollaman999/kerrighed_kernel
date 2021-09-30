@@ -19,7 +19,7 @@
 #include <linux/file.h>
 #include <linux/errno.h>
 #ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
+#include <hcc/krgsyms.h>
 #endif
 
 

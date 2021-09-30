@@ -15,7 +15,7 @@
 
 #include <kddm/kddm.h>
 #include <net/krgrpc/rpc.h>
-#include <kerrighed/hotplug.h>
+#include <hcc/hotplug.h>
 #include "ipc_handler.h"
 #include "msg_handler.h"
 #include "msg_io_linker.h"
@@ -121,7 +121,7 @@ int krg_ipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 {
 	struct kddm_set *master_set;
 	msq_object_t *msq_object;
-	kerrighed_node_t *master_node;
+	hcc_node_t *master_node;
 	long *key_index;
 	int index, err = 0;
 
@@ -158,7 +158,7 @@ int krg_ipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 	master_set = krgipc_ops_master_set(msg_ids(ns).krgops);
 
 	master_node = _kddm_grab_object(master_set, index);
-	*master_node = kerrighed_node_id;
+	*master_node = hcc_node_id;
 
 	msq->q_perm.krgops = msg_ids(ns).krgops;
 
@@ -201,7 +201,7 @@ void krg_ipc_msg_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 
 struct msgsnd_msg
 {
-	kerrighed_node_t requester;
+	hcc_node_t requester;
 	int msqid;
 	int msgflg;
 	long mtype;
@@ -215,7 +215,7 @@ long krg_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 {
 	struct rpc_desc * desc;
 	struct kddm_set *master_set;
-	kerrighed_node_t* master_node;
+	hcc_node_t* master_node;
 	void *buffer;
 	long r;
 	int err;
@@ -233,7 +233,7 @@ long krg_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 		goto exit;
 	}
 
-	if (*master_node == kerrighed_node_id) {
+	if (*master_node == hcc_node_id) {
 		/* inverting the following 2 lines can conduct to deadlock
 		 * if the send is blocked */
 		_kddm_put_object(master_set, index);
@@ -242,7 +242,7 @@ long krg_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 		goto exit;
 	}
 
-	msg.requester = kerrighed_node_id;
+	msg.requester = hcc_node_id;
 	msg.msqid = msqid;
 	msg.mtype = mtype;
 	msg.msgflg = msgflg;
@@ -325,7 +325,7 @@ exit_put_ns:
 
 struct msgrcv_msg
 {
-	kerrighed_node_t requester;
+	hcc_node_t requester;
 	int msqid;
 	int msgflg;
 	long msgtyp;
@@ -340,7 +340,7 @@ long krg_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	struct rpc_desc * desc;
 	enum rpc_error err;
 	struct kddm_set *master_set;
-	kerrighed_node_t *master_node;
+	hcc_node_t *master_node;
 	void * buffer;
 	long r;
 	int retval;
@@ -358,7 +358,7 @@ long krg_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 		return -EINVAL;
 	}
 
-	if (*master_node == kerrighed_node_id) {
+	if (*master_node == hcc_node_id) {
 		/*inverting the following 2 lines can conduct to deadlock
 		 * if the receive is blocked */
 		_kddm_put_object(master_set, index);
@@ -367,7 +367,7 @@ long krg_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 		return r;
 	}
 
-	msg.requester = kerrighed_node_id;
+	msg.requester = hcc_node_id;
 	msg.msqid = msqid;
 	msg.msgtyp = msgtyp;
 	msg.msgflg = msgflg;
@@ -515,7 +515,7 @@ int krg_msg_init_ns(struct ipc_namespace *ns)
 
 	msg_ops->master_kddm_set = create_new_kddm_set(
 		kddm_def_ns, MSGMASTER_KDDM_ID, MSGMASTER_LINKER,
-		KDDM_RR_DEF_OWNER, sizeof(kerrighed_node_t),
+		KDDM_RR_DEF_OWNER, sizeof(hcc_node_t),
 		KDDM_LOCAL_EXCLUSIVE);
 
 	if (IS_ERR(msg_ops->master_kddm_set)) {

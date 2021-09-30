@@ -11,9 +11,9 @@
 #include <linux/unique_id.h>
 #include <net/krgrpc/rpc.h>
 
-#include <kerrighed/types.h>
-#include <kerrighed/hotplug.h>
-#include <kerrighed/krginit.h>
+#include <hcc/types.h>
+#include <hcc/hotplug.h>
+#include <hcc/krginit.h>
 
 #define TABLE_SIZE 128
 
@@ -77,14 +77,14 @@ void free_cluster_barrier(struct cluster_barrier *barrier)
 
 int cluster_barrier(struct cluster_barrier *barrier,
 		    krgnodemask_t *nodes,
-		    kerrighed_node_t master)
+		    hcc_node_t master)
 {
 	struct cluster_barrier_core *core_bar;
 	struct cluster_barrier_id id;
 	struct rpc_desc *desc;
 	int err = 0;
 
-	BUG_ON (!__krgnode_isset(kerrighed_node_id, nodes));
+	BUG_ON (!__krgnode_isset(hcc_node_id, nodes));
 	BUG_ON (!__krgnode_isset(master, nodes));
 
 	spin_lock(&barrier->lock);

@@ -25,7 +25,7 @@
 #include <asm/pat.h>
 
 #ifdef CONFIG_KRG_PROCFS
-#include <kerrighed/dynamic_node_info_linker.h>
+#include <hcc/dynamic_node_info_linker.h>
 #endif
 
 /*

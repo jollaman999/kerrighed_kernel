@@ -22,10 +22,10 @@
 #include <asm/unistd.h>
 
 #ifdef CONFIG_KRG_DVFS
-#include <kerrighed/dvfs.h>
+#include <hcc/dvfs.h>
 #endif
 #ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#include <hcc/faf.h>
 #endif
 
 const struct file_operations generic_ro_fops = {

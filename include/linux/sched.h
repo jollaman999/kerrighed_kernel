@@ -93,11 +93,11 @@ struct sched_param {
 #include <linux/cred.h>
 #include <linux/percpu-rwsem.h>
 #ifdef CONFIG_KRG_CAP
-#include <kerrighed/capabilities.h>
+#include <hcc/capabilities.h>
 #endif
 #ifdef CONFIG_KRG_EPM
 #include <kddm/kddm_types.h>
-#include <kerrighed/sys/types.h>
+#include <hcc/sys/types.h>
 #endif
 #include <asm/processor.h>
 
@@ -1463,8 +1463,8 @@ struct task_struct {
 	unsigned remote_vfork_done:1;
 
 	int epm_type;
-	kerrighed_node_t epm_source;
-	kerrighed_node_t epm_target;
+	hcc_node_t epm_source;
+	hcc_node_t epm_target;
 #endif
 	unsigned in_iowait:1;
 

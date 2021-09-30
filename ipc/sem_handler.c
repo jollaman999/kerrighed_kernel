@@ -11,9 +11,9 @@
 #include <linux/sem.h>
 #include <linux/nsproxy.h>
 #include <kddm/kddm.h>
-#include <kerrighed/pid.h>
+#include <hcc/pid.h>
 #include <net/krgrpc/rpc.h>
-#include <kerrighed/hotplug.h>
+#include <hcc/hotplug.h>
 #include "ipc_handler.h"
 #include "sem_handler.h"
 #include "semarray_io_linker.h"
@@ -265,7 +265,7 @@ void krg_ipc_sem_freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 }
 
 struct ipcsem_wakeup_msg {
-	kerrighed_node_t requester;
+	hcc_node_t requester;
 	int sem_id;
 	pid_t pid;
 	int error;
@@ -341,7 +341,7 @@ void krg_ipc_sem_wakeup_process(struct sem_queue *q, int error)
 	struct ipcsem_wakeup_msg msg;
 	struct rpc_desc *desc;
 
-	msg.requester = kerrighed_node_id;
+	msg.requester = hcc_node_id;
 	msg.sem_id = q->semid;
 	msg.pid = remote_sleeper_pid(q); /* q->pid contains the tgid */
 	msg.error = error;

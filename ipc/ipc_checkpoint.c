@@ -8,8 +8,8 @@
 #include <linux/sched.h>
 #include <linux/uaccess.h>
 #include <linux/syscalls.h>
-#include <kerrighed/ghost.h>
-#include <kerrighed/file_ghost.h>
+#include <hcc/ghost.h>
+#include <hcc/file_ghost.h>
 #include "krgipc_mobility.h"
 #include "ipc_checkpoint.h"
 

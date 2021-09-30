@@ -46,7 +46,7 @@
 #include <linux/freezer.h>
 
 #ifdef CONFIG_KRG_MM
-#include <kerrighed/krgsyms.h>
+#include <hcc/krgsyms.h>
 #endif
 
 #include "ext4.h"
