@@ -1,3 +1,3 @@
-obj-$(CONFIG_KRG_EPM) := ghost.o
+obj-$(CONFIG_HCC_EPM) := ghost.o
 
 EXTRA_CFLAGS += -Wall -Werror

@@ -1,7 +1,7 @@
 VERSION = 2
 PATCHLEVEL = 6
 SUBLEVEL = 32
-EXTRAVERSION = -krg_xeon
+EXTRAVERSION = -hcc_xeon
 NAME = Man-Eating Seals of Antiquity
 RHEL_MAJOR = 6
 RHEL_MINOR = 10
@@ -684,7 +684,7 @@ export mod_strip_cmd
 
 
 ifeq ($(KBUILD_EXTMOD),)
-core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ kerrighed/ kddm/
+core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ hcc/ kddm/
 
 vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
 		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \

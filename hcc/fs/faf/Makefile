@@ -1,6 +1,6 @@
-obj-$(CONFIG_KRG_FAF) = krg_faf.o
+obj-$(CONFIG_HCC_FAF) = hcc_faf.o
 
-krg_faf-y :=  ruaccess.o faf_tools.o faf.o faf_hooks.o faf_server.o faf_file_mgr.o
+hcc_faf-y :=  ruaccess.o faf_tools.o faf.o faf_hooks.o faf_server.o faf_file_mgr.o
 
 EXTRA_CFLAGS += -I$(M) -Wall -Werror
 

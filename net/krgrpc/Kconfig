@@ -1,9 +1,9 @@
 #
-# Kerrighed RPC Configuration
+# HCC RPC Configuration
 #
 
-config KRGRPC
-	bool "Kerrighed RPC Protocol"
+config HCCRPC
+	bool "HCC RPC Protocol"
 	depends on TIPC
 	---help---
 	  Cluster-aware Remote Procedure Call (RPC) framework.
@@ -11,6 +11,6 @@ config KRGRPC
 	  This protocol is dedicated to distributed operating system services.
 	  User-space application are not supposed to use this protocol.
 
-	  For more informations about KRPC, see http://www.kerrighed.org
+	  For more informations about KRPC, see http://www.hcc.org
 
-	  Currently, if you are not planning to run Kerrighed, say N.
+	  Currently, if you are not planning to run HCC, say N.

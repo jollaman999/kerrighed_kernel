@@ -2175,7 +2175,7 @@ config HAVE_ATOMIC_IOMAP
 
 source "net/Kconfig"
 
-source "kerrighed/Kconfig.Kerrighed"
+source "hcc/Kconfig.HCC"
 
 source "drivers/Kconfig"
 
