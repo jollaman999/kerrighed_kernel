@@ -5,7 +5,7 @@
  *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
  */
 #include "proc.h"
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 #include "proc_pid.h"
 #endif
 #include "static_node_info_linker.h"
@@ -23,7 +23,7 @@ int init_procfs(void)
 	dynamic_node_info_init();
 	dynamic_cpu_info_init();
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	proc_pid_init();
 #endif
 
@@ -39,7 +39,7 @@ void cleanup_procfs(void)
 	procfs_hotplug_cleanup();
 	krg_procfs_finalize();
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	proc_pid_finalize();
 #endif
 }

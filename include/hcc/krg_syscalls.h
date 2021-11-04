@@ -1,6 +1,6 @@
-#ifndef __KRG_SYSCALLS__
+#ifndef __HCC_SYSCALLS__
 
-#define __KRG_SYSCALLS__
+#define __HCC_SYSCALLS__
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -39,4 +39,4 @@ int unregister_proc_service(unsigned int cmd);
 int krg_syscalls_init(void);
 int krg_syscalls_finalize(void);
 
-#endif				/* __KRG_SYSCALLS__ */
+#endif				/* __HCC_SYSCALLS__ */

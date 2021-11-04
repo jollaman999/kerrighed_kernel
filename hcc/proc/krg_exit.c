@@ -11,7 +11,7 @@
 #include <linux/workqueue.h>
 #include <linux/rcupdate.h>
 #include <hcc/task.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <linux/uaccess.h>
 #include <linux/tracehook.h>
 #include <linux/task_io_accounting_ops.h>
@@ -24,23 +24,23 @@
 #include <hcc/krgnodemask.h>
 #include <asm/cputime.h>
 #endif
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 #include <hcc/scheduler/info.h>
 #endif
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/workqueue.h>
 #endif
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
 #include <hcc/task.h>
 #include <hcc/krg_exit.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/action.h>
 #include <hcc/migration.h>
 #endif
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 static void delay_release_task_worker(struct work_struct *work);
 static DECLARE_WORK(delay_release_task_work, delay_release_task_worker);
@@ -531,19 +531,19 @@ void krg_finish_exit_ptrace_task(struct task_struct *task,
 	__krg_task_unlock(task);
 }
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 void *krg_prepare_exit_notify(struct task_struct *task)
 {
 	void *cookie = NULL;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	pid_t real_parent_tgid = 0;
 	pid_t real_parent_pid = 0;
 	pid_t parent_pid = 0;
 	hcc_node_t parent_node = KERRIGHED_NODE_ID_NONE;
 #endif
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (rcu_dereference(task->parent_children_obj))
 		cookie = parent_children_writelock_pid_location_lock(
 				task,
@@ -551,7 +551,7 @@ void *krg_prepare_exit_notify(struct task_struct *task)
 				&real_parent_pid,
 				&parent_pid,
 				&parent_node);
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 	if (task->task_obj) {
 		if (cookie)
@@ -559,12 +559,12 @@ void *krg_prepare_exit_notify(struct task_struct *task)
 		else
 			__krg_task_writelock(task);
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 		tasklist_write_lock_irq();
 		krg_update_parents(task, cookie, parent_pid, real_parent_pid,
 				   parent_node);
 		write_unlock_irq(&tasklist_lock);
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 	}
 
 	return cookie;
@@ -572,7 +572,7 @@ void *krg_prepare_exit_notify(struct task_struct *task)
 
 void krg_finish_exit_notify(struct task_struct *task, int signal, void *cookie)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (cookie) {
 		struct children_gdm_object *parent_children_obj = cookie;
 		pid_t parent_pid;
@@ -598,7 +598,7 @@ void krg_finish_exit_notify(struct task_struct *task, int signal, void *cookie)
 		}
 		krg_children_unlock(parent_children_obj);
 	}
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 	if (task->task_obj)
 		__krg_task_unlock(task);
@@ -606,21 +606,21 @@ void krg_finish_exit_notify(struct task_struct *task, int signal, void *cookie)
 
 void krg_release_task(struct task_struct *p)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	krg_exit_application(p);
 	krg_unhash_process(p);
 	if (p->exit_state != EXIT_MIGRATION) {
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 		krg_task_free(p);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 		if (krg_action_pending(p, EPM_MIGRATE))
 			/* Migration aborted because p died before */
 			migration_aborted(p);
 	}
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 /*
  * To chain the tasks to release in the worker, we overload the children field
@@ -719,14 +719,14 @@ void notify_remote_child_reaper(pid_t zombie_pid,
 		  &msg, sizeof(msg));
 }
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 /**
  * @author Pascal Gallard, Louis Rilling
  */
 void proc_krg_exit_start(void)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	rpc_register_void(PROC_DO_NOTIFY_PARENT, handle_do_notify_parent, 0);
 	rpc_register_void(PROC_NOTIFY_REMOTE_CHILD_REAPER,
 			  handle_notify_remote_child_reaper, 0);

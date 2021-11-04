@@ -4,7 +4,7 @@
  *  Copyright (C) 2006-2007 Louis Rilling - Kerlabs
  */
 /*
- * Management of incompatibilities between Kerrighed actions and
+ * Management of incompatibilities between HCC actions and
  * some Linux facilities
  */
 

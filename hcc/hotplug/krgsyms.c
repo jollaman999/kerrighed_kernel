@@ -14,14 +14,14 @@
 /*****************************************************************************/
 
 
-#define KRGSYMS_HTABLE_SIZE 256
+#define HCCSYMS_HTABLE_SIZE 256
 
 static hashtable_t *krgsyms_htable;
-static void* krgsyms_table[KRGSYMS_TABLE_SIZE];
+static void* krgsyms_table[HCCSYMS_TABLE_SIZE];
 
 int krgsyms_register(enum krgsyms_val v, void* p)
 {
-	if( (v < 0) || (v >= KRGSYMS_TABLE_SIZE) ){
+	if( (v < 0) || (v >= HCCSYMS_TABLE_SIZE) ){
 		printk("krgsyms_register: Incorrect krgsym value (%d)\n", v);
 		BUG();
 		return -1;
@@ -49,7 +49,7 @@ int krgsyms_unregister(enum krgsyms_val v)
 {
 	void *p;
 
-	if( (v < 0) || (v >= KRGSYMS_TABLE_SIZE) ){
+	if( (v < 0) || (v >= HCCSYMS_TABLE_SIZE) ){
 		printk("krgsyms_unregister: Incorrect krgsym value (%d)\n", v);
 		BUG();
 		return -1;
@@ -70,7 +70,7 @@ enum krgsyms_val krgsyms_export(void* p)
 
 void* krgsyms_import(enum krgsyms_val v)
 {
-	if( (v < 0) || (v >= KRGSYMS_TABLE_SIZE) ){
+	if( (v < 0) || (v >= HCCSYMS_TABLE_SIZE) ){
 		printk("krgsyms_import: Incorrect krgsym value (%d)\n", v);
 		BUG();
 		return NULL;
@@ -87,7 +87,7 @@ void* krgsyms_import(enum krgsyms_val v)
 
 int __init init_krgsyms(void)
 {
-	krgsyms_htable = hashtable_new(KRGSYMS_HTABLE_SIZE);
+	krgsyms_htable = hashtable_new(HCCSYMS_HTABLE_SIZE);
 	if (!krgsyms_htable)
 		panic("Could not setup krgsyms table!\n");
 

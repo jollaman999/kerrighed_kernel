@@ -25,7 +25,7 @@ struct dvfs_file_struct {
 
 extern struct gdm_set *dvfs_file_struct_ctnr;
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 extern struct file_operations krg_shm_file_operations;
 extern const struct file_operations shm_file_operations_huge;
 extern const struct file_operations shm_file_operations;
@@ -41,7 +41,7 @@ extern const struct file_operations shmem_file_operations;
 
 int create_gdm_file_object(struct file *file);
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 void check_file_struct_sharing (int index, struct file *file,
 				struct epm_action *action);
 #endif

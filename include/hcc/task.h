@@ -1,7 +1,7 @@
 #ifndef __KERRIGHED_TASK_H__
 #define __KERRIGHED_TASK_H__
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 
 #include <linux/types.h>
 #include <linux/rwsem.h>
@@ -18,7 +18,7 @@
 
 struct task_struct;
 struct pid;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 struct pid_gdm_object;
 #endif
 
@@ -49,7 +49,7 @@ struct task_gdm_object {
 	unsigned int dumpable;
 
 	/* The remaining fields are not shared */
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	struct pid_gdm_object *pid_obj;
 #endif
 	struct task_struct *task;
@@ -79,13 +79,13 @@ int krg_task_alloc(struct task_struct *task, struct pid *pid);
 void krg_task_fill(struct task_struct *task, unsigned long clone_flags);
 void krg_task_commit(struct task_struct *task);
 void krg_task_abort(struct task_struct *task);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 void __krg_task_free(struct task_struct *task);
 #endif
 void krg_task_free(struct task_struct *task);
 
 /* exit */
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 int krg_delay_release_task(struct task_struct *task);
 #endif
 void krg_release_task(struct task_struct *task);
@@ -93,6 +93,6 @@ void krg_release_task(struct task_struct *task);
 void __krg_task_unlink(struct task_gdm_object *obj, int need_update);
 void krg_task_unlink(struct task_gdm_object *obj, int need_update);
 
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 
 #endif /* __KERRIGHED_TASK_H__ */

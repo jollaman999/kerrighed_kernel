@@ -40,10 +40,10 @@
 #include <linux/irq_work.h>
 #include <linux/sched.h>
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/children.h>
 #endif
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 #include <hcc/scheduler/hooks.h>
 #endif
 
@@ -1297,7 +1297,7 @@ SYSCALL_DEFINE0(getppid)
 	int pid;
 
 	rcu_read_lock();
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	pid = krg_get_real_parent_tgid(current, task_active_pid_ns(current));
 #else
 	pid = task_tgid_vnr(current->real_parent);

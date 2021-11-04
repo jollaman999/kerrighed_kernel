@@ -41,7 +41,7 @@
 #include <linux/freezer.h>
 #include <linux/crc32.h>
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 #include <hcc/krgsyms.h>
 #endif
 
@@ -1718,8 +1718,8 @@ static int __init init_nfs_fs(void)
 {
 	int err;
 
-#ifdef CONFIG_KRG_MM
-	err = krgsyms_register(KRGSYMS_VM_OPS_NFS_FILE, &nfs_file_vm_ops);
+#ifdef CONFIG_HCC_MM
+	err = krgsyms_register(HCCSYMS_VM_OPS_NFS_FILE, &nfs_file_vm_ops);
 	if (err)
 		goto out10;
 #endif
@@ -1797,8 +1797,8 @@ out8:
 	nfs_idmap_quit();
 out9:
 #endif
-#ifdef CONFIG_KRG_MM
-	krgsyms_unregister(KRGSYMS_VM_OPS_NFS_FILE);
+#ifdef CONFIG_HCC_MM
+	krgsyms_unregister(HCCSYMS_VM_OPS_NFS_FILE);
 out10:
 #endif
 	return err;
@@ -1823,8 +1823,8 @@ static void __exit exit_nfs_fs(void)
 	unregister_nfs_fs();
 	nfs_fs_proc_exit();
 	nfsiod_stop();
-#ifdef CONFIG_KRG_MM
-	krgsyms_unregister(KRGSYMS_VM_OPS_NFS_FILE);
+#ifdef CONFIG_HCC_MM
+	krgsyms_unregister(HCCSYMS_VM_OPS_NFS_FILE);
 #endif
 }
 

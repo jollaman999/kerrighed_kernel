@@ -24,7 +24,7 @@
 #include <asm/proto.h>
 #include <asm/pat.h>
 
-#ifdef CONFIG_KRG_PROCFS
+#ifdef CONFIG_HCC_PROCFS
 #include <hcc/dynamic_node_info_linker.h>
 #endif
 
@@ -95,7 +95,7 @@ void arch_report_meminfo(struct seq_file *m)
 #endif
 }
 
-#ifdef CONFIG_KRG_PROCFS
+#ifdef CONFIG_HCC_PROCFS
 void krg_arch_fill_dynamic_node_info(krg_dynamic_node_info_t *info)
 {
 	info->arch_meminfo.direct_map_4k = direct_pages_count[PG_LEVEL_4K];
@@ -143,7 +143,7 @@ void krg_arch_report_meminfo(struct seq_file *m,
 			   arch_info->direct_map_1G << 20);
 #endif
 }
-#endif /* CONFIG_KRG_PROCFS */
+#endif /* CONFIG_HCC_PROCFS */
 #else
 static inline void split_page_count(int level) { }
 #endif

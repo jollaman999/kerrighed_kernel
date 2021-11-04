@@ -83,17 +83,17 @@
 #include <linux/pid_namespace.h>
 #include <linux/fs_struct.h>
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/action.h>
 #endif
-#ifdef CONFIG_KRG_GDM
+#ifdef CONFIG_HCC_GDM
 #include <hcc/krgnodemask.h>
 #include <gdm/gdm.h>
 #endif
-#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
 #include <hcc/pid.h>
 #endif
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include <hcc/faf.h>
 #endif
 
@@ -297,7 +297,7 @@ struct mm_struct *mm_for_maps(struct task_struct *task)
 	return mm;
 }
 
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int proc_pid_cmdline(struct task_struct *task, char *buffer)
@@ -337,7 +337,7 @@ out:
 	return res;
 }
 
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int proc_pid_auxv(struct task_struct *task, char *buffer)
@@ -364,7 +364,7 @@ int proc_pid_auxv(struct task_struct *task, char *buffer)
  * Provides a wchan file via kallsyms in a proper one-value-per-file format.
  * Returns the resolved symbol.  If that fails, simply return the address.
  */
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int proc_pid_wchan(struct task_struct *task, char *buffer)
@@ -405,7 +405,7 @@ static void unlock_trace(struct task_struct *task)
 
 #define MAX_STACK_TRACE_DEPTH	64
 
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int proc_pid_stack(struct seq_file *m, struct pid_namespace *ns,
@@ -459,7 +459,7 @@ int proc_pid_stack(struct seq_file *m, struct pid_namespace *ns,
 /*
  * Provides /proc/PID/schedstat
  */
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int proc_pid_schedstat(struct task_struct *task, char *buffer)
@@ -537,7 +537,7 @@ static const struct file_operations proc_lstats_operations = {
 
 #endif
 
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int proc_oom_score(struct task_struct *task, char *buffer)
@@ -577,7 +577,7 @@ static const struct limit_names lnames[RLIM_NLIMITS] = {
 };
 
 /* Display limits for a process */
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int proc_pid_limits(struct task_struct *task, char *buffer)
@@ -693,7 +693,7 @@ static const struct file_operations proc_pid_limits_operations = {
 };
 
 #ifdef CONFIG_HAVE_ARCH_TRACEHOOK
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int proc_pid_syscall(struct task_struct *task, char *buffer)
@@ -719,7 +719,7 @@ int proc_pid_syscall(struct task_struct *task, char *buffer)
 }
 #endif /* CONFIG_HAVE_ARCH_TRACEHOOK */
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 int epm_type_show(struct task_struct *task, char *buffer)
 {
 	int res = 0;
@@ -768,7 +768,7 @@ int epm_target_show(struct task_struct *task, char *buffer)
 }
 #endif
 
-#ifdef CONFIG_KRG_GDM
+#ifdef CONFIG_HCC_GDM
 
 static int proc_gdm_print_wq(char *buffer, wait_queue_head_t *q)
 {
@@ -844,7 +844,7 @@ done:
 	return len;
 }
 
-#endif /* CONFIG_KRG_GDM */
+#endif /* CONFIG_HCC_GDM */
 
 /************************************************************************/
 /*                       Here the fs part begins                        */
@@ -867,7 +867,7 @@ static int proc_fd_access_allowed(struct inode *inode)
 	return allowed;
 }
 
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int proc_setattr(struct dentry *dentry, struct iattr *attr)
@@ -930,7 +930,7 @@ static int proc_pid_permission(struct inode *inode, int mask)
 
 
 
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 const struct inode_operations proc_def_inode_operations = {
@@ -1990,7 +1990,7 @@ out:
 	return ERR_PTR(error);
 }
 
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int do_proc_readlink(struct path *path, char __user *buffer, int buflen)
@@ -2002,7 +2002,7 @@ int do_proc_readlink(struct path *path, char __user *buffer, int buflen)
 	if (!tmp)
 		return -ENOMEM;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (!path->dentry && path->mnt)
 		pathname = krg_faf_d_path((struct file *)path->mnt, tmp, PAGE_SIZE, NULL);
 	else
@@ -2037,7 +2037,7 @@ static int proc_pid_readlink(struct dentry * dentry, char __user * buffer, int b
 		goto out;
 
 	error = do_proc_readlink(&path, buffer, buflen);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (!path.dentry && path.mnt) {
 		fput((struct file *)path.mnt);
 		goto out;
@@ -2169,7 +2169,7 @@ int pid_revalidate(struct dentry *dentry, struct nameidata *nd)
 	struct task_struct *task = get_proc_task(inode);
 	const struct cred *cred;
 
-#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_EPM)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_EPM)
 	if (task && task->exit_state != EXIT_MIGRATION) {
 #else
 	if (task) {
@@ -2311,7 +2311,7 @@ static int proc_fd_info(struct inode *inode, struct path *path, char *info)
 			if (path) {
 				*path = file->f_path;
 				path_get(&file->f_path);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 				if (file->f_flags & O_FAF_CLT) {
 					get_file(file);
 					path->mnt = (struct vfsmount *)file;
@@ -2320,12 +2320,12 @@ static int proc_fd_info(struct inode *inode, struct path *path, char *info)
 #endif
 			}
 			if (info)
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 				snprintf(info, PROC_FDINFO_MAX,
 					 "pos:\t%lli\n"
 					 "flags:\t0%o\n",
 					 (long long) file->f_pos,
-					 (unsigned int)(file->f_flags & ~(unsigned long)O_KRG_FLAGS));
+					 (unsigned int)(file->f_flags & ~(unsigned long)O_HCC_FLAGS));
 #else
 				snprintf(info, PROC_FDINFO_MAX,
 					 "pos:\t%lli\n"
@@ -3158,7 +3158,7 @@ static int proc_tid_io_accounting(struct task_struct *task, char *buffer)
 	return do_io_accounting(task, buffer, 0);
 }
 
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int proc_tgid_io_accounting(struct task_struct *task, char *buffer)
@@ -3167,7 +3167,7 @@ int proc_tgid_io_accounting(struct task_struct *task, char *buffer)
 }
 #endif /* CONFIG_TASK_IO_ACCOUNTING */
 
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int proc_pid_personality(struct seq_file *m, struct pid_namespace *ns,
@@ -3215,7 +3215,7 @@ static const struct pid_entry tgid_base_stuff[] = {
 	INF("cmdline",    S_IRUGO, proc_pid_cmdline),
 	ONE("stat",       S_IRUGO, proc_tgid_stat),
 	ONE("statm",      S_IRUGO, proc_pid_statm),
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	INF("epm_type",  S_IRUGO, epm_type_show),
 	INF("epm_source",S_IRUGO, epm_source_show),
 	INF("epm_target",S_IRUGO, epm_target_show),
@@ -3452,19 +3452,19 @@ struct dentry *proc_pid_lookup(struct inode *dir, struct dentry * dentry, struct
 		get_task_struct(task);
 	rcu_read_unlock();
 	if (!task)
-#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
 	{
 		if (current->nsproxy->krg_ns
 		    && is_krg_pid_ns_root(ns) && (tgid & GLOBAL_PID_MASK))
 			result = krg_proc_pid_lookup(dir, dentry, tgid);
 #endif
                 goto out;
-#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
 	}
 #endif
 
 	result = proc_pid_instantiate(dir, dentry, task, NULL);
-#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_EPM)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_EPM)
 	if (current->nsproxy->krg_ns
 	    && IS_ERR(result) && task->exit_state == EXIT_MIGRATION) {
 		/*
@@ -3491,7 +3491,7 @@ out:
  * Find the first task with tgid >= tgid
  *
  */
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 struct tgid_iter {
 	unsigned int tgid;
 	struct task_struct *task;
@@ -3536,7 +3536,7 @@ retry:
 
 #define TGID_OFFSET (FIRST_PROCESS_ENTRY + ARRAY_SIZE(proc_base_stuff))
 
-#if !defined(CONFIG_KRG_PROCFS) || !defined(CONFIG_KRG_PROC)
+#if !defined(CONFIG_HCC_PROCFS) || !defined(CONFIG_HCC_PROC)
 static
 #endif
 int proc_pid_fill_cache(struct file *filp, void *dirent, filldir_t filldir,
@@ -3580,7 +3580,7 @@ int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
 	ns = filp->f_dentry->d_sb->s_fs_info;
 	iter.task = NULL;
 	iter.tgid = filp->f_pos - TGID_OFFSET;
-#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
 	if (current->nsproxy->krg_ns && is_krg_pid_ns_root(ns)) {
 		/* All filling is done by krg_proc_pid_readdir */
 		if (krg_proc_pid_readdir(filp, dirent, filldir, TGID_OFFSET))
@@ -3601,7 +3601,7 @@ int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
 			goto out;
 		}
 	}
-#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
 	filp->f_pos = KERRIGHED_PID_MAX_LIMIT + TGID_OFFSET;
 #else
 	filp->f_pos = PID_MAX_LIMIT + TGID_OFFSET;
@@ -3636,12 +3636,12 @@ static const struct pid_entry tid_base_stuff[] = {
 	INF("cmdline",   S_IRUGO, proc_pid_cmdline),
 	ONE("stat",      S_IRUGO, proc_tid_stat),
 	ONE("statm",     S_IRUGO, proc_pid_statm),
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	INF("epm_type",  S_IRUGO, epm_type_show),
 	INF("epm_source",S_IRUGO, epm_source_show),
 	INF("epm_target",S_IRUGO, epm_target_show),
 #endif
-#ifdef CONFIG_KRG_GDM
+#ifdef CONFIG_HCC_GDM
 	INF("gdm",      S_IRUGO, proc_tid_gdm),
 #endif
 	REG("maps",      S_IRUGO, proc_maps_operations),

@@ -1,4 +1,4 @@
-/** Kerrighed FAF tools.
+/** HCC FAF tools.
  *  @file faf_tools.h
  *  
  *  @author Pascal Gallard

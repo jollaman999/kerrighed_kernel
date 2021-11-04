@@ -13,11 +13,11 @@
 #include <gdm/gdm.h>
 #include <hcc/file.h>
 #include "file_struct_io_linker.h"
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include "mobility.h"
 #include <hcc/regular_file_mgr.h>
 #endif
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include "faf/faf_internal.h"
 #endif
 
@@ -38,10 +38,10 @@ int init_dvfs (void)
 	register_io_linker (DVFS_FILE_STRUCT_LINKER,
 			    &dvfs_file_struct_io_linker);
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	dvfs_mobility_init();
 #endif
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	faf_init();
 #endif
 	dvfs_file_init();
@@ -62,11 +62,11 @@ void cleanup_dvfs (void)
 {
 	printk ("DVFS termination : start\n");
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	faf_finalize() ;
 #endif
 	dvfs_file_finalize();
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	dvfs_mobility_finalize();
 #endif
 	printk ("DVFS termination done\n");

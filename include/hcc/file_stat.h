@@ -4,8 +4,8 @@
  * Copyright (C) 2009, Matthieu Fertré, Kerlabs.
  */
 
-#ifndef __KRG_FILE_STAT__
-#define __KRG_FILE_STAT__
+#ifndef __HCC_FILE_STAT__
+#define __HCC_FILE_STAT__
 
 struct file;
 

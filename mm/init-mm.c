@@ -8,13 +8,13 @@
 #include <asm/atomic.h>
 #include <asm/pgtable.h>
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #define INIT_MM_EPM	.mm_ltasks	= ATOMIC_INIT(1),
 #else
 #define INIT_MM_EPM
 #endif
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 #define INIT_MM_MM	.mm_tasks	= ATOMIC_INIT(1),
 #else
 #define INIT_MM_MM

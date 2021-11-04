@@ -15,7 +15,7 @@
 #include <linux/quotaops.h>
 #include <linux/buffer_head.h>
 #include <linux/kthread.h>
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include <hcc/faf.h>
 #endif
 #include "internal.h"
@@ -271,7 +271,7 @@ int vfs_fsync_range(struct file *file, struct dentry *dentry, loff_t start,
 	 * don't have a struct file available.  Damn nfsd..
 	 */
 	if (file) {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		if (file->f_flags & O_FAF_CLT) {
 			ret = krg_faf_fsync(file);
 			goto out;

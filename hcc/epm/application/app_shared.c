@@ -46,7 +46,7 @@ extern struct shared_object_operations cr_shared_file_ops;
 extern struct shared_object_operations cr_shared_unsupported_file_ops;
 extern struct shared_object_operations cr_shared_files_struct_ops;
 extern struct shared_object_operations cr_shared_fs_struct_ops;
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 extern struct shared_object_operations cr_shared_mm_struct_ops;
 #endif
 extern struct shared_object_operations cr_shared_semundo_ops;
@@ -72,7 +72,7 @@ static struct shared_object_operations * get_shared_ops(
 	case FS_STRUCT:
 		s_ops = &cr_shared_fs_struct_ops;
 		break;
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	case MM_STRUCT:
 		s_ops = &cr_shared_mm_struct_ops;
 		break;
@@ -311,7 +311,7 @@ int add_to_shared_objects_list(struct app_struct *app,
 				      &s->checkpoint.export.next);
 			r = 0;
 		}
-#ifdef CONFIG_KRG_DEBUG
+#ifdef CONFIG_HCC_DEBUG
 		else {
 			s = search_shared_object(&app->shared_objects.root,
 						 type, key);

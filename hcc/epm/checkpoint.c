@@ -40,7 +40,7 @@ int can_be_checkpointed(struct task_struct *task_to_checkpoint)
 {
 	struct nsproxy *nsp;
 
-	/* Task must live in the Kerrighed container. */
+	/* Task must live in the HCC container. */
 	rcu_read_lock();
 	nsp = rcu_dereference(task_to_checkpoint->nsproxy);
 	if (!nsp || !nsp->krg_ns) {
@@ -227,5 +227,5 @@ out:
 
 void register_checkpoint_hooks(void)
 {
-	hook_register(&krg_handler[KRG_SIG_CHECKPOINT], krg_task_checkpoint);
+	hook_register(&krg_handler[HCC_SIG_CHECKPOINT], krg_task_checkpoint);
 }

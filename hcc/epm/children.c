@@ -882,7 +882,7 @@ pid_t krg_get_real_parent_tgid(struct task_struct *task,
 		real_parent_tgid = task_tgid_nr_ns(real_parent, ns);
 	} else if (!ns->krg_ns_root) {
 		/*
-		 * ns is an ancestor of task's root Kerrighed namespace, and
+		 * ns is an ancestor of task's root HCC namespace, and
 		 * thus has no names for remote parents.
 		 */
 		real_parent_tgid = 0;

@@ -300,7 +300,7 @@ struct page *shmem_memory_wppage (struct vm_area_struct *vma,
 
 /****************************************************************************/
 
-/* Init the Kerrighed SHM file operations structure */
+/* Init the HCC SHM file operations structure */
 
 struct vm_operations_struct krg_shmem_vm_ops = {
 	fault:	shmem_memory_fault,
@@ -316,7 +316,7 @@ static int krg_shmem_mmap(struct file *file, struct vm_area_struct *vma)
 	BUG_ON(!file->private_data); /*shm_file_data(file) */
 
 	sfd = shm_file_data(file);
-#ifdef CONFIG_KRG_DEBUG
+#ifdef CONFIG_HCC_DEBUG
 	{
 		struct ipc_namespace *ns;
 
@@ -335,7 +335,7 @@ static int krg_shmem_mmap(struct file *file, struct vm_area_struct *vma)
 	return 0;
 }
 
-/* Init the Kerrighed SHM file operations structure */
+/* Init the HCC SHM file operations structure */
 
 struct file_operations krg_shm_file_operations = {
 	.mmap = krg_shmem_mmap,

@@ -55,7 +55,7 @@ extern void machine_shutdown(void);
 struct pt_regs;
 extern void machine_crash_shutdown(struct pt_regs *);
 
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 extern void kernel_shutdown_prepare(enum system_states state);
 #endif
 

@@ -1,5 +1,5 @@
-#ifndef __KKRG_CPU_ID_H__
-#define __KKRG_CPU_ID_H__
+#ifndef __KHCC_CPU_ID_H__
+#define __KHCC_CPU_ID_H__
 
 #include <linux/threads.h>
 #include <hcc/sys/types.h>
@@ -33,4 +33,4 @@ static inline int local_cpu_id(int krg_cpu_id)
 	return krg_cpu_id % NR_CPUS;
 }
 
-#endif /* __KKRG_CPU_ID_H__ */
+#endif /* __KHCC_CPU_ID_H__ */

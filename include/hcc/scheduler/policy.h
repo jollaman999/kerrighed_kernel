@@ -1,5 +1,5 @@
-#ifndef __KRG_SCHEDULER_POLICY_H__
-#define __KRG_SCHEDULER_POLICY_H__
+#ifndef __HCC_SCHEDULER_POLICY_H__
+#define __HCC_SCHEDULER_POLICY_H__
 
 #include <linux/configfs.h>
 #include <linux/list.h>
@@ -225,4 +225,4 @@ int scheduler_policy_type_register(struct scheduler_policy_type *type);
  */
 void scheduler_policy_type_unregister(struct scheduler_policy_type *type);
 
-#endif /* __KRG_SCHEDULER_POLICY_H__ */
+#endif /* __HCC_SCHEDULER_POLICY_H__ */

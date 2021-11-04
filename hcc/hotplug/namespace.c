@@ -131,10 +131,10 @@ struct krg_namespace *find_get_krg_ns(void)
 bool can_create_krg_ns(unsigned long flags)
 {
 	return current->create_krg_ns
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 		&& (flags & CLONE_NEWIPC)
 #endif
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		&& (flags & CLONE_NEWPID)
 #endif
 		;

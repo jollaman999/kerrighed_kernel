@@ -1,5 +1,5 @@
-#ifndef __KRG_DEBUG__
-#define __KRG_DEBUG__
+#ifndef __HCC_DEBUG__
+#define __HCC_DEBUG__
 
 #include <linux/mm.h>
 #include <linux/mmzone.h>
@@ -59,4 +59,4 @@ static inline void print_mem_info(void)
 
 extern int __krg_panic__;
 
-#endif				// __KRG_DEBUG__
+#endif				// __HCC_DEBUG__

@@ -300,7 +300,7 @@ void free_ghost_cgroups(struct task_struct *ghost);
 
 /* SCHED */
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 
 int export_krg_sched_info(struct epm_action *action, struct ghost *ghost,
 			  struct task_struct *task);
@@ -319,7 +319,7 @@ void export_process_set_links_end(struct epm_action *action, ghost_t *ghost,
 int import_process_set_links(struct epm_action *action, ghost_t *ghost,
 			     struct pid *pid, enum pid_type type);
 
-#endif /* CONFIG_KRG_SCHED */
+#endif /* CONFIG_HCC_SCHED */
 
 void do_ckpt_msg(int err, char *fmt, ...);
 

@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
  *
- *  Based on Kerrighed/modules/scheduler_old/mosix_probe.c:
+ *  Based on HCC/modules/scheduler_old/mosix_probe.c:
  *  Copyright (C) 1999-2006 INRIA, Universite de Rennes 1, EDF
  *  Copyright (C) 2006-2007 Louis Rilling - Kerlabs
  */
@@ -244,7 +244,7 @@ static void update_processes_load(unsigned int ticks)
 
 /**
  *  Function to compute load stats of the last execution period of a process.
- *  We only monitor Kerrighed processes.
+ *  We only monitor HCC processes.
  *
  *  @param tsk   Process concerned.
  */

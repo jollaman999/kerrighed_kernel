@@ -15,7 +15,7 @@
 #define __LINUX_WW_MUTEX_H
 
 #include <linux/mutex.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <linux/sched.h>
 #endif
 

@@ -56,14 +56,14 @@
 #include <linux/fs_struct.h>
 #include <linux/pipe_fs_i.h>
 #include <linux/oom.h>
-#ifdef CONFIG_KRG_CAP
+#ifdef CONFIG_HCC_CAP
 #include <hcc/capabilities.h>
 #endif
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 #include <hcc/task.h>
 #include <hcc/krginit.h>
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/signal.h>
 #endif
 
@@ -649,7 +649,7 @@ int setup_arg_pages(struct linux_binprm *bprm,
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma = bprm->vma;
 	struct vm_area_struct *prev = NULL;
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	unsigned long long vm_flags;
 #else
 	unsigned long vm_flags;
@@ -659,7 +659,7 @@ int setup_arg_pages(struct linux_binprm *bprm,
 	unsigned long stack_expand;
 	unsigned long rlim_stack;
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	if (mm->anon_vma_gdm_set)
 		krg_check_vma_link(vma);
 #endif
@@ -814,7 +814,7 @@ static int exec_mmap(struct mm_struct *mm)
 {
 	struct task_struct *tsk;
 	struct mm_struct * old_mm, *active_mm;
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	unique_id_t mm_id = 0;
 #endif
 
@@ -830,7 +830,7 @@ static int exec_mmap(struct mm_struct *mm)
 		 * through with the exec.  We must hold mmap_sem around
 		 * checking core_state and changing tsk->mm.
 		 */
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 		mm_id = old_mm->mm_id;
 #endif
 		down_read(&old_mm->mmap_sem);
@@ -855,7 +855,7 @@ static int exec_mmap(struct mm_struct *mm)
 		BUG_ON(active_mm != old_mm);
 		mm_update_next_owner(old_mm);
 		mmput(old_mm);
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 		if (mm_id)
 			kh_mm_release(old_mm, 1);
 #endif
@@ -914,14 +914,14 @@ static int de_thread(struct task_struct *tsk)
 	 */
 	if (!thread_group_leader(tsk)) {
 		struct task_struct *leader = tsk->group_leader;
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		struct task_gdm_object *obj;
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 		struct children_gdm_object *parent_children_obj;
 #endif
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		down_read(&hcc_init_sem);
 #endif
 		sig->notify_count = -1;	/* for exit_notify() */
@@ -936,22 +936,22 @@ static int de_thread(struct task_struct *tsk)
 			schedule();
 		}
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 		parent_children_obj = rcu_dereference(tsk->parent_children_obj);
 #endif
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		/* tsk's pid will disappear just below. */
 		obj = leader->task_obj;
 		BUG_ON(!obj ^ !tsk->task_obj);
 		if (
 		    obj
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 		    || parent_children_obj
 #endif
 		   ) {
 			write_unlock_irq(&tasklist_lock);
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 			parent_children_obj =
 				krg_children_prepare_de_thread(tsk);
 #endif
@@ -962,7 +962,7 @@ static int de_thread(struct task_struct *tsk)
 
 			write_lock_irq(&tasklist_lock);
 		}
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 		/*
 		 * The only record we have of the real-time age of a
 		 * process, regardless of execs it's done, is start_time.
@@ -995,7 +995,7 @@ static int de_thread(struct task_struct *tsk)
 		transfer_pid(leader, tsk, PIDTYPE_PGID);
 		transfer_pid(leader, tsk, PIDTYPE_SID);
 		list_replace_rcu(&leader->tasks, &tsk->tasks);
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		rcu_assign_pointer(leader->task_obj, NULL);
 		if (obj)
 			rcu_assign_pointer(obj->task, tsk);
@@ -1010,18 +1010,18 @@ static int de_thread(struct task_struct *tsk)
 		BUG_ON(leader->exit_state != EXIT_ZOMBIE);
 		leader->exit_state = EXIT_DEAD;
 		write_unlock_irq(&tasklist_lock);
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		/* tsk has taken leader's pid. */
 		if (obj)
 			__krg_task_unlock(tsk);
-#endif /* CONFIG_KRG_PROC */
-#ifdef CONFIG_KRG_EPM
+#endif /* CONFIG_HCC_PROC */
+#ifdef CONFIG_HCC_EPM
 		krg_children_finish_de_thread(parent_children_obj, tsk);
 #endif
 		threadgroup_change_end(tsk);
 
 		release_task(leader);
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		up_read(&hcc_init_sem);
 #endif
 	}
@@ -1049,7 +1049,7 @@ no_thread_group:
 		atomic_set(&newsighand->count, 1);
 		memcpy(newsighand->action, oldsighand->action,
 		       sizeof(newsighand->action));
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 		down_read(&hcc_init_sem);
 
 		krg_sighand_alloc_unshared(tsk, newsighand);
@@ -1061,7 +1061,7 @@ no_thread_group:
 		spin_unlock(&oldsighand->siglock);
 		write_unlock_irq(&tasklist_lock);
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 		krg_sighand_cleanup(oldsighand);
 
 		up_read(&hcc_init_sem);
@@ -1226,7 +1226,7 @@ void setup_new_exec(struct linux_binprm * bprm)
 	   group */
 
 	current->self_exec_id++;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	krg_update_self_exec_id(current);
 #endif
 			
@@ -1404,7 +1404,7 @@ int prepare_binprm(struct linux_binprm *bprm)
 		return retval;
 	bprm->cred_prepared = 1;
 
-#ifdef CONFIG_KRG_CAP
+#ifdef CONFIG_HCC_CAP
 	retval = krg_cap_prepare_binprm(bprm);
 	if (retval)
 		return retval;
@@ -1617,7 +1617,7 @@ int do_execve(const char * filename,
 	if (retval < 0)
 		goto out;
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	retval = krg_do_execve(current, current->mm);
 	if (retval)
 		goto out;
@@ -1625,7 +1625,7 @@ int do_execve(const char * filename,
 	/* execve succeeded */
 	current->fs->in_exec = 0;
 	current->in_execve = 0;
-#ifdef CONFIG_KRG_CAP
+#ifdef CONFIG_HCC_CAP
 	krg_cap_finish_exec(bprm);
 #endif
 	acct_update_integrals(current);
@@ -1635,7 +1635,7 @@ int do_execve(const char * filename,
 	return retval;
 
 out:
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	/* Quiet the BUG_ON() in mmput() */
 	if (bprm->mm)
 		atomic_dec(&bprm->mm->mm_ltasks);

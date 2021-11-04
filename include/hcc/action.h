@@ -1,12 +1,12 @@
 /*
- * Management of incompatibilities between Kerrighed actions and
+ * Management of incompatibilities between HCC actions and
  * some Linux facilities
  */
 
-#ifndef __KRG_ACTION_H__
-#define __KRG_ACTION_H__
+#ifndef __HCC_ACTION_H__
+#define __HCC_ACTION_H__
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 #include <linux/sched.h>
 #include <linux/time.h>
@@ -132,6 +132,6 @@ int krg_action_stop(struct task_struct *task, krg_epm_action_t action);
 
 int krg_action_pending(struct task_struct *task, krg_epm_action_t action);
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
-#endif /* __KRG_ACTION_H__ */
+#endif /* __HCC_ACTION_H__ */

@@ -75,7 +75,7 @@
 #include <linux/kaiser.h>
 #include <trace/boot.h>
 
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 #include <hcc/krgsyms.h>
 #endif
 
@@ -109,7 +109,7 @@ extern void tc_init(void);
 enum system_states system_state __read_mostly;
 EXPORT_SYMBOL(system_state);
 
-#ifdef CONFIG_KRGRPC
+#ifdef CONFIG_HCCRPC
 extern void hcc_init(void);
 #endif
 
@@ -935,7 +935,7 @@ static void __init do_basic_setup(void)
 	cgroup_wq_init();
 	cpuset_init_smp();
 	usermodehelper_init();
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 	init_krgsyms();
 #endif
 	shmem_init();	
@@ -965,7 +965,7 @@ static void run_init_process(char *init_filename)
 static noinline int init_post(void)
 	__releases(kernel_lock)
 {
-#if defined(CONFIG_KERRIGHED) || defined(CONFIG_KRGRPC)
+#if defined(CONFIG_KERRIGHED) || defined(CONFIG_HCCRPC)
 	/* 
 	 * In a perfect world we would like to call global_pid_init and
 	 * hcc_init just after async_synchronize_full
@@ -1060,7 +1060,7 @@ static int __init kernel_init(void * unused)
 		prepare_namespace();
 	}
 
-#if defined(CONFIG_KERRIGHED) || defined(CONFIG_KRGRPC)
+#if defined(CONFIG_KERRIGHED) || defined(CONFIG_HCCRPC)
 	/* need to finish all async __init code before freeing the memory */
 	async_synchronize_full();
 

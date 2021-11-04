@@ -45,7 +45,7 @@
 #include <linux/kthread.h>
 #include <linux/freezer.h>
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 #include <hcc/krgsyms.h>
 #endif
 
@@ -4872,8 +4872,8 @@ static int __init init_ext4_fs(void)
 	err = init_ext4_system_zone();
 	if (err)
 		return err;
-#ifdef CONFIG_KRG_MM
-	err = krgsyms_register(KRGSYMS_VM_OPS_FILE_EXT4, (void *)&ext4_file_vm_ops);
+#ifdef CONFIG_HCC_MM
+	err = krgsyms_register(HCCSYMS_VM_OPS_FILE_EXT4, (void *)&ext4_file_vm_ops);
 	if(err)
 			goto out5;
 #endif
@@ -4910,8 +4910,8 @@ out3:
 	remove_proc_entry("fs/ext4", NULL);
 	kset_unregister(ext4_kset);
 out4:
-#ifdef CONFIG_KRG_MM
-	krgsyms_unregister(KRGSYMS_VM_OPS_FILE_EXT4);
+#ifdef CONFIG_HCC_MM
+	krgsyms_unregister(HCCSYMS_VM_OPS_FILE_EXT4);
 out5:
 #endif
 	exit_ext4_system_zone();

@@ -27,7 +27,7 @@
 #include <linux/ptrace.h>
 #include <linux/module.h>
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/krgsyms.h>
 #endif
 
@@ -785,19 +785,19 @@ long compat_sys_clock_nanosleep(clockid_t which_clock, int flags,
 	return err;
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 int compat_krgsyms_register(void)
 {
 	int err;
 
-	err = krgsyms_register(KRGSYMS_COMPAT_NANOSLEEP_RESTART,
+	err = krgsyms_register(HCCSYMS_COMPAT_NANOSLEEP_RESTART,
 			compat_nanosleep_restart);
 	if (err)
 		return err;
-	err = krgsyms_register(KRGSYMS_COMPAT_CLOCK_NANOSLEEP_RESTART,
+	err = krgsyms_register(HCCSYMS_COMPAT_CLOCK_NANOSLEEP_RESTART,
 			compat_clock_nanosleep_restart);
 	if (err)
-		krgsyms_unregister(KRGSYMS_COMPAT_NANOSLEEP_RESTART);
+		krgsyms_unregister(HCCSYMS_COMPAT_NANOSLEEP_RESTART);
 
 	return err;
 }
@@ -806,12 +806,12 @@ int compat_krgsyms_unregister(void)
 {
 	int err;
 
-	err = krgsyms_unregister(KRGSYMS_COMPAT_CLOCK_NANOSLEEP_RESTART);
-	err = err ? err : krgsyms_unregister(KRGSYMS_COMPAT_NANOSLEEP_RESTART);
+	err = krgsyms_unregister(HCCSYMS_COMPAT_CLOCK_NANOSLEEP_RESTART);
+	err = err ? err : krgsyms_unregister(HCCSYMS_COMPAT_NANOSLEEP_RESTART);
 
 	return err;
 }
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 /*
  * We currently only need the following fields from the sigevent

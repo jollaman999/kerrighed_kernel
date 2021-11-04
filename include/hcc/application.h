@@ -5,7 +5,7 @@
 #ifndef __APPLICATION_H__
 #define __APPLICATION_H__
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 #include <linux/list.h>
 #include <linux/mutex.h>
@@ -197,6 +197,6 @@ int app_cr_enable(void);
 void application_cr_server_init(void);
 void application_cr_server_finalize(void);
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 #endif /* __APPLICATION_H__ */

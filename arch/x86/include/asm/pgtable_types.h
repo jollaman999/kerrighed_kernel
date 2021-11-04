@@ -27,7 +27,7 @@
 #define _PAGE_BIT_NX           63       /* No execute: only valid after cpuid check */
 
 /* If _PAGE_BIT_PRESENT is clear, we use these: */
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 
 /* | Offset | Swap device (5 bits) | FILE    | PROT_NONE     | OBJ_ENTRY = 0| PRESENT = 0| */
 /* | ObjEntry address              | FILE = 0| PROT_NONE = 0 | OBJ_ENTRY = 1| PRESENT = 0| */
@@ -77,7 +77,7 @@
 
 #define _PAGE_FILE	(_AT(pteval_t, 1) << _PAGE_BIT_FILE)
 #define _PAGE_PROTNONE	(_AT(pteval_t, 1) << _PAGE_BIT_PROTNONE)
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 #define _PAGE_OBJ_ENTRY (_AT(pteval_t, 1) << _PAGE_BIT_OBJ_ENTRY)
 #endif
 
@@ -289,7 +289,7 @@ static inline pmdval_t native_pmd_val(pmd_t pmd)
 }
 #endif
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 static inline pudval_t pud_flags(pud_t pud)
 {
 	return native_pud_val(pud) & PTE_FLAGS_MASK;
@@ -314,7 +314,7 @@ static inline pudval_t pud_flags(pud_t pud)
 }
 #endif
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 static inline pmdval_t pmd_flags(pmd_t pmd)
 {
 	return native_pmd_val(pmd) & PTE_FLAGS_MASK;

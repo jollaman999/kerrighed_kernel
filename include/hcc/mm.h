@@ -1,5 +1,5 @@
-#ifndef __KKRG_MM__
-#define __KKRG_MM__
+#ifndef __KHCC_MM__
+#define __KHCC_MM__
 
 #include <linux/err.h>
 #include <linux/fs.h>
@@ -71,7 +71,7 @@ static inline int anon_vma(struct vm_area_struct *vma)
 void mm_struct_pin(struct mm_struct *mm);
 void mm_struct_unpin(struct mm_struct *mm);
 
-/** Kerrighed Kernel Hooks **/
+/** HCC Kernel Hooks **/
 
 extern void (*kh_mm_get) (struct mm_struct *mm);
 extern void (*kh_mm_release) (struct mm_struct *mm, int notify);
@@ -112,5 +112,5 @@ void krg_do_mprotect(struct mm_struct *mm, unsigned long start, size_t len,
 
 #define TestClearPageLRU(page)  test_and_clear_bit(PG_lru, &(page)->flags)
 
-#endif // __KKRG_MM__
+#endif // __KHCC_MM__
 

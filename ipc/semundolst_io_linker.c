@@ -1,5 +1,5 @@
 /*
- *  Kerrighed/modules/ipc/semundolst_io_linker.c
+ *  HCC/modules/ipc/semundolst_io_linker.c
  *
  *  GDM SEM undo proc list Linker.
  *

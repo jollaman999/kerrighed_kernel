@@ -1,7 +1,7 @@
-#ifndef __KRG_SCHEDULER_INFO_H__
-#define __KRG_SCHEDULER_INFO_H__
+#ifndef __HCC_SCHEDULER_INFO_H__
+#define __HCC_SCHEDULER_INFO_H__
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 
 #include <linux/list.h>
 
@@ -52,6 +52,6 @@ krg_sched_module_info_get(struct task_struct *task,
 extern int krg_sched_info_copy(struct task_struct *tsk);
 extern void krg_sched_info_free(struct task_struct *tsk);
 
-#endif /* CONFIG_KRG_SCHED */
+#endif /* CONFIG_HCC_SCHED */
 
-#endif /* __KRG_SCHEDULER_INFO_H__ */
+#endif /* __HCC_SCHEDULER_INFO_H__ */

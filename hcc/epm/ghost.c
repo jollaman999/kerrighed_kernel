@@ -59,7 +59,7 @@ int export_restart_block(struct epm_action *action,
 	int r;
 
 	fn_id = krgsyms_export(ti->restart_block.fn);
-	if (fn_id == KRGSYMS_UNDEF) {
+	if (fn_id == HCCSYMS_UNDEF) {
 		r = -EBUSY;
 		goto out;
 	}
@@ -108,7 +108,7 @@ static int export_binfmt(struct epm_action *action,
 	int binfmt_id;
 
 	binfmt_id = krgsyms_export(task->mm->binfmt);
-	if (binfmt_id == KRGSYMS_UNDEF)
+	if (binfmt_id == HCCSYMS_UNDEF)
 		return -EPERM;
 
 	return ghost_write(ghost, &binfmt_id, sizeof(int));
@@ -168,11 +168,11 @@ static int export_pids(struct epm_action *action,
 	struct pid_link *link;
 	int retval = 0; /* Prevent gcc from warning */
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	retval = export_process_set_links_start(action, ghost, task);
 	if (retval)
 		goto out;
-#endif /* CONFIG_KRG_SCHED */
+#endif /* CONFIG_HCC_SCHED */
 
 	if ((action->type == EPM_REMOTE_CLONE
 	     && (action->remote_clone.clone_flags & CLONE_THREAD))
@@ -194,19 +194,19 @@ static int export_pids(struct epm_action *action,
 		retval = export_pid(action, ghost, link);
 		if (retval)
 			goto err;
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 		retval = export_process_set_links(action, ghost,
 						  link->pid, type);
 		if (retval)
 			goto err;
-#endif /* CONFIG_KRG_SCHED */
+#endif /* CONFIG_HCC_SCHED */
 	}
 
 out:
 	return retval;
 
 err:
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	export_process_set_links_end(action, ghost, task);
 #endif
 	goto out;
@@ -215,7 +215,7 @@ err:
 static void post_export_pids(struct epm_action *action,
 			     ghost_t *ghost, struct task_struct *task)
 {
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	export_process_set_links_end(action, ghost, task);
 #endif
 }
@@ -240,9 +240,9 @@ static int export_cpu_timers(struct epm_action *action,
 
 /* export_cred() is located in hcc/proc/remote_cred.c */
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 /* export_sysv_sem() is located in hcc/ipc/mobility.c */
-#endif /* !CONFIG_KRG_IPC */
+#endif /* !CONFIG_HCC_IPC */
 
 /* export_thread_struct() is located in <arch>/hcc/ghost.c */
 
@@ -471,7 +471,7 @@ static int export_task(struct epm_action *action,
 	    || (r = export_mempolicy(action, ghost, task)))
 		GOTO_ERROR;
 
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 	if (task->sysvsem.undo_list) {
 		r = -EBUSY;
 		GOTO_ERROR;
@@ -506,7 +506,7 @@ static int export_task(struct epm_action *action,
 	if (r)
 		GOTO_ERROR;
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	r = export_krg_sched_info(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
@@ -515,7 +515,7 @@ static int export_task(struct epm_action *action,
 	r = export_sched_info(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	r = export_mm_struct(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
@@ -541,7 +541,7 @@ static int export_task(struct epm_action *action,
 	if (r)
 		GOTO_ERROR;
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	r = export_fs_struct(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
@@ -578,7 +578,7 @@ static int export_task(struct epm_action *action,
 	if (r)
 		GOTO_ERROR;
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	r = export_sysv_sem(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
@@ -810,7 +810,7 @@ static void unimport_task(struct epm_action *action,
 	unimport_io_context(ghost_task);
 	unimport_exec_ids(ghost_task);
 	unimport_delays(ghost_task);
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	unimport_sysv_sem(ghost_task);
 #endif
 	unimport_sighand_struct(ghost_task);
@@ -821,7 +821,7 @@ static void unimport_task(struct epm_action *action,
 	unimport_children(action, ghost_task);
 	unimport_sched(ghost_task);
 	unimport_cgroups(ghost_task);
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	unimport_files_struct(ghost_task);
 	unimport_fs_struct(ghost_task);
 #endif
@@ -829,11 +829,11 @@ static void unimport_task(struct epm_action *action,
 	unimport_audit_context(ghost_task);
 	unimport_cred(ghost_task);
 	unimport_binfmt(ghost_task);
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	unimport_mm_struct(ghost_task);
 #endif
 	unimport_sched_info(ghost_task);
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	unimport_krg_sched_info(ghost_task);
 #endif
 	unimport_group_leader(ghost_task);
@@ -1042,14 +1042,14 @@ static int import_pids(struct epm_action *action,
 			break;
 		}
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 		retval = import_process_set_links(action, ghost,
 						  task->pids[type].pid, type);
 		if (retval) {
 			__unimport_pids(task, type + 1);
 			break;
 		}
-#endif /* CONFIG_KRG_SCHED */
+#endif /* CONFIG_HCC_SCHED */
 	}
 
 	task->pid = pid_nr(task_pid(task));
@@ -1418,7 +1418,7 @@ static struct task_struct *import_task(struct epm_action *action,
 	INIT_LIST_HEAD(&task->cpu_timers[1]);
 	INIT_LIST_HEAD(&task->cpu_timers[2]);
 	mutex_init(&task->cred_guard_mutex);
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 	BUG_ON(task->sysvsem.undo_list);
 #endif
 	BUG_ON(task->notifier);
@@ -1505,7 +1505,7 @@ static struct task_struct *import_task(struct epm_action *action,
 	if (retval)
 		goto err_group_leader;
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	retval = import_krg_sched_info(action, ghost, task);
 	if (retval)
 		goto err_krg_sched_info;
@@ -1515,7 +1515,7 @@ static struct task_struct *import_task(struct epm_action *action,
 	if (retval)
 		goto err_sched_info;
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	retval = import_mm_struct(action, ghost, task);
 	if (retval)
 		goto err_mm_struct;
@@ -1541,7 +1541,7 @@ static struct task_struct *import_task(struct epm_action *action,
 	if (retval)
 		goto err_thread_struct;
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	retval = import_fs_struct(action, ghost, task);
 	if (retval)
 		goto err_fs_struct;
@@ -1579,7 +1579,7 @@ static struct task_struct *import_task(struct epm_action *action,
 	if (retval)
 		goto err_sighand_struct;
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	retval = import_sysv_sem(action, ghost, task);
 	if (retval)
 		goto err_sysv_sem;
@@ -1604,7 +1604,7 @@ err_io_context:
 err_exec_ids:
 	unimport_delays(task);
 err_delays:
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	unimport_sysv_sem(task);
 err_sysv_sem:
 #endif
@@ -1624,7 +1624,7 @@ err_children:
 err_sched:
 	unimport_cgroups(task);
 err_cgroups:
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	unimport_files_struct(task);
 err_files_struct:
 	unimport_fs_struct(task);
@@ -1640,13 +1640,13 @@ err_cred:
 err_vfork_done:
 	unimport_binfmt(task);
 err_binfmt:
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	unimport_mm_struct(task);
 err_mm_struct:
 #endif
 	unimport_sched_info(task);
 err_sched_info:
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	unimport_krg_sched_info(task);
 err_krg_sched_info:
 #endif
@@ -1690,11 +1690,11 @@ static void free_ghost_task(struct task_struct *task)
 
 void free_ghost_process(struct task_struct *ghost)
 {
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	free_ghost_mm(ghost);
 #endif
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	free_ghost_files(ghost);
 #endif
 
@@ -1936,7 +1936,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	 */
 	join_local_relatives(newTsk);
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	post_import_krg_sched_info(newTsk);
 #endif
 

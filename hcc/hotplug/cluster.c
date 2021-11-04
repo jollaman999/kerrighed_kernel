@@ -18,7 +18,7 @@
 #include <linux/kobject.h>
 #include <linux/ipc.h>
 #include <linux/device.h>
-#ifndef CONFIG_KRG_HOTPLUG_DEL
+#ifndef CONFIG_HCC_HOTPLUG_DEL
 #include <linux/reboot.h>
 #endif
 #include <asm/uaccess.h>
@@ -36,18 +36,18 @@
 #include <hcc/krgnodemask.h>
 #include <hcc/namespace.h>
 #include <net/krgrpc/rpc.h>
-#ifdef CONFIG_KRG_GDM
+#ifdef CONFIG_HCC_GDM
 #include <gdm/gdm.h>
 #endif
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 #include <hcc/task.h>
 #include <hcc/pid.h>
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/signal.h>
 #include <hcc/children.h>
 #endif
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 #include <hcc/scheduler/info.h>
 #endif
 
@@ -72,12 +72,12 @@ static DEFINE_SPINLOCK(cluster_start_lock);
 static DEFINE_MUTEX(cluster_start_mutex);
 static DECLARE_COMPLETION(cluster_started);
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 #define CLUSTER_INIT_OPT_CLONE_FLAGS_IPC CLONE_NEWIPC
 #else
 #define CLUSTER_INIT_OPT_CLONE_FLAGS_IPC 0
 #endif
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 #define CLUSTER_INIT_OPT_CLONE_FLAGS_PID CLONE_NEWPID
 #else
 #define CLUSTER_INIT_OPT_CLONE_FLAGS_PID 0
@@ -138,7 +138,7 @@ static ssize_t isolate_ipc_show(struct kobject *obj,
 	return sprintf(page, "%d\n", isolate);
 }
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 static struct kobj_attribute isolate_ipc_attr =
 	__ATTR(isolate_ipc, 0444, isolate_ipc_show, NULL);
 #else
@@ -160,7 +160,7 @@ static ssize_t isolate_ipc_store(struct kobject *obj,
 
 static struct kobj_attribute isolate_ipc_attr =
 	__ATTR(isolate_ipc, 0644, isolate_ipc_show, isolate_ipc_store);
-#endif /* !CONFIG_KRG_IPC */
+#endif /* !CONFIG_HCC_IPC */
 
 static ssize_t isolate_mnt_show(struct kobject *obj,
 				struct kobj_attribute *attr,
@@ -197,7 +197,7 @@ static ssize_t isolate_pid_show(struct kobject *obj,
 	return sprintf(page, "%d\n", isolate);
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static struct kobj_attribute isolate_pid_attr =
 	__ATTR(isolate_pid, 0444, isolate_pid_show, NULL);
 #else
@@ -219,7 +219,7 @@ static ssize_t isolate_pid_store(struct kobject *obj,
 
 static struct kobj_attribute isolate_pid_attr =
 	__ATTR(isolate_pid, 0644, isolate_pid_show, isolate_pid_store);
-#endif /* !CONFIG_KRG_PROC */
+#endif /* !CONFIG_HCC_PROC */
 
 static ssize_t isolate_net_show(struct kobject *obj,
 				struct kobj_attribute *attr,
@@ -339,14 +339,14 @@ static bool krg_container_may_conflict(struct krg_namespace *ns)
 {
 	struct task_struct *root_task = ns->root_task;
 	struct task_struct *g, *t;
-#ifndef CONFIG_KRG_PROC
+#ifndef CONFIG_HCC_PROC
 	struct nsproxy *nsp;
 #endif
 	bool conflict = false;
 
 	/*
-	 * Check that userspace did not leak tasks in the Kerrighed container
-	 * With !KRG_PROC this does not check zombies, but they won't use any
+	 * Check that userspace did not leak tasks in the HCC container
+	 * With !HCC_PROC this does not check zombies, but they won't use any
 	 * conflicting resource.
 	 */
 	rcu_read_lock();
@@ -355,7 +355,7 @@ static bool krg_container_may_conflict(struct krg_namespace *ns)
 		if (t == root_task)
 			continue;
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		if (task_active_pid_ns(t)->krg_ns_root == ns->root_nsproxy.pid_ns)
 #else
 		nsp = task_nsproxy(t);
@@ -371,9 +371,9 @@ static bool krg_container_may_conflict(struct krg_namespace *ns)
 	if (conflict)
 		return conflict;
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	/*
-	 * Check that userspace did not leak IPCs in the Kerrighed
+	 * Check that userspace did not leak IPCs in the HCC
 	 * container
 	 */
 	if (root_task->nsproxy->ipc_ns != ns->root_nsproxy.ipc_ns
@@ -386,10 +386,10 @@ static bool krg_container_may_conflict(struct krg_namespace *ns)
 
 static int krg_container_cleanup(struct krg_namespace *ns)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	pidmap_map_cleanup(ns);
 #endif
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	cleanup_ipc_objects ();
 #endif
 
@@ -654,19 +654,19 @@ static void handle_cluster_start(struct rpc_desc *desc, void *data, size_t size)
 
 	rpc_enable_all();
 
-	SET_KERRIGHED_CLUSTER_FLAGS(KRGFLAGS_RUNNING);
-	SET_KERRIGHED_NODE_FLAGS(KRGFLAGS_RUNNING);
+	SET_KERRIGHED_CLUSTER_FLAGS(HCCFLAGS_RUNNING);
+	SET_KERRIGHED_NODE_FLAGS(HCCFLAGS_RUNNING);
 	clusters_status[hcc_subsession_id] = CLUSTER_DEF;
 
 	page = (char *)__get_free_page(GFP_KERNEL);
 	if (page) {
 		ret = krgnodelist_scnprintf(page, PAGE_SIZE, ctx->node_set.v);
 		BUG_ON(ret >= PAGE_SIZE);
-		printk("Kerrighed is running on %d nodes: %s\n",
+		printk("HCC is running on %d nodes: %s\n",
 		       krgnodes_weight(ctx->node_set.v), page);
 		free_page((unsigned long)page);
 	} else {
-		printk("Kerrighed is running on %d nodes\n", num_online_krgnodes());
+		printk("HCC is running on %d nodes\n", num_online_krgnodes());
 	}
 	complete_all(&cluster_started);
 
@@ -850,7 +850,7 @@ static int cluster_restart(void *arg)
 	return 0;
 }
 
-#ifndef CONFIG_KRG_HOTPLUG_DEL
+#ifndef CONFIG_HCC_HOTPLUG_DEL
 static void handle_node_poweroff(struct rpc_desc *desc)
 {
 	emergency_sync();
@@ -959,7 +959,7 @@ int hotplug_cluster_init(void)
 	}
 
 	rpc_register_void(CLUSTER_START, handle_cluster_start, 0);
-#ifndef CONFIG_KRG_HOTPLUG_DEL
+#ifndef CONFIG_HCC_HOTPLUG_DEL
 	rpc_register(NODE_POWEROFF, handle_node_poweroff, 0);
 #endif
 

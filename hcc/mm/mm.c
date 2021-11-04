@@ -39,21 +39,21 @@ int init_kermm(void)
 {
 	printk("KerMM initialisation : start\n");
 
-	krgsyms_register (KRGSYMS_VM_OPS_NULL, &null_vm_ops);
-	krgsyms_register (KRGSYMS_VM_OPS_FILE_GENERIC, (void *)&generic_file_vm_ops);
+	krgsyms_register (HCCSYMS_VM_OPS_NULL, &null_vm_ops);
+	krgsyms_register (HCCSYMS_VM_OPS_FILE_GENERIC, (void *)&generic_file_vm_ops);
 	special_mapping_vm_ops_krgsyms_register ();
-	krgsyms_register (KRGSYMS_VM_OPS_MEMORY_GDM_VMOPS,
+	krgsyms_register (HCCSYMS_VM_OPS_MEMORY_GDM_VMOPS,
 			  &anon_memory_gdm_vmops);
 
-	krgsyms_register (KRGSYMS_ARCH_UNMAP_AREA, arch_unmap_area);
-	krgsyms_register (KRGSYMS_ARCH_UNMAP_AREA_TOPDOWN,
+	krgsyms_register (HCCSYMS_ARCH_UNMAP_AREA, arch_unmap_area);
+	krgsyms_register (HCCSYMS_ARCH_UNMAP_AREA_TOPDOWN,
 			  arch_unmap_area_topdown);
-	krgsyms_register (KRGSYMS_ARCH_GET_UNMAP_AREA, arch_get_unmapped_area);
-	krgsyms_register (KRGSYMS_ARCH_GET_UNMAP_AREA_TOPDOWN,
+	krgsyms_register (HCCSYMS_ARCH_GET_UNMAP_AREA, arch_get_unmapped_area);
+	krgsyms_register (HCCSYMS_ARCH_GET_UNMAP_AREA_TOPDOWN,
 			  arch_get_unmapped_area_topdown);
-	krgsyms_register (KRGSYMS_ARCH_GET_UNMAP_EXEC_AREA, arch_get_unmapped_exec_area);
+	krgsyms_register (HCCSYMS_ARCH_GET_UNMAP_EXEC_AREA, arch_get_unmapped_exec_area);
 
-	krgsyms_register (KRGSYMS_GDM_PT_OPS, &gdm_pt_set_ops);
+	krgsyms_register (HCCSYMS_GDM_PT_OPS, &gdm_pt_set_ops);
 
 	register_io_linker (MEMORY_LINKER, &memory_linker);
 	register_io_linker (MM_STRUCT_LINKER, &mm_struct_io_linker);
@@ -82,14 +82,14 @@ void cleanup_kermm (void)
 	mm_server_finalize();
 	mm_struct_finalize();
 
-	krgsyms_unregister (KRGSYMS_VM_OPS_FILE_GENERIC);
+	krgsyms_unregister (HCCSYMS_VM_OPS_FILE_GENERIC);
 	special_mapping_vm_ops_krgsyms_unregister ();
-	krgsyms_unregister (KRGSYMS_VM_OPS_MEMORY_GDM_VMOPS);
-	krgsyms_unregister (KRGSYMS_ARCH_UNMAP_AREA);
-	krgsyms_unregister (KRGSYMS_ARCH_UNMAP_AREA_TOPDOWN);
-	krgsyms_unregister (KRGSYMS_ARCH_GET_UNMAP_AREA);
-	krgsyms_unregister (KRGSYMS_ARCH_GET_UNMAP_AREA_TOPDOWN);
-	krgsyms_unregister (KRGSYMS_ARCH_GET_UNMAP_EXEC_AREA);
+	krgsyms_unregister (HCCSYMS_VM_OPS_MEMORY_GDM_VMOPS);
+	krgsyms_unregister (HCCSYMS_ARCH_UNMAP_AREA);
+	krgsyms_unregister (HCCSYMS_ARCH_UNMAP_AREA_TOPDOWN);
+	krgsyms_unregister (HCCSYMS_ARCH_GET_UNMAP_AREA);
+	krgsyms_unregister (HCCSYMS_ARCH_GET_UNMAP_AREA_TOPDOWN);
+	krgsyms_unregister (HCCSYMS_ARCH_GET_UNMAP_EXEC_AREA);
 
 	printk ("KerMM termination done\n");
 }

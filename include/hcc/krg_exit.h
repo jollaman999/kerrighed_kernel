@@ -1,9 +1,9 @@
-#ifndef __KRG_EXIT_H__
-#define __KRG_EXIT_H__
+#ifndef __HCC_EXIT_H__
+#define __HCC_EXIT_H__
 
 struct task_struct;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 #include <linux/types.h>
 #include <hcc/sys/types.h>
@@ -55,15 +55,15 @@ void krg_finish_exit_ptrace_task(struct task_struct *task,
 				 bool dead)
 	__releases(tasklist_lock);
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 
 /* exit_notify() hooks */
 
 void *krg_prepare_exit_notify(struct task_struct *task);
 void krg_finish_exit_notify(struct task_struct *task, int signal, void *cookie);
 
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 
-#endif /* __KRG_EXIT_H__ */
+#endif /* __HCC_EXIT_H__ */

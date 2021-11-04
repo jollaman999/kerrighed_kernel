@@ -21,7 +21,7 @@
 #include <linux/sysctl.h>
 #include <linux/seq_file.h>
 #include <linux/mount.h>
-#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
 #include <hcc/task.h>
 #endif
 
@@ -63,7 +63,7 @@ static void proc_delete_inode(struct inode *inode)
 
 	/* Stop tracking associated processes */
 	put_pid(PROC_I(inode)->pid);
-#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
 	krg_task_put(PROC_I(inode)->distant_proc.task_obj);
 	PROC_I(inode)->distant_proc.task_obj = NULL;
 #endif
@@ -98,7 +98,7 @@ static struct inode *proc_alloc_inode(struct super_block *sb)
 	ei->fd = 0;
 	ei->op.proc_get_link = NULL;
 	ei->pde = NULL;
-#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
 	ei->distant_proc.task_obj = NULL;
 #endif
 	ei->sysctl = NULL;
@@ -489,9 +489,9 @@ struct inode *proc_get_inode(struct super_block *sb, unsigned int ino,
 		inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
 		PROC_I(inode)->fd = 0;
 		PROC_I(inode)->pde = de;
-#ifdef CONFIG_KRG_PROCFS
+#ifdef CONFIG_HCC_PROCFS
 		PROC_I(inode)->krg_procfs_private = de->data;
-#endif /* CONFIG_KRG_PROCFS */
+#endif /* CONFIG_HCC_PROCFS */
 
 		if (de->mode) {
 			inode->i_mode = de->mode;

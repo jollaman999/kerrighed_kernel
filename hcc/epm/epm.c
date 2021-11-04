@@ -31,7 +31,7 @@ static void init_baby_sitter(void)
 	strncpy(baby_sitter->comm, "baby sitter", 15);
 }
 
-/* Krgsyms to register for restart_blocks in ghost processes */
+/* HCCsyms to register for restart_blocks in ghost processes */
 extern int compat_krgsyms_register(void);
 extern int hrtimer_krgsyms_register(void);
 extern int posix_cpu_timers_krgsyms_register(void);
@@ -47,7 +47,7 @@ static int restart_block_krgsyms_register(void)
 {
 	int retval;
 
-	retval = krgsyms_register(KRGSYMS_DO_NO_RESTART_SYSCALL,
+	retval = krgsyms_register(HCCSYMS_DO_NO_RESTART_SYSCALL,
 			do_no_restart_syscall);
 #ifdef CONFIG_COMPAT
 	if (!retval)
@@ -69,7 +69,7 @@ static int restart_block_krgsyms_unregister(void)
 {
 	int retval;
 
-	retval = krgsyms_unregister(KRGSYMS_DO_NO_RESTART_SYSCALL);
+	retval = krgsyms_unregister(HCCSYMS_DO_NO_RESTART_SYSCALL);
 #ifdef CONFIG_COMPAT
 	if (!retval)
 		retval = compat_krgsyms_unregister();

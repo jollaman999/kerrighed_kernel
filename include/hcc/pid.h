@@ -1,7 +1,7 @@
 #ifndef __KERRIGHED_PID_H__
 #define __KERRIGHED_PID_H__
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 
 #include <asm/page.h> /* Needed by linux/threads.h */
 #include <linux/pid_namespace.h>
@@ -24,14 +24,14 @@
 	(((node) << PID_NODE_SHIFT)|GLOBAL_PID_MASK|((pid) & INTERNAL_PID_MASK))
 #define GLOBAL_PID(pid) GLOBAL_PID_NODE(pid, hcc_node_id)
 
-/** extract the original linux kernel pid of a Kerrighed PID */
+/** extract the original linux kernel pid of a HCC PID */
 #define SHORT_PID(pid) ((pid) & INTERNAL_PID_MASK)
-/** extract the original node id of a Kerrighed PID */
+/** extract the original node id of a HCC PID */
 #define ORIG_NODE(pid) ((pid) >> PID_NODE_SHIFT)
 
 #define KERRIGHED_PID_MAX_LIMIT GLOBAL_PID_NODE(0, KERRIGHED_MAX_NODES)
 
-/* Kerrighed container's PID numbers */
+/* HCC container's PID numbers */
 static inline pid_t pid_knr(struct pid *pid)
 {
 	struct pid_namespace *ns = ns_of_pid(pid);
@@ -74,7 +74,7 @@ static inline struct task_struct *find_task_by_kpid(pid_t pid)
 }
 
 /* PID location */
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 int krg_set_pid_location(struct task_struct *task);
 int krg_unset_pid_location(struct task_struct *task);
 #endif
@@ -85,7 +85,7 @@ void krg_unlock_pid_location(pid_t pid);
 struct pid *krg_find_ge_pid(int nr, struct pid_namespace *pid_ns,
 			    struct pid_namespace *pidmap_ns);
 
-#else /* !CONFIG_KRG_PROC */
+#else /* !CONFIG_HCC_PROC */
 
 static inline pid_t pid_knr(struct pid *pid)
 {
@@ -128,9 +128,9 @@ static inline struct task_struct *find_task_by_kpid(pid_t pid)
 	return find_task_by_pid_ns(pid, &init_pid_ns);
 }
 
-#endif /* !CONFIG_KRG_PROC */
+#endif /* !CONFIG_HCC_PROC */
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 /* Task GDM object link */
 struct pid_gdm_object;
@@ -158,7 +158,7 @@ void pidmap_map_cleanup(struct krg_namespace *krg_ns);
 
 void krg_free_pidmap(struct upid *upid);
 
-#elif defined(CONFIG_KRG_PROC)
+#elif defined(CONFIG_HCC_PROC)
 
 static inline int pidmap_map_read_lock(void)
 {
@@ -179,6 +179,6 @@ static inline struct pid_namespace *node_pidmap(hcc_node_t node)
 	return NULL;
 }
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 #endif /* __KERRIGHED_PID_H__ */

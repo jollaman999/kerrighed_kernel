@@ -202,7 +202,7 @@ out:
 	return ret;
 }
 
-#ifndef CONFIG_KRG_MM
+#ifndef CONFIG_HCC_MM
 static
 #endif
 const struct vm_operations_struct ocfs2_file_vm_ops = {

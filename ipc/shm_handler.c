@@ -96,7 +96,7 @@ static struct kern_ipc_perm *kcb_ipc_shm_findkey(struct ipc_ids *ids, key_t key)
 	return NULL;
 }
 
-/** Notify the creation of a new shm segment to Kerrighed.
+/** Notify the creation of a new shm segment to HCC.
  *
  *  @author Renaud Lottiaux
  */
@@ -278,7 +278,7 @@ void shm_handler_init(void)
 	register_io_linker(SHMID_LINKER, &shmid_linker);
 	register_io_linker(SHMKEY_LINKER, &shmkey_linker);
 
-	krgsyms_register(KRGSYMS_VM_OPS_SHM, &shm_vm_ops);
+	krgsyms_register(HCCSYMS_VM_OPS_SHM, &shm_vm_ops);
 
 	printk("Shm Server configured\n");
 }

@@ -163,7 +163,7 @@ int configfs_symlink(struct inode *dir, struct dentry *dentry, const char *symna
 	if (ret)
 		goto out_put;
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	ret = type->ct_item_ops->allow_link(parent_item, target_item,
 					    dentry->d_name.name);
 #else
@@ -207,7 +207,7 @@ int configfs_unlink(struct inode *dir, struct dentry *dentry)
 	parent_item = configfs_get_config_item(dentry->d_parent);
 	type = parent_item->ci_type;
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	if (type && type->ct_item_ops &&
 	    type->ct_item_ops->allow_drop_link) {
 		ret = type->ct_item_ops->allow_drop_link(parent_item,

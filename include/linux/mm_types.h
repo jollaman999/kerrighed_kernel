@@ -15,7 +15,7 @@
 #include <asm/page.h>
 #include <asm/mmu.h>
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 #include <hcc/types.h>
 #endif
 
@@ -55,7 +55,7 @@ struct page {
 			u16 objects;
 		};
 	};
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	atomic_t _gdm_count;		/* Count number of GDM set sharing
 					 * the page */
 	void *obj_entry;
@@ -124,7 +124,7 @@ struct page {
  */
 struct vm_region {
 	struct rb_node	vm_rb;		/* link in global region tree */
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	unsigned long long vm_flags;	/* VMA vm_flags */
 #else
 	unsigned long	vm_flags;	/* VMA vm_flags */
@@ -154,12 +154,12 @@ struct vm_area_struct {
 	struct vm_area_struct *vm_next, *vm_prev;
 
 	pgprot_t vm_page_prot;		/* Access permissions of this VMA. */
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	unsigned long long vm_flags;	/* Flags, see mm.h. */
 #else
 	unsigned long vm_flags;		/* Flags, see mm.h. */
 #endif
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	struct vm_operations_struct * initial_vm_ops;
 #endif
 
@@ -192,7 +192,7 @@ struct vm_area_struct {
 	struct anon_vma *anon_vma;	/* Serialized by page_table_lock */
 
 	/* Function pointers to deal with this struct. */
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	struct vm_operations_struct *vm_ops;
 #else
 	const struct vm_operations_struct *vm_ops;
@@ -251,11 +251,11 @@ struct mm_struct {
 	unsigned long cached_hole_size;
 	unsigned long free_area_cache;		/* first hole of size cached_hole_size or larger */
 	pgd_t * pgd;
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	atomic_t mm_tasks;			/* How many tasks sharing this mm_struct cluster wide */
 	struct rw_semaphore remove_sem;         /* Protect struct remove during a migration */
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	atomic_t mm_ltasks;			/* How many tasks sharing this mm_struct locally */
 #endif
 	atomic_t mm_users;			/* How many users with user space? */
@@ -311,7 +311,7 @@ struct mm_struct {
 
 	struct core_state *core_state; /* coredumping support */
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	struct gdm_set * anon_vma_gdm_set;
 	unique_id_t anon_vma_gdm_id;
 	krgnodemask_t copyset;		/* Nodes owning a copy of the struct */

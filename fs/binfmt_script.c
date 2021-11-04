@@ -14,7 +14,7 @@
 #include <linux/file.h>
 #include <linux/err.h>
 #include <linux/fs.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/krgsyms.h>
 #endif
 
@@ -108,13 +108,13 @@ static struct linux_binfmt script_format = {
 
 static int __init init_script_binfmt(void)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	int retval;
 
-	krgsyms_register(KRGSYMS_BINFMTS_SCRIPT, &script_format);
+	krgsyms_register(HCCSYMS_BINFMTS_SCRIPT, &script_format);
 	retval = register_binfmt(&script_format);
 	if (retval)
-		krgsyms_unregister(KRGSYMS_BINFMTS_SCRIPT);
+		krgsyms_unregister(HCCSYMS_BINFMTS_SCRIPT);
 	return retval;
 #else
 	return register_binfmt(&script_format);
@@ -123,8 +123,8 @@ static int __init init_script_binfmt(void)
 
 static void __exit exit_script_binfmt(void)
 {
-#ifdef CONFIG_KRG_EPM
-	krgsyms_unregister(KRGSYMS_BINFMTS_SCRIPT);
+#ifdef CONFIG_HCC_EPM
+	krgsyms_unregister(HCCSYMS_BINFMTS_SCRIPT);
 #endif
 	unregister_binfmt(&script_format);
 }

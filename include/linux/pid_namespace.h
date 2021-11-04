@@ -30,7 +30,7 @@ struct pid_namespace {
 #ifdef CONFIG_BSD_PROCESS_ACCT
 	struct bsd_acct_struct *bacct;
 #endif
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	struct pid_namespace *krg_ns_root;
 	unsigned global:1;
 #endif
@@ -67,7 +67,7 @@ static inline void put_pid_ns(struct pid_namespace *ns)
 		kref_put(&ns->kref, free_pid_ns);
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static inline bool is_krg_pid_ns_root(struct pid_namespace *ns)
 {
 	return ns == ns->krg_ns_root;
@@ -76,7 +76,7 @@ static inline bool is_krg_pid_ns_root(struct pid_namespace *ns)
 struct pid_namespace *find_get_krg_pid_ns(void);
 #endif
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns);
 #endif
 
@@ -105,7 +105,7 @@ static inline void zap_pid_ns_processes(struct pid_namespace *ns)
 	BUG();
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static inline bool is_krg_pid_ns_root(struct pid_namespace *ns)
 {
 	return true;

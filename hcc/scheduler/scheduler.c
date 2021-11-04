@@ -702,7 +702,7 @@ static struct config_group *schedulers_make_group(struct config_group *group,
 		goto out;
 
 	if (!(current->flags & PF_KTHREAD)
-	    && !IS_KERRIGHED_NODE(KRGFLAGS_RUNNING))
+	    && !IS_KERRIGHED_NODE(HCCFLAGS_RUNNING))
 		goto out;
 
 	global_names = global_config_make_item_begin(&group->cg_item, name);
@@ -792,7 +792,7 @@ static struct config_group schedulers_group = {
 int scheduler_post_add(struct hotplug_context *ctx)
 {
 	const krgnodemask_t *added = &ctx->node_set.v;
-	krgnodemask_t removed = KRGNODE_MASK_NONE;
+	krgnodemask_t removed = HCCNODE_MASK_NONE;
 	struct scheduler *s;
 
 	mutex_lock(&schedulers_list_mutex);

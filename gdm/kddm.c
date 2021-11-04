@@ -23,9 +23,9 @@
 #include <gdm/gdm_set.h>
 #include "gdm_bench.h"
 
-#ifndef CONFIG_KRG_MONOLITHIC
+#ifndef CONFIG_HCC_MONOLITHIC
 MODULE_AUTHOR ("Renaud Lottiaux");
-MODULE_DESCRIPTION ("Kerrighed Distributed Data Manager");
+MODULE_DESCRIPTION ("HCC Distributed Data Manager");
 MODULE_LICENSE ("GPL");
 #endif
 
@@ -110,7 +110,7 @@ int init_gdm (void)
 	  process_remove(0);
 	*/
 
-	krgsyms_register (KRGSYMS_GDM_TREE_OPS, &gdm_tree_set_ops);
+	krgsyms_register (HCCSYMS_GDM_TREE_OPS, &gdm_tree_set_ops);
 
 	printk ("GDM initialisation done\n");
 
@@ -126,7 +126,7 @@ void cleanup_gdm (void)
 {
 	printk ("GDM termination : start\n");
 
-	krgsyms_unregister (KRGSYMS_GDM_TREE_OPS);
+	krgsyms_unregister (HCCSYMS_GDM_TREE_OPS);
 
 	gdm_hotplug_cleanup();
 

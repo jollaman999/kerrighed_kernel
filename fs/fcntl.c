@@ -22,7 +22,7 @@
 #include <linux/pid_namespace.h>
 #include <linux/shmem_fs.h>
 #include <linux/nospec.h>
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include <hcc/faf.h>
 #endif
 
@@ -443,7 +443,7 @@ SYSCALL_DEFINE3(fcntl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
 	if (!filp)
 		goto out;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if ((filp->f_flags & O_FAF_CLT)
 	    && (cmd != F_DUPFD) && (cmd != F_DUPFD_CLOEXEC)
 	    && (cmd != F_GETFD) && (cmd != F_SETFD)) {
@@ -477,7 +477,7 @@ SYSCALL_DEFINE3(fcntl64, unsigned int, fd, unsigned int, cmd,
 	if (!filp)
 		goto out;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if ((filp->f_flags & O_FAF_CLT)
 	    && (cmd != F_DUPFD) && (cmd != F_DUPFD_CLOEXEC)
 	    && (cmd != F_GETFD) && (cmd != F_SETFD)) {

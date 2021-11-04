@@ -21,7 +21,7 @@ static inline int page_is_file_cache(struct page *page)
 	return !PageSwapBacked(page);
 }
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 static inline int page_is_migratable(struct page *page)
 {
 	return PageMigratable(page);
@@ -56,7 +56,7 @@ del_page_from_lru_list(struct zone *zone, struct page *page, enum lru_list l)
  */
 static inline enum lru_list page_lru_base_type(struct page *page)
 {
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	BUG_ON(page_is_migratable(page) && page_is_file_cache(page));
 
 	if (page_is_migratable(page))
@@ -110,7 +110,7 @@ static inline enum lru_list page_lru(struct page *page)
 	return lru;
 }
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 #define BUILD_LRU_ID(active,file,gdm) (LRU_BASE + LRU_MIGR * gdm + LRU_FILE * file + active)
 #define RECLAIM_STAT_INDEX(file,gdm) (file + 2 * gdm)
 static inline int reclaim_stat_index(struct page *page)

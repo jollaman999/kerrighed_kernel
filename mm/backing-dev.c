@@ -757,7 +757,7 @@ EXPORT_SYMBOL(set_bdi_congested);
  * write congestion.  If no backing_devs are congested then just wait for the
  * next write to be completed.
  */
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 static long __congestion_wait(int sync, long timeout)
 #else
 long congestion_wait(int sync, long timeout)
@@ -773,7 +773,7 @@ long congestion_wait(int sync, long timeout)
 	return ret;
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 long congestion_wait(int rw, long timeout)
 {
 	struct task_struct *krg_cur;

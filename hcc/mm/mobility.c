@@ -390,7 +390,7 @@ static int export_one_vma (struct epm_action *action,
 	if (r)
 		goto out;
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	/* Export the associated file */
 	r = export_vma_file (action, ghost, tsk, vma, file_table);
 	if (r)
@@ -400,19 +400,19 @@ static int export_one_vma (struct epm_action *action,
 
 	r = -EPERM;
 	vm_ops_type = krgsyms_export((void *)vma->vm_ops);
-	if (vma->vm_ops && vm_ops_type == KRGSYMS_UNDEF)
+	if (vma->vm_ops && vm_ops_type == HCCSYMS_UNDEF)
 		goto out;
 
 	/* shmem_vm_ops (posix shm) is supported only for checkpoint/restart */
 	if (action->type != EPM_CHECKPOINT
-	    && vma->vm_ops && vm_ops_type == KRGSYMS_VM_OPS_SHMEM)
+	    && vma->vm_ops && vm_ops_type == HCCSYMS_VM_OPS_SHMEM)
 		goto out;
 
 	initial_vm_ops_type = krgsyms_export((void *)vma->initial_vm_ops);
-	if (vma->initial_vm_ops && initial_vm_ops_type == KRGSYMS_UNDEF)
+	if (vma->initial_vm_ops && initial_vm_ops_type == HCCSYMS_UNDEF)
 		goto out;
 
-	BUG_ON(vma->vm_private_data && vm_ops_type != KRGSYMS_VM_OPS_SPECIAL_MAPPING);
+	BUG_ON(vma->vm_private_data && vm_ops_type != HCCSYMS_VM_OPS_SPECIAL_MAPPING);
 
 	r = ghost_write (ghost, &vm_ops_type, sizeof (krgsyms_val_t));
 	if (r)
@@ -680,7 +680,7 @@ int export_mm_struct(struct epm_action *action,
 	if (r)
 		goto up_mmap_sem;
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	r = export_mm_exe_file(action, ghost, tsk);
 	if (r)
 		goto up_mmap_sem;
@@ -883,7 +883,7 @@ int reconcile_vmas(struct mm_struct *mm, struct vm_area_struct *vma,
 		goto done;
 	}
 
-#ifdef CONFIG_KRG_DEBUG
+#ifdef CONFIG_HCC_DEBUG
 	/* Paranoia checks */
 	BUG_ON ((old->vm_start != vma->vm_start) ||
 		(old->vm_end != vma->vm_end));
@@ -952,7 +952,7 @@ static int import_one_vma (struct epm_action *action,
 
 	partial_init_vma(tsk->mm, vma);
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	/* Import the associated file */
 	r = import_vma_file(action, ghost, tsk, vma, file_table);
 	if (r)
@@ -981,7 +981,7 @@ static int import_one_vma (struct epm_action *action,
 	if (action->type == EPM_CHECKPOINT)
 		restore_initial_vm_ops(vma);
 
-	if (vm_ops_type == KRGSYMS_VM_OPS_SPECIAL_MAPPING)
+	if (vm_ops_type == HCCSYMS_VM_OPS_SPECIAL_MAPPING)
 		import_vdso_context(vma);
 
 	if (vma->vm_flags & VM_EXECUTABLE)
@@ -997,7 +997,7 @@ err_reconcile:
 	if (vma->vm_flags & VM_EXECUTABLE)
 		removed_exe_file_vma(vma->vm_mm);
 err_vm_ops:
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	if (vma->vm_file)
 		fput(vma->vm_file);
 #endif
@@ -1287,7 +1287,7 @@ int import_mm_struct (struct epm_action *action,
 	/* Just paranoia check */
 	BUG_ON(mm->core_state);
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	r = import_mm_exe_file(action, ghost, tsk);
 	if (r)
 		goto err;

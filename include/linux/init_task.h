@@ -11,7 +11,7 @@
 #include <linux/user_namespace.h>
 #include <linux/securebits.h>
 #include <net/net_namespace.h>
-#ifdef CONFIG_KRG_CAP
+#ifdef CONFIG_HCC_CAP
 #include <hcc/capabilities.h>
 #endif
 
@@ -126,18 +126,18 @@ extern struct cred init_cred;
 # define INIT_PERF_EVENTS(tsk)
 #endif
 
-#ifdef CONFIG_KRG_CAP
-#define INIT_KRG_CAP .krg_caps = {			    \
-	.permitted = KRG_CAP_INIT_PERM_SET,		    \
-	.effective = KRG_CAP_INIT_EFF_SET,		    \
-	.inheritable_permitted = KRG_CAP_INIT_INH_PERM_SET, \
-	.inheritable_effective = KRG_CAP_INIT_INH_EFF_SET   \
+#ifdef CONFIG_HCC_CAP
+#define INIT_HCC_CAP .krg_caps = {			    \
+	.permitted = HCC_CAP_INIT_PERM_SET,		    \
+	.effective = HCC_CAP_INIT_EFF_SET,		    \
+	.inheritable_permitted = HCC_CAP_INIT_INH_PERM_SET, \
+	.inheritable_effective = HCC_CAP_INIT_INH_EFF_SET   \
 },
 #else
-#define INIT_KRG_CAP
+#define INIT_HCC_CAP
 #endif
 
-#ifdef CONFIG_KRG_GDM
+#ifdef CONFIG_HCC_GDM
 #define INIT_GDM .gdm_info = NULL,
 #else
 #define INIT_GDM
@@ -212,7 +212,7 @@ extern struct cred init_cred;
 	INIT_FTRACE_GRAPH						\
 	INIT_TRACE_RECURSION						\
 	INIT_TASK_RCU_PREEMPT(tsk)					\
-	INIT_KRG_CAP							\
+	INIT_HCC_CAP							\
 	INIT_GDM							\
 }
 

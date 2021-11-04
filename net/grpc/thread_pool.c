@@ -50,7 +50,7 @@ struct {
 
 void (*rpc_handlers[RPC_HANDLER_MAX])(struct rpc_desc* desc);
 
-#define KRGRPC_INIT_FDTABLE \
+#define HCCRPC_INIT_FDTABLE \
 {                                                       \
         .max_fds        = NR_OPEN_DEFAULT,              \
         .fd             = &krgrpc_files.fd_array[0],    \
@@ -60,11 +60,11 @@ void (*rpc_handlers[RPC_HANDLER_MAX])(struct rpc_desc* desc);
         .next           = NULL,                         \
 }
 
-#define KRGRPC_INIT_FILES \
+#define HCCRPC_INIT_FILES \
 {                                                       \
         .count          = ATOMIC_INIT(1),               \
         .fdt            = &krgrpc_files.fdtab,          \
-        .fdtab          = KRGRPC_INIT_FDTABLE,          \
+        .fdtab          = HCCRPC_INIT_FDTABLE,          \
 	.file_lock	= __SPIN_LOCK_UNLOCKED(krgrpc_files.file_lock), \
         .next_fd        = 0,                            \
         .close_on_exec_init = { { 0, } },               \
@@ -72,7 +72,7 @@ void (*rpc_handlers[RPC_HANDLER_MAX])(struct rpc_desc* desc);
         .fd_array       = { NULL, }                     \
 }
 
-static struct files_struct krgrpc_files = KRGRPC_INIT_FILES;
+static struct files_struct krgrpc_files = HCCRPC_INIT_FILES;
 struct task_struct *first_krgrpc = NULL;
 
 static struct completion init_complete;

@@ -1,5 +1,5 @@
-#ifndef __KRG_SCHEDULER_PROCESS_SET__
-#define __KRG_SCHEDULER_PROCESS_SET__
+#ifndef __HCC_SCHEDULER_PROCESS_SET__
+#define __HCC_SCHEDULER_PROCESS_SET__
 
 #include <linux/configfs.h>
 #include <linux/pid.h>
@@ -302,4 +302,4 @@ static inline void process_set_cleanup_do_each_process(struct process_set *pset)
 		}							     \
 	} while(0)
 
-#endif /* __KRG_SCHEDULER_PROCESS_SET__ */
+#endif /* __HCC_SCHEDULER_PROCESS_SET__ */

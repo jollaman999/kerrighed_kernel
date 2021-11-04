@@ -1,5 +1,5 @@
 /**
- * Define Kerrighed Capabilities
+ * Define HCC Capabilities
  * @author David Margery (c) Inria 2004
  */
 

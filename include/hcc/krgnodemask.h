@@ -1,5 +1,5 @@
-#ifndef __KRG_NODEMASK_H
-#define __KRG_NODEMASK_H
+#ifndef __HCC_NODEMASK_H
+#define __HCC_NODEMASK_H
 
 /*
  * This file is nearly a copy/paste of linux/cpumask.h (2.6.20)
@@ -48,8 +48,8 @@
  * int next_krgnode(node, mask)		Next node past 'node', or KERRIGHED_MAX_NODES
  *
  * krgnodemask_t krgnodemask_of_node(node)	Return nodemask with bit 'node' set
- * KRGNODE_MASK_ALL				Initializer - all bits set
- * KRGNODE_MASK_NONE			Initializer - no bits set
+ * HCCNODE_MASK_ALL				Initializer - all bits set
+ * HCCNODE_MASK_NONE			Initializer - no bits set
  * unsigned long *krgnodes_addr(mask)	Array of unsigned long's in mask
  *
  * int krgnodemask_scnprintf(buf, len, mask) Format nodemask for printing
@@ -255,31 +255,31 @@ static inline int __next_krgnode(int n, const krgnodemask_t *srcp)
 	m;								\
 })
 
-#define KRGNODE_MASK_LAST_WORD BITMAP_LAST_WORD_MASK(KERRIGHED_MAX_NODES)
+#define HCCNODE_MASK_LAST_WORD BITMAP_LAST_WORD_MASK(KERRIGHED_MAX_NODES)
 
 #if KERRIGHED_MAX_NODES <= BITS_PER_LONG
 
-#define KRGNODE_MASK_ALL							\
+#define HCCNODE_MASK_ALL							\
 (krgnodemask_t) { {								\
-	[BITS_TO_LONGS(KERRIGHED_MAX_NODES)-1] = KRGNODE_MASK_LAST_WORD			\
+	[BITS_TO_LONGS(KERRIGHED_MAX_NODES)-1] = HCCNODE_MASK_LAST_WORD			\
 } }
 
 #else
 
-#define KRGNODE_MASK_ALL							\
+#define HCCNODE_MASK_ALL							\
 (krgnodemask_t) { {								\
 	[0 ... BITS_TO_LONGS(KERRIGHED_MAX_NODES)-2] = ~0UL,			\
-	[BITS_TO_LONGS(KERRIGHED_MAX_NODES)-1] = KRGNODE_MASK_LAST_WORD			\
+	[BITS_TO_LONGS(KERRIGHED_MAX_NODES)-1] = HCCNODE_MASK_LAST_WORD			\
 } }
 
 #endif
 
-#define KRGNODE_MASK_NONE							\
+#define HCCNODE_MASK_NONE							\
 (krgnodemask_t) { {								\
 	[0 ... BITS_TO_LONGS(KERRIGHED_MAX_NODES)-1] =  0UL				\
 } }
 
-#define KRGNODE_MASK_NODE0							\
+#define HCCNODE_MASK_NODE0							\
 (krgnodemask_t) { {								\
 	[0] =  1UL							\
 } }
@@ -450,4 +450,4 @@ int __any_online_krgnode(const krgnodemask_t *mask);
 #define krgnode_next_online_in_ring(node) next_krgnode_in_ring(node, krgnode_online_map)
 #define krgnode_next_present_in_ring(node) next_krgnode_in_ring(node, krgnode_present_map)
 
-#endif /* __KRG_NODEMASK_H */
+#endif /* __HCC_NODEMASK_H */

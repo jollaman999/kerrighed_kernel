@@ -16,7 +16,7 @@
 #include <linux/module.h>
 #include <linux/err.h>
 #include <hcc/pid.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/ghost.h>
 #include <hcc/action.h>
 #endif
@@ -663,7 +663,7 @@ static void process_set_release(struct config_item *item)
 	kfree(pset);
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 /*
  * Ghost export / import functions
@@ -820,4 +820,4 @@ out:
 	return err;
 }
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */

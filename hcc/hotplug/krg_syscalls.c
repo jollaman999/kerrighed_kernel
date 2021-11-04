@@ -1,4 +1,4 @@
-/** Interface to create / remove Kerrighed syscalls.
+/** Interface to create / remove HCC syscalls.
  *  @file krg_syscalls.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
@@ -50,8 +50,8 @@ static int proc_services_ioctl(struct inode *inode, struct file *filp,
 		service_entry->count++;
 		return service_entry->fct((void *)arg);
 	}
-#ifdef CONFIG_KRG_DEBUG
-	PANIC("Kerrighed command %d-%d (0x%08x) unknown\n", cmd & 0xE0,
+#ifdef CONFIG_HCC_DEBUG
+	PANIC("HCC command %d-%d (0x%08x) unknown\n", cmd & 0xE0,
 	      cmd & 0x1F, cmd);
 #endif
 
@@ -110,7 +110,7 @@ int __register_proc_service(unsigned int cmd, proc_service_function_t fun,
 	    (struct proc_service_entry *)hashtable_find(proc_service_functions,
 							cmd);
 	if (service_entry != NULL && fun != NULL) {
-		PANIC("Kerrighed command %d-%d (0x%08x) already registered\n",
+		PANIC("HCC command %d-%d (0x%08x) already registered\n",
 		      cmd & 0xE0, cmd & 0x1F, cmd);
 		return -1;
 	}

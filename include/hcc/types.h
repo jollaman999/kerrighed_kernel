@@ -1,5 +1,5 @@
-#ifndef __KRG_TYPES_INTERNAL__
-#define __KRG_TYPES_INTERNAL__
+#ifndef __HCC_TYPES_INTERNAL__
+#define __HCC_TYPES_INTERNAL__
 
 #include <hcc/sys/types.h>
 
@@ -7,9 +7,9 @@
 #include <hcc/krgnodemask.h>
 #endif
 
-#define KRGFCT(p) if(p!=NULL) p
+#define HCCFCT(p) if(p!=NULL) p
 
-#if defined(CONFIG_KERRIGHED) || defined(CONFIG_KRGRPC)
+#if defined(CONFIG_KERRIGHED) || defined(CONFIG_HCCRPC)
 
 typedef unsigned char hcc_session_t;
 typedef int hcc_subsession_t;
@@ -19,7 +19,7 @@ typedef unsigned long unique_id_t;   /**< Unique id type */
 
 #ifdef __KERNEL__
 
-#ifdef CONFIG_KRG_STREAM
+#ifdef CONFIG_HCC_STREAM
 struct dstream_socket { // shared node-wide
 	unique_id_t id_socket;
 	unique_id_t id_container;
@@ -30,4 +30,4 @@ struct dstream_socket { // shared node-wide
 
 #endif /* __KERNEL__ */
 
-#endif /* __KRG_TYPES_INTERNAL__ */
+#endif /* __HCC_TYPES_INTERNAL__ */

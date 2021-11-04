@@ -205,7 +205,7 @@ void * mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
 	unsigned long flags;
 	wait_queue_t wait;
 	gfp_t gfp_temp;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	struct task_struct *krg_cur;
 #endif
 
@@ -235,7 +235,7 @@ repeat_alloc:
 	if (!(gfp_mask & __GFP_WAIT))
 		return NULL;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	krg_cur = krg_current;
 	krg_current = NULL;
 #endif
@@ -252,7 +252,7 @@ repeat_alloc:
 		io_schedule_timeout(5*HZ);
 	}
 	finish_wait(&pool->wait, &wait);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	krg_current = krg_cur;
 #endif
 

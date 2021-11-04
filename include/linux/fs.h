@@ -11,7 +11,7 @@
 #include <linux/blk_types.h>
 #include <linux/types.h>
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include <asm/statfs.h>
 #endif
 
@@ -280,7 +280,7 @@ struct inodes_stat_t {
 #define S_NOCMTIME	128	/* Do not update file c/mtime */
 #define S_SWAPFILE	256	/* Do not truncate: swapon got its bmaps */
 #define S_PRIVATE	512	/* Inode is fs-internal */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #define S_IFAF          1024
 #endif
 #define S_AUTOMOUNT	2048	/* Automount/referral quasi-directory */
@@ -711,7 +711,7 @@ struct address_space {
 	spinlock_t		private_lock;	/* for use by the address_space */
 	struct list_head	private_list;	/* ditto */
 	struct address_space	*assoc_mapping;	/* ditto */
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	struct gdm_set         *gdm_set;
 #endif
 } __attribute__((aligned(sizeof(long))));
@@ -842,7 +842,7 @@ struct inode {
 
 	__u32			i_generation;
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	unsigned long           i_objid;
 #endif
 
@@ -1007,7 +1007,7 @@ struct file {
 	const struct file_operations	*f_op;
 	spinlock_t		f_lock;  /* f_ep_links, f_flags, no IRQ */
 	atomic_long_t		f_count;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	unsigned long           f_flags;
 #else
 	unsigned int 		f_flags;
@@ -1022,10 +1022,10 @@ struct file {
 #ifdef CONFIG_SECURITY
 	void			*f_security;
 #endif
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	unsigned long           f_objid;
 #endif
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	unsigned long           f_faf_srv_index;
 #endif
 
@@ -2092,7 +2092,7 @@ extern void drop_collected_mounts(struct vfsmount *);
 
 extern int vfs_statfs(struct path *, struct kstatfs *);
 extern int user_statfs(const char __user *, struct kstatfs *);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 extern int fd_statfs(int fd, struct kstatfs *, int *,
 	      struct statfs __user *);
 #else

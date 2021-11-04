@@ -16,7 +16,7 @@
 #include <linux/proc_fs.h>
 #include <linux/reboot.h>
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 #include <linux/module.h>
 #include <hcc/namespace.h>
 #endif
@@ -80,20 +80,20 @@ static void proc_cleanup_work(struct work_struct *work)
 	pid_ns_release_proc(ns);
 }
 
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_EPM
 static
 #endif
 struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns)
 {
 	struct pid_namespace *ns;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	unsigned int level = 0;
 #else
 	unsigned int level = parent_pid_ns->level + 1;
 #endif
 	int i, err = -ENOMEM;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (parent_pid_ns)
 		level = parent_pid_ns->level + 1;
 #endif
@@ -116,7 +116,7 @@ struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns)
 
 	kref_init(&ns->kref);
 	ns->level = level;
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	if (parent_pid_ns) {
 		ns->global = parent_pid_ns->global;
 		ns->global |= current->create_krg_ns;
@@ -151,7 +151,7 @@ static void destroy_pid_namespace(struct pid_namespace *ns)
 {
 	int i;
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	if (ns->krg_ns_root && ns->krg_ns_root != ns)
 		put_pid_ns(ns->krg_ns_root);
 #endif
@@ -182,7 +182,7 @@ void free_pid_ns(struct kref *kref)
 	if (parent != NULL)
 		put_pid_ns(parent);
 }
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 EXPORT_SYMBOL(free_pid_ns);
 #endif
 
@@ -259,7 +259,7 @@ void zap_pid_ns_processes(struct pid_namespace *pid_ns)
 	return;
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 struct pid_namespace *find_get_krg_pid_ns(void)
 {
 	struct krg_namespace *krg_ns = find_get_krg_ns();

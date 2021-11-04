@@ -1,4 +1,4 @@
-/** Kerrighed MM servers.
+/** HCC MM servers.
  *  @file mm_server.c
  *
  *  Copyright (C) 2008-2010, Renaud Lottiaux, Kerlabs.

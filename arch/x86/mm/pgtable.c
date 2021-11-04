@@ -23,7 +23,7 @@ pgtable_t pte_alloc_one(struct mm_struct *mm, unsigned long address)
 {
 	struct page *pte;
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	if (in_atomic())
 		pte = alloc_pages(GFP_ATOMIC|__GFP_ZERO, 0);
 	else

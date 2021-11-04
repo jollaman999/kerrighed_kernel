@@ -28,7 +28,7 @@
 #include <linux/shm.h>
 #include <linux/personality.h>
 #include <linux/init.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/krgsyms.h>
 #endif
 
@@ -292,13 +292,13 @@ static int load_som_library(struct file *f)
 
 static int __init init_som_binfmt(void)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	int retval;
 
-	krgsyms_register(KRGSYMS_BINFMTS_SOM, &som_format);
+	krgsyms_register(HCCSYMS_BINFMTS_SOM, &som_format);
 	retval = register_binfmt(&som_format);
 	if (retval)
-		krgsyms_unregister(KRGSYMS_BINFMTS_SOM);
+		krgsyms_unregister(HCCSYMS_BINFMTS_SOM);
 	return retval;
 #else
 	return register_binfmt(&som_format);
@@ -308,8 +308,8 @@ static int __init init_som_binfmt(void)
 static void __exit exit_som_binfmt(void)
 {
 	/* Remove the SOM loader. */
-#ifdef CONFIG_KRG_EPM
-	krgsyms_unregister(KRGSYMS_BINFMTS_SOM);
+#ifdef CONFIG_HCC_EPM
+	krgsyms_unregister(HCCSYMS_BINFMTS_SOM);
 #endif
 	unregister_binfmt(&som_format);
 }

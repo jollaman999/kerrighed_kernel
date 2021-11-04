@@ -1,5 +1,5 @@
-#ifndef __KRG_SCHEDULER_PORT_H__
-#define __KRG_SCHEDULER_PORT_H__
+#ifndef __HCC_SCHEDULER_PORT_H__
+#define __HCC_SCHEDULER_PORT_H__
 
 #include <linux/module.h>
 #include <linux/configfs.h>
@@ -574,4 +574,4 @@ ssize_t scheduler_port_show_value(struct scheduler_port *port, char *page)
  */
 extern port_get_remote_value_t scheduler_port_get_remote_value;
 
-#endif /* __KRG_SCHEDULER_PORT_H__ */
+#endif /* __HCC_SCHEDULER_PORT_H__ */

@@ -30,7 +30,7 @@ void grab_swap_token(struct mm_struct *mm)
 {
 	int current_interval;
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	if (!current->mm)
 		return;
 #endif

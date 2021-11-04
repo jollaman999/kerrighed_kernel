@@ -414,11 +414,11 @@ void __sleep_on_gdm_obj(struct gdm_set * set,
 {
 	struct gdm_info_struct *gdm_info = current->gdm_info;
 	wait_queue_t wait;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	struct task_struct *krg_cur = krg_current;
 #endif
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (krg_cur)
 		krg_current = NULL;
 #endif
@@ -474,7 +474,7 @@ retry:
 	if (atomic_dec_and_test(&obj_entry->sleeper_count))
 		CLEAR_OBJECT_PINNED(obj_entry);
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (krg_cur)
 		krg_current = krg_cur;
 #endif

@@ -1,4 +1,4 @@
-/** Kerrighed MM Server.
+/** HCC MM Server.
  *  @file mm_server.h
  *
  *  @author Renaud Lottiaux

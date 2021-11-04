@@ -10,7 +10,7 @@ struct ipc_namespace;
 struct pid_namespace;
 struct fs_struct;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 struct kmem_cache;
 
 extern struct kmem_cache *nsproxy_cachep;
@@ -35,7 +35,7 @@ struct nsproxy {
 	struct mnt_namespace *mnt_ns;
 	struct pid_namespace *pid_ns;
 	struct net 	     *net_ns;
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 	struct krg_namespace *krg_ns;
 #endif
 };

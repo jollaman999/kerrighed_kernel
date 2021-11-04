@@ -1,5 +1,5 @@
-#ifndef __KKRG_SHM__
-#define __KKRG_SHM__
+#ifndef __KHCC_SHM__
+#define __KHCC_SHM__
 
 #include <linux/init.h>
 #include <linux/ipc.h>
@@ -8,7 +8,7 @@
 struct vm_area_struct;
 
 
-/** Kerrighed Hooks **/
+/** HCC Hooks **/
 int krg_ipc_shm_newseg(struct ipc_namespace *ns, struct shmid_kernel * shp);
 void krg_ipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp);
 void krg_ipc_shm_rmkey(struct ipc_namespace *ns, key_t key);
@@ -59,4 +59,4 @@ static inline void shm_unlock(struct shmid_kernel *shp)
 
 void local_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp);
 
-#endif // __KKRG_SHM__
+#endif // __KHCC_SHM__

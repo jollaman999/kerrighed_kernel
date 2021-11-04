@@ -18,7 +18,7 @@
 #include <linux/falloc.h>
 
 #include <asm/ioctls.h>
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include <hcc/faf.h>
 #endif
 
@@ -641,7 +641,7 @@ SYSCALL_DEFINE3(ioctl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
 	if (!filp)
 		goto out;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (filp->f_flags & O_FAF_CLT) {
 		error = krg_faf_ioctl(filp, cmd, arg);
 		goto out_fput;

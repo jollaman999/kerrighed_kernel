@@ -63,7 +63,7 @@ static inline hcc_node_t get_req_node(hcc_node_t nodeid)
 			return nodeid;
 	}
 
-#ifdef CONFIG_KRG_CAP
+#ifdef CONFIG_HCC_CAP
 	if (nodeid == PROC_STAT_DEPEND_ON_CAPABILITY) {
 		if (cap_raised
 		    (current->krg_caps.effective, CAP_SEE_LOCAL_PROC_STAT))
@@ -83,7 +83,7 @@ static inline krgnodemask_t get_proc_nodes_vector(hcc_node_t nodeid)
 	krgnodes_clear(nodes);
 
 	if (nodeid == KERRIGHED_MAX_NODES) {
-		if (IS_KERRIGHED_NODE(KRGFLAGS_RUNNING))
+		if (IS_KERRIGHED_NODE(HCCFLAGS_RUNNING))
 			krgnodes_copy(nodes, krgnode_online_map);
 		else
 			krgnode_set(hcc_node_id, nodes);
@@ -408,7 +408,7 @@ static int show_meminfo(struct seq_file *p, void *v)
 		   "LowFree:        %8lu kB\n"
 #endif
 #ifndef CONFIG_MMU
-#error Is it possible to run Kerrighed without an MMU?
+#error Is it possible to run HCC without an MMU?
 #endif
 		   "SwapTotal:      %8lu kB\n"
 		   "SwapFree:       %8lu kB\n"
@@ -1042,7 +1042,7 @@ int remove_proc_node_info(hcc_node_t nodeid)
 	return -ENOENT;
 }
 
-/** Init Kerrighed proc stuffs.
+/** Init HCC proc stuffs.
  *  @author Renaud Lottiaux
  */
 int krg_procfs_init(void)
@@ -1112,7 +1112,7 @@ int krg_procfs_init(void)
 	return 0;
 }
 
-/** Finalize Kerrighed proc stuffs.
+/** Finalize HCC proc stuffs.
  *  @author Renaud Lottiaux
  */
 int krg_procfs_finalize(void)

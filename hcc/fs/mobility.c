@@ -35,7 +35,7 @@
 #include <hcc/physical_fs.h>
 #include <hcc/pid.h>
 #include "file_struct_io_linker.h"
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include <hcc/faf.h>
 #include <hcc/faf_file_mgr.h>
 #include "faf/faf_internal.h"
@@ -102,7 +102,7 @@ error:
 
 static struct dvfs_mobility_operations *get_dvfs_mobility_ops(struct file *file)
 {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & (O_FAF_SRV | O_FAF_CLT))
 		return &dvfs_mobility_faf_ops;
 #endif
@@ -147,7 +147,7 @@ int export_one_open_file (struct epm_action *action,
 		check_file_struct_sharing (index, file, action);
 	}
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	r = check_activate_faf(tsk, index, file, action);
 	if (r)
 		goto err;
@@ -175,7 +175,7 @@ static int get_file_size(struct file *file, loff_t *size)
 {
 	int r = 0;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT) {
 		struct kstat stat;
 		r = krg_faf_fstat(file, &stat);
@@ -186,7 +186,7 @@ static int get_file_size(struct file *file, loff_t *size)
 	} else
 #endif
 		*size = i_size_read(file->f_dentry->d_inode);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 exit:
 #endif
 	return r;
@@ -901,7 +901,7 @@ int import_one_open_file (struct epm_action *action,
 	 */
 	if (file) {
 		/* The file has already been imported on this node */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		free_faf_file_private_data(imported_file);
 #endif
 		fput(imported_file);
@@ -917,7 +917,7 @@ int import_one_open_file (struct epm_action *action,
 		goto exit;
 
 	if (!first_import) {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		free_faf_file_private_data(imported_file);
 #endif
 		fput(imported_file);
@@ -1489,11 +1489,11 @@ void unimport_fs_struct(struct task_struct *tsk)
 
 int dvfs_mobility_init(void)
 {
-#ifdef CONFIG_KRG_FAF
-	krgsyms_register(KRGSYMS_DVFS_MOBILITY_FAF_OPS,
+#ifdef CONFIG_HCC_FAF
+	krgsyms_register(HCCSYMS_DVFS_MOBILITY_FAF_OPS,
 			 &dvfs_mobility_faf_ops);
 #endif
-	krgsyms_register(KRGSYMS_DVFS_MOBILITY_REGULAR_OPS,
+	krgsyms_register(HCCSYMS_DVFS_MOBILITY_REGULAR_OPS,
 			 &dvfs_mobility_regular_ops);
 
 	return 0;
@@ -1501,9 +1501,9 @@ int dvfs_mobility_init(void)
 
 void dvfs_mobility_finalize (void)
 {
-	krgsyms_unregister(KRGSYMS_DVFS_MOBILITY_REGULAR_OPS);
-#ifdef CONFIG_KRG_FAF
-	krgsyms_unregister(KRGSYMS_DVFS_MOBILITY_FAF_OPS);
+	krgsyms_unregister(HCCSYMS_DVFS_MOBILITY_REGULAR_OPS);
+#ifdef CONFIG_HCC_FAF
+	krgsyms_unregister(HCCSYMS_DVFS_MOBILITY_FAF_OPS);
 #endif
 }
 

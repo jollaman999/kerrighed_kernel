@@ -1,7 +1,7 @@
-#ifndef __KRG_CHILDREN_H__
-#define __KRG_CHILDREN_H__
+#ifndef __HCC_CHILDREN_H__
+#define __HCC_CHILDREN_H__
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 #include <linux/types.h>
 #include <hcc/sys/types.h>
@@ -86,6 +86,6 @@ void krg_update_parents(struct task_struct *task,
 /* Used by krg_release_task() */
 void krg_unhash_process(struct task_struct *tsk);
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
-#endif /* __KRG_CHILDREN_H__ */
+#endif /* __HCC_CHILDREN_H__ */

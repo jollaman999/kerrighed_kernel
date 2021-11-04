@@ -1,4 +1,4 @@
-/** Kerrighed Kernel Hooks **/
+/** HCC Kernel Hooks **/
 
 #ifndef __FAF_H__
 #define __FAF_H__

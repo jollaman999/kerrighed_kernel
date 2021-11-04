@@ -6,7 +6,7 @@
 #include <linux/cred.h>
 #include <net/krgrpc/rpc.h>
 #include <hcc/namespace.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <linux/user_namespace.h>
 #include <linux/security.h>
 #include <hcc/ghost.h>
@@ -77,7 +77,7 @@ const struct cred *unpack_override_creds(struct rpc_desc *desc)
 	return old_cred;
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 int export_cred(struct epm_action *action,
 		ghost_t *ghost, struct task_struct *task)
@@ -229,4 +229,4 @@ void free_ghost_cred(struct task_struct *ghost)
 	put_cred(ghost->real_cred);
 }
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */

@@ -292,7 +292,7 @@ fail:
 	return error;
 }
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
 		unsigned long, prot)
 {
@@ -313,7 +313,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
 		unsigned long, prot)
 #endif
 {
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	unsigned long long vm_flags, nstart, end, tmp, reqprot;
 #else
 	unsigned long vm_flags, nstart, end, tmp, reqprot;
@@ -340,7 +340,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
 	/*
 	 * Does the application expect PROT_READ to imply PROT_EXEC:
 	 */
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	if ((prot & PROT_READ) && (personality & READ_IMPLIES_EXEC))
 #else
 	if ((prot & PROT_READ) && (current->personality & READ_IMPLIES_EXEC))
@@ -349,7 +349,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
 
 	vm_flags = calc_vm_prot_bits(prot);
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	down_write(&mm->mmap_sem);
 	vma = find_vma_prev(mm, start, &prev);
 #else
@@ -417,7 +417,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
 		}
 	}
 out:
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	up_write(&mm->mmap_sem);
 #else
 	up_write(&current->mm->mmap_sem);

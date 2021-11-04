@@ -92,7 +92,7 @@ int init_tools(void)
 		goto Error;
 	}
 	
-	printk("Kerrighed tools - init module\n");
+	printk("HCC tools - init module\n");
  Done:
 	return error;
 

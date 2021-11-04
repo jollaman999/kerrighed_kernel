@@ -1388,7 +1388,7 @@ static int configfs_rmdir(struct inode *dir, struct dentry *dentry)
 		return -EINVAL;
 	}
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	/* Get a working ref for the duration of this function */
 	item = configfs_get_config_item(dentry);
 
@@ -1435,7 +1435,7 @@ static int configfs_rmdir(struct inode *dir, struct dentry *dentry)
 
 		if (ret) {
 			if (ret != -EAGAIN) {
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 				config_item_put(item);
 #else
 				config_item_put(parent_item);
@@ -1449,7 +1449,7 @@ static int configfs_rmdir(struct inode *dir, struct dentry *dentry)
 		}
 	} while (ret == -EAGAIN);
 
-#ifndef CONFIG_KRG_SCHED
+#ifndef CONFIG_HCC_SCHED
 	/* Get a working ref for the duration of this function */
 	item = configfs_get_config_item(dentry);
 

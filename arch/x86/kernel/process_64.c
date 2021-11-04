@@ -274,7 +274,7 @@ int copy_thread(unsigned long clone_flags, unsigned long sp,
 			(THREAD_SIZE + task_stack_page(p))) - 1;
 	*childregs = *regs;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	/* Do not corrupt ax in migration/restart */
 	if (!krg_current || in_krg_do_fork())
 #endif
@@ -288,7 +288,7 @@ int copy_thread(unsigned long clone_flags, unsigned long sp,
 	p->thread.usersp = me->thread.usersp;
 
 	set_tsk_thread_flag(p, TIF_FORK);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	/*
 	 * Migration/restart could have rcx, r11, and rflags corrupted by
 	 * ret_from_fork.
@@ -299,14 +299,14 @@ int copy_thread(unsigned long clone_flags, unsigned long sp,
 
 	p->fpu_counter = 0;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (!krg_current) {
 #endif
 	savesegment(gs, p->thread.gsindex);
 	savesegment(fs, p->thread.fsindex);
 	savesegment(es, p->thread.es);
 	savesegment(ds, p->thread.ds);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	}
 #endif
 	p->thread.gs = p->thread.gsindex ? 0 : me->thread.gs;

@@ -29,7 +29,7 @@
 
 #include "rpc_internal.h"
 
-#define TIPC_KRG_SERVER_TYPE (1+TIPC_RESERVED_TYPES)
+#define TIPC_HCC_SERVER_TYPE (1+TIPC_RESERVED_TYPES)
 
 #define ACK_CLEANUP_WINDOW_SIZE 100
 #define MAX_CONSECUTIVE_RECV 1000
@@ -149,7 +149,7 @@ static
 inline int __send_iovec(hcc_node_t node, int nr_iov, struct iovec *iov)
 {
 	struct tipc_name name = {
-		.type = TIPC_KRG_SERVER_TYPE,
+		.type = TIPC_HCC_SERVER_TYPE,
 		.instance = node
 	};
 	struct __rpc_header *h = iov[0].iov_base;
@@ -1376,7 +1376,7 @@ int comlayer_init(void)
 	if (res)
 		return res;
 
-        tipc_seq.type = TIPC_KRG_SERVER_TYPE;
+        tipc_seq.type = TIPC_HCC_SERVER_TYPE;
         tipc_seq.lower = tipc_seq.upper = hcc_node_id;
         res = tipc_publish(tipc_port_ref, TIPC_CLUSTER_SCOPE, &tipc_seq);
 

@@ -10,8 +10,8 @@
  *  @author Louis Rilling, ported to configfs by Marko Novak and Louis Rilling
  */
 
-#ifndef __KRG_MOSIX_PROBE_H__
-#define __KRG_MOSIX_PROBE_H__
+#ifndef __HCC_MOSIX_PROBE_H__
+#define __HCC_MOSIX_PROBE_H__
 
 #define MOSIX_PROBE_NAME "mosix_probe"
 
@@ -26,4 +26,4 @@ struct mosix_probe_data {
 	unsigned long mosix_norm_single_process_load;
 };
 
-#endif /* __KRG_MOSIX_PROBE_H__ */
+#endif /* __HCC_MOSIX_PROBE_H__ */

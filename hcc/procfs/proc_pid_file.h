@@ -25,7 +25,7 @@ int krg_proc_pid_schedstat(struct proc_distant_pid_info *task, char *buffer);
 int krg_proc_pid_oom_score(struct proc_distant_pid_info *task, char *buffer);
 int krg_proc_tgid_io_accounting(struct proc_distant_pid_info *task,
 				char *buffer);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 int krg_proc_epm_type_show(struct proc_distant_pid_info *task, char *buffer);
 int krg_proc_epm_source_show(struct proc_distant_pid_info *task, char *buffer);
 int krg_proc_epm_target_show(struct proc_distant_pid_info *task, char *buffer);

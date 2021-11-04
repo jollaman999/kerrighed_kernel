@@ -96,10 +96,10 @@ struct thread_info {
 #define TIF_BLOCKSTEP		25	/* set when we want DEBUGCTLMSR_BTF */
 #define TIF_LAZY_MMU_UPDATES	27	/* task is updating the mmu lazily */
 #define TIF_SYSCALL_TRACEPOINT	28	/* syscall tracepoint instrumentation */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #define TIF_RUACCESS            29
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #define TIF_MIGRATION		30
 #endif
 
@@ -125,10 +125,10 @@ struct thread_info {
 #define _TIF_BLOCKSTEP		(1 << TIF_BLOCKSTEP)
 #define _TIF_LAZY_MMU_UPDATES	(1 << TIF_LAZY_MMU_UPDATES)
 #define _TIF_SYSCALL_TRACEPOINT	(1 << TIF_SYSCALL_TRACEPOINT)
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #define _TIF_RUACCESS           (1 << TIF_RUACCESS)
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #define _TIF_MIGRATION		(1 << TIF_MIGRATION)
 #endif
 

@@ -96,15 +96,15 @@ int mm_export_object (struct rpc_desc *desc,
 	rpc_pack(desc, 0, &mm->copyset, sizeof(krgnodemask_t));
 
 	get_unmap_exec_id = krgsyms_export(mm->get_unmapped_exec_area);
-	BUG_ON(mm->get_unmapped_exec_area && get_unmap_exec_id == KRGSYMS_UNDEF);
+	BUG_ON(mm->get_unmapped_exec_area && get_unmap_exec_id == HCCSYMS_UNDEF);
 	rpc_pack_type(desc, get_unmap_exec_id);
 
 	get_unmap_id = krgsyms_export(mm->get_unmapped_area);
-	BUG_ON(mm->get_unmapped_area && get_unmap_id == KRGSYMS_UNDEF);
+	BUG_ON(mm->get_unmapped_area && get_unmap_id == HCCSYMS_UNDEF);
 	rpc_pack_type(desc, get_unmap_id);
 
 	unmap_id = krgsyms_export(mm->unmap_area);
-	BUG_ON(mm->unmap_area && unmap_id == KRGSYMS_UNDEF);
+	BUG_ON(mm->unmap_area && unmap_id == HCCSYMS_UNDEF);
 	rpc_pack_type(desc, unmap_id);
 
 	return 0;

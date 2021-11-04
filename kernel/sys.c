@@ -42,12 +42,12 @@
 #include <linux/syscalls.h>
 #include <linux/kprobes.h>
 #include <linux/user_namespace.h>
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
 #include <hcc/remote_syscall.h>
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/krginit.h>
 #include <hcc/pid.h>
 #include <hcc/task.h>
@@ -332,7 +332,7 @@ void kernel_restart(char *cmd)
 }
 EXPORT_SYMBOL_GPL(kernel_restart);
 
-#ifndef CONFIG_KRG_HOTPLUG
+#ifndef CONFIG_HCC_HOTPLUG
 static
 #endif
 void kernel_shutdown_prepare(enum system_states state)
@@ -342,7 +342,7 @@ void kernel_shutdown_prepare(enum system_states state)
 	system_state = state;
 	device_shutdown();
 }
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 EXPORT_SYMBOL_GPL(kernel_shutdown_prepare);
 #endif
 
@@ -988,7 +988,7 @@ SYSCALL_DEFINE1(times, struct tms __user *, tbuf)
  * Auch. Had to add the 'did_exec' flag to conform completely to POSIX.
  * LBT 04.03.94
  */
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 static int do_setpgid(pid_t pid, pid_t pgid, pid_t parent_session,
 		      struct pid_namespace *ns)
 #else
@@ -998,12 +998,12 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	struct task_struct *p;
 	struct task_struct *group_leader = current->group_leader;
 	struct pid *pgrp;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	bool from_remote_parent = parent_session >= 0;
 #endif
 	int err;
 
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_EPM
 	if (!pid)
 		pid = task_pid_vnr(group_leader);
 	if (!pgid)
@@ -1018,7 +1018,7 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	tasklist_write_lock_irq();
 
 	err = -ESRCH;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	p = find_task_by_pid_ns(pid, ns);
 #else
 	p = find_task_by_vpid(pid);
@@ -1030,14 +1030,14 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	if (!thread_group_leader(p))
 		goto out;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (from_remote_parent
 	    || same_thread_group(p->real_parent, group_leader)) {
 #else
 	if (same_thread_group(p->real_parent, group_leader)) {
 #endif
 		err = -EPERM;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 		if (from_remote_parent) {
 			if (task_session_nr_ns(p, ns) != parent_session)
 				goto out;
@@ -1062,13 +1062,13 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	if (pgid != pid) {
 		struct task_struct *g;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 		pgrp = find_pid_ns(pgid, ns);
 #else
 		pgrp = find_vpid(pgid);
 #endif
 		g = pid_task(pgrp, PIDTYPE_PGID);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 		if (!g || task_session(g) != task_session(p))
 #else
 		if (!g || task_session(g) != task_session(group_leader))
@@ -1090,7 +1090,7 @@ out:
 	return err;
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 struct setpgid_message {
 	pid_t pid;
 	pid_t pgid;
@@ -1226,9 +1226,9 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	krg_cleanup_setpgid(pid, pgid, parent_children_obj, node, !err);
 	return err;
 }
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static int do_getpgid(pid_t pid, struct pid_namespace *ns)
 #else
 SYSCALL_DEFINE1(getpgid, pid_t, pid)
@@ -1243,7 +1243,7 @@ SYSCALL_DEFINE1(getpgid, pid_t, pid)
 		grp = task_pgrp(current);
 	else {
 		retval = -ESRCH;
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		p = find_task_by_pid_ns(pid, ns);
 #else
 		p = find_task_by_vpid(pid);
@@ -1258,7 +1258,7 @@ SYSCALL_DEFINE1(getpgid, pid_t, pid)
 		if (retval)
 			goto out;
 	}
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	retval = pid_nr_ns(grp, ns);
 #else
 	retval = pid_vnr(grp);
@@ -1268,7 +1268,7 @@ out:
 	return retval;
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static int handle_getpgid(struct rpc_desc *desc, void *msg, size_t size)
 {
 	struct pid *pid;
@@ -1305,7 +1305,7 @@ SYSCALL_DEFINE1(getpgid, pid_t, pid)
 
 	return retval;
 }
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 
 #ifdef __ARCH_WANT_SYS_GETPGRP
 
@@ -1316,7 +1316,7 @@ SYSCALL_DEFINE0(getpgrp)
 
 #endif
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static int do_getsid(pid_t pid, struct pid_namespace *ns)
 #else
 SYSCALL_DEFINE1(getsid, pid_t, pid)
@@ -1331,7 +1331,7 @@ SYSCALL_DEFINE1(getsid, pid_t, pid)
 		sid = task_session(current);
 	else {
 		retval = -ESRCH;
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		p = find_task_by_pid_ns(pid, ns);
 #else
 		p = find_task_by_vpid(pid);
@@ -1346,7 +1346,7 @@ SYSCALL_DEFINE1(getsid, pid_t, pid)
 		if (retval)
 			goto out;
 	}
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	retval = pid_nr_ns(sid, ns);
 #else
 	retval = pid_vnr(sid);
@@ -1356,7 +1356,7 @@ out:
 	return retval;
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static int handle_getsid(struct rpc_desc *desc, void *msg, size_t size)
 {
 	struct pid *pid;
@@ -1398,30 +1398,30 @@ void remote_sys_init(void)
 {
 	rpc_register_int(PROC_GETPGID, handle_getpgid, 0);
 	rpc_register_int(PROC_GETSID, handle_getsid, 0);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	rpc_register_int(PROC_FORWARD_SETPGID, handle_forward_setpgid, 0);
 #endif
 }
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 
 SYSCALL_DEFINE0(setsid)
 {
 	struct task_struct *group_leader = current->group_leader;
 	struct pid *sid = task_pid(group_leader);
 	pid_t session = pid_vnr(sid);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	struct children_gdm_object *parent_children_obj = NULL;
 	pid_t real_parent_tgid;
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 	int err = -EPERM;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	down_read(&hcc_init_sem);
 	if (rcu_dereference(current->parent_children_obj))
 		parent_children_obj =
 			krg_parent_children_writelock(current,
 						      &real_parent_tgid);
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 	tasklist_write_lock_irq();
 	/* Fail if I am already a session leader */
 	if (group_leader->signal->leader)
@@ -1445,14 +1445,14 @@ out:
 		proc_sid_connector(group_leader);
 		sched_autogroup_create_attach(group_leader);
 	}
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (parent_children_obj) {
 		if (err >= 0)
 			krg_set_child_pgid(parent_children_obj, current);
 		krg_children_unlock(parent_children_obj);
 	}
 	up_read(&hcc_init_sem);
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 	return err;
 }
 

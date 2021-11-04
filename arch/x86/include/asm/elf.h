@@ -370,7 +370,7 @@ struct va_alignment {
 extern struct va_alignment va_align;
 extern unsigned long align_addr(unsigned long, struct file *, enum align_flags);
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 struct vm_area_struct;
 
 void import_vdso_context(struct vm_area_struct *vma);

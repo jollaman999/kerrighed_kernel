@@ -1,5 +1,5 @@
-#ifndef __KRG_SCHEDULER_PLACEMENT_H__
-#define __KRG_SCHEDULER_PLACEMENT_H__
+#ifndef __HCC_SCHEDULER_PLACEMENT_H__
+#define __HCC_SCHEDULER_PLACEMENT_H__
 
 #include <hcc/sys/types.h>
 
@@ -18,4 +18,4 @@ struct task_struct;
  */
 hcc_node_t new_task_node(struct task_struct *parent);
 
-#endif /* __KRG_SCHEDULER_PLACEMENT_H__ */
+#endif /* __HCC_SCHEDULER_PLACEMENT_H__ */

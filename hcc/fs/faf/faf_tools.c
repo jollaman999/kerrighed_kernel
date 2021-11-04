@@ -1,4 +1,4 @@
-/** Kerrighed FAF Tools.
+/** HCC FAF Tools.
  *  @file faf_tools.c
  *
  *  Copyright (C) 2006-2007, Pascal Gallard, Kerlabs.

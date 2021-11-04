@@ -1,9 +1,9 @@
-#ifndef __KRG_KERRIGHED_SIGNAL_H__
-#define __KRG_KERRIGHED_SIGNAL_H__
+#ifndef __HCC_KERRIGHED_SIGNAL_H__
+#define __HCC_KERRIGHED_SIGNAL_H__
 
-/* Kerrighed signal */
+/* HCC signal */
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 #include <asm/signal.h>
 
@@ -18,6 +18,6 @@ extern hcc_handler_t *krg_handler[_NSIG];
 
 int send_hcc_signal(int sig, struct siginfo *info, struct task_struct *t);
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
-#endif /* __KRG_KERRIGHED_SIGNAL_H__ */
+#endif /* __HCC_KERRIGHED_SIGNAL_H__ */

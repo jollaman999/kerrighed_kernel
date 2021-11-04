@@ -15,7 +15,7 @@
 #include <hcc/hotplug.h>
 #include <hcc/action.h>
 #include <hcc/ghost.h>
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 #include <hcc/scheduler/placement.h>
 #endif
 #include <net/krgrpc/rpcid.h>
@@ -43,7 +43,7 @@ int krg_do_fork(unsigned long clone_flags,
 		int trace)
 {
 	struct task_struct *task = current;
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	hcc_node_t distant_node;
 #else
 	static hcc_node_t distant_node = -1;
@@ -75,7 +75,7 @@ int krg_do_fork(unsigned long clone_flags,
 	if (retval)
 		goto out;
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	distant_node = new_task_node(task);
 #else
 	if (distant_node < 0)

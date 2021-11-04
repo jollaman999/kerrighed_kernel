@@ -67,7 +67,7 @@ static int restore_app_gdm_object(struct app_gdm_object *obj,
 	r = ghost_read_string(ghost, compile_info);
 	if (r)
 		goto err_read;
-#ifndef CONFIG_KRG_DEBUG
+#ifndef CONFIG_HCC_DEBUG
 	if (strncmp(UTS_VERSION, compile_info, MAX_GHOST_STRING))
 		goto err_kernel_version;
 #endif
@@ -75,7 +75,7 @@ static int restore_app_gdm_object(struct app_gdm_object *obj,
 	r = ghost_read_string(ghost, compile_info);
 	if (r)
 		goto err_read;
-#ifndef CONFIG_KRG_DEBUG
+#ifndef CONFIG_HCC_DEBUG
 	if (strncmp(LINUX_COMPILE_TIME, compile_info, MAX_GHOST_STRING))
 		goto err_kernel_version;
 #endif
@@ -1084,7 +1084,7 @@ static void handle_do_restart(struct rpc_desc *desc, void *_msg, size_t size)
 		goto error;
 	}
 
-#ifdef CONFIG_KRG_DEBUG
+#ifdef CONFIG_HCC_DEBUG
 	{
 		int magic;
 		r = rpc_unpack_type(desc, magic);
@@ -1161,7 +1161,7 @@ static void handle_do_restart(struct rpc_desc *desc, void *_msg, size_t size)
 	if (r)
 		goto err_end_pid;
 
-#ifdef CONFIG_KRG_DEBUG
+#ifdef CONFIG_HCC_DEBUG
 	{
 		int magic;
 		r = rpc_unpack_type(desc, magic);
@@ -1244,7 +1244,7 @@ static int global_do_restart(struct app_gdm_object *obj,
 	if (r)
 		goto error;
 
-#ifdef CONFIG_KRG_DEBUG
+#ifdef CONFIG_HCC_DEBUG
 	{
 		int magic = 40;
 		r = rpc_pack_type(desc, magic);
@@ -1309,7 +1309,7 @@ static int global_do_restart(struct app_gdm_object *obj,
 	if (r)
 		goto error;
 
-#ifdef CONFIG_KRG_DEBUG
+#ifdef CONFIG_HCC_DEBUG
 	{
 		int magic = 48;
 		r = rpc_pack_type(desc, magic);

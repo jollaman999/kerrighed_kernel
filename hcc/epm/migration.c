@@ -30,10 +30,10 @@
 #include <hcc/krginit.h>
 #include <hcc/remote_cred.h>
 #include <hcc/remote_syscall.h>
-#ifdef CONFIG_KRG_CAP
+#ifdef CONFIG_HCC_CAP
 #include <hcc/capabilities.h>
 #endif
-#ifdef CONFIG_KRG_SYSCALL_EXIT_HOOK
+#ifdef CONFIG_HCC_SYSCALL_EXIT_HOOK
 #include <hcc/syscalls.h>
 #endif
 #include <hcc/task.h>
@@ -48,7 +48,7 @@
 #include "network_ghost.h"
 #include "epm_internal.h"
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 ATOMIC_NOTIFIER_HEAD(kmh_migration_send_start);
 ATOMIC_NOTIFIER_HEAD(kmh_migration_send_end);
 ATOMIC_NOTIFIER_HEAD(kmh_migration_recv_start);
@@ -117,10 +117,10 @@ int __may_migrate(struct task_struct *task)
 	return (pid_alive(task)
 		/* check permissions */
 		&& permissions_ok(task)
-#ifdef CONFIG_KRG_CAP
+#ifdef CONFIG_HCC_CAP
 		/* check capabilities */
 		&& can_use_krg_cap(task, CAP_CAN_MIGRATE)
-#endif /* CONFIG_KRG_CAP */
+#endif /* CONFIG_HCC_CAP */
 		&& !krg_action_pending(task, EPM_MIGRATE)
 		/* Implementation limitation */
 		&& migration_implemented(task));
@@ -140,7 +140,7 @@ EXPORT_SYMBOL(may_migrate);
 
 void migration_aborted(struct task_struct *tsk)
 {
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	atomic_notifier_call_chain(&kmh_migration_aborted, 0, tsk);
 #endif
 	krg_action_stop(tsk, EPM_MIGRATE);
@@ -161,7 +161,7 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 	 * For instance fork() may have created a thread right after the
 	 * migration request.
 	 */
-#ifdef CONFIG_KRG_CAP
+#ifdef CONFIG_HCC_CAP
 	if (!can_use_krg_cap(tsk, CAP_CAN_MIGRATE))
 		return -ENOSYS;
 #endif
@@ -244,7 +244,7 @@ static void krg_task_migrate(int sig, struct siginfo *info,
 	r = do_task_migrate(tsk, regs, si_node(*info));
 
 	if (!r) {
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 		atomic_notifier_call_chain(&kmh_migration_send_end, 0, NULL);
 #endif
 		do_exit_wo_notify(0); /* Won't return */
@@ -263,7 +263,7 @@ static void handle_migrate(struct rpc_desc *desc, void *msg, size_t size)
 	struct epm_action *action = msg;
 	struct task_struct *task;
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	atomic_notifier_call_chain(&kmh_migration_recv_start, 0, action);
 #endif
 	task = recv_task(desc, action);
@@ -276,7 +276,7 @@ static void handle_migrate(struct rpc_desc *desc, void *msg, size_t size)
 	task->epm_source = action->migrate.source;
 	task->epm_target = action->migrate.target;
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	action->migrate.end_date = current_kernel_time();
 	atomic_notifier_call_chain(&kmh_migration_recv_end, 0, action);
 #endif
@@ -308,7 +308,7 @@ static int do_migrate_process(struct task_struct *task,
 	if (retval)
 		return retval;
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	atomic_notifier_call_chain(&kmh_migration_send_start, 0, task);
 #endif
 
@@ -317,7 +317,7 @@ static int do_migrate_process(struct task_struct *task,
 	info.si_uid = 0;
 	si_node(info) = destination_node_id;
 
-	retval = send_hcc_signal(KRG_SIG_MIGRATE, &info, task);
+	retval = send_hcc_signal(HCC_SIG_MIGRATE, &info, task);
 	if (retval)
 		migration_aborted(task);
 
@@ -472,7 +472,7 @@ int sys_migrate_thread(pid_t pid, hcc_node_t dest_node)
 	return migrate_linux_threads(pid, MIGR_THREAD, dest_node);
 }
 
-#ifdef CONFIG_KRG_SYSCALL_EXIT_HOOK
+#ifdef CONFIG_HCC_SYSCALL_EXIT_HOOK
 void krg_syscall_exit(long syscall_nr)
 {
 	__migrate_linux_threads(current, MIGR_LOCAL_PROCESS,
@@ -482,7 +482,7 @@ void krg_syscall_exit(long syscall_nr)
 
 int epm_migration_start(void)
 {
-	krg_handler[KRG_SIG_MIGRATE] = krg_task_migrate;
+	krg_handler[HCC_SIG_MIGRATE] = krg_task_migrate;
 	if (rpc_register_void(RPC_EPM_MIGRATE, handle_migrate, 0))
 		BUG();
 	if (rpc_register_int(PROC_REQUEST_MIGRATION,

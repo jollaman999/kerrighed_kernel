@@ -13,7 +13,7 @@
 #include <linux/pid_namespace.h>
 #include <linux/rcupdate.h>
 #include <hcc/capabilities.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <linux/pid_namespace.h>
 #include <hcc/children.h>
 #endif
@@ -22,7 +22,7 @@
 #include <hcc/krg_syscalls.h>
 #include <hcc/krg_services.h>
 #include <hcc/remote_cred.h>
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 #include <hcc/remote_syscall.h>
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
@@ -42,7 +42,7 @@ void krg_cap_fork(struct task_struct *task, unsigned long clone_flags)
 	kernel_cap_t new_krg_effective;
 	int i;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (krg_current && !in_krg_do_fork())
 		/* Migration/restart: do not recompute krg caps */
 		return;
@@ -127,7 +127,7 @@ static int krg_set_cap(struct task_struct *tsk,
 		goto out;
 
 	res = -ENOSYS;
-	tmp_cap = KRG_CAP_SUPPORTED;
+	tmp_cap = HCC_CAP_SUPPORTED;
 	if (!cap_issubset(requested_cap->permitted, tmp_cap))
 		goto out;
 
@@ -166,7 +166,7 @@ out:
 	return res;
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static int remote_set_pid_cap(pid_t pid, const kernel_krg_cap_t *cap);
 #endif
 
@@ -176,12 +176,12 @@ static int krg_set_father_cap(struct task_struct *tsk,
 	int retval = 0;
 
 	read_lock(&tasklist_lock);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (tsk->real_parent != baby_sitter) {
 #endif
 		retval = krg_set_cap(tsk->real_parent, requested_cap);
 		read_unlock(&tasklist_lock);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	} else {
 		struct children_gdm_object *parent_children_obj;
 		pid_t real_parent_tgid;
@@ -215,7 +215,7 @@ static int krg_set_pid_cap(pid_t pid, const kernel_krg_cap_t *requested_cap)
 	if (tsk)
 		retval = krg_set_cap(tsk, requested_cap);
 	rcu_read_unlock();
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	if (!tsk)
 		retval = remote_set_pid_cap(pid, requested_cap);
 #endif
@@ -223,7 +223,7 @@ static int krg_set_pid_cap(pid_t pid, const kernel_krg_cap_t *requested_cap)
 	return retval;
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static int handle_set_pid_cap(struct rpc_desc* desc, void *_msg, size_t size)
 {
 	struct pid *pid;
@@ -251,7 +251,7 @@ static int remote_set_pid_cap(pid_t pid, const kernel_krg_cap_t *cap)
 	return krg_remote_syscall_simple(PROC_SET_PID_CAP, pid,
 					 cap, sizeof(*cap));
 }
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 
 static int krg_get_cap(struct task_struct *tsk, kernel_krg_cap_t *resulting_cap)
 {
@@ -272,7 +272,7 @@ static int krg_get_cap(struct task_struct *tsk, kernel_krg_cap_t *resulting_cap)
 	return res;
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static int remote_get_pid_cap(pid_t pid, kernel_krg_cap_t *cap);
 #endif
 
@@ -282,12 +282,12 @@ static int krg_get_father_cap(struct task_struct *son,
 	int retval = 0;
 
 	read_lock(&tasklist_lock);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (son->real_parent != baby_sitter) {
 #endif
 		retval = krg_get_cap(son->real_parent, resulting_cap);
 		read_unlock(&tasklist_lock);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	} else {
 		struct children_gdm_object *parent_children_obj;
 		pid_t real_parent_tgid;
@@ -340,7 +340,7 @@ static int krg_get_pid_cap(pid_t pid, kernel_krg_cap_t *resulting_cap)
 	if (tsk)
 		retval = krg_get_cap(tsk, resulting_cap);
 	rcu_read_unlock();
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	if (!tsk)
 		retval = remote_get_pid_cap(pid, resulting_cap);
 #endif
@@ -348,7 +348,7 @@ static int krg_get_pid_cap(pid_t pid, kernel_krg_cap_t *resulting_cap)
 	return retval;
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static int handle_get_pid_cap(struct rpc_desc *desc, void *_msg, size_t size)
 {
 	struct pid *pid;
@@ -417,9 +417,9 @@ err_cancel:
 		err = -EPIPE;
 	goto out_end;
 }
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 
-/* Kerrighed syscalls interface */
+/* HCC syscalls interface */
 
 static int user_to_kernel_krg_cap(const krg_cap_t __user *user_caps,
 				  kernel_krg_cap_t *caps)
@@ -549,7 +549,7 @@ out:
 static int proc_get_supported_cap(void __user *arg)
 {
 	int __user *set = arg;
-	return put_user(KRG_CAP_SUPPORTED.cap[0], set);
+	return put_user(HCC_CAP_SUPPORTED.cap[0], set);
 }
 
 int init_krg_cap(void)
@@ -585,7 +585,7 @@ int init_krg_cap(void)
 	if (r != 0)
 		goto unreg_get_pid_cap;
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	rpc_register_int(PROC_GET_PID_CAP, handle_get_pid_cap, 0);
 	rpc_register_int(PROC_SET_PID_CAP, handle_set_pid_cap, 0);
 #endif

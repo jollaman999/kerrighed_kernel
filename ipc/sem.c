@@ -88,10 +88,10 @@
 #include <asm/uaccess.h>
 #include "util.h"
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 #include <linux/random.h>
 #include <hcc/pid.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/action.h>
 #endif
 #include "krgsem.h"
@@ -108,7 +108,7 @@ struct sem_undo_list {
 
 #define sem_checkid(sma, semid)	ipc_checkid(&sma->sem_perm, semid)
 
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 static int newary(struct ipc_namespace *, struct ipc_params *);
 #endif
 static void freeary(struct ipc_namespace *, struct kern_ipc_perm *);
@@ -176,7 +176,7 @@ static void sem_wait_array(struct sem_array *sma)
 	}
 }
 
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 static void sem_rcu_free(struct rcu_head *head)
 {
 	struct ipc_rcu *p = container_of(head, struct ipc_rcu, rcu);
@@ -194,7 +194,7 @@ static void sem_rcu_free(struct rcu_head *head)
  * multiple semaphores in our own semops, or we need to look at
  * semaphores from other pending complex operations.
  */
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 static inline
 #endif
 int sem_lock(struct sem_array *sma, struct sembuf *sops,
@@ -276,14 +276,14 @@ int sem_lock(struct sem_array *sma, struct sembuf *sops,
 	}
 }
 
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 static inline
 #endif
 void sem_unlock(struct sem_array *sma, int locknum)
 {
 	if (locknum == -1) {
 		struct kern_ipc_perm *perm = &(sma)->sem_perm;
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 		if (perm->krgops) {
 			rcu_read_lock();
 			perm->krgops->ipc_unlock(perm);
@@ -325,7 +325,7 @@ static inline struct sem_array *sem_obtain_lock(struct ipc_namespace *ns,
 	return ERR_PTR(-EINVAL);
 }
 
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 static inline
 #endif
 struct sem_array *sem_obtain_object(struct ipc_namespace *ns, int id)
@@ -338,7 +338,7 @@ struct sem_array *sem_obtain_object(struct ipc_namespace *ns, int id)
 	return container_of(ipcp, struct sem_array, sem_perm);
 }
 
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 static inline
 #endif
 struct sem_array *sem_obtain_object_check(struct ipc_namespace *ns,
@@ -352,7 +352,7 @@ struct sem_array *sem_obtain_object_check(struct ipc_namespace *ns,
 	return container_of(ipcp, struct sem_array, sem_perm);
 }
 
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 static inline void sem_lock_and_putref(struct sem_array *sma)
 {
 	sem_lock(sma, NULL, -1);
@@ -406,7 +406,7 @@ static inline void sem_rmid(struct ipc_namespace *ns, struct sem_array *s)
  *
  * Called with sem_ids.rw_mutex held (as a writer)
  */
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 static
 #endif
 int newary(struct ipc_namespace *ns, struct ipc_params *params)
@@ -446,7 +446,7 @@ int newary(struct ipc_namespace *ns, struct ipc_params *params)
 
 	for (i = 0; i < nsems; i++) {
 		INIT_LIST_HEAD(&sma->sem_base[i].sem_pending);
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 		INIT_LIST_HEAD(&sma->sem_base[i].remote_sem_pending);
 #endif
 		spin_lock_init(&sma->sem_base[i].lock);
@@ -457,7 +457,7 @@ int newary(struct ipc_namespace *ns, struct ipc_params *params)
 	INIT_LIST_HEAD(&sma->list_id);
 	sma->sem_nsems = nsems;
 	sma->sem_ctime = get_seconds();
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	INIT_LIST_HEAD(&sma->remote_sem_pending);
 
 	if (is_krg_ipc(&sem_ids(ns))) {
@@ -611,7 +611,7 @@ undo:
  * Wake up a process waiting on the sem queue with a given error.
  * The queue is invalid (may not be accessed) after the function returns.
  */
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 static void wake_up_sem_queue(struct sem_queue *q, int error, int remote)
 #else
 static void wake_up_sem_queue(struct sem_queue *q, int error)
@@ -625,7 +625,7 @@ static void wake_up_sem_queue(struct sem_queue *q, int error)
 	 */
 	preempt_disable();
 	q->status = IN_WAKEUP;
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	if (remote)
 		krg_ipc_sem_wakeup_process(q, error);
 	else
@@ -637,7 +637,7 @@ static void wake_up_sem_queue(struct sem_queue *q, int error)
 	preempt_enable();
 }
 
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 static void unlink_queue(struct sem_array *sma, struct sem_queue *q)
 {
 	list_del(&q->list);
@@ -655,7 +655,7 @@ static void unlink_queue(struct sem_array *sma, struct sem_queue *q)
  * really necessary. It is called after a previously waiting operation
  * was completed.
  */
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 static int check_restart(struct sem_array *sma, struct sem_queue *q, int remote)
 #else
 static int check_restart(struct sem_array *sma, struct sem_queue *q)
@@ -679,7 +679,7 @@ static int check_restart(struct sem_array *sma, struct sem_queue *q)
 	curr = sma->sem_base + q->sops[0].sem_num;
 
 	/* No-one waits on this queue */
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	if (remote) {
 		if (list_empty(&curr->remote_sem_pending))
 			return 0;
@@ -711,7 +711,7 @@ static int check_restart(struct sem_array *sma, struct sem_queue *q)
 	 * semval is 0. Check if there are wait-for-zero semops.
 	 * They must be the first entries in the per-semaphore queue
 	 */
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	if (remote)
 		h = list_first_entry(&curr->remote_sem_pending, struct sem_queue, list);
 	else
@@ -749,7 +749,7 @@ static int update_queue(struct sem_array *sma, int semnum)
 	struct list_head *walk;
 	struct list_head *pending_list;
 	int semop_completed = 0;
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	/* the following is used to ensure that a node would not
 	   keep the sem for it */
 	int remote = 0, loop = 0;
@@ -810,14 +810,14 @@ again:
 			restart = 0;
 		} else {
 			semop_completed = 1;
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 			restart = check_restart(sma, q, remote);
 #else
 			restart = check_restart(sma, q);
 #endif
 		}
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 		wake_up_sem_queue(q, error, remote);
 #else
 		wake_up_sem_queue(q, error);
@@ -825,7 +825,7 @@ again:
 		if (restart)
 			goto again;
 	}
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	if (loop) {
 		remote = !remote;
 		loop = 0;
@@ -919,7 +919,7 @@ static int count_semncnt (struct sem_array * sma, ushort semnum)
 				semncnt++;
 	}
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	list_for_each_entry(q, &sma->sem_base[semnum].remote_sem_pending, list) {
 		struct sembuf * sops = q->sops;
 		BUG_ON(sops->sem_num != semnum);
@@ -966,7 +966,7 @@ static int count_semzcnt (struct sem_array * sma, ushort semnum)
 				semzcnt++;
 	}
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	list_for_each_entry(q, &sma->sem_base[semnum].remote_sem_pending, list) {
 		struct sembuf * sops = q->sops;
 		BUG_ON(sops->sem_num != semnum);
@@ -1001,7 +1001,7 @@ static void free_un(struct rcu_head *head)
  */
 static void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 {
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	if (is_krg_ipc(&sem_ids(ns)))
 		krg_ipc_sem_freeary(ns, ipcp);
 	else
@@ -1018,7 +1018,7 @@ static void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 	struct sem_array *sma = container_of(ipcp, struct sem_array, sem_perm);
 	int i;
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	if (is_krg_ipc(&sem_ids(ns)))
 		BUG_ON(!list_empty(&sma->list_id));
 #endif
@@ -1037,14 +1037,14 @@ static void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 	/* Wake up all pending processes and let them fail with EIDRM. */
 	list_for_each_entry_safe(q, tq, &sma->sem_pending, list) {
 		unlink_queue(sma, q);
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 		wake_up_sem_queue(q, -EIDRM, 0);
 #else
 		wake_up_sem_queue(q, -EIDRM);
 #endif
 	}
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	list_for_each_entry_safe(q, tq, &sma->remote_sem_pending, list) {
 		unlink_queue(sma, q);
 
@@ -1061,14 +1061,14 @@ static void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 		struct sem *sem = sma->sem_base + i;
 		list_for_each_entry_safe(q, tq, &sem->sem_pending, list) {
 			unlink_queue(sma, q);
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 			wake_up_sem_queue(q, -EIDRM, 0);
 #else
 			wake_up_sem_queue(q, -EIDRM);
 #endif
 		}
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 		list_for_each_entry_safe(q, tq, &sem->remote_sem_pending, list) {
 			unlink_queue(sma, q);
 
@@ -1296,7 +1296,7 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 		ushort __user *array = p;
 		int i;
 
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 		sem_lock(sma, NULL, -1);
 		if (sma->sem_perm.deleted) {
 			err = -EIDRM;
@@ -1304,7 +1304,7 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 		}
 #endif
 		if(nsems > SEMMSL_FAST) {
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 			if (!ipc_rcu_getref(sma)) {
 				err = -EIDRM;
 				goto out_unlock;
@@ -1317,10 +1317,10 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 				ipc_rcu_putref(sma, ipc_rcu_free);
 				return -ENOMEM;
 			}
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 			BUG_ON(sma->sem_perm.deleted);
 #endif
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 			rcu_read_lock();
 			sem_lock_and_putref(sma);
 			if (sma->sem_perm.deleted) {
@@ -1342,7 +1342,7 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 	{
 		int i;
 		struct sem_undo *un;
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 		if (!ipc_rcu_getref(sma)) {
 			err = -EIDRM;
 			goto out_rcu_wakeup;
@@ -1353,7 +1353,7 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 		if(nsems > SEMMSL_FAST) {
 			sem_io = ipc_alloc(sizeof(ushort)*nsems);
 			if(sem_io == NULL) {
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 				err = -ENOMEM;
 				goto out_unlock;
 #else
@@ -1364,7 +1364,7 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 		}
 
 		if (copy_from_user (sem_io, p, nsems*sizeof(ushort))) {
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 			err = -EFAULT;
 			goto out_unlock;
 #else
@@ -1376,7 +1376,7 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 
 		for (i = 0; i < nsems; i++) {
 			if (sem_io[i] > SEMVMX) {
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 				err = -ERANGE;
 				goto out_unlock;
 #else
@@ -1386,10 +1386,10 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 #endif
 			}
 		}
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 		BUG_ON(sma->sem_perm.deleted);
 #endif
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 		rcu_read_lock();
 		sem_lock_and_putref(sma);
 		if (sma->sem_perm.deleted) {
@@ -1666,7 +1666,7 @@ static struct sem_undo *find_alloc_undo(struct ipc_namespace *ns, int semid)
 	}
 
 	nsems = sma->sem_nsems;
-#ifndef CONFIG_KRG_IPC
+#ifndef CONFIG_HCC_IPC
 	if (!ipc_rcu_getref(sma)) {
 		rcu_read_unlock();
 		un = ERR_PTR(-EIDRM);
@@ -1678,7 +1678,7 @@ static struct sem_undo *find_alloc_undo(struct ipc_namespace *ns, int semid)
 	/* step 2: allocate new undo structure */
 	new = kzalloc(sizeof(struct sem_undo) + sizeof(short)*nsems, GFP_KERNEL);
 	if (!new) {
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 		sem_unlock(sma, -1);
 		rcu_read_unlock();
 #else
@@ -1687,7 +1687,7 @@ static struct sem_undo *find_alloc_undo(struct ipc_namespace *ns, int semid)
 		return ERR_PTR(-ENOMEM);
 	}
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	BUG_ON(sma->sem_perm.deleted);
 	rcu_read_lock();
 #else
@@ -1807,7 +1807,7 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 			alter = 1;
 	}
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	if (is_krg_ipc(&sem_ids(ns)))
 		un = NULL;
 	else
@@ -1857,7 +1857,7 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 	if (un && un->semid == -1)
 		goto out_unlock_free;
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	if (undos && sma->sem_perm.krgops) {
 		un = krg_ipc_sem_find_undo(sma);
 		if (IS_ERR(un)) {
@@ -1887,7 +1887,7 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 	queue.undo = un;
 	queue.pid = task_tgid_vnr(current);
 	queue.alter = alter;
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	queue.semid = sma->sem_perm.id;
 	queue.node = hcc_node_id;
 #endif
@@ -1954,9 +1954,9 @@ sleep_again:
 		goto out_free;
 	}
 
-#if defined(CONFIG_KRG_IPC) && defined(CONFIG_KRG_EPM)
+#if defined(CONFIG_HCC_IPC) && defined(CONFIG_HCC_EPM)
 	if (krg_action_any_pending(current)) {
-#ifdef CONFIG_KRG_DEBUG
+#ifdef CONFIG_HCC_DEBUG
 		printk("%s:%d - action hcc! --> need replay!!\n",
 		       __PRETTY_FUNCTION__, __LINE__);
 #endif
@@ -2009,7 +2009,7 @@ SYSCALL_DEFINE3(semop, int, semid, struct sembuf __user *, tsops,
  * parent and child tasks.
  */
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 int __copy_semundo(unsigned long clone_flags, struct task_struct *tsk);
 
 int copy_semundo(unsigned long clone_flags, struct task_struct *tsk)
@@ -2032,7 +2032,7 @@ int copy_semundo(unsigned long clone_flags, struct task_struct *tsk)
 	struct sem_undo_list *undo_list;
 	int error;
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	BUG_ON((clone_flags & CLONE_SYSVSEM)
 	       && current->sysvsem.undo_list_id != UNIQUE_ID_NONE);
 	tsk->sysvsem.undo_list_id = UNIQUE_ID_NONE;
@@ -2097,7 +2097,7 @@ void __exit_sem_found(struct sem_array *sma, struct sem_undo *un)
  * The current implementation does not do so. The POSIX standard
  * and SVID should be consulted to determine what behavior is mandated.
  */
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 void __exit_sem(struct task_struct *tsk)
 #else
 void exit_sem(struct task_struct *tsk)
@@ -2183,7 +2183,7 @@ void exit_sem(struct task_struct *tsk)
 	kfree(ulp);
 }
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 void exit_sem(struct task_struct *tsk)
 {
 	struct ipc_namespace *ipcns;
@@ -2203,7 +2203,7 @@ void exit_sem(struct task_struct *tsk)
 		krg_ipc_sem_exit_sem(ipcns, tsk);
 
 	/* let call __exit_sem in case process has been created
-	 * before the Kerrighed loading
+	 * before the HCC loading
 	 */
 	__exit_sem(tsk);
 }

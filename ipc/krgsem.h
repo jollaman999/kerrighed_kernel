@@ -1,5 +1,5 @@
-#ifndef __KKRG_SEM__
-#define __KKRG_SEM__
+#ifndef __KHCC_SEM__
+#define __KHCC_SEM__
 
 #define sc_semmni       sem_ctls[3]
 

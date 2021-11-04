@@ -1,17 +1,17 @@
 #ifndef __EPM_INTERNAL_H__
 #define __EPM_INTERNAL_H__
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 #include <linux/thread_info.h>
 #include <linux/slab.h>
 #include <hcc/sys/types.h>
 #include <asm/signal.h>
 
-#define KRG_SIG_MIGRATE		SIGRTMIN
-#define KRG_SIG_CHECKPOINT	(SIGRTMIN + 1)
-#ifdef CONFIG_KRG_FD
-#define KRG_SIG_FORK_DELAY_STOP	(SIGRTMIN + 2)
+#define HCC_SIG_MIGRATE		SIGRTMIN
+#define HCC_SIG_CHECKPOINT	(SIGRTMIN + 1)
+#ifdef CONFIG_HCC_FD
+#define HCC_SIG_FORK_DELAY_STOP	(SIGRTMIN + 2)
 #endif
 
 struct task_struct;
@@ -82,6 +82,6 @@ void register_checkpoint_hooks(void);
 void application_cr_server_init(void);
 void application_cr_server_finalize(void);
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 #endif /* __EPM_INTERNAL_H__ */

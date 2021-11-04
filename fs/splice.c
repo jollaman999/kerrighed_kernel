@@ -1140,7 +1140,7 @@ EXPORT_SYMBOL(generic_splice_sendpage);
 /*
  * Attempt to initiate a splice from pipe to file.
  */
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_EPM
 static
 #endif
 long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
@@ -1176,7 +1176,7 @@ long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
 /*
  * Attempt to initiate a splice from a file to a pipe.
  */
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_EPM
 static
 #endif
 long do_splice_to(struct file *in, loff_t *ppos,
@@ -1995,7 +1995,7 @@ retry:
 /*
  * Link contents of ipipe to opipe.
  */
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_EPM
 static
 #endif
 int link_pipe(struct pipe_inode_info *ipipe,

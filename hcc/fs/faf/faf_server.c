@@ -1,4 +1,4 @@
-/** Kerrighed FAF servers.
+/** HCC FAF servers.
  *  @file faf_server.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.

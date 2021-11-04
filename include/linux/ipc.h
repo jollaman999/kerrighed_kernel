@@ -88,7 +88,7 @@ struct ipc_kludge {
 
 #define IPCMNI 32768  /* <= MAX_INT limit for ipc arrays (including sysctl changes) */
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 struct krgipc_ops;
 #endif
 
@@ -106,12 +106,12 @@ struct kern_ipc_perm
 	mode_t		mode; 
 	unsigned long	seq;
 	void		*security;
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	struct krgipc_ops *krgops;
 #endif
 };
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 struct ipc_namespace;
 
 bool ipc_used(struct ipc_namespace *ns);

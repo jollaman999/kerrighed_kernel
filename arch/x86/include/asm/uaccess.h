@@ -193,7 +193,7 @@ extern int __get_user_bad(void);
 
 
 #ifdef CONFIG_X86_32
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 
 #define __put_user_asm_u64(x, addr, err, errret)			\
 	asm volatile("1:	movl %%eax,0(%2)\n"			\
@@ -219,7 +219,7 @@ extern int __get_user_bad(void);
 		     : "=r" (err)					\
 		     : "A" (x), "r" (addr), "i" (errret), "0" (err))
 
-#else /* !CONFIG_KRG_FAF */
+#else /* !CONFIG_HCC_FAF */
 
 #define __put_user_asm_u64(x, addr, err, errret)			\
 	asm volatile("1:	movl %%eax,0(%2)\n"			\
@@ -234,7 +234,7 @@ extern int __get_user_bad(void);
 		     : "=r" (err)					\
 		     : "A" (x), "r" (addr), "i" (errret), "0" (err))
 
-#endif /* !CONFIG_KRG_FAF */
+#endif /* !CONFIG_HCC_FAF */
 
 #define __put_user_asm_ex_u64(x, addr)					\
 	asm volatile("1:	movl %%eax,0(%1)\n"			\
@@ -414,7 +414,7 @@ do {									\
 	}								\
 } while (0)
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 
 extern int ruaccess_get_user_asm(void);
 
@@ -443,7 +443,7 @@ extern int ruaccess_get_user_asm(void);
 		     : "m" (__m(addr)), "i" (errret), "0" (err),	\
 		       "i" (sizeof(*(addr))))
 
-#else /* !CONFIG_KRG_FAF */
+#else /* !CONFIG_HCC_FAF */
 
 #define __get_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
 	asm volatile("1:	mov"itype" %2,%"rtype"1\n"		\
@@ -457,7 +457,7 @@ extern int ruaccess_get_user_asm(void);
 		     : "=r" (err), ltype(x)				\
 		     : "m" (__m(addr)), "i" (errret), "0" (err))
 
-#endif /* !CONFIG_KRG_FAF */
+#endif /* !CONFIG_HCC_FAF */
 
 /*
  * This doesn't do __uaccess_begin/end - the exception handling
@@ -519,7 +519,7 @@ struct __large_struct { unsigned long buf[100]; };
  * we do not write to any memory gcc knows about, so there are no
  * aliasing issues.
  */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 
 extern int ruaccess_put_user_asm(void);
 
@@ -545,7 +545,7 @@ extern int ruaccess_put_user_asm(void);
 		     : ltype(x), "m" (__m(addr)), "i" (errret), "0" (err), \
 		       "i" (sizeof(*(addr))))
 
-#else /* CONFIG_KRG_FAF */
+#else /* CONFIG_HCC_FAF */
 
 #define __put_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
 	asm volatile("1:	mov"itype" %"rtype"1,%2\n"		\
@@ -558,7 +558,7 @@ extern int ruaccess_put_user_asm(void);
 		     : "=r"(err)					\
 		     : ltype(x), "m" (__m(addr)), "i" (errret), "0" (err))
 
-#endif /* CONFIG_KRG_FAF */
+#endif /* CONFIG_HCC_FAF */
 
 #define __put_user_asm_ex(x, addr, itype, rtype, ltype)			\
 	asm volatile("1:	mov"itype" %"rtype"0,%1\n"		\
@@ -687,7 +687,7 @@ extern struct movsl_mask {
 } ____cacheline_aligned_in_smp movsl_mask;
 #endif
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 static inline int check_ruaccess(void)
 {
 	struct thread_info *ti = current_thread_info();
@@ -697,7 +697,7 @@ static inline int check_ruaccess(void)
 
 #define ARCH_HAS_RUACCESS
 #define ARCH_HAS_RUACCESS_FIXUP
-#endif /* CONFIG_KRG_FAF */
+#endif /* CONFIG_HCC_FAF */
 
 #define ARCH_HAS_NOCACHE_UACCESS 1
 

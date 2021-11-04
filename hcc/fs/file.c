@@ -10,7 +10,7 @@
 #include <linux/hugetlb.h>
 #include <hcc/dvfs.h>
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include <hcc/faf_file_mgr.h>
 #include "faf/faf_hooks.h"
 #include "faf/faf_internal.h"
@@ -18,7 +18,7 @@
 
 #include <gdm/gdm.h>
 #include <hcc/hotplug.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/action.h>
 #endif
 #include <hcc/file.h>
@@ -58,7 +58,7 @@ int create_gdm_file_object(struct file *file)
 	return 0;
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 /** Check if we need to share a file struct cluster wide and do whatever needed
  *  @author Renaud Lottiaux
  *
@@ -68,13 +68,13 @@ void check_file_struct_sharing (int index, struct file *file,
 				struct epm_action *action)
 {
 	/* Do not share the file struct for FAF files or already shared files*/
-	if (file->f_flags & (O_FAF_CLT | O_FAF_SRV | O_KRG_SHARED))
+	if (file->f_flags & (O_FAF_CLT | O_FAF_SRV | O_HCC_SHARED))
 		goto done;
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	BUG_ON(file->f_op == &krg_shm_file_operations);
 
-	/* Do not share the file struct for Kerrighed SHM files */
+	/* Do not share the file struct for HCC SHM files */
 	if (file->f_op == &shm_file_operations ||
 	    file->f_op == &shm_file_operations_huge)
 		goto done;
@@ -97,7 +97,7 @@ void check_file_struct_sharing (int index, struct file *file,
 	}
 
 share:
-	file->f_flags |= O_KRG_SHARED;
+	file->f_flags |= O_HCC_SHARED;
 
 done:
 	return;
@@ -125,7 +125,7 @@ void put_dvfs_file(int index, struct file *file)
 	dvfs_file = grab_dvfs_file_struct(objid);
 	dvfs_file->count--;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	check_last_faf_client_close(file, dvfs_file);
 #endif
 

@@ -1,5 +1,5 @@
-#ifndef __KKRG_MSG__
-#define __KKRG_MSG__
+#ifndef __KHCC_MSG__
+#define __KHCC_MSG__
 
 
 struct msg_msgseg {
@@ -10,7 +10,7 @@ struct msg_msgseg {
 #define DATALEN_MSG	(PAGE_SIZE-sizeof(struct msg_msg))
 #define DATALEN_SEG	(PAGE_SIZE-sizeof(struct msg_msgseg))
 
-/** Kerrighed Hooks **/
+/** HCC Hooks **/
 
 int krg_ipc_msg_newque(struct ipc_namespace *ns,
 		       struct msg_queue *msq);
@@ -69,4 +69,4 @@ long __do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 
 void local_master_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp);
 
-#endif // __KKRG_MSG__
+#endif // __KHCC_MSG__

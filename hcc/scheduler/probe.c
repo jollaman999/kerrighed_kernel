@@ -735,7 +735,7 @@ static struct config_group *probes_make_group(struct config_group *group,
 		goto out;
 
 	if (!(current->flags & PF_KTHREAD)
-	    && !IS_KERRIGHED_NODE(KRGFLAGS_RUNNING))
+	    && !IS_KERRIGHED_NODE(HCCFLAGS_RUNNING))
 		goto out;
 
 	global_probes = global_config_make_item_begin(&group->cg_item, name);

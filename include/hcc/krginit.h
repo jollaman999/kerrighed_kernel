@@ -1,13 +1,13 @@
-#ifndef __KRGINIT_H__
-#define __KRGINIT_H__
+#ifndef __HCCINIT_H__
+#define __HCCINIT_H__
 
 #include <hcc/types.h>
 #include <linux/rwsem.h>
 
 enum hcc_init_flags_t {
-	KRG_INITFLAGS_NODEID,
-	KRG_INITFLAGS_SESSIONID,
-	KRG_INITFLAGS_AUTONODEID,
+	HCC_INITFLAGS_NODEID,
+	HCC_INITFLAGS_SESSIONID,
+	HCC_INITFLAGS_AUTONODEID,
 };
 
 /* Tools */
@@ -19,8 +19,8 @@ extern hcc_subsession_t hcc_subsession_id;
 extern int hcc_init_flags;
 extern struct rw_semaphore hcc_init_sem;
 
-#define SET_KRG_INIT_FLAGS(p) hcc_init_flags |= (1<<p)
-#define CLR_KRG_INIT_FLAGS(p) hcc_init_flags &= ~(1<<p)
-#define ISSET_KRG_INIT_FLAGS(p) (hcc_init_flags & (1<<p))
+#define SET_HCC_INIT_FLAGS(p) hcc_init_flags |= (1<<p)
+#define CLR_HCC_INIT_FLAGS(p) hcc_init_flags &= ~(1<<p)
+#define ISSET_HCC_INIT_FLAGS(p) (hcc_init_flags & (1<<p))
 
 #endif

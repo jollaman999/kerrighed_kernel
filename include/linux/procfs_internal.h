@@ -2,7 +2,7 @@
 #define __PROCFS_INTERNAL_H__
 
 /* All definitions below are moved from fs/proc/internal.h */
-#ifdef CONFIG_KRG_PROCFS
+#ifdef CONFIG_HCC_PROCFS
 
 struct vmalloc_info {
 	unsigned long	used;
@@ -28,7 +28,7 @@ int show_stat(struct seq_file *p, void *v);
 int loadavg_proc_show(struct seq_file *m, void *v);
 int uptime_proc_show(struct seq_file *m, void *v);
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 /* From fs/proc/base.c */
 struct tgid_iter {
 	unsigned int tgid;
@@ -64,7 +64,7 @@ extern int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
 extern int proc_pid_statm(struct seq_file *m, struct pid_namespace *ns,
 				struct pid *pid, struct task_struct *task);
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 int epm_type_show(struct task_struct *task, char *buffer);
 int epm_source_show(struct task_struct *task, char *buffer);
 int epm_target_show(struct task_struct *task, char *buffer);
@@ -75,8 +75,8 @@ extern struct dentry *krg_proc_pid_lookup(struct inode *dir,
 extern int krg_proc_pid_readdir(struct file *filp,
 				void *dirent, filldir_t filldir,
 				loff_t offset);
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 
-#endif /* CONFIG_KRG_PROCFS */
+#endif /* CONFIG_HCC_PROCFS */
 
 #endif /* __PROCFS_INTERNAL_H__ */

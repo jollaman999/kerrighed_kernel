@@ -16,10 +16,10 @@
 #include <linux/cluster_barrier.h>
 #include <linux/unique_id.h>
 #include <net/krgrpc/rpc.h>
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 #include <hcc/pid.h>
 #endif
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 #include <hcc/hotplug.h>
 #endif
 
@@ -42,8 +42,8 @@ hcc_session_t hcc_session_id = 0;
 hcc_subsession_t hcc_subsession_id = -1;
 
 /* Initialisation flags */
-#ifdef CONFIG_KRG_AUTONODEID_ON
-#define IF_AUTONODEID (1<<KRG_INITFLAGS_AUTONODEID)
+#ifdef CONFIG_HCC_AUTONODEID_ON
+#define IF_AUTONODEID (1<<HCC_INITFLAGS_AUTONODEID)
 #else
 #define IF_AUTONODEID (0)
 #endif
@@ -70,37 +70,37 @@ struct kobject* krghotplugsys;
 #define deffct(p) extern int init_##p(void); extern void cleanup_##p(void)
 
 deffct(tools);
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 deffct(hotplug);
 #endif
-#ifdef CONFIG_KRGRPC
+#ifdef CONFIG_HCCRPC
 deffct(rpc);
 #endif
-#ifdef CONFIG_KRG_STREAM
+#ifdef CONFIG_HCC_STREAM
 deffct(stream);
 #endif
 deffct(gdm);
 deffct(kermm);
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 deffct(dvfs);
 #endif
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 deffct(keripc);
 #endif
-#ifdef CONFIG_KRG_CAP
+#ifdef CONFIG_HCC_CAP
 deffct(krg_cap);
 #endif
-#ifdef CONFIG_KRG_PROCFS
+#ifdef CONFIG_HCC_PROCFS
 deffct(procfs);
 #endif
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 deffct(proc);
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 deffct(ghost);
 deffct(epm);
 #endif
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 deffct(scheduler);
 #endif
 
@@ -112,9 +112,9 @@ static int __init  parse_autonodeid(char *str) {
 	int v = 0;
 	get_option(&str, &v);
 	if(v)
-		SET_KRG_INIT_FLAGS(KRG_INITFLAGS_AUTONODEID);
+		SET_HCC_INIT_FLAGS(HCC_INITFLAGS_AUTONODEID);
 	else
-		CLR_KRG_INIT_FLAGS(KRG_INITFLAGS_AUTONODEID);
+		CLR_HCC_INIT_FLAGS(HCC_INITFLAGS_AUTONODEID);
 	return 0;
 }
 __setup("autonodeid=",parse_autonodeid);
@@ -123,7 +123,7 @@ static int __init  parse_node_id(char *str) {
 	int v;
 	get_option(&str, &v);
 	hcc_node_id = v;
-	SET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID);
+	SET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID);
 	return 0;
 }
 __setup("node_id=",parse_node_id);
@@ -132,7 +132,7 @@ static int __init  parse_session_id(char *str){
 	int v;
 	get_option(&str, &v);
 	hcc_session_id = v;
-	SET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID);
+	SET_HCC_INIT_FLAGS(HCC_INITFLAGS_SESSIONID);
 	return 0;
 }
 __setup("session_id=",parse_session_id);
@@ -242,11 +242,11 @@ static void read_hcc_nodes(char *_h, char *k)
 	lh = strlen(h);
 
 	for (ik=k; ik && *ik;) {
-		if (!ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID)) {
+		if (!ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_SESSIONID)) {
 			if (strncmp("session=", ik, 8) == 0){
 				ik += 8;
 				hcc_session_id = simple_strtoul(ik, NULL, 10);
-				SET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID);
+				SET_HCC_INIT_FLAGS(HCC_INITFLAGS_SESSIONID);
 
 				ik = get_next_line(ik);
 				continue;
@@ -260,13 +260,13 @@ static void read_hcc_nodes(char *_h, char *k)
 			continue;
 		}
 
-		if (!ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID)) {
+		if (!ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID)) {
 			if (strncmp(h, ik, lh) == 0) {
 				char *end;
 				ik += lh;
 
 				hcc_node_id = simple_strtoul(ik, &end, 10);
-				SET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID);
+				SET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID);
 			}
 		}
 
@@ -278,8 +278,8 @@ static void __init init_ids(void)
 {
 	char *hostname, *hcc_nodes;
 
-	if (!ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID) ||
-	    !ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID)) {
+	if (!ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID) ||
+	    !ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_SESSIONID)) {
 		/* first we read the name of the node */
 		hostname = read_from_file("/etc/hostname", 256);
 		if (!hostname) {
@@ -301,9 +301,9 @@ static void __init init_ids(void)
 	}
 
  out:
-	if (ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID)) {
+	if (ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID)) {
 		check_node_id(hcc_node_id);
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 		universe[hcc_node_id].state = 1;
 		set_krgnode_present(hcc_node_id);
 #endif
@@ -312,12 +312,12 @@ static void __init init_ids(void)
 	hcc_cluster_flags = 0;
 	hcc_node_flags = 0;
 
-	printk("Kerrighed session ID : %d\n", hcc_session_id);
-	printk("Kerrighed node ID    : %d\n", hcc_node_id);
-	printk("Kerrighed min nodes  : %d\n", hcc_nb_nodes_min);
+	printk("HCC session ID : %d\n", hcc_session_id);
+	printk("HCC node ID    : %d\n", hcc_node_id);
+	printk("HCC min nodes  : %d\n", hcc_nb_nodes_min);
 
-	if (!ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID) ||
-	    !ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_SESSIONID))
+	if (!ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID) ||
+	    !ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_SESSIONID))
 		panic("hcc: incomplete session ID / node ID settings!\n");
 
 	return;
@@ -325,32 +325,32 @@ static void __init init_ids(void)
 
 int init_hcc_communication_system(void)
 {
-	printk("Init Kerrighed low-level framework...\n");
+	printk("Init HCC low-level framework...\n");
 
 	if (init_tools())
 		goto err_tools;
 
 	hcc_nb_nodes = 0;
 
-#ifdef CONFIG_KRGRPC
+#ifdef CONFIG_HCCRPC
 	if (init_rpc())
 		goto err_rpc;
 #endif
 
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 	if (init_hotplug())
 		goto err_hotplug;
 #endif
 
-	printk("Init Kerrighed low-level framework (nodeid %d) : done\n", hcc_node_id);
+	printk("Init HCC low-level framework (nodeid %d) : done\n", hcc_node_id);
 
 	return 0;
 
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 err_hotplug:
 	cleanup_hotplug();
 #endif
-#ifdef CONFIG_KRGRPC
+#ifdef CONFIG_HCCRPC
 err_rpc:
 #endif
 	cleanup_tools();
@@ -361,112 +361,112 @@ err_tools:
 #ifdef CONFIG_KERRIGHED
 int init_hcc_upper_layers(void)
 {
-	printk("Init Kerrighed distributed services...\n");
+	printk("Init HCC distributed services...\n");
 
-#ifdef CONFIG_KRG_GDM
+#ifdef CONFIG_HCC_GDM
 	if (init_gdm())
 		goto err_gdm;
 #endif
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (init_ghost())
 		goto err_ghost;
 #endif
 
-#ifdef CONFIG_KRG_STREAM
+#ifdef CONFIG_HCC_STREAM
 	if (init_stream())
 		goto err_palantir;
 #endif
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	if (init_kermm())
 		goto err_kermm;
 #endif
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	if (init_dvfs())
 		goto err_dvfs;
 #endif
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	if (init_keripc())
 		goto err_keripc;
 #endif
 
-#ifdef CONFIG_KRG_CAP
+#ifdef CONFIG_HCC_CAP
 	if (init_krg_cap())
 		goto err_krg_cap;
 #endif
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	if (init_proc())
 		goto err_proc;
 #endif
 
-#ifdef CONFIG_KRG_PROCFS
+#ifdef CONFIG_HCC_PROCFS
 	if (init_procfs())
 		goto err_procfs;
 #endif
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (init_epm())
 		goto err_epm;
 #endif
 
-	printk("Init Kerrighed distributed services: done\n");
+	printk("Init HCC distributed services: done\n");
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	if (init_scheduler())
 		goto err_sched;
 #endif
 
 	return 0;
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	cleanup_scheduler();
       err_sched:
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	cleanup_epm();
       err_epm:
 #endif
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	cleanup_keripc();
       err_keripc:
 #endif
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	cleanup_dvfs();
       err_dvfs:
 #endif
-#ifdef CONFIG_KRG_PROCFS
+#ifdef CONFIG_HCC_PROCFS
 	cleanup_procfs();
       err_procfs:
 #endif
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	cleanup_proc();
       err_proc:
 #endif
-#ifdef CONFIG_KRG_CAP
+#ifdef CONFIG_HCC_CAP
 	cleanup_krg_cap();
       err_krg_cap:
 #endif
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	cleanup_kermm();
       err_kermm:
 #endif
-#ifdef CONFIG_KRG_GDM
+#ifdef CONFIG_HCC_GDM
 	cleanup_gdm();
       err_gdm:
 #endif
-#ifdef CONFIG_KRG_STREAM
+#ifdef CONFIG_HCC_STREAM
 	cleanup_stream();
       err_palantir:
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	cleanup_ghost();
       err_ghost:
 #endif
-#ifdef CONFIG_KRGRPC
+#ifdef CONFIG_HCCRPC
 	cleanup_rpc();
 #endif
 	return -1;
@@ -614,10 +614,10 @@ static int init_sysfs(void){
 }
 
 void __init hcc_init(void){
-	printk("Kerrighed: stage 0\n");
+	printk("HCC: stage 0\n");
 	init_ids();
 
-	printk("Kerrighed: stage 1\n");
+	printk("HCC: stage 1\n");
 
 	init_sysfs();
 	krg_wq = create_workqueue("krg");
@@ -628,7 +628,7 @@ void __init hcc_init(void){
 	init_unique_ids();
 	init_node_discovering();
 
-	printk("Kerrighed: stage 2\n");
+	printk("HCC: stage 2\n");
 
 	if (init_hcc_communication_system())
 		return;
@@ -640,10 +640,10 @@ void __init hcc_init(void){
 		return;
 #endif
 
-	SET_KERRIGHED_CLUSTER_FLAGS(KRGFLAGS_LOADED);
-	SET_KERRIGHED_NODE_FLAGS(KRGFLAGS_LOADED);
+	SET_KERRIGHED_CLUSTER_FLAGS(HCCFLAGS_LOADED);
+	SET_KERRIGHED_NODE_FLAGS(HCCFLAGS_LOADED);
 
-	printk("Kerrighed... loaded!\n");
+	printk("HCC... loaded!\n");
 
 	rpc_enable(CLUSTER_START);
 }

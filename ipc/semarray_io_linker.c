@@ -1,5 +1,5 @@
 /*
- *  Kerrighed/modules/ipc/semarray_io_linker.c
+ *  HCC/modules/ipc/semarray_io_linker.c
  *
  *  GDM SEM array Linker.
  *
@@ -554,7 +554,7 @@ static inline int __import_semqueues(struct rpc_desc *desc,
 			goto err;
 	}
 
-#ifdef CONFIG_KRG_DEBUG
+#ifdef CONFIG_HCC_DEBUG
 	{
 		struct sem_queue *q;
 		i=0;

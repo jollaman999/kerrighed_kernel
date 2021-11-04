@@ -1,5 +1,5 @@
-#ifndef __KRG_SCHEDULER_PROBE_H__
-#define __KRG_SCHEDULER_PROBE_H__
+#ifndef __HCC_SCHEDULER_PROBE_H__
+#define __HCC_SCHEDULER_PROBE_H__
 
 #include <linux/configfs.h>
 #include <linux/errno.h>
@@ -525,4 +525,4 @@ void scheduler_probe_lock(struct scheduler_probe *probe);
  */
 void scheduler_probe_unlock(struct scheduler_probe *probe);
 
-#endif /* __KRG_SCHEDULER_PROBE_H__ */
+#endif /* __HCC_SCHEDULER_PROBE_H__ */

@@ -1,5 +1,5 @@
-#ifndef __KRG_RPC__
-#define __KRG_RPC__
+#ifndef __HCC_RPC__
+#define __HCC_RPC__
 
 #include <net/krgrpc/rpcid.h>
 #include <hcc/krgnodemask.h>

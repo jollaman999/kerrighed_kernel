@@ -52,11 +52,11 @@ static void handle_node_add(struct rpc_desc *rpc_desc, void *data, size_t size)
 	if (page) {
 		ret = krgnodelist_scnprintf(page, PAGE_SIZE, krgnode_online_map);
 		BUG_ON(ret >= PAGE_SIZE);
-		printk("Kerrighed is running on %d nodes: %s\n",
+		printk("HCC is running on %d nodes: %s\n",
 		       num_online_krgnodes(), page);
 		free_page((unsigned long)page);
 	} else {
-		printk("Kerrighed is running on %d nodes\n", num_online_krgnodes());
+		printk("HCC is running on %d nodes\n", num_online_krgnodes());
 	}
 }
 

@@ -30,7 +30,7 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/signal.h>
 #include <linux/nospec.h>
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
 #include <hcc/pid.h>
@@ -39,7 +39,7 @@
 #include <hcc/krginit.h>
 #include <hcc/remote_syscall.h>
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/krg_exit.h>
 #include <hcc/action.h>
 #include <hcc/hcc_signal.h>
@@ -136,7 +136,7 @@ static inline int has_pending_signals(sigset_t *signal, sigset_t *blocked)
 
 #define PENDING(p,b) has_pending_signals(&(p)->signal, (b))
 
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_EPM
 static
 #endif
 int recalc_sigpending_tsk(struct task_struct *t)
@@ -214,7 +214,7 @@ int next_signal(struct sigpending *pending, sigset_t *mask)
  * - this may be called without locks if and only if t == current, otherwise an
  *   appopriate lock must be held to stop the target task from exiting
  */
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_EPM
 static
 #endif
 struct sigqueue *__sigqueue_alloc(struct task_struct *t, gfp_t flags,
@@ -247,7 +247,7 @@ struct sigqueue *__sigqueue_alloc(struct task_struct *t, gfp_t flags,
 	return q;
 }
 
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_EPM
 static
 #endif
 void __sigqueue_free(struct sigqueue *q)
@@ -629,7 +629,7 @@ static inline bool si_fromuser(const struct siginfo *info)
  * Bad permissions for sending the signal
  * - the caller must hold at least the RCU read lock
  */
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static int __check_kill_permission(int sig, struct siginfo *info,
 				   struct task_struct *t,
 				   struct pid_namespace *ns, pid_t session)
@@ -667,7 +667,7 @@ static int check_kill_permission(int sig, struct siginfo *info,
 			 * We don't return the error if sid == NULL. The
 			 * task was unhashed, the caller must notice this.
 			 */
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 			if (!sid || pid_nr_ns(sid, ns) == session)
 #else
 			if (!sid || sid == task_session(current))
@@ -681,7 +681,7 @@ static int check_kill_permission(int sig, struct siginfo *info,
 	return security_task_kill(t, info, sig, 0);
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static int check_kill_permission(int sig, struct siginfo *info,
 				 struct task_struct *t)
 {
@@ -1208,7 +1208,7 @@ int kill_pid_info(int sig, struct siginfo *info, struct pid *pid)
 	}
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 /* Caller guarantees that info->si_pid is 0 if from an ancestor namespace. */
 int __krg_group_send_sig_info(int sig, struct siginfo *info,
 			      struct task_struct *p)
@@ -1310,18 +1310,18 @@ static int krg_kill_proc_info(int sig, struct siginfo *info, pid_t pid)
 	return krg_remote_syscall_simple(PROC_KILL_PROC_INFO, pid,
 					 &msg, sizeof(msg));
 }
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 
 int
 kill_proc_info(int sig, struct siginfo *info, pid_t pid)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	struct pid *p;
 	struct task_struct *t;
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 	int error;
 	rcu_read_lock();
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	p = find_vpid(pid);
 	t = pid_task(p, PIDTYPE_PID);
 	if (t && krg_action_block_any(t)) {
@@ -1331,14 +1331,14 @@ kill_proc_info(int sig, struct siginfo *info, pid_t pid)
 		/* Try a remote syscall */
 		error = -ESRCH;
 	}
-#else /* CONFIG_KRG_EPM */
+#else /* CONFIG_HCC_EPM */
 	error = kill_pid_info(sig, info, find_vpid(pid));
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 	rcu_read_unlock();
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	if (error == -ESRCH)
 		error = krg_kill_proc_info(sig, info, pid);
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 	return error;
 }
 
@@ -1381,7 +1381,7 @@ out_unlock:
 }
 EXPORT_SYMBOL_GPL(kill_pid_info_as_uid);
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 static int handle_kill_pg_info(struct rpc_desc *desc, void *_msg, size_t size)
 {
 	struct kill_info_msg *msg = _msg;
@@ -1477,7 +1477,7 @@ static void krg_kill_all(int sig, struct siginfo *info, int *count, int *retval)
 	if (!is_krg_pid_ns_root(task_active_pid_ns(current)))
 		return;
 }
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 
 /*
  * kill_something_info() interprets pid in interesting ways just like kill(2).
@@ -1494,10 +1494,10 @@ static int kill_something_info(int sig, struct siginfo *info, pid_t pid)
 		rcu_read_lock();
 		ret = kill_pid_info(sig, info, find_vpid(pid));
 		rcu_read_unlock();
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		if (ret == -ESRCH)
 			ret = krg_kill_proc_info(sig, info, pid);
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 		return ret;
 	}
 
@@ -1505,13 +1505,13 @@ static int kill_something_info(int sig, struct siginfo *info, pid_t pid)
 	if (pid != -1) {
 		ret = __kill_pgrp_info(sig, info,
 				pid ? find_vpid(-pid) : task_pgrp(current));
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		read_unlock(&tasklist_lock);
 		if (!pid)
 			pid = -task_pgrp_vnr(current);
 		ret = krg_kill_pg_info(sig, info, -pid) ? ret : 0;
 		return ret;
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 	} else {
 		int retval = 0, count = 0;
 		struct task_struct * p;
@@ -1525,12 +1525,12 @@ static int kill_something_info(int sig, struct siginfo *info, pid_t pid)
 					retval = err;
 			}
 		}
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		read_unlock(&tasklist_lock);
 		krg_kill_all(sig, info, &count, &retval);
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 		ret = count ? retval : -ESRCH;
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		return ret;
 #endif
 	}
@@ -1696,7 +1696,7 @@ ret:
 	return ret;
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 int send_hcc_signal(int sig, struct siginfo *info, struct task_struct *t)
 {
 	struct sigqueue *q;
@@ -1748,7 +1748,7 @@ static int handle_hcc_signal(int sig, struct siginfo *info,
 
 	return released;
 }
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 /*
  * Let a parent know about the death of a child.
@@ -1787,7 +1787,7 @@ int do_notify_parent(struct task_struct *tsk, int sig)
 	 * correct to rely on this
 	 */
 	rcu_read_lock();
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (tsk->parent == baby_sitter)
 		info.si_pid = task_pid_knr(tsk);
 	else
@@ -1811,7 +1811,7 @@ int do_notify_parent(struct task_struct *tsk, int sig)
 		info.si_status = tsk->exit_code >> 8;
 	}
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (tsk->parent == baby_sitter) {
 		/*
 		 * Current users hold write_lock_irq(&tasklist_lock).
@@ -1826,7 +1826,7 @@ int do_notify_parent(struct task_struct *tsk, int sig)
 			tsk->exit_signal = -1;
 		return ret;
 	}
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 	psig = tsk->parent->sighand;
 	spin_lock_irqsave(&psig->siglock, flags);
 	if (!task_ptrace(tsk) && sig == SIGCHLD &&
@@ -1872,7 +1872,7 @@ void do_notify_parent_cldstop(struct task_struct *tsk, int why)
 		tsk = tsk->group_leader;
 		parent = tsk->real_parent;
 	}
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (parent == baby_sitter)
 		return;
 #endif
@@ -2229,7 +2229,7 @@ relock:
 
 			if (!signr)
 				break; /* will return 0 */
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 			if (info->si_code == SI_KERRIGHED) {
 				if (handle_hcc_signal(signr, info, regs))
 					/* It released the siglock.  */
@@ -2823,7 +2823,7 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 	struct k_sigaction *k;
 	sigset_t mask;
 	int idx;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	unsigned long sighand_id;
 #endif
 	if (!valid_signal(sig) || sig < 1 || (act && sig_kernel_only(sig)))
@@ -2831,7 +2831,7 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 
 	idx = array_index_nospec(sig - 1, _NSIG);
 	k = &t->sighand->action[idx];
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	down_read(&hcc_init_sem);
 	sighand_id = current->sighand->krg_objid;
 	if (sighand_id)
@@ -2869,7 +2869,7 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 	}
 
 	spin_unlock_irq(&current->sighand->siglock);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (sighand_id)
 		krg_sighand_unlock(sighand_id);
 	up_read(&hcc_init_sem);
@@ -3124,13 +3124,13 @@ __attribute__((weak)) const char *arch_vma_name(struct vm_area_struct *vma)
 	return NULL;
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 void remote_signals_init(void)
 {
 	rpc_register_int(PROC_KILL_PROC_INFO, handle_kill_proc_info, 0);
 	rpc_register_int(PROC_KILL_PG_INFO, handle_kill_pg_info, 0);
 }
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 
 void __init signals_init(void)
 {

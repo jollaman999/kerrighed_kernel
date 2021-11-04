@@ -1,4 +1,4 @@
-/** Kerrighed FAF Server.
+/** HCC FAF Server.
  *  @file faf_server.h
  *
  *  @author Renaud Lottiaux

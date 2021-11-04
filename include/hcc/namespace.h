@@ -1,5 +1,5 @@
-#ifndef __KRG_NAMESPACE_H__
-#define __KRG_NAMESPACE_H__
+#ifndef __HCC_NAMESPACE_H__
+#define __HCC_NAMESPACE_H__
 
 #include <linux/nsproxy.h>
 #include <linux/rcupdate.h>
@@ -35,4 +35,4 @@ bool can_create_krg_ns(unsigned long flags);
 
 void krg_ns_root_exit(struct krg_namespace *ns);
 
-#endif /* __KRG_NAMESPACE_H__ */
+#endif /* __HCC_NAMESPACE_H__ */

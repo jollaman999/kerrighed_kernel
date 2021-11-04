@@ -25,7 +25,7 @@
 #include <asm/uaccess.h>
 #include <asm/ioctls.h>
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <linux/splice.h>
 #include <hcc/app_shared.h>
 #include <hcc/ghost.h>
@@ -923,7 +923,7 @@ struct pipe_inode_info * alloc_pipe_info(struct inode *inode)
 			init_waitqueue_head(&pipe->wait);
 			pipe->r_counter = pipe->w_counter = 1;
 			pipe->inode = inode;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 			pipe->fread = NULL;
 			pipe->fwrite = NULL;
 #endif
@@ -1060,7 +1060,7 @@ struct file *__create_write_pipe(struct path *path, int flags)
 {
 	struct file *f;
 	int err = -ENFILE;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	struct pipe_inode_info *pipe;
 #endif
 
@@ -1073,7 +1073,7 @@ struct file *__create_write_pipe(struct path *path, int flags)
 
 	f->f_flags = O_WRONLY | (flags & O_NONBLOCK);
 	f->f_version = 0;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	pipe = path->dentry->d_inode->i_pipe;
 	pipe->fwrite = f;
 #endif
@@ -1124,7 +1124,7 @@ static struct file *alloc_pipe_file(struct path *path, fmode_t mode,
 		const struct file_operations *fop, int flags)
 {
 	struct file *file;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	struct pipe_inode_info *pipe;
 #endif
 
@@ -1138,7 +1138,7 @@ static struct file *alloc_pipe_file(struct path *path, fmode_t mode,
 	file->f_mode = mode;
 	file->f_flags = O_RDONLY | (flags & O_NONBLOCK);
 	file->f_op = fop;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	pipe = path->dentry->d_inode->i_pipe;
 	pipe->fread = file;
 #endif
@@ -1213,7 +1213,7 @@ int do_pipe_flags(int *fd, int flags)
 	return error;
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 int cr_add_pipe_inode_to_shared_table(struct task_struct *task,
 				      struct file *file)
@@ -1438,7 +1438,7 @@ struct shared_object_operations cr_shared_pipe_inode_ops = {
 /** Return a hcc descriptor corresponding to the given file.
  *  @author Matthieu Fertré
  *
- *  @param file       The file to get a Kerrighed descriptor for.
+ *  @param file       The file to get a HCC descriptor for.
  *  @param desc       The returned descriptor.
  *  @param desc_size  Size of the returned descriptor.
  *

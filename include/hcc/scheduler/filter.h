@@ -1,5 +1,5 @@
-#ifndef __KRG_SCHEDULER_FILTER_H__
-#define __KRG_SCHEDULER_FILTER_H__
+#ifndef __HCC_SCHEDULER_FILTER_H__
+#define __HCC_SCHEDULER_FILTER_H__
 
 #include <linux/configfs.h>
 #include <linux/module.h>
@@ -783,4 +783,4 @@ scheduler_filter_simple_get_remote_value(struct scheduler_filter *filter,
 					       param_p, nr_param);
 }
 
-#endif /* __KRG_SCHEDULER_FILTER_H__ */
+#endif /* __HCC_SCHEDULER_FILTER_H__ */

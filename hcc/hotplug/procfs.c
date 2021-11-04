@@ -11,7 +11,7 @@
 #include <linux/types.h>
 #include <hcc/procfs.h>
 
-#define KRG_VERSION "$Name:  $ ($Date: 2004/11/29 17:44:08 $):1.0-rc4"
+#define HCC_VERSION "$Name:  $ ($Date: 2004/11/29 17:44:08 $):1.0-rc4"
 
 struct proc_dir_entry *proc_hcc = NULL;
 EXPORT_SYMBOL(proc_hcc);
@@ -65,7 +65,7 @@ void procfs_deltree(struct proc_dir_entry *entry)
 }
 EXPORT_SYMBOL(procfs_deltree);
 
-static char *krg_version = "Kerrighed v1.0-RC1 (" KRG_VERSION
+static char *krg_version = "HCC v1.0-RC1 (" HCC_VERSION
 #ifdef CONFIG_SMP
     " SMP"
 #endif

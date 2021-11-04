@@ -1,5 +1,5 @@
 /*
- *  Kerrighed/modules/epm/app_utils.h
+ *  HCC/modules/epm/app_utils.h
  *
  *  Copyright (C) 2008 INRIA
  *

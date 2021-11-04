@@ -13,7 +13,7 @@
 #include <hcc/file.h>
 #include <hcc/file_stat.h>
 #include <hcc/physical_fs.h>
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include <hcc/faf.h>
 #include "faf/faf_internal.h"
 #endif
@@ -22,7 +22,7 @@ static inline umode_t get_inode_mode(const struct file *file)
 {
 	umode_t i_mode;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
 		i_mode = ((struct faf_client_data*)file->private_data)->i_mode;
 	else
@@ -39,7 +39,7 @@ int is_pipe(const struct file *file)
 
 static int __is_pipe_named(const struct file *file)
 {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
 		return ((struct faf_client_data*)file->private_data)->is_named_pipe;
 #endif
@@ -132,7 +132,7 @@ char *get_phys_filename(struct file *file, char *buffer, bool del_ok)
 {
 	char *filename;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT) {
 		bool deleted = false;
 		bool *deleted_param = del_ok ? NULL : &deleted;

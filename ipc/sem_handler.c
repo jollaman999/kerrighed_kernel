@@ -1,5 +1,5 @@
 /*
- *  Kerrighed/modules/ipc/sem_handler.c
+ *  HCC/modules/ipc/sem_handler.c
  *
  *  All the code for sharing IPC semaphore accross the cluster
  *
@@ -137,7 +137,7 @@ static struct kern_ipc_perm *kcb_ipc_sem_findkey(struct ipc_ids *ids, key_t key)
 	return NULL;
 }
 
-/** Notify the creation of a new IPC sem_array to Kerrighed.
+/** Notify the creation of a new IPC sem_array to HCC.
  *
  *  @author Matthieu Fertré
  */
@@ -498,10 +498,10 @@ int krg_ipc_sem_copy_semundo(unsigned long clone_flags,
 	if (clone_flags & CLONE_SYSVSEM) {
 
 		/* Do not support fork of process which had used semaphore
-		   before Kerrighed was loaded */
+		   before HCC was loaded */
 		if (current->sysvsem.undo_list) {
 			printk("ERROR: Do not support fork of process (%d - %s)"
-			       "that had used semaphore before Kerrighed was "
+			       "that had used semaphore before HCC was "
 			       "started\n", tsk->tgid, tsk->comm);
 			r = -EPERM;
 			goto exit;
@@ -517,7 +517,7 @@ int krg_ipc_sem_copy_semundo(unsigned long clone_flags,
 		/* undolist will be only created when needed */
 		tsk->sysvsem.undo_list_id = UNIQUE_ID_NONE;
 
-	/* pointer to undo_list is useless in KRG implementation of semaphores */
+	/* pointer to undo_list is useless in HCC implementation of semaphores */
 	tsk->sysvsem.undo_list = NULL;
 
 exit:
@@ -530,7 +530,7 @@ int add_semundo_to_proc_list(struct semundo_list_object *undo_list, int semid)
 	int r = 0;
 	BUG_ON(!undo_list);
 
-#ifdef CONFIG_KRG_DEBUG
+#ifdef CONFIG_HCC_DEBUG
 	/* WARNING: this is a paranoiac checking */
 	for (undo_id = undo_list->list; undo_id; undo_id = undo_id->next) {
 		if (undo_id->semid == semid) {

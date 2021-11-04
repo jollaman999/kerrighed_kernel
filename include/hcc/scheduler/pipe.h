@@ -1,5 +1,5 @@
-#ifndef __KRG_SCHEDULER_PIPE_H__
-#define __KRG_SCHEDULER_PIPE_H__
+#ifndef __HCC_SCHEDULER_PIPE_H__
+#define __HCC_SCHEDULER_PIPE_H__
 
 #include <linux/configfs.h>
 #include <linux/kernel.h>
@@ -693,4 +693,4 @@ ssize_t scheduler_pipe_store_attribute(struct scheduler_pipe *pipe,
 				       const char *page, size_t count,
 				       int *handled);
 
-#endif /* __KRG_SCHEDULER_PIPE_H__ */
+#endif /* __HCC_SCHEDULER_PIPE_H__ */

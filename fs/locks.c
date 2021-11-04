@@ -129,7 +129,7 @@
 #include <linux/pid_namespace.h>
 
 #include <asm/uaccess.h>
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include <hcc/faf.h>
 #endif
 
@@ -1587,7 +1587,7 @@ SYSCALL_DEFINE2(flock, unsigned int, fd, unsigned int, cmd)
 	if (!filp)
 		goto out;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (filp->f_flags & O_FAF_CLT) {
 		error = krg_faf_flock(filp, cmd);
 		goto out_putf;

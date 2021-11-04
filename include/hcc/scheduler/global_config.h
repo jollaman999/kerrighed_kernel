@@ -1,5 +1,5 @@
-#ifndef __KRG_SCHEDULER_GLOBAL_CONFIG_H__
-#define __KRG_SCHEDULER_GLOBAL_CONFIG_H__
+#ifndef __HCC_SCHEDULER_GLOBAL_CONFIG_H__
+#define __HCC_SCHEDULER_GLOBAL_CONFIG_H__
 
 #include <linux/workqueue.h>
 #include <linux/list.h>
@@ -259,4 +259,4 @@ int export_global_config_item(struct epm_action *action, ghost_t *ghost,
 int import_global_config_item(struct epm_action *action, ghost_t *ghost,
 			      struct config_item **item_p);
 
-#endif /* __KRG_SCHEDULER_GLOBAL_CONFIG_H__ */
+#endif /* __HCC_SCHEDULER_GLOBAL_CONFIG_H__ */

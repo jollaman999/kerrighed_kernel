@@ -45,7 +45,7 @@
 #include <hcc/krgnodemask.h>
 #include <hcc/hotplug.h>
 #include <hcc/workqueue.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/ghost.h>
 #endif
 #include <hcc/scheduler/global_config.h>
@@ -1470,7 +1470,7 @@ struct config_item *global_config_unpack_get_item(struct rpc_desc *desc)
 	return item;
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 int export_global_config_item(struct epm_action *action, ghost_t *ghost,
 			      struct config_item *item)
@@ -1525,7 +1525,7 @@ out:
 	return err;
 }
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 static int replicate_config(hcc_node_t node)
 {

@@ -1,5 +1,5 @@
-#ifndef __KRG_SERVICES__
-#define __KRG_SERVICES__
+#ifndef __HCC_SERVICES__
+#define __HCC_SERVICES__
 
 #include <linux/ioctl.h>
 #include <hcc/types.h>
@@ -21,7 +21,7 @@
 #define IPC_PROC_BASE 224
 
 /*
- * Tools related Kerrighed syscalls
+ * Tools related HCC syscalls
  */
 
 #define KSYS_SET_CAP          _IOW(KERRIGHED_PROC_MAGIC, \
@@ -60,7 +60,7 @@
 				     int)
 
 /*
- * Communications related Kerrighed syscalls
+ * Communications related HCC syscalls
  */
 
 #define KSYS_GET_NODE_ID       _IOR(KERRIGHED_PROC_MAGIC, \
@@ -108,7 +108,7 @@
 
 
 /*
- *  Memory related Kerrighed syscalls
+ *  Memory related HCC syscalls
  */
 
 #define KSYS_CHANGE_MAP_LOCAL_VALUE  _IOW(KERRIGHED_PROC_MAGIC, \

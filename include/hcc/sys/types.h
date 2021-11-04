@@ -14,7 +14,7 @@
  *                                                                          *
  *--------------------------------------------------------------------------*/
 
-#ifdef CONFIG_KRG_AUTONODEID
+#ifdef CONFIG_HCC_AUTONODEID
 #define NR_BITS_IN_MAX_NODE_ID     8
 #else
 #define NR_BITS_IN_MAX_NODE_ID     7
@@ -47,11 +47,11 @@ typedef unsigned long physaddr_t;
 typedef unsigned int hcc_network_t;
 
 enum hcc_status {
-	KRG_FIRST_START,
-	KRG_FINAL_STOP,
-	KRG_NODE_STARTING,
-	KRG_NODE_STOPING,
-	KRG_RUNNING_CLUSTER,
+	HCC_FIRST_START,
+	HCC_FINAL_STOP,
+	HCC_NODE_STARTING,
+	HCC_NODE_STOPING,
+	HCC_RUNNING_CLUSTER,
 };
 typedef enum hcc_status hcc_status_t;
 

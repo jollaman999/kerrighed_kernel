@@ -1,4 +1,4 @@
-/** Kerrighed Open File Access Forwarding System.
+/** HCC Open File Access Forwarding System.
  *  @file faf.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
@@ -101,7 +101,7 @@ int close_faf_file(struct file * file)
 
 	spin_unlock(&files->file_lock);
 
-	/* Cleanup Kerrighed flags but not objid to pass through the regular
+	/* Cleanup HCC flags but not objid to pass through the regular
 	 * kernel close file code plus kh_put_file() only.
 	 */
 	file->f_flags = file->f_flags & (~O_FAF_SRV);

@@ -667,7 +667,7 @@ static void local_complete_stop(struct app_struct *app)
 	struct siginfo info;
 	int r, signo;
 
-	signo = KRG_SIG_CHECKPOINT;
+	signo = HCC_SIG_CHECKPOINT;
 	info.si_errno = 0;
 	info.si_pid = 0;
 	info.si_uid = 0;

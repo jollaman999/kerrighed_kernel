@@ -61,7 +61,7 @@ static int nfs_lock(struct file *filp, int cmd, struct file_lock *fl);
 static int nfs_flock(struct file *filp, int cmd, struct file_lock *fl);
 static int nfs_setlease(struct file *file, long arg, struct file_lock **fl);
 
-#ifndef CONFIG_KRG_MM
+#ifndef CONFIG_HCC_MM
 static const struct vm_operations_struct nfs_file_vm_ops;
 #endif
 
@@ -594,7 +594,7 @@ out:
 	return ret;
 }
 
-#ifndef CONFIG_KRG_MM
+#ifndef CONFIG_HCC_MM
 static const
 #endif
 struct vm_operations_struct nfs_file_vm_ops = {

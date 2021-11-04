@@ -7,8 +7,8 @@
  *  @author Geoffroy Vallée
  */
 
-#ifndef __KRG_MIGRATION_H__
-#define __KRG_MIGRATION_H__
+#ifndef __HCC_MIGRATION_H__
+#define __HCC_MIGRATION_H__
 
 #include <linux/types.h>
 #include <hcc/sys/types.h>
@@ -23,9 +23,9 @@ struct migration_infos_struct {
 
 typedef struct migration_infos_struct migration_infos_t;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 #include <linux/notifier.h>
 
 extern struct atomic_notifier_head kmh_migration_send_start;
@@ -57,6 +57,6 @@ int migrate_linux_threads(pid_t pid,
 /* Used by krg_release_task() */
 void migration_aborted(struct task_struct *tsk);
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
-#endif /* __KRG_MIGRATION_H__ */
+#endif /* __HCC_MIGRATION_H__ */

@@ -1,5 +1,5 @@
-#ifndef __KRG_SCHEDULER_REMOTE_PIPE_H__
-#define __KRG_SCHEDULER_REMOTE_PIPE_H__
+#ifndef __HCC_SCHEDULER_REMOTE_PIPE_H__
+#define __HCC_SCHEDULER_REMOTE_PIPE_H__
 
 #include <linux/workqueue.h>
 #include <hcc/sys/types.h>
@@ -82,4 +82,4 @@ void scheduler_sink_remote_pipe_cleanup(struct scheduler_sink *sink)
  */
 void scheduler_sink_remote_pipe_disconnect(struct scheduler_sink *sink);
 
-#endif /* __KRG_SCHEDULER_REMOTE_PIPE_H__ */
+#endif /* __HCC_SCHEDULER_REMOTE_PIPE_H__ */

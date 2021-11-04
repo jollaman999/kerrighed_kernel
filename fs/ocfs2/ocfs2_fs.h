@@ -57,7 +57,7 @@
 #define OCFS2_MAX_BLOCKSIZE		OCFS2_MIN_CLUSTERSIZE
 
 /* Filesystem magic number */
-#ifndef CONFIG_KRG_DVFS
+#ifndef CONFIG_HCC_DVFS
 #define OCFS2_SUPER_MAGIC		0x7461636f
 #else
 #include <linux/magic.h>

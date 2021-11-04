@@ -1,4 +1,4 @@
-/** Kerrighed FAF Hooks.
+/** HCC FAF Hooks.
  *  @file file_hooks.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
@@ -127,7 +127,7 @@ out:
 	return err;
 }
 
-/** Kerrighed kernel hook for FAF lseek function.
+/** HCC kernel hook for FAF lseek function.
  *  @author Renaud Lottiaux
  *
  *  @param file    File to seek in.
@@ -158,7 +158,7 @@ off_t krg_faf_lseek (struct file * file,
 	return r;
 }
 
-/** Kerrighed kernel hook for FAF llseek function.
+/** HCC kernel hook for FAF llseek function.
  *  @author Renaud Lottiaux
  *
  *  @param file          File to seek in.
@@ -195,7 +195,7 @@ long krg_faf_llseek (struct file *file,
 	return r;
 }
 
-/** Kerrighed kernel hook for FAF read function.
+/** HCC kernel hook for FAF read function.
  *  @author Renaud Lottiaux, Matthieu Fertré
  *
  *  @param file          File to read from.
@@ -283,7 +283,7 @@ cancel:
 	goto out_end;
 }
 
-/** Kerrighed kernel hook for FAF write function.
+/** HCC kernel hook for FAF write function.
  *  @author Renaud Lottiaux, Matthieu Fertré
  *
  *  @param file          File to write to.
@@ -505,7 +505,7 @@ cancel:
 	goto out_end;
 }
 
-/** Kerrighed kernel hook for FAF ioctl function.
+/** HCC kernel hook for FAF ioctl function.
  *  @author Renaud Lottiaux
  *
  *  @param file          File to do an ioctl to.
@@ -562,7 +562,7 @@ out_err:
 	goto out;
 }
 
-/** Kerrighed kernel hook for FAF fcntl function.
+/** HCC kernel hook for FAF fcntl function.
  *  @author Renaud Lottiaux
  *
  *  @param file          File to do an fcntl to.
@@ -644,7 +644,7 @@ cancel:
 }
 
 #if BITS_PER_LONG == 32
-/** Kerrighed kernel hook for FAF fcntl64 function.
+/** HCC kernel hook for FAF fcntl64 function.
  *  @author Renaud Lottiaux
  *
  *  @param file          File to do an fcntl to.
@@ -713,7 +713,7 @@ cancel:
 }
 #endif
 
-/** Kerrighed kernel hook for FAF fstat function.
+/** HCC kernel hook for FAF fstat function.
  *  @author Renaud Lottiaux
  *
  *  @param file          File to do an fcntl to.
@@ -744,7 +744,7 @@ long krg_faf_fstat (struct file *file,
 	return r;
 }
 
-/** Kerrighed kernel hook for FAF fstat function.
+/** HCC kernel hook for FAF fstat function.
  *  @author Matthieu Fertré
  *
  *  @param file          File to do an fcntl to.
@@ -786,7 +786,7 @@ err_rpc:
 	goto exit;
 }
 
-/** Kerrighed kernel hook for FAF fsync function.
+/** HCC kernel hook for FAF fsync function.
  *  @author Renaud Lottiaux
  *
  *  @param file          File to do a fsync to.
@@ -804,7 +804,7 @@ long krg_faf_fsync (struct file *file)
 	return r;
 }
 
-/** Kerrighed kernel hook for FAF flock function.
+/** HCC kernel hook for FAF flock function.
  *  @author Renaud Lottiaux
  *
  *  @param file          File to do a flock to.
@@ -918,7 +918,7 @@ char *krg_faf_phys_d_path(const struct file *file, char *buff, int size,
 	return ret;
 }
 
-/** Kerrighed FAF d_path function.
+/** HCC FAF d_path function.
  *  @author Renaud Lottiaux
  *
  *  @param file     The file to get the path.
@@ -1544,7 +1544,7 @@ void krg_faf_poll_dequeue(struct file *file)
 		printk("faf_poll: memory leak on server %d!\n", data->server_id);
 }
 
-/** Kerrighed kernel hook for FAF poll function.
+/** HCC kernel hook for FAF poll function.
  *  @author Renaud Lottiaux
  *
  *  @param file          File to do a poll to.

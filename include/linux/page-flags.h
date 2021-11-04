@@ -97,7 +97,7 @@ enum pageflags {
 	PG_mappedtodisk,	/* Has blocks allocated on-disk */
 	PG_reclaim,		/* To be reclaimed asap */
 	PG_buddy,		/* Page is free, on buddy lists */
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 	PG_to_invalidate,
 	PG_to_set_read_only,
 	PG_locked_gdm,           /* Page is locked in gdm layer */
@@ -296,7 +296,7 @@ PAGEFLAG_FALSE(HWPoison)
 
 u64 stable_page_flags(struct page *page);
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 PAGEFLAG(ToInvalidate, to_invalidate)
 PAGEFLAG(ToSetReadOnly, to_set_read_only)
 PAGEFLAG(LockedGDM, locked_gdm)

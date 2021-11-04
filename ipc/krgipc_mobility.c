@@ -1,5 +1,5 @@
 /*
- *  Kerrighed/modules/ipc/mobility.c
+ *  HCC/modules/ipc/mobility.c
  *
  *  Copyright (C) 2007 Louis Rilling - Kerlabs
  *  Copyright (C) 2007-2008 Matthieu Fertré - INRIA
@@ -46,7 +46,7 @@ extern struct gdm_set *sem_undo_list_gdm_set;
 /** Return a hcc descriptor corresponding to the given file.
  *  @author Renaud Lottiaux
  *
- *  @param file       The file to get a Kerrighed descriptor for.
+ *  @param file       The file to get a HCC descriptor for.
  *  @param desc       The returned descriptor.
  *  @param desc_size  Size of the returned descriptor.
  *

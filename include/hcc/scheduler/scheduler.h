@@ -1,5 +1,5 @@
-#ifndef __KRG_SCHEDULER_SCHEDULER_H__
-#define __KRG_SCHEDULER_SCHEDULER_H__
+#ifndef __HCC_SCHEDULER_SCHEDULER_H__
+#define __HCC_SCHEDULER_SCHEDULER_H__
 
 #include <hcc/scheduler/process_set.h>
 
@@ -128,4 +128,4 @@ void scheduler_get_node_set(struct scheduler *scheduler,
 		} while_each_process_set_task(__pset, task);	       \
 	} while (0)
 
-#endif /* __KRG_SCHEDULER_SCHEDULER_H__ */
+#endif /* __HCC_SCHEDULER_SCHEDULER_H__ */

@@ -14,7 +14,7 @@
 #include <linux/string.h>
 #include <linux/errno.h>
 #include <linux/err.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/ghost.h>
 #endif
 #include <hcc/scheduler/info.h>
@@ -444,7 +444,7 @@ void krg_sched_info_free(struct task_struct *task)
 {
 	struct krg_sched_info *info = rcu_dereference(task->krg_sched);
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	if (krg_current)
 		return;
 #endif
@@ -459,7 +459,7 @@ void krg_sched_info_free(struct task_struct *task)
 	call_rcu(&info->rcu, delayed_free_sched_info);
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 int export_krg_sched_info(struct epm_action *action, ghost_t *ghost,
 			  struct task_struct *task)
@@ -596,7 +596,7 @@ void unimport_krg_sched_info(struct task_struct *task)
 	krg_sched_info_free(task);
 }
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 int krg_sched_info_start(void)
 {

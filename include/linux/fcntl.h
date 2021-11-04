@@ -91,7 +91,7 @@
 
 #endif /* __KERNEL__ */
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 #include <hcc/fcntl.h>
 #endif
 

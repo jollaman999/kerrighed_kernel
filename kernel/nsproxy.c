@@ -25,11 +25,11 @@
 #include <linux/file.h>
 #include <linux/syscalls.h>
 
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 #include <hcc/namespace.h>
 #endif
 
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_EPM
 static
 #endif
 struct kmem_cache *nsproxy_cachep;
@@ -91,7 +91,7 @@ static struct nsproxy *create_new_namespaces(unsigned long flags,
 		goto out_net;
 	}
 
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 	err = copy_krg_ns(tsk, new_nsp);
 	if (err)
 		goto out_krg;
@@ -99,7 +99,7 @@ static struct nsproxy *create_new_namespaces(unsigned long flags,
 
 	return new_nsp;
 
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 out_krg:
 	if (new_nsp->net_ns)
 		put_net(new_nsp->net_ns);
@@ -172,7 +172,7 @@ out:
 
 void free_nsproxy(struct nsproxy *ns)
 {
-#ifdef CONFIG_KRG_HOTPLUG
+#ifdef CONFIG_HCC_HOTPLUG
 	if (ns->krg_ns)
 		put_krg_ns(ns->krg_ns);
 #endif

@@ -1022,7 +1022,7 @@ EXPORT_SYMBOL_GPL(l1tf_vmx_mitigation);
 
 static void __init l1tf_select_mitigation(void)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	return;
 #else
 	u64 half_pa;
@@ -1061,7 +1061,7 @@ static void __init l1tf_select_mitigation(void)
 
 static int __init l1tf_cmdline(char *str)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	return 0;
 #else
 	if (!boot_cpu_has_bug(X86_BUG_L1TF))

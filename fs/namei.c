@@ -35,7 +35,7 @@
 #include <linux/fs_struct.h>
 #include <linux/nospec.h>
 #include <asm/uaccess.h>
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include <hcc/faf.h>
 #endif
 
@@ -1279,7 +1279,7 @@ last_component:
 			err = do_follow_link(&next, nd);
 			if (err)
 				goto return_err;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 			if (nd->path.dentry)
 #endif
 			inode = nd->path.dentry->d_inode;
@@ -1376,7 +1376,7 @@ static int path_init(int dfd, const char *name, unsigned int flags, struct namei
 		if (!file)
 			goto out_fail;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		if (file->f_flags & O_FAF_CLT) {
 			faf_client_data_t *data = file->private_data;
 
@@ -2391,7 +2391,7 @@ do_last:
 	if (path.dentry->d_inode && S_ISDIR(path.dentry->d_inode->i_mode))
 		goto exit;
 ok:
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if ((!nd.path.dentry) && (nd.path.mnt)) {
 		struct file *file = (struct file *)nd.path.mnt;
 		get_file(file);

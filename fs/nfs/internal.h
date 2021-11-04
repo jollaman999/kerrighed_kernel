@@ -179,7 +179,7 @@ static inline void nfs_fs_proc_exit(void)
 }
 #endif
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_MM
 struct vm_operations_struct;
 
 extern struct vm_operations_struct nfs_file_vm_ops;

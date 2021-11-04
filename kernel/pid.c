@@ -38,7 +38,7 @@
 #include <linux/syscalls.h>
 #include <linux/proc_fs.h>
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 #include <hcc/pid.h>
 #include <hcc/krginit.h>
 #endif
@@ -84,7 +84,7 @@ struct pid_namespace init_pid_ns = {
 	.last_pid = 0,
 	.level = 0,
 	.child_reaper = &init_task,
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	.krg_ns_root = NULL,
 	.global = 0,
 #endif
@@ -123,13 +123,13 @@ EXPORT_SYMBOL(is_container_init);
 
 static  __cacheline_aligned_in_smp DEFINE_SPINLOCK(pidmap_lock);
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 void __free_pidmap(struct upid *upid)
 #else
 static void free_pidmap(struct upid *upid)
 #endif
 {
-#ifndef CONFIG_KRG_PROC
+#ifndef CONFIG_HCC_PROC
 	int nr = upid->nr;
 #else
 	int nr = SHORT_PID(upid->nr);
@@ -141,7 +141,7 @@ static void free_pidmap(struct upid *upid)
 	atomic_inc(&map->nr_free);
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 static void free_pidmap(struct upid *upid)
 {
 	if ((upid->nr & GLOBAL_PID_MASK)
@@ -168,7 +168,7 @@ int alloc_pidmap_page(struct pidmap *map)
 		return -ENOMEM;
 	return 0;
 }
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 /*
  * If we started walking pids at 'base', is 'a' seen before 'b'?
@@ -220,7 +220,7 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
 	max_scan = (pid_max + BITS_PER_PAGE - 1)/BITS_PER_PAGE - !offset;
 	for (i = 0; i <= max_scan; ++i) {
 		if (unlikely(!map->page)) {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 			if (alloc_pidmap_page(map))
 #else
 			void *page = kzalloc(PAGE_SIZE, GFP_KERNEL);
@@ -271,7 +271,7 @@ static int alloc_pidmap(struct pid_namespace *pid_ns)
 	return -1;
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 int reserve_pidmap(struct pid_namespace *pid_ns, int pid)
 {
 	int offset;
@@ -299,7 +299,7 @@ int reserve_pidmap(struct pid_namespace *pid_ns, int pid)
 
 	return -EBUSY;
 }
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 int next_pidmap(struct pid_namespace *pid_ns, unsigned int last)
 {
@@ -382,7 +382,7 @@ void free_pid(struct pid *pid)
 	call_rcu(&pid->rcu, delayed_put_pid);
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 struct pid *__alloc_pid(struct pid_namespace *ns, const int *req_nr)
 #else
 struct pid *alloc_pid(struct pid_namespace *ns)
@@ -397,7 +397,7 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
 	if (!pid)
 		goto out;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	pid->gdm_obj = NULL;
 	BUG_ON(req_nr && !is_krg_pid_ns_root(ns));
 #endif
@@ -405,7 +405,7 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 	tmp = ns;
 	pid->level = ns->level;
 	for (i = ns->level; i >= 0; i--) {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 		if (req_nr && tmp == ns) {
 			nr = req_nr[i - tmp->level];
 		} else {
@@ -413,11 +413,11 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 		nr = alloc_pidmap(tmp);
 		if (nr < 0)
 			goto out_free;
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		if (tmp->global && nr != 1)
 			nr = GLOBAL_PID(nr);
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 		}
 #endif
 
@@ -435,7 +435,7 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 	atomic_set(&pid->count, 1);
 	for (type = 0; type < PIDTYPE_MAX; ++type)
 		INIT_HLIST_HEAD(&pid->tasks[type]);
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_SCHED
 	for (type = 0; type < PIDTYPE_MAX; ++type)
 		INIT_HLIST_HEAD(&pid->process_sets[type]);
 #endif
@@ -459,7 +459,7 @@ out_unlock:
 	put_pid_ns(ns);
 
 out_free:
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	BUG_ON(req_nr);
 #endif
 	while (++i <= ns->level)
@@ -528,7 +528,7 @@ static void __change_pid(struct task_struct *task, enum pid_type type,
 		if (!hlist_empty(&pid->tasks[tmp]))
 			return;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	krg_put_pid(pid);
 #else
 	free_pid(pid);
@@ -629,7 +629,7 @@ pid_t pid_nr_ns(struct pid *pid, struct pid_namespace *ns)
 	}
 	return nr;
 }
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 EXPORT_SYMBOL(pid_nr_ns);
 #endif
 
@@ -678,19 +678,19 @@ EXPORT_SYMBOL_GPL(task_active_pid_ns);
 struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
 {
 	struct pid *pid;
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	int global = (nr & GLOBAL_PID_MASK) && ns->global;
 #endif
 
 	do {
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		if (global && !(nr & GLOBAL_PID_MASK))
 			nr = GLOBAL_PID(nr);
 #endif
 		pid = find_pid_ns(nr, ns);
 		if (pid)
 			break;
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 		if (global) {
 			if (ORIG_NODE(nr) != hcc_node_id)
 				break;
@@ -699,7 +699,7 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
 #endif
 		nr = next_pidmap(ns, nr);
 	} while (nr > 0);
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	if (nr <= 0 && !global && ns->global)
 		return find_ge_pid(GLOBAL_PID(0), ns);
 #endif
@@ -707,7 +707,7 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
 	return pid;
 }
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 struct pid *krg_find_ge_pid(int nr, struct pid_namespace *pid_ns,
 			    struct pid_namespace *pidmap_ns)
 {
@@ -728,7 +728,7 @@ struct pid *krg_find_ge_pid(int nr, struct pid_namespace *pid_ns,
 
 	return pid;
 }
-#endif /* CONFIG_KRG_PROC */
+#endif /* CONFIG_HCC_PROC */
 
 /*
  * The pid hash table is scaled according to the amount of memory in the

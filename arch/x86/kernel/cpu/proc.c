@@ -12,7 +12,7 @@ static void show_cpuinfo_core(struct seq_file *m, struct cpuinfo_x86 *c,
 {
 #ifdef CONFIG_SMP
 	seq_printf(m, "physical id\t: %d\n", c->phys_proc_id);
-#ifndef CONFIG_KRG_PROCFS
+#ifndef CONFIG_HCC_PROCFS
 	/* TODO: implement support for cpu_core_map */
 	seq_printf(m, "siblings\t: %d\n", cpumask_weight(cpu_core_mask(cpu)));
 #endif
@@ -70,7 +70,7 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 #ifdef CONFIG_SMP
 	cpu = c->cpu_index;
 #endif
-#ifdef CONFIG_KRG_PROCFS
+#ifdef CONFIG_HCC_PROCFS
 	if (m->op != &cpuinfo_op)
 		cpu = c->krg_cpu_id;
 #endif
@@ -93,7 +93,7 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 		seq_printf(m, "microcode\t: %u\n", c->microcode);
 
 	if (cpu_has(c, X86_FEATURE_TSC)) {
-#ifdef CONFIG_KRG_PROCFS
+#ifdef CONFIG_HCC_PROCFS
 		/* TODO: implement support for cpufreq */
 		unsigned int freq = ((m->op == &cpuinfo_op) ? cpu_khz : c->cpu_khz);
 #else

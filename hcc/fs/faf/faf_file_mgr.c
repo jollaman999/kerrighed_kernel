@@ -22,11 +22,11 @@ struct kmem_cache *faf_client_data_cachep;
 extern const struct file_operations tty_fops;
 extern const struct file_operations hung_up_tty_fops;
 
-/** Create a faf file struct from a Kerrighed file descriptor.
+/** Create a faf file struct from a HCC file descriptor.
  *  @author Renaud Lottiaux
  *
  *  @param task    Task to create the file for.
- *  @param desc    Kerrighed file descriptor.
+ *  @param desc    HCC file descriptor.
  *
  *  @return   0 if everything ok.
  *            Negative value otherwise.
@@ -88,7 +88,7 @@ void fill_faf_file_krg_desc(faf_client_data_t *data, struct file *file)
 /** Return a hcc descriptor corresponding to the given file.
  *  @author Renaud Lottiaux
  *
- *  @param file       The file to get a Kerrighed descriptor for.
+ *  @param file       The file to get a HCC descriptor for.
  *  @param desc       The returned descriptor.
  *  @param desc_size  Size of the returned descriptor.
  *

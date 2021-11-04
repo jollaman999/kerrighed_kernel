@@ -63,7 +63,7 @@
 #include <linux/flex_array.h> /* used in cgroup_attach_proc */
 #include <linux/kthread.h>
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/ghost.h>
 #include <hcc/action.h>
 #endif
@@ -2094,14 +2094,14 @@ static int attach_task_by_pid(struct cgroup *cgrp, u64 pid, bool threadgroup)
 	struct task_struct *tsk;
 	const struct cred *cred = current_cred(), *tcred;
 	int ret;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	char *cgrp_root_name = cgrp->root->name;
 #endif
 
 	if (!cgroup_lock_live_group(cgrp))
 		return -ENODEV;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	/* Prevent 'systemd' like daemons to set cgroup */
 	if (threadgroup && strlen(cgrp_root_name)) {
 		if ((!strcmp("systemd", cgrp_root_name)) ||
@@ -4830,7 +4830,7 @@ css_get_next(struct cgroup_subsys *ss, int id,
 	return ret;
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 int export_cgroups(struct epm_action *action,
 		   ghost_t *ghost, struct task_struct *task)
 {
@@ -4865,7 +4865,7 @@ void free_ghost_cgroups(struct task_struct *ghost)
 	/* TODO */
 	cgroup_exit(ghost, 0);
 }
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 /*
  * get corresponding css from file open on cgroupfs directory

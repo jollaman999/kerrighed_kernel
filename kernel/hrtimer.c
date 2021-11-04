@@ -46,7 +46,7 @@
 #include <linux/sched.h>
 #include <linux/timer.h>
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/krgsyms.h>
 #endif
 
@@ -1659,16 +1659,16 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
 	return hrtimer_nanosleep(&tu, rmtp, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 int hrtimer_krgsyms_register(void)
 {
-	return krgsyms_register(KRGSYMS_HRTIMER_NANOSLEEP_RESTART,
+	return krgsyms_register(HCCSYMS_HRTIMER_NANOSLEEP_RESTART,
 				hrtimer_nanosleep_restart);
 }
 
 int hrtimer_krgsyms_unregister(void)
 {
-	return krgsyms_unregister(KRGSYMS_HRTIMER_NANOSLEEP_RESTART);
+	return krgsyms_unregister(HCCSYMS_HRTIMER_NANOSLEEP_RESTART);
 }
 #endif
 

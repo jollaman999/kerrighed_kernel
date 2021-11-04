@@ -7,7 +7,7 @@
 #include <linux/mutex.h>
 #include <linux/sched.h>
 #include <linux/file.h>
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 #include <linux/ipc.h>
 #include <linux/shm.h>
 #include <linux/msg.h>
@@ -17,7 +17,7 @@
 #include <hcc/action.h>
 #include <hcc/application.h>
 #include <hcc/app_shared.h>
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include <hcc/faf.h>
 #include "faf/faf_internal.h"
 #include <hcc/faf_file_mgr.h>
@@ -77,11 +77,11 @@ struct file *create_file_entry_from_krg_desc (struct task_struct *task,
 	return file;
 }
 
-/** Create a regular file struct from a Kerrighed file descriptor.
+/** Create a regular file struct from a HCC file descriptor.
  *  @author Renaud Lottiaux, Matthieu Fertré
  *
  *  @param task    Task to create the file for.
- *  @param desc    Kerrighed file descriptor.
+ *  @param desc    HCC file descriptor.
  *
  *  @return   0 if everything ok.
  *            Negative value otherwise.
@@ -98,7 +98,7 @@ static struct file *import_regular_file_from_krg_desc(
 
 	if (desc->type == PIPE)
 		file = reopen_pipe_file_entry_from_krg_desc(task, desc);
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	else if (desc->type == SHM)
 		file = reopen_shm_file_entry_from_krg_desc(task, desc);
 #endif
@@ -147,7 +147,7 @@ int check_flush_file (struct epm_action *action,
 /** Return a hcc descriptor corresponding to the given file.
  *  @author Renaud Lottiaux, Matthieu Fertré
  *
- *  @param file       The file to get a Kerrighed descriptor for.
+ *  @param file       The file to get a HCC descriptor for.
  *  @param desc       The returned descriptor.
  *  @param desc_size  Size of the returned descriptor.
  *
@@ -162,7 +162,7 @@ int get_regular_file_krg_desc(struct file *file, void **desc,
 	int size = 0, name_len;
 	int r = -ENOENT;
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 	if (is_shm(file)) {
 		r = get_shm_file_krg_desc(file, desc, desc_size);
 		goto exit;
@@ -198,7 +198,7 @@ int get_regular_file_krg_desc(struct file *file, void **desc,
 	strncpy(data->file.filename, file_name, name_len);
 
 	data->file.flags = file->f_flags
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		& (~(O_FAF_SRV | O_FAF_CLT));
 #endif
 	data->file.mode = file->f_mode;
@@ -207,7 +207,7 @@ int get_regular_file_krg_desc(struct file *file, void **desc,
 	data->file.gid = file->f_cred->gid;
 
 	if (
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	    !(file->f_flags & (O_FAF_CLT | O_FAF_SRV)) &&
 #endif
 	    file->f_dentry->d_inode->i_mapping->gdm_set
@@ -376,7 +376,7 @@ static int __cr_link_to_file(struct epm_action *action, ghost_t *ghost,
 
 		/* the file is not yet opened on this node */
 		if (!file) {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 			if (file_link->desc_type == CR_FILE_FAF_DESC)
 				file = create_faf_file_from_krg_desc(
 							task, file_link->desc);
@@ -738,7 +738,7 @@ static int prepare_restart_data_dvfs_file(struct file *f,
 	return 0;
 }
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 void fill_faf_file_krg_desc(faf_client_data_t *data, struct file *file);
 
 static int prepare_restart_data_faf_file(struct file *f,
@@ -779,7 +779,7 @@ int prepare_restart_data_shared_file(struct file *f,
 	int r;
 	struct cr_file_link *file_link;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (f->f_flags & (O_FAF_CLT | O_FAF_SRV))
 		r = prepare_restart_data_faf_file(f, returned_data,
 						  data_size);
@@ -815,7 +815,7 @@ static int prepare_restart_data_supported_file(
 				goto error;
 		}
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		r = setup_faf_file_if_needed(f);
 		if (r)
 			goto error;

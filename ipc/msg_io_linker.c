@@ -1,5 +1,5 @@
 /*
- *  Kerrighed/modules/ipc/msg_io_linker.c
+ *  HCC/modules/ipc/msg_io_linker.c
  *
  *  GDM IPC msg_queue id Linker.
  *

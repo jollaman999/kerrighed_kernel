@@ -1,7 +1,7 @@
 #ifndef __KERRIGHED_SIGNAL_H__
 #define __KERRIGHED_SIGNAL_H__
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 
 #include <gdm/gdm_types.h>
 
@@ -41,6 +41,6 @@ void krg_sighand_unpin(struct sighand_struct *sig);
 struct sighand_struct *cr_sighand_alloc(void);
 void cr_sighand_free(objid_t id);
 
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 #endif /* __KERRIGHED_SIGNAL_H__ */

@@ -1,4 +1,4 @@
-/** Kerrighed Open File Access Forwarding System.
+/** HCC Open File Access Forwarding System.
  *  @file file_forwarding.h
  *
  *  @author Renaud Lottiaux

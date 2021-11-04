@@ -32,7 +32,7 @@ void do_local_node_remove(struct hotplug_node_set *node_set)
 {
 	hcc_node_t node;
 
-	SET_KERRIGHED_NODE_FLAGS(KRGFLAGS_STOPPING);
+	SET_KERRIGHED_NODE_FLAGS(HCCFLAGS_STOPPING);
 	printk("do_local_node_remove\n");
 
 	printk("...notify local\n");
@@ -43,14 +43,14 @@ void do_local_node_remove(struct hotplug_node_set *node_set)
 	printk("...confirm\n");
 	rpc_sync_m(NODE_REMOVE_CONFIRM, &krgnode_online_map, node_set, sizeof(*node_set));
 
-	CLEAR_KERRIGHED_NODE_FLAGS(KRGFLAGS_RUNNING);
+	CLEAR_KERRIGHED_NODE_FLAGS(HCCFLAGS_RUNNING);
 
 	for_each_online_krgnode(node)
 		if(node != hcc_node_id)
 			clear_krgnode_online(node);
 
 	hooks_stop();
-	SET_KERRIGHED_NODE_FLAGS(KRGFLAGS_STOPPED);
+	SET_KERRIGHED_NODE_FLAGS(HCCFLAGS_STOPPED);
 
 #if 0
 	printk("...sleep\n");
@@ -98,7 +98,7 @@ static int handle_node_remove_confirm(struct rpc_desc *desc, void *data, size_t 
 		return 0;
 	
 	hotplug_remove_notify((void*)&desc->client, HOTPLUG_NOTIFY_REMOVE_ACK);
-	printk("Kerrighed: node %d removed\n", desc->client);
+	printk("HCC: node %d removed\n", desc->client);
 	return 0;
 }
 

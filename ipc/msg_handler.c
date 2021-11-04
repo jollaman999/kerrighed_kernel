@@ -113,7 +113,7 @@ static struct kern_ipc_perm *kcb_ipc_msg_findkey(struct ipc_ids *ids, key_t key)
 	return NULL;
 }
 
-/** Notify the creation of a new IPC msg queue to Kerrighed.
+/** Notify the creation of a new IPC msg queue to HCC.
  *
  *  @author Matthieu Fertré
  */

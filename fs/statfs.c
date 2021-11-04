@@ -8,7 +8,7 @@
 #include <linux/security.h>
 #include <linux/uaccess.h>
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_IPC
 #include <hcc/faf.h>
 #endif
 
@@ -95,7 +95,7 @@ retry:
 	return error;
 }
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 int fd_statfs(int fd, struct kstatfs *st, int *is_faf_fstatfs,
 	      struct statfs __user *buf)
 #else
@@ -105,7 +105,7 @@ int fd_statfs(int fd, struct kstatfs *st)
 	struct file *file = fget(fd);
 	int error = -EBADF;
 	if (file) {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		if (is_faf_fstatfs && file->f_flags & O_FAF_CLT) {
 			struct statfs tmp;
 
@@ -212,16 +212,16 @@ SYSCALL_DEFINE3(statfs64, const char __user *, pathname, size_t, sz, struct stat
 SYSCALL_DEFINE2(fstatfs, unsigned int, fd, struct statfs __user *, buf)
 {
 	struct kstatfs st;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	int is_faf_fstatfs = 0;
 #endif
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	int error = fd_statfs(fd, &st, &is_faf_fstatfs, buf);
 #else
 	int error = fd_statfs(fd, &st);
 #endif
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (!error && !is_faf_fstatfs) {
 #else
 	if (!error) {
@@ -239,7 +239,7 @@ SYSCALL_DEFINE3(fstatfs64, unsigned int, fd, size_t, sz, struct statfs64 __user 
 	if (sz != sizeof(*buf))
 		return -EINVAL;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	error = fd_statfs(fd, &st, NULL, NULL);
 #else
 	error = fd_statfs(fd, &st);

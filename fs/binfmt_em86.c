@@ -18,7 +18,7 @@
 #include <linux/fs.h>
 #include <linux/file.h>
 #include <linux/errno.h>
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 #include <hcc/krgsyms.h>
 #endif
 
@@ -103,13 +103,13 @@ static struct linux_binfmt em86_format = {
 
 static int __init init_em86_binfmt(void)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	int retval;
 
-	krgsyms_register(KRGSYMS_BINFMTS_EM86, &em86_format);
+	krgsyms_register(HCCSYMS_BINFMTS_EM86, &em86_format);
 	retval = register_binfmt(&em86_format);
 	if (retval)
-		krgsyms_unregister(KRGSYMS_BINFMTS_EM86);
+		krgsyms_unregister(HCCSYMS_BINFMTS_EM86);
 	return retval;
 #else
 	return register_binfmt(&em86_format);
@@ -118,8 +118,8 @@ static int __init init_em86_binfmt(void)
 
 static void __exit exit_em86_binfmt(void)
 {
-#ifdef CONFIG_KRG_EPM
-	krgsyms_unregister(KRGSYMS_BINFMTS_EM86);
+#ifdef CONFIG_HCC_EPM
+	krgsyms_unregister(HCCSYMS_BINFMTS_EM86);
 #endif
 	unregister_binfmt(&em86_format);
 }
