@@ -76,7 +76,7 @@ typedef enum {
 			* Checkpoint is forbidden. */
 } app_state_t;
 
-struct app_kddm_object {
+struct app_gdm_object {
 	long app_id;
 	int chkpt_sn;
 
@@ -174,9 +174,9 @@ void unimport_application(struct epm_action *action,
 
 /*--------------------------------------------------------------------------*/
 
-int global_stop(struct app_kddm_object *obj);
+int global_stop(struct app_gdm_object *obj);
 
-int global_unfreeze(struct app_kddm_object *obj, int signal);
+int global_unfreeze(struct app_gdm_object *obj, int signal);
 
 /*--------------------------------------------------------------------------*/
 

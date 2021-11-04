@@ -1,14 +1,14 @@
-/** KDDM Memory Linker.
+/** GDM Memory Linker.
  *  @file memory_linker.h
  *
- *  Link kddm sets and linux memory system.
+ *  Link gdm sets and linux memory system.
  *  @author Renaud Lottiaux
  */
 
 #ifndef __MEMORY_LINKER__
 #define __MEMORY_LINKER__
 
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 
 /*--------------------------------------------------------------------------*

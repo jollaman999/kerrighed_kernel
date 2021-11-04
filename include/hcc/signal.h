@@ -3,7 +3,7 @@
 
 #ifdef CONFIG_KRG_EPM
 
-#include <kddm/kddm_types.h>
+#include <gdm/gdm_types.h>
 
 /* signal_struct sharing */
 

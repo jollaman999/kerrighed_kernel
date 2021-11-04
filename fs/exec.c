@@ -660,7 +660,7 @@ int setup_arg_pages(struct linux_binprm *bprm,
 	unsigned long rlim_stack;
 
 #ifdef CONFIG_KRG_MM
-	if (mm->anon_vma_kddm_set)
+	if (mm->anon_vma_gdm_set)
 		krg_check_vma_link(vma);
 #endif
 
@@ -915,10 +915,10 @@ static int de_thread(struct task_struct *tsk)
 	if (!thread_group_leader(tsk)) {
 		struct task_struct *leader = tsk->group_leader;
 #ifdef CONFIG_KRG_PROC
-		struct task_kddm_object *obj;
+		struct task_gdm_object *obj;
 #endif
 #ifdef CONFIG_KRG_EPM
-		struct children_kddm_object *parent_children_obj;
+		struct children_gdm_object *parent_children_obj;
 #endif
 
 #ifdef CONFIG_KRG_PROC

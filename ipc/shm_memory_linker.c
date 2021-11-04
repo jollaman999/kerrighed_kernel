@@ -1,4 +1,4 @@
-/** KDDM shared memory linker.
+/** GDM shared memory linker.
  *  @file shm_memory_linker.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
@@ -18,34 +18,34 @@
 #include <linux/mm_inline.h>
 #include <linux/kernel.h>
 #include <linux/swap.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include "krgshm.h"
 #include "ipc_handler.h"
 
-extern int memory_first_touch (struct kddm_obj * obj_entry,
-			       struct kddm_set * set, objid_t objid,int flags);
+extern int memory_first_touch (struct gdm_obj * obj_entry,
+			       struct gdm_set * set, objid_t objid,int flags);
 
-void memory_change_state (struct kddm_obj * objEntry, struct kddm_set * kddm,
-			  objid_t objid, kddm_obj_state_t state);
+void memory_change_state (struct gdm_obj * objEntry, struct gdm_set * gdm,
+			  objid_t objid, gdm_obj_state_t state);
 
 extern int memory_remove_page (void *object,
-			       struct kddm_set * kddm, objid_t objid);
-extern int memory_alloc_object (struct kddm_obj * objEntry,
-				struct kddm_set * kddm, objid_t objid);
+			       struct gdm_set * gdm, objid_t objid);
+extern int memory_alloc_object (struct gdm_obj * objEntry,
+				struct gdm_set * gdm, objid_t objid);
 
-extern int memory_import_object (struct rpc_desc *desc, struct kddm_set *set,
-				 struct kddm_obj *objEntry, objid_t objid,
+extern int memory_import_object (struct rpc_desc *desc, struct gdm_set *set,
+				 struct gdm_obj *objEntry, objid_t objid,
 				 int flags);
-extern int memory_export_object (struct rpc_desc *desc, struct kddm_set *set,
-				 struct kddm_obj *objEntry, objid_t objid,
+extern int memory_export_object (struct rpc_desc *desc, struct gdm_set *set,
+				 struct gdm_obj *objEntry, objid_t objid,
 				 int flags);
 
-extern void map_kddm_page (struct vm_area_struct *vma, unsigned long address,
+extern void map_gdm_page (struct vm_area_struct *vma, unsigned long address,
 			   struct page *page, int write);
 
 /*****************************************************************************/
 /*                                                                           */
-/*                            SHM KDDM IO FUNCTIONS                          */
+/*                            SHM GDM IO FUNCTIONS                          */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -55,10 +55,10 @@ extern void map_kddm_page (struct vm_area_struct *vma, unsigned long address,
  *  @author Renaud Lottiaux
  *
  *  @param  objEntry  Descriptor of the page to insert.
- *  @param  kddm      KDDM descriptor
+ *  @param  gdm      GDM descriptor
  *  @param  padeid    Id of the page to insert.
  */
-int shm_memory_insert_page(struct kddm_obj *objEntry, struct kddm_set *kddm,
+int shm_memory_insert_page(struct gdm_obj *objEntry, struct gdm_set *gdm,
 			   objid_t objid)
 {
 	struct page *page;
@@ -70,7 +70,7 @@ int shm_memory_insert_page(struct kddm_obj *objEntry, struct kddm_set *kddm,
 	ns = find_get_krg_ipcns();
 	BUG_ON(!ns);
 
-	shm_id = *(int *) kddm->private_data;
+	shm_id = *(int *) gdm->private_data;
 
 	shp = local_shm_lock(ns, shm_id);
 
@@ -106,14 +106,14 @@ error:
 
 
 
-/** Invalidate a KDDM memory page.
+/** Invalidate a GDM memory page.
  *  @author Renaud Lottiaux
  *
- *  @param  kddm     KDDM descriptor
+ *  @param  gdm     GDM descriptor
  *  @param  objid    Id of the page to invalidate
  */
-int shm_memory_invalidate_page (struct kddm_obj * objEntry,
-				struct kddm_set * kddm,
+int shm_memory_invalidate_page (struct gdm_obj * objEntry,
+				struct gdm_set * gdm,
 				objid_t objid)
 {
 	int res ;
@@ -148,14 +148,14 @@ int shm_memory_invalidate_page (struct kddm_obj * objEntry,
 
 		if ((page_count (page) != objEntry->countx + extra_count)) {
 			WARNING ("Hum... page %p (%ld;%ld) has count %d;%d "
-				 "(against %d)\n", page, kddm->id, objid,
+				 "(against %d)\n", page, gdm->id, objid,
 				 page_count (page), page_mapcount(page),
 				 objEntry->countx + extra_count);
 		}
 
 		if (PageActive(page)) {
 			WARNING ("Hum. page %p (%ld;%ld) has Active bit set\n",
-				 page, kddm->id, objid);
+				 page, gdm->id, objid);
 			while (1)
 				schedule();
 		}
@@ -167,14 +167,14 @@ int shm_memory_invalidate_page (struct kddm_obj * objEntry,
 
 
 
-/** Handle a kddm set memory page remove.
+/** Handle a gdm set memory page remove.
  *  @author Renaud Lottiaux
  *
  *  @param  set      Kddm Set descriptor
  *  @param  padeid   Id of the page to remove
  */
 int shm_memory_remove_page (void *object,
-			    struct kddm_set * set,
+			    struct gdm_set * set,
 			    objid_t objid)
 {
 	if (object)
@@ -222,22 +222,22 @@ int shmem_memory_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	struct inode *inode = vma->vm_file->f_dentry->d_inode;
 	struct page *page;
-	struct kddm_set *kddm;
+	struct gdm_set *gdm;
 	unsigned long address;
 	objid_t objid;
 	int write_access = vmf->flags & FAULT_FLAG_WRITE;
 
 	address = (unsigned long)(vmf->virtual_address) & PAGE_MASK;
 
-	kddm = inode->i_mapping->kddm_set;
+	gdm = inode->i_mapping->gdm_set;
 
-	BUG_ON(!kddm);
+	BUG_ON(!gdm);
 	objid = vma->vm_pgoff + (address - vma->vm_start) / PAGE_SIZE;
 
 	if (write_access)
-		page = kddm_grab_object(kddm_def_ns, kddm->id, objid);
+		page = gdm_grab_object(gdm_def_ns, gdm->id, objid);
 	else
-		page = kddm_get_object(kddm_def_ns, kddm->id, objid);
+		page = gdm_get_object(gdm_def_ns, gdm->id, objid);
 
 	page_cache_get(page);
 
@@ -246,19 +246,19 @@ int shmem_memory_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 		page->mapping = inode->i_mapping;
 	}
 
-	map_kddm_page (vma, address, page, write_access);
+	map_gdm_page (vma, address, page, write_access);
 	ClearPageMigratable(page);
 
 	inc_mm_counter(vma->vm_mm, file_rss);
 	page_add_file_rmap(page);
 
-	kddm_put_object (kddm_def_ns, kddm->id, objid);
+	gdm_put_object (gdm_def_ns, gdm->id, objid);
 
 	vmf->page = page;
 	return 0;
 }
 
-/** Handle a wppage fault on a memory KDDM set.
+/** Handle a wppage fault on a memory GDM set.
  *  @author Renaud Lottiaux
  *
  *  @param  vma       vm_area of the faulting address area
@@ -271,29 +271,29 @@ struct page *shmem_memory_wppage (struct vm_area_struct *vma,
 {
 	struct inode *inode = vma->vm_file->f_dentry->d_inode;
 	struct page *page;
-	struct kddm_set *kddm;
+	struct gdm_set *gdm;
 	objid_t objid;
 
 	BUG_ON(!vma);
 
-	kddm = inode->i_mapping->kddm_set;
+	gdm = inode->i_mapping->gdm_set;
 
-	BUG_ON(!kddm);
+	BUG_ON(!gdm);
 	objid = vma->vm_pgoff + (address - vma->vm_start) / PAGE_SIZE;
 
-	page = kddm_grab_object (kddm_def_ns, kddm->id, objid);
+	page = gdm_grab_object (gdm_def_ns, gdm->id, objid);
 
 	if (!page->mapping)
 		page->mapping = inode->i_mapping;
 
-	map_kddm_page (vma, address, page, 1);
+	map_gdm_page (vma, address, page, 1);
 
 	if (page != old_page) {
 		page_add_file_rmap(page);
 		page_cache_get(page);
 	}
 
-	kddm_put_object (kddm_def_ns, kddm->id, objid);
+	gdm_put_object (gdm_def_ns, gdm->id, objid);
 
 	return page;
 }
@@ -330,7 +330,7 @@ static int krg_shmem_mmap(struct file *file, struct vm_area_struct *vma)
 #endif
         file_accessed(file);
 	vma->vm_ops = &krg_shmem_vm_ops;
-	vma->vm_flags |= VM_KDDM;
+	vma->vm_flags |= VM_GDM;
 
 	return 0;
 }

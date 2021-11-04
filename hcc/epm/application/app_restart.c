@@ -20,13 +20,13 @@
 #include <hcc/physical_fs.h>
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include "../pid.h"
 #include "../restart.h"
 #include "../epm_internal.h"
 #include "app_utils.h"
 
-static int restore_app_kddm_object(struct app_kddm_object *obj,
+static int restore_app_gdm_object(struct app_gdm_object *obj,
 				   long app_id, int chkpt_sn)
 {
 	ghost_fs_t oldfs;
@@ -117,7 +117,7 @@ static int restore_app_kddm_object(struct app_kddm_object *obj,
 		goto err_read;
 	}
 
-	/* initialize app_kddm_object */
+	/* initialize app_gdm_object */
 	obj->app_id = app_id;
 	obj->chkpt_sn = chkpt_sn;
 
@@ -399,7 +399,7 @@ err_rpc:
 static inline hcc_node_t
 __find_node_for_restart(hcc_node_t *first_avail_node,
 			int *duplicate,
-			struct app_kddm_object *obj,
+			struct app_gdm_object *obj,
 			hcc_node_t node_id)
 {
 	int n;
@@ -431,7 +431,7 @@ out:
 	return n;
 }
 
-static int global_init_restart(struct app_kddm_object *obj, int chkpt_sn, int flags)
+static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int flags)
 {
 	struct rpc_desc *desc;
 	struct init_restart_msg msg;
@@ -441,7 +441,7 @@ static int global_init_restart(struct app_kddm_object *obj, int chkpt_sn, int fl
 	int duplicate = 0;
 	int r;
 
-	r = restore_app_kddm_object(obj, obj->app_id, chkpt_sn);
+	r = restore_app_gdm_object(obj, obj->app_id, chkpt_sn);
 	if (r)
 		goto exit;
 
@@ -457,12 +457,12 @@ static int global_init_restart(struct app_kddm_object *obj, int chkpt_sn, int fl
 		msg.substitution_sid = task_session_knr(current);
 
 		pid = task_pgrp(current);
-		r = cr_create_pid_kddm_object(pid);
+		r = cr_create_pid_gdm_object(pid);
 		if (r)
 			goto exit;
 
 		pid = task_session(current);
-		r = cr_create_pid_kddm_object(pid);
+		r = cr_create_pid_gdm_object(pid);
 		if (r)
 			goto exit;
 
@@ -927,7 +927,7 @@ static int local_restore_task_object(struct app_struct *app)
 static inline int task_restore_children_object(task_state_t *t)
 {
 	int r = 0;
-	struct children_kddm_object *obj;
+	struct children_gdm_object *obj;
 
 	if (t->restart.real_parent_tgid == 1)
 		goto exit;
@@ -1194,7 +1194,7 @@ error:
 	goto err_end_pid;
 }
 
-static int global_do_restart(struct app_kddm_object *obj,
+static int global_do_restart(struct app_gdm_object *obj,
 			     const task_identity_t *requester,
 			     struct restart_request *req)
 {
@@ -1287,7 +1287,7 @@ static int global_do_restart(struct app_kddm_object *obj,
 		goto error;
 	}
 
-	/* asking to rebuild task_kddm_obj if r == 0 */
+	/* asking to rebuild task_gdm_obj if r == 0 */
 	r = ask_nodes_to_continue(desc, obj->nodes, r);
 	if (r)
 		goto error;
@@ -1349,10 +1349,10 @@ err_no_pids:
 int app_restart(struct restart_request *req,
 		const task_identity_t *requester)
 {
-	struct app_kddm_object *obj;
+	struct app_gdm_object *obj;
 	int r = 0;
 
-	obj = kddm_grab_object(kddm_def_ns, APP_KDDM_ID, req->app_id);
+	obj = gdm_grab_object(gdm_def_ns, APP_GDM_ID, req->app_id);
 
 	if (obj->app_id == req->app_id) {
 		r = -E_CR_APPBUSY;
@@ -1372,10 +1372,10 @@ int app_restart(struct restart_request *req,
 
 exit:
 	if (r)
-		kddm_remove_frozen_object(kddm_def_ns, APP_KDDM_ID, req->app_id);
+		gdm_remove_frozen_object(gdm_def_ns, APP_GDM_ID, req->app_id);
 	else
 exit_app_busy:
-		kddm_put_object(kddm_def_ns, APP_KDDM_ID, req->app_id);
+		gdm_put_object(gdm_def_ns, APP_GDM_ID, req->app_id);
 
 	return r;
 }

@@ -51,8 +51,8 @@
 #include <trace/events/sched.h>
 #include <linux/oom.h>
 
-#ifdef CONFIG_KRG_KDDM
-#include <kddm/kddm_info.h>
+#ifdef CONFIG_KRG_GDM
+#include <gdm/gdm_info.h>
 #endif
 #ifdef CONFIG_KRG_HOTPLUG
 #include <hcc/namespace.h>
@@ -445,7 +445,7 @@ kill_orphaned_pgrp(struct task_struct *tsk, struct task_struct *parent)
 static void reparent_to_kthreadd(void)
 {
 #ifdef CONFIG_KRG_EPM
-	struct children_kddm_object *parent_children_obj = NULL;
+	struct children_gdm_object *parent_children_obj = NULL;
 	pid_t parent_tgid;
 
 	down_read(&hcc_init_sem);
@@ -902,7 +902,7 @@ static void forget_original_parent(struct task_struct *father)
 {
 	struct task_struct *p, *n, *reaper;
 #ifdef CONFIG_KRG_EPM
-	struct children_kddm_object *children_obj = NULL;
+	struct children_gdm_object *children_obj = NULL;
 #endif
 	LIST_HEAD(dead_children);
 
@@ -1232,9 +1232,9 @@ NORET_TYPE void do_exit(long code)
 	tsk->mempolicy = NULL;
 	task_unlock(tsk);
 #endif
-#ifdef CONFIG_KRG_KDDM
-	if (tsk->kddm_info)
-		kmem_cache_free(kddm_info_cachep, tsk->kddm_info);
+#ifdef CONFIG_KRG_GDM
+	if (tsk->gdm_info)
+		kmem_cache_free(gdm_info_cachep, tsk->gdm_info);
 #endif
 #ifdef CONFIG_FUTEX
 	if (unlikely(current->pi_state_cache))
@@ -1583,7 +1583,7 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 
 	if (traced) {
 #ifdef CONFIG_KRG_EPM
-		struct children_kddm_object *parent_children_obj = NULL;
+		struct children_gdm_object *parent_children_obj = NULL;
 		pid_t real_parent_tgid;
 		/* p may be set to NULL while we still need it */
 		struct task_struct *saved_p = p;

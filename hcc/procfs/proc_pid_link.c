@@ -18,7 +18,7 @@
 static int krg_proc_fd_access_allowed(struct inode *inode)
 {
 	struct proc_distant_pid_info *task = get_krg_proc_task(inode);
-/* 	struct task_kddm_object *obj; */
+/* 	struct task_gdm_object *obj; */
 	const struct cred *cred = current_cred();
 	int allowed = 0;
 

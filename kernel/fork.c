@@ -72,8 +72,8 @@
 #include <linux/oom.h>
 #include <linux/signalfd.h>
 
-#ifdef CONFIG_KRG_KDDM
-#include <kddm/kddm_info.h>
+#ifdef CONFIG_KRG_GDM
+#include <gdm/gdm_info.h>
 #endif
 #ifdef CONFIG_KRG_HOTPLUG
 #include <hcc/namespace.h>
@@ -1045,12 +1045,12 @@ static int copy_sighand(unsigned long clone_flags, struct task_struct *tsk)
 	if (clone_flags & CLONE_SIGHAND) {
 #ifdef CONFIG_KRG_EPM
 		sig = current->sighand;
-		if (sig->kddm_obj)
+		if (sig->gdm_obj)
 			krg_sighand_writelock(sig->krg_objid);
 #endif
 		atomic_inc(&current->sighand->count);
 #ifdef CONFIG_KRG_EPM
-		if (sig->kddm_obj) {
+		if (sig->gdm_obj) {
 			krg_sighand_share(current);
 			krg_sighand_unlock(sig->krg_objid);
 		}
@@ -1065,11 +1065,11 @@ static int copy_sighand(unsigned long clone_flags, struct task_struct *tsk)
 	memcpy(sig->action, current->sighand->action, sizeof(sig->action));
 #ifdef CONFIG_KRG_EPM
 	/*
-	 * Too early to allocate the KDDM object, will do it once we know the
+	 * Too early to allocate the GDM object, will do it once we know the
 	 * pid.
 	 */
 	sig->krg_objid = 0;
-	sig->kddm_obj = NULL;
+	sig->gdm_obj = NULL;
 #endif
 	return 0;
 }
@@ -1136,13 +1136,13 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	if (clone_flags & CLONE_THREAD)
 #ifdef CONFIG_KRG_EPM
 	{
-		if (current->signal->kddm_obj)
+		if (current->signal->gdm_obj)
 			krg_signal_writelock(current->signal);
 
 		atomic_inc(&current->signal->count);
 		atomic_inc(&current->signal->live);
 
-		if (current->signal->kddm_obj) {
+		if (current->signal->gdm_obj) {
 			krg_signal_share(current->signal);
 			krg_signal_unlock(current->signal);
 		}
@@ -1208,11 +1208,11 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 
 #ifdef CONFIG_KRG_EPM
 	/*
-	 * Too early to allocate the KDDM object, will do it once the tgid is
+	 * Too early to allocate the GDM object, will do it once the tgid is
 	 * known.
 	 */
 	sig->krg_objid = 0;
-	sig->kddm_obj = NULL;
+	sig->gdm_obj = NULL;
 #endif
 #ifdef CONFIG_CGROUPS
 	init_rwsem(&sig->group_rwsem);
@@ -1495,23 +1495,23 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	krg_cap_fork(p, clone_flags);
 #endif /* CONFIG_KRG_CAP */
 
-#ifdef CONFIG_KRG_KDDM
-	if (!kh_copy_kddm_info)
-		p->kddm_info = NULL;
-	else if ((retval = kh_copy_kddm_info(clone_flags, p)))
+#ifdef CONFIG_KRG_GDM
+	if (!kh_copy_gdm_info)
+		p->gdm_info = NULL;
+	else if ((retval = kh_copy_gdm_info(clone_flags, p)))
 		goto bad_fork_cleanup_policy;
-#endif /* CONFIG_KRG_KDDM */
+#endif /* CONFIG_KRG_GDM */
 
 	retval = perf_event_init_task(p);
 	if (retval)
 		goto bad_fork_cleanup_policy;
 
 	if ((retval = audit_alloc(p)))
-#ifdef CONFIG_KRG_KDDM
-		goto bad_fork_cleanup_kddm_info;
+#ifdef CONFIG_KRG_GDM
+		goto bad_fork_cleanup_gdm_info;
 #else
 		goto bad_fork_cleanup_perf;
-#endif /* CONFIG_KRG_KDDM */
+#endif /* CONFIG_KRG_GDM */
 	/* copy all the process information */
 	if ((retval = copy_semundo(clone_flags, p)))
 		goto bad_fork_cleanup_audit;
@@ -1864,10 +1864,10 @@ bad_fork_cleanup_semundo:
 	exit_sem(p);
 bad_fork_cleanup_audit:
 	audit_free(p);
-#ifdef CONFIG_KRG_KDDM
-bad_fork_cleanup_kddm_info:
-	if (p->kddm_info)
-		kmem_cache_free(kddm_info_cachep, p->kddm_info);
+#ifdef CONFIG_KRG_GDM
+bad_fork_cleanup_gdm_info:
+	if (p->gdm_info)
+		kmem_cache_free(gdm_info_cachep, p->gdm_info);
 #endif
 bad_fork_cleanup_perf:
 	perf_event_free_task(p);

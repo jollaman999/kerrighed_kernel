@@ -321,7 +321,7 @@ void  rotate_reclaimable_page(struct page *page)
 
 static void update_page_reclaim_stat(struct zone *zone, struct page *page,
 #ifdef CONFIG_KRG_MM
-				     int file, int kddm, int rotated)
+				     int file, int gdm, int rotated)
 #else
 				     int file, int rotated)
 #endif
@@ -330,7 +330,7 @@ static void update_page_reclaim_stat(struct zone *zone, struct page *page,
 	struct zone_reclaim_stat *memcg_reclaim_stat;
 #ifdef CONFIG_KRG_MM
 	/* Not clean but limit the patch on this function */
-	file = RECLAIM_STAT_INDEX(file, kddm);
+	file = RECLAIM_STAT_INDEX(file, gdm);
 	BUG_ON ((file > 2) || (file < 0));
 #endif
 
@@ -844,7 +844,7 @@ void ____pagevec_lru_add(struct pagevec *pvec, enum lru_list lru)
 		struct zone *pagezone = page_zone(page);
 		int file;
 #ifdef CONFIG_KRG_MM
-		int kddm;
+		int gdm;
 #endif
 		int active;
 
@@ -864,13 +864,13 @@ void ____pagevec_lru_add(struct pagevec *pvec, enum lru_list lru)
 		active = is_active_lru(lru);
 		file = is_file_lru(lru);
 #ifdef CONFIG_KRG_MM
-		kddm = is_kddm_lru(lru);
+		gdm = is_gdm_lru(lru);
 #endif
 		if (active)
 			SetPageActive(page);
 #ifdef CONFIG_KRG_MM
 		update_page_reclaim_stat(zone, page, file,
-					 kddm, active);
+					 gdm, active);
 #else
 		update_page_reclaim_stat(zone, page, file, active);
 #endif

@@ -13,7 +13,7 @@
 #include <linux/msg.h>
 #include <linux/ipc_namespace.h>
 #endif
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/action.h>
 #include <hcc/application.h>
 #include <hcc/app_shared.h>
@@ -105,7 +105,7 @@ static struct file *import_regular_file_from_krg_desc(
 	else {
 		desc->file.filename = (char *) &desc[1];
 
-		if (desc->file.ctnrid != KDDM_SET_UNUSED)
+		if (desc->file.ctnrid != GDM_SET_UNUSED)
 			file = create_file_entry_from_krg_desc(task, desc);
 		else
 			file = reopen_file_entry_from_krg_desc(task, desc);
@@ -210,12 +210,12 @@ int get_regular_file_krg_desc(struct file *file, void **desc,
 #ifdef CONFIG_KRG_FAF
 	    !(file->f_flags & (O_FAF_CLT | O_FAF_SRV)) &&
 #endif
-	    file->f_dentry->d_inode->i_mapping->kddm_set
+	    file->f_dentry->d_inode->i_mapping->gdm_set
 		)
 		data->file.ctnrid =
-			file->f_dentry->d_inode->i_mapping->kddm_set->id;
+			file->f_dentry->d_inode->i_mapping->gdm_set->id;
 	else
-		data->file.ctnrid = KDDM_SET_UNUSED;
+		data->file.ctnrid = GDM_SET_UNUSED;
 
 	*desc = data;
 	*desc_size = size;
@@ -810,7 +810,7 @@ static int prepare_restart_data_supported_file(
 
 		if (!f->f_objid) {
 			/* get a new dvfs objid */
-			r = create_kddm_file_object(f);
+			r = create_gdm_file_object(f);
 			if (r)
 				goto error;
 		}

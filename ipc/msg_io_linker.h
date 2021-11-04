@@ -1,14 +1,14 @@
-/** KDDM IPC MSG id Linker.
+/** GDM IPC MSG id Linker.
  *  @file msgid_io_linker.h
  *
- *  Link KDDM and Linux IPC msg id mechanisms.
+ *  Link GDM and Linux IPC msg id mechanisms.
  *  @author Matthieu Fertré
  */
 
 #ifndef __MSGID_IO_LINKER__
 #define __MSGID_IO_LINKER__
 
-#include <kddm/kddm_types.h>
+#include <gdm/gdm_types.h>
 
 extern struct kmem_cache *msq_object_cachep;
 

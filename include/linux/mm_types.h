@@ -56,7 +56,7 @@ struct page {
 		};
 	};
 #ifdef CONFIG_KRG_MM
-	atomic_t _kddm_count;		/* Count number of KDDM set sharing
+	atomic_t _gdm_count;		/* Count number of GDM set sharing
 					 * the page */
 	void *obj_entry;
 #endif
@@ -312,8 +312,8 @@ struct mm_struct {
 	struct core_state *core_state; /* coredumping support */
 
 #ifdef CONFIG_KRG_MM
-	struct kddm_set * anon_vma_kddm_set;
-	unique_id_t anon_vma_kddm_id;
+	struct gdm_set * anon_vma_gdm_set;
+	unique_id_t anon_vma_gdm_id;
 	krgnodemask_t copyset;		/* Nodes owning a copy of the struct */
 	unique_id_t mm_id;
 #endif

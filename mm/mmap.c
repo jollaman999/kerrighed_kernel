@@ -400,7 +400,7 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 			   current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur,
 			   current->signal->rlim[RLIMIT_DATA].rlim_cur);
 
-	if (mm->anon_vma_kddm_set)
+	if (mm->anon_vma_gdm_set)
 		krg_do_brk(mm, brk,
 			   current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur,
 			   current->signal->rlim[RLIMIT_DATA].rlim_cur);
@@ -810,7 +810,7 @@ static inline int is_mergeable_vma(struct vm_area_struct *vma,
 {
 	/* VM_CAN_NONLINEAR may get set later by f_op->mmap() */
 #ifdef CONFIG_KRG_MM
-	if ((vma->vm_flags ^ vm_flags) & ~(VM_CAN_NONLINEAR|VM_KDDM))
+	if ((vma->vm_flags ^ vm_flags) & ~(VM_CAN_NONLINEAR|VM_GDM))
 #else
 	if ((vma->vm_flags ^ vm_flags) & ~VM_CAN_NONLINEAR)
 #endif
@@ -821,7 +821,7 @@ static inline int is_mergeable_vma(struct vm_area_struct *vma,
 		return 0;
 
 #ifdef CONFIG_KRG_MM
-	if (!(vma->vm_flags & VM_KDDM) && (vm_flags & VM_KDDM))
+	if (!(vma->vm_flags & VM_GDM) && (vm_flags & VM_GDM))
 		return 0;
 #endif
 	return 1;
@@ -1490,7 +1490,7 @@ out:
 	} else if ((flags & MAP_POPULATE) && !(flags & MAP_NONBLOCK))
 		make_pages_present(addr, addr + len);
 #ifdef CONFIG_KRG_MM
-	if (!handler_call && mm->anon_vma_kddm_set)
+	if (!handler_call && mm->anon_vma_gdm_set)
 		krg_do_mmap_region(vma, flags, vm_flags);
 #endif
 	return addr;
@@ -2546,7 +2546,7 @@ SYSCALL_DEFINE2(munmap, unsigned long, addr, size_t, len)
 	up_write(&mm->mmap_sem);
 
 #ifdef CONFIG_KRG_MM
-	if (!ret && mm->anon_vma_kddm_set)
+	if (!ret && mm->anon_vma_gdm_set)
 		krg_do_munmap(mm, addr, len);
 #endif
 
@@ -2689,7 +2689,7 @@ unsigned long do_brk(unsigned long addr, unsigned long len)
 out:
 	perf_event_mmap(vma);
 #ifdef CONFIG_KRG_MM
-	if (mm->anon_vma_kddm_set)
+	if (mm->anon_vma_gdm_set)
 		krg_check_vma_link(vma);
 #endif
 	mm->total_vm += len >> PAGE_SHIFT;

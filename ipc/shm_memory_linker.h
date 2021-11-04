@@ -1,7 +1,7 @@
-/** KDDM SHM Memory Linker.
+/** GDM SHM Memory Linker.
  *  @file shm_memory_linker.h
  *
- *  Link KDDM and Linux SHM memory system.
+ *  Link GDM and Linux SHM memory system.
  *  @author Renaud Lottiaux
  */
 

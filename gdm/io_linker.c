@@ -1,4 +1,4 @@
-/** KDDM IO linker interface.
+/** GDM IO linker interface.
  *  @file io_linker.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
@@ -15,14 +15,14 @@
 #include <hcc/krgflags.h>
 
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
-#include <kddm/io_linker.h>
+#include <gdm/gdm.h>
+#include <gdm/io_linker.h>
 
 
 struct iolinker_struct *iolinker_list[MAX_IO_LINKER];
 
-krgnodemask_t krgnode_kddm_map;
-hcc_node_t kddm_nb_nodes;
+krgnodemask_t krgnode_gdm_map;
+hcc_node_t gdm_nb_nodes;
 
 
 /*****************************************************************************/
@@ -33,17 +33,17 @@ hcc_node_t kddm_nb_nodes;
 
 
 
-/** Instantiate a kddm set with an IO linker.
+/** Instantiate a gdm set with an IO linker.
  *  @author Renaud Lottiaux
  *
  *  @param set           Kddm set to instantiate.
- *  @param link          Node linked to the kddm set.
- *  @param iolinker_id   Id of the linker to link to the kddm set.
+ *  @param link          Node linked to the gdm set.
+ *  @param iolinker_id   Id of the linker to link to the gdm set.
  *  @param private_data  Data used by the instantiator...
  *
- *  @return  Structure of the requested kddm set or NULL if not found.
+ *  @return  Structure of the requested gdm set or NULL if not found.
  */
-int kddm_io_instantiate (struct kddm_set * set,
+int gdm_io_instantiate (struct gdm_set * set,
 			 hcc_node_t def_owner,
 			 iolinker_id_t iolinker_id,
 			 void *private_data,
@@ -54,10 +54,10 @@ int kddm_io_instantiate (struct kddm_set * set,
 
 	BUG_ON (set == NULL);
 	BUG_ON (iolinker_id < 0 || iolinker_id >= MAX_IO_LINKER);
-	BUG_ON (set->state != KDDM_SET_LOCKED);
+	BUG_ON (set->state != GDM_SET_LOCKED);
 
 	while (iolinker_list[iolinker_id] == NULL) {
-		WARNING ("Instantiate a kddm set with a not registered IO "
+		WARNING ("Instantiate a gdm set with a not registered IO "
 			 "linker (%d)... Retry in 1 second\n", iolinker_id);
 		set_current_state (TASK_INTERRUPTIBLE);
 		schedule_timeout (1 * HZ);
@@ -86,12 +86,12 @@ int kddm_io_instantiate (struct kddm_set * set,
 
 
 
-/** Uninstantiate a kddm set.
+/** Uninstantiate a gdm set.
  *  @author Renaud Lottiaux
  *
  *  @param set          Kddm Set to uninstantiate
  */
-void kddm_io_uninstantiate (struct kddm_set * set,
+void gdm_io_uninstantiate (struct gdm_set * set,
                             int destroy)
 {
 	if (set->iolinker && set->iolinker->uninstantiate)
@@ -119,8 +119,8 @@ void kddm_io_uninstantiate (struct kddm_set * set,
  *  @param obj_entry    Object entry to export data from.
  *  @param set          Kddm Set the object belong to.
  */
-int kddm_io_alloc_object (struct kddm_obj * obj_entry,
-			  struct kddm_set * set,
+int gdm_io_alloc_object (struct gdm_obj * obj_entry,
+			  struct gdm_set * set,
 			  objid_t objid)
 {
 	int r = 0;
@@ -153,8 +153,8 @@ done:
  *  @param objid        Id of the object to first touch.
  *  @param obj_entry    Object entry the object belong to.
  */
-int kddm_io_first_touch_object (struct kddm_obj * obj_entry,
-                                struct kddm_set * set,
+int gdm_io_first_touch_object (struct gdm_obj * obj_entry,
+                                struct gdm_set * set,
                                 objid_t objid,
 				int flags)
 {
@@ -170,22 +170,22 @@ int kddm_io_first_touch_object (struct kddm_obj * obj_entry,
 			atomic_inc(&set->nr_objects);
 	}
 	else
-		res = kddm_io_alloc_object(obj_entry, set, objid);
+		res = gdm_io_alloc_object(obj_entry, set, objid);
 
 	return res ;
 }
 
 
 
-/** Request an IO linker to insert an object in a kddm set.
+/** Request an IO linker to insert an object in a gdm set.
  *  @author Renaud Lottiaux
  *
  *  @param set          Kddm Set the object belong to.
  *  @param objid        Id of the object to insert.
  *  @param obj_entry    Object entry the object belong to.
  */
-int kddm_io_insert_object (struct kddm_obj * obj_entry,
-                           struct kddm_set * set,
+int gdm_io_insert_object (struct gdm_obj * obj_entry,
+                           struct gdm_set * set,
                            objid_t objid)
 {
 	int res = 0;
@@ -199,15 +199,15 @@ int kddm_io_insert_object (struct kddm_obj * obj_entry,
 
 
 
-/** Request an IO linker to put a kddm object.
+/** Request an IO linker to put a gdm object.
  *  @author Renaud Lottiaux
  *
  *  @param set          Kddm Set the object belong to.
  *  @param objid        Id of the object to put.
  *  @param obj_entry    Object entry the object belong to.
  */
-int kddm_io_put_object (struct kddm_obj * obj_entry,
-                        struct kddm_set * set,
+int gdm_io_put_object (struct gdm_obj * obj_entry,
+                        struct gdm_set * set,
                         objid_t objid)
 {
 	int res = 0;
@@ -230,8 +230,8 @@ int kddm_io_put_object (struct kddm_obj * obj_entry,
  *  @param objid        Id of the object to invalidate.
  *  @param obj_entry    Object entry the object belong to.
  */
-int kddm_io_invalidate_object (struct kddm_obj * obj_entry,
-			       struct kddm_set * set,
+int gdm_io_invalidate_object (struct gdm_obj * obj_entry,
+			       struct gdm_set * set,
 			       objid_t objid)
 {
 	int res = 0;
@@ -243,7 +243,7 @@ int kddm_io_invalidate_object (struct kddm_obj * obj_entry,
 			res = set->iolinker->invalidate_object (obj_entry,
 								set, objid);
 
-			if (res != KDDM_IO_KEEP_OBJECT)
+			if (res != GDM_IO_KEEP_OBJECT)
 				obj_entry->object = NULL;
 		}
 
@@ -263,8 +263,8 @@ int kddm_io_invalidate_object (struct kddm_obj * obj_entry,
  *  @param objid        Id of the object to remove.
  *  @param obj_entry    Object entry the object belong to.
  */
-int kddm_io_remove_object (void *object,
-			   struct kddm_set * set,
+int gdm_io_remove_object (void *object,
+			   struct gdm_set * set,
 			   objid_t objid)
 {
 	int res = 0;
@@ -282,8 +282,8 @@ int kddm_io_remove_object (void *object,
 	return res;
 }
 
-int kddm_io_remove_object_and_unlock (struct kddm_obj * obj_entry,
-				      struct kddm_set * set,
+int gdm_io_remove_object_and_unlock (struct gdm_obj * obj_entry,
+				      struct gdm_set * set,
 				      objid_t objid)
 {
 	int res = 0;
@@ -294,14 +294,14 @@ int kddm_io_remove_object_and_unlock (struct kddm_obj * obj_entry,
 	object = obj_entry->object;
 
 	if (object == NULL) {
-		put_kddm_obj_entry(set, obj_entry, objid);
+		put_gdm_obj_entry(set, obj_entry, objid);
 		goto done;
 	}
 
 	obj_entry->object = NULL;
-	put_kddm_obj_entry(set, obj_entry, objid);
+	put_gdm_obj_entry(set, obj_entry, objid);
 
-	res = kddm_io_remove_object (object, set, objid);
+	res = gdm_io_remove_object (object, set, objid);
 
 done:
 	return res;
@@ -316,8 +316,8 @@ done:
  *  @param objid        Id of the object to sync.
  *  @param obj_entry    Object entry the object belong to.
  */
-int kddm_io_sync_object (struct kddm_obj * obj_entry,
-                         struct kddm_set * set,
+int gdm_io_sync_object (struct gdm_obj * obj_entry,
+                         struct gdm_set * set,
                          objid_t objid)
 {
 	int res = 0 ;
@@ -340,10 +340,10 @@ int kddm_io_sync_object (struct kddm_obj * obj_entry,
  *  @param objid        Id of the object to sync.
  *  @param new_state    New state for the object.
  */
-int kddm_io_change_state (struct kddm_obj * obj_entry,
-			  struct kddm_set * set,
+int gdm_io_change_state (struct gdm_obj * obj_entry,
+			  struct gdm_set * set,
 			  objid_t objid,
-			  kddm_obj_state_t new_state)
+			  gdm_obj_state_t new_state)
 {
 	if (set->iolinker && set->iolinker->change_state)
 		set->iolinker->change_state (obj_entry, set, objid, new_state);
@@ -360,9 +360,9 @@ int kddm_io_change_state (struct kddm_obj * obj_entry,
  *  @param obj_entry    Object entry to import data into.
  *  @param buffer       Buffer containing data to import.
  */
-int kddm_io_import_object (struct rpc_desc *desc,
-                           struct kddm_set *set,
-                           struct kddm_obj *obj_entry,
+int gdm_io_import_object (struct rpc_desc *desc,
+                           struct gdm_set *set,
+                           struct gdm_obj *obj_entry,
                            objid_t objid,
 			   int flags)
 {
@@ -390,9 +390,9 @@ int kddm_io_import_object (struct rpc_desc *desc,
  *  @param obj_entry    Object entry to export data from.
  *  @param desc		RPC descriptor to export data on.
  */
-int kddm_io_export_object (struct rpc_desc *desc,
-			   struct kddm_set *set,
-                           struct kddm_obj *obj_entry,
+int gdm_io_export_object (struct rpc_desc *desc,
+			   struct gdm_set *set,
+                           struct gdm_obj *obj_entry,
                            objid_t objid,
 			   int flags)
 {
@@ -407,22 +407,22 @@ int kddm_io_export_object (struct rpc_desc *desc,
 	return res;
 }
 
-hcc_node_t __kddm_io_default_owner (struct kddm_set *set,
+hcc_node_t __gdm_io_default_owner (struct gdm_set *set,
 					  objid_t objid,
 					  const krgnodemask_t *nodes,
 					  int nr_nodes)
 {
 	switch (set->def_owner) {
-	  case KDDM_RR_DEF_OWNER:
+	  case GDM_RR_DEF_OWNER:
 		  if (likely(__krgnode_isset(hcc_node_id, nodes)))
 			  return __nth_krgnode(objid % nr_nodes, nodes);
 		  else
 			  return hcc_node_id;
 
-	  case KDDM_UNIQUE_ID_DEF_OWNER:
+	  case GDM_UNIQUE_ID_DEF_OWNER:
 		  return objid >> UNIQUE_ID_NODE_SHIFT;
 
-	  case KDDM_CUSTOM_DEF_OWNER:
+	  case GDM_CUSTOM_DEF_OWNER:
 		  return set->iolinker->default_owner (set, objid,
 						       nodes, nr_nodes);
 
@@ -431,11 +431,11 @@ hcc_node_t __kddm_io_default_owner (struct kddm_set *set,
 	}
 }
 
-hcc_node_t kddm_io_default_owner (struct kddm_set * set, objid_t objid)
+hcc_node_t gdm_io_default_owner (struct gdm_set * set, objid_t objid)
 {
-	return __kddm_io_default_owner (set, objid,
-					&krgnode_kddm_map,
-					kddm_nb_nodes);
+	return __gdm_io_default_owner (set, objid,
+					&krgnode_gdm_map,
+					gdm_nb_nodes);
 }
 
 
@@ -447,7 +447,7 @@ hcc_node_t kddm_io_default_owner (struct kddm_set * set, objid_t objid)
 
 
 
-/** Register a new kddm set IO linker.
+/** Register a new gdm set IO linker.
  *  @author Renaud Lottiaux
  *
  *  @param io_linker_id
@@ -472,8 +472,8 @@ void io_linker_init (void)
 {
 	int i;
 
-	kddm_nb_nodes = hcc_nb_nodes;
-	krgnodes_copy(krgnode_kddm_map, krgnode_online_map);
+	gdm_nb_nodes = hcc_nb_nodes;
+	krgnodes_copy(krgnode_gdm_map, krgnode_online_map);
 
 	for (i = 0; i < MAX_IO_LINKER; i++)
 		iolinker_list[i] = NULL;

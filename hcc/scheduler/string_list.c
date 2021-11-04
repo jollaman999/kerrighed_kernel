@@ -11,7 +11,7 @@
 #include <linux/list.h>
 #include <linux/types.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 struct string_list_object {
 	struct list_head head;
@@ -25,8 +25,8 @@ struct string_list_element {
 
 static struct kmem_cache *string_list_cachep;
 
-static int string_list_alloc_object(struct kddm_obj *obj_entry,
-				    struct kddm_set *set,
+static int string_list_alloc_object(struct gdm_obj *obj_entry,
+				    struct gdm_set *set,
 				    objid_t objid)
 {
 	struct string_list_object *obj;
@@ -70,8 +70,8 @@ static void string_list_make_empty(struct string_list_object *object)
 }
 
 static int string_list_import_object(struct rpc_desc *desc,
-				     struct kddm_set *set,
-				     struct kddm_obj *obj_entry,
+				     struct gdm_set *set,
+				     struct gdm_obj *obj_entry,
 				     objid_t objid,
 				     int flags)
 {
@@ -109,8 +109,8 @@ out:
 }
 
 static int string_list_export_object(struct rpc_desc *desc,
-				     struct kddm_set *set,
-				     struct kddm_obj *obj_entry,
+				     struct gdm_set *set,
+				     struct gdm_obj *obj_entry,
 				     objid_t objid,
 				     int flags)
 {
@@ -141,7 +141,7 @@ out:
 }
 
 static int string_list_remove_object(void *object,
-				     struct kddm_set *set,
+				     struct gdm_set *set,
 				     objid_t objid)
 {
 	string_list_make_empty(object);
@@ -158,28 +158,28 @@ static struct iolinker_struct string_list_io_linker = {
 };
 
 struct string_list_object *string_list_create_writelock(
-	struct kddm_set *kddm_set,
+	struct gdm_set *gdm_set,
 	objid_t objid)
 {
-	return _kddm_grab_object(kddm_set, objid);
+	return _gdm_grab_object(gdm_set, objid);
 }
 
-struct string_list_object *string_list_writelock(struct kddm_set *kddm_set,
+struct string_list_object *string_list_writelock(struct gdm_set *gdm_set,
 						 objid_t objid)
 {
-	return _kddm_grab_object_no_ft(kddm_set, objid);
+	return _gdm_grab_object_no_ft(gdm_set, objid);
 }
 
-void string_list_unlock(struct kddm_set *kddm_set,
+void string_list_unlock(struct gdm_set *gdm_set,
 			struct string_list_object *object)
 {
-	_kddm_put_object(kddm_set, object->id);
+	_gdm_put_object(gdm_set, object->id);
 }
 
-void string_list_unlock_and_destroy(struct kddm_set *kddm_set,
+void string_list_unlock_and_destroy(struct gdm_set *gdm_set,
 				    struct string_list_object *object)
 {
-	_kddm_remove_frozen_object(kddm_set, object->id);
+	_gdm_remove_frozen_object(gdm_set, object->id);
 }
 
 int string_list_add_element(struct string_list_object *object,

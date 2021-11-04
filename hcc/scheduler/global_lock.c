@@ -7,16 +7,16 @@
 
 #include <linux/errno.h>
 #include <linux/err.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <asm/system.h>
 
-static struct kddm_set *lock_set;
+static struct gdm_set *lock_set;
 
 #define ZERO_SIZE_LOCK_OBJECT	((void *) 0xe5e5e5e5)
 
 /* Avoid using memory for 0-sized objects */
-static int global_lock_alloc_object(struct kddm_obj *obj_entry,
-				    struct kddm_set *set,
+static int global_lock_alloc_object(struct gdm_obj *obj_entry,
+				    struct gdm_set *set,
 				    objid_t objid)
 {
 	obj_entry->object = ZERO_SIZE_LOCK_OBJECT;
@@ -25,8 +25,8 @@ static int global_lock_alloc_object(struct kddm_obj *obj_entry,
 
 /* Avoid a useless rpc_pack() ... */
 static int global_lock_export_object(struct rpc_desc *desc,
-				     struct kddm_set *set,
-				     struct kddm_obj *obj_entry,
+				     struct gdm_set *set,
+				     struct gdm_obj *obj_entry,
 				     objid_t objid,
 				     int flags)
 {
@@ -35,8 +35,8 @@ static int global_lock_export_object(struct rpc_desc *desc,
 
 /* ... and its useless rpc_unpack() counterpart */
 static int global_lock_import_object(struct rpc_desc *desc,
-				     struct kddm_set *set,
-				     struct kddm_obj *obj_entry,
+				     struct gdm_set *set,
+				     struct gdm_obj *obj_entry,
 				     objid_t objid,
 				     int flags)
 {
@@ -45,7 +45,7 @@ static int global_lock_import_object(struct rpc_desc *desc,
 
 /* Do not try kfree(ZERO_SIZE_LOCK_OBJECT) */
 static int global_lock_remove_object(void *object,
-				     struct kddm_set *set,
+				     struct gdm_set *set,
 				     objid_t objid)
 {
 	return 0;
@@ -62,7 +62,7 @@ static struct iolinker_struct global_lock_io_linker = {
 
 int global_lock_try_writelock(unsigned long lock_id)
 {
-	void *ret = _kddm_try_grab_object(lock_set, lock_id);
+	void *ret = _gdm_try_grab_object(lock_set, lock_id);
 	int retval;
 
 	if (likely(ret == ZERO_SIZE_LOCK_OBJECT))
@@ -79,7 +79,7 @@ int global_lock_try_writelock(unsigned long lock_id)
 
 int global_lock_writelock(unsigned long lock_id)
 {
-	void *ret = _kddm_grab_object(lock_set, lock_id);
+	void *ret = _gdm_grab_object(lock_set, lock_id);
 	int retval;
 
 	if (likely(ret == ZERO_SIZE_LOCK_OBJECT))
@@ -94,7 +94,7 @@ int global_lock_writelock(unsigned long lock_id)
 
 int global_lock_readlock(unsigned long lock_id)
 {
-	void *ret = _kddm_get_object(lock_set, lock_id);
+	void *ret = _gdm_get_object(lock_set, lock_id);
 	int retval;
 
 	if (likely(ret == ZERO_SIZE_LOCK_OBJECT))
@@ -109,17 +109,17 @@ int global_lock_readlock(unsigned long lock_id)
 
 void global_lock_unlock(unsigned long lock_id)
 {
-	_kddm_put_object(lock_set, lock_id);
+	_gdm_put_object(lock_set, lock_id);
 }
 
 int global_lock_start(void)
 {
 	register_io_linker(GLOBAL_LOCK_LINKER, &global_lock_io_linker);
 
-	lock_set = create_new_kddm_set(kddm_def_ns, GLOBAL_LOCK_KDDM_SET_ID,
+	lock_set = create_new_gdm_set(gdm_def_ns, GLOBAL_LOCK_GDM_SET_ID,
 				       GLOBAL_LOCK_LINKER,
-				       KDDM_RR_DEF_OWNER,
-				       0, KDDM_LOCAL_EXCLUSIVE);
+				       GDM_RR_DEF_OWNER,
+				       0, GDM_LOCAL_EXCLUSIVE);
 	BUG_ON(!lock_set);
 	if (IS_ERR(lock_set))
 		return PTR_ERR(lock_set);

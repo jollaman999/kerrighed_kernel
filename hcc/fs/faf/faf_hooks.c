@@ -24,7 +24,7 @@
 #include <hcc/remote_cred.h>
 #include <asm/uaccess.h>
 
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/hotplug.h>
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
@@ -1576,7 +1576,7 @@ static void handle_faf_poll_notify(struct rpc_desc *desc,
 	struct dvfs_file_struct *dvfs_file;
 	faf_client_data_t *data;
 
-	dvfs_file = _kddm_get_object_no_ft(dvfs_file_struct_ctnr, dvfs_id);
+	dvfs_file = _gdm_get_object_no_ft(dvfs_file_struct_ctnr, dvfs_id);
 	if (dvfs_file && dvfs_file->file) {
 		/* TODO: still required? */
 		if (atomic_long_read (&dvfs_file->file->f_count) == 0)
@@ -1589,7 +1589,7 @@ static void handle_faf_poll_notify(struct rpc_desc *desc,
 	wake_up_interruptible_all(&data->poll_wq);
 
 out_put_dvfs_file:
-	_kddm_put_object(dvfs_file_struct_ctnr, dvfs_id);
+	_gdm_put_object(dvfs_file_struct_ctnr, dvfs_id);
 }
 
 struct file_operations faf_file_ops = {

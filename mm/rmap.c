@@ -63,8 +63,8 @@
 #include <asm/tlbflush.h>
 #ifdef CONFIG_KRG_MM
 #include <hcc/page_table_tree.h>
-#include <kddm/object.h>
-#include <kddm/kddm_types.h>
+#include <gdm/object.h>
+#include <gdm/gdm_types.h>
 #endif
 
 #include "internal.h"
@@ -1202,7 +1202,7 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 	spinlock_t *ptl;
 	int ret = SWAP_AGAIN;
 #ifdef CONFIG_KRG_MM
-	struct kddm_obj *obj_entry = NULL;
+	struct gdm_obj *obj_entry = NULL;
 #endif
 
 	pte = page_check_address(page, mm, address, &ptl, 0);
@@ -1258,10 +1258,10 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 		}
 #ifdef CONFIG_KRG_MM
 		/* Avoid unmap of a page in an address space being inserted in
-		 * a KDDM or in use in the KDDM layer */
+		 * a GDM or in use in the GDM layer */
 		obj_entry = page->obj_entry;
 		if (obj_entry) {
-			if ((mm->anon_vma_kddm_id && !mm->anon_vma_kddm_set) ||
+			if ((mm->anon_vma_gdm_id && !mm->anon_vma_gdm_set) ||
 			    object_frozen(obj_entry, NULL)) {
 				ret = SWAP_FAIL;
 				goto out_unmap;
@@ -1326,14 +1326,14 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 		set_pte_at(mm, address, pte, swp_entry_to_pte(entry));
 		BUG_ON(pte_file(*pte));
 #ifdef CONFIG_KRG_MM
-		wait_lock_kddm_page(page);
-		if (obj_entry && mm->anon_vma_kddm_id) {
+		wait_lock_gdm_page(page);
+		if (obj_entry && mm->anon_vma_gdm_id) {
 			obj_entry->object = (void*) mk_swap_pte_page(pte);
 			set_swap_pte_obj_entry(pte, obj_entry);
-			if (atomic_dec_and_test(&page->_kddm_count))
+			if (atomic_dec_and_test(&page->_gdm_count))
 				page->obj_entry = NULL;
 		}
-		unlock_kddm_page(page);
+		unlock_gdm_page(page);
 #endif
 	} else if (PAGE_MIGRATION && (TTU_ACTION(flags) == TTU_MIGRATION)) {
 		/* Establish migration entry for a file page */

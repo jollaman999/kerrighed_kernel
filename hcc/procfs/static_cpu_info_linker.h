@@ -8,8 +8,8 @@
 #define STATIC_CPU_INFO_LINKER_H
 
 #include <hcc/cpu_id.h>
-#include <kddm/kddm.h>
-#include <kddm/object_server.h>
+#include <gdm/gdm.h>
+#include <gdm/object_server.h>
 #include <asm/hcc/cpuinfo.h>
 
 /*--------------------------------------------------------------------------*
@@ -30,7 +30,7 @@ typedef struct {
  *                                                                          *
  *--------------------------------------------------------------------------*/
 
-extern struct kddm_set *static_cpu_info_kddm_set;
+extern struct gdm_set *static_cpu_info_gdm_set;
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -51,12 +51,12 @@ int static_cpu_info_init(void);
 static inline krg_static_cpu_info_t *get_static_cpu_info(int node_id,
 							 int cpu_id)
 {
-	return _fkddm_get_object(static_cpu_info_kddm_set,
+	return _fgdm_get_object(static_cpu_info_gdm_set,
 				 __krg_cpu_id(node_id, cpu_id),
-				 KDDM_NO_FREEZE|KDDM_NO_FT_REQ);
+				 GDM_NO_FREEZE|GDM_NO_FT_REQ);
 }
 
-hcc_node_t cpu_info_default_owner(struct kddm_set *set,
+hcc_node_t cpu_info_default_owner(struct gdm_set *set,
 					objid_t objid,
 					const krgnodemask_t *nodes,
 					int nr_nodes);

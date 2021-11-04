@@ -5,21 +5,21 @@
  *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
  */
 #include <linux/swap.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 #include "static_node_info_linker.h"
 
 #include <hcc/debug.h>
 
-struct kddm_set *static_node_info_kddm_set;
+struct gdm_set *static_node_info_gdm_set;
 
 /*****************************************************************************/
 /*                                                                           */
-/*                     STATIC NODE INFO KDDM IO FUNCTIONS                    */
+/*                     STATIC NODE INFO GDM IO FUNCTIONS                    */
 /*                                                                           */
 /*****************************************************************************/
 
-hcc_node_t node_info_default_owner(struct kddm_set *set,
+hcc_node_t node_info_default_owner(struct gdm_set *set,
 					 objid_t objid,
 					 const krgnodemask_t *nodes,
 					 int nr_nodes)
@@ -44,26 +44,26 @@ int static_node_info_init()
 	register_io_linker(STATIC_NODE_INFO_LINKER,
 			   &static_node_info_io_linker);
 
-	/* Create the static node info kddm set */
+	/* Create the static node info gdm set */
 
-	static_node_info_kddm_set =
-		create_new_kddm_set(kddm_def_ns,
-				    STATIC_NODE_INFO_KDDM_ID,
+	static_node_info_gdm_set =
+		create_new_gdm_set(gdm_def_ns,
+				    STATIC_NODE_INFO_GDM_ID,
 				    STATIC_NODE_INFO_LINKER,
-				    KDDM_CUSTOM_DEF_OWNER,
+				    GDM_CUSTOM_DEF_OWNER,
 				    sizeof(krg_static_node_info_t),
 				    0);
-	if (IS_ERR(static_node_info_kddm_set))
+	if (IS_ERR(static_node_info_gdm_set))
 		OOM;
 
-	static_node_info = _kddm_grab_object(static_node_info_kddm_set,
+	static_node_info = _gdm_grab_object(static_node_info_gdm_set,
 					     hcc_node_id);
 
 	static_node_info->nr_cpu = num_online_cpus();
 	static_node_info->totalram = totalram_pages;
 	static_node_info->totalhigh = totalhigh_pages;
 
-	_kddm_put_object(static_node_info_kddm_set, hcc_node_id);
+	_gdm_put_object(static_node_info_gdm_set, hcc_node_id);
 
 	return 0;
 }

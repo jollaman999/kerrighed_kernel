@@ -1253,7 +1253,7 @@ static unsigned long isolate_pages(unsigned long nr, struct mem_cgroup_zone *mz,
 				   unsigned long *scanned, int order,
 #ifdef CONFIG_KRG_MM
 				   isolate_mode_t mode, int active, int file,
-				   int kddm)
+				   int gdm)
 #else
 				   isolate_mode_t mode, int active, int file)
 #endif
@@ -1267,7 +1267,7 @@ static unsigned long isolate_pages(unsigned long nr, struct mem_cgroup_zone *mz,
 	if (file)
 		lru += LRU_FILE;
 #ifdef CONFIG_KRG_MM
-	if (kddm)
+	if (gdm)
 		lru += LRU_MIGR;
 #endif
 	return isolate_lru_pages(nr, &lruvec->lists[lru], dst,
@@ -1384,7 +1384,7 @@ static int too_many_isolated(struct zone *zone, int file,
 static unsigned long shrink_inactive_list(unsigned long max_scan,
 			struct mem_cgroup_zone *mz, struct scan_control *sc,
 #ifdef CONFIG_KRG_MM
-			int priority, int file, int kddm)
+			int priority, int file, int gdm)
 #else
 			int priority, int file)
 #endif
@@ -1441,7 +1441,7 @@ static unsigned long shrink_inactive_list(unsigned long max_scan,
 		nr_taken = isolate_pages(SWAP_CLUSTER_MAX, mz, &page_list,
 					 &nr_scan, order,
 #ifdef CONFIG_KRG_MM
-					 ISOLATE_INACTIVE, 0, file, kddm);
+					 ISOLATE_INACTIVE, 0, file, gdm);
 #else
 					 ISOLATE_INACTIVE, 0, file);
 #endif
@@ -1659,7 +1659,7 @@ static void shrink_active_list(unsigned long nr_pages,
 			       struct mem_cgroup_zone *mz,
 			       struct scan_control *sc,
 #ifdef CONFIG_KRG_MM
-			       int priority, int file, int kddm)
+			       int priority, int file, int gdm)
 #else
 			       int priority, int file)
 #endif
@@ -1689,7 +1689,7 @@ static void shrink_active_list(unsigned long nr_pages,
 	nr_taken = isolate_pages(nr_pages, mz, &l_hold,
 				 &pgscanned, order,
 #ifdef CONFIG_KRG_MM
-				 ISOLATE_ACTIVE, 1, file, kddm);
+				 ISOLATE_ACTIVE, 1, file, gdm);
 #else
 				 ISOLATE_ACTIVE, 1, file);
 #endif
@@ -1698,7 +1698,7 @@ static void shrink_active_list(unsigned long nr_pages,
 		zone->pages_scanned += pgscanned;
 
 #ifdef CONFIG_KRG_MM
-	reclaim_stat->recent_scanned[RECLAIM_STAT_INDEX(file, kddm)] += nr_taken;
+	reclaim_stat->recent_scanned[RECLAIM_STAT_INDEX(file, gdm)] += nr_taken;
 #else
 	reclaim_stat->recent_scanned[file] += nr_taken;
 #endif
@@ -1708,7 +1708,7 @@ static void shrink_active_list(unsigned long nr_pages,
 		__mod_zone_page_state(zone, NR_ACTIVE_FILE, -nr_taken);
 	else
 #ifdef CONFIG_KRG_MM
-	if (kddm)
+	if (gdm)
 		__mod_zone_page_state(zone, NR_ACTIVE_MIGR, -nr_taken);
 	else
 #endif
@@ -1759,15 +1759,15 @@ static void shrink_active_list(unsigned long nr_pages,
 	 * get_scan_ratio.
 	 */
 #ifdef CONFIG_KRG_MM
-	reclaim_stat->recent_rotated[RECLAIM_STAT_INDEX(file, kddm)] += nr_rotated;
+	reclaim_stat->recent_rotated[RECLAIM_STAT_INDEX(file, gdm)] += nr_rotated;
 #else
 	reclaim_stat->recent_rotated[file] += nr_rotated;
 #endif
 
 	move_active_pages_to_lru(zone, &l_active,
-					BUILD_LRU_ID(1 /* active */, file, kddm));
+					BUILD_LRU_ID(1 /* active */, file, gdm));
 	move_active_pages_to_lru(zone, &l_inactive,
-					BUILD_LRU_ID(0 /* inactive */, file, kddm));
+					BUILD_LRU_ID(0 /* inactive */, file, gdm));
 
 	__mod_zone_page_state(zone, NR_ISOLATED_ANON + file, -nr_taken);
 	spin_unlock_irq(&zone->lru_lock);
@@ -1838,7 +1838,7 @@ static int inactive_file_is_low(struct mem_cgroup_zone *mz)
 }
 
 #ifdef CONFIG_KRG_MM
-static int inactive_kddm_is_low_global(struct zone *zone)
+static int inactive_gdm_is_low_global(struct zone *zone)
 {
 	unsigned long active, inactive;
 
@@ -1851,12 +1851,12 @@ static int inactive_kddm_is_low_global(struct zone *zone)
 	return 0;
 }
 
-static int inactive_kddm_is_low(struct mem_cgroup_zone *mz)
+static int inactive_gdm_is_low(struct mem_cgroup_zone *mz)
 {
 	int low;
 
 	if (scanning_global_lru(mz))
-		low = inactive_kddm_is_low_global(mz->zone);
+		low = inactive_gdm_is_low_global(mz->zone);
 	else
 		BUG();
 	return low;
@@ -1865,7 +1865,7 @@ static int inactive_kddm_is_low(struct mem_cgroup_zone *mz)
 
 #ifdef CONFIG_KRG_MM
 static int inactive_list_is_low(struct mem_cgroup_zone *mz, int file,
-				int kddm)
+				int gdm)
 #else
 static int inactive_list_is_low(struct mem_cgroup_zone *mz, int file)
 #endif
@@ -1873,8 +1873,8 @@ static int inactive_list_is_low(struct mem_cgroup_zone *mz, int file)
 	if (file)
 		return inactive_file_is_low(mz);
 #ifdef CONFIG_KRG_MM
-	else if (kddm)
-		return inactive_kddm_is_low(mz);
+	else if (gdm)
+		return inactive_gdm_is_low(mz);
 #endif
 	else
 		return inactive_anon_is_low(mz);
@@ -1886,13 +1886,13 @@ static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
 {
 	int file = is_file_lru(lru);
 #ifdef CONFIG_KRG_MM
-	int kddm = is_kddm_lru(lru);
+	int gdm = is_gdm_lru(lru);
 #endif
 
 	if (is_active_lru(lru)) {
 #ifdef CONFIG_KRG_MM
-		if (inactive_list_is_low(mz, file, kddm))
-		    shrink_active_list(nr_to_scan, mz, sc, priority, file, kddm);
+		if (inactive_list_is_low(mz, file, gdm))
+		    shrink_active_list(nr_to_scan, mz, sc, priority, file, gdm);
 #else
 		if (inactive_list_is_low(mz, file))
 		    shrink_active_list(nr_to_scan, mz, sc, priority, file);
@@ -1901,7 +1901,7 @@ static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
 	}
 
 #ifdef CONFIG_KRG_MM
-	return shrink_inactive_list(nr_to_scan, mz, sc, priority, file, kddm);
+	return shrink_inactive_list(nr_to_scan, mz, sc, priority, file, gdm);
 #else
 	return shrink_inactive_list(nr_to_scan, mz, sc, priority, file);
 #endif
@@ -1920,7 +1920,7 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 					unsigned long *percent)
 {
 #ifdef CONFIG_KRG_MM
-	unsigned long kddm, kddm_prio, kp;
+	unsigned long gdm, gdm_prio, kp;
 #endif
 	unsigned long anon, file, free;
 #ifndef CONFIG_KRG_MM
@@ -1935,7 +1935,7 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 	file  = zone_nr_lru_pages(mz, LRU_ACTIVE_FILE) +
 		zone_nr_lru_pages(mz, LRU_INACTIVE_FILE);
 #ifdef CONFIG_KRG_MM
-	kddm  = zone_nr_lru_pages(mz, LRU_ACTIVE_MIGR) +
+	gdm  = zone_nr_lru_pages(mz, LRU_ACTIVE_MIGR) +
 		zone_nr_lru_pages(mz, LRU_INACTIVE_MIGR);
 #else
 	if (global_reclaim(sc)) {
@@ -1978,7 +1978,7 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 	}
 
 #ifdef CONFIG_KRG_MM
-	if (unlikely(reclaim_stat->recent_scanned[2] > kddm / 4)) {
+	if (unlikely(reclaim_stat->recent_scanned[2] > gdm / 4)) {
 		spin_lock_irq(&mz->zone->lru_lock);
 		reclaim_stat->recent_scanned[2] /= 2;
 		reclaim_stat->recent_rotated[2] /= 2;
@@ -2002,7 +2002,7 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 		if (unlikely(file + free <= high_wmark_pages(mz->zone)))
 			file_prio = 0;
 	}
-	kddm_prio = 400 - anon_prio - file_prio;
+	gdm_prio = 400 - anon_prio - file_prio;
 #endif
 	/*
 	 * The amount of pressure on anon vs file pages is inversely
@@ -2016,7 +2016,7 @@ static void get_scan_ratio(struct mem_cgroup_zone *mz, struct scan_control *sc,
 	fp /= reclaim_stat->recent_rotated[1] + 1;
 
 #ifdef CONFIG_KRG_MM
-	kp = kddm_prio * (reclaim_stat->recent_scanned[2] + 1);
+	kp = gdm_prio * (reclaim_stat->recent_scanned[2] + 1);
 	kp /= reclaim_stat->recent_rotated[2] + 1;
 
 	/* Normalize to percentages */
@@ -2060,7 +2060,7 @@ static void shrink_mem_cgroup_zone(int priority, struct mem_cgroup_zone *mz,
 	unsigned long nr[NR_LRU_LISTS];
 	unsigned long nr_to_scan;
 #ifdef CONFIG_KRG_MM
-	unsigned long percent[3];	/* anon @ 0; file @ 1; kddm @ 2 */
+	unsigned long percent[3];	/* anon @ 0; file @ 1; gdm @ 2 */
 #else
 	unsigned long percent[2];	/* anon @ 0; file @ 1 */
 #endif
@@ -2086,7 +2086,7 @@ static void shrink_mem_cgroup_zone(int priority, struct mem_cgroup_zone *mz,
 
 	for_each_evictable_lru(l) {
 #ifdef CONFIG_KRG_MM
-		int file = RECLAIM_STAT_INDEX(is_file_lru(l), is_kddm_lru(l));
+		int file = RECLAIM_STAT_INDEX(is_file_lru(l), is_gdm_lru(l));
 #else
 		int file = is_file_lru(l);
 #endif
@@ -2145,7 +2145,7 @@ static void shrink_mem_cgroup_zone(int priority, struct mem_cgroup_zone *mz,
 	if (get_nr_swap_pages() > 0) {
 		if (inactive_anon_is_low(mz))
 			shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0, 0);
-		if (inactive_kddm_is_low(mz))
+		if (inactive_gdm_is_low(mz))
 			shrink_active_list(SWAP_CLUSTER_MAX, mz, sc, priority, 0, 1);
 	}
 #else
@@ -2683,8 +2683,8 @@ static void age_active_anon(struct zone *zone, struct scan_control *sc,
 					   sc, priority, 0);
 #else
 					   sc, priority, 0, 0);
-		/* Do the same on kddm lru pages */
-		if (inactive_kddm_is_low(&mz))
+		/* Do the same on gdm lru pages */
+		if (inactive_gdm_is_low(&mz))
 			shrink_active_list(SWAP_CLUSTER_MAX, &mz,
 					   sc, priority, 0, 1);
 #endif

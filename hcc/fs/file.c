@@ -16,7 +16,7 @@
 #include "faf/faf_internal.h"
 #endif
 
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/hotplug.h>
 #ifdef CONFIG_KRG_EPM
 #include <hcc/action.h>
@@ -28,9 +28,9 @@
 unique_id_root_t file_struct_unique_id_root;
 
 /* DVFS file struct container */
-struct kddm_set *dvfs_file_struct_ctnr = NULL;
+struct gdm_set *dvfs_file_struct_ctnr = NULL;
 
-int create_kddm_file_object(struct file *file)
+int create_gdm_file_object(struct file *file)
 {
 	struct dvfs_file_struct *dvfs_file;
 	unsigned long file_id;
@@ -49,7 +49,7 @@ int create_kddm_file_object(struct file *file)
 	 * The second one is destroyed. We assume this is really unlikely.
 	 */
 	if (cmpxchg (&file->f_objid, 0, file_id) != 0)
-		_kddm_remove_frozen_object(dvfs_file_struct_ctnr, file_id);
+		_gdm_remove_frozen_object(dvfs_file_struct_ctnr, file_id);
 	else {
 		dvfs_file->file = file;
 		put_dvfs_file_struct (file_id);
@@ -132,7 +132,7 @@ void put_dvfs_file(int index, struct file *file)
 	/* else someone has allocated a new structure during the grab */
 
 	if (dvfs_file->count == 0)
-		_kddm_remove_frozen_object (dvfs_file_struct_ctnr, objid);
+		_gdm_remove_frozen_object (dvfs_file_struct_ctnr, objid);
 	else
 		put_dvfs_file_struct (objid);
 }
@@ -202,13 +202,13 @@ int dvfs_file_init(void)
 
 	/* Create the DVFS file struct container */
 
-	dvfs_file_struct_ctnr = create_new_kddm_set(
-		kddm_def_ns,
-		DVFS_FILE_STRUCT_KDDM_ID,
+	dvfs_file_struct_ctnr = create_new_gdm_set(
+		gdm_def_ns,
+		DVFS_FILE_STRUCT_GDM_ID,
 		DVFS_FILE_STRUCT_LINKER,
-		KDDM_UNIQUE_ID_DEF_OWNER,
+		GDM_UNIQUE_ID_DEF_OWNER,
 		sizeof (struct dvfs_file_struct),
-		KDDM_LOCAL_EXCLUSIVE);
+		GDM_LOCAL_EXCLUSIVE);
 
 	if (IS_ERR(dvfs_file_struct_ctnr))
 		OOM;

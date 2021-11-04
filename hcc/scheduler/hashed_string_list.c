@@ -6,17 +6,17 @@
  */
 
 #include <linux/string.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 #include "string_list.h"
 
-struct kddm_set *hashed_string_list_create(kddm_set_id_t kddm_set_id)
+struct gdm_set *hashed_string_list_create(gdm_set_id_t gdm_set_id)
 {
-	return create_new_kddm_set(kddm_def_ns, kddm_set_id,
+	return create_new_gdm_set(gdm_def_ns, gdm_set_id,
 				   STRING_LIST_LINKER,
-				   KDDM_RR_DEF_OWNER,
+				   GDM_RR_DEF_OWNER,
 				   0,
-				   KDDM_LOCAL_EXCLUSIVE);
+				   GDM_LOCAL_EXCLUSIVE);
 }
 
 static unsigned long get_hash(const char *string)
@@ -39,16 +39,16 @@ static unsigned long get_hash(const char *string)
 }
 
 struct string_list_object *
-hashed_string_list_lock_hash(struct kddm_set *kddm_set, const char *element)
+hashed_string_list_lock_hash(struct gdm_set *gdm_set, const char *element)
 {
-	return string_list_create_writelock(kddm_set, get_hash(element));
+	return string_list_create_writelock(gdm_set, get_hash(element));
 }
 
-void hashed_string_list_unlock_hash(struct kddm_set *kddm_set,
+void hashed_string_list_unlock_hash(struct gdm_set *gdm_set,
 				    struct string_list_object *string_list)
 {
 	if (string_list_empty(string_list))
-		string_list_unlock_and_destroy(kddm_set, string_list);
+		string_list_unlock_and_destroy(gdm_set, string_list);
 	else
-		string_list_unlock(kddm_set, string_list);
+		string_list_unlock(gdm_set, string_list);
 }

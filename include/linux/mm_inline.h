@@ -111,8 +111,8 @@ static inline enum lru_list page_lru(struct page *page)
 }
 
 #ifdef CONFIG_KRG_MM
-#define BUILD_LRU_ID(active,file,kddm) (LRU_BASE + LRU_MIGR * kddm + LRU_FILE * file + active)
-#define RECLAIM_STAT_INDEX(file,kddm) (file + 2 * kddm)
+#define BUILD_LRU_ID(active,file,gdm) (LRU_BASE + LRU_MIGR * gdm + LRU_FILE * file + active)
+#define RECLAIM_STAT_INDEX(file,gdm) (file + 2 * gdm)
 static inline int reclaim_stat_index(struct page *page)
 {
 	return RECLAIM_STAT_INDEX(page_is_file_cache(page),

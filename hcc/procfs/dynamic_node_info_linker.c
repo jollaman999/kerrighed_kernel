@@ -17,7 +17,7 @@
 #include <linux/workqueue.h>
 
 #include <hcc/workqueue.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 #include <hcc/dynamic_node_info_linker.h>
 #include "static_node_info_linker.h"
@@ -25,11 +25,11 @@
 #include <hcc/debug.h>
 
 /* Kddm set of node information locations */
-struct kddm_set *dynamic_node_info_kddm_set;
+struct gdm_set *dynamic_node_info_gdm_set;
 
 /*****************************************************************************/
 /*                                                                           */
-/*                    DYNAMIC NODE INFO KDDM IO FUNCTIONS                    */
+/*                    DYNAMIC NODE INFO GDM IO FUNCTIONS                    */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -65,7 +65,7 @@ static void update_dynamic_node_info_worker(struct work_struct *work)
 	unsigned long jif, seq;
 	int i;
 
-	dynamic_node_info = _kddm_grab_object(dynamic_node_info_kddm_set,
+	dynamic_node_info = _gdm_grab_object(dynamic_node_info_gdm_set,
 					      hcc_node_id);
 
 	/* Compute data for uptime proc file */
@@ -161,7 +161,7 @@ static void update_dynamic_node_info_worker(struct work_struct *work)
 
 	krg_arch_fill_dynamic_node_info(dynamic_node_info);
 
-	_kddm_put_object(dynamic_node_info_kddm_set, hcc_node_id);
+	_gdm_put_object(dynamic_node_info_gdm_set, hcc_node_id);
 
 	queue_delayed_work(krg_wq, &update_dynamic_node_info_work, HZ);
 }
@@ -171,14 +171,14 @@ int dynamic_node_info_init(void)
 	register_io_linker(DYNAMIC_NODE_INFO_LINKER,
 			   &dynamic_node_info_io_linker);
 
-	/* Create the node info kddm set */
+	/* Create the node info gdm set */
 
-	dynamic_node_info_kddm_set =
-		create_new_kddm_set(kddm_def_ns, DYNAMIC_NODE_INFO_KDDM_ID,
+	dynamic_node_info_gdm_set =
+		create_new_gdm_set(gdm_def_ns, DYNAMIC_NODE_INFO_GDM_ID,
 				    DYNAMIC_NODE_INFO_LINKER,
-				    KDDM_CUSTOM_DEF_OWNER,
+				    GDM_CUSTOM_DEF_OWNER,
 				    sizeof(krg_dynamic_node_info_t), 0);
-	if (IS_ERR(dynamic_node_info_kddm_set))
+	if (IS_ERR(dynamic_node_info_gdm_set))
 		OOM;
 
 	/* Start periodic updates */

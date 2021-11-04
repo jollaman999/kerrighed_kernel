@@ -21,7 +21,7 @@
 #include <linux/string.h>
 #include <linux/rcupdate.h>
 
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/namespace.h>
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>
@@ -143,7 +143,7 @@ int export_one_open_file (struct epm_action *action,
 	if (action->type != EPM_CHECKPOINT
 	    && index != MMAPPED_FILE) {
 		if (!file->f_objid)
-			create_kddm_file_object(file);
+			create_gdm_file_object(file);
 		check_file_struct_sharing (index, file, action);
 	}
 

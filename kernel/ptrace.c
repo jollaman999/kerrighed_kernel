@@ -526,7 +526,7 @@ int ptrace_check_attach(struct task_struct *child, int kill)
 int ptrace_attach(struct task_struct *task)
 {
 #ifdef CONFIG_KRG_EPM
-	struct children_kddm_object *parent_children_obj;
+	struct children_gdm_object *parent_children_obj;
 	pid_t real_parent_tgid;
 #endif
 	int retval;
@@ -608,7 +608,7 @@ out:
 int ptrace_traceme(void)
 {
 #ifdef CONFIG_KRG_EPM
-	struct children_kddm_object *parent_children_obj;
+	struct children_gdm_object *parent_children_obj;
 	pid_t real_parent_tgid;
 #endif /* CONFIG_KRG_EPM */
 	int ret = -EPERM;
@@ -675,7 +675,7 @@ int ptrace_traceme(void)
 int ptrace_detach(struct task_struct *child, unsigned int data)
 {
 #ifdef CONFIG_KRG_EPM
-	struct children_kddm_object *parent_children_obj;
+	struct children_gdm_object *parent_children_obj;
 	pid_t real_parent_tgid;
 #endif
 	bool dead = false;
@@ -730,7 +730,7 @@ void exit_ptrace(struct task_struct *tracer)
 {
 	struct task_struct *p, *n;
 #ifdef CONFIG_KRG_EPM
-	struct children_kddm_object *parent_children_obj;
+	struct children_gdm_object *parent_children_obj;
 	LIST_HEAD(ptraced);
 	int dead;
 #endif

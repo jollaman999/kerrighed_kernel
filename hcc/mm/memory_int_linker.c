@@ -20,7 +20,7 @@
 #include <hcc/pid.h>
 #include <asm/tlb.h>
 
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include "memory_int_linker.h"
 #include "memory_io_linker.h"
 #include "mm_struct.h"
@@ -39,20 +39,20 @@ extern struct vm_operations_struct shm_vm_ops;
 
 
 
-/** Link a VMA to the anon memory kddm set
+/** Link a VMA to the anon memory gdm set
  *  @author Renaud Lottiaux
  *
- *  @param  vma          vm_area to link with a kddm set.
+ *  @param  vma          vm_area to link with a gdm set.
  *
  *  @return   0 If everything OK,
  *            Negative value otherwise.
  */
-int check_link_vma_to_anon_memory_kddm_set (struct vm_area_struct *vma)
+int check_link_vma_to_anon_memory_gdm_set (struct vm_area_struct *vma)
 {
 	int r = 0;
 
 	/* Easy case */
-	if (vma->anon_vma || vma->vm_flags & VM_KDDM)
+	if (vma->anon_vma || vma->vm_flags & VM_GDM)
 		goto link;
 
 	/* Don't link shared mapping */
@@ -70,25 +70,25 @@ link:
 		return r;
 
 	/* Don't link already linked VMAs */
-	if ((vma->vm_ops == &anon_memory_kddm_vmops) ||
+	if ((vma->vm_ops == &anon_memory_gdm_vmops) ||
 	    (vma->vm_ops == &shm_vm_ops))
 		return r;
 
-	/*** Make the VMA a kddm set VMA ***/
-	BUG_ON(vma->initial_vm_ops == &anon_memory_kddm_vmops);
+	/*** Make the VMA a gdm set VMA ***/
+	BUG_ON(vma->initial_vm_ops == &anon_memory_gdm_vmops);
 	if (vma->vm_ops == NULL)
 		vma->initial_vm_ops = &null_vm_ops;
 	else
 		vma->initial_vm_ops = vma->vm_ops;
-	vma->vm_ops = &anon_memory_kddm_vmops;
-	vma->vm_flags |= VM_KDDM;
+	vma->vm_ops = &anon_memory_gdm_vmops;
+	vma->vm_flags |= VM_GDM;
 
 	return r;
 }
 
 
 
-static inline void memory_kddm_readahead (struct kddm_set * set,
+static inline void memory_gdm_readahead (struct gdm_set * set,
                                           objid_t start,
 					  int upper_limit)
 {
@@ -128,7 +128,7 @@ do_prefetch:
 	ra_end = min_t (int, ra_end, upper_limit);
 
 	for (i = ra_start; i < ra_end; i++)
-		_async_kddm_grab_object_no_ft (set, i);
+		_async_gdm_grab_object_no_ft (set, i);
 }
 
 
@@ -139,7 +139,7 @@ do_prefetch:
 /*                                                                           */
 /*****************************************************************************/
 
-void map_kddm_page(struct vm_area_struct *vma,
+void map_gdm_page(struct vm_area_struct *vma,
 		   unsigned long address,
 		   struct page *page,
 		   int write)
@@ -176,7 +176,7 @@ void map_kddm_page(struct vm_area_struct *vma,
 int anon_memory_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	struct page *page, *new_page;
-	struct kddm_set *set;
+	struct gdm_set *set;
 	objid_t objid;
 	unsigned long address;
 	int ret = VM_FAULT_MINOR;
@@ -186,7 +186,7 @@ int anon_memory_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 
 	BUG_ON(!vma);
 
-	set = vma->vm_mm->anon_vma_kddm_set;
+	set = vma->vm_mm->anon_vma_gdm_set;
 
 	BUG_ON(!set);
 
@@ -195,7 +195,7 @@ int anon_memory_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 	if (thread_group_empty(current)) {
 		write_access = 1;
 		if (set->def_owner != hcc_node_id)
-			memory_kddm_readahead (set, objid,
+			memory_gdm_readahead (set, objid,
 					       vma->vm_start / PAGE_SIZE);
 	}
 
@@ -204,16 +204,16 @@ int anon_memory_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 		/* Mapped file VMA no page access */
 
 		/* First, try to check if the page already exist in the anon
-		 * kddm set */
+		 * gdm set */
 		if (write_access)
-			page = _kddm_grab_object_manual_ft(set, objid);
+			page = _gdm_grab_object_manual_ft(set, objid);
 		else
-			page = _kddm_get_object_manual_ft (set, objid);
+			page = _gdm_get_object_manual_ft (set, objid);
 
 		if (page != NULL)
 			goto map_page;
 
-		/* Ok, the page is not present in the anon kddm set, let's
+		/* Ok, the page is not present in the anon gdm set, let's
 		 * load it */
 
 		ret = vma->initial_vm_ops->fault(vma, vmf);
@@ -250,7 +250,7 @@ int anon_memory_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 		page_cache_release(vmf->page);
 		page = new_page;
 
-		_kddm_set_object(set, objid, page);
+		_gdm_set_object(set, objid, page);
 	}
 	else
 	{
@@ -261,9 +261,9 @@ int anon_memory_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 			 * alloc_zeroed_user_highpage() is done on
 			 * archs other than x86.
 			 */
-			page = _kddm_grab_object (set, objid);
+			page = _gdm_grab_object (set, objid);
 		else
-			page = _kddm_get_object (set, objid);
+			page = _gdm_get_object (set, objid);
 	}
 
 map_page:
@@ -298,19 +298,19 @@ map_page:
 		}
 	}
 
-	map_kddm_page(vma, objid * PAGE_SIZE, page, write_access);
+	map_gdm_page(vma, objid * PAGE_SIZE, page, write_access);
 
 	vmf->page = page;
 
 exit_error:
-	_kddm_put_object (set, objid);
+	_gdm_put_object (set, objid);
 
 	return ret;
 }
 
 
 
-/** Handle a wppage fault on a memory kddm set.
+/** Handle a wppage fault on a memory gdm set.
  *  @author Renaud Lottiaux
  *
  *  @param  vma       vm_area of the faulting address area
@@ -322,35 +322,35 @@ struct page *anon_memory_wppage (struct vm_area_struct *vma,
 				 struct page *old_page)
 {
 	struct page *page;
-	struct kddm_set *set;
+	struct gdm_set *set;
 	objid_t objid;
 
 	BUG_ON (vma == NULL);
 
-	set = vma->vm_mm->anon_vma_kddm_set;
+	set = vma->vm_mm->anon_vma_gdm_set;
 
 	BUG_ON (set == NULL);
 
 	objid = address / PAGE_SIZE;
 
-	/* If the old page is hosted by a KDDM, the KDDM layer will do the
-	 * copy on write. If the page is not hosted by a KDDM, we must copy the
+	/* If the old page is hosted by a GDM, the GDM layer will do the
+	 * copy on write. If the page is not hosted by a GDM, we must copy the
 	 * page here, after the grab.
 	 */
 	if (old_page && old_page->obj_entry)
 		old_page = NULL;
 
 	if (set->def_owner != hcc_node_id)
-		memory_kddm_readahead (set, objid, vma->vm_start / PAGE_SIZE);
+		memory_gdm_readahead (set, objid, vma->vm_start / PAGE_SIZE);
 
-	page = _kddm_grab_object_cow (set, objid);
+	page = _gdm_grab_object_cow (set, objid);
 
 	if (old_page && old_page != page)
 		copy_user_highpage(page, old_page, address, vma);
 
-	map_kddm_page(vma, objid * PAGE_SIZE, page, 1);
+	map_gdm_page(vma, objid * PAGE_SIZE, page, 1);
 
-	_kddm_put_object (set, objid);
+	_gdm_put_object (set, objid);
 
 	return page;
 }
@@ -364,14 +364,14 @@ void anon_memory_close (struct vm_area_struct *vma)
 /*
  * Virtual Memory Operation.
  *  Redefinition of some virtual memory operations. Used to handle page faults
- *  on a memory kddm set.
+ *  on a memory gdm set.
  *  @arg @c nopage is called when a page is touched for the first time
  * 	 (i.e. the page is not in memory and is not swap).
  *  @arg @c wppage is called when a page with read access is touch with a write
  *          access.
  *  @arg @c map is called when a vma is created or extended by do_mmap().
  */
-struct vm_operations_struct anon_memory_kddm_vmops = {
+struct vm_operations_struct anon_memory_gdm_vmops = {
 	close:  anon_memory_close,
 	fault: anon_memory_fault,
 	wppage: anon_memory_wppage,

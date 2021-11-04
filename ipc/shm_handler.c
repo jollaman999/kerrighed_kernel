@@ -11,7 +11,7 @@
 #include <linux/ipc_namespace.h>
 #include <linux/shm.h>
 #include <linux/msg.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/hotplug.h>
 #include "krgshm.h"
 #include "ipc_handler.h"
@@ -36,7 +36,7 @@ static struct kern_ipc_perm *kcb_ipc_shm_lock(struct ipc_ids *ids, int id)
 
 	index = ipcid_to_idx(id);
 
-	shp_object = _kddm_grab_object_no_ft(ids->krgops->data_kddm_set, index);
+	shp_object = _gdm_grab_object_no_ft(ids->krgops->data_gdm_set, index);
 
 	if (!shp_object)
 		goto error;
@@ -55,7 +55,7 @@ static struct kern_ipc_perm *kcb_ipc_shm_lock(struct ipc_ids *ids, int id)
 	return &(shp->shm_perm);
 
 error:
-	_kddm_put_object(ids->krgops->data_kddm_set, index);
+	_gdm_put_object(ids->krgops->data_gdm_set, index);
 	rcu_read_unlock();
 
 	return ERR_PTR(-EINVAL);
@@ -70,7 +70,7 @@ static void kcb_ipc_shm_unlock(struct kern_ipc_perm *ipcp)
 	if (ipcp->deleted)
 		deleted = 1;
 
-	_kddm_put_object(ipcp->krgops->data_kddm_set, index);
+	_gdm_put_object(ipcp->krgops->data_gdm_set, index);
 
 	if (!deleted)
 		spin_unlock(&ipcp->lock);
@@ -83,12 +83,12 @@ static struct kern_ipc_perm *kcb_ipc_shm_findkey(struct ipc_ids *ids, key_t key)
 	long *key_index;
 	int id = -1;
 
-	key_index = _kddm_get_object_no_ft(ids->krgops->key_kddm_set, key);
+	key_index = _gdm_get_object_no_ft(ids->krgops->key_gdm_set, key);
 
 	if (key_index)
 		id = *key_index;
 
-	_kddm_put_object(ids->krgops->key_kddm_set, key);
+	_gdm_put_object(ids->krgops->key_gdm_set, key);
 
 	if (id != -1)
 		return kcb_ipc_shm_lock(ids, id);
@@ -103,7 +103,7 @@ static struct kern_ipc_perm *kcb_ipc_shm_findkey(struct ipc_ids *ids, key_t key)
 int krg_ipc_shm_newseg (struct ipc_namespace *ns, struct shmid_kernel *shp)
 {
 	shmid_object_t *shp_object;
-	struct kddm_set *kddm;
+	struct gdm_set *gdm;
 	long *key_index;
 	int index, err;
 
@@ -111,8 +111,8 @@ int krg_ipc_shm_newseg (struct ipc_namespace *ns, struct shmid_kernel *shp)
 
 	index = ipcid_to_idx(shp->shm_perm.id);
 
-	shp_object = _kddm_grab_object_manual_ft(
-		shm_ids(ns).krgops->data_kddm_set, index);
+	shp_object = _gdm_grab_object_manual_ft(
+		shm_ids(ns).krgops->data_gdm_set, index);
 
 	BUG_ON(shp_object);
 
@@ -122,38 +122,38 @@ int krg_ipc_shm_newseg (struct ipc_namespace *ns, struct shmid_kernel *shp)
 		goto err_put;
 	}
 
-	/* Create a KDDM set to host segment pages */
-	kddm = _create_new_kddm_set (kddm_def_ns, 0, SHM_MEMORY_LINKER,
+	/* Create a GDM set to host segment pages */
+	gdm = _create_new_gdm_set (gdm_def_ns, 0, SHM_MEMORY_LINKER,
 				     hcc_node_id, PAGE_SIZE,
 				     &shp->shm_perm.id, sizeof(int), 0);
 
-	if (IS_ERR(kddm)) {
-		err = PTR_ERR(kddm);
+	if (IS_ERR(gdm)) {
+		err = PTR_ERR(gdm);
 		goto err_put;
 	}
 
-	shp->shm_file->f_dentry->d_inode->i_mapping->kddm_set = kddm;
+	shp->shm_file->f_dentry->d_inode->i_mapping->gdm_set = gdm;
 	shp->shm_file->f_op = &krg_shm_file_operations;
 
-	shp_object->set_id = kddm->id;
+	shp_object->set_id = gdm->id;
 
 	shp_object->local_shp = shp;
 
-	_kddm_set_object(shm_ids(ns).krgops->data_kddm_set, index, shp_object);
+	_gdm_set_object(shm_ids(ns).krgops->data_gdm_set, index, shp_object);
 
 	if (shp->shm_perm.key != IPC_PRIVATE)
 	{
-		key_index = _kddm_grab_object(shm_ids(ns).krgops->key_kddm_set,
+		key_index = _gdm_grab_object(shm_ids(ns).krgops->key_gdm_set,
 					      shp->shm_perm.key);
 		*key_index = index;
-		_kddm_put_object (shm_ids(ns).krgops->key_kddm_set,
+		_gdm_put_object (shm_ids(ns).krgops->key_gdm_set,
 				  shp->shm_perm.key);
 	}
 
 	shp->shm_perm.krgops = shm_ids(ns).krgops;
 
 err_put:
-	_kddm_put_object(shm_ids(ns).krgops->data_kddm_set, index);
+	_gdm_put_object(shm_ids(ns).krgops->data_gdm_set, index);
 
 	return 0;
 
@@ -161,29 +161,29 @@ err_put:
 
 void krg_ipc_shm_rmkey(struct ipc_namespace *ns, key_t key)
 {
-	_kddm_remove_object(shm_ids(ns).krgops->key_kddm_set, key);
+	_gdm_remove_object(shm_ids(ns).krgops->key_gdm_set, key);
 }
 
 void krg_ipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 {
-	struct kddm_set *mm_set;
+	struct gdm_set *mm_set;
 	int index;
 	key_t key;
 
 	index = ipcid_to_idx(shp->shm_perm.id);
 	key = shp->shm_perm.key;
 
-	mm_set = shp->shm_file->f_dentry->d_inode->i_mapping->kddm_set;
+	mm_set = shp->shm_file->f_dentry->d_inode->i_mapping->gdm_set;
 
 	if (key != IPC_PRIVATE) {
-		_kddm_grab_object_no_ft(shm_ids(ns).krgops->key_kddm_set, key);
-		_kddm_remove_frozen_object(shm_ids(ns).krgops->key_kddm_set, key);
+		_gdm_grab_object_no_ft(shm_ids(ns).krgops->key_gdm_set, key);
+		_gdm_remove_frozen_object(shm_ids(ns).krgops->key_gdm_set, key);
 	}
 
 	local_shm_unlock(shp);
 
-	_kddm_remove_frozen_object(shm_ids(ns).krgops->data_kddm_set, index);
-	_destroy_kddm_set(mm_set);
+	_gdm_remove_frozen_object(shm_ids(ns).krgops->data_gdm_set, index);
+	_destroy_gdm_set(mm_set);
 
 	krg_ipc_rmid(&shm_ids(ns), index);
 }
@@ -205,36 +205,36 @@ int krg_shm_init_ns(struct ipc_namespace *ns)
 		goto err;
 	}
 
-	shm_ops->map_kddm_set = create_new_kddm_set(kddm_def_ns,
-						    SHMMAP_KDDM_ID,
+	shm_ops->map_gdm_set = create_new_gdm_set(gdm_def_ns,
+						    SHMMAP_GDM_ID,
 						    IPCMAP_LINKER,
-						    KDDM_RR_DEF_OWNER,
+						    GDM_RR_DEF_OWNER,
 						    sizeof(ipcmap_object_t),
-						    KDDM_LOCAL_EXCLUSIVE);
-	if (IS_ERR(shm_ops->map_kddm_set)) {
-		r = PTR_ERR(shm_ops->map_kddm_set);
+						    GDM_LOCAL_EXCLUSIVE);
+	if (IS_ERR(shm_ops->map_gdm_set)) {
+		r = PTR_ERR(shm_ops->map_gdm_set);
 		goto err_map;
 	}
 
-	shm_ops->key_kddm_set = create_new_kddm_set(kddm_def_ns,
-						    SHMKEY_KDDM_ID,
+	shm_ops->key_gdm_set = create_new_gdm_set(gdm_def_ns,
+						    SHMKEY_GDM_ID,
 						    SHMKEY_LINKER,
-						    KDDM_RR_DEF_OWNER,
+						    GDM_RR_DEF_OWNER,
 						    sizeof(long),
-						    KDDM_LOCAL_EXCLUSIVE);
-	if (IS_ERR(shm_ops->key_kddm_set)) {
-		r = PTR_ERR(shm_ops->key_kddm_set);
+						    GDM_LOCAL_EXCLUSIVE);
+	if (IS_ERR(shm_ops->key_gdm_set)) {
+		r = PTR_ERR(shm_ops->key_gdm_set);
 		goto err_key;
 	}
 
-	shm_ops->data_kddm_set = create_new_kddm_set(kddm_def_ns,
-						     SHMID_KDDM_ID,
+	shm_ops->data_gdm_set = create_new_gdm_set(gdm_def_ns,
+						     SHMID_GDM_ID,
 						     SHMID_LINKER,
-						     KDDM_RR_DEF_OWNER,
+						     GDM_RR_DEF_OWNER,
 						     sizeof(shmid_object_t),
-						     KDDM_LOCAL_EXCLUSIVE);
-	if (IS_ERR(shm_ops->data_kddm_set)) {
-		r = PTR_ERR(shm_ops->data_kddm_set);
+						     GDM_LOCAL_EXCLUSIVE);
+	if (IS_ERR(shm_ops->data_gdm_set)) {
+		r = PTR_ERR(shm_ops->data_gdm_set);
 		goto err_data;
 	}
 
@@ -247,9 +247,9 @@ int krg_shm_init_ns(struct ipc_namespace *ns)
 	return 0;
 
 err_data:
-	_destroy_kddm_set(shm_ops->key_kddm_set);
+	_destroy_gdm_set(shm_ops->key_gdm_set);
 err_key:
-	_destroy_kddm_set(shm_ops->map_kddm_set);
+	_destroy_gdm_set(shm_ops->map_gdm_set);
 err_map:
 	kfree(shm_ops);
 err:
@@ -260,9 +260,9 @@ void krg_shm_exit_ns(struct ipc_namespace *ns)
 {
 	if (shm_ids(ns).krgops) {
 
-		_destroy_kddm_set(shm_ids(ns).krgops->data_kddm_set);
-		_destroy_kddm_set(shm_ids(ns).krgops->key_kddm_set);
-		_destroy_kddm_set(shm_ids(ns).krgops->map_kddm_set);
+		_destroy_gdm_set(shm_ids(ns).krgops->data_gdm_set);
+		_destroy_gdm_set(shm_ids(ns).krgops->key_gdm_set);
+		_destroy_gdm_set(shm_ids(ns).krgops->map_gdm_set);
 
 		kfree(shm_ids(ns).krgops);
 	}

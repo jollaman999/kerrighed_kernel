@@ -15,7 +15,7 @@
 #ifdef CONFIG_KRG_IPC
 #include <linux/security.h>
 #include <hcc/types.h>
-#include <kddm/kddm_types.h>
+#include <gdm/gdm_types.h>
 #endif
 
 #define SEQ_MULTIPLIER	(IPCMNI)
@@ -274,9 +274,9 @@ void msg_rcu_free(struct rcu_head *head);
 void sem_rcu_free(struct rcu_head *head);
 
 struct krgipc_ops {
-	struct kddm_set *map_kddm_set;
-	struct kddm_set *key_kddm_set;
-	struct kddm_set *data_kddm_set;
+	struct gdm_set *map_gdm_set;
+	struct gdm_set *key_gdm_set;
+	struct gdm_set *data_gdm_set;
 
 	struct kern_ipc_perm *(*ipc_lock)(struct ipc_ids *, int);
 	void (*ipc_unlock)(struct kern_ipc_perm *);

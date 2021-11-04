@@ -1,14 +1,14 @@
-/** KDDM SEM_UNDO proc_list Linker.
+/** GDM SEM_UNDO proc_list Linker.
  *  @file semundolst_io_linker.h
  *
- *  Link KDDM and Linux SEM_UNDO proc list mechanisms.
+ *  Link GDM and Linux SEM_UNDO proc list mechanisms.
  *  @author Matthieu Fertré
  */
 
 #ifndef __SEMUNDOLST_IO_LINKER__
 #define __SEMUNDOLST_IO_LINKER__
 
-#include <kddm/kddm_types.h>
+#include <gdm/gdm_types.h>
 
 /*--------------------------------------------------------------------------*
  *                                                                          *

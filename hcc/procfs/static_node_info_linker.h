@@ -7,8 +7,8 @@
 #ifndef STATIC_NODE_INFO_LINKER_H
 #define STATIC_NODE_INFO_LINKER_H
 
-#include <kddm/kddm.h>
-#include <kddm/object_server.h>
+#include <gdm/gdm.h>
+#include <gdm/object_server.h>
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -30,7 +30,7 @@ typedef struct {
  *                                                                          *
  *--------------------------------------------------------------------------*/
 
-extern struct kddm_set *static_node_info_kddm_set;
+extern struct gdm_set *static_node_info_gdm_set;
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -49,11 +49,11 @@ int static_node_info_init(void);
  */
 static inline krg_static_node_info_t *get_static_node_info(int node_id)
 {
-	return _fkddm_get_object(static_node_info_kddm_set, node_id,
-				 KDDM_NO_FREEZE|KDDM_NO_FT_REQ);
+	return _fgdm_get_object(static_node_info_gdm_set, node_id,
+				 GDM_NO_FREEZE|GDM_NO_FT_REQ);
 }
 
-hcc_node_t node_info_default_owner(struct kddm_set *set,
+hcc_node_t node_info_default_owner(struct gdm_set *set,
 					 objid_t objid,
 					 const krgnodemask_t *nodes,
 					 int nr_nodes);

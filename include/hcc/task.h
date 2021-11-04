@@ -14,15 +14,15 @@
  *  @author Geoffroy Vallee, David Margery, Pascal Gallard and Louis Rilling
  */
 
-/* task kddm object */
+/* task gdm object */
 
 struct task_struct;
 struct pid;
 #ifdef CONFIG_KRG_EPM
-struct pid_kddm_object;
+struct pid_gdm_object;
 #endif
 
-struct task_kddm_object {
+struct task_gdm_object {
 	volatile long state;
 	unsigned int flags;
 	unsigned int ptrace;
@@ -50,7 +50,7 @@ struct task_kddm_object {
 
 	/* The remaining fields are not shared */
 #ifdef CONFIG_KRG_EPM
-	struct pid_kddm_object *pid_obj;
+	struct pid_gdm_object *pid_obj;
 #endif
 	struct task_struct *task;
 
@@ -63,16 +63,16 @@ struct task_kddm_object {
 	struct rcu_head rcu;
 };
 
-void krg_task_get(struct task_kddm_object *obj);
-void krg_task_put(struct task_kddm_object *obj);
-int krg_task_alive(struct task_kddm_object *obj);
-struct task_kddm_object *krg_task_readlock(pid_t pid);
-struct task_kddm_object *__krg_task_readlock(struct task_struct *task);
-struct task_kddm_object *krg_task_create_writelock(pid_t pid);
-struct task_kddm_object *krg_task_writelock(pid_t pid);
-struct task_kddm_object *__krg_task_writelock(struct task_struct *task);
-struct task_kddm_object *krg_task_writelock_nested(pid_t pid);
-struct task_kddm_object *__krg_task_writelock_nested(struct task_struct *task);
+void krg_task_get(struct task_gdm_object *obj);
+void krg_task_put(struct task_gdm_object *obj);
+int krg_task_alive(struct task_gdm_object *obj);
+struct task_gdm_object *krg_task_readlock(pid_t pid);
+struct task_gdm_object *__krg_task_readlock(struct task_struct *task);
+struct task_gdm_object *krg_task_create_writelock(pid_t pid);
+struct task_gdm_object *krg_task_writelock(pid_t pid);
+struct task_gdm_object *__krg_task_writelock(struct task_struct *task);
+struct task_gdm_object *krg_task_writelock_nested(pid_t pid);
+struct task_gdm_object *__krg_task_writelock_nested(struct task_struct *task);
 void krg_task_unlock(pid_t pid);
 void __krg_task_unlock(struct task_struct *task);
 int krg_task_alloc(struct task_struct *task, struct pid *pid);
@@ -90,8 +90,8 @@ int krg_delay_release_task(struct task_struct *task);
 #endif
 void krg_release_task(struct task_struct *task);
 
-void __krg_task_unlink(struct task_kddm_object *obj, int need_update);
-void krg_task_unlink(struct task_kddm_object *obj, int need_update);
+void __krg_task_unlink(struct task_gdm_object *obj, int need_update);
+void krg_task_unlink(struct task_gdm_object *obj, int need_update);
 
 #endif /* CONFIG_KRG_PROC */
 

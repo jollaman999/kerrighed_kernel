@@ -759,7 +759,7 @@ static void faf_poll_notify_nodes(unsigned long dvfs_id)
 	struct faf_polled_fd_node *polled_fd_node;
 	struct hlist_node *pos;
 
-	dvfs_file = _kddm_get_object_no_ft(dvfs_file_struct_ctnr, dvfs_id);
+	dvfs_file = _gdm_get_object_no_ft(dvfs_file_struct_ctnr, dvfs_id);
 	if (dvfs_file && dvfs_file->file) {
 		/* TODO: still required? */
 		if (atomic_long_read (&dvfs_file->file->f_count) == 0)
@@ -781,7 +781,7 @@ out_unlock:
 	mutex_unlock(&faf_polled_fd_mutex);
 
 out_put_dvfs_file:
-	_kddm_put_object(dvfs_file_struct_ctnr, dvfs_id);
+	_gdm_put_object(dvfs_file_struct_ctnr, dvfs_id);
 }
 
 static int faf_poll_thread(void *arg)
@@ -991,7 +991,7 @@ static int faf_polled_fd_remove(hcc_node_t client,
 	struct faf_polled_fd_node *polled_fd_node;
 	int err;
 
-	dvfs_file = _kddm_get_object_no_ft(dvfs_file_struct_ctnr, dvfs_id);
+	dvfs_file = _gdm_get_object_no_ft(dvfs_file_struct_ctnr, dvfs_id);
 	if (dvfs_file && dvfs_file->file) {
 		/* TODO: still required? */
 		if (atomic_long_read (&dvfs_file->file->f_count) == 0)
@@ -1031,7 +1031,7 @@ free_polled_fd:
 out_unlock:
 	mutex_unlock(&faf_polled_fd_mutex);
 
-	_kddm_put_object(dvfs_file_struct_ctnr, dvfs_id);
+	_gdm_put_object(dvfs_file_struct_ctnr, dvfs_id);
 
 	return 0;
 }
@@ -1264,7 +1264,7 @@ void handle_faf_accept (struct rpc_desc *desc,
 	file = fcheck_files(current->files, r);
 
 	if (!file->f_objid) {
-		err = create_kddm_file_object(file);
+		err = create_gdm_file_object(file);
 		if (err)
 			goto err_close_file;
 	}

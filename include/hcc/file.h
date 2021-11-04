@@ -7,7 +7,7 @@
 #ifndef __DVFS_FILE__
 #define __DVFS_FILE__
 
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 struct epm_action;
 
@@ -23,7 +23,7 @@ struct dvfs_file_struct {
 	struct file *file;
 };
 
-extern struct kddm_set *dvfs_file_struct_ctnr;
+extern struct gdm_set *dvfs_file_struct_ctnr;
 
 #ifdef CONFIG_KRG_IPC
 extern struct file_operations krg_shm_file_operations;
@@ -39,7 +39,7 @@ extern const struct file_operations shmem_file_operations;
  *                                                                          *
  *--------------------------------------------------------------------------*/
 
-int create_kddm_file_object(struct file *file);
+int create_gdm_file_object(struct file *file);
 
 #ifdef CONFIG_KRG_EPM
 void check_file_struct_sharing (int index, struct file *file,
@@ -56,7 +56,7 @@ static inline struct dvfs_file_struct *grab_dvfs_file_struct(unsigned long file_
 {
 	struct dvfs_file_struct * dvfs_file;
 
-	dvfs_file = _kddm_grab_object(dvfs_file_struct_ctnr, file_id);
+	dvfs_file = _gdm_grab_object(dvfs_file_struct_ctnr, file_id);
 	if (dvfs_file && dvfs_file->file) {
 		if (atomic_long_read(&dvfs_file->file->f_count) == 0)
 			dvfs_file->file = NULL;
@@ -68,7 +68,7 @@ static inline struct dvfs_file_struct *get_dvfs_file_struct(unsigned long file_i
 {
 	struct dvfs_file_struct * dvfs_file;
 
-	dvfs_file = _kddm_get_object(dvfs_file_struct_ctnr, file_id);
+	dvfs_file = _gdm_get_object(dvfs_file_struct_ctnr, file_id);
 	if (dvfs_file && dvfs_file->file) {
 		if (atomic_long_read(&dvfs_file->file->f_count) == 0)
 			dvfs_file->file = NULL;
@@ -78,7 +78,7 @@ static inline struct dvfs_file_struct *get_dvfs_file_struct(unsigned long file_i
 
 static inline void put_dvfs_file_struct(unsigned long file_id)
 {
-	_kddm_put_object (dvfs_file_struct_ctnr, file_id);
+	_gdm_put_object (dvfs_file_struct_ctnr, file_id);
 }
 
 #endif // __KERFS_FILE__

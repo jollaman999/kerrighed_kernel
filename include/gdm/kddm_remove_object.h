@@ -1,17 +1,17 @@
 
 
 
-/** KDDM remove object.
- *  @file kddm_remove_object.h
+/** GDM remove object.
+ *  @file gdm_remove_object.h
  *
- *  Definition of KDDM interface.
+ *  Definition of GDM interface.
  *  @author Renaud Lottiaux
  */
 
-#ifndef __KDDM_REMOVE_OBJECT__
-#define __KDDM_REMOVE_OBJECT__
+#ifndef __GDM_REMOVE_OBJECT__
+#define __GDM_REMOVE_OBJECT__
 
-#include <kddm/kddm_set.h>
+#include <gdm/gdm_set.h>
 
 
 /*--------------------------------------------------------------------------*
@@ -22,15 +22,15 @@
 
 
 
-/** Remove an object from a kddm set cluster wide */
-int kddm_remove_object(struct kddm_ns *ns, kddm_set_id_t set_id,
+/** Remove an object from a gdm set cluster wide */
+int gdm_remove_object(struct gdm_ns *ns, gdm_set_id_t set_id,
 		       objid_t objid);
 
-int _kddm_remove_object(struct kddm_set *set, objid_t objid);
+int _gdm_remove_object(struct gdm_set *set, objid_t objid);
 
-int kddm_remove_frozen_object(struct kddm_ns *ns, kddm_set_id_t set_id,
+int gdm_remove_frozen_object(struct gdm_ns *ns, gdm_set_id_t set_id,
 			      objid_t objid);
 
-int _kddm_remove_frozen_object(struct kddm_set *set, objid_t objid);
+int _gdm_remove_frozen_object(struct gdm_set *set, objid_t objid);
 
 #endif

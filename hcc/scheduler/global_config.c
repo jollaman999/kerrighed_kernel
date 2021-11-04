@@ -51,7 +51,7 @@
 #include <hcc/scheduler/global_config.h>
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 #include <asm/fcntl.h>
 #include <asm/system.h>
@@ -70,7 +70,7 @@ struct global_config_attr {
 	size_t size;
 };
 
-static struct kddm_set *global_items_set;
+static struct gdm_set *global_items_set;
 static LIST_HEAD(items_head);
 
 static struct global_config_item_operations *global_item_ops[] = {
@@ -1642,7 +1642,7 @@ int global_config_start(void)
 	if (err)
 		goto err_pin_fs;
 
-	global_items_set = hashed_string_list_create(GLOBAL_CONFIG_KDDM_SET_ID);
+	global_items_set = hashed_string_list_create(GLOBAL_CONFIG_GDM_SET_ID);
 	if (IS_ERR(global_items_set)) {
 		err = PTR_ERR(global_items_set);
 		goto err_set;

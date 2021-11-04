@@ -1,23 +1,23 @@
-/** KDDM IPC allocation bitmap Linker.
+/** GDM IPC allocation bitmap Linker.
  *  @file ipcmap_io_linker.c
  *
  *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
  */
 
 #define MODULE_NAME "IPC map linker  "
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include "ipcmap_io_linker.h"
 
 struct kmem_cache *ipcmap_object_cachep;
 
 /*****************************************************************************/
 /*                                                                           */
-/*                           SHMID KDDM IO FUNCTIONS                         */
+/*                           SHMID GDM IO FUNCTIONS                         */
 /*                                                                           */
 /*****************************************************************************/
 
-int ipcmap_alloc_object (struct kddm_obj * obj_entry,
-			 struct kddm_set * set,
+int ipcmap_alloc_object (struct gdm_obj * obj_entry,
+			 struct gdm_set * set,
 			 objid_t objid)
 {
 	obj_entry->object = kmem_cache_alloc(ipcmap_object_cachep, GFP_KERNEL);
@@ -27,22 +27,22 @@ int ipcmap_alloc_object (struct kddm_obj * obj_entry,
 }
 
 int ipcmap_remove_object (void *object,
-			  struct kddm_set * set,
+			  struct gdm_set * set,
 			  objid_t objid)
 {
 	kmem_cache_free (ipcmap_object_cachep, object);
 	return 0;
 }
 
-/** First touch a kddm ipcmap object.
+/** First touch a gdm ipcmap object.
  *  @author Renaud Lottiaux
  *
  *  @param  obj_entr  Descriptor of the object to invalidate.
- *  @param  set       KDDM descriptor
+ *  @param  set       GDM descriptor
  *  @param  objid     Id of the object to invalidate
  */
-int ipcmap_first_touch_object (struct kddm_obj * obj_entry,
-			       struct kddm_set * set,
+int ipcmap_first_touch_object (struct gdm_obj * obj_entry,
+			       struct gdm_set * set,
 			       objid_t objid,
 			       int flags)
 {
@@ -58,15 +58,15 @@ int ipcmap_first_touch_object (struct kddm_obj * obj_entry,
 	return 0;
 }
 
-/** Invalidate a KDDM ipcmap object.
+/** Invalidate a GDM ipcmap object.
  *  @author Renaud Lottiaux
  *
  *  @param  obj_entry  Descriptor of the object to invalidate.
- *  @param  set        KDDM descriptor
+ *  @param  set        GDM descriptor
  *  @param  objid      Id of the object to invalidate
  */
-int ipcmap_invalidate_object (struct kddm_obj * obj_entry,
-			      struct kddm_set * set,
+int ipcmap_invalidate_object (struct gdm_obj * obj_entry,
+			      struct gdm_set * set,
 			      objid_t objid)
 {
 	kmem_cache_free (ipcmap_object_cachep, obj_entry->object);

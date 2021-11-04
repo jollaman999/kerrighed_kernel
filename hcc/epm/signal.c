@@ -31,25 +31,25 @@
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
-struct signal_struct_kddm_object {
+struct signal_struct_gdm_object {
 	struct signal_struct *signal;
 	atomic_t count;
 	int keep_on_remove;
 	struct rw_semaphore remove_sem;
 };
 
-static struct kmem_cache *signal_struct_kddm_obj_cachep;
+static struct kmem_cache *signal_struct_gdm_obj_cachep;
 
 /* Kddm set of 'struct signal_struct' */
-static struct kddm_set *signal_struct_kddm_set;
+static struct gdm_set *signal_struct_gdm_set;
 
-static struct signal_struct_kddm_object *signal_struct_kddm_object_alloc(void)
+static struct signal_struct_gdm_object *signal_struct_gdm_object_alloc(void)
 {
-	struct signal_struct_kddm_object *obj;
+	struct signal_struct_gdm_object *obj;
 
-	obj = kmem_cache_alloc(signal_struct_kddm_obj_cachep, GFP_KERNEL);
+	obj = kmem_cache_alloc(signal_struct_gdm_obj_cachep, GFP_KERNEL);
 	if (obj) {
 		obj->signal = NULL;
 	/*	atomic_set(&obj->count, 1); */
@@ -99,30 +99,30 @@ static struct signal_struct *signal_struct_alloc(void)
 }
 
 static void signal_struct_attach_object(struct signal_struct *sig,
-					struct signal_struct_kddm_object *obj,
+					struct signal_struct_gdm_object *obj,
 					objid_t objid)
 {
 	sig->krg_objid = objid;
-	sig->kddm_obj = obj;
+	sig->gdm_obj = obj;
 	obj->signal = sig;
 }
 
 /*
  * @author Pascal Gallard
  */
-static int signal_struct_alloc_object(struct kddm_obj *obj_entry,
-				      struct kddm_set *set, objid_t objid)
+static int signal_struct_alloc_object(struct gdm_obj *obj_entry,
+				      struct gdm_set *set, objid_t objid)
 {
-	struct signal_struct_kddm_object *obj;
+	struct signal_struct_gdm_object *obj;
 	struct signal_struct *sig;
 
-	obj = signal_struct_kddm_object_alloc();
+	obj = signal_struct_gdm_object_alloc();
 	if (!obj)
 		return -ENOMEM;
 
 	sig = signal_struct_alloc();
 	if (!sig) {
-		kmem_cache_free(signal_struct_kddm_obj_cachep, obj);
+		kmem_cache_free(signal_struct_gdm_obj_cachep, obj);
 		return -ENOMEM;
 	}
 
@@ -136,13 +136,13 @@ static int signal_struct_alloc_object(struct kddm_obj *obj_entry,
 /*
  * @author Pascal Gallard
  */
-static int signal_struct_first_touch(struct kddm_obj *obj_entry,
-				     struct kddm_set *set, objid_t objid,
+static int signal_struct_first_touch(struct gdm_obj *obj_entry,
+				     struct gdm_set *set, objid_t objid,
 				     int flags)
 {
-	struct signal_struct_kddm_object *obj;
+	struct signal_struct_gdm_object *obj;
 
-	obj = signal_struct_kddm_object_alloc();
+	obj = signal_struct_gdm_object_alloc();
 	if (!obj)
 		return -ENOMEM;
 	atomic_set(&obj->count, 1);
@@ -158,12 +158,12 @@ static int signal_struct_first_touch(struct kddm_obj *obj_entry,
  * @author Pascal Gallard
  */
 static int signal_struct_import_object(struct rpc_desc *desc,
-				       struct kddm_set *set,
-				       struct kddm_obj *obj_entry,
+				       struct gdm_set *set,
+				       struct gdm_obj *obj_entry,
 				       objid_t objid,
 				       int flags)
 {
-	struct signal_struct_kddm_object *obj = obj_entry->object;
+	struct signal_struct_gdm_object *obj = obj_entry->object;
 	struct signal_struct *dest = obj->signal;
 	struct signal_struct tmp_sig;
 	int retval;
@@ -261,12 +261,12 @@ static int signal_struct_import_object(struct rpc_desc *desc,
  * @author Pascal Gallard
  */
 static int signal_struct_export_object(struct rpc_desc *desc,
-				       struct kddm_set *set,
-				       struct kddm_obj *obj_entry,
+				       struct gdm_set *set,
+				       struct gdm_obj *obj_entry,
 				       objid_t objid,
 				       int _flags)
 {
-	struct signal_struct_kddm_object *obj = obj_entry->object;
+	struct signal_struct_gdm_object *obj = obj_entry->object;
 	struct task_struct *tsk;
 	unsigned long flags;
 	int retval;
@@ -274,7 +274,7 @@ static int signal_struct_export_object(struct rpc_desc *desc,
 	rcu_read_lock();
 	tsk = find_task_by_kpid(obj->signal->krg_objid);
 	/*
-	 * We may find no task in the middle of a migration. In that case, kddm
+	 * We may find no task in the middle of a migration. In that case, gdm
 	 * locking is enough since neither userspace nor the kernel will access
 	 * this copy.
 	 */
@@ -300,22 +300,22 @@ static int signal_struct_export_object(struct rpc_desc *desc,
 
 void krg_signal_pin(struct signal_struct *sig)
 {
-	struct signal_struct_kddm_object *obj = sig->kddm_obj;
+	struct signal_struct_gdm_object *obj = sig->gdm_obj;
 	BUG_ON(!obj);
 	down_read(&obj->remove_sem);
 }
 
 void krg_signal_unpin(struct signal_struct *sig)
 {
-	struct signal_struct_kddm_object *obj = sig->kddm_obj;
+	struct signal_struct_gdm_object *obj = sig->gdm_obj;
 	BUG_ON(!obj);
 	up_read(&obj->remove_sem);
 }
 
 static int signal_struct_remove_object(void *object,
-				       struct kddm_set *set, objid_t objid)
+				       struct gdm_set *set, objid_t objid)
 {
-	struct signal_struct_kddm_object *obj = object;
+	struct signal_struct_gdm_object *obj = object;
 
 	/* Ensure that no thread uses this signal_struct copy */
 	down_write(&obj->remove_sem);
@@ -336,7 +336,7 @@ static int signal_struct_remove_object(void *object,
 		sched_autogroup_exit(sig);
 		kmem_cache_free(signal_cachep, sig);
 	}
-	kmem_cache_free(signal_struct_kddm_obj_cachep, obj);
+	kmem_cache_free(signal_struct_gdm_obj_cachep, obj);
 
 	return 0;
 }
@@ -353,13 +353,13 @@ static struct iolinker_struct signal_struct_io_linker = {
 };
 
 static
-struct signal_struct_kddm_object *
+struct signal_struct_gdm_object *
 ____krg_signal_alloc(struct signal_struct *sig, objid_t id)
 {
-	struct signal_struct_kddm_object *obj;
+	struct signal_struct_gdm_object *obj;
 
 	/* Create the signal object */
-	obj = _kddm_grab_object(signal_struct_kddm_set, id);
+	obj = _gdm_grab_object(signal_struct_gdm_set, id);
 	BUG_ON(!obj);
 	/* Must be a first touch */
 	BUG_ON(obj->signal);
@@ -370,7 +370,7 @@ ____krg_signal_alloc(struct signal_struct *sig, objid_t id)
 
 static struct signal_struct *cr_signal_alloc(objid_t id)
 {
-	struct signal_struct_kddm_object *obj;
+	struct signal_struct_gdm_object *obj;
 	struct signal_struct *sig;
 
 	sig = signal_struct_alloc();
@@ -385,18 +385,18 @@ static struct signal_struct *cr_signal_alloc(objid_t id)
 
 static void cr_signal_free(struct signal_struct *sig)
 {
-	_kddm_remove_frozen_object(signal_struct_kddm_set, sig->krg_objid);
+	_gdm_remove_frozen_object(signal_struct_gdm_set, sig->krg_objid);
 }
 
 static void __krg_signal_alloc(struct task_struct *task, struct pid *pid)
 {
-	struct signal_struct_kddm_object *obj;
+	struct signal_struct_gdm_object *obj;
 	struct signal_struct *sig = task->signal;
 	pid_t tgid = pid_knr(pid);
 
 	/*
 	 * Exclude kernel threads and local pids from using signal_struct
-	 * kddm objects.
+	 * gdm objects.
 	 */
 	/*
 	 * At this stage, task->mm may point to the mm of a
@@ -407,7 +407,7 @@ static void __krg_signal_alloc(struct task_struct *task, struct pid *pid)
 	if (!(tgid & GLOBAL_PID_MASK) || !task->mm) {
 		BUG_ON(krg_current);
 		sig->krg_objid = 0;
-		sig->kddm_obj = NULL;
+		sig->gdm_obj = NULL;
 		return;
 	}
 
@@ -444,13 +444,13 @@ void krg_signal_alloc(struct task_struct *task, struct pid *pid,
  * Get and lock a signal structure for a given process
  * @author Pascal Gallard
  */
-static struct signal_struct_kddm_object *__krg_signal_readlock(objid_t id)
+static struct signal_struct_gdm_object *__krg_signal_readlock(objid_t id)
 {
-	struct signal_struct_kddm_object *obj;
+	struct signal_struct_gdm_object *obj;
 
-	obj = _kddm_get_object_no_ft(signal_struct_kddm_set, id);
+	obj = _gdm_get_object_no_ft(signal_struct_gdm_set, id);
 	if (!obj) {
-		_kddm_put_object(signal_struct_kddm_set, id);
+		_gdm_put_object(signal_struct_gdm_set, id);
 		return NULL;
 	}
 	BUG_ON(!obj->signal);
@@ -460,11 +460,11 @@ static struct signal_struct_kddm_object *__krg_signal_readlock(objid_t id)
 
 struct signal_struct *krg_signal_readlock(struct signal_struct *sig)
 {
-	struct signal_struct_kddm_object *obj;
+	struct signal_struct_gdm_object *obj;
 	objid_t id = sig->krg_objid;
 
-	/* Filter well known cases of no signal_struct kddm object. */
-	if (!sig->kddm_obj)
+	/* Filter well known cases of no signal_struct gdm object. */
+	if (!sig->gdm_obj)
 		return NULL;
 
 	obj = __krg_signal_readlock(id);
@@ -474,13 +474,13 @@ struct signal_struct *krg_signal_readlock(struct signal_struct *sig)
 	return obj->signal;
 }
 
-static struct signal_struct_kddm_object *__krg_signal_writelock(objid_t id)
+static struct signal_struct_gdm_object *__krg_signal_writelock(objid_t id)
 {
-	struct signal_struct_kddm_object *obj;
+	struct signal_struct_gdm_object *obj;
 
-	obj = _kddm_grab_object_no_ft(signal_struct_kddm_set, id);
+	obj = _gdm_grab_object_no_ft(signal_struct_gdm_set, id);
 	if (!obj) {
-		_kddm_put_object(signal_struct_kddm_set, id);
+		_gdm_put_object(signal_struct_gdm_set, id);
 		return NULL;
 	}
 	BUG_ON(!obj->signal);
@@ -493,11 +493,11 @@ static struct signal_struct_kddm_object *__krg_signal_writelock(objid_t id)
  */
 struct signal_struct *krg_signal_writelock(struct signal_struct *sig)
 {
-	struct signal_struct_kddm_object *obj;
+	struct signal_struct_gdm_object *obj;
 	objid_t id = sig->krg_objid;
 
-	/* Filter well known cases of no signal_struct kddm object. */
-	if (!sig->kddm_obj)
+	/* Filter well known cases of no signal_struct gdm object. */
+	if (!sig->gdm_obj)
 		return NULL;
 
 	obj = __krg_signal_writelock(id);
@@ -514,13 +514,13 @@ struct signal_struct *krg_signal_writelock(struct signal_struct *sig)
 void krg_signal_unlock(struct signal_struct *sig)
 {
 	if (sig)
-		_kddm_put_object(signal_struct_kddm_set, sig->krg_objid);
+		_gdm_put_object(signal_struct_gdm_set, sig->krg_objid);
 }
 
-/* Assumes that the associated kddm object is write locked. */
+/* Assumes that the associated gdm object is write locked. */
 void krg_signal_share(struct signal_struct *sig)
 {
-	struct signal_struct_kddm_object *obj = sig->kddm_obj;
+	struct signal_struct_gdm_object *obj = sig->gdm_obj;
 	int count;
 
 	count = atomic_inc_return(&obj->count);
@@ -529,22 +529,22 @@ void krg_signal_share(struct signal_struct *sig)
 struct signal_struct *krg_signal_exit(struct signal_struct *sig)
 {
 	objid_t id = sig->krg_objid;
-	struct signal_struct_kddm_object *obj;
+	struct signal_struct_gdm_object *obj;
 	int count;
 
-	if (!sig->kddm_obj)
+	if (!sig->gdm_obj)
 		return NULL;
 
 	obj = __krg_signal_writelock(id);
-	BUG_ON(obj != sig->kddm_obj);
+	BUG_ON(obj != sig->gdm_obj);
 	count = atomic_dec_return(&obj->count);
 	if (count == 0) {
 		krg_signal_unlock(sig);
 		BUG_ON(obj->keep_on_remove);
-		/* Free the kddm object but keep the signal_struct so that
+		/* Free the gdm object but keep the signal_struct so that
 		 * __exit_signal releases it properly. */
 		obj->keep_on_remove = 1;
-		_kddm_remove_object(signal_struct_kddm_set, id);
+		_gdm_remove_object(signal_struct_gdm_set, id);
 
 		return NULL;
 	}
@@ -868,7 +868,7 @@ int import_signal_struct(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk)
 {
 	objid_t krg_objid;
-	struct signal_struct_kddm_object *obj;
+	struct signal_struct_gdm_object *obj;
 	struct signal_struct *sig;
 	int r;
 
@@ -1031,7 +1031,7 @@ err_read:
 void unimport_signal_struct(struct task_struct *task)
 {
 	/*
-	 * TODO: for restart, we must free the created kddm signal_struct
+	 * TODO: for restart, we must free the created gdm signal_struct
 	 * object.
 	 */
 	unimport_posix_timers(task);
@@ -1184,18 +1184,18 @@ int epm_signal_start(void)
 #ifdef CONFIG_DEBUG_SLAB
 	cache_flags |= SLAB_POISON;
 #endif
-	signal_struct_kddm_obj_cachep = KMEM_CACHE(signal_struct_kddm_object,
+	signal_struct_gdm_obj_cachep = KMEM_CACHE(signal_struct_gdm_object,
 						   cache_flags);
 
 	register_io_linker(SIGNAL_STRUCT_LINKER, &signal_struct_io_linker);
 
-	signal_struct_kddm_set = create_new_kddm_set(kddm_def_ns,
-						     SIGNAL_STRUCT_KDDM_ID,
+	signal_struct_gdm_set = create_new_gdm_set(gdm_def_ns,
+						     SIGNAL_STRUCT_GDM_ID,
 						     SIGNAL_STRUCT_LINKER,
-						     KDDM_CUSTOM_DEF_OWNER,
+						     GDM_CUSTOM_DEF_OWNER,
 						     0,
-						     KDDM_LOCAL_EXCLUSIVE);
-	if (IS_ERR(signal_struct_kddm_set))
+						     GDM_LOCAL_EXCLUSIVE);
+	if (IS_ERR(signal_struct_gdm_set))
 		OOM;
 
 	return 0;

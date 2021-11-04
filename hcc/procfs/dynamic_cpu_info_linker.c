@@ -10,7 +10,7 @@
 
 #include <hcc/cpu_id.h>
 #include <hcc/workqueue.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 #include <asm/cputime.h>
 
@@ -21,11 +21,11 @@
 
 extern cputime64_t get_idle_time(int cpu);
 
-struct kddm_set *dynamic_cpu_info_kddm_set;
+struct gdm_set *dynamic_cpu_info_gdm_set;
 
 /*****************************************************************************/
 /*                                                                           */
-/*                   DYNAMIC CPU INFO KDDM IO FUNCTIONS                      */
+/*                   DYNAMIC CPU INFO GDM IO FUNCTIONS                      */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -54,7 +54,7 @@ static void update_dynamic_cpu_info_worker(struct work_struct *data)
 	for_each_online_cpu(i) {
 		cpu_id = krg_cpu_id(i);
 		dynamic_cpu_info =
-			_kddm_grab_object(dynamic_cpu_info_kddm_set, cpu_id);
+			_gdm_grab_object(dynamic_cpu_info_gdm_set, cpu_id);
 
 		/* Compute data for stat proc file */
 
@@ -74,7 +74,7 @@ static void update_dynamic_cpu_info_worker(struct work_struct *data)
 			dynamic_cpu_info->sum_softirq += softirq_stat;
 		}
 
-		_kddm_put_object(dynamic_cpu_info_kddm_set, cpu_id);
+		_gdm_put_object(dynamic_cpu_info_gdm_set, cpu_id);
 	}
 
 	queue_delayed_work(krg_wq, &update_dynamic_cpu_info_work, HZ);
@@ -87,14 +87,14 @@ int dynamic_cpu_info_init(void)
 
 	/* Create the CPU info container */
 
-	dynamic_cpu_info_kddm_set =
-		create_new_kddm_set(kddm_def_ns,
-				    DYNAMIC_CPU_INFO_KDDM_ID,
+	dynamic_cpu_info_gdm_set =
+		create_new_gdm_set(gdm_def_ns,
+				    DYNAMIC_CPU_INFO_GDM_ID,
 				    DYNAMIC_CPU_INFO_LINKER,
-				    KDDM_CUSTOM_DEF_OWNER,
+				    GDM_CUSTOM_DEF_OWNER,
 				    sizeof(krg_dynamic_cpu_info_t),
 				    0);
-	if (IS_ERR(dynamic_cpu_info_kddm_set))
+	if (IS_ERR(dynamic_cpu_info_gdm_set))
 		OOM;
 
 	queue_delayed_work(krg_wq, &update_dynamic_cpu_info_work, 0);

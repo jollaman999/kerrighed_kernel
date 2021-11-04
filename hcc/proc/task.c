@@ -28,14 +28,14 @@
 
 #include <net/krgrpc/rpc.h>
 #include <hcc/libproc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
-static struct kmem_cache *task_kddm_obj_cachep;
+static struct kmem_cache *task_gdm_obj_cachep;
 
-/* kddm set of pid location and task struct */
-static struct kddm_set *task_kddm_set;
+/* gdm set of pid location and task struct */
+static struct gdm_set *task_gdm_set;
 
-void krg_task_get(struct task_kddm_object *obj)
+void krg_task_get(struct task_gdm_object *obj)
 {
 	if (obj)
 		kref_get(&obj->kref);
@@ -43,15 +43,15 @@ void krg_task_get(struct task_kddm_object *obj)
 
 static void task_free(struct kref *kref)
 {
-	struct task_kddm_object *obj;
+	struct task_gdm_object *obj;
 
-	obj = container_of(kref, struct task_kddm_object, kref);
+	obj = container_of(kref, struct task_gdm_object, kref);
 	BUG_ON(!obj);
 
-	kmem_cache_free(task_kddm_obj_cachep, obj);
+	kmem_cache_free(task_gdm_obj_cachep, obj);
 }
 
-void krg_task_put(struct task_kddm_object *obj)
+void krg_task_put(struct task_gdm_object *obj)
 {
 	if (obj)
 		kref_put(&obj->kref, task_free);
@@ -60,12 +60,12 @@ void krg_task_put(struct task_kddm_object *obj)
 /*
  * @author Pascal Gallard
  */
-static int task_alloc_object(struct kddm_obj *obj_entry,
-			     struct kddm_set *set, objid_t objid)
+static int task_alloc_object(struct gdm_obj *obj_entry,
+			     struct gdm_set *set, objid_t objid)
 {
-	struct task_kddm_object *p;
+	struct task_gdm_object *p;
 
-	p = kmem_cache_alloc(task_kddm_obj_cachep, GFP_KERNEL);
+	p = kmem_cache_alloc(task_gdm_obj_cachep, GFP_KERNEL);
 	if (!p)
 		return -ENOMEM;
 
@@ -95,8 +95,8 @@ static int task_alloc_object(struct kddm_obj *obj_entry,
 /*
  * @author Pascal Gallard
  */
-static int task_first_touch(struct kddm_obj *obj_entry,
-			    struct kddm_set *set, objid_t objid, int flags)
+static int task_first_touch(struct gdm_obj *obj_entry,
+			    struct gdm_set *set, objid_t objid, int flags)
 {
 	return task_alloc_object(obj_entry, set, objid);
 }
@@ -105,13 +105,13 @@ static int task_first_touch(struct kddm_obj *obj_entry,
  * @author Pascal Gallard
  */
 static int task_import_object(struct rpc_desc *desc,
-			      struct kddm_set *set,
-			      struct kddm_obj *obj_entry,
+			      struct gdm_set *set,
+			      struct gdm_obj *obj_entry,
 			      objid_t objid,
 			      int flags)
 {
-	struct task_kddm_object *dest = obj_entry->object;
-	struct task_kddm_object src;
+	struct task_gdm_object *dest = obj_entry->object;
+	struct task_gdm_object src;
 	int retval;
 
 	retval = rpc_unpack_type(desc, src);
@@ -155,7 +155,7 @@ static int task_import_object(struct rpc_desc *desc,
  * Assumes either tasklist_lock read locked with appropriate task_lock held, or
  * tasklist_lock write locked.
  */
-static void task_update_object(struct task_kddm_object *obj)
+static void task_update_object(struct task_gdm_object *obj)
 {
 	struct task_struct *tsk = obj->task;
 	const struct cred *cred;
@@ -194,12 +194,12 @@ static void task_update_object(struct task_kddm_object *obj)
  * @author Pascal Gallard
  */
 static int task_export_object(struct rpc_desc *desc,
-			      struct kddm_set *set,
-			      struct kddm_obj *obj_entry,
+			      struct gdm_set *set,
+			      struct gdm_obj *obj_entry,
 			      objid_t objid,
 			      int flags)
 {
-	struct task_kddm_object *src = obj_entry->object;
+	struct task_gdm_object *src = obj_entry->object;
 	struct task_struct *tsk;
 
 	read_lock(&tasklist_lock);
@@ -216,8 +216,8 @@ static int task_export_object(struct rpc_desc *desc,
 
 static void delayed_task_put(struct rcu_head *rhp)
 {
-	struct task_kddm_object *obj =
-		container_of(rhp, struct task_kddm_object, rcu);
+	struct task_gdm_object *obj =
+		container_of(rhp, struct task_gdm_object, rcu);
 
 	krg_task_put(obj);
 }
@@ -226,9 +226,9 @@ static void delayed_task_put(struct rcu_head *rhp)
  *  @author Louis Rilling
  */
 static int task_remove_object(void *object,
-			      struct kddm_set *set, objid_t objid)
+			      struct gdm_set *set, objid_t objid)
 {
-	struct task_kddm_object *obj = object;
+	struct task_gdm_object *obj = object;
 
 	krg_task_unlink(obj, 0);
 
@@ -258,7 +258,7 @@ static struct iolinker_struct task_io_linker = {
 
 int krg_task_alloc(struct task_struct *task, struct pid *pid)
 {
-	struct task_kddm_object *obj;
+	struct task_gdm_object *obj;
 	int nr = pid_knr(pid);
 
 	task->task_obj = NULL;
@@ -268,7 +268,7 @@ int krg_task_alloc(struct task_struct *task, struct pid *pid)
 	if (krg_current)
 		return 0;
 #endif
-	/* Exclude kernel threads and local pids from using task kddm objects. */
+	/* Exclude kernel threads and local pids from using task gdm objects. */
 	/*
 	 * At this stage, current->mm points the mm of the task being duplicated
 	 * instead of the mm of task for which this struct is being allocated,
@@ -282,7 +282,7 @@ int krg_task_alloc(struct task_struct *task, struct pid *pid)
 	if (!obj)
 		return -ENOMEM;
 
-	/* Set the link between task kddm object and tsk */
+	/* Set the link between task gdm object and tsk */
 	obj->task = task;
 	task->task_obj = obj;
 
@@ -291,7 +291,7 @@ int krg_task_alloc(struct task_struct *task, struct pid *pid)
 
 void krg_task_fill(struct task_struct *task, unsigned long clone_flags)
 {
-	struct task_kddm_object *obj = task->task_obj;
+	struct task_gdm_object *obj = task->task_obj;
 
 	BUG_ON((task_tgid_knr(task) & GLOBAL_PID_MASK)
 	       != (task_pid_knr(task) & GLOBAL_PID_MASK));
@@ -308,7 +308,7 @@ void krg_task_fill(struct task_struct *task, unsigned long clone_flags)
 	if (task->real_parent == baby_sitter) {
 		BUG_ON(!current->task_obj);
 		if (clone_flags & (CLONE_PARENT|CLONE_THREAD)) {
-			struct task_kddm_object *cur_obj = current->task_obj;
+			struct task_gdm_object *cur_obj = current->task_obj;
 			obj->real_parent = cur_obj->real_parent;
 			obj->real_parent_tgid = cur_obj->real_parent_tgid;
 		} else {
@@ -338,7 +338,7 @@ void krg_task_commit(struct task_struct *task)
 
 void krg_task_abort(struct task_struct *task)
 {
-	struct task_kddm_object *obj = task->task_obj;
+	struct task_gdm_object *obj = task->task_obj;
 
 #ifdef CONFIG_KRG_EPM
 	if (krg_current)
@@ -351,12 +351,12 @@ void krg_task_abort(struct task_struct *task)
 	obj->write_locked = 2;
 	up_write(&obj->sem);
 
-	_kddm_remove_frozen_object(task_kddm_set, obj->pid);
+	_gdm_remove_frozen_object(task_gdm_set, obj->pid);
 }
 
 void __krg_task_free(struct task_struct *task)
 {
-	_kddm_remove_object(task_kddm_set, task_pid_knr(task));
+	_gdm_remove_object(task_gdm_set, task_pid_knr(task));
 }
 
 void krg_task_free(struct task_struct *task)
@@ -369,7 +369,7 @@ void krg_task_free(struct task_struct *task)
 }
 
 /* Expects tasklist write locked */
-void __krg_task_unlink(struct task_kddm_object *obj, int need_update)
+void __krg_task_unlink(struct task_gdm_object *obj, int need_update)
 {
 	BUG_ON(!obj);
 
@@ -381,14 +381,14 @@ void __krg_task_unlink(struct task_kddm_object *obj, int need_update)
 	}
 }
 
-void krg_task_unlink(struct task_kddm_object *obj, int need_update)
+void krg_task_unlink(struct task_gdm_object *obj, int need_update)
 {
 	tasklist_write_lock_irq();
 	__krg_task_unlink(obj, need_update);
 	write_unlock_irq(&tasklist_lock);
 }
 
-int krg_task_alive(struct task_kddm_object *obj)
+int krg_task_alive(struct task_gdm_object *obj)
 {
 	return obj && obj->alive;
 }
@@ -396,21 +396,21 @@ int krg_task_alive(struct task_kddm_object *obj)
 /**
  * @author Pascal Gallard
  */
-struct task_kddm_object *krg_task_readlock(pid_t pid)
+struct task_gdm_object *krg_task_readlock(pid_t pid)
 {
-	struct task_kddm_object *obj;
+	struct task_gdm_object *obj;
 
-	/* Filter well known cases of no task kddm object. */
+	/* Filter well known cases of no task gdm object. */
 	if (!(pid & GLOBAL_PID_MASK))
 		return NULL;
 
-	obj = _kddm_get_object_no_ft(task_kddm_set, pid);
+	obj = _gdm_get_object_no_ft(task_gdm_set, pid);
 	if (likely(obj)) {
 		down_read(&obj->sem);
 		if (obj->write_locked == 2) {
 			/* Dying object */
 			up_read(&obj->sem);
-			_kddm_put_object(task_kddm_set, pid);
+			_gdm_put_object(task_gdm_set, pid);
 			return NULL;
 		}
 		/* Marker for unlock. Dirty but temporary. */
@@ -420,7 +420,7 @@ struct task_kddm_object *krg_task_readlock(pid_t pid)
 	return obj;
 }
 
-struct task_kddm_object *__krg_task_readlock(struct task_struct *task)
+struct task_gdm_object *__krg_task_readlock(struct task_struct *task)
 {
 	return krg_task_readlock(task_pid_knr(task));
 }
@@ -428,15 +428,15 @@ struct task_kddm_object *__krg_task_readlock(struct task_struct *task)
 /**
  * @author Pascal Gallard
  */
-static struct task_kddm_object *task_writelock(pid_t pid, int nested)
+static struct task_gdm_object *task_writelock(pid_t pid, int nested)
 {
-	struct task_kddm_object *obj;
+	struct task_gdm_object *obj;
 
-	/* Filter well known cases of no task kddm object. */
+	/* Filter well known cases of no task gdm object. */
 	if (!(pid & GLOBAL_PID_MASK))
 		return NULL;
 
-	obj = _kddm_grab_object_no_ft(task_kddm_set, pid);
+	obj = _gdm_grab_object_no_ft(task_gdm_set, pid);
 	if (likely(obj)) {
 		if (!nested)
 			down_write(&obj->sem);
@@ -445,7 +445,7 @@ static struct task_kddm_object *task_writelock(pid_t pid, int nested)
 		if (obj->write_locked == 2) {
 			/* Dying object */
 			up_write(&obj->sem);
-			_kddm_put_object(task_kddm_set, pid);
+			_gdm_put_object(task_gdm_set, pid);
 			return NULL;
 		}
 		/* Marker for unlock. Dirty but temporary. */
@@ -455,22 +455,22 @@ static struct task_kddm_object *task_writelock(pid_t pid, int nested)
 	return obj;
 }
 
-struct task_kddm_object *krg_task_writelock(pid_t pid)
+struct task_gdm_object *krg_task_writelock(pid_t pid)
 {
 	return task_writelock(pid, 0);
 }
 
-struct task_kddm_object *__krg_task_writelock(struct task_struct *task)
+struct task_gdm_object *__krg_task_writelock(struct task_struct *task)
 {
 	return task_writelock(task_pid_knr(task), 0);
 }
 
-struct task_kddm_object *krg_task_writelock_nested(pid_t pid)
+struct task_gdm_object *krg_task_writelock_nested(pid_t pid)
 {
 	return task_writelock(pid, 1);
 }
 
-struct task_kddm_object *__krg_task_writelock_nested(struct task_struct *task)
+struct task_gdm_object *__krg_task_writelock_nested(struct task_struct *task)
 {
 	return task_writelock(task_pid_knr(task), 1);
 }
@@ -478,15 +478,15 @@ struct task_kddm_object *__krg_task_writelock_nested(struct task_struct *task)
 /**
  * @author Louis Rilling
  */
-struct task_kddm_object *krg_task_create_writelock(pid_t pid)
+struct task_gdm_object *krg_task_create_writelock(pid_t pid)
 {
-	struct task_kddm_object *obj;
+	struct task_gdm_object *obj;
 
-	/* Filter well known cases of no task kddm object. */
+	/* Filter well known cases of no task gdm object. */
 	/* The exact filter is expected to be implemented by the caller. */
 	BUG_ON(!(pid & GLOBAL_PID_MASK));
 
-	obj = _kddm_grab_object(task_kddm_set, pid);
+	obj = _gdm_grab_object(task_gdm_set, pid);
 	if (likely(obj && !IS_ERR(obj))) {
 		down_write(&obj->sem);
 		/* No dying object race or this is really smelly */
@@ -494,7 +494,7 @@ struct task_kddm_object *krg_task_create_writelock(pid_t pid)
 		/* Marker for unlock. Dirty but temporary. */
 		obj->write_locked = 1;
 	} else {
-		_kddm_put_object(task_kddm_set, pid);
+		_gdm_put_object(task_gdm_set, pid);
 	}
 
 	return obj;
@@ -505,27 +505,27 @@ struct task_kddm_object *krg_task_create_writelock(pid_t pid)
  */
 void krg_task_unlock(pid_t pid)
 {
-	/* Filter well known cases of no task kddm object. */
+	/* Filter well known cases of no task gdm object. */
 	if (!(pid & GLOBAL_PID_MASK))
 		return;
 
 	{
 		/*
 		 * Dirty tricks here. Hopefully it should be temporary waiting
-		 * for kddm to implement locking on a task basis.
+		 * for gdm to implement locking on a task basis.
 		 */
-		struct task_kddm_object *obj;
+		struct task_gdm_object *obj;
 
-		obj = _kddm_find_object(task_kddm_set, pid);
+		obj = _gdm_find_object(task_gdm_set, pid);
 		if (likely(obj)) {
-			_kddm_put_object(task_kddm_set, pid);
+			_gdm_put_object(task_gdm_set, pid);
 			if (obj->write_locked)
 				up_write(&obj->sem);
 			else
 				up_read(&obj->sem);
 		}
 	}
-	_kddm_put_object(task_kddm_set, pid);
+	_gdm_put_object(task_gdm_set, pid);
 }
 
 void __krg_task_unlock(struct task_struct *task)
@@ -540,7 +540,7 @@ void __krg_task_unlock(struct task_struct *task)
  */
 int krg_set_pid_location(struct task_struct *task)
 {
-	struct task_kddm_object *p;
+	struct task_gdm_object *p;
 
 	p = __krg_task_writelock(task);
 	if (likely(p))
@@ -552,7 +552,7 @@ int krg_set_pid_location(struct task_struct *task)
 
 int krg_unset_pid_location(struct task_struct *task)
 {
-	struct task_kddm_object *p;
+	struct task_gdm_object *p;
 
 	BUG_ON(!(task_pid_knr(task) & GLOBAL_PID_MASK));
 
@@ -568,7 +568,7 @@ int krg_unset_pid_location(struct task_struct *task)
 hcc_node_t krg_lock_pid_location(pid_t pid)
 {
 	hcc_node_t node = KERRIGHED_NODE_ID_NONE;
-	struct task_kddm_object *obj;
+	struct task_gdm_object *obj;
 #ifdef CONFIG_KRG_EPM
 	struct timespec back_off_time = {
 		.tv_sec = 0,
@@ -613,7 +613,7 @@ void krg_unlock_pid_location(pid_t pid)
 
 /**
  * @author David Margery
- * @author Pascal Gallard (update to kddm architecture)
+ * @author Pascal Gallard (update to gdm architecture)
  * @author Louis Rilling (split files)
  */
 void proc_task_start(void)
@@ -623,22 +623,22 @@ void proc_task_start(void)
 #ifdef CONFIG_DEBUG_SLAB
 	cache_flags |= SLAB_POISON;
 #endif
-	task_kddm_obj_cachep = KMEM_CACHE(task_kddm_object, cache_flags);
+	task_gdm_obj_cachep = KMEM_CACHE(task_gdm_object, cache_flags);
 
 	register_io_linker(TASK_LINKER, &task_io_linker);
 
-	task_kddm_set = create_new_kddm_set(kddm_def_ns, TASK_KDDM_ID,
+	task_gdm_set = create_new_gdm_set(gdm_def_ns, TASK_GDM_ID,
 					    TASK_LINKER,
-					    KDDM_CUSTOM_DEF_OWNER,
+					    GDM_CUSTOM_DEF_OWNER,
 					    0, 0);
-	if (IS_ERR(task_kddm_set))
+	if (IS_ERR(task_gdm_set))
 		OOM;
 
 }
 
 /**
  * @author David Margery
- * @author Pascal Gallard (update to kddm architecture)
+ * @author Pascal Gallard (update to gdm architecture)
  * @author Louis Rilling (split files)
  */
 void proc_task_exit(void)

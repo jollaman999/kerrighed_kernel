@@ -31,7 +31,7 @@
 #include <hcc/regular_file_mgr.h>
 #include <hcc/task.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/application.h>
 #include <hcc/ghost_helpers.h>
 #include <hcc/app_shared.h>
@@ -887,7 +887,7 @@ error:
 }
 
 int global_chkpt_shared(struct rpc_desc *desc,
-			struct app_kddm_object *obj)
+			struct app_gdm_object *obj)
 {
 	int r = 0;
 	hcc_node_t node;
@@ -1537,7 +1537,7 @@ static int insert_one_substitution_file(struct rb_root *files,
 	}
 
 	if (!file->f_objid) {
-		r = create_kddm_file_object(file);
+		r = create_gdm_file_object(file);
 		if (r)
 			goto err_put_file;
 	}
@@ -1796,7 +1796,7 @@ err_ghost_fs:
 }
 
 static int global_restart_shared_objects(struct rpc_desc *desc,
-					 struct app_kddm_object *obj)
+					 struct app_gdm_object *obj)
 {
 	int r = 0;
 	int err_rpc = 0;
@@ -1842,7 +1842,7 @@ err_rpc:
 }
 
 int global_restart_shared(struct rpc_desc *desc,
-			  struct app_kddm_object *obj,
+			  struct app_gdm_object *obj,
 			  struct restart_request *req)
 {
 	int r = 0;

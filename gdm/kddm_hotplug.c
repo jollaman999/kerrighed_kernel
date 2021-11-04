@@ -14,14 +14,14 @@
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
 #include <hcc/hotplug.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include "protocol_action.h"
 
-struct cluster_barrier *kddm_barrier;
+struct cluster_barrier *gdm_barrier;
 
-extern krgnodemask_t krgnode_kddm_map;
-extern hcc_node_t kddm_nb_nodes;
-extern hcc_node_t __kddm_io_default_owner (struct kddm_set *set,
+extern krgnodemask_t krgnode_gdm_map;
+extern hcc_node_t gdm_nb_nodes;
+extern hcc_node_t __gdm_io_default_owner (struct gdm_set *set,
 						 objid_t objid,
 						 const krgnodemask_t *nodes,
 						 int nr_nodes);
@@ -34,7 +34,7 @@ extern hcc_node_t __kddm_io_default_owner (struct kddm_set *set,
  *--------------------------------------------------------------------------*/
 
 struct browse_add_param {
-	struct kddm_set *set;
+	struct gdm_set *set;
 	krgnodemask_t new_nodes_map;
 	hcc_node_t new_nb_nodes;
 };
@@ -43,13 +43,13 @@ static int add_browse_objects(unsigned long objid,
 			      void *_obj_entry,
 			      void *_data)
 {
-	struct kddm_obj *obj_entry = (struct kddm_obj *)_obj_entry;
+	struct gdm_obj *obj_entry = (struct gdm_obj *)_obj_entry;
 	hcc_node_t old_def_owner, new_def_owner;
 	struct browse_add_param *param = _data;
-	struct kddm_set *set = param->set;
+	struct gdm_set *set = param->set;
 
-	old_def_owner = kddm_io_default_owner (set, objid);
-	new_def_owner = __kddm_io_default_owner(set, objid,
+	old_def_owner = gdm_io_default_owner (set, objid);
+	new_def_owner = __gdm_io_default_owner(set, objid,
 						&param->new_nodes_map,
 						param->new_nb_nodes);
 
@@ -102,19 +102,19 @@ done:
 static void add_browse_sets(void *_set, void *_data)
 {
 	struct browse_add_param *param = _data;
-	struct kddm_set *set = _set;
+	struct gdm_set *set = _set;
 
 	BUG_ON(set->def_owner < 0);
-	BUG_ON(set->def_owner > KDDM_MAX_DEF_OWNER);
+	BUG_ON(set->def_owner > GDM_MAX_DEF_OWNER);
 
 	switch (set->def_owner) {
-	case KDDM_RR_DEF_OWNER:
-	case KDDM_CUSTOM_DEF_OWNER:
+	case GDM_RR_DEF_OWNER:
+	case GDM_CUSTOM_DEF_OWNER:
 		param->set = set;
-		__for_each_kddm_object(set, add_browse_objects, _data);
+		__for_each_gdm_object(set, add_browse_objects, _data);
 		break;
 
-	case KDDM_UNIQUE_ID_DEF_OWNER:
+	case GDM_UNIQUE_ID_DEF_OWNER:
 		/* The unique_id default owners are hard-coded depending on
 		 * object ids. Adding a node doesn't change anything. */
 	default:
@@ -132,7 +132,7 @@ static void set_add(krgnodemask_t * vector)
         hcc_node_t node;
 
 	if(__krgnode_isset(hcc_node_id, vector))
-		rpc_enable(KDDM_CHANGE_PROB_OWNER);
+		rpc_enable(GDM_CHANGE_PROB_OWNER);
 
 	krgnodes_copy(param.new_nodes_map, krgnode_online_map);
 
@@ -144,21 +144,21 @@ static void set_add(krgnodemask_t * vector)
 		}
 	};
 
-	freeze_kddm();
+	freeze_gdm();
 
-	cluster_barrier(kddm_barrier, &param.new_nodes_map,
+	cluster_barrier(gdm_barrier, &param.new_nodes_map,
 			__first_krgnode(&param.new_nodes_map));
 
-	__hashtable_foreach_data(kddm_def_ns->kddm_set_table,
+	__hashtable_foreach_data(gdm_def_ns->gdm_set_table,
 				 add_browse_sets, &param);
 
-	cluster_barrier(kddm_barrier, &param.new_nodes_map,
+	cluster_barrier(gdm_barrier, &param.new_nodes_map,
 			__first_krgnode(&param.new_nodes_map));
 
-	kddm_nb_nodes = param.new_nb_nodes;
-	krgnodes_copy(krgnode_kddm_map, param.new_nodes_map);
+	gdm_nb_nodes = param.new_nb_nodes;
+	krgnodes_copy(krgnode_gdm_map, param.new_nodes_map);
 
-	unfreeze_kddm();
+	unfreeze_gdm();
 
 	if(!__krgnode_isset(hcc_node_id, vector))
 		return;
@@ -188,16 +188,16 @@ static void set_add(krgnodemask_t * vector)
 static int browse_remove(unsigned long objid, void *_obj_entry,
 			 void *_data)
 {
-	struct kddm_obj *obj_entry = _obj_entry;
-	struct kddm_set *kddm_set = (struct kddm_set *)_data;
+	struct gdm_obj *obj_entry = _obj_entry;
+	struct gdm_set *gdm_set = (struct gdm_set *)_data;
 
 	might_sleep();
 	switch (OBJ_STATE(obj_entry)) {
 	case READ_OWNER:
-		up (&kddm_def_ns->table_sem);
-		_kddm_flush_object(kddm_set, objid,
+		up (&gdm_def_ns->table_sem);
+		_gdm_flush_object(gdm_set, objid,
 				   krgnode_next_online_in_ring(hcc_node_id));
-		down (&kddm_def_ns->table_sem);
+		down (&gdm_def_ns->table_sem);
 		return -1;
 		break;
 
@@ -205,13 +205,13 @@ static int browse_remove(unsigned long objid, void *_obj_entry,
 	case WRITE_GHOST:
 	case WRITE_OWNER:
 		// we have to flush this object
-		_kddm_flush_object(kddm_set, objid,
+		_gdm_flush_object(gdm_set, objid,
 				   krgnode_next_online_in_ring(hcc_node_id));
 		break;
 
 	case WAIT_ACK_INV:
 	case WAIT_OBJ_RM_ACK:
-		printk ("kddm_set_remove_cb: WAIT_ACK_INV: todo\n");
+		printk ("gdm_set_remove_cb: WAIT_ACK_INV: todo\n");
 		break;
 
 	case WAIT_ACK_WRITE:
@@ -237,7 +237,7 @@ static int browse_remove(unsigned long objid, void *_obj_entry,
 
 	default:
 		STATE_MACHINE_ERROR
-			(kddm_set->id,
+			(gdm_set->id,
 			 objid, obj_entry);
 		break;
 	}
@@ -245,11 +245,11 @@ static int browse_remove(unsigned long objid, void *_obj_entry,
 	return 0;
 };
 
-static void kddm_set_remove_cb(void *_kddm_set, void *_data)
+static void gdm_set_remove_cb(void *_gdm_set, void *_data)
 {
-	struct kddm_set *kddm_set = _kddm_set;
+	struct gdm_set *gdm_set = _gdm_set;
 
-	__for_each_kddm_object(kddm_set, browse_remove, kddm_set);
+	__for_each_gdm_object(gdm_set, browse_remove, gdm_set);
 
 };
 
@@ -259,10 +259,10 @@ static void set_remove(krgnodemask_t * vector)
 	printk("set_remove...\n");
 	return;
 
-	down (&kddm_def_ns->table_sem);
-	__hashtable_foreach_data(kddm_def_ns->kddm_set_table,
-				 kddm_set_remove_cb, vector);
-	up (&kddm_def_ns->table_sem);
+	down (&gdm_def_ns->table_sem);
+	__hashtable_foreach_data(gdm_def_ns->gdm_set_table,
+				 gdm_set_remove_cb, vector);
+	up (&gdm_def_ns->table_sem);
 };
 
 /**
@@ -281,10 +281,10 @@ extern krgnodemask_t failure_vector;
 
 static void handle_set_copyset(struct rpc_desc *desc)
 {
-	struct kddm_set *set;
+	struct gdm_set *set;
 	struct rpc_desc *new_desc;
-	struct kddm_obj *obj_entry;
-	kddm_set_id_t set_id;
+	struct gdm_obj *obj_entry;
+	gdm_set_id_t set_id;
 	objid_t objid;
 	krgnodemask_t map;
 	hcc_node_t true_owner;
@@ -306,7 +306,7 @@ static void handle_set_copyset(struct rpc_desc *desc)
 	if (krgnode_isset(hcc_node_id, map)) {
 		// Yes it is (since I'm already in the copyset)
 
-		obj_entry = _get_kddm_obj_entry(kddm_def_ns, set_id,
+		obj_entry = _get_gdm_obj_entry(gdm_def_ns, set_id,
 						objid, &set);
 
 		// the object should be frozen... so we expect to be in READ_COPY
@@ -319,7 +319,7 @@ static void handle_set_copyset(struct rpc_desc *desc)
 			// May be there are some other applicant to this position...
 			if (potential_owner == hcc_node_id) {
 				// I'm the new owner
-				kddm_change_obj_state(set, obj_entry, objid, READ_OWNER);
+				gdm_change_obj_state(set, obj_entry, objid, READ_OWNER);
 				change_prob_owner(obj_entry, hcc_node_id);
 
 				krgnodes_copy(obj_entry->master_obj.copyset, map);
@@ -329,7 +329,7 @@ static void handle_set_copyset(struct rpc_desc *desc)
 				    hcc_node_id) {
 					struct rpc_desc *desc;
 
-					desc = rpc_begin(KDDM_ADVERTISE_OWNER,
+					desc = rpc_begin(GDM_ADVERTISE_OWNER,
 							 nth_online_krgnode(objid % hcc_nb_nodes));
 					rpc_pack_type(desc, set_id);
 					rpc_pack_type(desc, objid);
@@ -346,16 +346,16 @@ static void handle_set_copyset(struct rpc_desc *desc)
 		};
 
 		object_clear_frozen(obj_entry, set);
-		put_kddm_obj_entry(set, obj_entry, objid);
+		put_gdm_obj_entry(set, obj_entry, objid);
 	} else {
 
-		set = _local_get_kddm_set(kddm_def_ns, set_id);
+		set = _local_get_gdm_set(gdm_def_ns, set_id);
 
 		// is this set availaible on this node ?
 		if (!set)
 			goto forward_rq;
 
-		obj_entry = __get_kddm_obj_entry(set, objid);
+		obj_entry = __get_gdm_obj_entry(set, objid);
 
 		// is this object available on this node ?
 		if (!obj_entry)
@@ -395,15 +395,15 @@ static void handle_set_copyset(struct rpc_desc *desc)
 			change_prob_owner(obj_entry, potential_owner);
 
 	unlock_forward_rq:
-		put_kddm_obj_entry(set, obj_entry, objid);
+		put_gdm_obj_entry(set, obj_entry, objid);
 
 	put_set_forward_rq:
-		put_kddm_set(set);
+		put_gdm_set(set);
 
 	forward_rq:
 		// Forward the request
 		new_desc = rpc_begin(krgnode_next_online_in_ring(hcc_node_id),
-				     KDDM_COPYSET);
+				     GDM_COPYSET);
 		rpc_pack_type(new_desc, set_id);
 		rpc_pack_type(new_desc, objid);
 		rpc_pack_type(new_desc, map);
@@ -421,9 +421,9 @@ static krgnodemask_t select_sync;
 
 static void handle_select_owner(struct rpc_desc *desc)
 {
-	struct kddm_set *set;
-	struct kddm_obj *obj_entry;
-	kddm_set_id_t set_id;
+	struct gdm_set *set;
+	struct gdm_obj *obj_entry;
+	gdm_set_id_t set_id;
 	objid_t objid;
 	krgnodemask_t copyset;
 	hcc_node_t sender;
@@ -447,29 +447,29 @@ static void handle_select_owner(struct rpc_desc *desc)
 			return;
 		} else {
 			// We received all the sync... we can continue the recovery mechanism
-			down (&kddm_def_ns->table_sem);
-			__hashtable_foreach_data(kddm_def_ns->kddm_set_table,
-						 kddm_set_failure_cb,
+			down (&gdm_def_ns->table_sem);
+			__hashtable_foreach_data(gdm_def_ns->gdm_set_table,
+						 gdm_set_failure_cb,
 						 &failure_vector);
-			up (&kddm_def_ns->table_sem);
+			up (&gdm_def_ns->table_sem);
 
 			return;
 		};
 	};
 
-	// the struct kddm_setable lock is already held by the fct: kddm_set_failure
-	set = __hashtable_find(kddm_def_ns->kddm_set_table, set_id);
+	// the struct gdm_setable lock is already held by the fct: gdm_set_failure
+	set = __hashtable_find(gdm_def_ns->gdm_set_table, set_id);
 
 	// is this set availaible on this node ?
 	if (set != NULL) {
 
-		obj_entry = __get_kddm_obj_entry(set, objid);
+		obj_entry = __get_gdm_obj_entry(set, objid);
 
 		// is this object available on this node ?
 		if (obj_entry != NULL) {
 			CLEAR_FAILURE_FLAG(obj_entry);
 			change_prob_owner(obj_entry, sender);
-			put_kddm_obj_entry(set, obj_entry, objid);
+			put_gdm_obj_entry(set, obj_entry, objid);
 		};
 
 	};
@@ -478,7 +478,7 @@ static void handle_select_owner(struct rpc_desc *desc)
 	if (krgnode_next_online_in_ring(hcc_node_id) != sender) {
 		struct rpc_desc *new_desc;
 
-		new_desc = rpc_begin(KDDM_SELECT_OWNER,
+		new_desc = rpc_begin(GDM_SELECT_OWNER,
 				     krgnode_next_online_in_ring(hcc_node_id));
 		rpc_pack_type(new_desc, sender);
 		rpc_pack_type(new_desc, set_id);
@@ -493,36 +493,36 @@ static void handle_select_owner(struct rpc_desc *desc)
 
 /**
  **
- ** Per kddm_set callback
+ ** Per gdm_set callback
  **
  **/
 static int browse_clean_failure(unsigned long objid, void *_obj_entry,
 				void *_data)
 {
-	struct kddm_obj *obj_entry = (struct kddm_obj *)_obj_entry;
+	struct gdm_obj *obj_entry = (struct gdm_obj *)_obj_entry;
 	BUG_ON(!obj_entry);
 	CLEAR_FAILURE_FLAG(obj_entry);
 	return 0;
 };
 
-static void kddm_set_clean_failure_cb(void *_set, void *_data)
+static void gdm_set_clean_failure_cb(void *_set, void *_data)
 {
-	struct kddm_set *set = _set;
+	struct gdm_set *set = _set;
 
-	__for_each_kddm_object(set, browse_clean_failure, NULL);
+	__for_each_gdm_object(set, browse_clean_failure, NULL);
 };
 
 static int browse_failure(unsigned long objid, void *_obj_entry,
 			  void *_data)
 {
 	int correct_prob_owner = 0;
-	struct kddm_set * set = (struct kddm_set *)_data;
-	struct kddm_obj *obj_entry = (struct kddm_obj *)_obj_entry;
+	struct gdm_set * set = (struct gdm_set *)_data;
+	struct gdm_obj *obj_entry = (struct gdm_obj *)_obj_entry;
 
 	if(TEST_FAILURE_FLAG(obj_entry))
 		goto exit;
 
-	if (kddm_ft_linked(set)) {
+	if (gdm_ft_linked(set)) {
 		if (!krgnode_online(get_prob_owner(obj_entry))){
 			printk("browse_failure: TODO: set %ld is FT Linked\n",
 			       set->id);
@@ -558,7 +558,7 @@ static int browse_failure(unsigned long objid, void *_obj_entry,
 		krgnodes_clear(copyset);
 		krgnode_set(hcc_node_id, copyset);
 
-		desc = rpc_begin(KDDM_COPYSET,
+		desc = rpc_begin(GDM_COPYSET,
 				 krgnode_next_online_in_ring(hcc_node_id));
 		rpc_pack_type(desc, set->id);
 		rpc_pack_type(desc, objid);
@@ -579,7 +579,7 @@ static int browse_failure(unsigned long objid, void *_obj_entry,
 		if (get_prob_owner(obj_entry) != hcc_node_id) {
 			struct rpc_desc *desc;
 
-			desc = rpc_begin(KDDM_ADVERTISE_OWNER,
+			desc = rpc_begin(GDM_ADVERTISE_OWNER,
 					 get_prob_owner(obj_entry));
 			rpc_pack_type(desc, set->id);
 			rpc_pack_type(desc, objid);
@@ -593,17 +593,17 @@ static int browse_failure(unsigned long objid, void *_obj_entry,
 		break;
 
 	case WAIT_ACK_INV:
-		printk("kddm_set_failure_cb: WAIT_ACK_INV: todo\n");
+		printk("gdm_set_failure_cb: WAIT_ACK_INV: todo\n");
 		// we are waiting for the ack of an invalidation.
 		// if the dest is a fail-node, we can just discard this rq silently
 		break;
 
 	case WAIT_OBJ_RM_ACK:
-		printk("kddm_set_failure_cb: WAIT_OBJ_RM_ACK: todo\n");
+		printk("gdm_set_failure_cb: WAIT_OBJ_RM_ACK: todo\n");
 		break;
 
 	case WAIT_OBJ_RM_ACK2:
-		printk("kddm_set_failure_cb: WAIT_OBJ_RM_ACK2: todo\n");
+		printk("gdm_set_failure_cb: WAIT_OBJ_RM_ACK2: todo\n");
 		break;
 
 	case WAIT_ACK_WRITE:
@@ -638,18 +638,18 @@ exit:
 	return 0;
 };
 
-static void kddm_set_failure_cb(void *_set, void *_data)
+static void gdm_set_failure_cb(void *_set, void *_data)
 {
-	struct kddm_set *set = _set;
+	struct gdm_set *set = _set;
 
-	__for_each_kddm_object(set, browse_failure, set);
+	__for_each_gdm_object(set, browse_failure, set);
 };
 
 static int browse_select_owner(objid_t objid, void *_obj_entry,
 			       void *_data)
 {
 	krgnodemask_t *vector_fail = _data;
-	struct kddm_obj * obj_entry = (struct kddm_obj *)_obj_entry;
+	struct gdm_obj * obj_entry = (struct gdm_obj *)_obj_entry;
 
 	BUG_ON(!vector_fail);
 
@@ -665,15 +665,15 @@ static int browse_select_owner(objid_t objid, void *_obj_entry,
 	return 0;
 };
 
-static void kddm_set_select_owner_cb(void *_set, void *_data)
+static void gdm_set_select_owner_cb(void *_set, void *_data)
 {
-	struct kddm_set *set = _set;
+	struct gdm_set *set = _set;
 
-	__for_each_kddm_object(set, browse_select_owner, _data);
+	__for_each_gdm_object(set, browse_select_owner, _data);
 };
 
 /* set_failure
- * Handle the kddm recovery mechanism
+ * Handle the gdm recovery mechanism
  * 1. Stop ownership/copyset management of the object
  * 2. Clean the recovery information (may be from a previous recovery) of each object
  * 3. Prepare to receive ownership advertisement
@@ -687,25 +687,25 @@ static void set_failure(krgnodemask_t * vector)
 {
 	struct rpc_desc *desc;
 	objid_t objid = 0;
-	kddm_set_id_t set_id = 0;
+	gdm_set_id_t set_id = 0;
 	int sync = hcc_node_id;
 	krgnodemask_t v;
 
-	down (&kddm_def_ns->table_sem);
+	down (&gdm_def_ns->table_sem);
 
-	__hashtable_foreach_data(kddm_def_ns->kddm_set_table,
-				 kddm_set_clean_failure_cb, vector);
+	__hashtable_foreach_data(gdm_def_ns->gdm_set_table,
+				 gdm_set_clean_failure_cb, vector);
 
 	krgnode_set(hcc_node_id, select_sync);
 
-	__hashtable_foreach_data(kddm_def_ns->kddm_set_table,
-				 kddm_set_select_owner_cb, vector);
+	__hashtable_foreach_data(gdm_def_ns->gdm_set_table,
+				 gdm_set_select_owner_cb, vector);
 
-	printk("TODO: we MUST lock creation/destruction of kddm_set during"
+	printk("TODO: we MUST lock creation/destruction of gdm_set during"
 	       "the recovery step and we should use read/write lock\n");
-	up (&kddm_def_ns->table_sem);
+	up (&gdm_def_ns->table_sem);
 
-	desc = rpc_begin(KDDM_SELECT_OWNER,
+	desc = rpc_begin(GDM_SELECT_OWNER,
 			 krgnode_next_online_in_ring(hcc_node_id));
 	rpc_pack_type(desc, hcc_node_id);
 	rpc_pack_type(desc, set_id);
@@ -724,7 +724,7 @@ static void set_failure(krgnodemask_t * vector)
  *
  */
 
-static int kddm_notification(struct notifier_block *nb, hotplug_event_t event,
+static int gdm_notification(struct notifier_block *nb, hotplug_event_t event,
 			     void *data){
 	struct hotplug_context *ctx;
 	struct hotplug_node_set *node_set;
@@ -749,16 +749,16 @@ static int kddm_notification(struct notifier_block *nb, hotplug_event_t event,
 	return NOTIFY_OK;
 };
 
-int kddm_hotplug_init(void){
-	kddm_barrier = alloc_cluster_barrier(KDDM_HOTPLUG_BARRIER);
-	BUG_ON (IS_ERR(kddm_barrier));
+int gdm_hotplug_init(void){
+	gdm_barrier = alloc_cluster_barrier(GDM_HOTPLUG_BARRIER);
+	BUG_ON (IS_ERR(gdm_barrier));
 
-//	rpc_register(KDDM_COPYSET, handle_set_copyset, 0);
-//	rpc_register(KDDM_SELECT_OWNER, handle_select_owner, 0);
+//	rpc_register(GDM_COPYSET, handle_set_copyset, 0);
+//	rpc_register(GDM_SELECT_OWNER, handle_select_owner, 0);
 
-	register_hotplug_notifier(kddm_notification, HOTPLUG_PRIO_KDDM);
+	register_hotplug_notifier(gdm_notification, HOTPLUG_PRIO_GDM);
 	return 0;
 };
 
-void kddm_hotplug_cleanup(void){
+void gdm_hotplug_cleanup(void){
 };

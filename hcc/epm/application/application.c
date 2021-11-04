@@ -19,7 +19,7 @@
 #include <hcc/action.h>
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include "../epm_internal.h"
 #include "../checkpoint.h"
 #include "app_checkpoint.h"
@@ -40,17 +40,17 @@ struct app_struct *find_local_app(long app_id)
 /*--------------------------------------------------------------------------*
  *--------------------------------------------------------------------------*/
 
-static struct kddm_set *app_kddm_set;
-static struct kmem_cache *app_kddm_obj_cachep;
+static struct gdm_set *app_gdm_set;
+static struct kmem_cache *app_gdm_obj_cachep;
 static struct kmem_cache *app_struct_cachep;
 static struct kmem_cache *task_state_cachep;
 
-static int app_alloc_object(struct kddm_obj *obj_entry,
-			    struct kddm_set *kddm, objid_t objid)
+static int app_alloc_object(struct gdm_obj *obj_entry,
+			    struct gdm_set *gdm, objid_t objid)
 {
-	struct app_kddm_object *a;
+	struct app_gdm_object *a;
 
-	a = kmem_cache_alloc(app_kddm_obj_cachep, GFP_KERNEL);
+	a = kmem_cache_alloc(app_gdm_obj_cachep, GFP_KERNEL);
 	if (a == NULL)
 		return -ENOMEM;
 
@@ -63,11 +63,11 @@ static int app_alloc_object(struct kddm_obj *obj_entry,
 	return 0;
 }
 
-static int app_remove_object(void *obj, struct kddm_set *kddm,
+static int app_remove_object(void *obj, struct gdm_set *gdm,
 			     objid_t objid)
 {
-	struct app_kddm_object *a = obj;
-	kmem_cache_free(app_kddm_obj_cachep, a);
+	struct app_gdm_object *a = obj;
+	kmem_cache_free(app_gdm_obj_cachep, a);
 
 	return 0;
 }
@@ -145,7 +145,7 @@ exit_wo_deleting:
 void delete_app(struct app_struct *app)
 {
 	int r = 0;
-	struct app_kddm_object *obj = NULL;
+	struct app_gdm_object *obj = NULL;
 
 	mutex_lock(&app->mutex);
 	if (!local_tasks_list_empty(app)) {
@@ -154,7 +154,7 @@ void delete_app(struct app_struct *app)
 	}
 	mutex_unlock(&app->mutex);
 
-	obj = _kddm_grab_object_no_ft(app_kddm_set, app->app_id);
+	obj = _gdm_grab_object_no_ft(app_gdm_set, app->app_id);
 	if (!obj) /* another process was running delete_app concurrently */
 		goto exit;
 
@@ -165,12 +165,12 @@ void delete_app(struct app_struct *app)
 	krgnode_clear(hcc_node_id, obj->nodes);
 
 	if (krgnodes_empty(obj->nodes)) {
-		_kddm_remove_frozen_object(app_kddm_set, obj->app_id);
+		_gdm_remove_frozen_object(app_gdm_set, obj->app_id);
 		goto exit;
 	}
 
 exit_put:
-	_kddm_put_object(app_kddm_set, obj->app_id);
+	_gdm_put_object(app_gdm_set, obj->app_id);
 exit:
 	return;
 }
@@ -180,14 +180,14 @@ exit:
 int create_application(struct task_struct *task)
 {
 	struct app_struct *app;
-	struct app_kddm_object *obj;
+	struct app_gdm_object *obj;
 	long app_id = task_pid_knr(task);
 	int r = 0;
 
-	obj = _kddm_grab_object(app_kddm_set, app_id);
+	obj = _gdm_grab_object(app_gdm_set, app_id);
 
 	if (obj->app_id == app_id) {
-		_kddm_put_object(app_kddm_set, app_id);
+		_gdm_put_object(app_gdm_set, app_id);
 		r = -EBUSY;
 		goto exit;
 	}
@@ -201,12 +201,12 @@ int create_application(struct task_struct *task)
 	if (IS_ERR(app)) {
 		r = PTR_ERR(app);
 		task->application = NULL;
-		_kddm_remove_frozen_object(app_kddm_set, app_id);
+		_gdm_remove_frozen_object(app_gdm_set, app_id);
 		goto exit;
 	}
 
 	register_task_to_app(app, task);
-	_kddm_put_object(app_kddm_set, app_id);
+	_gdm_put_object(app_gdm_set, app_id);
 exit:
 	return r;
 }
@@ -297,9 +297,9 @@ static int register_task_to_appid(long app_id,
 {
 	int r;
 	struct app_struct *app;
-	struct app_kddm_object *obj;
+	struct app_gdm_object *obj;
 
-	obj = _kddm_grab_object_no_ft(app_kddm_set, app_id);
+	obj = _gdm_grab_object_no_ft(app_gdm_set, app_id);
 	BUG_ON(!obj);
 
 	app = find_local_app(app_id);
@@ -314,7 +314,7 @@ static int register_task_to_appid(long app_id,
 	r = register_task_to_app(app, task);
 
 error:
-	_kddm_put_object(app_kddm_set, app_id);
+	_gdm_put_object(app_gdm_set, app_id);
 	return r;
 }
 
@@ -776,7 +776,7 @@ out_unlock:
 	goto out;
 }
 
-int global_stop(struct app_kddm_object *obj)
+int global_stop(struct app_gdm_object *obj)
 {
 	struct rpc_desc *desc;
 	struct app_stop_msg msg;
@@ -888,7 +888,7 @@ err:
 	rpc_cancel(desc);
 }
 
-static int global_continue(struct app_kddm_object *obj)
+static int global_continue(struct app_gdm_object *obj)
 {
 	struct rpc_desc *desc;
 	struct app_continue_msg msg;
@@ -1000,7 +1000,7 @@ err:
 	rpc_cancel(desc);
 }
 
-static int global_kill(struct app_kddm_object *obj, int signal)
+static int global_kill(struct app_gdm_object *obj, int signal)
 {
 	struct rpc_desc *desc;
 	struct app_kill_msg msg;
@@ -1033,7 +1033,7 @@ err_rpc:
 	goto exit;
 }
 
-int global_unfreeze(struct app_kddm_object *obj, int signal)
+int global_unfreeze(struct app_gdm_object *obj, int signal)
 {
 	int r;
 
@@ -1061,7 +1061,7 @@ err:
 int app_set_userdata(__u64 user_data)
 {
 	int r = 0;
-	struct app_kddm_object *obj;
+	struct app_gdm_object *obj;
 
 	if (!can_be_checkpointed(current)) {
 		r = -EPERM;
@@ -1074,17 +1074,17 @@ int app_set_userdata(__u64 user_data)
 			goto exit;
 	}
 
-	obj = kddm_grab_object_no_ft(kddm_def_ns, APP_KDDM_ID,
+	obj = gdm_grab_object_no_ft(gdm_def_ns, APP_GDM_ID,
 				     current->application->app_id);
 	if (!obj) {
 		r = -ESRCH;
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	obj->user_data = user_data;
 
-exit_kddmput:
-	kddm_put_object(kddm_def_ns, APP_KDDM_ID, current->application->app_id);
+exit_gdmput:
+	gdm_put_object(gdm_def_ns, APP_GDM_ID, current->application->app_id);
 exit:
 	return r;
 }
@@ -1093,7 +1093,7 @@ int app_get_userdata(long _appid, int flags, __u64 *user_data)
 {
 	int r = 0;
 	long app_id = _appid;
-	struct app_kddm_object *obj;
+	struct app_gdm_object *obj;
 
 	if (app_id < 0) {
 		r = -EINVAL;
@@ -1108,16 +1108,16 @@ int app_get_userdata(long _appid, int flags, __u64 *user_data)
 		}
 	}
 
-	obj = kddm_get_object_no_ft(kddm_def_ns, APP_KDDM_ID, app_id);
+	obj = gdm_get_object_no_ft(gdm_def_ns, APP_GDM_ID, app_id);
 	if (!obj) {
 		r = -ESRCH;
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	*user_data = obj->user_data;
 
-exit_kddmput:
-	kddm_put_object(kddm_def_ns, APP_KDDM_ID, app_id);
+exit_gdmput:
+	gdm_put_object(gdm_def_ns, APP_GDM_ID, app_id);
 exit:
 	return r;
 }
@@ -1125,7 +1125,7 @@ exit:
 int app_cr_disable(void)
 {
 	int r = 0;
-	struct app_kddm_object *obj;
+	struct app_gdm_object *obj;
 
 	if (!can_be_checkpointed(current)) {
 		r = -EPERM;
@@ -1138,11 +1138,11 @@ int app_cr_disable(void)
 			goto exit;
 	}
 
-	obj = kddm_grab_object_no_ft(kddm_def_ns, APP_KDDM_ID,
+	obj = gdm_grab_object_no_ft(gdm_def_ns, APP_GDM_ID,
 				     current->application->app_id);
 	if (!obj) {
 		r = -ESRCH;
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	if (obj->state == APP_RUNNING_CS)
@@ -1152,8 +1152,8 @@ int app_cr_disable(void)
 	else
 		BUG();
 
-exit_kddmput:
-	kddm_put_object(kddm_def_ns, APP_KDDM_ID, current->application->app_id);
+exit_gdmput:
+	gdm_put_object(gdm_def_ns, APP_GDM_ID, current->application->app_id);
 exit:
 	return r;
 }
@@ -1161,7 +1161,7 @@ exit:
 int app_cr_enable(void)
 {
 	int r = 0;
-	struct app_kddm_object *obj;
+	struct app_gdm_object *obj;
 
 	if (!can_be_checkpointed(current)) {
 		r = -EPERM;
@@ -1174,11 +1174,11 @@ int app_cr_enable(void)
 			goto exit;
 	}
 
-	obj = kddm_grab_object_no_ft(kddm_def_ns, APP_KDDM_ID,
+	obj = gdm_grab_object_no_ft(gdm_def_ns, APP_GDM_ID,
 				     current->application->app_id);
 	if (!obj) {
 		r = -ESRCH;
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	if (obj->state == APP_RUNNING)
@@ -1188,8 +1188,8 @@ int app_cr_enable(void)
 	else
 		BUG();
 
-exit_kddmput:
-	kddm_put_object(kddm_def_ns, APP_KDDM_ID, current->application->app_id);
+exit_gdmput:
+	gdm_put_object(gdm_def_ns, APP_GDM_ID, current->application->app_id);
 exit:
 	return r;
 }
@@ -1231,14 +1231,14 @@ void application_cr_server_init(void)
 
 	register_io_linker(APP_LINKER, &app_io_linker);
 
-	app_kddm_set = create_new_kddm_set(kddm_def_ns, APP_KDDM_ID,
-					   APP_LINKER, KDDM_CUSTOM_DEF_OWNER,
-					   sizeof(struct app_kddm_object),
-					   KDDM_LOCAL_EXCLUSIVE);
-	if (IS_ERR(app_kddm_set))
+	app_gdm_set = create_new_gdm_set(gdm_def_ns, APP_GDM_ID,
+					   APP_LINKER, GDM_CUSTOM_DEF_OWNER,
+					   sizeof(struct app_gdm_object),
+					   GDM_LOCAL_EXCLUSIVE);
+	if (IS_ERR(app_gdm_set))
 		OOM;
 
-	app_kddm_obj_cachep = KMEM_CACHE(app_kddm_object, cache_flags);
+	app_gdm_obj_cachep = KMEM_CACHE(app_gdm_object, cache_flags);
 	app_struct_cachep = KMEM_CACHE(app_struct, cache_flags);
 	task_state_cachep = KMEM_CACHE(task_and_state, cache_flags);
 
@@ -1254,7 +1254,7 @@ void application_cr_server_init(void)
 void application_cr_server_finalize(void)
 {
 	if (hcc_node_id == 0) {
-		_destroy_kddm_set(app_kddm_set);
+		_destroy_gdm_set(app_gdm_set);
 	}
 	hashtable_free(app_struct_table);
 }

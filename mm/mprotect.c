@@ -300,7 +300,7 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
 
 	res = do_mprotect(current->mm, start, len, prot, current->personality);
 
-	if (!res && current->mm->anon_vma_kddm_set)
+	if (!res && current->mm->anon_vma_gdm_set)
 		krg_do_mprotect(current->mm, start, len, prot,
 				current->personality);
 

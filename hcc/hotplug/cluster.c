@@ -36,8 +36,8 @@
 #include <hcc/krgnodemask.h>
 #include <hcc/namespace.h>
 #include <net/krgrpc/rpc.h>
-#ifdef CONFIG_KRG_KDDM
-#include <kddm/kddm.h>
+#ifdef CONFIG_KRG_GDM
+#include <gdm/gdm.h>
 #endif
 #ifdef CONFIG_KRG_PROC
 #include <hcc/task.h>

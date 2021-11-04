@@ -712,7 +712,7 @@ struct address_space {
 	struct list_head	private_list;	/* ditto */
 	struct address_space	*assoc_mapping;	/* ditto */
 #ifdef CONFIG_KRG_DVFS
-	struct kddm_set         *kddm_set;
+	struct gdm_set         *gdm_set;
 #endif
 } __attribute__((aligned(sizeof(long))));
 	/*

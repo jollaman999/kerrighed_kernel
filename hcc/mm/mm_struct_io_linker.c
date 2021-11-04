@@ -5,7 +5,7 @@
  */
 #include <linux/rmap.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 #include "mm_struct.h"
 #include "vma_struct.h"
@@ -14,14 +14,14 @@
 
 /*****************************************************************************/
 /*                                                                           */
-/*                       MM_STRUCT KDDM SET IO FUNCTIONS                     */
+/*                       MM_STRUCT GDM SET IO FUNCTIONS                     */
 /*                                                                           */
 /*****************************************************************************/
 
 
 
-int mm_alloc_object (struct kddm_obj *obj_entry,
-		     struct kddm_set *set,
+int mm_alloc_object (struct gdm_obj *obj_entry,
+		     struct gdm_set *set,
 		     objid_t objid)
 {
 	obj_entry->object = NULL;
@@ -30,8 +30,8 @@ int mm_alloc_object (struct kddm_obj *obj_entry,
 
 
 
-int mm_first_touch (struct kddm_obj *obj_entry,
-		    struct kddm_set *set,
+int mm_first_touch (struct gdm_obj *obj_entry,
+		    struct gdm_set *set,
 		    objid_t objid,
 		    int flags)
 {
@@ -44,7 +44,7 @@ int mm_first_touch (struct kddm_obj *obj_entry,
 
 
 int mm_remove_object (void *object,
-		      struct kddm_set *set,
+		      struct gdm_set *set,
 		      objid_t objid)
 {
 	struct mm_struct *mm = object;
@@ -78,8 +78,8 @@ int mm_remove_object (void *object,
  *  @param  obj_entry  Object entry of the object to export.
  */
 int mm_export_object (struct rpc_desc *desc,
-		      struct kddm_set *set,
-		      struct kddm_obj *obj_entry,
+		      struct gdm_set *set,
+		      struct gdm_obj *obj_entry,
 		      objid_t objid,
 		      int flags)
 {
@@ -91,7 +91,7 @@ int mm_export_object (struct rpc_desc *desc,
 	krgnode_set (desc->client, mm->copyset);
 
 	rpc_pack(desc, 0, &mm->mm_id, sizeof(unique_id_t));
-	rpc_pack(desc, 0, &mm->anon_vma_kddm_id, sizeof(unique_id_t));
+	rpc_pack(desc, 0, &mm->anon_vma_gdm_id, sizeof(unique_id_t));
 	rpc_pack(desc, 0, &mm->context.vdso, sizeof(void*));
 	rpc_pack(desc, 0, &mm->copyset, sizeof(krgnodemask_t));
 
@@ -119,15 +119,15 @@ int mm_export_object (struct rpc_desc *desc,
  *  @param  _buffer   Data to import in the object.
  */
 int mm_import_object (struct rpc_desc *desc,
-		      struct kddm_set *_set,
-		      struct kddm_obj *obj_entry,
+		      struct gdm_set *_set,
+		      struct gdm_obj *obj_entry,
 		      objid_t objid,
 		      int flags)
 {
 	struct mm_struct *mm;
 	krgsyms_val_t unmap_id, get_unmap_id, get_unmap_exec_id;
-	struct kddm_set *set;
-	unique_id_t mm_id, kddm_id;
+	struct gdm_set *set;
+	unique_id_t mm_id, gdm_id;
 	void *context_vdso;
 	int r;
 
@@ -137,7 +137,7 @@ int mm_import_object (struct rpc_desc *desc,
 	if (r)
 		return r;
 
-	r = rpc_unpack (desc, 0, &kddm_id, sizeof(unique_id_t));
+	r = rpc_unpack (desc, 0, &gdm_id, sizeof(unique_id_t));
 	if (r)
 		return r;
 
@@ -147,14 +147,14 @@ int mm_import_object (struct rpc_desc *desc,
 
 	if (mm == NULL) {
 		/* First import */
-		set = _find_get_kddm_set(kddm_def_ns, kddm_id);
+		set = _find_get_gdm_set(gdm_def_ns, gdm_id);
 		BUG_ON (set == NULL);
 
 		mm = set->obj_set;
 		mm->mm_id = mm_id;
 		atomic_inc(&mm->mm_users);
 		obj_entry->object = mm;
-		put_kddm_set(set);
+		put_gdm_set(set);
 		mm->context.vdso = context_vdso;
 	}
 

@@ -1,7 +1,7 @@
 /*
  *  Kerrighed/modules/ipc/msg_io_linker.c
  *
- *  KDDM IPC msg_queue id Linker.
+ *  GDM IPC msg_queue id Linker.
  *
  *  Copyright (C) 2007-2008 Matthieu Fertré - INRIA
  */
@@ -11,7 +11,7 @@
 #include <linux/ipc_namespace.h>
 #include <linux/ipc.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 #include "ipc_handler.h"
 #include "msg_io_linker.h"
@@ -104,14 +104,14 @@ static void update_local_msq (struct msg_queue *local_msq,
 
 /*****************************************************************************/
 /*                                                                           */
-/*                         MSQID KDDM IO FUNCTIONS                           */
+/*                         MSQID GDM IO FUNCTIONS                           */
 /*                                                                           */
 /*****************************************************************************/
 
 
 
-int msq_alloc_object (struct kddm_obj * obj_entry,
-		      struct kddm_set * set,
+int msq_alloc_object (struct gdm_obj * obj_entry,
+		      struct gdm_set * set,
 		      objid_t objid)
 {
 	msq_object_t *msq_object;
@@ -128,7 +128,7 @@ int msq_alloc_object (struct kddm_obj * obj_entry,
 
 
 
-/** Handle a kddm set msq_queue id first touch
+/** Handle a gdm set msq_queue id first touch
  *  @author Matthieu Fertré
  *
  *  @param  obj_entry  Kddm object descriptor.
@@ -137,8 +137,8 @@ int msq_alloc_object (struct kddm_obj * obj_entry,
  *
  *  @return  0 if everything is ok. Negative value otherwise.
  */
-int msq_first_touch (struct kddm_obj * obj_entry,
-		     struct kddm_set * set,
+int msq_first_touch (struct gdm_obj * obj_entry,
+		     struct gdm_set * set,
 		     objid_t objid,
 		     int flags)
 {
@@ -156,8 +156,8 @@ int msq_first_touch (struct kddm_obj * obj_entry,
  *  @param  set       Kddm set descriptor
  *  @param  objid     Id of the object to insert.
  */
-int msq_insert_object (struct kddm_obj * obj_entry,
-		       struct kddm_set * set,
+int msq_insert_object (struct gdm_obj * obj_entry,
+		       struct gdm_set * set,
 		       objid_t objid)
 {
 	msq_object_t *msq_object;
@@ -198,18 +198,18 @@ int msq_insert_object (struct kddm_obj * obj_entry,
 
 
 
-/** Invalidate a kddm object msqid.
+/** Invalidate a gdm object msqid.
  *  @author Matthieu Fertré
  *
  *  @param  obj_entry  Descriptor of the object to invalidate.
  *  @param  set       Kddm set descriptor
  *  @param  objid     Id of the object to invalidate
  */
-int msq_invalidate_object (struct kddm_obj * obj_entry,
-			   struct kddm_set * set,
+int msq_invalidate_object (struct gdm_obj * obj_entry,
+			   struct gdm_set * set,
 			   objid_t objid)
 {
-	return KDDM_IO_KEEP_OBJECT;
+	return GDM_IO_KEEP_OBJECT;
 }
 
 
@@ -221,7 +221,7 @@ int msq_invalidate_object (struct kddm_obj * obj_entry,
  *  @param  set       Kddm set descriptor.
  *  @param  padeid    Id of the object to remove.
  */
-int msq_remove_object(void *object, struct kddm_set *set, objid_t objid)
+int msq_remove_object(void *object, struct gdm_set *set, objid_t objid)
 {
 	msq_object_t *msq_object;
 	struct msg_queue *msq;
@@ -256,8 +256,8 @@ int msq_remove_object(void *object, struct kddm_set *set, objid_t objid)
  *  @param  object    The object to export data from.
  */
 int msq_export_object (struct rpc_desc *desc,
-		       struct kddm_set *set,
-		       struct kddm_obj *obj_entry,
+		       struct gdm_set *set,
+		       struct gdm_obj *obj_entry,
 		       objid_t objid,
 		       int flags)
 {
@@ -281,8 +281,8 @@ int msq_export_object (struct rpc_desc *desc,
  *  @param  buffer    Data to import in the object.
  */
 int msq_import_object (struct rpc_desc *desc,
-		       struct kddm_set *set,
-		       struct kddm_obj *obj_entry,
+		       struct gdm_set *set,
+		       struct gdm_obj *obj_entry,
 		       objid_t objid,
 		       int flags)
 {
@@ -328,7 +328,7 @@ struct iolinker_struct msq_linker = {
 
 /*****************************************************************************/
 /*                                                                           */
-/*                  MSG QUEUE KEY KDDM IO FUNCTIONS                          */
+/*                  MSG QUEUE KEY GDM IO FUNCTIONS                          */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -341,7 +341,7 @@ struct iolinker_struct msqkey_linker = {
 
 /*****************************************************************************/
 /*                                                                           */
-/*                  MSG MASTER KDDM IO FUNCTIONS                             */
+/*                  MSG MASTER GDM IO FUNCTIONS                             */
 /*                                                                           */
 /*****************************************************************************/
 

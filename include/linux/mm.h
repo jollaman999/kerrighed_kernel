@@ -126,7 +126,7 @@ extern unsigned int kobjsize(const void *objp);
 #define VM_PFN_AT_MMAP	0x40000000	/* PFNMAP vma that is fully mapped at mmap time */
 #define VM_MERGEABLE	0x80000000	/* KSM may merge identical pages */
 #ifdef CONFIG_KRG_MM
-#define VM_KDDM		0x100000000ULL	/* The vma is stored inside KDDM */
+#define VM_GDM		0x100000000ULL	/* The vma is stored inside GDM */
 #endif
 
 #ifdef CONFIG_KRG_MM
@@ -398,9 +398,9 @@ static inline struct page *compound_head(struct page *page)
 }
 
 #ifdef CONFIG_KRG_MM
-static inline int page_kddm_count(struct page *page)
+static inline int page_gdm_count(struct page *page)
 {
-	return atomic_read(&page->_kddm_count);
+	return atomic_read(&page->_gdm_count);
 }
 #endif
 
@@ -1477,7 +1477,7 @@ static inline int expand_stack(struct vm_area_struct *vma,
 	int err;
 
 	err = __expand_stack(vma, address);
-	if (!err && vma->vm_mm->anon_vma_kddm_set)
+	if (!err && vma->vm_mm->anon_vma_gdm_set)
 		krg_expand_stack(vma, address);
 
 	return err;

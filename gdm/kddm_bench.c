@@ -1,11 +1,11 @@
-/** KDDM benchmark module.
- *  @file kddm_bench.c
+/** GDM benchmark module.
+ *  @file gdm_bench.c
  *
  *  Copyright (C) 2007, Renaud Lottiaux, Kerlabs.
  */
 
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 #define NR_TEST_LOOPS 16
 #define NR_TESTS 12
@@ -14,8 +14,8 @@
 
 /****************************************************************************/
 
-int test_first_touch (struct kddm_obj * obj_entry,
-		      struct kddm_set * set,
+int test_first_touch (struct gdm_obj * obj_entry,
+		      struct gdm_set * set,
 		      objid_t objid,
 		      int flags)
 {
@@ -30,17 +30,17 @@ int test_first_touch (struct kddm_obj * obj_entry,
 	return 0;
 }
 
-/* Init the KDDM test IO linker */
+/* Init the GDM test IO linker */
 
-struct iolinker_struct kddm_test_linker = {
+struct iolinker_struct gdm_test_linker = {
 	first_touch:       test_first_touch,
-	linker_name:       "kddm_test",
-	linker_id:         KDDM_TEST_LINKER,
+	linker_name:       "gdm_test",
+	linker_id:         GDM_TEST_LINKER,
 };
 
-struct kddm_set *kddm_test4_dist = NULL;
-struct kddm_set *kddm_test4_loc = NULL;
-struct kddm_set *kddm_test4096_dist = NULL;
+struct gdm_set *gdm_test4_dist = NULL;
+struct gdm_set *gdm_test4_loc = NULL;
+struct gdm_set *gdm_test4096_dist = NULL;
 
 static inline void start_timer (struct timeval *tv)
 {
@@ -59,41 +59,41 @@ static inline long stop_timer (struct timeval *tv_start)
 	return end - start;
 }
 
-void kddm_test_barrier(void)
+void gdm_test_barrier(void)
 {
 	int *val, done = 0;
 
 	if (hcc_node_id == 0) {
-		val = _kddm_grab_object (kddm_test4_loc, BARRIER_ID);
+		val = _gdm_grab_object (gdm_test4_loc, BARRIER_ID);
 		*val = hcc_nb_nodes;
-		_kddm_put_object (kddm_test4_loc, BARRIER_ID);
+		_gdm_put_object (gdm_test4_loc, BARRIER_ID);
 	}
 	else {
 		while (! done) {
-			val = _kddm_get_object (kddm_test4_loc, BARRIER_ID);
+			val = _gdm_get_object (gdm_test4_loc, BARRIER_ID);
 			done = (*val != 0);
-			_kddm_put_object (kddm_test4_loc, BARRIER_ID);
+			_gdm_put_object (gdm_test4_loc, BARRIER_ID);
 			schedule();
 		}
 	}
 
-	val = _kddm_grab_object (kddm_test4_loc, BARRIER_ID);
+	val = _gdm_grab_object (gdm_test4_loc, BARRIER_ID);
 	(*val)--;
-	_kddm_put_object (kddm_test4_loc, BARRIER_ID);
+	_gdm_put_object (gdm_test4_loc, BARRIER_ID);
 
 	done = 0;
 
 	while (! done) {
-		val = _kddm_get_object (kddm_test4_loc, BARRIER_ID);
+		val = _gdm_get_object (gdm_test4_loc, BARRIER_ID);
 		done = (*val == 0);
-		_kddm_put_object (kddm_test4_loc, BARRIER_ID);
+		_gdm_put_object (gdm_test4_loc, BARRIER_ID);
 		schedule();
 	}
 }
 
 
 
-long do_grab(struct kddm_set *set, int start, int end)
+long do_grab(struct gdm_set *set, int start, int end)
 {
 	struct timeval tv;
 	long tot_time = 0;
@@ -101,17 +101,17 @@ long do_grab(struct kddm_set *set, int start, int end)
 
 	for (i = start; i < end; i++) {
 		start_timer (&tv);
-		_kddm_grab_object (set, i);
+		_gdm_grab_object (set, i);
 		tot_time += stop_timer(&tv);
 	}
 
 	for (i = start; i < end; i++)
-		_kddm_put_object (set, i);
+		_gdm_put_object (set, i);
 
 	return tot_time / NR_TEST_LOOPS;
 }
 
-long do_get(struct kddm_set *set, int start, int end)
+long do_get(struct gdm_set *set, int start, int end)
 {
 	struct timeval tv;
 	long tot_time = 0;
@@ -119,53 +119,53 @@ long do_get(struct kddm_set *set, int start, int end)
 
 	for (i = start; i < end; i++) {
 		start_timer (&tv);
-		_kddm_get_object (set, i);
+		_gdm_get_object (set, i);
 		tot_time += stop_timer(&tv);
 	}
 
 	for (i = start; i < end; i++)
-		_kddm_put_object (set, i);
+		_gdm_put_object (set, i);
 
 	return tot_time / NR_TEST_LOOPS;
 }
 
-long do_remove(struct kddm_set *set, int start, int end)
+long do_remove(struct gdm_set *set, int start, int end)
 {
 	struct timeval tv;
 	long tot_time = 0;
 	int i ;
 
 	for (i = start; i < end; i++)
-		_kddm_get_object (set, i);
+		_gdm_get_object (set, i);
 
 	for (i = start; i < end; i++) {
 		start_timer (&tv);
-		_kddm_remove_frozen_object (set, i);
+		_gdm_remove_frozen_object (set, i);
 		tot_time += stop_timer(&tv);
 	}
 
 	return tot_time / NR_TEST_LOOPS;
 }
 
-void alloc_test_kddm_sets(int master_node)
+void alloc_test_gdm_sets(int master_node)
 {
-	kddm_test4_dist = create_new_kddm_set (kddm_def_ns,
-					       KDDM_TEST4_DIST,
-					       KDDM_TEST_LINKER,
+	gdm_test4_dist = create_new_gdm_set (gdm_def_ns,
+					       GDM_TEST4_DIST,
+					       GDM_TEST_LINKER,
 					       master_node + 1, 4, 0);
 
-	kddm_test4_loc = create_new_kddm_set (kddm_def_ns,
-					      KDDM_TEST4_LOC,
-					      KDDM_TEST_LINKER,
+	gdm_test4_loc = create_new_gdm_set (gdm_def_ns,
+					      GDM_TEST4_LOC,
+					      GDM_TEST_LINKER,
 					      master_node, 4, 0);
 
-	kddm_test4096_dist = create_new_kddm_set (kddm_def_ns,
-						  KDDM_TEST4096,
-						  KDDM_TEST_LINKER,
+	gdm_test4096_dist = create_new_gdm_set (gdm_def_ns,
+						  GDM_TEST4096,
+						  GDM_TEST_LINKER,
 						  master_node + 1, 4096, 0);
 }
 
-void prepare_bench (struct kddm_set *set, int master_node)
+void prepare_bench (struct gdm_set *set, int master_node)
 {
 	int start, end, test_nr;
 
@@ -223,7 +223,7 @@ void prepare_bench (struct kddm_set *set, int master_node)
 	}
 }
 
-void do_one_bench (struct kddm_set *set, char *buff, int size, int *index)
+void do_one_bench (struct gdm_set *set, char *buff, int size, int *index)
 {
 	int start, end, test_nr;
 
@@ -298,7 +298,7 @@ void do_one_bench (struct kddm_set *set, char *buff, int size, int *index)
 
 
 
-void cleanup_bench (struct kddm_set *set)
+void cleanup_bench (struct gdm_set *set)
 {
 	int start, end, test_nr;
 
@@ -315,38 +315,38 @@ int do_bench (char *buff, int size, int master_node)
 {
 	int index = 0;
 
-	if (kddm_test4_dist == NULL)
-		alloc_test_kddm_sets(master_node);
+	if (gdm_test4_dist == NULL)
+		alloc_test_gdm_sets(master_node);
 
-	prepare_bench(kddm_test4_loc, master_node);
-	prepare_bench(kddm_test4_dist, master_node);
-	prepare_bench(kddm_test4096_dist, master_node);
+	prepare_bench(gdm_test4_loc, master_node);
+	prepare_bench(gdm_test4_dist, master_node);
+	prepare_bench(gdm_test4096_dist, master_node);
 
-	kddm_test_barrier();
+	gdm_test_barrier();
 
 	if (hcc_node_id == master_node) {
-		index += snprintf (&buff[index], size - index, "----- KDDM "
+		index += snprintf (&buff[index], size - index, "----- GDM "
 				   "BENCH - Local Manager   - Object size = "
 				   "4 -----\n");
-		do_one_bench(kddm_test4_loc, buff, size, &index);
-		index += snprintf (&buff[index], size - index, "----- KDDM "
+		do_one_bench(gdm_test4_loc, buff, size, &index);
+		index += snprintf (&buff[index], size - index, "----- GDM "
 				   "BENCH - Distant Manager - Object size = "
 				   "4 -----\n");
-		do_one_bench(kddm_test4_dist, buff, size, &index);
-		index += snprintf (&buff[index], size - index, "----- KDDM "
+		do_one_bench(gdm_test4_dist, buff, size, &index);
+		index += snprintf (&buff[index], size - index, "----- GDM "
 				   "BENCH - Distant Manager - Object size = "
 				   "4096 -----\n");
-		do_one_bench(kddm_test4096_dist, buff, size, &index);
-		cleanup_bench(kddm_test4_loc);
-		cleanup_bench(kddm_test4_dist);
-		cleanup_bench(kddm_test4096_dist);
+		do_one_bench(gdm_test4096_dist, buff, size, &index);
+		cleanup_bench(gdm_test4_loc);
+		cleanup_bench(gdm_test4_dist);
+		cleanup_bench(gdm_test4096_dist);
 	}
 	return index;
 }
 
 
 
-int handle_kddm_bench (struct rpc_desc* desc, void *_msg, size_t size)
+int handle_gdm_bench (struct rpc_desc* desc, void *_msg, size_t size)
 {
 	int *master_node = _msg;
 
@@ -356,7 +356,7 @@ int handle_kddm_bench (struct rpc_desc* desc, void *_msg, size_t size)
 
 
 
-int kddm_bench(char *buff, int size)
+int gdm_bench(char *buff, int size)
 {
 	int n, i, master_node = hcc_node_id;
 	krgnodemask_t nodes;
@@ -371,22 +371,22 @@ int kddm_bench(char *buff, int size)
 	for (i = master_node + 1; i <= master_node + 3; i++)
 		krgnode_set(i, nodes);
 
-	rpc_async_m(KDDM_BENCH, &nodes, &master_node, sizeof(int));
+	rpc_async_m(GDM_BENCH, &nodes, &master_node, sizeof(int));
 
 	return do_bench(buff, size, master_node);
 }
 
 
 
-void init_kddm_test (void)
+void init_gdm_test (void)
 {
 	struct rpc_synchro* test_server;
 
-	test_server = rpc_synchro_new(1, "kddm test", 0);
+	test_server = rpc_synchro_new(1, "gdm test", 0);
 
-	register_io_linker (KDDM_TEST_LINKER, &kddm_test_linker);
+	register_io_linker (GDM_TEST_LINKER, &gdm_test_linker);
 
-	__rpc_register(KDDM_BENCH,
+	__rpc_register(GDM_BENCH,
 		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
-		       test_server, handle_kddm_bench, 0);
+		       test_server, handle_gdm_bench, 0);
 }

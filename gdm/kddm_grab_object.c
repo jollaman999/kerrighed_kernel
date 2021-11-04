@@ -1,36 +1,36 @@
-/** KDDM grab object
- *  @file kddm_grab_object.c
+/** GDM grab object
+ *  @file gdm_grab_object.c
  *
- *  Implementation of KDDM grab object function.
+ *  Implementation of GDM grab object function.
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
  *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
  */
 #include <linux/module.h>
 
-#include <kddm/kddm.h>
-#include <kddm/object_server.h>
+#include <gdm/gdm.h>
+#include <gdm/object_server.h>
 #include "protocol_action.h"
 
-static inline struct kddm_obj *check_cow (struct kddm_set *set,
-					  struct kddm_obj *obj_entry,
+static inline struct gdm_obj *check_cow (struct gdm_set *set,
+					  struct gdm_obj *obj_entry,
 					  objid_t objid,
 					  int flags,
 					  int *retry)
 {
 	*retry = 0;
-	if (flags & KDDM_COW_OBJECT) {
+	if (flags & GDM_COW_OBJECT) {
 		if (object_frozen(obj_entry, set)) {
-			if (!(flags & KDDM_ASYNC_REQ)) {
-				sleep_on_kddm_obj(set, obj_entry, objid,
+			if (!(flags & GDM_ASYNC_REQ)) {
+				sleep_on_gdm_obj(set, obj_entry, objid,
 						  flags);
 				*retry = 1;
 			}
 		}
 		else
-			obj_entry = kddm_break_cow_object(set, obj_entry,
+			obj_entry = gdm_break_cow_object(set, obj_entry,
 							  objid,
-							  KDDM_BREAK_COW_COPY);
+							  GDM_BREAK_COW_COPY);
 	}
 	return obj_entry;
 }
@@ -38,7 +38,7 @@ static inline struct kddm_obj *check_cow (struct kddm_set *set,
 /** Get a copy of a object and invalidate any other existing copy.
  *  @author Renaud Lottiaux
  *
- *  @param set        KDDM set hosting the object.
+ *  @param set        GDM set hosting the object.
  *  @param obj_entry  Object entry of the object to grab.
  *  @param objid      Identifier of the object to grab.
  *  @param flags      Sync / Async request, FT or not, etc...
@@ -47,23 +47,23 @@ static inline struct kddm_obj *check_cow (struct kddm_set *set,
  *                       NULL if the object does not exist.
  *                       Negative value if error.
  */
-void *generic_kddm_grab_object(struct kddm_set *set,
+void *generic_gdm_grab_object(struct gdm_set *set,
 			       objid_t objid,
 			       int flags)
 {
-	struct kddm_obj *obj_entry;
+	struct gdm_obj *obj_entry;
 	void *object;
 	int retry;
 
 	inc_grab_object_counter(set);
 
-	obj_entry = __get_alloc_kddm_obj_entry(set, objid);
+	obj_entry = __get_alloc_gdm_obj_entry(set, objid);
 
 try_again:
 	switch (OBJ_STATE(obj_entry)) {
 	case READ_COPY:
 		if (object_frozen(obj_entry, set)) {
-			if (flags & KDDM_ASYNC_REQ)
+			if (flags & GDM_ASYNC_REQ)
 				BUG();
 			goto sleep;
 		}
@@ -71,22 +71,22 @@ try_again:
 	case INV_COPY:
 		request_object_on_write(set, obj_entry, objid, flags);
 		CLEAR_SET(COPYSET(obj_entry));
-		kddm_change_obj_state(set, obj_entry, objid, WAIT_OBJ_WRITE);
-		if (flags & KDDM_TRY_GRAB)
+		gdm_change_obj_state(set, obj_entry, objid, WAIT_OBJ_WRITE);
+		if (flags & GDM_TRY_GRAB)
 			goto sleep_on_wait_page;
 		/* Else Fall through */
 
 	case WAIT_ACK_WRITE:
 	case WAIT_OBJ_WRITE:
 	case INV_FILLING:
-		if (flags & KDDM_TRY_GRAB)
+		if (flags & GDM_TRY_GRAB)
 			goto exit_try_failed;
 
-		if (flags & KDDM_ASYNC_REQ)
+		if (flags & GDM_ASYNC_REQ)
 			goto exit_no_freeze;
 
 sleep_on_wait_page:
-		sleep_on_kddm_obj(set, obj_entry, objid, flags);
+		sleep_on_gdm_obj(set, obj_entry, objid, flags);
 
 		if (OBJ_STATE(obj_entry) == WRITE_OWNER) {
 			obj_entry = check_cow (set, obj_entry, objid, flags,
@@ -96,25 +96,25 @@ sleep_on_wait_page:
 			break;
 		}
 
-		if (flags & KDDM_NO_FT_REQ) {
+		if (flags & GDM_NO_FT_REQ) {
 			if (OBJ_STATE(obj_entry) == INV_OWNER)
 				break;
 
 			if (OBJ_STATE(obj_entry) == INV_COPY) {
-				if (!(flags & KDDM_SEND_OWNERSHIP))
+				if (!(flags & GDM_SEND_OWNERSHIP))
 					break;
 				BUG();
 			}
 		}
 
-		if (flags & KDDM_TRY_GRAB)
+		if (flags & GDM_TRY_GRAB)
 			goto exit_try_failed;
 
 		/* Argh, object has been invalidated before we woke up. */
 		goto try_again;
 
 	case INV_OWNER:
-		if (flags & KDDM_NO_FT_REQ)
+		if (flags & GDM_NO_FT_REQ)
 			break;
 
 		/*** The object can be created on the local node  ***/
@@ -130,13 +130,13 @@ sleep_on_wait_page:
 			goto try_again;
 
 		if (!OBJ_EXCLUSIVE(obj_entry)) {
-			kddm_change_obj_state(set, obj_entry, objid,
+			gdm_change_obj_state(set, obj_entry, objid,
 					      WAIT_ACK_WRITE);
 			request_copies_invalidation(set, obj_entry, objid,
 						    hcc_node_id);
-			if (flags & KDDM_ASYNC_REQ)
+			if (flags & GDM_ASYNC_REQ)
 				goto exit_no_freeze;
-			sleep_on_kddm_obj(set, obj_entry, objid, flags);
+			sleep_on_gdm_obj(set, obj_entry, objid, flags);
 
 			if (OBJ_STATE(obj_entry) != WRITE_OWNER) {
 				/* Argh, object has been invalidated before
@@ -144,7 +144,7 @@ sleep_on_wait_page:
 				goto try_again;
 			}
 		} else
-			kddm_change_obj_state(set, obj_entry, objid,
+			gdm_change_obj_state(set, obj_entry, objid,
 					      WRITE_OWNER);
 		break;
 
@@ -158,12 +158,12 @@ sleep_on_wait_page:
 		obj_entry = check_cow (set, obj_entry, objid, flags, &retry);
 		if (retry)
 			goto try_again;
-		kddm_change_obj_state(set, obj_entry, objid, WRITE_OWNER);
+		gdm_change_obj_state(set, obj_entry, objid, WRITE_OWNER);
 		break;
 
 	case WAIT_ACK_INV:
 	case WAIT_OBJ_READ:
-		if (flags & KDDM_TRY_GRAB)
+		if (flags & GDM_TRY_GRAB)
 			goto exit_try_failed;
 
 		/* Fall through */
@@ -172,10 +172,10 @@ sleep_on_wait_page:
 	case WAIT_OBJ_RM_ACK2:
 	case WAIT_CHG_OWN_ACK:
 sleep:
-		if (flags & KDDM_ASYNC_REQ)
+		if (flags & GDM_ASYNC_REQ)
 			goto exit_no_freeze;
 
-		sleep_on_kddm_obj(set, obj_entry, objid, flags);
+		sleep_on_gdm_obj(set, obj_entry, objid, flags);
 		goto try_again;
 
 	default:
@@ -183,204 +183,204 @@ sleep:
 		break;
 	}
 
-	if (flags & KDDM_ASYNC_REQ)
+	if (flags & GDM_ASYNC_REQ)
 		goto exit_no_freeze;
 
 	if (object_frozen(obj_entry, set) &&
-	    (flags & KDDM_TRY_GRAB) &&
-	    (kddm_local_exclusive (set)))
+	    (flags & GDM_TRY_GRAB) &&
+	    (gdm_local_exclusive (set)))
 		goto exit_try_failed;
 
 	if (check_sleep_on_local_exclusive(set, obj_entry, objid, flags))
 		goto try_again;
 
-	if (!(flags & KDDM_NO_FREEZE))
+	if (!(flags & GDM_NO_FREEZE))
 		set_object_frozen(obj_entry, set);
 
 exit_no_freeze:
 	object = obj_entry->object;
-	put_kddm_obj_entry(set, obj_entry, objid);
+	put_gdm_obj_entry(set, obj_entry, objid);
 
 	return object;
 
 exit_try_failed:
-	put_kddm_obj_entry(set, obj_entry, objid);
+	put_gdm_obj_entry(set, obj_entry, objid);
 	return ERR_PTR(-EBUSY);
 }
 
 
 
-void *_kddm_grab_object(struct kddm_set *set, objid_t objid)
+void *_gdm_grab_object(struct gdm_set *set, objid_t objid)
 {
-	return generic_kddm_grab_object(set, objid, 0);
+	return generic_gdm_grab_object(set, objid, 0);
 }
-EXPORT_SYMBOL(_kddm_grab_object);
+EXPORT_SYMBOL(_gdm_grab_object);
 
-void *kddm_grab_object(struct kddm_ns *ns, kddm_set_id_t set_id, objid_t objid)
+void *gdm_grab_object(struct gdm_ns *ns, gdm_set_id_t set_id, objid_t objid)
 {
-	struct kddm_set *set;
+	struct gdm_set *set;
 	void *obj;
 
-	set = _find_get_kddm_set (ns, set_id);
-	obj = generic_kddm_grab_object(set, objid, 0);
-	put_kddm_set(set);
+	set = _find_get_gdm_set (ns, set_id);
+	obj = generic_gdm_grab_object(set, objid, 0);
+	put_gdm_set(set);
 
 	return obj;
 }
-EXPORT_SYMBOL(kddm_grab_object);
+EXPORT_SYMBOL(gdm_grab_object);
 
-void *fkddm_grab_object(struct kddm_ns *ns, kddm_set_id_t set_id,
+void *fgdm_grab_object(struct gdm_ns *ns, gdm_set_id_t set_id,
 			objid_t objid, int flags)
 {
-	struct kddm_set *set;
+	struct gdm_set *set;
 	void *obj;
 
-	set = _find_get_kddm_set (ns, set_id);
-	obj = generic_kddm_grab_object(set, objid, flags);
-	put_kddm_set(set);
+	set = _find_get_gdm_set (ns, set_id);
+	obj = generic_gdm_grab_object(set, objid, flags);
+	put_gdm_set(set);
 
 	return obj;
 }
-EXPORT_SYMBOL(fkddm_grab_object);
+EXPORT_SYMBOL(fgdm_grab_object);
 
 
 
-void *_async_kddm_grab_object(struct kddm_set *set, objid_t objid)
+void *_async_gdm_grab_object(struct gdm_set *set, objid_t objid)
 {
-	return generic_kddm_grab_object(set, objid, KDDM_ASYNC_REQ);
+	return generic_gdm_grab_object(set, objid, GDM_ASYNC_REQ);
 }
-EXPORT_SYMBOL(_async_kddm_grab_object);
+EXPORT_SYMBOL(_async_gdm_grab_object);
 
-void *async_kddm_grab_object(struct kddm_ns *ns, kddm_set_id_t set_id,
+void *async_gdm_grab_object(struct gdm_ns *ns, gdm_set_id_t set_id,
 			     objid_t objid)
 {
-	struct kddm_set *set;
+	struct gdm_set *set;
 	void *obj;
 
-	set = _find_get_kddm_set (ns, set_id);
-	obj = generic_kddm_grab_object(set, objid, KDDM_ASYNC_REQ);
-	put_kddm_set(set);
+	set = _find_get_gdm_set (ns, set_id);
+	obj = generic_gdm_grab_object(set, objid, GDM_ASYNC_REQ);
+	put_gdm_set(set);
 
 	return obj;
 }
-EXPORT_SYMBOL(async_kddm_grab_object);
+EXPORT_SYMBOL(async_gdm_grab_object);
 
 
 
-void *_kddm_grab_object_no_ft(struct kddm_set *set, objid_t objid)
+void *_gdm_grab_object_no_ft(struct gdm_set *set, objid_t objid)
 {
-	return generic_kddm_grab_object(set, objid, KDDM_NO_FT_REQ);
+	return generic_gdm_grab_object(set, objid, GDM_NO_FT_REQ);
 }
-EXPORT_SYMBOL(_kddm_grab_object_no_ft);
+EXPORT_SYMBOL(_gdm_grab_object_no_ft);
 
-void *kddm_grab_object_no_ft(struct kddm_ns *ns, kddm_set_id_t set_id,
+void *gdm_grab_object_no_ft(struct gdm_ns *ns, gdm_set_id_t set_id,
 			     objid_t objid)
 {
-	struct kddm_set *set;
+	struct gdm_set *set;
 	void *obj;
 
-	set = _find_get_kddm_set (ns, set_id);
-	obj = generic_kddm_grab_object(set, objid, KDDM_NO_FT_REQ);
-	put_kddm_set(set);
+	set = _find_get_gdm_set (ns, set_id);
+	obj = generic_gdm_grab_object(set, objid, GDM_NO_FT_REQ);
+	put_gdm_set(set);
 
 	return obj;
 }
-EXPORT_SYMBOL(kddm_grab_object_no_ft);
+EXPORT_SYMBOL(gdm_grab_object_no_ft);
 
 
 
-void *_async_kddm_grab_object_no_ft(struct kddm_set *set, objid_t objid)
+void *_async_gdm_grab_object_no_ft(struct gdm_set *set, objid_t objid)
 {
-	return generic_kddm_grab_object(set, objid, KDDM_NO_FT_REQ |
-					KDDM_ASYNC_REQ);
+	return generic_gdm_grab_object(set, objid, GDM_NO_FT_REQ |
+					GDM_ASYNC_REQ);
 }
-EXPORT_SYMBOL(_async_kddm_grab_object_no_ft);
+EXPORT_SYMBOL(_async_gdm_grab_object_no_ft);
 
-void *async_kddm_grab_object_no_ft(struct kddm_ns *ns, kddm_set_id_t set_id,
+void *async_gdm_grab_object_no_ft(struct gdm_ns *ns, gdm_set_id_t set_id,
 				   objid_t objid)
 {
-	struct kddm_set *set;
+	struct gdm_set *set;
 	void *obj;
 
-	set = _find_get_kddm_set (ns, set_id);
-	obj = generic_kddm_grab_object(set, objid, KDDM_NO_FT_REQ |
-				       KDDM_ASYNC_REQ);
-	put_kddm_set(set);
+	set = _find_get_gdm_set (ns, set_id);
+	obj = generic_gdm_grab_object(set, objid, GDM_NO_FT_REQ |
+				       GDM_ASYNC_REQ);
+	put_gdm_set(set);
 
 	return obj;
 }
-EXPORT_SYMBOL(async_kddm_grab_object_no_ft);
+EXPORT_SYMBOL(async_gdm_grab_object_no_ft);
 
 
 
-void *_kddm_grab_object_manual_ft(struct kddm_set *set, objid_t objid)
+void *_gdm_grab_object_manual_ft(struct gdm_set *set, objid_t objid)
 {
-	return generic_kddm_grab_object(set, objid, KDDM_NO_FT_REQ |
-					KDDM_SEND_OWNERSHIP);
+	return generic_gdm_grab_object(set, objid, GDM_NO_FT_REQ |
+					GDM_SEND_OWNERSHIP);
 }
-EXPORT_SYMBOL(_kddm_grab_object_manual_ft);
+EXPORT_SYMBOL(_gdm_grab_object_manual_ft);
 
-void *kddm_grab_object_manual_ft(struct kddm_ns *ns, kddm_set_id_t set_id,
+void *gdm_grab_object_manual_ft(struct gdm_ns *ns, gdm_set_id_t set_id,
 				 objid_t objid)
 {
-	struct kddm_set *set;
+	struct gdm_set *set;
 	void *obj;
 
-	set = _find_get_kddm_set (ns, set_id);
-	obj = generic_kddm_grab_object(set, objid, KDDM_NO_FT_REQ |
-				       KDDM_SEND_OWNERSHIP);
-	put_kddm_set(set);
+	set = _find_get_gdm_set (ns, set_id);
+	obj = generic_gdm_grab_object(set, objid, GDM_NO_FT_REQ |
+				       GDM_SEND_OWNERSHIP);
+	put_gdm_set(set);
 
 	return obj;
 }
-EXPORT_SYMBOL(kddm_grab_object_manual_ft);
+EXPORT_SYMBOL(gdm_grab_object_manual_ft);
 
 
 
-void *_kddm_grab_object_no_lock(struct kddm_set *set, objid_t objid)
+void *_gdm_grab_object_no_lock(struct gdm_set *set, objid_t objid)
 {
-	return generic_kddm_grab_object(set, objid, KDDM_NO_FREEZE);
+	return generic_gdm_grab_object(set, objid, GDM_NO_FREEZE);
 }
-EXPORT_SYMBOL(_kddm_grab_object_no_lock);
+EXPORT_SYMBOL(_gdm_grab_object_no_lock);
 
-void *kddm_grab_object_no_lock(struct kddm_ns *ns, kddm_set_id_t set_id,
+void *gdm_grab_object_no_lock(struct gdm_ns *ns, gdm_set_id_t set_id,
 			       objid_t objid)
 {
-	struct kddm_set *set;
+	struct gdm_set *set;
 	void *obj;
 
-	set = _find_get_kddm_set (ns, set_id);
-	obj = generic_kddm_grab_object(set, objid, KDDM_NO_FREEZE);
-	put_kddm_set(set);
+	set = _find_get_gdm_set (ns, set_id);
+	obj = generic_gdm_grab_object(set, objid, GDM_NO_FREEZE);
+	put_gdm_set(set);
 
 	return obj;
 }
-EXPORT_SYMBOL(kddm_grab_object_no_lock);
+EXPORT_SYMBOL(gdm_grab_object_no_lock);
 
 
-void *_kddm_try_grab_object(struct kddm_set *set, objid_t objid)
+void *_gdm_try_grab_object(struct gdm_set *set, objid_t objid)
 {
-	return generic_kddm_grab_object(set, objid, KDDM_TRY_GRAB);
+	return generic_gdm_grab_object(set, objid, GDM_TRY_GRAB);
 }
-EXPORT_SYMBOL(_kddm_try_grab_object);
+EXPORT_SYMBOL(_gdm_try_grab_object);
 
-void *_kddm_grab_object_cow(struct kddm_set *set, objid_t objid)
+void *_gdm_grab_object_cow(struct gdm_set *set, objid_t objid)
 {
-	return generic_kddm_grab_object(set, objid, KDDM_COW_OBJECT);
+	return generic_gdm_grab_object(set, objid, GDM_COW_OBJECT);
 }
-EXPORT_SYMBOL(_kddm_grab_object_cow);
+EXPORT_SYMBOL(_gdm_grab_object_cow);
 
 
-void *kddm_try_grab_object(struct kddm_ns *ns, kddm_set_id_t set_id,
+void *gdm_try_grab_object(struct gdm_ns *ns, gdm_set_id_t set_id,
 			   objid_t objid)
 {
-	struct kddm_set *set;
+	struct gdm_set *set;
 	void *obj;
 
-	set = _find_get_kddm_set (ns, set_id);
-	obj = generic_kddm_grab_object(set, objid, KDDM_TRY_GRAB);
-	put_kddm_set(set);
+	set = _find_get_gdm_set (ns, set_id);
+	obj = generic_gdm_grab_object(set, objid, GDM_TRY_GRAB);
+	put_gdm_set(set);
 
 	return obj;
 }
-EXPORT_SYMBOL(kddm_try_grab_object);
+EXPORT_SYMBOL(gdm_try_grab_object);

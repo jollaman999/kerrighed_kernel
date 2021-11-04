@@ -8,7 +8,7 @@ struct task_struct;
 #include <linux/types.h>
 #include <hcc/sys/types.h>
 
-struct children_kddm_object;
+struct children_gdm_object;
 enum pid_type;
 struct siginfo;
 struct rusage;
@@ -29,7 +29,7 @@ struct remote_child {
 };
 
 /* do_wait() hook */
-int krg_do_wait(struct children_kddm_object *obj, struct wait_opts *wo);
+int krg_do_wait(struct children_gdm_object *obj, struct wait_opts *wo);
 
 /* Used by krg_do_wait() */
 int krg_wait_task_zombie(struct wait_opts *wo,
@@ -46,12 +46,12 @@ void notify_remote_child_reaper(pid_t zombie_pid,
 int krg_delayed_notify_parent(struct task_struct *leader);
 
 /* exit_ptrace() hooks */
-struct children_kddm_object *
+struct children_gdm_object *
 krg_prepare_exit_ptrace_task(struct task_struct *tracer,
 			     struct task_struct *task)
 	__acquires(tasklist_lock);
 void krg_finish_exit_ptrace_task(struct task_struct *task,
-				 struct children_kddm_object *obj,
+				 struct children_gdm_object *obj,
 				 bool dead)
 	__releases(tasklist_lock);
 

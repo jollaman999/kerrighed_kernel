@@ -1,5 +1,5 @@
-/** KDDM tree management.
- *  @file kddm_tree.c
+/** GDM tree management.
+ *  @file gdm_tree.c
  *
  *  Copyright (C) 2007, Renaud Lottiaux, Kerlabs.
  */
@@ -7,17 +7,17 @@
 #include <linux/mm.h>
 
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm_tree.h>
-#include <kddm/kddm_types.h>
-#include <kddm/object.h>
+#include <gdm/gdm_tree.h>
+#include <gdm/gdm_types.h>
+#include <gdm/object.h>
 
-struct kmem_cache *kddm_tree_cachep;
-struct kmem_cache *kddm_tree_lvl_cachep;
+struct kmem_cache *gdm_tree_cachep;
+struct kmem_cache *gdm_tree_lvl_cachep;
 
-int _2levels_kddm_tree = _2LEVELS_KDDM_TREE;
-int _nlevels_kddm_tree = _NLEVELS_KDDM_TREE;
-void *_2levels_kddm_tree_init_data = (void*)&_2levels_kddm_tree;
-void *_nlevels_kddm_tree_init_data = (void*)&_nlevels_kddm_tree;
+int _2levels_gdm_tree = _2LEVELS_GDM_TREE;
+int _nlevels_gdm_tree = _NLEVELS_GDM_TREE;
+void *_2levels_gdm_tree_init_data = (void*)&_2levels_gdm_tree;
+void *_nlevels_gdm_tree_init_data = (void*)&_nlevels_gdm_tree;
 
 
 
@@ -29,20 +29,20 @@ void *_nlevels_kddm_tree_init_data = (void*)&_nlevels_kddm_tree;
 
 
 
-static inline int lvl_bits(struct kddm_tree *tree, int level)
+static inline int lvl_bits(struct gdm_tree *tree, int level)
 {
 	if (level < tree->nr_level - 1 || !tree->bit_size_last)
 		return tree->bit_size;
 	return tree->bit_size_last;
 }
 
-static inline int lvl_shift(struct kddm_tree *tree, int level)
+static inline int lvl_shift(struct gdm_tree *tree, int level)
 {
 	return (tree->nr_level - 1 - level) * tree->bit_size;
 }
 
 static inline unsigned long
-lvl_sub_index(struct kddm_tree *tree, int level, unsigned long index)
+lvl_sub_index(struct gdm_tree *tree, int level, unsigned long index)
 {
 	int bits = lvl_bits(tree, level);
 
@@ -59,17 +59,17 @@ lvl_sub_index(struct kddm_tree *tree, int level, unsigned long index)
 
 
 
-/** Lookup for a data in a kddm tree.
+/** Lookup for a data in a gdm tree.
  *  @param tree      The tree to lookup in.
  *  @param index     The index of the data to lookup.
  *
  *  @return The data if found.
  *          NULL if the data is not found.
  */
-static void *kddm_tree_lookup (struct kddm_tree *tree,
+static void *gdm_tree_lookup (struct gdm_tree *tree,
 			       unsigned long index)
 {
-	struct kddm_tree_lvl *cur_level;
+	struct gdm_tree_lvl *cur_level;
 	int sub_index, i;
 
 	BUG_ON (tree == NULL);
@@ -91,18 +91,18 @@ static void *kddm_tree_lookup (struct kddm_tree *tree,
 
 
 
-/** Lookup for a data in a kddm tree and allocated slots if needed.
+/** Lookup for a data in a gdm tree and allocated slots if needed.
  *  @param tree      The tree to lookup in.
  *  @param index     The index of the data to lookup.
  *
  *  @return The address of the slot hosting the data.
  *          If the data does not exist, an empty slot is allocated.
  */
-static void **kddm_tree_lookup_slot (struct kddm_tree *tree,
+static void **gdm_tree_lookup_slot (struct gdm_tree *tree,
 				     unsigned long index,
 				     int flags)
 {
-	struct kddm_tree_lvl *cur_level, *prev_level;
+	struct gdm_tree_lvl *cur_level, *prev_level;
 	int sub_index, nr_entries, i;
 	void *data;
 
@@ -116,15 +116,15 @@ static void **kddm_tree_lookup_slot (struct kddm_tree *tree,
 		if (cur_level == NULL) {
 			nr_entries = 1UL << lvl_bits(tree, i);
 
-			cur_level = kmem_cache_alloc (kddm_tree_lvl_cachep,
+			cur_level = kmem_cache_alloc (gdm_tree_lvl_cachep,
 						      GFP_ATOMIC);
 			cur_level->sub_lvl = kmalloc(
-				sizeof(struct kddm_tree_lvl *) * nr_entries,
+				sizeof(struct gdm_tree_lvl *) * nr_entries,
 				GFP_ATOMIC);
 			cur_level->nr_obj = 0;
 
 			memset(cur_level->sub_lvl, 0,
-			       sizeof(struct kddm_tree_lvl *) * nr_entries);
+			       sizeof(struct gdm_tree_lvl *) * nr_entries);
 
 			if (i == 0)
 				tree->lvl1 = cur_level;
@@ -140,7 +140,7 @@ static void **kddm_tree_lookup_slot (struct kddm_tree *tree,
 	}
 
 	data = prev_level->sub_lvl[sub_index];
-	if ((flags & KDDM_TREE_ADD_ENTRY) && (data == NULL))
+	if ((flags & GDM_TREE_ADD_ENTRY) && (data == NULL))
 		prev_level->nr_obj++;
 
 	return (void **)&(prev_level->sub_lvl[sub_index]);
@@ -148,20 +148,20 @@ static void **kddm_tree_lookup_slot (struct kddm_tree *tree,
 
 
 
-/** Lookup for a data in a kddm tree and allocated slots if needed.
+/** Lookup for a data in a gdm tree and allocated slots if needed.
  *  @param tree      The tree to lookup in.
  *  @param index     The index of the data to lookup.
  *
  *  @return The address of the slot hosting the data.
  *          If the data does not exist, an empty slot is allocated.
  */
-static void *__kddm_tree_remove (struct kddm_tree *tree,
-				 struct kddm_tree_lvl *cur_level,
+static void *__gdm_tree_remove (struct gdm_tree *tree,
+				 struct gdm_tree_lvl *cur_level,
 				 int level,
 				 unsigned long index,
 				 int *_sub_level_freed)
 {
-	struct kddm_tree_lvl *sub_level;
+	struct gdm_tree_lvl *sub_level;
 	int sub_index, sub_level_freed = 0;
 	void *data;
 
@@ -176,7 +176,7 @@ static void *__kddm_tree_remove (struct kddm_tree *tree,
 	if (sub_level == NULL)
 		return NULL;
 
-	data = __kddm_tree_remove(tree, sub_level, level+1, index,
+	data = __gdm_tree_remove(tree, sub_level, level+1, index,
 				  &sub_level_freed);
 	if (sub_level_freed)
 		goto free_sub_level_slot;
@@ -187,7 +187,7 @@ free_sub_level_slot:
 	cur_level->nr_obj--;
 	if (cur_level->nr_obj == 0) {
 		kfree (cur_level->sub_lvl);
-		kmem_cache_free(kddm_tree_lvl_cachep, cur_level);
+		kmem_cache_free(gdm_tree_lvl_cachep, cur_level);
 		*_sub_level_freed = 1;
 	}
 	return data;
@@ -195,17 +195,17 @@ free_sub_level_slot:
 
 
 
-/** Remove a data from a kddm tree.
+/** Remove a data from a gdm tree.
  *  @param tree      The tree to lookup in.
  *  @param index     The index of the data to remove.
  */
-static void *kddm_tree_remove(struct kddm_tree *tree,
+static void *gdm_tree_remove(struct gdm_tree *tree,
 			      unsigned long index)
 {
 	void *data;
 	int sub_level_freed = 0;
 
-	data = __kddm_tree_remove(tree, tree->lvl1, 0, index,
+	data = __gdm_tree_remove(tree, tree->lvl1, 0, index,
 				  &sub_level_freed);
 
 	if (sub_level_freed)
@@ -216,8 +216,8 @@ static void *kddm_tree_remove(struct kddm_tree *tree,
 
 
 
-static void __kddm_tree_for_each_level(struct kddm_tree *tree,
-				       struct kddm_tree_lvl *cur_level,
+static void __gdm_tree_for_each_level(struct gdm_tree *tree,
+				       struct gdm_tree_lvl *cur_level,
 				       int level,
 				       int index,
 				       int free,
@@ -225,7 +225,7 @@ static void __kddm_tree_for_each_level(struct kddm_tree *tree,
 				       void *priv)
 {
 	int i;
-	struct kddm_tree_lvl *sub_level;
+	struct gdm_tree_lvl *sub_level;
 	unsigned long index_gap = 1UL << lvl_shift(tree, level);
 
 	for (i = 0; i < (1UL << lvl_bits(tree, level)); i++) {
@@ -234,7 +234,7 @@ static void __kddm_tree_for_each_level(struct kddm_tree *tree,
 			if ((level + 1) == tree->nr_level)
 				f(index, sub_level, priv);
 			else
-				__kddm_tree_for_each_level(tree, sub_level,
+				__gdm_tree_for_each_level(tree, sub_level,
 							   level+1, index,
 							   free, f, priv);
 		}
@@ -242,18 +242,18 @@ static void __kddm_tree_for_each_level(struct kddm_tree *tree,
 	}
 	if (free) {
 		kfree (cur_level->sub_lvl);
-		kmem_cache_free(kddm_tree_lvl_cachep, cur_level);
+		kmem_cache_free(gdm_tree_lvl_cachep, cur_level);
 	}
 }
 
-static inline void __kddm_tree_for_each(struct kddm_tree *tree,
+static inline void __gdm_tree_for_each(struct gdm_tree *tree,
 					int free,
 					int(*f)(unsigned long, void*, void*),
 					void *priv)
 {
 	if (tree->lvl1 == NULL)
 		return;
-	__kddm_tree_for_each_level(tree, tree->lvl1, 0, 0, free, f, priv);
+	__gdm_tree_for_each_level(tree, tree->lvl1, 0, 0, free, f, priv);
 }
 
 
@@ -263,27 +263,27 @@ static inline void __kddm_tree_for_each(struct kddm_tree *tree,
  *  @param f         The function to execute for each data.
  *  @param priv      Private data passed to the function.
  */
-static void kddm_tree_for_each(struct kddm_tree *tree,
+static void gdm_tree_for_each(struct gdm_tree *tree,
 			       int(*f)(unsigned long, void*, void*),
 			       void *priv)
 {
-	__kddm_tree_for_each(tree, 0, f, priv);
+	__gdm_tree_for_each(tree, 0, f, priv);
 }
 
 
 
-/** Alloc a KDDM tree.
+/** Alloc a GDM tree.
  *  @param tree_type   The tree type :)
  *
  *  @return   A newly allocated tree.
  */
-static void *kddm_tree_alloc (struct kddm_set *set, void *data)
+static void *gdm_tree_alloc (struct gdm_set *set, void *data)
 {
-	struct kddm_tree *tree;
+	struct gdm_tree *tree;
 	int width, bit_size;
 	int tree_type = *((int*)data);
 
-	tree = kmem_cache_alloc (kddm_tree_cachep, GFP_KERNEL);
+	tree = kmem_cache_alloc (gdm_tree_cachep, GFP_KERNEL);
 	if (tree == NULL)
 		return NULL;
 
@@ -291,18 +291,18 @@ static void *kddm_tree_alloc (struct kddm_set *set, void *data)
 	tree->tree_type = tree_type;
 
 	switch (tree_type) {
-	case _2LEVELS_KDDM_TREE:
+	case _2LEVELS_GDM_TREE:
 		width = 20;
 		bit_size = 10;
 		break;
 
-	case _NLEVELS_KDDM_TREE:
+	case _NLEVELS_GDM_TREE:
 		width = BITS_PER_LONG;
 		bit_size = 8;
 		break;
 
 	default:
-		  printk ("Unknown KDDM tree type %d\n", tree_type);
+		  printk ("Unknown GDM tree type %d\n", tree_type);
 		  BUG();
 	}
 	tree->bit_width = width;
@@ -320,37 +320,37 @@ static void *kddm_tree_alloc (struct kddm_set *set, void *data)
 
 
 
-/** Delete a KDDM tree.
+/** Delete a GDM tree.
  *  @param tree_type   The tree to delete.
  *  @param f           A function to call on each found data.
  *  @param priv        Private data passed to the function.
  */
-static void kddm_tree_free (void *tree,
+static void gdm_tree_free (void *tree,
 			    int (*f)(unsigned long, void *data, void *priv),
 			    void *priv)
 {
-	__kddm_tree_for_each(tree, 1, f, priv);
+	__gdm_tree_for_each(tree, 1, f, priv);
 
-	kmem_cache_free(kddm_tree_cachep, tree);
+	kmem_cache_free(gdm_tree_cachep, tree);
 }
 
 
 
 /*****************************************************************************/
 /*                                                                           */
-/*                             KDDM SET OPERATIONS                           */
+/*                             GDM SET OPERATIONS                           */
 /*                                                                           */
 /*****************************************************************************/
 
 
 
-static struct kddm_obj *kddm_tree_lookup_obj_entry (struct kddm_set *set,
+static struct gdm_obj *gdm_tree_lookup_obj_entry (struct gdm_set *set,
 						    objid_t objid)
 {
-	struct kddm_obj *obj_entry;
+	struct gdm_obj *obj_entry;
 
 	spin_lock (&set->table_lock);
-	obj_entry = kddm_tree_lookup(set->obj_set, objid);
+	obj_entry = gdm_tree_lookup(set->obj_set, objid);
 	spin_unlock (&set->table_lock);
 
 	return obj_entry;
@@ -358,16 +358,16 @@ static struct kddm_obj *kddm_tree_lookup_obj_entry (struct kddm_set *set,
 
 
 
-static struct kddm_obj *kddm_tree_get_obj_entry (struct kddm_set *set,
+static struct gdm_obj *gdm_tree_get_obj_entry (struct gdm_set *set,
 						 objid_t objid,
-						 struct kddm_obj *new_obj)
+						 struct gdm_obj *new_obj)
 {
-	struct kddm_obj **obj_ptr, *obj_entry;
+	struct gdm_obj **obj_ptr, *obj_entry;
 
 	spin_lock (&set->table_lock);
 
-	obj_ptr = (struct kddm_obj **)kddm_tree_lookup_slot(set->obj_set,
-					    objid, KDDM_TREE_ADD_ENTRY);
+	obj_ptr = (struct gdm_obj **)gdm_tree_lookup_slot(set->obj_set,
+					    objid, GDM_TREE_ADD_ENTRY);
 
 	if (*obj_ptr == NULL)
 		*obj_ptr = new_obj;
@@ -379,37 +379,37 @@ static struct kddm_obj *kddm_tree_get_obj_entry (struct kddm_set *set,
 
 
 
-static void kddm_tree_remove_obj_entry (struct kddm_set *set,
+static void gdm_tree_remove_obj_entry (struct gdm_set *set,
 					objid_t objid)
 {
 	spin_lock (&set->table_lock);
-	kddm_tree_remove (set->obj_set, objid);
+	gdm_tree_remove (set->obj_set, objid);
 	spin_unlock (&set->table_lock);
 }
 
 
 
-static void kddm_tree_for_each_obj_entry(struct kddm_set *set,
+static void gdm_tree_for_each_obj_entry(struct gdm_set *set,
 					 int(*f)(unsigned long, void *, void*),
 					 void *data)
 {
 	spin_lock (&set->table_lock);
-	kddm_tree_for_each(set->obj_set, f, data);
+	gdm_tree_for_each(set->obj_set, f, data);
 	spin_unlock (&set->table_lock);
 }
 
 
 
-static void kddm_tree_export (struct rpc_desc* desc, struct kddm_set *set)
+static void gdm_tree_export (struct rpc_desc* desc, struct gdm_set *set)
 {
-	struct kddm_tree *tree = set->obj_set;
+	struct gdm_tree *tree = set->obj_set;
 
 	rpc_pack_type(desc, tree->tree_type);
 }
 
 
 
-static void *kddm_tree_import (struct rpc_desc* desc, int *free_data)
+static void *gdm_tree_import (struct rpc_desc* desc, int *free_data)
 {
 	int *tree_type;
 
@@ -422,13 +422,13 @@ static void *kddm_tree_import (struct rpc_desc* desc, int *free_data)
 
 
 
-struct kddm_set_ops kddm_tree_set_ops = {
-	obj_set_alloc:       kddm_tree_alloc,
-	obj_set_free:        kddm_tree_free,
-	lookup_obj_entry:    kddm_tree_lookup_obj_entry,
-	get_obj_entry:       kddm_tree_get_obj_entry,
-	remove_obj_entry:    kddm_tree_remove_obj_entry,
-	for_each_obj_entry:  kddm_tree_for_each_obj_entry,
-	export:              kddm_tree_export,
-	import:              kddm_tree_import,
+struct gdm_set_ops gdm_tree_set_ops = {
+	obj_set_alloc:       gdm_tree_alloc,
+	obj_set_free:        gdm_tree_free,
+	lookup_obj_entry:    gdm_tree_lookup_obj_entry,
+	get_obj_entry:       gdm_tree_get_obj_entry,
+	remove_obj_entry:    gdm_tree_remove_obj_entry,
+	for_each_obj_entry:  gdm_tree_for_each_obj_entry,
+	export:              gdm_tree_export,
+	import:              gdm_tree_import,
 };

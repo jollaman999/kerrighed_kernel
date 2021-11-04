@@ -143,7 +143,7 @@ static int krg_pid_revalidate(struct dentry *dentry, struct nameidata *nd)
 	/* We need to check that the pid still exists in the system */
 	struct inode *inode = dentry->d_inode;
 	struct proc_distant_pid_info *ei = get_krg_proc_task(inode);
-	struct task_kddm_object *obj;
+	struct task_gdm_object *obj;
 	long state = EXIT_DEAD;
 
 	/*
@@ -522,7 +522,7 @@ struct dentry *krg_proc_pid_instantiate(struct inode *dir,
 	/*
 	 * There is no race of the process dying before we return the dentry
 	 * because either krg_proc_pid_lookup() or krg_proc_pid_fill_cache()
-	 * has locked the task kddm object.
+	 * has locked the task gdm object.
 	 */
 	error = NULL;
 out:
@@ -535,7 +535,7 @@ struct dentry *krg_proc_pid_lookup(struct inode *dir,
 	/* try and locate pid in the cluster */
 	struct dentry *result = ERR_PTR(-ENOENT);
 	struct proc_distant_pid_info task;
-	struct task_kddm_object *obj;
+	struct task_gdm_object *obj;
 
 #ifdef CONFIG_KRG_CAP
 	if (can_use_krg_cap(current, CAP_SEE_LOCAL_PROC_STAT))
@@ -575,7 +575,7 @@ static int krg_proc_pid_fill_cache(struct file *filp,
 	char name[PROC_NUMBUF];
 	int len = snprintf(name, sizeof(name), "%d", iter.tgid);
 	struct proc_distant_pid_info proc_task;
-	struct task_kddm_object *obj;
+	struct task_gdm_object *obj;
 	int retval = 0;
 
 	obj = krg_task_readlock(iter.tgid);
@@ -616,13 +616,13 @@ static int krg_proc_pid_fill_cache(struct file *filp,
 }
 
 /* Must be called under rcu_read_lock() */
-static struct task_kddm_object *next_tgid(pid_t tgid,
+static struct task_gdm_object *next_tgid(pid_t tgid,
 					  struct pid_namespace *pid_ns,
 					  struct pid_namespace *pidmap_ns)
 {
 	struct pid *pid;
 	struct task_struct *task;
-	struct task_kddm_object *task_obj;
+	struct task_gdm_object *task_obj;
 
 retry:
 	task_obj = NULL;
@@ -662,7 +662,7 @@ static void handle_req_available_tgids(struct rpc_desc *desc,
 	struct pid_namespace *pidmap_ns;
 	pid_t pid_array[PROC_MAXPIDS];
 	pid_t tgid;
-	struct task_kddm_object *task;
+	struct task_gdm_object *task;
 	int nr_tgids = 0;
 	int retval;
 
@@ -803,7 +803,7 @@ static int fill_next_local_tgids(struct file *filp,
 	pid_t tgid = filp->f_pos - offset;
 	struct pid *pid;
 #ifdef CONFIG_KRG_EPM
-	struct task_kddm_object *task_obj;
+	struct task_gdm_object *task_obj;
 #endif
 	int global_mode = tgid & GLOBAL_PID_MASK;
 	int nr;

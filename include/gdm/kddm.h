@@ -1,25 +1,25 @@
-/** KDDM interface.
- *  @file kddm.h
+/** GDM interface.
+ *  @file gdm.h
  *
- *  Definition of KDDM interface.
+ *  Definition of GDM interface.
  *  @author Renaud Lottiaux
  */
 
-#ifndef __KDDM__
-#define __KDDM__
+#ifndef __GDM__
+#define __GDM__
 
-#include <kddm/kddm_types.h>
-#include <kddm/io_linker.h>
-#include <kddm/object.h>
-#include <kddm/kddm_set.h>
-#include <kddm/kddm_find_object.h>
-#include <kddm/kddm_put_object.h>
-#include <kddm/kddm_get_object.h>
-#include <kddm/kddm_grab_object.h>
-#include <kddm/kddm_set_object.h>
-#include <kddm/kddm_flush_object.h>
-#include <kddm/kddm_remove_object.h>
-#include <kddm/kddm_sync_object.h>
+#include <gdm/gdm_types.h>
+#include <gdm/io_linker.h>
+#include <gdm/object.h>
+#include <gdm/gdm_set.h>
+#include <gdm/gdm_find_object.h>
+#include <gdm/gdm_put_object.h>
+#include <gdm/gdm_get_object.h>
+#include <gdm/gdm_grab_object.h>
+#include <gdm/gdm_set_object.h>
+#include <gdm/gdm_flush_object.h>
+#include <gdm/gdm_remove_object.h>
+#include <gdm/gdm_sync_object.h>
 
 #include <hcc/debug.h>
 
@@ -60,45 +60,45 @@ extern event_counter_t total_flush_object_counter;
 
 
 
-/*********************** KDDM set Counter tools ************************/
+/*********************** GDM set Counter tools ************************/
 
-int initialize_kddm_info_struct (struct task_struct *task);
+int initialize_gdm_info_struct (struct task_struct *task);
 
 
-static inline void inc_get_object_counter(struct kddm_set *set)
+static inline void inc_get_object_counter(struct gdm_set *set)
 {
 	total_get_object_counter++;
 	set->get_object_counter++;
-	if (!current->kddm_info)
-		initialize_kddm_info_struct(current);
-	current->kddm_info->get_object_counter++;
+	if (!current->gdm_info)
+		initialize_gdm_info_struct(current);
+	current->gdm_info->get_object_counter++;
 }
 
-static inline void inc_grab_object_counter(struct kddm_set *set)
+static inline void inc_grab_object_counter(struct gdm_set *set)
 {
 	total_grab_object_counter++;
 	set->grab_object_counter++;
-	if (!current->kddm_info)
-		initialize_kddm_info_struct(current);
-	current->kddm_info->grab_object_counter++;
+	if (!current->gdm_info)
+		initialize_gdm_info_struct(current);
+	current->gdm_info->grab_object_counter++;
 }
 
-static inline void inc_remove_object_counter(struct kddm_set *set)
+static inline void inc_remove_object_counter(struct gdm_set *set)
 {
 	total_remove_object_counter++;
 	set->remove_object_counter++;
-	if (!current->kddm_info)
-		initialize_kddm_info_struct(current);
-	current->kddm_info->remove_object_counter++;
+	if (!current->gdm_info)
+		initialize_gdm_info_struct(current);
+	current->gdm_info->remove_object_counter++;
 }
 
-static inline void inc_flush_object_counter(struct kddm_set *set)
+static inline void inc_flush_object_counter(struct gdm_set *set)
 {
 	total_flush_object_counter++;
 	set->flush_object_counter++;
-	if (!current->kddm_info)
-		initialize_kddm_info_struct(current);
-	current->kddm_info->flush_object_counter++;
+	if (!current->gdm_info)
+		initialize_gdm_info_struct(current);
+	current->gdm_info->flush_object_counter++;
 }
 
 #endif

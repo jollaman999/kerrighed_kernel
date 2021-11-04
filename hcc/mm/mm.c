@@ -20,7 +20,7 @@
 #include <hcc/mm.h>
 #include <hcc/hotplug.h>
 #include <hcc/page_table_tree.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include "mm_struct.h"
 #include "memory_int_linker.h"
 #include "memory_io_linker.h"
@@ -32,7 +32,7 @@
 /** Initialisation of the DSM module.
  *  @author Renaud Lottiaux
  *
- *  Start object server, object manager and kddm set manager threads.
+ *  Start object server, object manager and gdm set manager threads.
  *  Register kermm services in the /proc/hcc/services.
  */
 int init_kermm(void)
@@ -42,8 +42,8 @@ int init_kermm(void)
 	krgsyms_register (KRGSYMS_VM_OPS_NULL, &null_vm_ops);
 	krgsyms_register (KRGSYMS_VM_OPS_FILE_GENERIC, (void *)&generic_file_vm_ops);
 	special_mapping_vm_ops_krgsyms_register ();
-	krgsyms_register (KRGSYMS_VM_OPS_MEMORY_KDDM_VMOPS,
-			  &anon_memory_kddm_vmops);
+	krgsyms_register (KRGSYMS_VM_OPS_MEMORY_GDM_VMOPS,
+			  &anon_memory_gdm_vmops);
 
 	krgsyms_register (KRGSYMS_ARCH_UNMAP_AREA, arch_unmap_area);
 	krgsyms_register (KRGSYMS_ARCH_UNMAP_AREA_TOPDOWN,
@@ -53,7 +53,7 @@ int init_kermm(void)
 			  arch_get_unmapped_area_topdown);
 	krgsyms_register (KRGSYMS_ARCH_GET_UNMAP_EXEC_AREA, arch_get_unmapped_exec_area);
 
-	krgsyms_register (KRGSYMS_KDDM_PT_OPS, &kddm_pt_set_ops);
+	krgsyms_register (KRGSYMS_GDM_PT_OPS, &gdm_pt_set_ops);
 
 	register_io_linker (MEMORY_LINKER, &memory_linker);
 	register_io_linker (MM_STRUCT_LINKER, &mm_struct_io_linker);
@@ -72,7 +72,7 @@ int init_kermm(void)
 /** Cleanup of the DSM module.
  *  @author Renaud Lottiaux
  *
- *  Kill object manager, object server and kddm set manager threads.
+ *  Kill object manager, object server and gdm set manager threads.
  */
 void cleanup_kermm (void)
 {
@@ -84,7 +84,7 @@ void cleanup_kermm (void)
 
 	krgsyms_unregister (KRGSYMS_VM_OPS_FILE_GENERIC);
 	special_mapping_vm_ops_krgsyms_unregister ();
-	krgsyms_unregister (KRGSYMS_VM_OPS_MEMORY_KDDM_VMOPS);
+	krgsyms_unregister (KRGSYMS_VM_OPS_MEMORY_GDM_VMOPS);
 	krgsyms_unregister (KRGSYMS_ARCH_UNMAP_AREA);
 	krgsyms_unregister (KRGSYMS_ARCH_UNMAP_AREA_TOPDOWN);
 	krgsyms_unregister (KRGSYMS_ARCH_GET_UNMAP_AREA);

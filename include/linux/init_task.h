@@ -137,10 +137,10 @@ extern struct cred init_cred;
 #define INIT_KRG_CAP
 #endif
 
-#ifdef CONFIG_KRG_KDDM
-#define INIT_KDDM .kddm_info = NULL,
+#ifdef CONFIG_KRG_GDM
+#define INIT_GDM .gdm_info = NULL,
 #else
-#define INIT_KDDM
+#define INIT_GDM
 #endif
 
 /*
@@ -213,7 +213,7 @@ extern struct cred init_cred;
 	INIT_TRACE_RECURSION						\
 	INIT_TASK_RCU_PREEMPT(tsk)					\
 	INIT_KRG_CAP							\
-	INIT_KDDM							\
+	INIT_GDM							\
 }
 
 

@@ -17,7 +17,7 @@
 #include <hcc/krginit.h>
 #include <asm/uaccess.h>
 #include <hcc/krg_services.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/page_table_tree.h>
 #include <hcc/hotplug.h>
 #include "memory_int_linker.h"
@@ -41,7 +41,7 @@ void (*kh_zap_pte)(struct mm_struct *mm, unsigned long addr,
 int krg_do_execve(struct task_struct *tsk, struct mm_struct *mm)
 {
 	if (can_use_krg_cap(current, CAP_USE_REMOTE_MEMORY))
-		return init_anon_vma_kddm_set(tsk, mm);
+		return init_anon_vma_gdm_set(tsk, mm);
 
 	return 0;
 }
@@ -89,61 +89,61 @@ void mm_struct_unpin(struct mm_struct *mm)
 /* Unique mm_struct id generator root */
 unique_id_root_t mm_struct_unique_id_root;
 
-/* mm_struct KDDM set */
-struct kddm_set *mm_struct_kddm_set = NULL;
+/* mm_struct GDM set */
+struct gdm_set *mm_struct_gdm_set = NULL;
 
 void kcb_fill_pte(struct mm_struct *mm, unsigned long addr, pte_t pte);
 void kcb_zap_pte(struct mm_struct *mm, unsigned long addr, pte_t pte);
 
 
 
-void break_distributed_cow(struct kddm_set *set, struct mm_struct *mm)
+void break_distributed_cow(struct gdm_set *set, struct mm_struct *mm)
 {
 	struct vm_area_struct *vma;
 	unsigned long addr;
 
 	for (vma = mm->mmap; vma != NULL; vma = vma->vm_next) {
-		if (vma->vm_ops != &anon_memory_kddm_vmops)
+		if (vma->vm_ops != &anon_memory_gdm_vmops)
 			continue;
 
 		for (addr = vma->vm_start;
 		     addr < vma->vm_end;
 		     addr += PAGE_SIZE)
-			_kddm_grab_object_no_ft(set, addr / PAGE_SIZE);
+			_gdm_grab_object_no_ft(set, addr / PAGE_SIZE);
 	}
 }
 
 
 
-void break_distributed_cow_put(struct kddm_set *set, struct mm_struct *mm)
+void break_distributed_cow_put(struct gdm_set *set, struct mm_struct *mm)
 {
 	struct vm_area_struct *vma;
 	unsigned long addr;
 
 	for (vma = mm->mmap; vma != NULL; vma = vma->vm_next) {
 		cond_resched();
-		if (vma->vm_ops != &anon_memory_kddm_vmops)
+		if (vma->vm_ops != &anon_memory_gdm_vmops)
 			continue;
 
 		for (addr = vma->vm_start;
 		     addr < vma->vm_end;
 		     addr += PAGE_SIZE)
-			_kddm_put_object(set, addr / PAGE_SIZE);
+			_gdm_put_object(set, addr / PAGE_SIZE);
 	}
 }
 
 
 
 /* Duplicate a MM struct for a distant fork. The resulting MM will be used
- * to store pages locally for a remote process through a memory KDDM set.
+ * to store pages locally for a remote process through a memory GDM set.
  */
 struct mm_struct *krg_dup_mm(struct task_struct *tsk, struct mm_struct *src_mm)
 {
 	struct mm_struct *mm;
 	int err = -ENOMEM;
 
-	if (src_mm->anon_vma_kddm_set)
-		break_distributed_cow(src_mm->anon_vma_kddm_set, src_mm);
+	if (src_mm->anon_vma_gdm_set)
+		break_distributed_cow(src_mm->anon_vma_gdm_set, src_mm);
 
 	mm = allocate_mm();
 	if (!mm)
@@ -172,12 +172,12 @@ struct mm_struct *krg_dup_mm(struct task_struct *tsk, struct mm_struct *src_mm)
 	if (mm->binfmt && !try_module_get(mm->binfmt->module))
 		goto exit_put_mm;
 
-	err = init_anon_vma_kddm_set(tsk, mm);
+	err = init_anon_vma_gdm_set(tsk, mm);
 	if (err)
 		goto exit_put_mm;
 
-	if (src_mm->anon_vma_kddm_set)
-		break_distributed_cow_put(src_mm->anon_vma_kddm_set, src_mm);
+	if (src_mm->anon_vma_gdm_set)
+		break_distributed_cow_put(src_mm->anon_vma_gdm_set, src_mm);
 
 	dup_mm_exe_file(src_mm, mm);
 #ifdef CONFIG_PROCFS
@@ -218,15 +218,15 @@ void create_mm_struct_object(struct mm_struct *mm)
 
 	BUG_ON(atomic_read(&mm->mm_ltasks) > 1);
 
-	atomic_inc(&mm->mm_users); // Get a reference count for the KDDM.
+	atomic_inc(&mm->mm_users); // Get a reference count for the GDM.
 
 	krgnode_set(hcc_node_id, mm->copyset);
 
 	mm->mm_id = get_unique_id(&mm_struct_unique_id_root);
 
-	_mm = _kddm_grab_object_manual_ft(mm_struct_kddm_set, mm->mm_id);
+	_mm = _gdm_grab_object_manual_ft(mm_struct_gdm_set, mm->mm_id);
 	BUG_ON(_mm);
-	_kddm_set_object(mm_struct_kddm_set, mm->mm_id, mm);
+	_gdm_set_object(mm_struct_gdm_set, mm->mm_id, mm);
 
 	krg_put_mm(mm->mm_id);
 }
@@ -249,24 +249,24 @@ static struct mm_struct *kcb_copy_mm(struct task_struct * tsk,
 {
 	struct mm_struct *mm = NULL;
 
-	if (oldmm->anon_vma_kddm_set)
-		break_distributed_cow(oldmm->anon_vma_kddm_set, oldmm);
+	if (oldmm->anon_vma_gdm_set)
+		break_distributed_cow(oldmm->anon_vma_gdm_set, oldmm);
 
 	mm = dup_mm(tsk);
 	if (!mm)
 		goto done_put;
 
 	mm->mm_id = 0;
-	mm->anon_vma_kddm_set = NULL;
-	mm->anon_vma_kddm_id = 0;
+	mm->anon_vma_gdm_set = NULL;
+	mm->anon_vma_gdm_id = 0;
 	krgnodes_clear (mm->copyset);
 
 	if (clone_flags & CLONE_VFORK)
 		goto done_put;
 
 	if (cap_raised(tsk->krg_caps.effective, CAP_USE_REMOTE_MEMORY) ||
-	    oldmm->anon_vma_kddm_set) {
-		if (init_anon_vma_kddm_set(tsk, mm) != 0) {
+	    oldmm->anon_vma_gdm_set) {
+		if (init_anon_vma_gdm_set(tsk, mm) != 0) {
 			BUG();
 			mmput(mm);
 			mm = NULL;
@@ -275,22 +275,22 @@ static struct mm_struct *kcb_copy_mm(struct task_struct * tsk,
 	}
 
 done_put:
-	if (oldmm->anon_vma_kddm_set)
-		break_distributed_cow_put(oldmm->anon_vma_kddm_set, oldmm);
+	if (oldmm->anon_vma_gdm_set)
+		break_distributed_cow_put(oldmm->anon_vma_gdm_set, oldmm);
 
 	return mm;
 }
 
 
-int init_anon_vma_kddm_set(struct task_struct *tsk,
+int init_anon_vma_gdm_set(struct task_struct *tsk,
 			   struct mm_struct *mm)
 {
-	struct kddm_set *set;
+	struct gdm_set *set;
 
 	mm->mm_id = 0;
 	krgnodes_clear (mm->copyset);
 
-	set = __create_new_kddm_set(kddm_def_ns, 0, &kddm_pt_set_ops, mm,
+	set = __create_new_gdm_set(gdm_def_ns, 0, &gdm_pt_set_ops, mm,
 				    MEMORY_LINKER, hcc_node_id,
 				    PAGE_SIZE, NULL, 0, 0);
 
@@ -306,8 +306,8 @@ int init_anon_vma_kddm_set(struct task_struct *tsk,
 
 void krg_check_vma_link(struct vm_area_struct *vma)
 {
-	BUG_ON (!vma->vm_mm->anon_vma_kddm_set);
-	check_link_vma_to_anon_memory_kddm_set (vma);
+	BUG_ON (!vma->vm_mm->anon_vma_gdm_set);
+	check_link_vma_to_anon_memory_gdm_set (vma);
 }
 
 
@@ -378,13 +378,13 @@ static void kcb_mm_release(struct mm_struct *mm, int notify)
 	atomic_dec (&mm->mm_tasks);
 
 	if (atomic_read(&mm->mm_tasks) == 0) {
-		struct kddm_set *set = mm->anon_vma_kddm_set;
+		struct gdm_set *set = mm->anon_vma_gdm_set;
 		unique_id_t mm_id = mm->mm_id;
 
 		mm->mm_id = 0;
 
-		_kddm_remove_frozen_object(mm_struct_kddm_set, mm_id);
-		_destroy_kddm_set(set);
+		_gdm_remove_frozen_object(mm_struct_gdm_set, mm_id);
+		_destroy_gdm_set(set);
 	}
 	else
 		krg_put_mm(mm->mm_id);
@@ -399,14 +399,14 @@ void krg_do_mmap_region(struct vm_area_struct *vma,
 	struct mm_mmap_msg msg;
 	krgnodemask_t copyset;
 
-	if (!mm->anon_vma_kddm_set)
+	if (!mm->anon_vma_gdm_set)
 		return;
 
 	BUG_ON (!mm->mm_id);
 
-	check_link_vma_to_anon_memory_kddm_set (vma);
+	check_link_vma_to_anon_memory_gdm_set (vma);
 
-	if (!(vma->vm_flags & VM_KDDM))
+	if (!(vma->vm_flags & VM_GDM))
 		return;
 
 	if (krgnode_is_unique(hcc_node_id, mm->copyset))
@@ -567,14 +567,14 @@ void mm_struct_init (void)
 {
 	init_unique_id_root (&mm_struct_unique_id_root);
 
-	mm_struct_kddm_set = create_new_kddm_set(kddm_def_ns,
-						 MM_STRUCT_KDDM_ID,
+	mm_struct_gdm_set = create_new_gdm_set(gdm_def_ns,
+						 MM_STRUCT_GDM_ID,
 						 MM_STRUCT_LINKER,
-						 KDDM_UNIQUE_ID_DEF_OWNER,
+						 GDM_UNIQUE_ID_DEF_OWNER,
 						 sizeof (struct mm_struct),
-						 KDDM_LOCAL_EXCLUSIVE);
+						 GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(mm_struct_kddm_set))
+	if (IS_ERR(mm_struct_gdm_set))
 		OOM;
 
 	hook_register(&kh_copy_mm, kcb_copy_mm);

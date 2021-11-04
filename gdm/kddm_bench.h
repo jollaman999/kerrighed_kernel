@@ -1,2 +1,2 @@
-void init_kddm_test (void);
-int kddm_bench(char *buff, int size);
+void init_gdm_test (void);
+int gdm_bench(char *buff, int size);

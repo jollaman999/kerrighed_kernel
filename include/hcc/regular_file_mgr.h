@@ -6,7 +6,7 @@
 #ifndef __REGULAR_FILE_MGR__
 #define __REGULAR_FILE_MGR__
 
-#include <kddm/kddm_types.h>
+#include <gdm/gdm_types.h>
 #include <hcc/ghost.h>
 
 /*--------------------------------------------------------------------------*
@@ -38,7 +38,7 @@ struct regular_file_krg_desc {
 			unsigned int flags;
 			unsigned int uid;
 			unsigned int gid;
-			kddm_set_id_t ctnrid;
+			gdm_set_id_t ctnrid;
 			char *filename;
 		} file;
 	};

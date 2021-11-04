@@ -1,8 +1,8 @@
-/** KDDM module initialization.
- *  @file kddm.c
+/** GDM module initialization.
+ *  @file gdm.c
  *
  *  Implementation of functions used to initialize and finalize the
- *  KDDM module. It also implements some device file system functions for
+ *  GDM module. It also implements some device file system functions for
  *  testing purpose.
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
@@ -15,13 +15,13 @@
 #include <linux/kernel.h>
 
 #include <hcc/hotplug.h>
-#include <kddm/kddm.h>
-#include <kddm/object_server.h>
+#include <gdm/gdm.h>
+#include <gdm/object_server.h>
 #include "procfs.h"
 #include "protocol_action.h"
-#include <kddm/name_space.h>
-#include <kddm/kddm_set.h>
-#include "kddm_bench.h"
+#include <gdm/name_space.h>
+#include <gdm/gdm_set.h>
+#include "gdm_bench.h"
 
 #ifndef CONFIG_KRG_MONOLITHIC
 MODULE_AUTHOR ("Renaud Lottiaux");
@@ -34,75 +34,75 @@ event_counter_t total_grab_object_counter = 0;
 event_counter_t total_remove_object_counter = 0;
 event_counter_t total_flush_object_counter = 0;
 
-int (*kh_copy_kddm_info)(unsigned long clone_flags, struct task_struct * tsk);
+int (*kh_copy_gdm_info)(unsigned long clone_flags, struct task_struct * tsk);
 
-struct kmem_cache *kddm_info_cachep;
+struct kmem_cache *gdm_info_cachep;
 
-int kddm_hotplug_init(void);
-void kddm_hotplug_cleanup(void);
+int gdm_hotplug_init(void);
+void gdm_hotplug_cleanup(void);
 
 
-/** Initialize the kddm field of the krg_task field of the given task.
+/** Initialize the gdm field of the krg_task field of the given task.
  *  @author  Renaud Lottiaux
  *
- *  @param tsk   Task to fill the kddm struct.
+ *  @param tsk   Task to fill the gdm struct.
  */
-int initialize_kddm_info_struct (struct task_struct *task)
+int initialize_gdm_info_struct (struct task_struct *task)
 {
-	struct kddm_info_struct *kddm_info;
+	struct gdm_info_struct *gdm_info;
 
-	kddm_info = kmem_cache_alloc (kddm_info_cachep, GFP_KERNEL);
-	if (!kddm_info)
+	gdm_info = kmem_cache_alloc (gdm_info_cachep, GFP_KERNEL);
+	if (!gdm_info)
 		return -ENOMEM;
 
-	kddm_info->get_object_counter = 0;
-	kddm_info->grab_object_counter = 0;
-	kddm_info->remove_object_counter = 0;
-	kddm_info->flush_object_counter = 0;
-	kddm_info->wait_obj = NULL;
+	gdm_info->get_object_counter = 0;
+	gdm_info->grab_object_counter = 0;
+	gdm_info->remove_object_counter = 0;
+	gdm_info->flush_object_counter = 0;
+	gdm_info->wait_obj = NULL;
 
-	task->kddm_info = kddm_info;
+	task->gdm_info = gdm_info;
 
 	return 0;
 }
 
 
 
-int kcb_copy_kddm_info(unsigned long clone_flags, struct task_struct * tsk)
+int kcb_copy_gdm_info(unsigned long clone_flags, struct task_struct * tsk)
 {
-	return initialize_kddm_info_struct(tsk);
+	return initialize_gdm_info_struct(tsk);
 }
 
 
 
-/** Initialisation of the KDDM sub-system module.
+/** Initialisation of the GDM sub-system module.
  *  @author Renaud Lottiaux
  */
-int init_kddm (void)
+int init_gdm (void)
 {
-	printk ("KDDM initialisation : start\n");
+	printk ("GDM initialisation : start\n");
 
-        kddm_info_cachep = KMEM_CACHE(kddm_info_struct, SLAB_PANIC);
+        gdm_info_cachep = KMEM_CACHE(gdm_info_struct, SLAB_PANIC);
 
-	kddm_ns_init();
+	gdm_ns_init();
 
 	io_linker_init();
 
-	kddm_set_init();
+	gdm_set_init();
 
-	init_kddm_objects();
+	init_gdm_objects();
 
-	procfs_kddm_init ();
+	procfs_gdm_init ();
 
 	object_server_init ();
 
 	start_run_queue_thread ();
 
-	hook_register(&kh_copy_kddm_info, kcb_copy_kddm_info);
+	hook_register(&kh_copy_gdm_info, kcb_copy_gdm_info);
 
-	kddm_hotplug_init();
+	gdm_hotplug_init();
 
-	init_kddm_test ();
+	init_gdm_test ();
 
 	/*
 	  process_add(0, hcc_nb_nodes);
@@ -110,37 +110,37 @@ int init_kddm (void)
 	  process_remove(0);
 	*/
 
-	krgsyms_register (KRGSYMS_KDDM_TREE_OPS, &kddm_tree_set_ops);
+	krgsyms_register (KRGSYMS_GDM_TREE_OPS, &gdm_tree_set_ops);
 
-	printk ("KDDM initialisation done\n");
+	printk ("GDM initialisation done\n");
 
 	return 0;
 }
 
 
 
-/** Cleanup of the KDDM sub-system.
+/** Cleanup of the GDM sub-system.
  *  @author Renaud Lottiaux
  */
-void cleanup_kddm (void)
+void cleanup_gdm (void)
 {
-	printk ("KDDM termination : start\n");
+	printk ("GDM termination : start\n");
 
-	krgsyms_unregister (KRGSYMS_KDDM_TREE_OPS);
+	krgsyms_unregister (KRGSYMS_GDM_TREE_OPS);
 
-	kddm_hotplug_cleanup();
+	gdm_hotplug_cleanup();
 
 	stop_run_queue_thread ();
 
-	procfs_kddm_finalize ();
+	procfs_gdm_finalize ();
 
 	object_server_finalize ();
 
-	kddm_set_finalize();
+	gdm_set_finalize();
 
 	io_linker_finalize();
 
-	kddm_ns_finalize();
+	gdm_ns_finalize();
 
-	printk ("KDDM termination done\n");
+	printk ("GDM termination done\n");
 }

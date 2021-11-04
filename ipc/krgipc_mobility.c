@@ -20,7 +20,7 @@
 #include <linux/unique_id.h>
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/namespace.h>
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>
@@ -41,7 +41,7 @@
 #include "sem_handler.h"
 #include "semundolst_io_linker.h"
 
-extern struct kddm_set *sem_undo_list_kddm_set;
+extern struct gdm_set *sem_undo_list_gdm_set;
 
 /** Return a hcc descriptor corresponding to the given file.
  *  @author Renaud Lottiaux
@@ -190,21 +190,21 @@ static int cr_export_semundos(ghost_t *ghost, struct task_struct *task)
 {
 	int r = 0;
 	struct semundo_list_object *undo_list;
-	struct kddm_set *undo_list_kddm_set;
+	struct gdm_set *undo_list_gdm_set;
 	struct semundo_id *undo_id;
 	long nb_semundo;
 
 	if (task->sysvsem.undo_list_id == UNIQUE_ID_NONE)
 		goto exit;
 
-	undo_list_kddm_set = task_undolist_set(task);
-	if (IS_ERR(undo_list_kddm_set)) {
-		r = PTR_ERR(undo_list_kddm_set);
+	undo_list_gdm_set = task_undolist_set(task);
+	if (IS_ERR(undo_list_gdm_set)) {
+		r = PTR_ERR(undo_list_gdm_set);
 		goto exit;
 	}
 
 	/* get the list of semaphores for which we have a semundo */
-	undo_list = _kddm_grab_object_no_ft(undo_list_kddm_set,
+	undo_list = _gdm_grab_object_no_ft(undo_list_gdm_set,
 					    task->sysvsem.undo_list_id);
 	if (!undo_list) {
 		r = -ENOMEM;
@@ -272,7 +272,7 @@ static int cr_export_semundos(ghost_t *ghost, struct task_struct *task)
 	}
 
 exit_put:
-	_kddm_put_object(undo_list_kddm_set, task->sysvsem.undo_list_id);
+	_gdm_put_object(undo_list_gdm_set, task->sysvsem.undo_list_id);
 exit:
 	return r;
 }
@@ -411,7 +411,7 @@ free_undo:
 static int cr_import_semundos(ghost_t *ghost, struct task_struct *task)
 {
 	int r = 0;
-	struct kddm_set *undo_list_set;
+	struct gdm_set *undo_list_set;
 	struct semundo_list_object *undo_list;
 	long i, nb_semundo;
 
@@ -425,7 +425,7 @@ static int cr_import_semundos(ghost_t *ghost, struct task_struct *task)
 	}
 
 	/* get the list of semaphores for which we have a semundo */
-	undo_list = _kddm_grab_object_no_ft(undo_list_set,
+	undo_list = _gdm_grab_object_no_ft(undo_list_set,
 					    task->sysvsem.undo_list_id);
 	if (!undo_list) {
 		r = -ENOMEM;
@@ -443,12 +443,12 @@ static int cr_import_semundos(ghost_t *ghost, struct task_struct *task)
 	}
 
 exit_put:
-	_kddm_put_object(undo_list_set, task->sysvsem.undo_list_id);
+	_gdm_put_object(undo_list_set, task->sysvsem.undo_list_id);
 err:
 	return r;
 
 unimport_semundos:
-	_kddm_remove_frozen_object(undo_list_set, task->sysvsem.undo_list_id);
+	_gdm_remove_frozen_object(undo_list_set, task->sysvsem.undo_list_id);
 	goto err;
 }
 
@@ -789,7 +789,7 @@ int __sys_msgq_checkpoint(int msqid, int fd)
 {
 	int r, index, err;
 	struct msgq_checkpoint_msg msg;
-	struct kddm_set *master_set;
+	struct gdm_set *master_set;
 	hcc_node_t *master_node;
 	struct ipc_namespace *ns;
 	struct file *file;
@@ -801,15 +801,15 @@ int __sys_msgq_checkpoint(int msqid, int fd)
 
 	master_set = krgipc_ops_master_set(msg_ids(ns).krgops);
 
-	master_node = _kddm_get_object_no_ft(master_set, index);
+	master_node = _gdm_get_object_no_ft(master_set, index);
 	if (!master_node) {
-		_kddm_put_object(master_set, index);
+		_gdm_put_object(master_set, index);
 		r = -EINVAL;
 		goto out;
 	}
 
 	if (*master_node == hcc_node_id) {
-		_kddm_put_object(master_set, index);
+		_gdm_put_object(master_set, index);
 		r = local_sys_msgq_checkpoint(msqid, fd);
 		goto out;
 	}
@@ -817,7 +817,7 @@ int __sys_msgq_checkpoint(int msqid, int fd)
 	file = fget(fd);
 
 	desc = rpc_begin(IPC_MSG_CHKPT, *master_node);
-	_kddm_put_object(master_set, index);
+	_gdm_put_object(master_set, index);
 
 	msg.msqid = msqid;
 	r = rpc_pack_type(desc, msg);
@@ -1116,7 +1116,7 @@ out_freeary:
 
 static const int CR_SHM_MAGIC = 0x33333333;
 
-static int export_full_one_shm_page(ghost_t * ghost, struct kddm_set *kset,
+static int export_full_one_shm_page(ghost_t * ghost, struct gdm_set *kset,
 				    unsigned long pageid, unsigned long size)
 {
 	int r;
@@ -1124,7 +1124,7 @@ static int export_full_one_shm_page(ghost_t * ghost, struct kddm_set *kset,
 	char *data;
 	const int no_page=0, page_used = 1;
 
-	page = _kddm_get_object_no_ft(kset, (objid_t)pageid);
+	page = _gdm_get_object_no_ft(kset, (objid_t)pageid);
 	if (page) {
 		r = ghost_write(ghost, &page_used, sizeof(int));
 		if (r)
@@ -1136,7 +1136,7 @@ static int export_full_one_shm_page(ghost_t * ghost, struct kddm_set *kset,
 		r = ghost_write(ghost, &no_page, sizeof(int));
 
 put_page:
-	_kddm_put_object(kset, (objid_t)pageid);
+	_gdm_put_object(kset, (objid_t)pageid);
 	return r;
 }
 
@@ -1146,7 +1146,7 @@ static int export_full_shm_content(ghost_t * ghost, struct ipc_namespace *ns,
 {
 	int r = 0;
 	int shmid;
-	struct kddm_set *kset;
+	struct gdm_set *kset;
 	unsigned long i;
 	unsigned long nb_pages;
 	unsigned long left_size;
@@ -1156,7 +1156,7 @@ static int export_full_shm_content(ghost_t * ghost, struct ipc_namespace *ns,
 	nb_pages = (*shp)->shm_segsz / PAGE_SIZE;
 	left_size = (*shp)->shm_segsz % PAGE_SIZE;
 
-	kset = (*shp)->shm_file->f_dentry->d_inode->i_mapping->kddm_set;
+	kset = (*shp)->shm_file->f_dentry->d_inode->i_mapping->gdm_set;
 
 	/* to ensure the SHP will stay alive without deadlocking
 	 * with the IO Linker...
@@ -1225,7 +1225,7 @@ out:
 	return r;
 }
 
-static int import_full_one_shm_page(ghost_t * ghost, struct kddm_set *kset,
+static int import_full_one_shm_page(ghost_t * ghost, struct gdm_set *kset,
 				    unsigned long pageid,
 				    unsigned long size)
 {
@@ -1242,7 +1242,7 @@ static int import_full_one_shm_page(ghost_t * ghost, struct kddm_set *kset,
 		goto out;
 
 	/* it should return an existing but empty object */
-	page = _kddm_grab_object(kset, (objid_t)pageid);
+	page = _gdm_grab_object(kset, (objid_t)pageid);
 	if (!page)
 		goto put_page;
 
@@ -1251,7 +1251,7 @@ static int import_full_one_shm_page(ghost_t * ghost, struct kddm_set *kset,
 	kunmap(page);
 
 put_page:
-	_kddm_put_object(kset, (objid_t)pageid);
+	_gdm_put_object(kset, (objid_t)pageid);
 out:
 	return r;
 }
@@ -1262,7 +1262,7 @@ static int import_full_shm_content(ghost_t * ghost, struct ipc_namespace *ns,
 {
 	int r = 0;
 	int shmid;
-	struct kddm_set *kset;
+	struct gdm_set *kset;
 	unsigned long nb_pages;
 	unsigned long left_size;
 	unsigned long i;
@@ -1272,7 +1272,7 @@ static int import_full_shm_content(ghost_t * ghost, struct ipc_namespace *ns,
 	nb_pages = (*shp)->shm_segsz / PAGE_SIZE;
 	left_size = (*shp)->shm_segsz % PAGE_SIZE;
 
-	kset = (*shp)->shm_file->f_dentry->d_inode->i_mapping->kddm_set;
+	kset = (*shp)->shm_file->f_dentry->d_inode->i_mapping->gdm_set;
 
 	/* to ensure the SHP will stay alive without deadlocking
 	 * with the IO Linker...

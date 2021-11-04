@@ -169,7 +169,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	lockdep_set_class(&inode->i_alloc_sem, &sb->s_type->i_alloc_sem_key);
 
 #ifdef CONFIG_KRG_DVFS
-	mapping->kddm_set = NULL;
+	mapping->gdm_set = NULL;
 #endif
 	mapping->a_ops = &empty_aops;
 	mapping->host = inode;

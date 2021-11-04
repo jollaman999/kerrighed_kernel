@@ -467,7 +467,7 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 		sid = task_session_nr_ns(task, ns);
 #ifdef CONFIG_KRG_EPM
 		/*
-		 * sighand lock is not enough: task or children KDDM objects
+		 * sighand lock is not enough: task or children GDM objects
 		 * can disappear before release_task() locks sighand.
 		 */
 		rcu_read_lock();

@@ -1,7 +1,7 @@
-/** KDDM Memory interface Linker.
+/** GDM Memory interface Linker.
  *  @file memory_int_linker.h
  *
- *  Link kddm sets and linux memory system.
+ *  Link gdm sets and linux memory system.
  *  @author Renaud Lottiaux
  */
 
@@ -10,7 +10,7 @@
 
 #include <linux/mm.h>
 
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 
 /*--------------------------------------------------------------------------*
@@ -21,7 +21,7 @@
 
 
 
-extern struct vm_operations_struct anon_memory_kddm_vmops;
+extern struct vm_operations_struct anon_memory_gdm_vmops;
 extern struct vm_operations_struct null_vm_ops;
 
 
@@ -34,18 +34,18 @@ extern struct vm_operations_struct null_vm_ops;
 
 
 
-/** Link a VMA to an anon kddm set.
+/** Link a VMA to an anon gdm set.
  *  @author Renaud Lottiaux
  *
- *  @param vma     vma structure to link to the anon KDDM set.
+ *  @param vma     vma structure to link to the anon GDM set.
  *
- *  The kddm set must have been allocated and initialized. The
+ *  The gdm set must have been allocated and initialized. The
  *  VM_CONTAINER flag is added to the vm_cflags field of the vma. The
- *  kddm set id is stored in the vm_ctnr field and vm operations are
- *  set to the operations used by kddm sets, depending on the
- *  kddm set type.
+ *  gdm set id is stored in the vm_ctnr field and vm operations are
+ *  set to the operations used by gdm sets, depending on the
+ *  gdm set type.
  */
-int check_link_vma_to_anon_memory_kddm_set (struct vm_area_struct *vma);
+int check_link_vma_to_anon_memory_gdm_set (struct vm_area_struct *vma);
 
 static inline void restore_initial_vm_ops (struct vm_area_struct *vma)
 {

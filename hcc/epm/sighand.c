@@ -19,28 +19,28 @@
 #include <hcc/ghost_helpers.h>
 #include <hcc/action.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
-struct sighand_struct_kddm_object {
+struct sighand_struct_gdm_object {
 	struct sighand_struct *sighand;
 	atomic_t count;
 	int keep_on_remove;
 	struct rw_semaphore remove_sem;
 };
 
-static struct kmem_cache *sighand_struct_kddm_obj_cachep;
+static struct kmem_cache *sighand_struct_gdm_obj_cachep;
 
 /* Kddm set of 'struct sighand_struct' location */
-static struct kddm_set *sighand_struct_kddm_set = NULL;
+static struct gdm_set *sighand_struct_gdm_set = NULL;
 
-/* unique_id for sighand kddm objects */
+/* unique_id for sighand gdm objects */
 static unique_id_root_t sighand_struct_id_root;
 
-static struct sighand_struct_kddm_object *sighand_struct_kddm_object_alloc(void)
+static struct sighand_struct_gdm_object *sighand_struct_gdm_object_alloc(void)
 {
-	struct sighand_struct_kddm_object *obj;
+	struct sighand_struct_gdm_object *obj;
 
-	obj = kmem_cache_alloc(sighand_struct_kddm_obj_cachep, GFP_KERNEL);
+	obj = kmem_cache_alloc(sighand_struct_gdm_obj_cachep, GFP_KERNEL);
 	if (obj) {
 		obj->sighand = NULL;
 		obj->keep_on_remove = 0;
@@ -55,30 +55,30 @@ static struct sighand_struct *sighand_struct_alloc(void)
 }
 
 static void sighand_struct_attach_object(struct sighand_struct *sig,
-					 struct sighand_struct_kddm_object *obj,
+					 struct sighand_struct_gdm_object *obj,
 					 objid_t objid)
 {
 	sig->krg_objid = objid;
-	sig->kddm_obj = obj;
+	sig->gdm_obj = obj;
 	obj->sighand = sig;
 }
 
 /*
  * @author Pascal Gallard
  */
-static int sighand_struct_alloc_object(struct kddm_obj *obj_entry,
-				       struct kddm_set *set, objid_t objid)
+static int sighand_struct_alloc_object(struct gdm_obj *obj_entry,
+				       struct gdm_set *set, objid_t objid)
 {
-	struct sighand_struct_kddm_object *obj;
+	struct sighand_struct_gdm_object *obj;
 	struct sighand_struct *sig;
 
-	obj = sighand_struct_kddm_object_alloc();
+	obj = sighand_struct_gdm_object_alloc();
 	if (!obj)
 		return -ENOMEM;
 
 	sig = sighand_struct_alloc();
 	if (!sig) {
-		kmem_cache_free(sighand_struct_kddm_obj_cachep, obj);
+		kmem_cache_free(sighand_struct_gdm_obj_cachep, obj);
 		return -ENOMEM;
 	}
 
@@ -92,13 +92,13 @@ static int sighand_struct_alloc_object(struct kddm_obj *obj_entry,
 /*
  * @author Pascal Gallard
  */
-static int sighand_struct_first_touch(struct kddm_obj *obj_entry,
-				      struct kddm_set *set, objid_t objid,
+static int sighand_struct_first_touch(struct gdm_obj *obj_entry,
+				      struct gdm_set *set, objid_t objid,
 				      int flags)
 {
-	struct sighand_struct_kddm_object *obj;
+	struct sighand_struct_gdm_object *obj;
 
-	obj = sighand_struct_kddm_object_alloc();
+	obj = sighand_struct_gdm_object_alloc();
 	if (!obj)
 		return -ENOMEM;
 	atomic_set(&obj->count, 1);
@@ -112,12 +112,12 @@ static int sighand_struct_first_touch(struct kddm_obj *obj_entry,
  * @author Pascal Gallard
  */
 static int sighand_struct_import_object(struct rpc_desc *desc,
-					struct kddm_set *set,
-					struct kddm_obj *obj_entry,
+					struct gdm_set *set,
+					struct gdm_obj *obj_entry,
 					objid_t objid,
 					int flags)
 {
-	struct sighand_struct_kddm_object *obj = obj_entry->object;
+	struct sighand_struct_gdm_object *obj = obj_entry->object;
 	struct sighand_struct *dest;
 	struct sighand_struct *tmp;
 	int retval;
@@ -151,12 +151,12 @@ static int sighand_struct_import_object(struct rpc_desc *desc,
  * @author Pascal Gallard
  */
 static int sighand_struct_export_object(struct rpc_desc *desc,
-					struct kddm_set *set,
-					struct kddm_obj *obj_entry,
+					struct gdm_set *set,
+					struct gdm_obj *obj_entry,
 					objid_t objid,
 					int flags)
 {
-	struct sighand_struct_kddm_object *obj = obj_entry->object;
+	struct sighand_struct_gdm_object *obj = obj_entry->object;
 	struct sighand_struct *src;
 	int retval;
 
@@ -172,22 +172,22 @@ static int sighand_struct_export_object(struct rpc_desc *desc,
 
 void krg_sighand_pin(struct sighand_struct *sig)
 {
-	struct sighand_struct_kddm_object *obj = sig->kddm_obj;
+	struct sighand_struct_gdm_object *obj = sig->gdm_obj;
 	BUG_ON(!obj);
 	down_read(&obj->remove_sem);
 }
 
 void krg_sighand_unpin(struct sighand_struct *sig)
 {
-	struct sighand_struct_kddm_object *obj = sig->kddm_obj;
+	struct sighand_struct_gdm_object *obj = sig->gdm_obj;
 	BUG_ON(!obj);
 	up_read(&obj->remove_sem);
 }
 
 static int sighand_struct_remove_object(void *object,
-					struct kddm_set *set, objid_t objid)
+					struct gdm_set *set, objid_t objid)
 {
-	struct sighand_struct_kddm_object *obj = object;
+	struct sighand_struct_gdm_object *obj = object;
 
 	/* Ensure that no thread uses this sighand_struct copy */
 	down_write(&obj->remove_sem);
@@ -197,7 +197,7 @@ static int sighand_struct_remove_object(void *object,
 		BUG_ON(waitqueue_active(&obj->sighand->signalfd_wqh));
 		kmem_cache_free(sighand_cachep, obj->sighand);
 	}
-	kmem_cache_free(sighand_struct_kddm_obj_cachep, obj);
+	kmem_cache_free(sighand_struct_gdm_obj_cachep, obj);
 
 	return 0;
 }
@@ -218,11 +218,11 @@ static struct iolinker_struct sighand_struct_io_linker = {
  */
 struct sighand_struct *krg_sighand_readlock(objid_t id)
 {
-	struct sighand_struct_kddm_object *obj;
+	struct sighand_struct_gdm_object *obj;
 
-	obj = _kddm_get_object_no_ft(sighand_struct_kddm_set, id);
+	obj = _gdm_get_object_no_ft(sighand_struct_gdm_set, id);
 	if (!obj) {
-		_kddm_put_object(sighand_struct_kddm_set, id);
+		_gdm_put_object(sighand_struct_gdm_set, id);
 		return NULL;
 	}
 	BUG_ON(!obj->sighand);
@@ -236,11 +236,11 @@ struct sighand_struct *krg_sighand_readlock(objid_t id)
  */
 struct sighand_struct *krg_sighand_writelock(objid_t id)
 {
-	struct sighand_struct_kddm_object *obj;
+	struct sighand_struct_gdm_object *obj;
 
-	obj = _kddm_grab_object_no_ft(sighand_struct_kddm_set, id);
+	obj = _gdm_grab_object_no_ft(sighand_struct_gdm_set, id);
 	if (!obj) {
-		_kddm_put_object(sighand_struct_kddm_set, id);
+		_gdm_put_object(sighand_struct_gdm_set, id);
 		return NULL;
 	}
 	BUG_ON(!obj->sighand);
@@ -254,20 +254,20 @@ struct sighand_struct *krg_sighand_writelock(objid_t id)
  */
 void krg_sighand_unlock(objid_t id)
 {
-	_kddm_put_object(sighand_struct_kddm_set, id);
+	_gdm_put_object(sighand_struct_gdm_set, id);
 }
 
 static
-struct sighand_struct_kddm_object *
+struct sighand_struct_gdm_object *
 ____krg_sighand_alloc(struct sighand_struct *sig)
 {
-	struct sighand_struct_kddm_object *obj;
+	struct sighand_struct_gdm_object *obj;
 	unique_id_t id;
 
 	id = get_unique_id(&sighand_struct_id_root);
 
 	/* Create the sighand object */
-	obj = _kddm_grab_object(sighand_struct_kddm_set, id);
+	obj = _gdm_grab_object(sighand_struct_gdm_set, id);
 	BUG_ON(!obj);
 	/* Must be a first touch */
 	BUG_ON(obj->sighand);
@@ -283,10 +283,10 @@ ____krg_sighand_alloc(struct sighand_struct *sig)
 static void __krg_sighand_alloc(struct task_struct *task,
 				struct sighand_struct *sig)
 {
-	struct sighand_struct_kddm_object *obj;
+	struct sighand_struct_gdm_object *obj;
 
 	/*
-	 * Exclude kernel threads and local pids from using sighand_struct kddm
+	 * Exclude kernel threads and local pids from using sighand_struct gdm
 	 * objects.
 	 */
 	/*
@@ -300,7 +300,7 @@ static void __krg_sighand_alloc(struct task_struct *task,
 	    || (task->flags & PF_KTHREAD)) {
 		BUG_ON(krg_current);
 		sig->krg_objid = 0;
-		sig->kddm_obj = NULL;
+		sig->gdm_obj = NULL;
 		return;
 	}
 
@@ -335,7 +335,7 @@ void krg_sighand_alloc_unshared(struct task_struct *task,
 
 struct sighand_struct *cr_sighand_alloc(void)
 {
-	struct sighand_struct_kddm_object *obj;
+	struct sighand_struct_gdm_object *obj;
 	struct sighand_struct *sig;
 
 	sig = sighand_struct_alloc();
@@ -350,13 +350,13 @@ struct sighand_struct *cr_sighand_alloc(void)
 
 void cr_sighand_free(objid_t id)
 {
-	_kddm_remove_frozen_object(sighand_struct_kddm_set, id);
+	_gdm_remove_frozen_object(sighand_struct_gdm_set, id);
 }
 
-/* Assumes that the associated kddm object is write locked. */
+/* Assumes that the associated gdm object is write locked. */
 void krg_sighand_share(struct task_struct *task)
 {
-	struct sighand_struct_kddm_object *obj = task->sighand->kddm_obj;
+	struct sighand_struct_gdm_object *obj = task->sighand->gdm_obj;
 	int count;
 
 	count = atomic_inc_return(&obj->count);
@@ -364,7 +364,7 @@ void krg_sighand_share(struct task_struct *task)
 
 objid_t krg_sighand_exit(struct sighand_struct *sig)
 {
-	struct sighand_struct_kddm_object *obj = sig->kddm_obj;
+	struct sighand_struct_gdm_object *obj = sig->gdm_obj;
 	objid_t id = sig->krg_objid;
 	int count;
 
@@ -376,10 +376,10 @@ objid_t krg_sighand_exit(struct sighand_struct *sig)
 	if (count == 0) {
 		krg_sighand_unlock(id);
 		BUG_ON(obj->keep_on_remove);
-		/* Free the kddm object but keep the sighand_struct so that
+		/* Free the gdm object but keep the sighand_struct so that
 		 * __exit_sighand releases it properly. */
 		obj->keep_on_remove = 1;
-		_kddm_remove_object(sighand_struct_kddm_set, id);
+		_gdm_remove_object(sighand_struct_gdm_set, id);
 
 		return 0;
 	}
@@ -625,24 +625,24 @@ int epm_sighand_start(void)
 #ifdef CONFIG_DEBUG_SLAB
 	cache_flags |= SLAB_POISON;
 #endif
-	sighand_struct_kddm_obj_cachep = KMEM_CACHE(sighand_struct_kddm_object,
+	sighand_struct_gdm_obj_cachep = KMEM_CACHE(sighand_struct_gdm_object,
 						    cache_flags);
 
 	/*
 	 * Objid 0 is reserved to mark a sighand_struct having not been
-	 * linked to a kddm object yet.
+	 * linked to a gdm object yet.
 	 */
 	init_and_set_unique_id_root(&sighand_struct_id_root, 1);
 
 	register_io_linker(SIGHAND_STRUCT_LINKER, &sighand_struct_io_linker);
 
-	sighand_struct_kddm_set =
-		create_new_kddm_set(kddm_def_ns,
-				    SIGHAND_STRUCT_KDDM_ID,
+	sighand_struct_gdm_set =
+		create_new_gdm_set(gdm_def_ns,
+				    SIGHAND_STRUCT_GDM_ID,
 				    SIGHAND_STRUCT_LINKER,
-				    KDDM_UNIQUE_ID_DEF_OWNER,
+				    GDM_UNIQUE_ID_DEF_OWNER,
 				    0, 0);
-	if (IS_ERR(sighand_struct_kddm_set))
+	if (IS_ERR(sighand_struct_gdm_set))
 		OOM;
 
 	return 0;

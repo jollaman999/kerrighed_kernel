@@ -808,24 +808,24 @@ static inline void clone_pgd_range(pgd_t *dst, pgd_t *src, int count)
 }
 
 #ifdef CONFIG_KRG_MM
-struct kddm_obj;
-static inline void set_pte_obj_entry(pte_t *ptep, struct kddm_obj *obj)
+struct gdm_obj;
+static inline void set_pte_obj_entry(pte_t *ptep, struct gdm_obj *obj)
 {
 	pte_t pte = __pte((unsigned long)obj);
 	pte = pte_set_flags(pte, _PAGE_OBJ_ENTRY);
 	set_pte(ptep, pte);
 }
 
-static inline void set_swap_pte_obj_entry(pte_t *ptep, struct kddm_obj *obj)
+static inline void set_swap_pte_obj_entry(pte_t *ptep, struct gdm_obj *obj)
 {
 	pte_t pte = __pte((unsigned long)obj);
 	pte = pte_set_flags(pte, _PAGE_OBJ_ENTRY | _PAGE_FILE);
 	set_pte(ptep, pte);
 }
 
-static inline struct kddm_obj *get_pte_obj_entry(pte_t *ptep)
+static inline struct gdm_obj *get_pte_obj_entry(pte_t *ptep)
 {
-	return (struct kddm_obj *)(pte_val(*ptep) & (~(_PAGE_OBJ_ENTRY |
+	return (struct gdm_obj *)(pte_val(*ptep) & (~(_PAGE_OBJ_ENTRY |
 						       _PAGE_FILE)));
 }
 

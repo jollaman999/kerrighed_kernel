@@ -13,7 +13,7 @@
 #include <linux/syscalls.h>
 #include <linux/remote_sleep.h>
 
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <net/krgrpc/rpc.h>
 #include <hcc/hotplug.h>
 #include "ipc_handler.h"
@@ -26,16 +26,16 @@
 
 struct msgkrgops {
 	struct krgipc_ops krgops;
-	struct kddm_set *master_kddm_set;
+	struct gdm_set *master_gdm_set;
 };
 
-struct kddm_set *krgipc_ops_master_set(struct krgipc_ops *ipcops)
+struct gdm_set *krgipc_ops_master_set(struct krgipc_ops *ipcops)
 {
 	struct msgkrgops *msgops;
 
 	msgops = container_of(ipcops, struct msgkrgops, krgops);
 
-	return msgops->master_kddm_set;
+	return msgops->master_gdm_set;
 }
 
 /*****************************************************************************/
@@ -52,7 +52,7 @@ static struct kern_ipc_perm *kcb_ipc_msg_lock(struct ipc_ids *ids, int id)
 
 	index = ipcid_to_idx(id);
 
-	msq_object = _kddm_grab_object_no_ft(ids->krgops->data_kddm_set, index);
+	msq_object = _gdm_grab_object_no_ft(ids->krgops->data_gdm_set, index);
 
 	if (!msq_object)
 		goto error;
@@ -68,7 +68,7 @@ static struct kern_ipc_perm *kcb_ipc_msg_lock(struct ipc_ids *ids, int id)
 	return &(msq->q_perm);
 
 error:
-	_kddm_put_object(ids->krgops->data_kddm_set, index);
+	_gdm_put_object(ids->krgops->data_gdm_set, index);
 
 	return ERR_PTR(-EINVAL);
 }
@@ -79,7 +79,7 @@ static void kcb_ipc_msg_unlock(struct kern_ipc_perm *ipcp)
 	long task_state;
 
 	/*
-	 * We may enter in interruptible state, and kddm_put_object might
+	 * We may enter in interruptible state, and gdm_put_object might
 	 * schedule and reset to running.
 	 * Fortunately, wakeup only happens with ipcp->mutex held, so we can
 	 * restore the state right before mutex_unlock.
@@ -88,7 +88,7 @@ static void kcb_ipc_msg_unlock(struct kern_ipc_perm *ipcp)
 
 	index = ipcid_to_idx(ipcp->id);
 
-	_kddm_put_object(ipcp->krgops->data_kddm_set, index);
+	_gdm_put_object(ipcp->krgops->data_gdm_set, index);
 
 	__set_current_state(task_state);
 
@@ -100,12 +100,12 @@ static struct kern_ipc_perm *kcb_ipc_msg_findkey(struct ipc_ids *ids, key_t key)
 	long *key_index;
 	int id = -1;
 
-	key_index = _kddm_get_object_no_ft(ids->krgops->key_kddm_set, key);
+	key_index = _gdm_get_object_no_ft(ids->krgops->key_gdm_set, key);
 
 	if (key_index)
 		id = *key_index;
 
-	_kddm_put_object(ids->krgops->key_kddm_set, key);
+	_gdm_put_object(ids->krgops->key_gdm_set, key);
 
 	if (id != -1)
 		return kcb_ipc_msg_lock(ids, id);
@@ -119,7 +119,7 @@ static struct kern_ipc_perm *kcb_ipc_msg_findkey(struct ipc_ids *ids, key_t key)
  */
 int krg_ipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 {
-	struct kddm_set *master_set;
+	struct gdm_set *master_set;
 	msq_object_t *msq_object;
 	hcc_node_t *master_node;
 	long *key_index;
@@ -129,8 +129,8 @@ int krg_ipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 
 	index = ipcid_to_idx(msq->q_perm.id);
 
-	msq_object = _kddm_grab_object_manual_ft(
-		msg_ids(ns).krgops->data_kddm_set, index);
+	msq_object = _gdm_grab_object_manual_ft(
+		msg_ids(ns).krgops->data_gdm_set, index);
 
 	BUG_ON(msq_object);
 
@@ -144,28 +144,28 @@ int krg_ipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 	msq_object->local_msq->is_master = 1;
 	msq_object->mobile_msq.q_perm.id = -1;
 
-	_kddm_set_object(msg_ids(ns).krgops->data_kddm_set, index, msq_object);
+	_gdm_set_object(msg_ids(ns).krgops->data_gdm_set, index, msq_object);
 
 	if (msq->q_perm.key != IPC_PRIVATE)
 	{
-		key_index = _kddm_grab_object(msg_ids(ns).krgops->key_kddm_set,
+		key_index = _gdm_grab_object(msg_ids(ns).krgops->key_gdm_set,
 					      msq->q_perm.key);
 		*key_index = index;
-		_kddm_put_object(msg_ids(ns).krgops->key_kddm_set,
+		_gdm_put_object(msg_ids(ns).krgops->key_gdm_set,
 				 msq->q_perm.key);
 	}
 
 	master_set = krgipc_ops_master_set(msg_ids(ns).krgops);
 
-	master_node = _kddm_grab_object(master_set, index);
+	master_node = _gdm_grab_object(master_set, index);
 	*master_node = hcc_node_id;
 
 	msq->q_perm.krgops = msg_ids(ns).krgops;
 
-	_kddm_put_object(master_set, index);
+	_gdm_put_object(master_set, index);
 
 err_put:
-	_kddm_put_object(msg_ids(ns).krgops->data_kddm_set, index);
+	_gdm_put_object(msg_ids(ns).krgops->data_gdm_set, index);
 
 	return err;
 }
@@ -174,25 +174,25 @@ void krg_ipc_msg_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 {
 	int index;
 	key_t key;
-	struct kddm_set *master_set;
+	struct gdm_set *master_set;
 	struct msg_queue *msq = container_of(ipcp, struct msg_queue, q_perm);
 
 	index = ipcid_to_idx(msq->q_perm.id);
 	key = msq->q_perm.key;
 
 	if (key != IPC_PRIVATE) {
-		_kddm_grab_object_no_ft(ipcp->krgops->key_kddm_set, key);
-		_kddm_remove_frozen_object(ipcp->krgops->key_kddm_set, key);
+		_gdm_grab_object_no_ft(ipcp->krgops->key_gdm_set, key);
+		_gdm_remove_frozen_object(ipcp->krgops->key_gdm_set, key);
 	}
 
 	master_set = krgipc_ops_master_set(ipcp->krgops);
 
-	_kddm_grab_object_no_ft(master_set, index);
-	_kddm_remove_frozen_object(master_set, index);
+	_gdm_grab_object_no_ft(master_set, index);
+	_gdm_remove_frozen_object(master_set, index);
 
 	local_msg_unlock(msq);
 
-	_kddm_remove_frozen_object(ipcp->krgops->data_kddm_set, index);
+	_gdm_remove_frozen_object(ipcp->krgops->data_gdm_set, index);
 
 	krg_ipc_rmid(&msg_ids(ns), index);
 }
@@ -214,7 +214,7 @@ long krg_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 		    pid_t tgid)
 {
 	struct rpc_desc * desc;
-	struct kddm_set *master_set;
+	struct gdm_set *master_set;
 	hcc_node_t* master_node;
 	void *buffer;
 	long r;
@@ -226,9 +226,9 @@ long krg_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 
 	master_set = krgipc_ops_master_set(msg_ids(ns).krgops);
 
-	master_node = _kddm_get_object_no_ft(master_set, index);
+	master_node = _gdm_get_object_no_ft(master_set, index);
 	if (!master_node) {
-		_kddm_put_object(master_set, index);
+		_gdm_put_object(master_set, index);
 		r = -EINVAL;
 		goto exit;
 	}
@@ -236,7 +236,7 @@ long krg_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 	if (*master_node == hcc_node_id) {
 		/* inverting the following 2 lines can conduct to deadlock
 		 * if the send is blocked */
-		_kddm_put_object(master_set, index);
+		_gdm_put_object(master_set, index);
 		r = __do_msgsnd(msqid, mtype, mtext, msgsz,
 				msgflg, ns, tgid);
 		goto exit;
@@ -260,7 +260,7 @@ long krg_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 		goto exit_free_buffer;
 
 	desc = rpc_begin(IPC_MSG_SEND, *master_node);
-	_kddm_put_object(master_set, index);
+	_gdm_put_object(master_set, index);
 
 	r = rpc_pack_type(desc, msg);
 	if (r)
@@ -339,7 +339,7 @@ long krg_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 {
 	struct rpc_desc * desc;
 	enum rpc_error err;
-	struct kddm_set *master_set;
+	struct gdm_set *master_set;
 	hcc_node_t *master_node;
 	void * buffer;
 	long r;
@@ -352,16 +352,16 @@ long krg_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 
 	master_set = krgipc_ops_master_set(msg_ids(ns).krgops);
 
-	master_node = _kddm_get_object_no_ft(master_set, index);
+	master_node = _gdm_get_object_no_ft(master_set, index);
 	if (!master_node) {
-		_kddm_put_object(master_set, index);
+		_gdm_put_object(master_set, index);
 		return -EINVAL;
 	}
 
 	if (*master_node == hcc_node_id) {
 		/*inverting the following 2 lines can conduct to deadlock
 		 * if the receive is blocked */
-		_kddm_put_object(master_set, index);
+		_gdm_put_object(master_set, index);
 		r = __do_msgrcv(msqid, pmtype, mtext, msgsz, msgtyp,
 				msgflg, ns, tgid);
 		return r;
@@ -375,7 +375,7 @@ long krg_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	msg.msgsz = msgsz;
 
 	desc = rpc_begin(IPC_MSG_RCV, *master_node);
-	_kddm_put_object(master_set, index);
+	_gdm_put_object(master_set, index);
 
 	r = rpc_pack_type(desc, msg);
 	if (r)
@@ -483,43 +483,43 @@ int krg_msg_init_ns(struct ipc_namespace *ns)
 		goto err;
 	}
 
-	msg_ops->krgops.map_kddm_set = create_new_kddm_set(
-		kddm_def_ns, MSGMAP_KDDM_ID, IPCMAP_LINKER,
-		KDDM_RR_DEF_OWNER, sizeof(ipcmap_object_t),
-		KDDM_LOCAL_EXCLUSIVE);
+	msg_ops->krgops.map_gdm_set = create_new_gdm_set(
+		gdm_def_ns, MSGMAP_GDM_ID, IPCMAP_LINKER,
+		GDM_RR_DEF_OWNER, sizeof(ipcmap_object_t),
+		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(msg_ops->krgops.map_kddm_set)) {
-		r = PTR_ERR(msg_ops->krgops.map_kddm_set);
+	if (IS_ERR(msg_ops->krgops.map_gdm_set)) {
+		r = PTR_ERR(msg_ops->krgops.map_gdm_set);
 		goto err_map;
 	}
 
-	msg_ops->krgops.key_kddm_set = create_new_kddm_set(
-		kddm_def_ns, MSGKEY_KDDM_ID, MSGKEY_LINKER,
-		KDDM_RR_DEF_OWNER, sizeof(long),
-		KDDM_LOCAL_EXCLUSIVE);
+	msg_ops->krgops.key_gdm_set = create_new_gdm_set(
+		gdm_def_ns, MSGKEY_GDM_ID, MSGKEY_LINKER,
+		GDM_RR_DEF_OWNER, sizeof(long),
+		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(msg_ops->krgops.key_kddm_set)) {
-		r = PTR_ERR(msg_ops->krgops.key_kddm_set);
+	if (IS_ERR(msg_ops->krgops.key_gdm_set)) {
+		r = PTR_ERR(msg_ops->krgops.key_gdm_set);
 		goto err_key;
 	}
 
-	msg_ops->krgops.data_kddm_set = create_new_kddm_set(
-		kddm_def_ns, MSG_KDDM_ID, MSG_LINKER,
-		KDDM_RR_DEF_OWNER, sizeof(msq_object_t),
-		KDDM_LOCAL_EXCLUSIVE);
+	msg_ops->krgops.data_gdm_set = create_new_gdm_set(
+		gdm_def_ns, MSG_GDM_ID, MSG_LINKER,
+		GDM_RR_DEF_OWNER, sizeof(msq_object_t),
+		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(msg_ops->krgops.data_kddm_set)) {
-		r = PTR_ERR(msg_ops->krgops.data_kddm_set);
+	if (IS_ERR(msg_ops->krgops.data_gdm_set)) {
+		r = PTR_ERR(msg_ops->krgops.data_gdm_set);
 		goto err_data;
 	}
 
-	msg_ops->master_kddm_set = create_new_kddm_set(
-		kddm_def_ns, MSGMASTER_KDDM_ID, MSGMASTER_LINKER,
-		KDDM_RR_DEF_OWNER, sizeof(hcc_node_t),
-		KDDM_LOCAL_EXCLUSIVE);
+	msg_ops->master_gdm_set = create_new_gdm_set(
+		gdm_def_ns, MSGMASTER_GDM_ID, MSGMASTER_LINKER,
+		GDM_RR_DEF_OWNER, sizeof(hcc_node_t),
+		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(msg_ops->master_kddm_set)) {
-		r = PTR_ERR(msg_ops->master_kddm_set);
+	if (IS_ERR(msg_ops->master_gdm_set)) {
+		r = PTR_ERR(msg_ops->master_gdm_set);
 		goto err_master;
 	}
 
@@ -532,11 +532,11 @@ int krg_msg_init_ns(struct ipc_namespace *ns)
 	return 0;
 
 err_master:
-	_destroy_kddm_set(msg_ops->krgops.data_kddm_set);
+	_destroy_gdm_set(msg_ops->krgops.data_gdm_set);
 err_data:
-	_destroy_kddm_set(msg_ops->krgops.key_kddm_set);
+	_destroy_gdm_set(msg_ops->krgops.key_gdm_set);
 err_key:
-	_destroy_kddm_set(msg_ops->krgops.map_kddm_set);
+	_destroy_gdm_set(msg_ops->krgops.map_gdm_set);
 err_map:
 	kfree(msg_ops);
 err:
@@ -551,10 +551,10 @@ void krg_msg_exit_ns(struct ipc_namespace *ns)
 		msg_ops = container_of(msg_ids(ns).krgops, struct msgkrgops,
 				       krgops);
 
-		_destroy_kddm_set(msg_ops->krgops.map_kddm_set);
-		_destroy_kddm_set(msg_ops->krgops.key_kddm_set);
-		_destroy_kddm_set(msg_ops->krgops.data_kddm_set);
-		_destroy_kddm_set(msg_ops->master_kddm_set);
+		_destroy_gdm_set(msg_ops->krgops.map_gdm_set);
+		_destroy_gdm_set(msg_ops->krgops.key_gdm_set);
+		_destroy_gdm_set(msg_ops->krgops.data_gdm_set);
+		_destroy_gdm_set(msg_ops->master_gdm_set);
 
 		kfree(msg_ops);
 	}

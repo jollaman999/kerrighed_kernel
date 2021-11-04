@@ -1,4 +1,4 @@
-/** KDDM memory IO linker.
+/** GDM memory IO linker.
  *  @file memory_io_linker.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
@@ -18,7 +18,7 @@
 #include <asm/tlbflush.h>
 
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/page_table_tree.h>
 
 #include "memory_io_linker.h"
@@ -26,15 +26,15 @@
 
 /*****************************************************************************/
 /*                                                                           */
-/*                       MEMORY KDDM SET IO FUNCTIONS                       */
+/*                       MEMORY GDM SET IO FUNCTIONS                       */
 /*                                                                           */
 /*****************************************************************************/
 
 /** Allocate an object
  *  @author Renaud Lottiaux
  */
-int memory_alloc_object (struct kddm_obj * obj_entry,
-			 struct kddm_set * set,
+int memory_alloc_object (struct gdm_obj * obj_entry,
+			 struct gdm_set * set,
 			 objid_t objid)
 {
 	struct page *page = alloc_page (GFP_HIGHUSER);
@@ -54,8 +54,8 @@ int memory_alloc_object (struct kddm_obj * obj_entry,
  *  @param  buffer    Data to import in the object.
  */
 int memory_import_object (struct rpc_desc *desc,
-			  struct kddm_set *set,
-			  struct kddm_obj *obj_entry,
+			  struct gdm_set *set,
+			  struct gdm_obj *obj_entry,
 			  objid_t objid,
 			  int flags)
 {
@@ -77,8 +77,8 @@ int memory_import_object (struct rpc_desc *desc,
  *  @param  object    The object to export data from.
  */
 int memory_export_object (struct rpc_desc *desc,
-			  struct kddm_set *set,
-			  struct kddm_obj *obj_entry,
+			  struct gdm_set *set,
+			  struct gdm_obj *obj_entry,
 			  objid_t objid,
 			  int flags)
 {
@@ -93,7 +93,7 @@ int memory_export_object (struct rpc_desc *desc,
 	return 0;
 }
 
-/** Handle a kddm set memory page first touch
+/** Handle a gdm set memory page first touch
  *  @author Renaud Lottiaux
  *
  *  @param  obj_entry  Kddm Set page descriptor.
@@ -102,8 +102,8 @@ int memory_export_object (struct rpc_desc *desc,
  *
  *  @return  0 if everything is ok. Negative value otherwise.
  */
-int memory_first_touch (struct kddm_obj * obj_entry,
-                        struct kddm_set * set,
+int memory_first_touch (struct gdm_obj * obj_entry,
+                        struct gdm_set * set,
                         objid_t objid,
 			int flags)
 {
@@ -124,15 +124,15 @@ int memory_first_touch (struct kddm_obj * obj_entry,
 	return res;
 }
 
-/** Insert a new kddm set page in the file cache.
+/** Insert a new gdm set page in the file cache.
  *  @author Renaud Lottiaux
  *
  *  @param  obj_entry  Descriptor of the page to insert.
  *  @param  set        Kddm Set descriptor
  *  @param  padeid     Id of the page to insert.
  */
-int memory_insert_page (struct kddm_obj * obj_entry,
-                        struct kddm_set * set,
+int memory_insert_page (struct gdm_obj * obj_entry,
+                        struct gdm_set * set,
                         objid_t objid)
 {
 	struct page *page;
@@ -142,14 +142,14 @@ int memory_insert_page (struct kddm_obj * obj_entry,
 	return 0;
 }
 
-/** Invalidate a kddm set memory page.
+/** Invalidate a gdm set memory page.
  *  @author Renaud Lottiaux
  *
  *  @param  set      Kddm Set descriptor
  *  @param  objid    Id of the page to invalidate
  */
-int memory_invalidate_page (struct kddm_obj * obj_entry,
-                            struct kddm_set * set,
+int memory_invalidate_page (struct gdm_obj * obj_entry,
+                            struct gdm_set * set,
                             objid_t objid)
 {
 	if (obj_entry->object) {
@@ -158,7 +158,7 @@ int memory_invalidate_page (struct kddm_obj * obj_entry,
 		BUG_ON(swap_pte_page(page));
 
 		/* Invalidate page table entry */
-		kddm_pt_invalidate (set, objid, obj_entry, page);
+		gdm_pt_invalidate (set, objid, obj_entry, page);
 
 		ClearPageMigratable(page);
 
@@ -169,10 +169,10 @@ int memory_invalidate_page (struct kddm_obj * obj_entry,
 	return 0;
 }
 
-void memory_change_state (struct kddm_obj * obj_entry,
-			  struct kddm_set * set,
+void memory_change_state (struct gdm_obj * obj_entry,
+			  struct gdm_set * set,
 			  objid_t objid,
-			  kddm_obj_state_t state)
+			  gdm_obj_state_t state)
 {
 	struct page *page = obj_entry->object;
 
@@ -209,18 +209,18 @@ void memory_change_state (struct kddm_obj * obj_entry,
 	}
 }
 
-/** Handle a kddm set memory page remove.
+/** Handle a gdm set memory page remove.
  *  @author Renaud Lottiaux
  *
  *  @param  set      Kddm Set descriptor
  *  @param  padeid   Id of the page to remove
  */
 int memory_remove_page (void *object,
-                        struct kddm_set * set,
+                        struct gdm_set * set,
                         objid_t objid)
 {
 	struct page *page = (struct page *) object;
-	struct kddm_obj *obj_entry;
+	struct gdm_obj *obj_entry;
 	swp_entry_t entry;
 
 	if (!page)
@@ -234,7 +234,7 @@ int memory_remove_page (void *object,
 		obj_entry = page->obj_entry;
 
 		/* Invalidate page table entry */
-		kddm_pt_invalidate (set, objid, obj_entry, page);
+		gdm_pt_invalidate (set, objid, obj_entry, page);
 
 		ClearPageMigratable(page);
 

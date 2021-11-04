@@ -24,7 +24,7 @@
 #include <hcc/physical_fs.h>
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include "app_frontier.h"
 #include "app_utils.h"
 #include "../checkpoint.h"
@@ -32,7 +32,7 @@
 
 /*--------------------------------------------------------------------------*/
 
-static int save_app_kddm_object(struct app_kddm_object *obj)
+static int save_app_gdm_object(struct app_gdm_object *obj)
 {
 	ghost_fs_t oldfs;
 	ghost_t *ghost;
@@ -111,7 +111,7 @@ static inline int write_task_parent_links(task_state_t *t,
 	int r = 0;
 	pid_t parent, real_parent, real_parent_tgid;
 	pid_t pid, tgid, pgrp, session;
-	struct children_kddm_object *obj;
+	struct children_gdm_object *obj;
 
 	if (!can_be_checkpointed(t->task)) {
 		r = -EPERM;
@@ -404,7 +404,7 @@ error:
 	}
 }
 
-static int global_do_chkpt(struct app_kddm_object *obj, int flags)
+static int global_do_chkpt(struct app_gdm_object *obj, int flags)
 {
 	struct rpc_desc *desc;
 	struct checkpoint_request_msg msg;
@@ -447,7 +447,7 @@ static int global_do_chkpt(struct app_kddm_object *obj, int flags)
 	if (err_rpc)
 		goto err_rpc;
 
-	r = save_app_kddm_object(obj);
+	r = save_app_gdm_object(obj);
 	if (r)
 		goto exit;
 
@@ -472,15 +472,15 @@ err_rpc:
 static int _freeze_app(long appid)
 {
 	int r;
-	struct app_kddm_object *obj;
+	struct app_gdm_object *obj;
 
-	obj = kddm_grab_object_no_ft(kddm_def_ns, APP_KDDM_ID, appid);
+	obj = gdm_grab_object_no_ft(gdm_def_ns, APP_GDM_ID, appid);
 	if (!obj) {
 		r = -ESRCH;
 		ckpt_err(NULL, r,
 			 "Application %ld does not exist. Can not freeze it",
 			 appid);
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	if (obj->state == APP_RUNNING_CS) {
@@ -488,7 +488,7 @@ static int _freeze_app(long appid)
 		ckpt_err(NULL, r,
 			 "Application %ld is in critical section. Can not freeze it",
 			 appid);
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	if (obj->state != APP_RUNNING) {
@@ -496,30 +496,30 @@ static int _freeze_app(long appid)
 		ckpt_err(NULL, r,
 			 "Application %ld is not running. Can not freeze it",
 			 appid);
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	r = global_stop(obj);
 	if (!r)
 		obj->state = APP_FROZEN;
 
-exit_kddmput:
-	kddm_put_object(kddm_def_ns, APP_KDDM_ID, appid);
+exit_gdmput:
+	gdm_put_object(gdm_def_ns, APP_GDM_ID, appid);
 	return r;
 }
 
 static int _unfreeze_app(long appid, int signal)
 {
 	int r;
-	struct app_kddm_object *obj;
+	struct app_gdm_object *obj;
 
-	obj = kddm_grab_object_no_ft(kddm_def_ns, APP_KDDM_ID, appid);
+	obj = gdm_grab_object_no_ft(gdm_def_ns, APP_GDM_ID, appid);
 	if (!obj) {
 		r = -ESRCH;
 		ckpt_err(NULL, r,
 			 "Application %ld does not exist. Can not unfreeze it",
 			 appid);
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	if (obj->state == APP_RUNNING) {
@@ -527,13 +527,13 @@ static int _unfreeze_app(long appid, int signal)
 		ckpt_err(NULL, r,
 			 "Application %ld is running. Can not unfreeze it",
 			 appid);
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	r = global_unfreeze(obj, signal);
 
-exit_kddmput:
-	kddm_put_object(kddm_def_ns, APP_KDDM_ID, appid);
+exit_gdmput:
+	gdm_put_object(gdm_def_ns, APP_GDM_ID, appid);
 	return r;
 }
 
@@ -541,15 +541,15 @@ static int _checkpoint_frozen_app(struct checkpoint_info *info)
 {
 	int r;
 	int prev_chkpt_sn;
-	struct app_kddm_object *obj;
+	struct app_gdm_object *obj;
 
-	obj = kddm_grab_object_no_ft(kddm_def_ns, APP_KDDM_ID, info->app_id);
+	obj = gdm_grab_object_no_ft(gdm_def_ns, APP_GDM_ID, info->app_id);
 	if (!obj) {
 		r = -ESRCH;
 		ckpt_err(NULL, r,
 			 "Application %ld does not exist. Can not checkpoint it",
 			 info->app_id);
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	if (obj->state != APP_FROZEN) {
@@ -557,7 +557,7 @@ static int _checkpoint_frozen_app(struct checkpoint_info *info)
 		ckpt_err(NULL, r,
 			 "Application %ld is not frozen. Can not checkpoint it",
 			 info->app_id);
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	prev_chkpt_sn = obj->chkpt_sn;
@@ -568,8 +568,8 @@ static int _checkpoint_frozen_app(struct checkpoint_info *info)
 	if (r)
 		obj->chkpt_sn = prev_chkpt_sn;
 
-exit_kddmput:
-	kddm_put_object(kddm_def_ns, APP_KDDM_ID, info->app_id);
+exit_gdmput:
+	gdm_put_object(gdm_def_ns, APP_GDM_ID, info->app_id);
 	return r;
 }
 
@@ -604,7 +604,7 @@ error:
 int app_cr_exclude(struct cr_mm_region *mm_regions)
 {
 	long app_id;
-	struct app_kddm_object *obj;
+	struct app_gdm_object *obj;
 	struct rpc_desc *desc;
 	struct cr_mm_region *element;
 	int r;
@@ -616,13 +616,13 @@ int app_cr_exclude(struct cr_mm_region *mm_regions)
 	if (app_id < 0)
 		return app_id;
 
-	obj = kddm_grab_object_no_ft(kddm_def_ns, APP_KDDM_ID, app_id);
+	obj = gdm_grab_object_no_ft(gdm_def_ns, APP_GDM_ID, app_id);
 	if (!obj) {
 		r = -ESRCH;
 		ckpt_err(NULL, r,
 			 "Application %ld does not exist. Can not checkpoint it",
 			 app_id);
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	if (obj->state == APP_RUNNING_CS) {
@@ -631,7 +631,7 @@ int app_cr_exclude(struct cr_mm_region *mm_regions)
 			 "Application %ld is in critical section. Can not"
 			 " exclude memory regions",
 			 app_id);
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	if (obj->state != APP_RUNNING) {
@@ -639,13 +639,13 @@ int app_cr_exclude(struct cr_mm_region *mm_regions)
 		ckpt_err(NULL, r,
 			 "Application %ld is not running. Can not checkpoint it",
 			 app_id);
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	desc = rpc_begin_m(APP_EXCL_MM_REGION, &obj->nodes);
 	if (!desc) {
 		r = -ENOMEM;
-		goto exit_kddmput;
+		goto exit_gdmput;
 	}
 
 	r = rpc_pack_type(desc, app_id);
@@ -662,12 +662,12 @@ int app_cr_exclude(struct cr_mm_region *mm_regions)
 	}
 
 	rpc_end(desc, 0);
-exit_kddmput:
-	kddm_put_object(kddm_def_ns, APP_KDDM_ID, app_id);
+exit_gdmput:
+	gdm_put_object(gdm_def_ns, APP_GDM_ID, app_id);
 	return r;
 exit_rpc:
 	rpc_cancel(desc);
-	goto exit_kddmput;
+	goto exit_gdmput;
 }
 
 /*--------------------------------------------------------------------------*/

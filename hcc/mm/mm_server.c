@@ -34,7 +34,7 @@ int handle_do_mmap_region (struct rpc_desc* desc,
 	vma = find_vma(mm, msg->start);
 	BUG_ON(!vma || vma->vm_start != msg->start);
 
-	check_link_vma_to_anon_memory_kddm_set (vma);
+	check_link_vma_to_anon_memory_gdm_set (vma);
 
 	up_write(&mm->mmap_sem);
 

@@ -1,7 +1,7 @@
 /*
  *  Kerrighed/modules/ipc/semarray_io_linker.c
  *
- *  KDDM SEM array Linker.
+ *  GDM SEM array Linker.
  *
  *  Copyright (C) 2007-2008 Matthieu Fertré - INRIA
  */
@@ -12,7 +12,7 @@
 #include <linux/ipc_namespace.h>
 #include <linux/ipc.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/pid.h>
 
 #include "ipc_handler.h"
@@ -143,12 +143,12 @@ static void update_local_sem(struct sem_array *local_sma,
 
 /*****************************************************************************/
 /*                                                                           */
-/*                         SEM Array KDDM IO FUNCTIONS                       */
+/*                         SEM Array GDM IO FUNCTIONS                       */
 /*                                                                           */
 /*****************************************************************************/
 
-int semarray_alloc_object (struct kddm_obj * obj_entry,
-			   struct kddm_set * set,
+int semarray_alloc_object (struct gdm_obj * obj_entry,
+			   struct gdm_set * set,
 			   objid_t objid)
 {
 	semarray_object_t *sem_object;
@@ -166,7 +166,7 @@ int semarray_alloc_object (struct kddm_obj * obj_entry,
 
 
 
-/** Handle a kddm set sem_array first touch
+/** Handle a gdm set sem_array first touch
  *  @author Matthieu Fertré, Renaud Lottiaux
  *
  *  @param  obj_entry  Kddm object descriptor.
@@ -175,8 +175,8 @@ int semarray_alloc_object (struct kddm_obj * obj_entry,
  *
  *  @return  0 if everything is ok. Negative value otherwise.
  */
-int semarray_first_touch (struct kddm_obj * obj_entry,
-			  struct kddm_set * set,
+int semarray_first_touch (struct gdm_obj * obj_entry,
+			  struct gdm_set * set,
 			  objid_t objid,
 			  int flags)
 {
@@ -194,8 +194,8 @@ int semarray_first_touch (struct kddm_obj * obj_entry,
  *  @param  set       Kddm set descriptor
  *  @param  objid     Id of the object to insert.
  */
-int semarray_insert_object (struct kddm_obj * obj_entry,
-			    struct kddm_set * set,
+int semarray_insert_object (struct gdm_obj * obj_entry,
+			    struct gdm_set * set,
 			    objid_t objid)
 {
 	semarray_object_t *sem_object;
@@ -234,15 +234,15 @@ int semarray_insert_object (struct kddm_obj * obj_entry,
 
 
 
-/** Invalidate a kddm object semarray.
+/** Invalidate a gdm object semarray.
  *  @author Matthieu Fertré, Renaud Lottiaux
  *
  *  @param  obj_entry  Descriptor of the object to invalidate.
  *  @param  set       Kddm set descriptor
  *  @param  objid     Id of the object to invalidate
  */
-int semarray_invalidate_object (struct kddm_obj * obj_entry,
-				struct kddm_set * set,
+int semarray_invalidate_object (struct gdm_obj * obj_entry,
+				struct gdm_set * set,
 				objid_t objid)
 {
 	semarray_object_t *sem_object = obj_entry->object;
@@ -266,17 +266,17 @@ int semarray_invalidate_object (struct kddm_obj * obj_entry,
 		free_semqueue(q);
 	}
 
-	return KDDM_IO_KEEP_OBJECT;
+	return GDM_IO_KEEP_OBJECT;
 }
 
-/** Handle a kddm semaphore remove.
+/** Handle a gdm semaphore remove.
  *  @author Matthieu Fertré, Renaud Lottiaux
  *
  *  @param  obj_entry  Descriptor of the object to remove.
  *  @param  set       Kddm set descriptor.
  *  @param  padeid    Id of the object to remove.
  */
-int semarray_remove_object(void *object, struct kddm_set * set,
+int semarray_remove_object(void *object, struct gdm_set * set,
 			   objid_t objid)
 {
 	semarray_object_t *sem_object;
@@ -400,8 +400,8 @@ static inline void __export_semqueues(struct rpc_desc *desc,
  *  @param  object    The object to export data from.
  */
 int semarray_export_object (struct rpc_desc *desc,
-			    struct kddm_set *set,
-			    struct kddm_obj *obj_entry,
+			    struct gdm_set *set,
+			    struct gdm_obj *obj_entry,
 			    objid_t objid,
 			    int flags)
 {
@@ -586,8 +586,8 @@ static inline void __unimport_semqueues(struct sem_array *sma)
  *  @param  buffer    Data to import in the object.
  */
 int semarray_import_object (struct rpc_desc *desc,
-			    struct kddm_set *set,
-			    struct kddm_obj *obj_entry,
+			    struct gdm_set *set,
+			    struct gdm_obj *obj_entry,
 			    objid_t objid,
 			    int flags)
 {
@@ -636,7 +636,7 @@ struct iolinker_struct semarray_linker = {
 
 /*****************************************************************************/
 /*                                                                           */
-/*                         SEMKEY KDDM IO FUNCTIONS                          */
+/*                         SEMKEY GDM IO FUNCTIONS                          */
 /*                                                                           */
 /*****************************************************************************/
 

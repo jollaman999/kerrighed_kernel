@@ -62,7 +62,7 @@ struct pid
 	struct hlist_head tasks[PIDTYPE_MAX];
 	struct rcu_head rcu;
 #ifdef CONFIG_KRG_EPM
-	struct pid_kddm_object *kddm_obj;
+	struct pid_gdm_object *gdm_obj;
 #endif
 #ifdef CONFIG_KRG_SCHED
 	struct hlist_head process_sets[PIDTYPE_MAX];

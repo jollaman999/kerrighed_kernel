@@ -1,14 +1,14 @@
-/** KDDM SEM Array Linker.
+/** GDM SEM Array Linker.
  *  @file semarray_io_linker.h
  *
- *  Link KDDM and Linux SEM Array mechanisms.
+ *  Link GDM and Linux SEM Array mechanisms.
  *  @author Matthieu Fertré
  */
 
 #ifndef __SEMARRAY_IO_LINKER__
 #define __SEMARRAY_IO_LINKER__
 
-#include <kddm/kddm_types.h>
+#include <gdm/gdm_types.h>
 
 extern struct kmem_cache *semarray_object_cachep;
 

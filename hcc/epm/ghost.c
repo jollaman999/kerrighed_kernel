@@ -22,7 +22,7 @@
 #include <linux/list.h>
 #include <linux/rcupdate.h>
 #include <net/net_namespace.h>
-#include <kddm/kddm_info.h>
+#include <gdm/gdm_info.h>
 #include <hcc/krginit.h>
 #include <hcc/namespace.h>
 #include <hcc/krgsyms.h>
@@ -117,7 +117,7 @@ static int export_binfmt(struct epm_action *action,
 static int export_children(struct epm_action *action,
 			   ghost_t *ghost, struct task_struct *task)
 {
-	/* Managed by children kddm object */
+	/* Managed by children gdm object */
 	return 0;
 }
 
@@ -420,13 +420,13 @@ static int export_krg_structs(struct epm_action *action,
 
 	if (action->type == EPM_MIGRATE) {
 		/*
-		 * The task kddm object must be linked to at most one task in
+		 * The task gdm object must be linked to at most one task in
 		 * the cluster, and after import_krg_structs() it will be
 		 * linked to the migrated task.
 		 * Unlink and let import_krg_structs() proceed.
 		 *
 		 * Now that pids are globalized, remote procfs can see that task
-		 * even without a link to its task kddm object.
+		 * even without a link to its task gdm object.
 		 */
 		krg_task_unlink(task->task_obj, 1);
 		retval = ghost_write(ghost, &retval, sizeof(retval));
@@ -564,7 +564,7 @@ static int export_task(struct epm_action *action,
 	r = export_krg_structs(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
-	r = export_kddm_info_struct(action, ghost, task);
+	r = export_gdm_info_struct(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
 
@@ -816,7 +816,7 @@ static void unimport_task(struct epm_action *action,
 	unimport_sighand_struct(ghost_task);
 	unimport_signal_struct(ghost_task);
 	unimport_private_signals(ghost_task);
-	unimport_kddm_info_struct(ghost_task);
+	unimport_gdm_info_struct(ghost_task);
 	unimport_krg_structs(action, ghost_task);
 	unimport_children(action, ghost_task);
 	unimport_sched(ghost_task);
@@ -1270,7 +1270,7 @@ static int import_krg_structs(struct epm_action *action,
 	/* Inits are only needed to prevent compiler warnings. */
 	pid_t parent_pid = 0, real_parent_pid = 0, real_parent_tgid = 0;
 	pid_t group_leader_pid = 0;
-	struct task_kddm_object *obj;
+	struct task_gdm_object *obj;
 	int retval = 0, dummy;
 
 	if (action->type == EPM_MIGRATE) {
@@ -1284,7 +1284,7 @@ static int import_krg_structs(struct epm_action *action,
 
 	if (action->type == EPM_REMOTE_CLONE) {
 		if (action->remote_clone.clone_flags & CLONE_THREAD) {
-			struct task_kddm_object *item;
+			struct task_gdm_object *item;
 
 			item = krg_task_readlock(action->remote_clone.from_pid);
 			BUG_ON(!item);
@@ -1564,9 +1564,9 @@ static struct task_struct *import_task(struct epm_action *action,
 	retval = import_krg_structs(action, ghost, task);
 	if (retval)
 		goto err_krg_structs;
-	retval = import_kddm_info_struct(action, ghost, task);
+	retval = import_gdm_info_struct(action, ghost, task);
 	if (retval)
-		goto err_kddm_info_struct;
+		goto err_gdm_info_struct;
 
 	retval = import_private_signals(action, ghost, task);
 	if (retval)
@@ -1614,8 +1614,8 @@ err_sighand_struct:
 err_signal_struct:
 	unimport_private_signals(task);
 err_signals:
-	unimport_kddm_info_struct(task);
-err_kddm_info_struct:
+	unimport_gdm_info_struct(task);
+err_gdm_info_struct:
 	unimport_krg_structs(action, task);
 err_krg_structs:
 	unimport_children(action, task);
@@ -1703,7 +1703,7 @@ void free_ghost_process(struct task_struct *ghost)
 
 	free_ghost_cgroups(ghost);
 	put_nsproxy(ghost->nsproxy);
-	kmem_cache_free(kddm_info_cachep, ghost->kddm_info);
+	kmem_cache_free(gdm_info_cachep, ghost->gdm_info);
 
 	free_ghost_thread_info(ghost);
 
@@ -1718,7 +1718,7 @@ static int register_pids(struct task_struct *task, struct epm_action *action)
 		if (!thread_group_leader(task) && type > PIDTYPE_PID)
 			break;
 		if ((type != PIDTYPE_PID || action->type != EPM_REMOTE_CLONE)
-		    && task->pids[type].pid->kddm_obj)
+		    && task->pids[type].pid->gdm_obj)
 			krg_end_get_pid(task->pids[type].pid);
 	}
 
@@ -1743,13 +1743,13 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 {
 	struct pid *pid;
 	struct task_struct *newTsk;
-	struct task_kddm_object *obj;
+	struct task_gdm_object *obj;
 	unsigned long flags;
 	unsigned long stack_start;
 	unsigned long stack_size;
 	int *parent_tidptr;
 	int *child_tidptr;
-	struct children_kddm_object *parent_children_obj;
+	struct children_gdm_object *parent_children_obj;
 	pid_t real_parent_tgid;
 	int retval;
 
@@ -1761,7 +1761,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	 */
 	tskRecv->parent = tskRecv->real_parent = baby_sitter;
 
-	/* Re-attach to the children kddm object of the parent. */
+	/* Re-attach to the children gdm object of the parent. */
 	if (action->type == EPM_REMOTE_CLONE) {
 		real_parent_tgid = action->remote_clone.from_tgid;
 		/* We need writelock to declare the new child later. */

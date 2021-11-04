@@ -16,7 +16,7 @@
 #include <hcc/hotplug.h>
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 #include "pid.h"
 
@@ -26,21 +26,21 @@ struct pidmap_map {
 	hcc_node_t host[KERRIGHED_MAX_NODES];
 };
 
-static struct kddm_set *pidmap_map_kddm_set;
+static struct gdm_set *pidmap_map_gdm_set;
 static struct pidmap_map pidmap_map;
 static DECLARE_RWSEM(pidmap_map_rwsem);
 static struct pid_namespace *foreign_pidmap[KERRIGHED_MAX_NODES];
 
-static int pidmap_map_alloc_object(struct kddm_obj *obj_entry,
-				   struct kddm_set *set, objid_t objid)
+static int pidmap_map_alloc_object(struct gdm_obj *obj_entry,
+				   struct gdm_set *set, objid_t objid)
 {
 	BUG_ON(objid);
 	obj_entry->object = &pidmap_map;
 	return 0;
 }
 
-static int pidmap_map_first_touch(struct kddm_obj *obj_entry,
-				  struct kddm_set *set, objid_t objid,
+static int pidmap_map_first_touch(struct gdm_obj *obj_entry,
+				  struct gdm_set *set, objid_t objid,
 				  int flags)
 {
 	struct pidmap_map *map;
@@ -59,8 +59,8 @@ out:
 	return 0;
 }
 
-static int pidmap_map_import_object(struct rpc_desc *desc, struct kddm_set *set,
-				    struct kddm_obj *obj_entry, objid_t objid,
+static int pidmap_map_import_object(struct rpc_desc *desc, struct gdm_set *set,
+				    struct gdm_obj *obj_entry, objid_t objid,
 				    int flags)
 {
 	struct pidmap_map *map = obj_entry->object;
@@ -68,8 +68,8 @@ static int pidmap_map_import_object(struct rpc_desc *desc, struct kddm_set *set,
 	return rpc_unpack_type(desc, map->host);
 }
 
-static int pidmap_map_export_object(struct rpc_desc *desc, struct kddm_set *set,
-				    struct kddm_obj *obj_entry, objid_t objid,
+static int pidmap_map_export_object(struct rpc_desc *desc, struct gdm_set *set,
+				    struct gdm_obj *obj_entry, objid_t objid,
 				    int flags)
 {
 	struct pidmap_map *map = obj_entry->object;
@@ -78,7 +78,7 @@ static int pidmap_map_export_object(struct rpc_desc *desc, struct kddm_set *set,
 }
 
 static int pidmap_map_remove_object(void *object,
-				    struct kddm_set *set, objid_t objid)
+				    struct gdm_set *set, objid_t objid)
 {
 	return 0;
 }
@@ -98,7 +98,7 @@ int pidmap_map_read_lock(void)
 	struct pidmap_map *map;
 	int err = 0;
 
-	map = _kddm_get_object(pidmap_map_kddm_set, 0);
+	map = _gdm_get_object(pidmap_map_gdm_set, 0);
 	BUG_ON(!map);
 	if (IS_ERR(map))
 		err = PTR_ERR(map);
@@ -111,7 +111,7 @@ int pidmap_map_read_lock(void)
 void pidmap_map_read_unlock(void)
 {
 	up_read(&pidmap_map_rwsem);
-	_kddm_put_object(pidmap_map_kddm_set, 0);
+	_gdm_put_object(pidmap_map_gdm_set, 0);
 }
 
 int pidmap_map_write_lock(void)
@@ -119,7 +119,7 @@ int pidmap_map_write_lock(void)
 	struct pidmap_map *map;
 	int err = 0;
 
-	map = _kddm_grab_object(pidmap_map_kddm_set, 0);
+	map = _gdm_grab_object(pidmap_map_gdm_set, 0);
 	BUG_ON(!map);
 	if (IS_ERR(map))
 		err = PTR_ERR(map);
@@ -132,7 +132,7 @@ int pidmap_map_write_lock(void)
 void pidmap_map_write_unlock(void)
 {
 	up_write(&pidmap_map_rwsem);
-	_kddm_put_object(pidmap_map_kddm_set, 0);
+	_gdm_put_object(pidmap_map_gdm_set, 0);
 }
 
 static struct pid_namespace *pidmap_alloc(void)
@@ -212,13 +212,13 @@ void pidmap_map_cleanup(struct krg_namespace *krg_ns)
 
 	/*
 	 * Wait until all PIDs are ready to be reused
-	 * Restarted processes may have created pid kddm objects which logic
+	 * Restarted processes may have created pid gdm objects which logic
 	 * delays the actual free of the pidmap entry after the last user is
 	 * reaped.
 	 */
 	pid_wait_quiescent();
 
-	_kddm_remove_object(pidmap_map_kddm_set, 0);
+	_gdm_remove_object(pidmap_map_gdm_set, 0);
 
 	for (node = 0; node < KERRIGHED_MAX_NODES; node++) {
 		ns = foreign_pidmap[node];
@@ -428,12 +428,12 @@ cancel:
 void epm_pidmap_start(void)
 {
 	register_io_linker(PIDMAP_MAP_LINKER, &pidmap_map_io_linker);
-	pidmap_map_kddm_set = create_new_kddm_set(kddm_def_ns,
-						  PIDMAP_MAP_KDDM_ID,
+	pidmap_map_gdm_set = create_new_gdm_set(gdm_def_ns,
+						  PIDMAP_MAP_GDM_ID,
 						  PIDMAP_MAP_LINKER,
-						  KDDM_RR_DEF_OWNER,
+						  GDM_RR_DEF_OWNER,
 						  0, 0);
-	if (IS_ERR(pidmap_map_kddm_set))
+	if (IS_ERR(pidmap_map_gdm_set))
 		OOM;
 
 	rpc_register_void(EPM_PIDMAP_STEAL, handle_pidmap_steal, 0);

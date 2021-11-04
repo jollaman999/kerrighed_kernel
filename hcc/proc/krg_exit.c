@@ -152,28 +152,28 @@ err:
 }
 
 /*
- * If return value is not NULL, all variables are set, and the children kddm
+ * If return value is not NULL, all variables are set, and the children gdm
  * object will have to be unlocked with krg_children_unlock(@return),
  * and parent pid location will have to be unlocked with
  * krg_unlock_pid_location(*parent_pid_p)
  *
- * If return value is NULL, parent has no children kddm object. It is up to the
+ * If return value is NULL, parent has no children gdm object. It is up to the
  * caller to know whether original parent died or is still alive and never had a
- * children kddm object.
+ * children gdm object.
  */
 static
-struct children_kddm_object *
+struct children_gdm_object *
 parent_children_writelock_pid_location_lock(struct task_struct *task,
 					    pid_t *real_parent_tgid_p,
 					    pid_t *real_parent_pid_p,
 					    pid_t *parent_pid_p,
 					    hcc_node_t *parent_node_p)
 {
-	struct children_kddm_object *children_obj;
+	struct children_gdm_object *children_obj;
 	pid_t real_parent_tgid;
 	pid_t real_parent_pid;
 	pid_t parent_pid;
-	struct task_kddm_object *obj;
+	struct task_gdm_object *obj;
 	hcc_node_t parent_node = KERRIGHED_NODE_ID_NONE;
 	struct timespec backoff_time = {
 		.tv_sec = 1,
@@ -221,7 +221,7 @@ parent_children_writelock_pid_location_lock(struct task_struct *task,
 
 int krg_delayed_notify_parent(struct task_struct *leader)
 {
-	struct children_kddm_object *parent_children_obj;
+	struct children_gdm_object *parent_children_obj;
 	pid_t real_parent_tgid;
 	pid_t parent_pid, real_parent_pid;
 	hcc_node_t parent_node;
@@ -260,7 +260,7 @@ int krg_delayed_notify_parent(struct task_struct *leader)
 			 * Parent was not interested by notification,
 			 * but may have been woken up in do_wait and
 			 * should not see leader as a child
-			 * anymore. Remove leader from its children kddm
+			 * anymore. Remove leader from its children gdm
 			 * object before parent can access it again.
 			 */
 			krg_remove_child(parent_children_obj, leader);
@@ -472,11 +472,11 @@ err_cancel:
 	goto out;
 }
 
-struct children_kddm_object *
+struct children_gdm_object *
 krg_prepare_exit_ptrace_task(struct task_struct *tracer,
 			     struct task_struct *task)
 {
-	struct children_kddm_object *obj;
+	struct children_gdm_object *obj;
 	pid_t real_parent_tgid, real_parent_pid, parent_pid;
 	hcc_node_t parent_node;
 
@@ -510,7 +510,7 @@ krg_prepare_exit_ptrace_task(struct task_struct *tracer,
 }
 
 void krg_finish_exit_ptrace_task(struct task_struct *task,
-				 struct children_kddm_object *obj,
+				 struct children_gdm_object *obj,
 				 bool dead)
 {
 	pid_t parent_pid;
@@ -574,7 +574,7 @@ void krg_finish_exit_notify(struct task_struct *task, int signal, void *cookie)
 {
 #ifdef CONFIG_KRG_EPM
 	if (cookie) {
-		struct children_kddm_object *parent_children_obj = cookie;
+		struct children_gdm_object *parent_children_obj = cookie;
 		pid_t parent_pid;
 
 		if (task->task_obj)
@@ -587,7 +587,7 @@ void krg_finish_exit_notify(struct task_struct *task, int signal, void *cookie)
 			/*
 			 * Parent was not interested by notification, but may
 			 * have been woken up in do_wait and should not see tsk
-			 * as a child anymore. Remove tsk from its children kddm
+			 * as a child anymore. Remove tsk from its children gdm
 			 * object before parent can access it again.
 			 */
 			krg_remove_child(parent_children_obj, task);

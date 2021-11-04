@@ -17,26 +17,26 @@
 #include <linux/krg_hashtable.h>
 
 #include <hcc/procfs.h>
-#include <kddm/kddm.h>
-#include "kddm_bench.h"
+#include <gdm/gdm.h>
+#include "gdm_bench.h"
 
-/*  /proc/hcc/kddm          */
-static struct proc_dir_entry *procfs_kddm;
+/*  /proc/hcc/gdm          */
+static struct proc_dir_entry *procfs_gdm;
 
-/*  /proc/hcc/kddm/meminfo  */
+/*  /proc/hcc/gdm/meminfo  */
 static struct proc_dir_entry *procfs_meminfo;
 
-/*  /proc/hcc/kddm/kddmstat */
+/*  /proc/hcc/gdm/gdmstat */
 static struct proc_dir_entry *procfs_setstat;
 
-/*  /proc/hcc/kddm/bench */
+/*  /proc/hcc/gdm/bench */
 static struct proc_dir_entry *procfs_bench;
 
 
 
 /****************************************************************************/
 /*                                                                          */
-/*                         /proc/kddminfo Management                        */
+/*                         /proc/gdminfo Management                        */
 /*                                                                          */
 /****************************************************************************/
 
@@ -44,18 +44,18 @@ static struct proc_dir_entry *procfs_bench;
 
 static void *s_start(struct seq_file *m, loff_t *pos)
 {
-	struct kddm_set *set;
+	struct gdm_set *set;
 	unsigned long found;
 
 	if (*pos == 0)
 		seq_printf (m, "       Set ID           nr entries       nr objects     obj size      Set size     \n");
 
-	/* Assumption: KDDM set id 0 is never used. */
+	/* Assumption: GDM set id 0 is never used. */
 
-	down (&kddm_def_ns->table_sem);
-	set = __hashtable_find_next (kddm_def_ns->kddm_set_table, *pos,
+	down (&gdm_def_ns->table_sem);
+	set = __hashtable_find_next (gdm_def_ns->gdm_set_table, *pos,
 				     &found);
-	up (&kddm_def_ns->table_sem);
+	up (&gdm_def_ns->table_sem);
 	*pos = found;
 	return set;
 }
@@ -71,7 +71,7 @@ static void s_stop(struct seq_file *m, void *p)
 
 static int s_show(struct seq_file *m, void *p)
 {
-	struct kddm_set *set = p;
+	struct gdm_set *set = p;
 
 	seq_printf (m, "%20ld %16d %16d %10d %16d\n", set->id,
 		    atomic_read(&set->nr_entries),
@@ -83,7 +83,7 @@ static int s_show(struct seq_file *m, void *p)
 
 
 
-const struct seq_operations kddminfo_op = {
+const struct seq_operations gdminfo_op = {
         .start = s_start,
         .next = s_next,
         .stop = s_stop,
@@ -92,15 +92,15 @@ const struct seq_operations kddminfo_op = {
 
 
 
-static int kddminfo_open(struct inode *inode, struct file *file)
+static int gdminfo_open(struct inode *inode, struct file *file)
 {
-        return seq_open(file, &kddminfo_op);
+        return seq_open(file, &gdminfo_op);
 }
 
 
 
-static struct file_operations proc_kddminfo_operations = {
-        .open           = kddminfo_open,
+static struct file_operations proc_gdminfo_operations = {
+        .open           = gdminfo_open,
         .read           = seq_read,
         .llseek         = seq_lseek,
         .release        = seq_release,
@@ -110,13 +110,13 @@ static struct file_operations proc_kddminfo_operations = {
 
 /****************************************************************************/
 /*                                                                          */
-/*                     /proc/hcc/kddm  Management                     */
+/*                     /proc/hcc/gdm  Management                     */
 /*                                                                          */
 /****************************************************************************/
 
 
 
-/** Read function for /proc/hcc/kddm/meminfo entry.
+/** Read function for /proc/hcc/gdm/meminfo entry.
  *  @author Renaud Lottiaux
  *
  *  @param buffer           Buffer to write data to.
@@ -172,7 +172,7 @@ int read_meminfo (char *buffer,
 
 
 
-/** Read function for /proc/hcc/kddm/setstat entry.
+/** Read function for /proc/hcc/gdm/setstat entry.
  *  @author Renaud Lottiaux
  *
  *  @param buffer           Buffer to write data to.
@@ -220,7 +220,7 @@ int read_setstat (char *buffer,
 
 
 
-/** Read function for /proc/hcc/kddm/bench entry.
+/** Read function for /proc/hcc/gdm/bench entry.
  *  @author Renaud Lottiaux
  *
  *  @param buffer           Buffer to write data to.
@@ -240,7 +240,7 @@ int read_bench (char *buffer,
 		mybuffer = kmalloc (size, GFP_KERNEL);
 
 	if (offset == 0)
-		len = kddm_bench(mybuffer, size);
+		len = gdm_bench(mybuffer, size);
 
 	if (offset + count >= len)
 	{
@@ -259,84 +259,84 @@ int read_bench (char *buffer,
 
 
 
-/** Create the /proc/hcc/kddm directory and sub-directories.
+/** Create the /proc/hcc/gdm directory and sub-directories.
  *  @author Renaud Lottiaux
  */
-void create_kddm_proc_dir (void)
+void create_gdm_proc_dir (void)
 {
-  /* Create the /proc/hcc/kddm entry */
+  /* Create the /proc/hcc/gdm entry */
 
   BUG_ON (proc_hcc == NULL);
 
-  procfs_kddm = create_proc_entry ("kddm", S_IFDIR | S_IRUGO | S_IWUGO |
+  procfs_gdm = create_proc_entry ("gdm", S_IFDIR | S_IRUGO | S_IWUGO |
                                    S_IXUGO, proc_hcc);
 
-  if (procfs_kddm == NULL)
+  if (procfs_gdm == NULL)
     {
-      printk ("Cannot create /proc/hcc/kddm\n");
+      printk ("Cannot create /proc/hcc/gdm\n");
       return;
     }
 
-  /* Create the /proc/hcc/kddm/meminfo entry */
+  /* Create the /proc/hcc/gdm/meminfo entry */
 
-  procfs_meminfo = create_proc_entry ("meminfo", S_IRUGO, procfs_kddm);
+  procfs_meminfo = create_proc_entry ("meminfo", S_IRUGO, procfs_gdm);
 
   if (procfs_meminfo == NULL)
     {
-      printk ("Cannot create /proc/hcc/kddm/memfinfo\n");
+      printk ("Cannot create /proc/hcc/gdm/memfinfo\n");
       return;
     }
 
   procfs_meminfo->read_proc = read_meminfo;
 
-  /* Create the /proc/hcc/kddm/setstat entry */
+  /* Create the /proc/hcc/gdm/setstat entry */
 
-  procfs_setstat = create_proc_entry ("setstat", S_IRUGO, procfs_kddm);
+  procfs_setstat = create_proc_entry ("setstat", S_IRUGO, procfs_gdm);
   if (procfs_setstat == NULL)
     {
-      printk ("Cannot create /proc/hcc/kddm/setstat\n");
+      printk ("Cannot create /proc/hcc/gdm/setstat\n");
       return;
     }
 
   procfs_setstat->read_proc = read_setstat;
 
-  /* Create the /proc/hcc/kddm/bench entry */
+  /* Create the /proc/hcc/gdm/bench entry */
 
-  procfs_bench = create_proc_entry ("bench", S_IRUGO, procfs_kddm);
+  procfs_bench = create_proc_entry ("bench", S_IRUGO, procfs_gdm);
   if (procfs_bench == NULL) {
-	  printk ("Cannot create /proc/hcc/kddm/bench\n");
+	  printk ("Cannot create /proc/hcc/gdm/bench\n");
 	  return;
   }
 
   procfs_bench->read_proc = read_bench;
 
-  /* Create the /proc/kddminfo entry */
+  /* Create the /proc/gdminfo entry */
 
-  proc_create("kddminfo", S_IRUGO, NULL, &proc_kddminfo_operations);
+  proc_create("gdminfo", S_IRUGO, NULL, &proc_gdminfo_operations);
 }
 
 
 
-/** Delete the /proc/hcc/kddm directory and sub-directories.
+/** Delete the /proc/hcc/gdm directory and sub-directories.
  *  @author Renaud Lottiaux
  */
-void remove_kddm_proc_dir (void)
+void remove_gdm_proc_dir (void)
 {
-  procfs_deltree (procfs_kddm);
+  procfs_deltree (procfs_gdm);
 }
 
 
 
 /****************************************************************************/
 /*                                                                          */
-/*               /proc/hcc/kddm/<set_id>  Management                */
+/*               /proc/hcc/gdm/<set_id>  Management                */
 /*                                                                          */
 /****************************************************************************/
 
 
 
 
-/** Read function for /proc/hcc/kddm/<set_id>/setstat entry.
+/** Read function for /proc/hcc/gdm/<set_id>/setstat entry.
  *  @author Renaud Lottiaux
  *
  *  @param buffer           Buffer to write data to.
@@ -350,12 +350,12 @@ int read_set_id_setstat (char *buffer,
                           char **start,
                           off_t offset, int count, int *eof, void *data)
 {
-	struct kddm_set *set = NULL;
+	struct gdm_set *set = NULL;
 	static char mybuffer[80 * 5];
 	static int len;
 
 	if (offset == 0) {
-		set = _find_get_kddm_set (kddm_def_ns, (kddm_set_id_t) data);
+		set = _find_get_gdm_set (gdm_def_ns, (gdm_set_id_t) data);
 		BUG_ON (!set);
 
 		len = 0;
@@ -372,7 +372,7 @@ int read_set_id_setstat (char *buffer,
 		len += sprintf (mybuffer + len, "Flush Object:        %ld\n",
 				set->flush_object_counter);
 
-		put_kddm_set(set);
+		put_gdm_set(set);
 	}
 
   if (offset + count >= len)
@@ -390,7 +390,7 @@ int read_set_id_setstat (char *buffer,
 
 
 
-/** Read function for /proc/hcc/kddm/<set_id>/setinfo entry.
+/** Read function for /proc/hcc/gdm/<set_id>/setinfo entry.
  *  @author Renaud Lottiaux
  *
  *  @param buffer           Buffer to write data to.
@@ -404,7 +404,7 @@ int read_set_id_setinfo (char *buffer,
                           char **start,
                           off_t offset, int count, int *eof, void *data)
 {
-	struct kddm_set *set = NULL;
+	struct gdm_set *set = NULL;
 	static char mybuffer[80 * 20];
 
 	static int len;
@@ -412,7 +412,7 @@ int read_set_id_setinfo (char *buffer,
 	if (offset == 0) {
 		len = 0;
 
-		set = _find_get_kddm_set (kddm_def_ns, (kddm_set_id_t) data);
+		set = _find_get_gdm_set (gdm_def_ns, (gdm_set_id_t) data);
 		BUG_ON (!set);
 
 		if (set->iolinker == NULL)
@@ -423,7 +423,7 @@ int read_set_id_setinfo (char *buffer,
 					set->iolinker->linker_name);
 
 		len += sprintf (mybuffer + len, "Manager            : %d\n",
-				KDDM_SET_MGR (set));
+				GDM_SET_MGR (set));
 
 		len += sprintf (mybuffer + len, "Nr Objects         : %d\n",
 				atomic_read(&set->nr_objects));
@@ -447,12 +447,12 @@ int read_set_id_setinfo (char *buffer,
 				atomic_read(&set->count) - 1);
 
 		switch (set->def_owner) {
-		  case KDDM_RR_DEF_OWNER:
+		  case GDM_RR_DEF_OWNER:
 			  len += sprintf (mybuffer + len,
 					  "Default owner    : Round Robin\n");
 			  break;
 
-		  case KDDM_CUSTOM_DEF_OWNER:
+		  case GDM_CUSTOM_DEF_OWNER:
 			  len += sprintf (mybuffer + len,
 					  "Default owner    : Custom\n");
 			  break;
@@ -462,7 +462,7 @@ int read_set_id_setinfo (char *buffer,
 					  set->def_owner);
 		}
 
-		put_kddm_set(set);
+		put_gdm_set(set);
 	}
 
 	if (offset + count >= len) {
@@ -479,7 +479,7 @@ int read_set_id_setinfo (char *buffer,
 
 
 
-/** Read function for /proc/hcc/kddm/<set_id>/objectstates entry.
+/** Read function for /proc/hcc/gdm/<set_id>/objectstates entry.
  *  @author Gael Utard
  */
 int read_set_id_objectstates (char *buffer,
@@ -487,7 +487,7 @@ int read_set_id_objectstates (char *buffer,
                               off_t offset, int count, int *eof, void *data)
 {
 	int i, size = 0;
-	struct kddm_set *set;
+	struct gdm_set *set;
 
 	if (offset >= size) {
 		*eof = 1;
@@ -495,10 +495,10 @@ int read_set_id_objectstates (char *buffer,
 	}
 
 	for (i = 0; offset + i < size && i < count; i++) {
-		struct kddm_obj *obj_entry;
+		struct gdm_obj *obj_entry;
 
-		obj_entry = _get_kddm_obj_entry(kddm_def_ns,
-						(kddm_set_id_t) data,
+		obj_entry = _get_gdm_obj_entry(gdm_def_ns,
+						(gdm_set_id_t) data,
 						offset + i, &set);
 
 		if (obj_entry != NULL) {
@@ -530,7 +530,7 @@ int read_set_id_objectstates (char *buffer,
 			default:
 				buffer[i] = '?';
 			}
-			put_kddm_obj_entry(set, obj_entry, offset + i);
+			put_gdm_obj_entry(set, obj_entry, offset + i);
 		}
 		else
 			buffer[i] = 'I';
@@ -541,25 +541,25 @@ int read_set_id_objectstates (char *buffer,
 
 
 
-/* Create a /proc/hcc/kddm/<set_id> directory and sub-directories. */
+/* Create a /proc/hcc/gdm/<set_id> directory and sub-directories. */
 
-struct proc_dir_entry *create_kddm_proc (kddm_set_id_t set_id)
+struct proc_dir_entry *create_gdm_proc (gdm_set_id_t set_id)
 {
 	struct proc_dir_entry *entry, *objectstates, *stat, *info;
 	char buffer[24];
 
-	BUG_ON (procfs_kddm == NULL);
+	BUG_ON (procfs_gdm == NULL);
 
-	/* Create the /proc/hcc/kddm/<set_id> entry */
+	/* Create the /proc/hcc/gdm/<set_id> entry */
 
 	snprintf (buffer, 24, "%ld", set_id);
 	entry = create_proc_entry (buffer, S_IFDIR|S_IRUGO|S_IWUGO|S_IXUGO,
-				   procfs_kddm);
+				   procfs_gdm);
 
 	if (entry == NULL)
 		return NULL;
 
-	/* Create the /proc/hcc/kddm/<set_id>/objectstates entry */
+	/* Create the /proc/hcc/gdm/<set_id>/objectstates entry */
 
 	objectstates = create_proc_entry ("objectstates", S_IRUGO, entry);
 
@@ -569,7 +569,7 @@ struct proc_dir_entry *create_kddm_proc (kddm_set_id_t set_id)
 	objectstates->data = (void *) set_id;
 	objectstates->read_proc = read_set_id_objectstates;
 
-	/* Create the /proc/hcc/kddm/<set_id>/setstat entry */
+	/* Create the /proc/hcc/gdm/<set_id>/setstat entry */
 
 	stat = create_proc_entry ("setstat", S_IRUGO, entry);
 	if (stat == NULL) {
@@ -581,7 +581,7 @@ struct proc_dir_entry *create_kddm_proc (kddm_set_id_t set_id)
 	stat->data = (void *) set_id;
 	stat->read_proc = read_set_id_setstat;
 
-	/* Create the /proc/hcc/kddm/<set_id>/setinfo entry */
+	/* Create the /proc/hcc/gdm/<set_id>/setinfo entry */
 
 	info = create_proc_entry ("setinfo", S_IRUGO, entry);
 	if (info == NULL)
@@ -595,10 +595,10 @@ struct proc_dir_entry *create_kddm_proc (kddm_set_id_t set_id)
 
 
 
-/* Remove a /proc/hcc/kddm/<set_id> directory and sub-directories. */
+/* Remove a /proc/hcc/gdm/<set_id> directory and sub-directories. */
 
 
-void remove_kddm_proc (struct proc_dir_entry *proc_entry)
+void remove_gdm_proc (struct proc_dir_entry *proc_entry)
 {
   if (proc_entry != NULL)
     procfs_deltree (proc_entry);
@@ -617,9 +617,9 @@ void remove_kddm_proc (struct proc_dir_entry *proc_entry)
 /** Init Kddm proc stuffs.
  *  @author Renaud Lottiaux
  */
-int procfs_kddm_init (void)
+int procfs_gdm_init (void)
 {
-	create_kddm_proc_dir ();
+	create_gdm_proc_dir ();
 
 	return 0;
 };
@@ -629,9 +629,9 @@ int procfs_kddm_init (void)
 /** Finalize Kddm proc stuffs.
  *  @author Renaud Lottiaux
  */
-int procfs_kddm_finalize (void)
+int procfs_gdm_finalize (void)
 {
-	remove_kddm_proc_dir ();
+	remove_gdm_proc_dir ();
 
 	return 0;
 };

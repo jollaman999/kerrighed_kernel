@@ -199,7 +199,7 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 	rpc_end(desc, 0);
 
 	if (remote_pid < 0) {
-		struct task_kddm_object *obj;
+		struct task_gdm_object *obj;
 
 		mm_struct_unpin(tsk->mm);
 

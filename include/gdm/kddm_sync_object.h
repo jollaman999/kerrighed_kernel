@@ -1,14 +1,14 @@
-/** KDDM sync object.
- *  @file kddm_sync_object.h
+/** GDM sync object.
+ *  @file gdm_sync_object.h
  *
- *  Definition of KDDM interface.
+ *  Definition of GDM interface.
  *  @author Renaud Lottiaux
  */
 
-#ifndef __KDDM_SYNC_OBJECT__
-#define __KDDM_SYNC_OBJECT__
+#ifndef __GDM_SYNC_OBJECT__
+#define __GDM_SYNC_OBJECT__
 
-#include <kddm/kddm_set.h>
+#include <gdm/gdm_set.h>
 
 
 /*--------------------------------------------------------------------------*
@@ -20,9 +20,9 @@
 
 
 /** Sync an object from local memory */
-int kddm_sync_frozen_object(struct kddm_ns *ns, kddm_set_id_t set_id,
+int gdm_sync_frozen_object(struct gdm_ns *ns, gdm_set_id_t set_id,
 			    objid_t objid);
 
-int _kddm_sync_frozen_object(struct kddm_set *set, objid_t objid);
+int _gdm_sync_frozen_object(struct gdm_set *set, objid_t objid);
 
 #endif

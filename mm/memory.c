@@ -917,7 +917,7 @@ static unsigned long zap_pte_range(struct mmu_gather *tlb,
 		}
 
 #ifdef CONFIG_KRG_MM
-		if (vma->vm_mm->anon_vma_kddm_set &&
+		if (vma->vm_mm->anon_vma_gdm_set &&
 		    !(details && (details->check_mapping ||
 				  details->nonlinear_vma ))) {
 			KRGFCT(kh_zap_pte)(vma->vm_mm, addr, pte);
@@ -2327,7 +2327,7 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	}
 #ifdef CONFIG_KRG_MM
 	else {
-		if (vma->vm_flags & VM_KDDM) {
+		if (vma->vm_flags & VM_GDM) {
 			page_cache_get(old_page);
 			goto gotten;
 		}
@@ -2447,7 +2447,7 @@ gotten:
 		goto oom;
 
 #ifdef CONFIG_KRG_MM
-	if (need_vma_link_check && mm->anon_vma_kddm_set)
+	if (need_vma_link_check && mm->anon_vma_gdm_set)
 		krg_check_vma_link(vma);
 	if (vma->vm_ops && vma->vm_ops->wppage) {
 		new_page = vma->vm_ops->wppage(vma, address & PAGE_MASK,
@@ -2863,7 +2863,7 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	int exclusive = 0;
 	int ret = 0;
 #ifdef CONFIG_KRG_MM
-	struct kddm_obj *obj_entry = NULL;
+	struct gdm_obj *obj_entry = NULL;
 #endif
 
 	if (!pte_unmap_same(mm, pmd, page_table, orig_pte))
@@ -2994,13 +2994,13 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 #ifdef CONFIG_KRG_MM
 	if (obj_entry) {
 		BUG_ON (!swap_pte_obj_entry(&orig_pte));
-		wait_lock_kddm_page(page);
+		wait_lock_gdm_page(page);
 		BUG_ON(page->obj_entry && page->obj_entry != obj_entry);
 		if (swap_pte_page(obj_entry->object))
 			obj_entry->object = page;
                 page->obj_entry = obj_entry;
-                atomic_inc(&page->_kddm_count);
-		unlock_kddm_page(page);
+                atomic_inc(&page->_gdm_count);
+		unlock_gdm_page(page);
                 pte = pte_wrprotect(pte);
 	}
 #endif
@@ -3165,7 +3165,7 @@ static int __do_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 			anon = 1;
 			return VM_FAULT_OOM;
 		}
-		if (mm->anon_vma_kddm_set)
+		if (mm->anon_vma_gdm_set)
 			krg_check_vma_link(vma);
 	}
 #endif
@@ -3182,10 +3182,10 @@ static int __do_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 
 #ifdef CONFIG_KRG_MM
 	/*
-	 * If we are in a KDDM linked VMA, all the mapping job has been done
+	 * If we are in a GDM linked VMA, all the mapping job has been done
 	 * by the Kerrighed MM layer.
 	 */
-	if (vma->vm_flags & VM_KDDM)
+	if (vma->vm_flags & VM_GDM)
 		return ret;
 #endif
 

@@ -12,10 +12,10 @@ int share_existing_semundo_proc_list(struct task_struct *tsk,
 				     unique_id_t undo_list_id);
 int create_semundo_proc_list(struct task_struct *tsk);
 
-struct kddm_set;
+struct gdm_set;
 
-struct kddm_set *krgipc_ops_undolist_set(struct krgipc_ops *ipcops);
-struct kddm_set *task_undolist_set(struct task_struct *task);
+struct gdm_set *krgipc_ops_undolist_set(struct krgipc_ops *ipcops);
+struct gdm_set *task_undolist_set(struct task_struct *task);
 
 struct semundo_list_object;
 int add_semundo_to_proc_list(struct semundo_list_object *undo_list, int semid);

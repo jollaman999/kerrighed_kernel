@@ -132,16 +132,16 @@ static inline struct task_struct *find_task_by_kpid(pid_t pid)
 
 #ifdef CONFIG_KRG_EPM
 
-/* Task KDDM object link */
-struct pid_kddm_object;
-struct task_kddm_object;
+/* Task GDM object link */
+struct pid_gdm_object;
+struct task_gdm_object;
 struct pid;
 
 /* Must be called under rcu_read_lock() */
-struct task_kddm_object *krg_pid_task(struct pid *pid);
+struct task_gdm_object *krg_pid_task(struct pid *pid);
 
 /* Must be called under rcu_read_lock() */
-void krg_pid_unlink_task(struct pid_kddm_object *obj);
+void krg_pid_unlink_task(struct pid_gdm_object *obj);
 
 /* Pid reference tracking */
 struct pid *krg_get_pid(int nr);

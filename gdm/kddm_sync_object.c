@@ -1,36 +1,36 @@
-/** KDDM sync object
- *  @file kddm_sync_object.c
+/** GDM sync object
+ *  @file gdm_sync_object.c
  *
- *  Implementation of KDDM sync object function.
+ *  Implementation of GDM sync object function.
  *
  *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
  */
 #include <linux/module.h>
 
-#include <kddm/kddm.h>
-#include <kddm/object_server.h>
+#include <gdm/gdm.h>
+#include <gdm/object_server.h>
 #include "protocol_action.h"
 
 
 /** Synchronize an object with its attached physical device.
  *  @author Renaud Lottiaux
  *
- *  @param set        KDDM set hosting the object.
+ *  @param set        GDM set hosting the object.
  *  @param obj_entry  Object entry of the object to sync.
  *  @param objid      Identifier of the object to sync.
  *  @param dest       Identifier of the node to send object to if needed.
  *  @return           0 if everything OK, -1 otherwise.
  */
-int _kddm_sync_frozen_object(struct kddm_set *set,
+int _gdm_sync_frozen_object(struct gdm_set *set,
 			     objid_t objid)
 {
-	kddm_obj_state_t new_state = INV_COPY;
-	struct kddm_obj *obj_entry;
+	gdm_obj_state_t new_state = INV_COPY;
+	struct gdm_obj *obj_entry;
 	int res = -1;
 
-	BUG_ON(!kddm_ft_linked(set));
+	BUG_ON(!gdm_ft_linked(set));
 
-	obj_entry = __get_kddm_obj_entry(set, objid);
+	obj_entry = __get_gdm_obj_entry(set, objid);
 	if (obj_entry == NULL)
 		return -ENOENT;
 
@@ -52,8 +52,8 @@ int _kddm_sync_frozen_object(struct kddm_set *set,
 	}
 
 	if (I_AM_DEFAULT_OWNER(set, objid)) {
-		put_kddm_obj_entry(set, obj_entry, objid);
-		res = kddm_io_sync_object(obj_entry, set, objid);
+		put_gdm_obj_entry(set, obj_entry, objid);
+		res = gdm_io_sync_object(obj_entry, set, objid);
 	}
 	else
 		request_sync_object_and_unlock(set, obj_entry, objid,
@@ -61,18 +61,18 @@ int _kddm_sync_frozen_object(struct kddm_set *set,
 
 	return res;
 }
-EXPORT_SYMBOL(_kddm_sync_frozen_object);
+EXPORT_SYMBOL(_gdm_sync_frozen_object);
 
-int kddm_sync_frozen_object(struct kddm_ns *ns, kddm_set_id_t set_id,
+int gdm_sync_frozen_object(struct gdm_ns *ns, gdm_set_id_t set_id,
 			    objid_t objid)
 {
-	struct kddm_set *set;
+	struct gdm_set *set;
 	int res;
 
-	set = _find_get_kddm_set (ns, set_id);
-	res = _kddm_sync_frozen_object(set, objid);
-	put_kddm_set(set);
+	set = _find_get_gdm_set (ns, set_id);
+	res = _gdm_sync_frozen_object(set, objid);
+	put_gdm_set(set);
 
 	return res;
 }
-EXPORT_SYMBOL(kddm_sync_frozen_object);
+EXPORT_SYMBOL(gdm_sync_frozen_object);

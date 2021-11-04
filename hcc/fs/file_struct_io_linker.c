@@ -5,7 +5,7 @@
  */
 
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/file.h>
 #include "file_struct_io_linker.h"
 
@@ -17,8 +17,8 @@ struct kmem_cache *dvfs_file_cachep;
 /*                                                                           */
 /*****************************************************************************/
 
-int file_alloc_object (struct kddm_obj * obj_entry,
-		       struct kddm_set * ctnr,
+int file_alloc_object (struct gdm_obj * obj_entry,
+		       struct gdm_set * ctnr,
 		       objid_t objid)
 {
 	struct dvfs_file_struct *dvfs_file;
@@ -33,8 +33,8 @@ int file_alloc_object (struct kddm_obj * obj_entry,
 	return 0;
 }
 
-int file_first_touch (struct kddm_obj * obj_entry,
-		      struct kddm_set * ctnr,
+int file_first_touch (struct gdm_obj * obj_entry,
+		      struct gdm_set * ctnr,
 		      objid_t objid,
 		      int flags)
 {
@@ -49,7 +49,7 @@ int file_first_touch (struct kddm_obj * obj_entry,
  *  @param  objid     Id of the object to remove.
  */
 int file_remove_object (void *object,
-			struct kddm_set * ctnr,
+			struct gdm_set * ctnr,
 			objid_t objid)
 {
 	struct dvfs_file_struct *dvfs_file;
@@ -71,8 +71,8 @@ int file_remove_object (void *object,
  *  @param  obj_entry  Object entry of the object to export.
  */
 int file_export_object (struct rpc_desc *desc,
-			struct kddm_set *set,
-			struct kddm_obj *obj_entry,
+			struct gdm_set *set,
+			struct gdm_obj *obj_entry,
 			objid_t objid,
 			int flags)
 {
@@ -91,8 +91,8 @@ int file_export_object (struct rpc_desc *desc,
  *  @param  _buffer   Data to import in the object.
  */
 int file_import_object (struct rpc_desc *desc,
-			struct kddm_set *set,
-			struct kddm_obj *obj_entry,
+			struct gdm_set *set,
+			struct gdm_obj *obj_entry,
 			objid_t objid,
 			int flags)
 {

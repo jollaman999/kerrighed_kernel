@@ -10,7 +10,7 @@
 #include <linux/module.h>
 #include <linux/proc_fs.h>
 
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/file.h>
 #include "file_struct_io_linker.h"
 #ifdef CONFIG_KRG_EPM

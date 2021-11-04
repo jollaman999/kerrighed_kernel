@@ -12,7 +12,7 @@
 /*--------------------------------------------------------------------------*/
 
 struct app_struct;
-struct app_kddm_object;
+struct app_gdm_object;
 struct rpc_desc;
 
 void clear_shared_objects(struct app_struct *app);
@@ -21,14 +21,14 @@ void destroy_shared_objects(struct app_struct *app,
 			    struct task_struct *fake);
 
 int global_chkpt_shared(struct rpc_desc *desc,
-			struct app_kddm_object *obj);
+			struct app_gdm_object *obj);
 
 int local_chkpt_shared(struct rpc_desc *desc,
 		       struct app_struct *app,
 		       int chkpt_sn);
 
 int global_restart_shared(struct rpc_desc *desc,
-			  struct app_kddm_object *obj,
+			  struct app_gdm_object *obj,
 			  struct restart_request *req);
 
 int local_restart_shared(struct rpc_desc *desc,

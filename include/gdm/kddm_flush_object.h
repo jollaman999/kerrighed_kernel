@@ -1,14 +1,14 @@
-/** KDDM flush object.
- *  @file kddm_flush_object.h
+/** GDM flush object.
+ *  @file gdm_flush_object.h
  *
- *  Definition of KDDM interface.
+ *  Definition of GDM interface.
  *  @author Renaud Lottiaux
  */
 
-#ifndef __KDDM_FLUSH_OBJECT__
-#define __KDDM_FLUSH_OBJECT__
+#ifndef __GDM_FLUSH_OBJECT__
+#define __GDM_FLUSH_OBJECT__
 
-#include <kddm/kddm_set.h>
+#include <gdm/gdm_set.h>
 
 
 /*--------------------------------------------------------------------------*
@@ -20,10 +20,10 @@
 
 
 /** Flush an object from local memory */
-int kddm_flush_object(struct kddm_ns *ns, kddm_set_id_t set_id, objid_t objid,
+int gdm_flush_object(struct gdm_ns *ns, gdm_set_id_t set_id, objid_t objid,
 		      hcc_node_t dest);
 
-int _kddm_flush_object(struct kddm_set *set, objid_t objid,
+int _gdm_flush_object(struct gdm_set *set, objid_t objid,
 		       hcc_node_t dest);
 
 #endif

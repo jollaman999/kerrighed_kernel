@@ -96,7 +96,7 @@ struct sched_param {
 #include <hcc/capabilities.h>
 #endif
 #ifdef CONFIG_KRG_EPM
-#include <kddm/kddm_types.h>
+#include <gdm/gdm_types.h>
 #include <hcc/sys/types.h>
 #endif
 #include <asm/processor.h>
@@ -512,7 +512,7 @@ struct sighand_struct {
 	wait_queue_head_t	signalfd_wqh;
 #ifdef CONFIG_KRG_EPM
 	objid_t			krg_objid;
-	struct sighand_struct_kddm_object *kddm_obj;
+	struct sighand_struct_gdm_object *gdm_obj;
 #endif
 };
 
@@ -734,7 +734,7 @@ struct signal_struct {
 #endif /* __GENKSYMS__ */
 #ifdef CONFIG_KRG_EPM
 	objid_t krg_objid;
-	struct signal_struct_kddm_object *kddm_obj;
+	struct signal_struct_gdm_object *gdm_obj;
 #endif
 };
 
@@ -822,7 +822,7 @@ struct user_struct {
 #endif
 #ifdef CONFIG_KRG_EPM
 	objid_t krg_objid;
-	struct signal_struct_kddm_object *kddm_obj;
+	struct signal_struct_gdm_object *gdm_obj;
 #endif
 };
 
@@ -1779,17 +1779,17 @@ struct task_struct {
 	atomic_t krg_cap_unavailable[CAP_SIZE];
 	atomic_t krg_cap_unavailable_private[CAP_SIZE];
 #endif
-#ifdef CONFIG_KRG_KDDM
-	struct kddm_info_struct *kddm_info;
+#ifdef CONFIG_KRG_GDM
+	struct gdm_info_struct *gdm_info;
 #endif
 #ifdef CONFIG_KRG_PROC
-	struct task_kddm_object *task_obj;
+	struct task_gdm_object *task_obj;
 #endif
 #ifdef CONFIG_KRG_EPM
 	int krg_action_flags;
 	struct task_struct *effective_current;
-	struct children_kddm_object *parent_children_obj;
-	struct children_kddm_object *children_obj;
+	struct children_gdm_object *parent_children_obj;
+	struct children_gdm_object *children_obj;
 	struct app_struct *application;
 #endif
 #ifdef CONFIG_KRG_SCHED

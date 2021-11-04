@@ -41,7 +41,7 @@
 #include "util.h"
 
 #ifdef CONFIG_KRG_IPC
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include "ipcmap_io_linker.h"
 #include "ipc_handler.h"
 #include "msg_handler.h"

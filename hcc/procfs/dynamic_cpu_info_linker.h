@@ -10,8 +10,8 @@
 #include <linux/irqnr.h>
 #include <linux/kernel_stat.h>
 #include <hcc/cpu_id.h>
-#include <kddm/kddm.h>
-#include <kddm/object_server.h>
+#include <gdm/gdm.h>
+#include <gdm/object_server.h>
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -34,7 +34,7 @@ typedef struct {
  *                                                                          *
  *--------------------------------------------------------------------------*/
 
-extern struct kddm_set *dynamic_cpu_info_kddm_set;
+extern struct gdm_set *dynamic_cpu_info_gdm_set;
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -55,9 +55,9 @@ int dynamic_cpu_info_init(void);
 static inline krg_dynamic_cpu_info_t *get_dynamic_cpu_info(int node_id,
 							   int cpu_id)
 {
-	return _fkddm_get_object(dynamic_cpu_info_kddm_set,
+	return _fgdm_get_object(dynamic_cpu_info_gdm_set,
 				 __krg_cpu_id(node_id, cpu_id),
-				 KDDM_NO_FREEZE|KDDM_NO_FT_REQ);
+				 GDM_NO_FREEZE|GDM_NO_FT_REQ);
 }
 
 #endif /* DYNAMIC_CPU_INFO LINKER_H */

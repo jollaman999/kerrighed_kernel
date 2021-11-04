@@ -1,14 +1,14 @@
-/** KDDM set object.
- *  @file kddm_set_object.h
+/** GDM set object.
+ *  @file gdm_set_object.h
  *
- *  Definition of KDDM interface.
+ *  Definition of GDM interface.
  *  @author Renaud Lottiaux
  */
 
-#ifndef __KDDM_SET_OBJECT__
-#define __KDDM_SET_OBJECT__
+#ifndef __GDM_SET_OBJECT__
+#define __GDM_SET_OBJECT__
 
-#include <kddm/kddm_set.h>
+#include <gdm/gdm_set.h>
 
 
 /*--------------------------------------------------------------------------*
@@ -20,15 +20,15 @@
 
 
 /** Set the initial value of an object. */
-int _kddm_set_object_state(struct kddm_set *set, objid_t objid, void *object,
-			   kddm_obj_state_t state);
+int _gdm_set_object_state(struct gdm_set *set, objid_t objid, void *object,
+			   gdm_obj_state_t state);
 
-int kddm_set_object_state(struct kddm_ns *ns, kddm_set_id_t set_id,
-			  objid_t objid, void *object, kddm_obj_state_t state);
+int gdm_set_object_state(struct gdm_ns *ns, gdm_set_id_t set_id,
+			  objid_t objid, void *object, gdm_obj_state_t state);
 
-int _kddm_set_object(struct kddm_set *set, objid_t objid, void *object);
+int _gdm_set_object(struct gdm_set *set, objid_t objid, void *object);
 
-int kddm_set_object(struct kddm_ns *ns, kddm_set_id_t set_id, objid_t objid,
+int gdm_set_object(struct gdm_ns *ns, gdm_set_id_t set_id, objid_t objid,
 		    void *object);
 
 #endif

@@ -183,7 +183,7 @@ static int krg_set_father_cap(struct task_struct *tsk,
 		read_unlock(&tasklist_lock);
 #ifdef CONFIG_KRG_EPM
 	} else {
-		struct children_kddm_object *parent_children_obj;
+		struct children_gdm_object *parent_children_obj;
 		pid_t real_parent_tgid;
 		pid_t parent_pid, real_parent_pid;
 		int retval;
@@ -289,7 +289,7 @@ static int krg_get_father_cap(struct task_struct *son,
 		read_unlock(&tasklist_lock);
 #ifdef CONFIG_KRG_EPM
 	} else {
-		struct children_kddm_object *parent_children_obj;
+		struct children_gdm_object *parent_children_obj;
 		pid_t real_parent_tgid;
 		pid_t parent_pid, real_parent_pid;
 		int retval;

@@ -86,9 +86,9 @@
 #ifdef CONFIG_KRG_EPM
 #include <hcc/action.h>
 #endif
-#ifdef CONFIG_KRG_KDDM
+#ifdef CONFIG_KRG_GDM
 #include <hcc/krgnodemask.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #endif
 #if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
 #include <hcc/pid.h>
@@ -768,9 +768,9 @@ int epm_target_show(struct task_struct *task, char *buffer)
 }
 #endif
 
-#ifdef CONFIG_KRG_KDDM
+#ifdef CONFIG_KRG_GDM
 
-static int proc_kddm_print_wq(char *buffer, wait_queue_head_t *q)
+static int proc_gdm_print_wq(char *buffer, wait_queue_head_t *q)
 {
 	wait_queue_t *curr;
 	int len = 0;
@@ -783,16 +783,16 @@ static int proc_kddm_print_wq(char *buffer, wait_queue_head_t *q)
 	return len;
 }
 
-static int proc_tid_kddm(struct task_struct *task, char *buffer)
+static int proc_tid_gdm(struct task_struct *task, char *buffer)
 {
-	struct kddm_info_struct info;
-	struct kddm_set *set;
-	struct kddm_obj *obj_entry;
+	struct gdm_info_struct info;
+	struct gdm_set *set;
+	struct gdm_obj *obj_entry;
 	int len = 0;
 
-	if (!task->kddm_info)
+	if (!task->gdm_info)
 		goto done;
-	info = *task->kddm_info;
+	info = *task->gdm_info;
 
 	len += sprintf (buffer + len, "Get Object:          %ld\n",
 			info.get_object_counter);
@@ -807,7 +807,7 @@ static int proc_tid_kddm(struct task_struct *task, char *buffer)
 			info.flush_object_counter);
 
 
-	obj_entry = get_kddm_obj_entry(info.ns_id, info.set_id, info.obj_id,
+	obj_entry = get_gdm_obj_entry(info.ns_id, info.set_id, info.obj_id,
 				       &set);
 	if (!set)
 		goto done;
@@ -835,16 +835,16 @@ static int proc_tid_kddm(struct task_struct *task, char *buffer)
 	len += krgnodemask_scnprintf(buffer + len, PAGE_SIZE - len,
 				     obj_entry->master_obj.copyset);
 	len += sprintf (buffer + len, "\n  * Waiting processes: ");
-	len += proc_kddm_print_wq (buffer + len, &obj_entry->waiting_tsk);
+	len += proc_gdm_print_wq (buffer + len, &obj_entry->waiting_tsk);
 	len += sprintf (buffer + len, "\n");
 unlock:
-	put_kddm_obj_entry(set, obj_entry, info.obj_id);
+	put_gdm_obj_entry(set, obj_entry, info.obj_id);
 done:
 
 	return len;
 }
 
-#endif /* CONFIG_KRG_KDDM */
+#endif /* CONFIG_KRG_GDM */
 
 /************************************************************************/
 /*                       Here the fs part begins                        */
@@ -3641,8 +3641,8 @@ static const struct pid_entry tid_base_stuff[] = {
 	INF("epm_source",S_IRUGO, epm_source_show),
 	INF("epm_target",S_IRUGO, epm_target_show),
 #endif
-#ifdef CONFIG_KRG_KDDM
-	INF("kddm",      S_IRUGO, proc_tid_kddm),
+#ifdef CONFIG_KRG_GDM
+	INF("gdm",      S_IRUGO, proc_tid_gdm),
 #endif
 	REG("maps",      S_IRUGO, proc_maps_operations),
 #ifdef CONFIG_NUMA

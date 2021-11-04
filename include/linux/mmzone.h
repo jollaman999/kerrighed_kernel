@@ -164,7 +164,7 @@ static inline int is_file_lru(enum lru_list l)
 }
 
 #ifdef CONFIG_KRG_MM
-static inline int is_kddm_lru(enum lru_list l)
+static inline int is_gdm_lru(enum lru_list l)
 {
 	return (l == LRU_INACTIVE_MIGR || l == LRU_ACTIVE_MIGR);
 }
@@ -321,7 +321,7 @@ struct zone_reclaim_stat {
 	 * The anon LRU stats live in [0], file LRU stats in [1]
 	 */
 #ifdef CONFIG_KRG_MM
-	/* The KDDM migratable LRU stats live in [2] */
+	/* The GDM migratable LRU stats live in [2] */
 	unsigned long		recent_rotated[3];
 	unsigned long		recent_scanned[3];
 #else

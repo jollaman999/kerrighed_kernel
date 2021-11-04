@@ -398,7 +398,7 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 	if (!pid)
 		goto out;
 #ifdef CONFIG_KRG_EPM
-	pid->kddm_obj = NULL;
+	pid->gdm_obj = NULL;
 	BUG_ON(req_nr && !is_krg_pid_ns_root(ns));
 #endif
 

@@ -79,7 +79,7 @@ deffct(rpc);
 #ifdef CONFIG_KRG_STREAM
 deffct(stream);
 #endif
-deffct(kddm);
+deffct(gdm);
 deffct(kermm);
 #ifdef CONFIG_KRG_DVFS
 deffct(dvfs);
@@ -363,9 +363,9 @@ int init_hcc_upper_layers(void)
 {
 	printk("Init Kerrighed distributed services...\n");
 
-#ifdef CONFIG_KRG_KDDM
-	if (init_kddm())
-		goto err_kddm;
+#ifdef CONFIG_KRG_GDM
+	if (init_gdm())
+		goto err_gdm;
 #endif
 
 #ifdef CONFIG_KRG_EPM
@@ -454,9 +454,9 @@ int init_hcc_upper_layers(void)
 	cleanup_kermm();
       err_kermm:
 #endif
-#ifdef CONFIG_KRG_KDDM
-	cleanup_kddm();
-      err_kddm:
+#ifdef CONFIG_KRG_GDM
+	cleanup_gdm();
+      err_gdm:
 #endif
 #ifdef CONFIG_KRG_STREAM
 	cleanup_stream();

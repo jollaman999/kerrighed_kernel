@@ -10,7 +10,7 @@
 #include <linux/msg.h>
 #include <linux/sem.h>
 #include <linux/nsproxy.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/pid.h>
 #include <net/krgrpc/rpc.h>
 #include <hcc/hotplug.h>
@@ -24,22 +24,22 @@
 
 struct semkrgops {
 	struct krgipc_ops krgops;
-	struct kddm_set *undo_list_kddm_set;
+	struct gdm_set *undo_list_gdm_set;
 
 	/* unique_id generator for sem_undo_list identifier */
 	unique_id_root_t undo_list_unique_id_root;
 };
 
-struct kddm_set *krgipc_ops_undolist_set(struct krgipc_ops *ipcops)
+struct gdm_set *krgipc_ops_undolist_set(struct krgipc_ops *ipcops)
 {
 	struct semkrgops *semops;
 
 	semops = container_of(ipcops, struct semkrgops, krgops);
 
-	return semops->undo_list_kddm_set;
+	return semops->undo_list_gdm_set;
 }
 
-struct kddm_set *task_undolist_set(struct task_struct *task)
+struct gdm_set *task_undolist_set(struct task_struct *task)
 {
 	struct ipc_namespace *ns;
 
@@ -66,7 +66,7 @@ static struct kern_ipc_perm *kcb_ipc_sem_lock(struct ipc_ids *ids, int id)
 
 	index = ipcid_to_idx(id);
 
-	sem_object = _kddm_grab_object_no_ft(ids->krgops->data_kddm_set, index);
+	sem_object = _gdm_grab_object_no_ft(ids->krgops->data_gdm_set, index);
 
 	if (!sem_object)
 		goto error;
@@ -85,7 +85,7 @@ static struct kern_ipc_perm *kcb_ipc_sem_lock(struct ipc_ids *ids, int id)
 	return &(sma->sem_perm);
 
 error:
-	_kddm_put_object(ids->krgops->data_kddm_set, index);
+	_gdm_put_object(ids->krgops->data_gdm_set, index);
 	rcu_read_unlock();
 
 	return ERR_PTR(-EINVAL);
@@ -97,7 +97,7 @@ static void kcb_ipc_sem_unlock(struct kern_ipc_perm *ipcp)
 	long task_state;
 
 	/*
-	 * We may enter in interruptible state, and kddm_put_object might
+	 * We may enter in interruptible state, and gdm_put_object might
 	 * schedule and reset to running.
 	 * Fortunately, wakeup only happens with ipcp->mutex held, so we can
 	 * restore the state right before mutex_unlock.
@@ -109,7 +109,7 @@ static void kcb_ipc_sem_unlock(struct kern_ipc_perm *ipcp)
 	if (ipcp->deleted)
 		deleted = 1;
 
-	_kddm_put_object(ipcp->krgops->data_kddm_set, index);
+	_gdm_put_object(ipcp->krgops->data_gdm_set, index);
 
 	__set_current_state(task_state);
 
@@ -124,12 +124,12 @@ static struct kern_ipc_perm *kcb_ipc_sem_findkey(struct ipc_ids *ids, key_t key)
 	long *key_index;
 	int id = -1;
 
-	key_index = _kddm_get_object_no_ft(ids->krgops->key_kddm_set, key);
+	key_index = _gdm_get_object_no_ft(ids->krgops->key_gdm_set, key);
 
 	if (key_index)
 		id = *key_index;
 
-	_kddm_put_object(ids->krgops->key_kddm_set, key);
+	_gdm_put_object(ids->krgops->key_gdm_set, key);
 
 	if (id != -1)
 		return kcb_ipc_sem_lock(ids, id);
@@ -153,8 +153,8 @@ int krg_ipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma,
 
 	index = ipcid_to_idx(sma->sem_perm.id);
 
-	sem_object = _kddm_grab_object_manual_ft(
-		sem_ids(ns).krgops->data_kddm_set, index);
+	sem_object = _gdm_grab_object_manual_ft(
+		sem_ids(ns).krgops->data_gdm_set, index);
 
 	BUG_ON(sem_object);
 
@@ -182,18 +182,18 @@ int krg_ipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma,
 		INIT_LIST_HEAD(&sem_object->imported_sem.sem_base[i].remote_sem_pending);
 	}
 
-	_kddm_set_object(sem_ids(ns).krgops->data_kddm_set, index, sem_object);
+	_gdm_set_object(sem_ids(ns).krgops->data_gdm_set, index, sem_object);
 
 	if (sma->sem_perm.key != IPC_PRIVATE)
 	{
-		key_index = _kddm_grab_object(sem_ids(ns).krgops->key_kddm_set,
+		key_index = _gdm_grab_object(sem_ids(ns).krgops->key_gdm_set,
 					      sma->sem_perm.key);
 		*key_index = index;
-		_kddm_put_object(sem_ids(ns).krgops->key_kddm_set,
+		_gdm_put_object(sem_ids(ns).krgops->key_gdm_set,
 				 sma->sem_perm.key);
 	}
 
-	_kddm_put_object(sem_ids(ns).krgops->data_kddm_set, index);
+	_gdm_put_object(sem_ids(ns).krgops->data_gdm_set, index);
 
 	sma->sem_perm.krgops = sem_ids(ns).krgops;
 
@@ -204,12 +204,12 @@ static inline void __remove_semundo_from_proc_list(struct sem_array *sma,
 						   unique_id_t proc_list_id)
 {
 	struct semundo_id * undo_id, *next, *prev;
-	struct kddm_set *undo_list_set;
+	struct gdm_set *undo_list_set;
 	struct semundo_list_object *undo_list;
 
 	undo_list_set = krgipc_ops_undolist_set(sma->sem_perm.krgops);
 
-	undo_list = _kddm_grab_object_no_ft(undo_list_set, proc_list_id);
+	undo_list = _gdm_grab_object_no_ft(undo_list_set, proc_list_id);
 
 	if (!undo_list)
 		goto exit;
@@ -233,7 +233,7 @@ static inline void __remove_semundo_from_proc_list(struct sem_array *sma,
 	BUG();
 
 exit:
-	_kddm_put_object(undo_list_set, proc_list_id);
+	_gdm_put_object(undo_list_set, proc_list_id);
 }
 
 void krg_ipc_sem_freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
@@ -252,14 +252,14 @@ void krg_ipc_sem_freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 	}
 
 	if (ipcp->key != IPC_PRIVATE) {
-		_kddm_grab_object(sem_ids(ns).krgops->key_kddm_set,
+		_gdm_grab_object(sem_ids(ns).krgops->key_gdm_set,
 				  ipcp->key);
-		_kddm_remove_frozen_object(sem_ids(ns).krgops->key_kddm_set,
+		_gdm_remove_frozen_object(sem_ids(ns).krgops->key_gdm_set,
 					   ipcp->key);
 	}
 
 	sem_unlock(sma, -1);
-	_kddm_remove_frozen_object(sem_ids(ns).krgops->data_kddm_set, index);
+	_gdm_remove_frozen_object(sem_ids(ns).krgops->data_gdm_set, index);
 
 	krg_ipc_rmid(&sem_ids(ns), index);
 }
@@ -283,7 +283,7 @@ void handle_ipcsem_wakeup_process(struct rpc_desc *desc, void *_msg,
 	ns = find_get_krg_ipcns();
 	BUG_ON(!ns);
 
-	/* take only a local lock because the requester node has the kddm lock
+	/* take only a local lock because the requester node has the gdm lock
 	   on the semarray */
 	rcu_read_lock();
 	sma = sem_obtain_object_check(ns, msg->sem_id);
@@ -353,7 +353,7 @@ void krg_ipc_sem_wakeup_process(struct sem_queue *q, int error)
 }
 
 static inline struct semundo_list_object * __create_semundo_proc_list(
-	struct task_struct *task, struct kddm_set *undo_list_set)
+	struct task_struct *task, struct gdm_set *undo_list_set)
 {
 	unique_id_t undo_list_id;
 	struct semundo_list_object *undo_list;
@@ -369,7 +369,7 @@ static inline struct semundo_list_object * __create_semundo_proc_list(
 	/* get a random id */
 	undo_list_id = get_unique_id(&semops->undo_list_unique_id_root);
 
-	undo_list = _kddm_grab_object_manual_ft(undo_list_set, undo_list_id);
+	undo_list = _gdm_grab_object_manual_ft(undo_list_set, undo_list_id);
 
 	BUG_ON(undo_list);
 
@@ -382,21 +382,21 @@ static inline struct semundo_list_object * __create_semundo_proc_list(
 	undo_list->id = undo_list_id;
 	atomic_inc(&undo_list->refcnt);
 
-	_kddm_set_object(undo_list_set, undo_list_id, undo_list);
+	_gdm_set_object(undo_list_set, undo_list_id, undo_list);
 
 	task->sysvsem.undo_list_id = undo_list_id;
 exit:
 	return undo_list;
 
 err_alloc:
-	_kddm_put_object(undo_list_set, undo_list_id);
+	_gdm_put_object(undo_list_set, undo_list_id);
 	goto exit;
 }
 
 int create_semundo_proc_list(struct task_struct *task)
 {
 	int r = 0;
-	struct kddm_set *undo_list_set;
+	struct gdm_set *undo_list_set;
 	struct semundo_list_object *undo_list;
 
 	BUG_ON(task->sysvsem.undo_list_id != UNIQUE_ID_NONE);
@@ -416,7 +416,7 @@ int create_semundo_proc_list(struct task_struct *task)
 
 	BUG_ON(atomic_read(&undo_list->refcnt) != 1);
 
-	_kddm_put_object(undo_list_set, task->sysvsem.undo_list_id);
+	_gdm_put_object(undo_list_set, task->sysvsem.undo_list_id);
 err:
 	return r;
 }
@@ -426,7 +426,7 @@ static int __share_new_semundo(struct task_struct *task)
 {
 	int r = 0;
 	struct semundo_list_object *undo_list;
-	struct kddm_set *undo_list_set;
+	struct gdm_set *undo_list_set;
 
 	BUG_ON(krg_current);
 	BUG_ON(current->sysvsem.undo_list_id != UNIQUE_ID_NONE);
@@ -449,7 +449,7 @@ static int __share_new_semundo(struct task_struct *task)
 
 	BUG_ON(atomic_read(&undo_list->refcnt) != 2);
 
-	_kddm_put_object(undo_list_set, current->sysvsem.undo_list_id);
+	_gdm_put_object(undo_list_set, current->sysvsem.undo_list_id);
 exit:
 	return r;
 }
@@ -459,7 +459,7 @@ int share_existing_semundo_proc_list(struct task_struct *task,
 {
 	int r = 0;
 	struct semundo_list_object *undo_list;
-	struct kddm_set *undo_list_set;
+	struct gdm_set *undo_list_set;
 
 	undo_list_set = task_undolist_set(task);
 	if (IS_ERR(undo_list_set)) {
@@ -469,7 +469,7 @@ int share_existing_semundo_proc_list(struct task_struct *task,
 
 	BUG_ON(undo_list_id == UNIQUE_ID_NONE);
 
-	undo_list = _kddm_grab_object_no_ft(undo_list_set, undo_list_id);
+	undo_list = _gdm_grab_object_no_ft(undo_list_set, undo_list_id);
 
 	if (!undo_list) {
 		r = -ENOMEM;
@@ -480,7 +480,7 @@ int share_existing_semundo_proc_list(struct task_struct *task,
 	atomic_inc(&undo_list->refcnt);
 
 exit_put:
-	_kddm_put_object(undo_list_set, undo_list_id);
+	_gdm_put_object(undo_list_set, undo_list_id);
 exit:
 	return r;
 }
@@ -560,7 +560,7 @@ struct sem_undo * krg_ipc_sem_find_undo(struct sem_array* sma)
 {
 	struct sem_undo * undo;
 	int r = 0;
-	struct kddm_set *undo_list_set;
+	struct gdm_set *undo_list_set;
 	struct semundo_list_object *undo_list = NULL;
 	unique_id_t undo_list_id;
 
@@ -599,7 +599,7 @@ struct sem_undo * krg_ipc_sem_find_undo(struct sem_array* sma)
 		       sizeof(short)*(sma->sem_nsems), GFP_KERNEL);
 	if (!undo) {
 		undo = ERR_PTR(-ENOMEM);
-		goto exit_put_kddm;
+		goto exit_put_gdm;
 	}
 
 	INIT_LIST_HEAD(&undo->list_proc);
@@ -613,7 +613,7 @@ struct sem_undo * krg_ipc_sem_find_undo(struct sem_array* sma)
 	BUG_ON(undo_list_id == UNIQUE_ID_NONE);
 
 	if (!undo_list)
-		undo_list = _kddm_grab_object_no_ft(undo_list_set,
+		undo_list = _gdm_grab_object_no_ft(undo_list_set,
 						    undo_list_id);
 
 	if (!undo_list) {
@@ -630,9 +630,9 @@ exit_free_undo:
 		undo = ERR_PTR(r);
 	}
 
-exit_put_kddm:
+exit_put_gdm:
 	if (undo_list && !IS_ERR(undo_list))
-		_kddm_put_object(undo_list_set, undo_list_id);
+		_gdm_put_object(undo_list_set, undo_list_id);
 exit:
 	return undo;
 }
@@ -673,7 +673,7 @@ exit_unlock:
 void krg_ipc_sem_exit_sem(struct ipc_namespace *ns,
 			  struct task_struct * task)
 {
-	struct kddm_set *undo_list_kddm_set;
+	struct gdm_set *undo_list_gdm_set;
 	unique_id_t undo_list_id;
 	struct semundo_list_object * undo_list;
 	struct semundo_id * undo_id, *next;
@@ -681,15 +681,15 @@ void krg_ipc_sem_exit_sem(struct ipc_namespace *ns,
 	if (task->sysvsem.undo_list_id == UNIQUE_ID_NONE)
 		return;
 
-	undo_list_kddm_set = krgipc_ops_undolist_set(sem_ids(ns).krgops);
-	if (IS_ERR(undo_list_kddm_set)) {
+	undo_list_gdm_set = krgipc_ops_undolist_set(sem_ids(ns).krgops);
+	if (IS_ERR(undo_list_gdm_set)) {
 		BUG();
 		return;
 	}
 
 	undo_list_id = task->sysvsem.undo_list_id;
 
-	undo_list = _kddm_grab_object_no_ft(undo_list_kddm_set, undo_list_id);
+	undo_list = _gdm_grab_object_no_ft(undo_list_gdm_set, undo_list_id);
 	if (!undo_list) {
 		printk("undo_list_id: %lu\n", undo_list_id);
 		BUG();
@@ -706,12 +706,12 @@ void krg_ipc_sem_exit_sem(struct ipc_namespace *ns,
 	undo_list->list = NULL;
 	atomic_set(&undo_list->semcnt, 0);
 
-	_kddm_remove_frozen_object(undo_list_kddm_set, undo_list_id);
+	_gdm_remove_frozen_object(undo_list_gdm_set, undo_list_id);
 
 	return;
 
 exit_wo_action:
-	_kddm_put_object(undo_list_kddm_set, undo_list_id);
+	_gdm_put_object(undo_list_gdm_set, undo_list_id);
 }
 
 /*****************************************************************************/
@@ -731,42 +731,42 @@ int krg_sem_init_ns(struct ipc_namespace *ns)
 		goto err;
 	}
 
-	sem_ops->krgops.map_kddm_set = create_new_kddm_set(
-		kddm_def_ns, SEMMAP_KDDM_ID, IPCMAP_LINKER,
-		KDDM_RR_DEF_OWNER, sizeof(ipcmap_object_t),
-		KDDM_LOCAL_EXCLUSIVE);
+	sem_ops->krgops.map_gdm_set = create_new_gdm_set(
+		gdm_def_ns, SEMMAP_GDM_ID, IPCMAP_LINKER,
+		GDM_RR_DEF_OWNER, sizeof(ipcmap_object_t),
+		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(sem_ops->krgops.map_kddm_set)) {
-		r = PTR_ERR(sem_ops->krgops.map_kddm_set);
+	if (IS_ERR(sem_ops->krgops.map_gdm_set)) {
+		r = PTR_ERR(sem_ops->krgops.map_gdm_set);
 		goto err_map;
 	}
 
-	sem_ops->krgops.key_kddm_set = create_new_kddm_set(
-		kddm_def_ns, SEMKEY_KDDM_ID, SEMKEY_LINKER,
-		KDDM_RR_DEF_OWNER, sizeof(long), KDDM_LOCAL_EXCLUSIVE);
+	sem_ops->krgops.key_gdm_set = create_new_gdm_set(
+		gdm_def_ns, SEMKEY_GDM_ID, SEMKEY_LINKER,
+		GDM_RR_DEF_OWNER, sizeof(long), GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(sem_ops->krgops.key_kddm_set)) {
-		r = PTR_ERR(sem_ops->krgops.key_kddm_set);
+	if (IS_ERR(sem_ops->krgops.key_gdm_set)) {
+		r = PTR_ERR(sem_ops->krgops.key_gdm_set);
 		goto err_key;
 	}
 
-	sem_ops->krgops.data_kddm_set = create_new_kddm_set(
-		kddm_def_ns, SEMARRAY_KDDM_ID, SEMARRAY_LINKER,
-		KDDM_RR_DEF_OWNER, sizeof(semarray_object_t),
-		KDDM_LOCAL_EXCLUSIVE);
+	sem_ops->krgops.data_gdm_set = create_new_gdm_set(
+		gdm_def_ns, SEMARRAY_GDM_ID, SEMARRAY_LINKER,
+		GDM_RR_DEF_OWNER, sizeof(semarray_object_t),
+		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(sem_ops->krgops.data_kddm_set)) {
-		r = PTR_ERR(sem_ops->krgops.data_kddm_set);
+	if (IS_ERR(sem_ops->krgops.data_gdm_set)) {
+		r = PTR_ERR(sem_ops->krgops.data_gdm_set);
 		goto err_data;
 	}
 
-	sem_ops->undo_list_kddm_set = create_new_kddm_set(
-		kddm_def_ns, SEMUNDO_KDDM_ID, SEMUNDO_LINKER,
-		KDDM_RR_DEF_OWNER, sizeof(struct semundo_list_object),
-		KDDM_LOCAL_EXCLUSIVE);
+	sem_ops->undo_list_gdm_set = create_new_gdm_set(
+		gdm_def_ns, SEMUNDO_GDM_ID, SEMUNDO_LINKER,
+		GDM_RR_DEF_OWNER, sizeof(struct semundo_list_object),
+		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(sem_ops->undo_list_kddm_set)) {
-		r = PTR_ERR(sem_ops->undo_list_kddm_set);
+	if (IS_ERR(sem_ops->undo_list_gdm_set)) {
+		r = PTR_ERR(sem_ops->undo_list_gdm_set);
 		goto err_undolist;
 	}
 
@@ -781,11 +781,11 @@ int krg_sem_init_ns(struct ipc_namespace *ns)
 	return 0;
 
 err_undolist:
-	_destroy_kddm_set(sem_ops->krgops.data_kddm_set);
+	_destroy_gdm_set(sem_ops->krgops.data_gdm_set);
 err_data:
-	_destroy_kddm_set(sem_ops->krgops.key_kddm_set);
+	_destroy_gdm_set(sem_ops->krgops.key_gdm_set);
 err_key:
-	_destroy_kddm_set(sem_ops->krgops.map_kddm_set);
+	_destroy_gdm_set(sem_ops->krgops.map_gdm_set);
 err_map:
 	kfree(sem_ops);
 err:
@@ -800,10 +800,10 @@ void krg_sem_exit_ns(struct ipc_namespace *ns)
 		sem_ops = container_of(sem_ids(ns).krgops, struct semkrgops,
 				      krgops);
 
-		_destroy_kddm_set(sem_ops->undo_list_kddm_set);
-		_destroy_kddm_set(sem_ops->krgops.data_kddm_set);
-		_destroy_kddm_set(sem_ops->krgops.key_kddm_set);
-		_destroy_kddm_set(sem_ops->krgops.map_kddm_set);
+		_destroy_gdm_set(sem_ops->undo_list_gdm_set);
+		_destroy_gdm_set(sem_ops->krgops.data_gdm_set);
+		_destroy_gdm_set(sem_ops->krgops.key_gdm_set);
+		_destroy_gdm_set(sem_ops->krgops.map_gdm_set);
 
 		kfree(sem_ops);
 	}

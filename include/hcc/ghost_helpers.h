@@ -11,13 +11,13 @@ struct pid_link;
 struct pid;
 enum shared_obj_type;
 
-/* KDDM */
+/* GDM */
 
-int export_kddm_info_struct (struct epm_action *action,
+int export_gdm_info_struct (struct epm_action *action,
 			     ghost_t *ghost, struct task_struct *tsk);
-int import_kddm_info_struct (struct epm_action *action,
+int import_gdm_info_struct (struct epm_action *action,
 			     ghost_t *ghost, struct task_struct *tsk);
-void unimport_kddm_info_struct (struct task_struct *tsk);
+void unimport_gdm_info_struct (struct task_struct *tsk);
 
 /* MM */
 
@@ -238,7 +238,7 @@ int import_pid_namespace(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *task);
 void unimport_pid(struct pid_link *link);
 
-int cr_create_pid_kddm_object(struct pid *pid);
+int cr_create_pid_gdm_object(struct pid *pid);
 
 /* Misc */
 

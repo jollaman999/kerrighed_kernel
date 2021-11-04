@@ -11,16 +11,16 @@
 
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
-#include <kddm/object_server.h>
+#include <gdm/gdm.h>
+#include <gdm/object_server.h>
 #include "protocol_action.h"
 
 
 /** Forward a message to the supposed correct prob Owner.
  *  @author Renaud Lottiaux
  */
-static inline void forward_object_server_msg (struct kddm_obj * obj_entry,
-					      struct kddm_set *set,
+static inline void forward_object_server_msg (struct gdm_obj * obj_entry,
+					      struct gdm_set *set,
 					      enum rpcid msg_type,
 					      void *_msg)
 {
@@ -28,7 +28,7 @@ static inline void forward_object_server_msg (struct kddm_obj * obj_entry,
 	hcc_node_t prob_owner;
 
 	if (obj_entry == NULL)
-		prob_owner = kddm_io_default_owner(set, msg->objid);
+		prob_owner = gdm_io_default_owner(set, msg->objid);
 	else
 		prob_owner = get_prob_owner(obj_entry);
 
@@ -58,13 +58,13 @@ static inline int __handle_invalidation_ack (hcc_node_t sender,
 					     void *_msg)
 {
 	msg_server_t *msg = _msg;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
 	hcc_node_t dest;
 
 	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
 
-	obj_entry = get_kddm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
+	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
 
 	/* Managing this message on a frozen object could lead to some bad
@@ -113,7 +113,7 @@ static inline int __handle_invalidation_ack (hcc_node_t sender,
 
 			  obj_entry = send_copy_on_write_and_inv (
 				  set, obj_entry, msg->objid, dest,
-				  KDDM_IO_FLUSH);
+				  GDM_IO_FLUSH);
 
 			  /* Wake up the set_flush function */
 
@@ -143,7 +143,7 @@ handle_ack:
 
 		  if (OBJ_EXCLUSIVE (obj_entry) &&
 		      (OBJ_STATE(obj_entry) != INV_FILLING)) {
-			  kddm_insert_object (set, msg->objid, obj_entry,
+			  gdm_insert_object (set, msg->objid, obj_entry,
 					      WRITE_OWNER);
 		  }
 
@@ -155,7 +155,7 @@ handle_ack:
 		  BUG_ON(SET_IS_EMPTY (COPYSET(obj_entry)));
 
 		  if (OBJ_EXCLUSIVE (obj_entry)) {
-			  kddm_change_obj_state (set, obj_entry, msg->objid,
+			  gdm_change_obj_state (set, obj_entry, msg->objid,
 						 WRITE_OWNER);
 			  wake_up_on_wait_object (obj_entry, set);
 		  }
@@ -174,7 +174,7 @@ handle_ack:
 	}
 
 exit:
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 
 exit_no_unlock:
 	return 0;
@@ -196,12 +196,12 @@ void handle_remove_ack (struct rpc_desc* desc,
 		       void *_msg, size_t size)
 {
 	msg_server_t *msg = _msg;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
 
 	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
 
-	obj_entry = get_kddm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
+	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
 
 	switch (OBJ_STATE(obj_entry)) {
@@ -215,14 +215,14 @@ void handle_remove_ack (struct rpc_desc* desc,
 		  REMOVE_FROM_SET (COPYSET(obj_entry), desc->client);
 		  REMOVE_FROM_SET (RMSET(obj_entry), desc->client);
 
-		  if (msg->flags & KDDM_NEED_OBJ_RM_ACK2)
+		  if (msg->flags & GDM_NEED_OBJ_RM_ACK2)
 			  SET_OBJECT_RM_ACK2(obj_entry);
 
 		  if (SET_IS_EMPTY (RMSET(obj_entry))) {
 			  BUG_ON (!SET_IS_EMPTY (COPYSET(obj_entry)));
 			  if (TEST_OBJECT_RM_ACK2(obj_entry)) {
 				  send_remove_ack2 (set, msg->objid,
-						    kddm_io_default_owner(set,
+						    gdm_io_default_owner(set,
 									  msg->objid));
 				  CLEAR_OBJECT_RM_ACK2(obj_entry);
 			  }
@@ -235,7 +235,7 @@ void handle_remove_ack (struct rpc_desc* desc,
 		  break;
 	}
 
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 
 	return;
 }
@@ -250,18 +250,18 @@ void handle_remove_ack2 (struct rpc_desc* desc,
 		       void *_msg, size_t size)
 {
 	msg_server_t *msg = _msg;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
 
 	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
 
-	obj_entry = get_kddm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
+	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
 
 	switch (OBJ_STATE(obj_entry)) {
 	  case WAIT_OBJ_WRITE:
 	  case WAIT_OBJ_READ:
-		  kddm_change_obj_state (set, obj_entry, msg->objid,
+		  gdm_change_obj_state (set, obj_entry, msg->objid,
 					 INV_OWNER);
 		  wake_up_on_wait_object (obj_entry, set);
 
@@ -270,7 +270,7 @@ void handle_remove_ack2 (struct rpc_desc* desc,
 		  break;
 
 	  case WAIT_OBJ_RM_ACK2:
-		  destroy_kddm_obj_entry(set, obj_entry, msg->objid, 1);
+		  destroy_gdm_obj_entry(set, obj_entry, msg->objid, 1);
 		  goto exit_no_unlock;
 
 	  default:
@@ -278,7 +278,7 @@ void handle_remove_ack2 (struct rpc_desc* desc,
 		  break;
 	}
 
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 exit_no_unlock:
 	return;
 }
@@ -294,12 +294,12 @@ void handle_remove_done (struct rpc_desc* desc,
 			void *_msg, size_t size)
 {
 	rm_done_msg_server_t *msg = _msg;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
 
 	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
 
-	obj_entry = get_kddm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
+	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
 
 	switch (OBJ_STATE(obj_entry)) {
@@ -308,7 +308,7 @@ void handle_remove_done (struct rpc_desc* desc,
 		  if (SET_IS_EMPTY(RMSET(obj_entry)))
 			  wake_up_on_wait_object (obj_entry, set);
 		  else
-			  kddm_change_obj_state(set, obj_entry, msg->objid,
+			  gdm_change_obj_state(set, obj_entry, msg->objid,
 						WAIT_OBJ_RM_ACK);
 		  break;
 
@@ -317,7 +317,7 @@ void handle_remove_done (struct rpc_desc* desc,
 		  break;
 	}
 
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 
 	return;
 }
@@ -334,12 +334,12 @@ int __handle_object_invalidation (hcc_node_t sender,
 				  void *_msg)
 {
 	msg_server_t *msg = _msg;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
 
 	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
 
-	obj_entry = get_kddm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
+	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
 
 	if (object_frozen_or_pinned (obj_entry, set)) {
@@ -356,7 +356,7 @@ int __handle_object_invalidation (hcc_node_t sender,
 		  break;
 
 	  case READ_COPY:
-		  kddm_invalidate_local_object_and_unlock (obj_entry, set,
+		  gdm_invalidate_local_object_and_unlock (obj_entry, set,
 							   msg->objid,
 							   INV_COPY);
 
@@ -372,7 +372,7 @@ int __handle_object_invalidation (hcc_node_t sender,
 		  break;
 
 	  case WAIT_OBJ_WRITE:
-		  kddm_invalidate_local_object_and_unlock (obj_entry, set,
+		  gdm_invalidate_local_object_and_unlock (obj_entry, set,
 							   msg->objid,
 							   WAIT_OBJ_WRITE);
 
@@ -386,7 +386,7 @@ int __handle_object_invalidation (hcc_node_t sender,
 	}
 
 exit:
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 exit_no_unlock:
 
 	return 0;
@@ -409,13 +409,13 @@ static inline int __handle_object_remove_req (hcc_node_t sender,
 					      void *_msg)
 {
 	msg_server_t *msg = _msg;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
 	int flag = 0;
 
 	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
 
-	obj_entry = get_kddm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
+	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
 
 	if (obj_entry == NULL) {
@@ -432,17 +432,17 @@ static inline int __handle_object_remove_req (hcc_node_t sender,
 		goto exit;
 	}
 
-	if (kddm_io_default_owner(set, msg->objid) == hcc_node_id)
-		flag = KDDM_NEED_OBJ_RM_ACK2;
+	if (gdm_io_default_owner(set, msg->objid) == hcc_node_id)
+		flag = GDM_NEED_OBJ_RM_ACK2;
 
 	switch (OBJ_STATE(obj_entry)) {
 	  case INV_COPY:
 	  case READ_COPY:
 		  if (flag) {
-			  kddm_change_obj_state (set, obj_entry, msg->objid,
+			  gdm_change_obj_state (set, obj_entry, msg->objid,
 						 WAIT_OBJ_RM_ACK2);
 
-			  kddm_io_remove_object_and_unlock(obj_entry, set,
+			  gdm_io_remove_object_and_unlock(obj_entry, set,
 							   msg->objid);
 
 			  send_remove_ack (set, msg->objid, msg->reply_node,
@@ -450,7 +450,7 @@ static inline int __handle_object_remove_req (hcc_node_t sender,
 
 			  goto exit_no_unlock;
 		  }
-		  destroy_kddm_obj_entry(set, obj_entry, msg->objid, 1);
+		  destroy_gdm_obj_entry(set, obj_entry, msg->objid, 1);
 
 		  send_remove_ack (set, msg->objid, msg->reply_node, flag);
 		  goto exit_no_unlock;
@@ -459,7 +459,7 @@ static inline int __handle_object_remove_req (hcc_node_t sender,
 	  case WAIT_OBJ_READ:
 		  BUG_ON(TEST_OBJECT_PINNED(obj_entry));
 
-		  kddm_io_remove_object_and_unlock (obj_entry, set,
+		  gdm_io_remove_object_and_unlock (obj_entry, set,
 						    msg->objid);
 
 		  send_remove_ack (set, msg->objid, msg->reply_node, flag);
@@ -477,7 +477,7 @@ static inline int __handle_object_remove_req (hcc_node_t sender,
 	}
 
 exit:
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 exit_no_unlock:
 
 	return 0;
@@ -501,12 +501,12 @@ static inline int __handle_send_ownership_req (hcc_node_t sender,
 					       void *_msg)
 {
 	msg_injection_t *msg = _msg;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
 
 	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
 
-	obj_entry = get_kddm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
+	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
 
 	switch (OBJ_STATE(obj_entry)) {
@@ -535,7 +535,7 @@ static inline int __handle_send_ownership_req (hcc_node_t sender,
 		  break;
 	}
 
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 
 	return 0;
 }
@@ -556,12 +556,12 @@ void handle_change_ownership_ack (struct rpc_desc* desc,
                                  void *_msg, size_t size)
 {
 	msg_server_t *msg = _msg;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
 
 	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
 
-	obj_entry = get_kddm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
+	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
 
 	if (OBJ_STATE(obj_entry) == WAIT_CHG_OWN_ACK)
@@ -574,7 +574,7 @@ void handle_change_ownership_ack (struct rpc_desc* desc,
 	else
 		STATE_MACHINE_ERROR (msg->set_id, msg->objid, obj_entry);
 
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 
 	return ;
 }
@@ -591,32 +591,32 @@ void handle_object_receive (struct rpc_desc* desc,
                            void *_msg, size_t size)
 {
 	msg_object_receiver_t *msg = _msg;
-	kddm_obj_state_t obj_state = 0;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
+	gdm_obj_state_t obj_state = 0;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
 	masterObj_t master_info;
 	int res, dont_insert = 0 ;
 
 	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
 
-	if (msg->object_state & KDDM_OWNER_OBJ) {
+	if (msg->object_state & GDM_OWNER_OBJ) {
 		res = rpc_unpack(desc, 0, &master_info, sizeof(masterObj_t));
 		if (res)
 			return;
 	}
 
-	obj_entry = get_alloc_kddm_obj_entry (msg->ns_id, msg->set_id,
+	obj_entry = get_alloc_gdm_obj_entry (msg->ns_id, msg->set_id,
 					      msg->objid, &set);
 
 	if (!obj_entry) {
-		if (msg->flags & KDDM_SYNC_OBJECT) {
+		if (msg->flags & GDM_SYNC_OBJECT) {
 			res = -EINVAL;
 			rpc_pack_type(desc, res);
 		}
 		return;
 	}
 
-	if (msg->object_state & KDDM_OWNER_OBJ) {
+	if (msg->object_state & GDM_OWNER_OBJ) {
 		DUP2_SET(&master_info.rmset, &obj_entry->master_obj.rmset);
 		ADD_TO_SET(RMSET(obj_entry), desc->client);
 		ADD_TO_SET(RMSET(obj_entry), hcc_node_id);
@@ -624,7 +624,7 @@ void handle_object_receive (struct rpc_desc* desc,
 
 	switch (OBJ_STATE(obj_entry)) {
 	  case INV_COPY:
-		  if (msg->flags & KDDM_SYNC_OBJECT)
+		  if (msg->flags & GDM_SYNC_OBJECT)
 			  obj_state = READ_COPY;
 		  else {
 			  change_prob_owner(obj_entry, hcc_node_id);
@@ -652,28 +652,28 @@ void handle_object_receive (struct rpc_desc* desc,
 	  case READ_OWNER:
 	  case READ_COPY:
 		  obj_state = OBJ_STATE(obj_entry);
-		  if (!(msg->flags & KDDM_NO_DATA))
+		  if (!(msg->flags & GDM_NO_DATA))
 			  dont_insert = 1;
 		  break;
 
 	  default:
 		  STATE_MACHINE_ERROR (msg->set_id, msg->objid, obj_entry);
-		  kddm_obj_path_unlock(set, msg->objid);
+		  gdm_obj_path_unlock(set, msg->objid);
 		  BUG();
 	}
 
-	if (!(msg->flags & KDDM_NO_DATA)) {
-		kddm_change_obj_state (set, obj_entry, msg->objid,
+	if (!(msg->flags & GDM_NO_DATA)) {
+		gdm_change_obj_state (set, obj_entry, msg->objid,
 				       INV_FILLING);
-		put_kddm_obj_entry(set, obj_entry, msg->objid);
+		put_gdm_obj_entry(set, obj_entry, msg->objid);
 
-		res = kddm_io_alloc_object (obj_entry, set, msg->objid);
+		res = gdm_io_alloc_object (obj_entry, set, msg->objid);
 		BUG_ON(res != 0);
 
-		kddm_io_import_object (desc, set, obj_entry, msg->objid,
+		gdm_io_import_object (desc, set, obj_entry, msg->objid,
 				       msg->flags);
 
-		kddm_obj_path_lock(set, msg->objid);
+		gdm_obj_path_lock(set, msg->objid);
 
 		if (obj_state == WAIT_ACK_INV) {
 			if (OBJ_EXCLUSIVE (obj_entry))
@@ -691,18 +691,18 @@ void handle_object_receive (struct rpc_desc* desc,
 		}
 
 		if (dont_insert) {
-			kddm_change_obj_state (set, obj_entry, msg->objid,
+			gdm_change_obj_state (set, obj_entry, msg->objid,
 					       obj_state);
 		}
 		else
-			kddm_insert_object (set, msg->objid, obj_entry,
+			gdm_insert_object (set, msg->objid, obj_entry,
 					    obj_state);
 	}
 
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 
-	if (msg->flags & KDDM_SYNC_OBJECT) {
-		res = kddm_io_sync_object(obj_entry, set, msg->objid);
+	if (msg->flags & GDM_SYNC_OBJECT) {
+		res = gdm_io_sync_object(obj_entry, set, msg->objid);
 		rpc_pack_type(desc, res);
 	}
 
@@ -721,12 +721,12 @@ int __handle_no_object (hcc_node_t sender,
 			void *_msg)
 {
 	msg_server_t *msg = _msg;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
 
 	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
 
-	obj_entry = get_alloc_kddm_obj_entry (msg->ns_id, msg->set_id,
+	obj_entry = get_alloc_gdm_obj_entry (msg->ns_id, msg->set_id,
 					      msg->objid, &set);
 
 	if (object_frozen (obj_entry, set)) {
@@ -742,17 +742,17 @@ int __handle_no_object (hcc_node_t sender,
 	  case WAIT_OBJ_READ:
 	  case WAIT_OBJ_WRITE:
 		  if (msg->flags ||
-		      (kddm_io_default_owner(set, msg->objid) ==
+		      (gdm_io_default_owner(set, msg->objid) ==
 		       hcc_node_id))
-			  kddm_change_obj_state (set, obj_entry, msg->objid,
+			  gdm_change_obj_state (set, obj_entry, msg->objid,
 						 INV_OWNER);
 		  else
-			  kddm_change_obj_state (set, obj_entry, msg->objid,
+			  gdm_change_obj_state (set, obj_entry, msg->objid,
 						 INV_COPY);
 
 		  wake_up_on_wait_object (obj_entry, set);
 
-		  kddm_io_remove_object_and_unlock (obj_entry, set,
+		  gdm_io_remove_object_and_unlock (obj_entry, set,
 						    msg->objid);
 		  goto exit_no_unlock;
 
@@ -766,7 +766,7 @@ int __handle_no_object (hcc_node_t sender,
 	}
 
 exit:
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 
 exit_no_unlock:
 	return 0;
@@ -788,12 +788,12 @@ void handle_receive_write_access (struct rpc_desc* desc,
 				  void *_msg, size_t size)
 {
 	msg_injection_t *msg = _msg;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
 
 	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
 
-	obj_entry = get_alloc_kddm_obj_entry (msg->ns_id, msg->set_id,
+	obj_entry = get_alloc_gdm_obj_entry (msg->ns_id, msg->set_id,
 					      msg->objid, &set);
 
 	krgnodes_copy(obj_entry->master_obj.rmset, msg->owner_info.rmset);
@@ -805,12 +805,12 @@ void handle_receive_write_access (struct rpc_desc* desc,
 		  merge_ack_set(COPYSET(obj_entry), &msg->owner_info.copyset);
 		  ADD_TO_SET(COPYSET(obj_entry), hcc_node_id);
 		  if (OBJ_EXCLUSIVE2 (COPYSET(obj_entry))) {
-			  kddm_change_obj_state (set, obj_entry, msg->objid,
+			  gdm_change_obj_state (set, obj_entry, msg->objid,
 						 WRITE_OWNER);
 			  wake_up_on_wait_object (obj_entry, set);
 		  }
 		  else
-			  kddm_change_obj_state (set, obj_entry, msg->objid,
+			  gdm_change_obj_state (set, obj_entry, msg->objid,
 						 WAIT_ACK_WRITE);
 		  break;
 
@@ -819,7 +819,7 @@ void handle_receive_write_access (struct rpc_desc* desc,
 		  break;
 	}
 
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 
 	return;
 }
@@ -836,15 +836,15 @@ static inline int __handle_object_copy_req (hcc_node_t sender,
 					    void *_msg)
 {
 	msg_server_t *msg = _msg;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
-	int request_type = msg->flags & KDDM_SET_REQ_TYPE;
-	int send_ownership = msg->flags & KDDM_SEND_OWNERSHIP;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
+	int request_type = msg->flags & GDM_SET_REQ_TYPE;
+	int send_ownership = msg->flags & GDM_SEND_OWNERSHIP;
 	int r;
 
 	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
 
-	obj_entry = get_kddm_obj_entry (msg->ns_id, msg->set_id,
+	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id,
 					msg->objid, &set);
 
 	/* First, check for NULL obj_entry case */
@@ -855,18 +855,18 @@ static inline int __handle_object_copy_req (hcc_node_t sender,
 			goto exit_no_unlock;
 		}
 
-		if ((msg->flags & KDDM_NO_FT_REQ) && !send_ownership) {
+		if ((msg->flags & GDM_NO_FT_REQ) && !send_ownership) {
 			send_no_object (set, obj_entry, msg->objid,
 					msg->reply_node, send_ownership);
 			goto exit_no_unlock;
 		}
 
-		obj_entry = get_alloc_kddm_obj_entry (msg->ns_id, msg->set_id,
+		obj_entry = get_alloc_gdm_obj_entry (msg->ns_id, msg->set_id,
 						      msg->objid, &set);
 	}
 
 	if (object_frozen_or_pinned (obj_entry, set)) {
-		if (msg->flags & KDDM_TRY_GRAB)
+		if (msg->flags & GDM_TRY_GRAB)
 			send_no_object (set, obj_entry, msg->objid,
 					msg->reply_node, send_ownership);
 		else
@@ -890,8 +890,8 @@ static inline int __handle_object_copy_req (hcc_node_t sender,
 		   * the new owner. And this is true, we are the new owner
 		   * of a new object we have to create.
 		   */
-		  if (msg->flags & KDDM_NO_FT_REQ) {
-			  kddm_change_obj_state (set, obj_entry, msg->objid,
+		  if (msg->flags & GDM_NO_FT_REQ) {
+			  gdm_change_obj_state (set, obj_entry, msg->objid,
 						 INV_OWNER);
 			  wake_up_on_wait_object (obj_entry, set);
 			  break;
@@ -937,7 +937,7 @@ regular_case:
 	  case INV_COPY:
 	  case READ_COPY:
 		  /* Shorten the prob owner chain on a write request */
-/*		  if (request_type == KDDM_OBJ_COPY_ON_WRITE) */
+/*		  if (request_type == GDM_OBJ_COPY_ON_WRITE) */
 /*			  change_prob_owner(obj_entry, msg->new_owner); */
 
 		  forward_object_server_msg (obj_entry, set,
@@ -945,13 +945,13 @@ regular_case:
 		  break;
 
 	  case INV_OWNER:
-		  if (msg->flags & KDDM_NO_FT_REQ) {
+		  if (msg->flags & GDM_NO_FT_REQ) {
 			  send_no_object (set, obj_entry, msg->objid,
 					  msg->reply_node, send_ownership);
 			  break;
 		  }
 
-		  if (!kddm_ft_linked (set))
+		  if (!gdm_ft_linked (set))
 			  /* The object can be created on the faulting node */
 			  send_back_object_first_touch (set, obj_entry,
 							msg->objid,
@@ -960,7 +960,7 @@ regular_case:
 							SEND_BACK_FIRST_TOUCH);
 		  else {
 			  /* The object can be created on the local node  */
-			  if (request_type == KDDM_OBJ_COPY_ON_WRITE) {
+			  if (request_type == GDM_OBJ_COPY_ON_WRITE) {
 				  /* The object can be created on the local node */
 				  r = object_first_touch_no_wakeup (
 					  set, obj_entry, msg->objid,
@@ -992,8 +992,8 @@ regular_case:
 		  goto exit_no_unlock;
 
 	  case WRITE_OWNER:
-		  if (request_type == KDDM_OBJ_COPY_ON_READ) {
-			  kddm_change_obj_state (set, obj_entry, msg->objid,
+		  if (request_type == GDM_OBJ_COPY_ON_READ) {
+			  gdm_change_obj_state (set, obj_entry, msg->objid,
 						 READ_OWNER);
 			  goto send_copy;
 		  }
@@ -1007,7 +1007,7 @@ regular_case:
 
 	  case READ_OWNER:
 
-		  if (request_type == KDDM_OBJ_COPY_ON_READ) {
+		  if (request_type == GDM_OBJ_COPY_ON_READ) {
 send_copy:
 			  /* Read copy request */
 
@@ -1055,7 +1055,7 @@ send_copy:
 	}
 
 exit:
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 
 exit_no_unlock:
 	return 0;
@@ -1085,11 +1085,11 @@ int __handle_object_remove_to_mgr_req (hcc_node_t sender,
 				       void *_msg)
 {
 	msg_server_t *msg = _msg;
-	struct kddm_set *set;
-	struct kddm_obj *obj_entry;
+	struct gdm_set *set;
+	struct gdm_obj *obj_entry;
 	int err = 0;
 
-	obj_entry = get_alloc_kddm_obj_entry (msg->ns_id, msg->set_id,
+	obj_entry = get_alloc_gdm_obj_entry (msg->ns_id, msg->set_id,
 					      msg->objid, &set);
 
 	if (object_frozen_or_pinned(obj_entry, set)) {
@@ -1133,7 +1133,7 @@ int __handle_object_remove_to_mgr_req (hcc_node_t sender,
 		  send_remove_object_done(set, msg->objid,
 					  msg->reply_node, RMSET(obj_entry));
 
-		  destroy_kddm_obj_entry(set, obj_entry,
+		  destroy_gdm_obj_entry(set, obj_entry,
 					 msg->objid, 1);
 		  goto exit_no_unlock;
 
@@ -1143,7 +1143,7 @@ int __handle_object_remove_to_mgr_req (hcc_node_t sender,
 	}
 
 exit:
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 
 exit_no_unlock:
 	return err;
@@ -1164,12 +1164,12 @@ void handle_send_back_first_touch_req (struct rpc_desc* desc,
 				       void *_msg, size_t size)
 {
 	msg_server_t *msg = _msg;
-	struct kddm_set *set;
-	struct kddm_obj *obj_entry;
+	struct gdm_set *set;
+	struct gdm_obj *obj_entry;
 
 	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
 
-	obj_entry = get_kddm_obj_entry (msg->ns_id, msg->set_id,
+	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id,
 					msg->objid, &set);
 
 	switch (OBJ_STATE(obj_entry)) {
@@ -1187,7 +1187,7 @@ void handle_send_back_first_touch_req (struct rpc_desc* desc,
 		  STATE_MACHINE_ERROR (msg->set_id, msg->objid, obj_entry);
 		  break;
 	}
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 
 	return;
 }
@@ -1202,26 +1202,26 @@ static int handle_change_prob_owner_req(struct rpc_desc* desc,
 					void *_msg, size_t size)
 {
 	msg_server_t *msg = _msg;
-	struct kddm_obj *obj_entry;
-	struct kddm_set *set;
-	struct kddm_ns *ns;
+	struct gdm_obj *obj_entry;
+	struct gdm_set *set;
+	struct gdm_ns *ns;
 
 	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
 
-	ns = kddm_ns_get (msg->ns_id);
-	set = __find_get_kddm_set(ns, msg->set_id, KDDM_LOCK_FREE);
+	ns = gdm_ns_get (msg->ns_id);
+	set = __find_get_gdm_set(ns, msg->set_id, GDM_LOCK_FREE);
 
-	obj_entry = __get_alloc_kddm_obj_entry (set, msg->objid);
+	obj_entry = __get_alloc_gdm_obj_entry (set, msg->objid);
 
-	put_kddm_set(set);
-	kddm_ns_put(ns);
+	put_gdm_set(set);
+	gdm_ns_put(ns);
 
 	change_prob_owner(obj_entry, msg->new_owner);
 
 	if (OBJ_STATE(obj_entry) == INV_OWNER)
-		kddm_change_obj_state(set, obj_entry, msg->objid, INV_COPY);
+		gdm_change_obj_state(set, obj_entry, msg->objid, INV_COPY);
 
-	put_kddm_obj_entry(set, obj_entry, msg->objid);
+	put_gdm_obj_entry(set, obj_entry, msg->objid);
 
 	return 0;
 };
@@ -1294,7 +1294,7 @@ void object_server_init ()
 		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_no_object, 0);
 
-	rpc_register_int(KDDM_CHANGE_PROB_OWNER, handle_change_prob_owner_req,
+	rpc_register_int(GDM_CHANGE_PROB_OWNER, handle_change_prob_owner_req,
 			 0);
 }
 

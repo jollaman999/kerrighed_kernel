@@ -1,7 +1,7 @@
-/** KDDM set interface.
- *  @file kddm_set.c
+/** GDM set interface.
+ *  @file gdm_set.c
  *
- *  Implementation of KDDM set manipulation functions.
+ *  Implementation of GDM set manipulation functions.
  *
  *  Copyright (C) 2007, Renaud Lottiaux, Kerlabs.
  */
@@ -21,79 +21,79 @@
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
 
-#include <kddm/kddm.h>
-#include <kddm/kddm_set.h>
-#include <kddm/name_space.h>
-#include <kddm/kddm_tree.h>
+#include <gdm/gdm.h>
+#include <gdm/gdm_set.h>
+#include <gdm/name_space.h>
+#include <gdm/gdm_tree.h>
 #include "protocol_action.h"
 #include "procfs.h"
 
-struct kmem_cache *kddm_set_cachep;
-extern struct kmem_cache *kddm_tree_cachep;
-extern struct kmem_cache *kddm_tree_lvl_cachep;
+struct kmem_cache *gdm_set_cachep;
+extern struct kmem_cache *gdm_tree_cachep;
+extern struct kmem_cache *gdm_tree_lvl_cachep;
 
 static struct lock_class_key obj_lock_key[NR_OBJ_ENTRY_LOCKS];
 
 
-/** Alloc a new KDDM set id.
+/** Alloc a new GDM set id.
  *  @author Renaud Lottiaux
  *
  *  @param ns     Name space to create the set id in.
  *
- *  @return   A newly allocated KDDM set id.
+ *  @return   A newly allocated GDM set id.
  */
-static inline kddm_set_id_t alloc_new_kddm_set_id (struct kddm_ns *ns)
+static inline gdm_set_id_t alloc_new_gdm_set_id (struct gdm_ns *ns)
 {
-	return get_unique_id (&ns->kddm_set_unique_id_root);
+	return get_unique_id (&ns->gdm_set_unique_id_root);
 }
 
 
 
-/** Alloc a new KDDM set structure.
+/** Alloc a new GDM set structure.
  *  @author Renaud Lottiaux
  *
  *  @param ns     Name space to create the set in.
  *
- *  @return   A newly allocated KDDM set structure.
+ *  @return   A newly allocated GDM set structure.
  */
-static inline struct kddm_set *alloc_kddm_set_struct (struct kddm_ns *ns,
-						      kddm_set_id_t set_id,
+static inline struct gdm_set *alloc_gdm_set_struct (struct gdm_ns *ns,
+						      gdm_set_id_t set_id,
 						      int init_state)
 {
-	struct kddm_set *kddm_set;
+	struct gdm_set *gdm_set;
 
-	kddm_set = kmem_cache_alloc (kddm_set_cachep, GFP_ATOMIC);
-	if (kddm_set == NULL) {
-		kddm_set = ERR_PTR(-ENOMEM);
+	gdm_set = kmem_cache_alloc (gdm_set_cachep, GFP_ATOMIC);
+	if (gdm_set == NULL) {
+		gdm_set = ERR_PTR(-ENOMEM);
 		goto err;
 	}
 
 	/* Make minimal initialisation */
 
-	memset (kddm_set, 0, sizeof(struct kddm_set));
-	kddm_set->state = init_state;
-	kddm_set->id = set_id;
-	kddm_set->ns = ns;
-	kddm_set->flags = 0;
-	init_waitqueue_head (&kddm_set->create_wq);
-	init_waitqueue_head (&kddm_set->frozen_wq);
-	spin_lock_init(&kddm_set->lock);
-	atomic_set(&kddm_set->count, 1);
-	INIT_LIST_HEAD(&kddm_set->event_list);
-	spin_lock_init(&kddm_set->event_lock);
+	memset (gdm_set, 0, sizeof(struct gdm_set));
+	gdm_set->state = init_state;
+	gdm_set->id = set_id;
+	gdm_set->ns = ns;
+	gdm_set->flags = 0;
+	init_waitqueue_head (&gdm_set->create_wq);
+	init_waitqueue_head (&gdm_set->frozen_wq);
+	spin_lock_init(&gdm_set->lock);
+	atomic_set(&gdm_set->count, 1);
+	INIT_LIST_HEAD(&gdm_set->event_list);
+	spin_lock_init(&gdm_set->event_lock);
 
 err:
-	return kddm_set;
+	return gdm_set;
 }
 
 
 
-/** Make full kddm set initialization
+/** Make full gdm set initialization
  *  @author Renaud Lottiaux
  */
-int init_kddm_set (struct kddm_set *set,
-		   kddm_set_id_t set_id,
-		   struct kddm_set_ops *set_ops,
+int init_gdm_set (struct gdm_set *set,
+		   gdm_set_id_t set_id,
+		   struct gdm_set_ops *set_ops,
 		   void *tree_init_data,
 		   unsigned long flags,
 		   hcc_node_t def_owner,
@@ -115,7 +115,7 @@ int init_kddm_set (struct kddm_set *set,
 	set->flags |= flags;
 	set->def_owner = def_owner;
 	set->ra_window_size = DEFAULT_READAHEAD_WINDOW_SIZE;
-	set->state = KDDM_SET_LOCKED;
+	set->state = GDM_SET_LOCKED;
 	atomic_set (&set->nr_objects, 0);
 	atomic_set (&set->nr_masters, 0);
 	atomic_set (&set->nr_copies, 0);
@@ -130,8 +130,8 @@ int init_kddm_set (struct kddm_set *set,
 	if (!set->obj_set)
 		goto exit;
 
-	/* create /proc/hcc/kddm_set entry. */
-	set->procfs_entry = create_kddm_proc(set->id);
+	/* create /proc/hcc/gdm_set entry. */
+	set->procfs_entry = create_gdm_proc(set->id);
 
 	err = 0;
 exit:
@@ -139,123 +139,123 @@ exit:
 }
 
 
-static int __free_kddm_obj_entry(unsigned long index,
+static int __free_gdm_obj_entry(unsigned long index,
 				 void *data,
 				 void *priv_data)
 {
-	put_obj_entry_count((struct kddm_set *)priv_data,
-			      (struct kddm_obj *)data, index);
+	put_obj_entry_count((struct gdm_set *)priv_data,
+			      (struct gdm_obj *)data, index);
 
 	return 0;
 }
 
-/** Free a kddm set structure. */
+/** Free a gdm set structure. */
 
-void free_kddm_set_struct(struct kddm_set * kddm_set)
+void free_gdm_set_struct(struct gdm_set * gdm_set)
 {
 	{   /// JUST FOR DEBUGGING: BEGIN
-		struct kddm_set *_kddm_set;
-		_kddm_set = _local_get_kddm_set(kddm_set->ns,
-						kddm_set->id);
-		BUG_ON (_kddm_set != NULL);
+		struct gdm_set *_gdm_set;
+		_gdm_set = _local_get_gdm_set(gdm_set->ns,
+						gdm_set->id);
+		BUG_ON (_gdm_set != NULL);
 	}   /// JUST FOR DEBUGGING: END
 
 	/*** Free object struct and objects content ***/
 
-	kddm_set->ops->obj_set_free(kddm_set->obj_set, __free_kddm_obj_entry,
-				    kddm_set);
+	gdm_set->ops->obj_set_free(gdm_set->obj_set, __free_gdm_obj_entry,
+				    gdm_set);
 
 	/*** Get rid of the IO linker ***/
 
-	kddm_io_uninstantiate(kddm_set, 0);
+	gdm_io_uninstantiate(gdm_set, 0);
 
-	if (kddm_set->procfs_entry)
-		remove_kddm_proc(kddm_set->procfs_entry);
+	if (gdm_set->procfs_entry)
+		remove_gdm_proc(gdm_set->procfs_entry);
 
-	/*** Finally, we are done... The kddm set is free ***/
+	/*** Finally, we are done... The gdm set is free ***/
 
-	kmem_cache_free(kddm_set_cachep, kddm_set);
+	kmem_cache_free(gdm_set_cachep, gdm_set);
 }
 
 
 
-void put_kddm_set(struct kddm_set *set)
+void put_gdm_set(struct gdm_set *set)
 {
 	if (atomic_dec_and_test(&set->count))
-		free_kddm_set_struct(set);
+		free_gdm_set_struct(set);
 }
-EXPORT_SYMBOL(put_kddm_set);
+EXPORT_SYMBOL(put_gdm_set);
 
 
-/** Find a KDDM set structure from its id.
+/** Find a GDM set structure from its id.
  *  @author Renaud Lottiaux
  *
  *  @param ns            Name space to search the set in.
- *  @param set_id        Identifier of the requested kddm set.
+ *  @param set_id        Identifier of the requested gdm set.
  *  @param init_state    Initial state of the set.
  *  @param flags         Identify extra actions to cary out on the look-up.
  *
- *  @return  Structure of the requested KDDM set.
+ *  @return  Structure of the requested GDM set.
  *           NULL if the set does not exist.
  */
-struct kddm_set *_generic_local_get_kddm_set(struct kddm_ns *ns,
-					     kddm_set_id_t set_id,
+struct gdm_set *_generic_local_get_gdm_set(struct gdm_ns *ns,
+					     gdm_set_id_t set_id,
 					     int init_state,
 					     int flags)
 {
-	struct kddm_set *kddm_set;
+	struct gdm_set *gdm_set;
 
-	if (!(flags & KDDM_LOCK_FREE))
+	if (!(flags & GDM_LOCK_FREE))
 		down (&ns->table_sem);
-	kddm_set = __hashtable_find (ns->kddm_set_table, set_id);
+	gdm_set = __hashtable_find (ns->gdm_set_table, set_id);
 
-	if ( (kddm_set != NULL) && (flags & KDDM_CHECK_UNIQUE)) {
-		kddm_set = ERR_PTR(-EEXIST);
+	if ( (gdm_set != NULL) && (flags & GDM_CHECK_UNIQUE)) {
+		gdm_set = ERR_PTR(-EEXIST);
 		goto found;
 	}
 
-	if ( (kddm_set == NULL) && (flags & KDDM_ALLOC_STRUCT)) {
-		kddm_set = alloc_kddm_set_struct(ns, set_id, init_state);
-		__hashtable_add (ns->kddm_set_table, set_id, kddm_set);
+	if ( (gdm_set == NULL) && (flags & GDM_ALLOC_STRUCT)) {
+		gdm_set = alloc_gdm_set_struct(ns, set_id, init_state);
+		__hashtable_add (ns->gdm_set_table, set_id, gdm_set);
 	}
 
-	if (likely(kddm_set != NULL))
-		atomic_inc(&kddm_set->count);
+	if (likely(gdm_set != NULL))
+		atomic_inc(&gdm_set->count);
 
 found:
-	if (!(flags & KDDM_LOCK_FREE))
+	if (!(flags & GDM_LOCK_FREE))
 		up (&ns->table_sem);
 
-	return kddm_set;
+	return gdm_set;
 }
 
 
 
-/** Find a KDDM set structure from its id.
+/** Find a GDM set structure from its id.
  *  @author Renaud Lottiaux
  *
  *  @param ns_id         Name space id to search the set in.
- *  @param set_id        Identifier of the requested kddm set.
+ *  @param set_id        Identifier of the requested gdm set.
  *  @param flags         Identify extra actions to cary out on the look-up.
  *
- *  @return  Structure of the requested KDDM set.
+ *  @return  Structure of the requested GDM set.
  *           NULL if the set does not exist.
  */
-struct kddm_set *generic_local_get_kddm_set(int ns_id,
-					    kddm_set_id_t set_id,
+struct gdm_set *generic_local_get_gdm_set(int ns_id,
+					    gdm_set_id_t set_id,
 					    int init_state,
 					    int flags)
 {
-	struct kddm_ns *ns;
-	struct kddm_set *kddm_set;
+	struct gdm_ns *ns;
+	struct gdm_set *gdm_set;
 
-	ns = kddm_ns_get (ns_id);
+	ns = gdm_ns_get (ns_id);
 	if (ns == NULL)
 		return ERR_PTR(-EINVAL);
-	kddm_set = _generic_local_get_kddm_set(ns , set_id, init_state, flags);
-	kddm_ns_put (ns);
+	gdm_set = _generic_local_get_gdm_set(ns , set_id, init_state, flags);
+	gdm_ns_put (ns);
 
-	return kddm_set;
+	return gdm_set;
 }
 
 
@@ -263,31 +263,31 @@ struct kddm_set *generic_local_get_kddm_set(int ns_id,
 /** Try to find the given set on a remote node and create a local instance
  *  @author Renaud Lottiaux
  *
- *  @param kddm_set   Struct of the kddm set to lookup.
+ *  @param gdm_set   Struct of the gdm set to lookup.
  *
- *  @return  Structure of the requested kddm set or NULL if not found.
+ *  @return  Structure of the requested gdm set or NULL if not found.
  */
-int find_kddm_set_remotely(struct kddm_set *kddm_set)
+int find_gdm_set_remotely(struct gdm_set *gdm_set)
 {
-	hcc_node_t kddm_set_mgr_node_id ;
-	kddm_id_msg_t kddm_id;
-	msg_kddm_set_t *msg;
+	hcc_node_t gdm_set_mgr_node_id ;
+	gdm_id_msg_t gdm_id;
+	msg_gdm_set_t *msg;
 	int msg_size;
 	int err = -ENOMEM;
 	struct rpc_desc* desc;
-	struct kddm_set_ops *set_ops = NULL;
+	struct gdm_set_ops *set_ops = NULL;
 	void *tree_init_data = NULL;
 	int free_init_data = 1;
 
-	kddm_set_mgr_node_id = KDDM_SET_MGR(kddm_set);
+	gdm_set_mgr_node_id = GDM_SET_MGR(gdm_set);
 
-	kddm_id.set_id = kddm_set->id;
-	kddm_id.ns_id = kddm_set->ns->id;
+	gdm_id.set_id = gdm_set->id;
+	gdm_id.ns_id = gdm_set->ns->id;
 
-	desc = rpc_begin(REQ_KDDM_SET_LOOKUP, kddm_set_mgr_node_id);
-	rpc_pack_type(desc, kddm_id);
+	desc = rpc_begin(REQ_GDM_SET_LOOKUP, gdm_set_mgr_node_id);
+	rpc_pack_type(desc, gdm_id);
 
-	msg_size = sizeof(msg_kddm_set_t) + MAX_PRIVATE_DATA_SIZE;
+	msg_size = sizeof(msg_gdm_set_t) + MAX_PRIVATE_DATA_SIZE;
 
 	msg = kmalloc(msg_size, GFP_KERNEL);
 	if (msg == NULL)
@@ -295,21 +295,21 @@ int find_kddm_set_remotely(struct kddm_set *kddm_set)
 
 	rpc_unpack(desc, 0, msg, msg_size);
 
-	if (msg->kddm_set_id != KDDM_SET_UNUSED) {
+	if (msg->gdm_set_id != GDM_SET_UNUSED) {
 		set_ops = krgsyms_import (msg->set_ops);
 	tree_init_data = set_ops->import(desc, &free_init_data);
 	}
 
 	rpc_end(desc, 0);
 
-	if (msg->kddm_set_id == KDDM_SET_UNUSED) {
+	if (msg->gdm_set_id == GDM_SET_UNUSED) {
 		err = -ENOENT;
 		goto check_err;
 	}
 
-	BUG_ON(msg->kddm_set_id != kddm_set->id);
+	BUG_ON(msg->gdm_set_id != gdm_set->id);
 
-	err = init_kddm_set(kddm_set, kddm_set->id, set_ops, tree_init_data,
+	err = init_gdm_set(gdm_set, gdm_set->id, set_ops, tree_init_data,
 			    msg->flags, msg->link, msg->obj_size);
 
 	if (tree_init_data && free_init_data)
@@ -318,137 +318,137 @@ int find_kddm_set_remotely(struct kddm_set *kddm_set)
 	if (err != 0)
 		goto check_err;
 
-	err = kddm_io_instantiate(kddm_set, msg->link, msg->linker_id,
+	err = gdm_io_instantiate(gdm_set, msg->link, msg->linker_id,
 				  msg->private_data, msg->data_size, 0);
 
 check_err:
 	kfree(msg);
 
-	spin_lock(&kddm_set->lock);
+	spin_lock(&gdm_set->lock);
 
 	if (err == 0)
-		kddm_set->state = KDDM_SET_READY;
+		gdm_set->state = GDM_SET_READY;
 	else
-		kddm_set->state = KDDM_SET_INVALID;
+		gdm_set->state = GDM_SET_INVALID;
 
-	wake_up(&kddm_set->create_wq);
+	wake_up(&gdm_set->create_wq);
 
-	spin_unlock(&kddm_set->lock);
+	spin_unlock(&gdm_set->lock);
 
 	return err;
 }
 
 
 
-/** Return a pointer to the given kddm_set. */
+/** Return a pointer to the given gdm_set. */
 
-struct kddm_set *__find_get_kddm_set(struct kddm_ns *ns,
-				     kddm_set_id_t set_id,
+struct gdm_set *__find_get_gdm_set(struct gdm_ns *ns,
+				     gdm_set_id_t set_id,
 				     int flags)
 {
-	struct kddm_set *kddm_set;
+	struct gdm_set *gdm_set;
 
-	flags |= KDDM_ALLOC_STRUCT;
-	kddm_set = _generic_local_get_kddm_set(ns, set_id,
-					       KDDM_SET_NEED_LOOKUP, flags);
-	if (unlikely(IS_ERR(kddm_set)))
-		return kddm_set;
+	flags |= GDM_ALLOC_STRUCT;
+	gdm_set = _generic_local_get_gdm_set(ns, set_id,
+					       GDM_SET_NEED_LOOKUP, flags);
+	if (unlikely(IS_ERR(gdm_set)))
+		return gdm_set;
 
-	/* If the kddm set has been found INVALID earlier, we have to check if
-	 * it is still invalid... So, we force a new remote kddm set lookup.
+	/* If the gdm set has been found INVALID earlier, we have to check if
+	 * it is still invalid... So, we force a new remote gdm set lookup.
 	 */
-	spin_lock(&kddm_set->lock);
+	spin_lock(&gdm_set->lock);
 
-	if (kddm_set->state == KDDM_SET_INVALID)
-		kddm_set->state = KDDM_SET_NEED_LOOKUP;
+	if (gdm_set->state == GDM_SET_INVALID)
+		gdm_set->state = GDM_SET_NEED_LOOKUP;
 
 	goto check_no_lock;
 
 recheck_state:
-	spin_lock(&kddm_set->lock);
+	spin_lock(&gdm_set->lock);
 
 check_no_lock:
-	/* If KDDM frozen, sleep until it is no more frozen */
-	if (!(flags & KDDM_LOCK_FREE) && kddm_frozen(kddm_set)) {
-		spin_unlock(&kddm_set->lock);
-		wait_event (kddm_set->frozen_wq, (!kddm_frozen(kddm_set)));
+	/* If GDM frozen, sleep until it is no more frozen */
+	if (!(flags & GDM_LOCK_FREE) && gdm_frozen(gdm_set)) {
+		spin_unlock(&gdm_set->lock);
+		wait_event (gdm_set->frozen_wq, (!gdm_frozen(gdm_set)));
 		goto recheck_state;
 	}
-	/* Make sure we only use bypass_frozen when KDDM are frozen (i.e.
+	/* Make sure we only use bypass_frozen when GDM are frozen (i.e.
 	   hotplug cases) */
-	BUG_ON ((flags & KDDM_LOCK_FREE) && !kddm_frozen(kddm_set));
+	BUG_ON ((flags & GDM_LOCK_FREE) && !gdm_frozen(gdm_set));
 
-	switch (kddm_set->state) {
-	  case KDDM_SET_READY:
-		  spin_unlock(&kddm_set->lock);
+	switch (gdm_set->state) {
+	  case GDM_SET_READY:
+		  spin_unlock(&gdm_set->lock);
 		  break;
 
-	  case KDDM_SET_NEED_LOOKUP:
-		  /* The kddm set structure has just been allocated or
+	  case GDM_SET_NEED_LOOKUP:
+		  /* The gdm set structure has just been allocated or
 		   * a remote lookup has been forced.
 		   */
-		  kddm_set->state = KDDM_SET_LOCKED;
-		  spin_unlock(&kddm_set->lock);
-		  find_kddm_set_remotely(kddm_set);
+		  gdm_set->state = GDM_SET_LOCKED;
+		  spin_unlock(&gdm_set->lock);
+		  find_gdm_set_remotely(gdm_set);
 		  goto recheck_state;
 
-	  case KDDM_SET_UNINITIALIZED:
-	  case KDDM_SET_INVALID:
-		  spin_unlock(&kddm_set->lock);
-		  kddm_set = NULL;
+	  case GDM_SET_UNINITIALIZED:
+	  case GDM_SET_INVALID:
+		  spin_unlock(&gdm_set->lock);
+		  gdm_set = NULL;
 		  break;
 
-	  case KDDM_SET_LOCKED:
-		  sleep_on_and_spin_unlock(&kddm_set->create_wq,
-					   &kddm_set->lock);
+	  case GDM_SET_LOCKED:
+		  sleep_on_and_spin_unlock(&gdm_set->create_wq,
+					   &gdm_set->lock);
 		  goto recheck_state;
 
 	  default:
 		  BUG();
 	}
 
-	return kddm_set;
+	return gdm_set;
 }
-EXPORT_SYMBOL(_find_get_kddm_set);
+EXPORT_SYMBOL(_find_get_gdm_set);
 
 
-struct kddm_set *find_get_kddm_set(int ns_id,
-				   kddm_set_id_t set_id)
+struct gdm_set *find_get_gdm_set(int ns_id,
+				   gdm_set_id_t set_id)
 {
-	struct kddm_ns *ns;
-	struct kddm_set *kddm_set;
+	struct gdm_ns *ns;
+	struct gdm_set *gdm_set;
 
-	ns = kddm_ns_get (ns_id);
+	ns = gdm_ns_get (ns_id);
 
-	kddm_set = _find_get_kddm_set(ns, set_id);
+	gdm_set = _find_get_gdm_set(ns, set_id);
 
-	kddm_ns_put(ns);
+	gdm_ns_put(ns);
 
-	return kddm_set;
+	return gdm_set;
 }
-EXPORT_SYMBOL(find_get_kddm_set);
+EXPORT_SYMBOL(find_get_gdm_set);
 
 
 
-/** High level function to create a new kddm set.
+/** High level function to create a new gdm set.
  *  @author Renaud Lottiaux
  *
  *  @param ns             Name space to create a new set in.
- *  @param set_id         Id of the kddm set to create. 0 -> auto attribution.
+ *  @param set_id         Id of the gdm set to create. 0 -> auto attribution.
  *  @param order          Order of the number of objects storable in the set.
- *  @param linker_id      Id of the IO linker to link the kddm set with.
+ *  @param linker_id      Id of the IO linker to link the gdm set with.
  *  @param def_owner      Default owner node.
- *  @param obj_size       Size of objects stored in the kddm set.
+ *  @param obj_size       Size of objects stored in the gdm set.
  *  @param private_data   Data used by the instantiator.
  *  @param data_size      Size of private data.
  *  @param flags          Kddm set flags.
  *
- *  @return      A newly created kddm set if everything is ok.
+ *  @return      A newly created gdm set if everything is ok.
  *               Negative value otherwise
  */
-struct kddm_set *__create_new_kddm_set(struct kddm_ns *ns,
-				       kddm_set_id_t set_id,
-				       struct kddm_set_ops *set_ops,
+struct gdm_set *__create_new_gdm_set(struct gdm_ns *ns,
+				       gdm_set_id_t set_id,
+				       struct gdm_set_ops *set_ops,
 				       void *tree_init_data,
 				       iolinker_id_t linker_id,
 				       hcc_node_t def_owner,
@@ -457,90 +457,90 @@ struct kddm_set *__create_new_kddm_set(struct kddm_ns *ns,
 				       unsigned long data_size,
 				       unsigned long flags)
 {
-	struct kddm_set *kddm_set;
+	struct gdm_set *gdm_set;
 	int err = -EINVAL;
 
 	if (data_size > MAX_PRIVATE_DATA_SIZE)
 		goto error;
 
 	if (set_id == 0)
-		set_id = alloc_new_kddm_set_id(ns);
+		set_id = alloc_new_gdm_set_id(ns);
 
-	kddm_set = _local_get_alloc_unique_kddm_set(ns, set_id,
-						    KDDM_SET_UNINITIALIZED);
-	if (IS_ERR(kddm_set))
+	gdm_set = _local_get_alloc_unique_gdm_set(ns, set_id,
+						    GDM_SET_UNINITIALIZED);
+	if (IS_ERR(gdm_set))
 		goto error;
 
-	err = init_kddm_set(kddm_set, set_id, set_ops, tree_init_data,
+	err = init_gdm_set(gdm_set, set_id, set_ops, tree_init_data,
 			    flags, def_owner, obj_size);
 	if (err)
 		goto error;
 
-	err = kddm_io_instantiate(kddm_set, def_owner, linker_id,
+	err = gdm_io_instantiate(gdm_set, def_owner, linker_id,
 				  private_data, data_size, 1);
 	if (err)
 		goto error;
 
-	spin_lock(&kddm_set->lock);
+	spin_lock(&gdm_set->lock);
 
-	kddm_set->state = KDDM_SET_READY;
-	wake_up(&kddm_set->create_wq);
+	gdm_set->state = GDM_SET_READY;
+	wake_up(&gdm_set->create_wq);
 
-	spin_unlock(&kddm_set->lock);
+	spin_unlock(&gdm_set->lock);
 
-	put_kddm_set(kddm_set);
+	put_gdm_set(gdm_set);
 
 	goto exit;
 
 error:
-	kddm_set = ERR_PTR(err);
+	gdm_set = ERR_PTR(err);
 exit:
-	return kddm_set;
+	return gdm_set;
 }
-EXPORT_SYMBOL(__create_new_kddm_set);
+EXPORT_SYMBOL(__create_new_gdm_set);
 
 
-static void do_freeze_kddm_set(void *_set, void *_data)
+static void do_freeze_gdm_set(void *_set, void *_data)
 {
-	struct kddm_set *set = _set;
+	struct gdm_set *set = _set;
 
 	spin_lock(&set->lock);
 
-	BUG_ON (kddm_frozen(set));
-	set_kddm_frozen(set);
-	freeze_kddm_event(set);
+	BUG_ON (gdm_frozen(set));
+	set_gdm_frozen(set);
+	freeze_gdm_event(set);
 
 	spin_unlock(&set->lock);
 }
 
-static void do_unfreeze_kddm_set(void *_set, void *_data)
+static void do_unfreeze_gdm_set(void *_set, void *_data)
 {
-	struct kddm_set *set = _set;
+	struct gdm_set *set = _set;
 
 	spin_lock(&set->lock);
 
-	BUG_ON (!kddm_frozen(set));
+	BUG_ON (!gdm_frozen(set));
 
-	unfreeze_kddm_event(set);
-	clear_kddm_frozen(set);
+	unfreeze_gdm_event(set);
+	clear_gdm_frozen(set);
 
 	wake_up(&set->frozen_wq);
 
 	spin_unlock(&set->lock);
 }
 
-void freeze_kddm(void)
+void freeze_gdm(void)
 {
-	down (&kddm_def_ns->table_sem);
-	__hashtable_foreach_data(kddm_def_ns->kddm_set_table,
-				 do_freeze_kddm_set, NULL);
+	down (&gdm_def_ns->table_sem);
+	__hashtable_foreach_data(gdm_def_ns->gdm_set_table,
+				 do_freeze_gdm_set, NULL);
 }
 
-void unfreeze_kddm(void)
+void unfreeze_gdm(void)
 {
-	__hashtable_foreach_data(kddm_def_ns->kddm_set_table,
-				 do_unfreeze_kddm_set, NULL);
-	up (&kddm_def_ns->table_sem);
+	__hashtable_foreach_data(gdm_def_ns->gdm_set_table,
+				 do_unfreeze_gdm_set, NULL);
+	up (&gdm_def_ns->table_sem);
 }
 
 
@@ -550,103 +550,103 @@ void unfreeze_kddm(void)
 /*                                                                           */
 /*****************************************************************************/
 
-/** kddm set lookup handler.
+/** gdm set lookup handler.
  *  @author Renaud Lottiaux
  *
  *  @param sender    Identifier of the remote requesting machine.
- *  @param msg       Identifier of the kddm set to lookup for.
+ *  @param msg       Identifier of the gdm set to lookup for.
  */
-int handle_req_kddm_set_lookup(struct rpc_desc* desc,
+int handle_req_gdm_set_lookup(struct rpc_desc* desc,
 			       void *_msg, size_t size)
 {
-	kddm_id_msg_t kddm_id = *((kddm_id_msg_t *) _msg);
-	struct kddm_set *kddm_set;
-	msg_kddm_set_t *msg;
-	int msg_size = sizeof(msg_kddm_set_t);
+	gdm_id_msg_t gdm_id = *((gdm_id_msg_t *) _msg);
+	struct gdm_set *gdm_set;
+	msg_gdm_set_t *msg;
+	int msg_size = sizeof(msg_gdm_set_t);
 
 	BUG_ON(!krgnode_online(rpc_desc_get_client(desc)));
 
-	kddm_set = local_get_kddm_set(kddm_id.ns_id, kddm_id.set_id);
+	gdm_set = local_get_gdm_set(gdm_id.ns_id, gdm_id.set_id);
 
-	if (kddm_set)
-		msg_size += kddm_set->private_data_size;
+	if (gdm_set)
+		msg_size += gdm_set->private_data_size;
 
-	/* Prepare the kddm set creation message */
+	/* Prepare the gdm set creation message */
 
 	msg = kmalloc(msg_size, GFP_KERNEL);
 	if (msg == NULL)
 		OOM;
 
-	if (kddm_set == NULL || kddm_set->state != KDDM_SET_READY) {
-		msg->kddm_set_id = KDDM_SET_UNUSED;
+	if (gdm_set == NULL || gdm_set->state != GDM_SET_READY) {
+		msg->gdm_set_id = GDM_SET_UNUSED;
 		goto done;
 	}
 
-	msg->kddm_set_id = kddm_id.set_id;
-	msg->linker_id = kddm_set->iolinker->linker_id;
-	msg->flags = kddm_set->flags;
-	msg->link = kddm_set->def_owner;
-	msg->obj_size = kddm_set->obj_size;
-	msg->data_size = kddm_set->private_data_size;
-	msg->set_ops = krgsyms_export (kddm_set->ops);
-	memcpy(msg->private_data, kddm_set->private_data, kddm_set->private_data_size);
+	msg->gdm_set_id = gdm_id.set_id;
+	msg->linker_id = gdm_set->iolinker->linker_id;
+	msg->flags = gdm_set->flags;
+	msg->link = gdm_set->def_owner;
+	msg->obj_size = gdm_set->obj_size;
+	msg->data_size = gdm_set->private_data_size;
+	msg->set_ops = krgsyms_export (gdm_set->ops);
+	memcpy(msg->private_data, gdm_set->private_data, gdm_set->private_data_size);
 
 done:
 	rpc_pack(desc, 0, msg, msg_size);
-	if (msg->kddm_set_id != KDDM_SET_UNUSED)
-		kddm_set->ops->export(desc, kddm_set);
+	if (msg->gdm_set_id != GDM_SET_UNUSED)
+		gdm_set->ops->export(desc, gdm_set);
 
 	kfree(msg);
 
-	if (kddm_set)
-		put_kddm_set(kddm_set);
+	if (gdm_set)
+		put_gdm_set(gdm_set);
 
 	return 0;
 }
 
 
 
-/** kddm set destroy handler.
+/** gdm set destroy handler.
  *  @author Renaud Lottiaux
  *
  *  @param sender    Identifier of the remote requesting machine.
- *  @param msg       Identifier of the kddm set to destroy.
+ *  @param msg       Identifier of the gdm set to destroy.
  */
 static inline
-int __handle_req_kddm_set_destroy(hcc_node_t sender,
+int __handle_req_gdm_set_destroy(hcc_node_t sender,
 				void *msg)
 {
-	kddm_id_msg_t kddm_id = *((kddm_id_msg_t *) msg);
-	struct kddm_ns *ns;
-	struct kddm_set *kddm_set;
+	gdm_id_msg_t gdm_id = *((gdm_id_msg_t *) msg);
+	struct gdm_ns *ns;
+	struct gdm_set *gdm_set;
 
 	BUG_ON(!krgnode_online(sender));
 
-	/* Remove the kddm set from the name space */
+	/* Remove the gdm set from the name space */
 
-	ns = kddm_ns_get (kddm_id.ns_id);
+	ns = gdm_ns_get (gdm_id.ns_id);
 	if (ns == NULL)
 		return -EINVAL;
 
 	down (&ns->table_sem);
-	kddm_set = __hashtable_remove(ns->kddm_set_table, kddm_id.set_id);
+	gdm_set = __hashtable_remove(ns->gdm_set_table, gdm_id.set_id);
 	up (&ns->table_sem);
 
-	kddm_ns_put (ns);
+	gdm_ns_put (ns);
 
-	if (kddm_set == NULL)
+	if (gdm_set == NULL)
 		return -EINVAL;
 
-	/* Free the kddm set structure */
+	/* Free the gdm set structure */
 
-	put_kddm_set(kddm_set);
+	put_gdm_set(gdm_set);
 
 	return 0;
 }
 
-int handle_req_kddm_set_destroy(struct rpc_desc* desc,
+int handle_req_gdm_set_destroy(struct rpc_desc* desc,
 				void *msg, size_t size){
-	return __handle_req_kddm_set_destroy(rpc_desc_get_client(desc), msg);
+	return __handle_req_gdm_set_destroy(rpc_desc_get_client(desc), msg);
 }
 
 /*****************************************************************************/
@@ -656,35 +656,35 @@ int handle_req_kddm_set_destroy(struct rpc_desc* desc,
 /*****************************************************************************/
 
 
-/* High level function to destroy a kddm set. */
+/* High level function to destroy a gdm set. */
 
-int _destroy_kddm_set(struct kddm_set * kddm_set)
+int _destroy_gdm_set(struct gdm_set * gdm_set)
 {
-	kddm_id_msg_t kddm_id;
+	gdm_id_msg_t gdm_id;
 
-	kddm_id.set_id = kddm_set->id;
-	kddm_id.ns_id = kddm_set->ns->id;
+	gdm_id.set_id = gdm_set->id;
+	gdm_id.ns_id = gdm_set->ns->id;
 
-	rpc_async_m(REQ_KDDM_SET_DESTROY, &krgnode_online_map,
-		    &kddm_id, sizeof(kddm_id_msg_t));
+	rpc_async_m(REQ_GDM_SET_DESTROY, &krgnode_online_map,
+		    &gdm_id, sizeof(gdm_id_msg_t));
 	return 0;
 }
-EXPORT_SYMBOL(_destroy_kddm_set);
+EXPORT_SYMBOL(_destroy_gdm_set);
 
-int destroy_kddm_set(struct kddm_ns *ns, kddm_set_id_t set_id)
+int destroy_gdm_set(struct gdm_ns *ns, gdm_set_id_t set_id)
 {
-	struct kddm_set * kddm_set;
+	struct gdm_set * gdm_set;
 	int r;
 
-	kddm_set = _find_get_kddm_set(ns, set_id);
-	if (kddm_set == NULL)
+	gdm_set = _find_get_gdm_set(ns, set_id);
+	if (gdm_set == NULL)
 		return -EINVAL;
-	r = _destroy_kddm_set(kddm_set);
+	r = _destroy_gdm_set(gdm_set);
 
-	put_kddm_set(kddm_set);
+	put_gdm_set(gdm_set);
 	return r;
 }
-EXPORT_SYMBOL(destroy_kddm_set);
+EXPORT_SYMBOL(destroy_gdm_set);
 
 /*****************************************************************************/
 /*                                                                           */
@@ -694,49 +694,49 @@ EXPORT_SYMBOL(destroy_kddm_set);
 
 
 
-void __kddm_set_destroy(void *_kddm_set,
+void __gdm_set_destroy(void *_gdm_set,
 			void *dummy)
 {
-	struct kddm_set *kddm_set = _kddm_set;
-	kddm_id_msg_t kddm_id;
+	struct gdm_set *gdm_set = _gdm_set;
+	gdm_id_msg_t gdm_id;
 
-	kddm_id.ns_id = kddm_set->ns->id;
-	kddm_id.set_id = kddm_set->id;
+	gdm_id.ns_id = gdm_set->ns->id;
+	gdm_id.set_id = gdm_set->id;
 
-	handle_req_kddm_set_destroy(0, &kddm_id, sizeof(kddm_id));
+	handle_req_gdm_set_destroy(0, &gdm_id, sizeof(gdm_id));
 }
 
 
 
-/* KDDM set mecanisms initialisation.*/
+/* GDM set mecanisms initialisation.*/
 
-void kddm_set_init()
+void gdm_set_init()
 {
-	struct rpc_synchro* kddm_server;
+	struct rpc_synchro* gdm_server;
 
-	printk ("KDDM set init\n");
+	printk ("GDM set init\n");
 
-	kddm_server = rpc_synchro_new(1, "kddm server", 0);
+	gdm_server = rpc_synchro_new(1, "gdm server", 0);
 
-	kddm_set_cachep = KMEM_CACHE(kddm_set, SLAB_PANIC);
+	gdm_set_cachep = KMEM_CACHE(gdm_set, SLAB_PANIC);
 
-	kddm_tree_cachep = KMEM_CACHE(kddm_tree, SLAB_PANIC);
+	gdm_tree_cachep = KMEM_CACHE(gdm_tree, SLAB_PANIC);
 
-	kddm_tree_lvl_cachep = KMEM_CACHE(kddm_tree_lvl, SLAB_PANIC);
+	gdm_tree_lvl_cachep = KMEM_CACHE(gdm_tree_lvl, SLAB_PANIC);
 
-	__rpc_register(REQ_KDDM_SET_LOOKUP,
+	__rpc_register(REQ_GDM_SET_LOOKUP,
 		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
-		       kddm_server, handle_req_kddm_set_lookup, 0);
+		       gdm_server, handle_req_gdm_set_lookup, 0);
 
-	__rpc_register(REQ_KDDM_SET_DESTROY,
+	__rpc_register(REQ_GDM_SET_DESTROY,
 		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
-		       kddm_server, handle_req_kddm_set_destroy, 0);
+		       gdm_server, handle_req_gdm_set_destroy, 0);
 
-	printk ("KDDM set init : done\n");
+	printk ("GDM set init : done\n");
 }
 
 
 
-void kddm_set_finalize()
+void gdm_set_finalize()
 {
 }

@@ -326,10 +326,10 @@ static void bad_page(struct page *page)
 		current->comm, page_to_pfn(page));
 #ifdef CONFIG_KRG_MM
 	printk(KERN_ALERT
-	        "page:%p flags:%p count:%d mapcount:%d mapping:%p kddm_count:%d obj_entry:%p\n",
+	        "page:%p flags:%p count:%d mapcount:%d mapping:%p gdm_count:%d obj_entry:%p\n",
 	       page, (void *)page->flags, page_count(page),
 	       page_mapcount(page), page->mapping,
-	       page_kddm_count(page), page->obj_entry);
+	       page_gdm_count(page), page->obj_entry);
 #else
 	printk(KERN_ALERT
 		"page:%p flags:%p count:%d mapcount:%d mapping:%p ",
@@ -596,7 +596,7 @@ static inline int free_pages_check(struct page *page)
 		(atomic_read(&page->_count) != 0) |
 #ifdef CONFIG_KRG_MM
 		(page->obj_entry != NULL) |
-		(page_kddm_count(page) != 0) |
+		(page_gdm_count(page) != 0) |
 #endif
 		(page->flags & PAGE_FLAGS_CHECK_AT_FREE) |
 		(mem_cgroup_bad_page_check(page)))) {
@@ -3600,7 +3600,7 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 		}
 		page = pfn_to_page(pfn);
 #ifdef CONFIG_KRG_MM
-		atomic_set(&page->_kddm_count, 0);
+		atomic_set(&page->_gdm_count, 0);
 #endif
 		set_page_links(page, zone, nid, pfn);
 		mminit_verify_page_links(page, zone, nid, pfn);

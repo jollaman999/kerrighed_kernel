@@ -1,16 +1,16 @@
-/** Definition and management of kddm objects.
+/** Definition and management of gdm objects.
  *  @file object.h
  *
  *  @author Renaud Lottiaux
  */
 
-#ifndef __KDDM_OBJECT__
-#define __KDDM_OBJECT__
+#ifndef __GDM_OBJECT__
+#define __GDM_OBJECT__
 
 #include <linux/highmem.h>
 
-#include <kddm/kddm_types.h>
-#include <kddm/kddm_set.h>
+#include <gdm/gdm_types.h>
+#include <gdm/gdm_set.h>
 
 
 
@@ -24,16 +24,16 @@
 
 typedef enum {
 	INV_COPY = 0,
-	READ_COPY =         1 << STATE_INDEX_SHIFT | KDDM_READ_OBJ,
+	READ_COPY =         1 << STATE_INDEX_SHIFT | GDM_READ_OBJ,
 
-	INV_OWNER =         2 << STATE_INDEX_SHIFT | KDDM_OWNER_OBJ,
-	READ_OWNER =        3 << STATE_INDEX_SHIFT | KDDM_OWNER_OBJ | KDDM_READ_OBJ,
-	WRITE_OWNER =       4 << STATE_INDEX_SHIFT | KDDM_OWNER_OBJ | KDDM_READ_OBJ | KDDM_WRITE_OBJ,
-	WRITE_GHOST =       5 << STATE_INDEX_SHIFT | KDDM_OWNER_OBJ | KDDM_READ_OBJ | KDDM_WRITE_OBJ,
+	INV_OWNER =         2 << STATE_INDEX_SHIFT | GDM_OWNER_OBJ,
+	READ_OWNER =        3 << STATE_INDEX_SHIFT | GDM_OWNER_OBJ | GDM_READ_OBJ,
+	WRITE_OWNER =       4 << STATE_INDEX_SHIFT | GDM_OWNER_OBJ | GDM_READ_OBJ | GDM_WRITE_OBJ,
+	WRITE_GHOST =       5 << STATE_INDEX_SHIFT | GDM_OWNER_OBJ | GDM_READ_OBJ | GDM_WRITE_OBJ,
 
-	WAIT_ACK_INV =      6 << STATE_INDEX_SHIFT | KDDM_OWNER_OBJ | KDDM_READ_OBJ,
-	WAIT_ACK_WRITE =    7 << STATE_INDEX_SHIFT | KDDM_OWNER_OBJ | KDDM_READ_OBJ,
-	WAIT_CHG_OWN_ACK =  8 << STATE_INDEX_SHIFT | KDDM_READ_OBJ,
+	WAIT_ACK_INV =      6 << STATE_INDEX_SHIFT | GDM_OWNER_OBJ | GDM_READ_OBJ,
+	WAIT_ACK_WRITE =    7 << STATE_INDEX_SHIFT | GDM_OWNER_OBJ | GDM_READ_OBJ,
+	WAIT_CHG_OWN_ACK =  8 << STATE_INDEX_SHIFT | GDM_READ_OBJ,
 
 	WAIT_OBJ_READ =    10 << STATE_INDEX_SHIFT,
 	WAIT_OBJ_WRITE =   11 << STATE_INDEX_SHIFT,
@@ -45,7 +45,7 @@ typedef enum {
 	INV_FILLING =      16 << STATE_INDEX_SHIFT,
 
 	NB_OBJ_STATE =     17 /* MUST always be the last one */
-} kddm_obj_state_t;
+} gdm_obj_state_t;
 
 /************************** Copyset management **************************/
 
@@ -64,7 +64,7 @@ typedef enum {
 
 /** Tests if local node is the object owner */
 
-#define I_AM_OWNER(obj_entry) ((obj_entry)->flags & KDDM_OWNER_OBJ)
+#define I_AM_OWNER(obj_entry) ((obj_entry)->flags & GDM_OWNER_OBJ)
 
 /** Tests if the copyset is empty */
 #define SET_IS_EMPTY(set) __krgnodes_empty(set)
@@ -82,7 +82,7 @@ typedef enum {
 #define REMOVE_FROM_SET(set,nodeid) __krgnode_clear(nodeid, set)
 
 #define I_AM_DEFAULT_OWNER(set, objid) \
-        (hcc_node_id == kddm_io_default_owner(set, objid))
+        (hcc_node_id == gdm_io_default_owner(set, objid))
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -108,7 +108,7 @@ extern const char *state_name[]; /*< Printable state name */
 #define ASSERT_OBJ_PATH_LOCKED(set, objid) assert_spin_locked(&(set)->obj_lock[(objid) % NR_OBJ_ENTRY_LOCKS])
 
 /** Lock the object (take care about the interrupt context) **/
-static inline void kddm_obj_path_lock (struct kddm_set *set,
+static inline void gdm_obj_path_lock (struct gdm_set *set,
 				       objid_t objid)
 {
 	spinlock_t *lock = &set->obj_lock[objid % NR_OBJ_ENTRY_LOCKS];
@@ -119,7 +119,7 @@ static inline void kddm_obj_path_lock (struct kddm_set *set,
 		spin_lock_bh (lock);
 }
 
-static inline void kddm_obj_path_unlock (struct kddm_set *set,
+static inline void gdm_obj_path_unlock (struct gdm_set *set,
 					 objid_t objid)
 {
 	spinlock_t *lock = &set->obj_lock[objid % NR_OBJ_ENTRY_LOCKS];
@@ -132,173 +132,173 @@ static inline void kddm_obj_path_unlock (struct kddm_set *set,
 
 
 
-/** Alloc a new KDDM obj entry structure.
+/** Alloc a new GDM obj entry structure.
  *  @author Renaud Lottiaux
  *
  *  @param set     Kddm set to create an object for.
  *  @param objid   Id of the object to create.
  */
-struct kddm_obj *alloc_kddm_obj_entry(struct kddm_set *set,
+struct gdm_obj *alloc_gdm_obj_entry(struct gdm_set *set,
 				      objid_t objid);
 
-/** Duplicate a KDDM obj entry structure.
+/** Duplicate a GDM obj entry structure.
  *  @author Renaud Lottiaux
  *
  *  @param src_obj   The object entry to duplicate
  */
-struct kddm_obj *dup_kddm_obj_entry(struct kddm_obj *src_obj);
+struct gdm_obj *dup_gdm_obj_entry(struct gdm_obj *src_obj);
 
-/** Free KDDM obj entry structure.
+/** Free GDM obj entry structure.
  *  @author Renaud Lottiaux
  *
  *  @param set        The set the object belongs to.
  *  @param obj_entry  The structure to free
  *  @param objid      Id of the object to free.
  */
-void free_kddm_obj_entry(struct kddm_set *set,
-			 struct kddm_obj *obj_entry,
+void free_gdm_obj_entry(struct gdm_set *set,
+			 struct gdm_obj *obj_entry,
 			 objid_t objid);
 
-static inline void put_obj_entry_count(struct kddm_set *set,
-					 struct kddm_obj *obj_entry,
+static inline void put_obj_entry_count(struct gdm_set *set,
+					 struct gdm_obj *obj_entry,
 					 objid_t objid)
 {
 	if (atomic_dec_and_test(&obj_entry->count))
-		free_kddm_obj_entry(set, obj_entry, objid);
+		free_gdm_obj_entry(set, obj_entry, objid);
 }
 
-static inline int obj_entry_count(struct kddm_obj *obj_entry)
+static inline int obj_entry_count(struct gdm_obj *obj_entry)
 {
         return atomic_read(&obj_entry->count);
 }
 
-/** Lookup for an object entry in a kddm set.
+/** Lookup for an object entry in a gdm set.
  *  @author Renaud Lottiaux
  *
- *  @param kddm_set    Kddm set to lookup the object in.
+ *  @param gdm_set    Kddm set to lookup the object in.
  *  @param objid       Id of the object to lookup for.
  *
  *  @return        Object entry of the object or NULL if the object entry does
  *                 not exist.
  */
-struct kddm_obj *__get_kddm_obj_entry (struct kddm_set *kddm_set,
+struct gdm_obj *__get_gdm_obj_entry (struct gdm_set *gdm_set,
 				       objid_t objid);
 
-static inline struct kddm_obj *_get_kddm_obj_entry (struct kddm_ns *ns,
-						    kddm_set_id_t set_id,
+static inline struct gdm_obj *_get_gdm_obj_entry (struct gdm_ns *ns,
+						    gdm_set_id_t set_id,
 						    objid_t objid,
-						    struct kddm_set **kddm_set)
+						    struct gdm_set **gdm_set)
 {
-	struct kddm_obj *obj = NULL;
+	struct gdm_obj *obj = NULL;
 
-	*kddm_set = _find_get_kddm_set (ns, set_id);
-	if (*kddm_set) {
-		obj = __get_kddm_obj_entry (*kddm_set, objid);
-		put_kddm_set(*kddm_set);
+	*gdm_set = _find_get_gdm_set (ns, set_id);
+	if (*gdm_set) {
+		obj = __get_gdm_obj_entry (*gdm_set, objid);
+		put_gdm_set(*gdm_set);
 	}
 	return obj;
 }
 
-static inline struct kddm_obj *get_kddm_obj_entry (int ns_id,
-						   kddm_set_id_t set_id,
+static inline struct gdm_obj *get_gdm_obj_entry (int ns_id,
+						   gdm_set_id_t set_id,
 						   objid_t objid,
-						   struct kddm_set **kddm_set)
+						   struct gdm_set **gdm_set)
 {
-	struct kddm_obj *obj = NULL;
+	struct gdm_obj *obj = NULL;
 
-	*kddm_set = find_get_kddm_set (ns_id, set_id);
-	if (*kddm_set) {
-		obj = __get_kddm_obj_entry (*kddm_set, objid);
-		put_kddm_set(*kddm_set);
+	*gdm_set = find_get_gdm_set (ns_id, set_id);
+	if (*gdm_set) {
+		obj = __get_gdm_obj_entry (*gdm_set, objid);
+		put_gdm_set(*gdm_set);
 	}
 	return obj;
 }
 
-static inline void put_kddm_obj_entry (struct kddm_set *set,
-				       struct kddm_obj *obj_entry,
+static inline void put_gdm_obj_entry (struct gdm_set *set,
+				       struct gdm_obj *obj_entry,
 				       objid_t objid)
 {
 	if (obj_entry)
 		CLEAR_OBJECT_LOCKED(obj_entry);
 
-	kddm_obj_path_unlock (set, objid);
+	gdm_obj_path_unlock (set, objid);
 }
 
-struct kddm_obj *default_get_kddm_obj_entry (struct kddm_set *set,
+struct gdm_obj *default_get_gdm_obj_entry (struct gdm_set *set,
 					     objid_t objid);
 
 
 
-/** Lookup for an object entry in a kddm set and create it if necessary
+/** Lookup for an object entry in a gdm set and create it if necessary
  *  @author Renaud Lottiaux
  *
- *  @param kddm_set    Kddm set to lookup the object in.
+ *  @param gdm_set    Kddm set to lookup the object in.
  *  @param objid       Id of the object to lookup for.
  *
  *  @return        Object entry of the object. If the object does not exist,
  *                 it is allocated
  */
-struct kddm_obj *__get_alloc_kddm_obj_entry (struct kddm_set *kddm_set,
+struct gdm_obj *__get_alloc_gdm_obj_entry (struct gdm_set *gdm_set,
 					     objid_t objid);
 
-static inline struct kddm_obj *get_alloc_kddm_obj_entry (int ns_id,
-							 kddm_set_id_t set_id,
+static inline struct gdm_obj *get_alloc_gdm_obj_entry (int ns_id,
+							 gdm_set_id_t set_id,
 							 objid_t objid,
-							 struct kddm_set **kddm_set)
+							 struct gdm_set **gdm_set)
 {
-	struct kddm_obj *obj = NULL;
+	struct gdm_obj *obj = NULL;
 
-	*kddm_set = find_get_kddm_set (ns_id, set_id);
-	if (*kddm_set) {
-		obj = __get_alloc_kddm_obj_entry (*kddm_set, objid);
-		put_kddm_set(*kddm_set);
+	*gdm_set = find_get_gdm_set (ns_id, set_id);
+	if (*gdm_set) {
+		obj = __get_alloc_gdm_obj_entry (*gdm_set, objid);
+		put_gdm_set(*gdm_set);
 	}
 	return obj;
 }
 
-static inline struct kddm_obj *_get_alloc_kddm_obj_entry (struct kddm_ns *ns,
-							  kddm_set_id_t set_id,
+static inline struct gdm_obj *_get_alloc_gdm_obj_entry (struct gdm_ns *ns,
+							  gdm_set_id_t set_id,
 							  objid_t objid,
-							  struct kddm_set **kddm_set)
+							  struct gdm_set **gdm_set)
 {
-	struct kddm_obj *obj = NULL;
+	struct gdm_obj *obj = NULL;
 
-	*kddm_set = _find_get_kddm_set (ns, set_id);
-	if (*kddm_set) {
-		obj = __get_alloc_kddm_obj_entry (*kddm_set, objid);
-		put_kddm_set(*kddm_set);
+	*gdm_set = _find_get_gdm_set (ns, set_id);
+	if (*gdm_set) {
+		obj = __get_alloc_gdm_obj_entry (*gdm_set, objid);
+		put_gdm_set(*gdm_set);
 	}
 	return obj;
 }
 
 
 
-int destroy_kddm_obj_entry (struct kddm_set *kddm_set,
-			    struct kddm_obj *obj_entry,
+int destroy_gdm_obj_entry (struct gdm_set *gdm_set,
+			    struct gdm_obj *obj_entry,
 			    objid_t objid,
 			    int cluster_wide_remove);
 
-void __for_each_kddm_object(struct kddm_set *kddm_set,
+void __for_each_gdm_object(struct gdm_set *gdm_set,
 			    int(*f)(unsigned long, void *, void*),
 			    void *data);
 
-void for_each_kddm_object(int ns_id, kddm_set_id_t set_id,
+void for_each_gdm_object(int ns_id, gdm_set_id_t set_id,
 			  int(*f)(unsigned long, void*, void*),
 			  void *data);
 
-/** Insert a new object frame in a kddm set.
+/** Insert a new object frame in a gdm set.
  *  @author Renaud Lottiaux
  *
  *  @param set          Kddm set to insert object in.
  *  @param objid        Id of the object to insert.
  *  @param state        State of the object to insert.
  */
-void kddm_insert_object (struct kddm_set *set, objid_t objid,
-                         struct kddm_obj * obj_entry,
-			 kddm_obj_state_t state);
+void gdm_insert_object (struct gdm_set *set, objid_t objid,
+                         struct gdm_obj * obj_entry,
+			 gdm_obj_state_t state);
 
-static inline struct kddm_obj *kddm_break_cow_object (struct kddm_set * set,
-					      struct kddm_obj *obj_entry,
+static inline struct gdm_obj *gdm_break_cow_object (struct gdm_set * set,
+					      struct gdm_obj *obj_entry,
 					      objid_t objid,
 					      int break_type)
 {
@@ -308,31 +308,31 @@ static inline struct kddm_obj *kddm_break_cow_object (struct kddm_set * set,
 }
 
 
-/** Change a kddm object state.
+/** Change a gdm object state.
  *  @author Renaud Lottiaux
  *
- *  @param kddm_set   Kddm set hosting the object.
+ *  @param gdm_set   Kddm set hosting the object.
  *  @param obj_entry  Structure of the object.
  *  @param objid      Id of the object to modify state.
  *  @param new_state  New state of the object.
  */
-void kddm_change_obj_state(struct kddm_set * kddm_set,
-			   struct kddm_obj *obj_entry,
+void gdm_change_obj_state(struct gdm_set * gdm_set,
+			   struct gdm_obj *obj_entry,
 			   objid_t objid,
-			   kddm_obj_state_t newState);
+			   gdm_obj_state_t newState);
 
 
-/** Invalidate a object frame from a kddm set.
+/** Invalidate a object frame from a gdm set.
  *  @author Renaud Lottiaux
  *
  *  @param obj_entry  Entry of the object to invalidate.
  *  @param set        Kddm set hosting the object.
  *  @param objid      Id of the object to invalidate.
  */
-void kddm_invalidate_local_object_and_unlock (struct kddm_obj *obj_entry,
-					      struct kddm_set *set,
+void gdm_invalidate_local_object_and_unlock (struct gdm_obj *obj_entry,
+					      struct gdm_set *set,
 					      objid_t objid,
-					      kddm_obj_state_t state);
+					      gdm_obj_state_t state);
 
 
 
@@ -341,10 +341,10 @@ void kddm_invalidate_local_object_and_unlock (struct kddm_obj *obj_entry,
  *
  *  @param obj_entry  Entry of the object to test.
  */
-int object_frozen (struct kddm_obj * obj_entry, struct kddm_set *set);
+int object_frozen (struct gdm_obj * obj_entry, struct gdm_set *set);
 
-int object_frozen_or_pinned (struct kddm_obj * obj_entry,
-			     struct kddm_set * set);
+int object_frozen_or_pinned (struct gdm_obj * obj_entry,
+			     struct gdm_set * set);
 
 
 
@@ -353,7 +353,7 @@ int object_frozen_or_pinned (struct kddm_obj * obj_entry,
  *
  *  @param obj_entry  Entry of the object to freeze.
  */
-void set_object_frozen (struct kddm_obj * obj_entry, struct kddm_set *set);
+void set_object_frozen (struct gdm_obj * obj_entry, struct gdm_set *set);
 
 
 
@@ -362,11 +362,11 @@ void set_object_frozen (struct kddm_obj * obj_entry, struct kddm_set *set);
  *
  *  @param obj_entry  Entry of the object to warm.
  */
-void object_clear_frozen (struct kddm_obj * obj_entry, struct kddm_set *set);
+void object_clear_frozen (struct gdm_obj * obj_entry, struct gdm_set *set);
 
 
 
-static inline int change_prob_owner(struct kddm_obj * obj_entry,
+static inline int change_prob_owner(struct gdm_obj * obj_entry,
 				     hcc_node_t new_owner)
 {
 	if (obj_entry)
@@ -377,7 +377,7 @@ static inline int change_prob_owner(struct kddm_obj * obj_entry,
 
 
 
-static inline hcc_node_t get_prob_owner (struct kddm_obj *obj_entry)
+static inline hcc_node_t get_prob_owner (struct gdm_obj *obj_entry)
 {
 	if (likely(obj_entry))
 		return (obj_entry->flags & PROB_OWNER_MASK) >>PROB_OWNER_SHIFT;
@@ -391,25 +391,25 @@ static inline hcc_node_t get_prob_owner (struct kddm_obj *obj_entry)
  *  object is received.
  *  @author Renaud Lottiaux
  *
- *  @param  set        The kddm set the object belong to.
+ *  @param  set        The gdm set the object belong to.
  *  @param  obj_entry  The object to wait for.
  *  @param  objid      Id of the object.
  */
-void __sleep_on_kddm_obj (struct kddm_set *set,
-			  struct kddm_obj *obj_entry,
+void __sleep_on_gdm_obj (struct gdm_set *set,
+			  struct gdm_obj *obj_entry,
 			  objid_t objid,
 			  int flags);
 
-static inline void sleep_on_kddm_obj (struct kddm_set *set,
-				      struct kddm_obj *obj_entry,
+static inline void sleep_on_gdm_obj (struct gdm_set *set,
+				      struct gdm_obj *obj_entry,
 				      objid_t objid,
 				      int flags)
 {
-	__sleep_on_kddm_obj (set, obj_entry, objid, flags);
+	__sleep_on_gdm_obj (set, obj_entry, objid, flags);
 }
 
-int check_sleep_on_local_exclusive (struct kddm_set *set,
-				    struct kddm_obj *obj_entry,
+int check_sleep_on_local_exclusive (struct gdm_set *set,
+				    struct gdm_obj *obj_entry,
 				    objid_t objid,
 				    int flags);
 
@@ -419,14 +419,14 @@ int check_sleep_on_local_exclusive (struct kddm_set *set,
  *
  *  @param  obj_entry  The object to wake up waiting process.
  */
-static inline void wake_up_on_wait_object (struct kddm_obj *obj_entry,
-                                           struct kddm_set *set)
+static inline void wake_up_on_wait_object (struct gdm_obj *obj_entry,
+                                           struct gdm_set *set)
 {
 	if (atomic_read (&obj_entry->sleeper_count))
 		SET_OBJECT_PINNED (obj_entry);
 	wake_up (&obj_entry->waiting_tsk);
 }
 
-int init_kddm_objects (void);
+int init_gdm_objects (void);
 
-#endif // __KDDM_OBJECT__
+#endif // __GDM_OBJECT__

@@ -6,7 +6,7 @@
  */
 #include <linux/file.h>
 #include <linux/wait.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <net/krgrpc/rpc.h>
 #include <hcc/file.h>
 #include <hcc/physical_fs.h>
@@ -244,7 +244,7 @@ int send_faf_file_desc(struct rpc_desc *desc, struct file *file)
 	int r;
 
 	if (!file->f_objid) {
-		r = create_kddm_file_object(file);
+		r = create_gdm_file_object(file);
 		if (r)
 			goto out;
 	}

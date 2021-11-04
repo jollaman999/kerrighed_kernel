@@ -1,7 +1,7 @@
-#ifndef __KDDM_SET_TYPES__
-#define __KDDM_SET_TYPES__
+#ifndef __GDM_SET_TYPES__
+#define __GDM_SET_TYPES__
 
-#include <kddm/kddm_tree.h>
+#include <gdm/gdm_tree.h>
 #include <linux/wait.h>
 #include <hcc/types.h>
 
@@ -50,9 +50,9 @@
 #define STATE_INDEX_MASK    0x000FF000  /* Mask to extract the state index */
 #define STATE_INDEX_SHIFT   12
 
-#define KDDM_OWNER_OBJ      (1 << 20)  /* Object is the master object */
-#define KDDM_READ_OBJ       (1 << 21)  /* Object can be read */
-#define KDDM_WRITE_OBJ      (1 << 22)  /* Object can be write */
+#define GDM_OWNER_OBJ      (1 << 20)  /* Object is the master object */
+#define GDM_READ_OBJ       (1 << 21)  /* Object can be read */
+#define GDM_WRITE_OBJ      (1 << 22)  /* Object can be write */
 
 #define OBJECT_STATE_MASK   0x00FFF000
 
@@ -111,7 +111,7 @@
         atomic_inc (&nr_OBJ_STATE[OBJ_STATE_INDEX(state)])
 
 
-/** kddm object identifier */
+/** gdm object identifier */
 typedef unsigned long objid_t;
 
 
@@ -128,7 +128,7 @@ typedef struct {
 /** Kddm object type.
  *  Used to store local informations on objects.
  */
-typedef struct kddm_obj {
+typedef struct gdm_obj {
 	/* flags field must be kept first in the structure */
 	long flags;                    /* Flags, state, prob_owner, etc... */
 	atomic_t count;                /* Reference counter */
@@ -139,95 +139,95 @@ typedef struct kddm_obj {
 	atomic_t sleeper_count;        /* Nunmber of task waiting on the
 					  object */
 	wait_queue_head_t waiting_tsk; /* Process waiting for the object */
-} __attribute__((aligned(8))) kddm_obj_t;
+} __attribute__((aligned(8))) gdm_obj_t;
 
 
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
- *                               KDDM SET TYPES                             *
+ *                               GDM SET TYPES                             *
  *                                                                          *
  *--------------------------------------------------------------------------*/
 
-/** KDDM set flags */
-#define _KDDM_LOCAL_EXCLUSIVE  0
-#define _KDDM_FT_LINKED        1
-#define _KDDM_FROZEN           2
+/** GDM set flags */
+#define _GDM_LOCAL_EXCLUSIVE  0
+#define _GDM_FT_LINKED        1
+#define _GDM_FROZEN           2
 
-#define KDDM_LOCAL_EXCLUSIVE  (1<<_KDDM_LOCAL_EXCLUSIVE)
-#define KDDM_FT_LINKED        (1<<_KDDM_FT_LINKED)
-#define KDDM_FROZEN           (1<<_KDDM_FROZEN)
+#define GDM_LOCAL_EXCLUSIVE  (1<<_GDM_LOCAL_EXCLUSIVE)
+#define GDM_FT_LINKED        (1<<_GDM_FT_LINKED)
+#define GDM_FROZEN           (1<<_GDM_FROZEN)
 
-#define kddm_local_exclusive(kddm) test_bit(_KDDM_LOCAL_EXCLUSIVE, &kddm->flags)
-#define set_kddm_local_exclusive(kddm) set_bit(_KDDM_LOCAL_EXCLUSIVE, &kddm->flags);
-#define clear_kddm_local_exclusive(kddm) clear_bit(_KDDM_LOCAL_EXCLUSIVE, &kddm->flags);
+#define gdm_local_exclusive(gdm) test_bit(_GDM_LOCAL_EXCLUSIVE, &gdm->flags)
+#define set_gdm_local_exclusive(gdm) set_bit(_GDM_LOCAL_EXCLUSIVE, &gdm->flags);
+#define clear_gdm_local_exclusive(gdm) clear_bit(_GDM_LOCAL_EXCLUSIVE, &gdm->flags);
 
-#define kddm_ft_linked(kddm) test_bit(_KDDM_FT_LINKED, &kddm->flags)
-#define set_kddm_ft_linked(kddm) set_bit(_KDDM_FT_LINKED, &kddm->flags);
-#define clear_kddm_ft_linked(kddm) clear_bit(_KDDM_FT_LINKED, &kddm->flags);
+#define gdm_ft_linked(gdm) test_bit(_GDM_FT_LINKED, &gdm->flags)
+#define set_gdm_ft_linked(gdm) set_bit(_GDM_FT_LINKED, &gdm->flags);
+#define clear_gdm_ft_linked(gdm) clear_bit(_GDM_FT_LINKED, &gdm->flags);
 
-#define kddm_frozen(kddm) test_bit(_KDDM_FROZEN, &kddm->flags)
-#define set_kddm_frozen(kddm) set_bit(_KDDM_FROZEN, &kddm->flags);
-#define clear_kddm_frozen(kddm) clear_bit(_KDDM_FROZEN, &kddm->flags);
+#define gdm_frozen(gdm) test_bit(_GDM_FROZEN, &gdm->flags)
+#define set_gdm_frozen(gdm) set_bit(_GDM_FROZEN, &gdm->flags);
+#define clear_gdm_frozen(gdm) clear_bit(_GDM_FROZEN, &gdm->flags);
 
-#define KDDM_BREAK_COW_COPY 1
-#define KDDM_BREAK_COW_INV 2
+#define GDM_BREAK_COW_COPY 1
+#define GDM_BREAK_COW_INV 2
 
 #define NR_OBJ_ENTRY_LOCKS 16
 
 
-struct kddm_set;
+struct gdm_set;
 struct rpc_desc;
 
-typedef struct kddm_set_ops {
-	void *(*obj_set_alloc) (struct kddm_set *set, void *data);
+typedef struct gdm_set_ops {
+	void *(*obj_set_alloc) (struct gdm_set *set, void *data);
 	void (*obj_set_free) (void *tree,
 			      int (*f)(unsigned long, void *data,void *priv),
 			      void *priv);
-	struct kddm_obj *(*lookup_obj_entry)(struct kddm_set *set,
+	struct gdm_obj *(*lookup_obj_entry)(struct gdm_set *set,
 					     objid_t objid);
-	struct kddm_obj *(*get_obj_entry)(struct kddm_set *set,
-					  objid_t objid, struct kddm_obj *obj);
-	void (*insert_object)(struct kddm_set * set, objid_t objid,
-			      struct kddm_obj *obj_entry);
-	struct kddm_obj *(*break_cow)(struct kddm_set * set,
-				      struct kddm_obj *obj_entry,objid_t objid,
+	struct gdm_obj *(*get_obj_entry)(struct gdm_set *set,
+					  objid_t objid, struct gdm_obj *obj);
+	void (*insert_object)(struct gdm_set * set, objid_t objid,
+			      struct gdm_obj *obj_entry);
+	struct gdm_obj *(*break_cow)(struct gdm_set * set,
+				      struct gdm_obj *obj_entry,objid_t objid,
 				      int break_type);
-	void (*remove_obj_entry) (struct kddm_set *set, objid_t objid);
-	void (*for_each_obj_entry)(struct kddm_set *set,
+	void (*remove_obj_entry) (struct gdm_set *set, objid_t objid);
+	void (*for_each_obj_entry)(struct gdm_set *set,
 				   int(*f)(unsigned long, void *, void*),
 				   void *data);
-	void (*export) (struct rpc_desc* desc, struct kddm_set *set);
+	void (*export) (struct rpc_desc* desc, struct gdm_set *set);
 	void *(*import) (struct rpc_desc* desc, int *free_data);
-} kddm_set_ops_t;
+} gdm_set_ops_t;
 
 
 
-typedef unique_id_t kddm_set_id_t;   /**< Kddm set identifier */
+typedef unique_id_t gdm_set_id_t;   /**< Kddm set identifier */
 
 typedef int iolinker_id_t;           /**< IO Linker identifier */
 
-/** KDDM set structure */
+/** GDM set structure */
 
-typedef struct kddm_set {
+typedef struct gdm_set {
 	void *obj_set;               /**< Structure hosting the set objects */
 	spinlock_t table_lock;       /**< Object table lock */
-	struct kddm_ns *ns;          /**< kddm set name space */
-	struct kddm_set_ops *ops;    /**< kddm set operations */
-	kddm_set_id_t id;            /**< kddm set identifier */
+	struct gdm_ns *ns;          /**< gdm set name space */
+	struct gdm_set_ops *ops;    /**< gdm set operations */
+	gdm_set_id_t id;            /**< gdm set identifier */
 	spinlock_t lock;             /**< Structure lock */
 	unsigned int obj_size;       /**< size of objects in the set */
 	atomic_t nr_objects;         /**< Number of objects locally present */
 	unsigned long flags;         /**< Kddm set flags */
 	int state;                   /**< State of the set (locked, ...) */
 	wait_queue_head_t create_wq; /**< Process waiting for set creation */
-	wait_queue_head_t frozen_wq; /**< Process waiting on a frozen KDDM */
+	wait_queue_head_t frozen_wq; /**< Process waiting on a frozen GDM */
 	atomic_t count;
 	unsigned int last_ra_start;  /**< Start of the last readahead window */
 	int ra_window_size;          /**< Size of the readahead window */
 	hcc_node_t def_owner;  /**< Id of default owner node */
 	struct iolinker_struct *iolinker;    /**< IO linker ops */
-	struct proc_dir_entry *procfs_entry; /**< entry in /proc/hcc/kddm */
+	struct proc_dir_entry *procfs_entry; /**< entry in /proc/hcc/gdm */
 
 	void *private_data;                  /**< Data used to instantiate */
 	int private_data_size;               /**< Size of private data... */
@@ -243,21 +243,21 @@ typedef struct kddm_set {
 	event_counter_t remove_object_counter;
 	event_counter_t flush_object_counter;
 	void *private;
-} kddm_set_t;
+} gdm_set_t;
 
 
 
-struct kddm_info_struct {
+struct gdm_info_struct {
 	event_counter_t get_object_counter;
 	event_counter_t grab_object_counter;
 	event_counter_t remove_object_counter;
 	event_counter_t flush_object_counter;
 
 	wait_queue_t object_wait_queue_entry;
-	struct kddm_obj *wait_obj;
+	struct gdm_obj *wait_obj;
 	int ns_id;
-	kddm_set_id_t set_id;
+	gdm_set_id_t set_id;
 	objid_t obj_id;
 };
 
-#endif // __KDDM_SET_TYPES__
+#endif // __GDM_SET_TYPES__

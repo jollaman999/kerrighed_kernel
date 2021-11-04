@@ -1,4 +1,4 @@
-/** KDDM SHM id Linker.
+/** GDM SHM id Linker.
  *  @file shmid_io_linker.c
  *
  *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
@@ -11,7 +11,7 @@
 #include <linux/ipc.h>
 #include <linux/shmem_fs.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include "ipc_handler.h"
 #include "krgshm.h"
 #include "util.h"
@@ -29,10 +29,10 @@ struct kmem_cache *shmid_object_cachep;
  */
 struct shmid_kernel *create_local_shp (struct ipc_namespace *ns,
 				       struct shmid_kernel *received_shp,
-				       kddm_set_id_t set_id)
+				       gdm_set_id_t set_id)
 {
 	struct shmid_kernel *shp;
-	struct kddm_set *set;
+	struct gdm_set *set;
 	char name[13];
 	int retval;
 
@@ -67,15 +67,15 @@ struct shmid_kernel *create_local_shp (struct ipc_namespace *ns,
 		goto out;
 	}
 
-	set = _find_get_kddm_set(kddm_def_ns, set_id);
+	set = _find_get_gdm_set(gdm_def_ns, set_id);
 	BUG_ON(!set);
 
 	shp->shm_file->f_dentry->d_inode->i_ino = shp->shm_perm.id;
-	shp->shm_file->f_dentry->d_inode->i_mapping->kddm_set = set;
+	shp->shm_file->f_dentry->d_inode->i_mapping->gdm_set = set;
 	shp->shm_file->f_op = &krg_shm_file_operations;
 	shp->mlock_user = NULL;
 
-	put_kddm_set(set);
+	put_gdm_set(set);
 
 	ns->shm_tot += (shp->shm_segsz + PAGE_SIZE -1) >> PAGE_SHIFT;
 
@@ -93,14 +93,14 @@ out:
 
 /*****************************************************************************/
 /*                                                                           */
-/*                         SHMID KDDM IO FUNCTIONS                           */
+/*                         SHMID GDM IO FUNCTIONS                           */
 /*                                                                           */
 /*****************************************************************************/
 
 
 
-int shmid_alloc_object (struct kddm_obj * obj_entry,
-			struct kddm_set * set,
+int shmid_alloc_object (struct gdm_obj * obj_entry,
+			struct gdm_set * set,
 			objid_t objid)
 {
 	shmid_object_t *shp_object;
@@ -117,7 +117,7 @@ int shmid_alloc_object (struct kddm_obj * obj_entry,
 
 
 
-/** Handle a kddm set shmid first touch
+/** Handle a gdm set shmid first touch
  *  @author Renaud Lottiaux
  *
  *  @param  obj_entry  Kddm object descriptor.
@@ -126,8 +126,8 @@ int shmid_alloc_object (struct kddm_obj * obj_entry,
  *
  *  @return  0 if everything is ok. Negative value otherwise.
  */
-int shmid_first_touch (struct kddm_obj * obj_entry,
-		       struct kddm_set * set,
+int shmid_first_touch (struct gdm_obj * obj_entry,
+		       struct gdm_set * set,
 		       objid_t objid,
 		       int flags)
 {
@@ -145,8 +145,8 @@ int shmid_first_touch (struct kddm_obj * obj_entry,
  *  @param  set       Kddm set descriptor
  *  @param  objid     Id of the object to insert.
  */
-int shmid_insert_object (struct kddm_obj * obj_entry,
-			 struct kddm_set * set,
+int shmid_insert_object (struct gdm_obj * obj_entry,
+			 struct gdm_set * set,
 			 objid_t objid)
 {
 	shmid_object_t *shp_object;
@@ -182,23 +182,23 @@ done:
 
 
 
-/** Invalidate a kddm object shmid.
+/** Invalidate a gdm object shmid.
  *  @author Renaud Lottiaux
  *
  *  @param  obj_entry  Descriptor of the object to invalidate.
  *  @param  set       Kddm set descriptor
  *  @param  objid     Id of the object to invalidate
  */
-int shmid_invalidate_object (struct kddm_obj * obj_entry,
-			     struct kddm_set * set,
+int shmid_invalidate_object (struct gdm_obj * obj_entry,
+			     struct gdm_set * set,
 			     objid_t objid)
 {
-	return KDDM_IO_KEEP_OBJECT;
+	return GDM_IO_KEEP_OBJECT;
 }
 
 
 
-/** Handle a kddm memory page remove.
+/** Handle a gdm memory page remove.
  *  @author Renaud Lottiaux
  *
  *  @param  obj_entry  Descriptor of the object to remove.
@@ -206,7 +206,7 @@ int shmid_invalidate_object (struct kddm_obj * obj_entry,
  *  @param  padeid    Id of the object to remove.
  */
 int shmid_remove_object (void *object,
-			 struct kddm_set * set,
+			 struct gdm_set * set,
 			 objid_t objid)
 {
 	shmid_object_t *shp_object;
@@ -240,8 +240,8 @@ int shmid_remove_object (void *object,
  *  @param  object    The object to export data from.
  */
 int shmid_export_object (struct rpc_desc *desc,
-			 struct kddm_set *set,
-			 struct kddm_obj *obj_entry,
+			 struct gdm_set *set,
+			 struct gdm_obj *obj_entry,
 			 objid_t objid,
 			 int flags)
 {
@@ -263,8 +263,8 @@ int shmid_export_object (struct rpc_desc *desc,
  *  @param  buffer    Data to import in the object.
  */
 int shmid_import_object (struct rpc_desc *desc,
-			 struct kddm_set *set,
-			 struct kddm_obj *obj_entry,
+			 struct gdm_set *set,
+			 struct gdm_obj *obj_entry,
 			 objid_t objid,
 			 int flags)
 {
@@ -308,7 +308,7 @@ struct iolinker_struct shmid_linker = {
 
 /*****************************************************************************/
 /*                                                                           */
-/*                         SHMKEY KDDM IO FUNCTIONS                          */
+/*                         SHMKEY GDM IO FUNCTIONS                          */
 /*                                                                           */
 /*****************************************************************************/
 

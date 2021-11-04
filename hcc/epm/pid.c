@@ -19,8 +19,8 @@
 #include <net/krgrpc/rpcid.h>
 #include <net/krgrpc/rpc.h>
 #include <hcc/hotplug.h>
-#include <kddm/kddm.h>
-#include <kddm/object_server.h>
+#include <gdm/gdm.h>
+#include <gdm/object_server.h>
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>
 #include <hcc/action.h>
@@ -31,20 +31,20 @@
 
 #include "pid.h"
 
-struct pid_kddm_object {
+struct pid_gdm_object {
 	struct list_head wq;
 	struct rcu_head rcu;
 	struct pid *pid;
 	int attach_pending;
 	int active;
-	struct task_kddm_object *task_obj;
-	/* This is the only field shared through kddm. */
+	struct task_gdm_object *task_obj;
+	/* This is the only field shared through gdm. */
 	int node_count;
 };
 
-static struct kmem_cache *pid_kddm_obj_cachep;
-static DEFINE_SPINLOCK(pid_kddm_lock);
-static struct kddm_set *pid_kddm_set;
+static struct kmem_cache *pid_gdm_obj_cachep;
+static DEFINE_SPINLOCK(pid_gdm_lock);
+static struct gdm_set *pid_gdm_set;
 
 static LIST_HEAD(put_pid_wq_head);
 static DEFINE_SPINLOCK(put_pid_wq_lock);
@@ -53,12 +53,12 @@ static struct work_struct put_pid_work;
 /*
  * @author Pascal Gallard
  */
-static int pid_alloc_object(struct kddm_obj *obj_entry,
-			    struct kddm_set *set, objid_t objid)
+static int pid_alloc_object(struct gdm_obj *obj_entry,
+			    struct gdm_set *set, objid_t objid)
 {
-	struct pid_kddm_object *p;
+	struct pid_gdm_object *p;
 
-	p = kmem_cache_alloc(pid_kddm_obj_cachep, GFP_KERNEL);
+	p = kmem_cache_alloc(pid_gdm_obj_cachep, GFP_KERNEL);
 	if (!p)
 		return -ENOMEM;
 
@@ -75,10 +75,10 @@ static int pid_alloc_object(struct kddm_obj *obj_entry,
 /*
  * @author Pascal Gallard
  */
-static int pid_first_touch(struct kddm_obj *obj_entry,
-			   struct kddm_set *set, objid_t objid, int flags)
+static int pid_first_touch(struct gdm_obj *obj_entry,
+			   struct gdm_set *set, objid_t objid, int flags)
 {
-	struct pid_kddm_object *obj;
+	struct pid_gdm_object *obj;
 	int r;
 
 	BUG_ON(obj_entry->object);
@@ -98,12 +98,12 @@ static int pid_first_touch(struct kddm_obj *obj_entry,
  * @author Pascal Gallard
  */
 static int pid_import_object(struct rpc_desc *desc,
-			     struct kddm_set *set,
-			     struct kddm_obj *obj_entry,
+			     struct gdm_set *set,
+			     struct gdm_obj *obj_entry,
 			     objid_t objid,
 			     int flags)
 {
-	struct pid_kddm_object *obj = obj_entry->object;
+	struct pid_gdm_object *obj = obj_entry->object;
 
 	return rpc_unpack_type(desc, obj->node_count);
 }
@@ -112,34 +112,34 @@ static int pid_import_object(struct rpc_desc *desc,
  * @author Pascal Gallard
  */
 static int pid_export_object(struct rpc_desc *desc,
-			     struct kddm_set *set,
-			     struct kddm_obj *obj_entry,
+			     struct gdm_set *set,
+			     struct gdm_obj *obj_entry,
 			     objid_t objid,
 			     int flags)
 {
-	struct pid_kddm_object *obj = obj_entry->object;
+	struct pid_gdm_object *obj = obj_entry->object;
 
 	return rpc_pack_type(desc, obj->node_count);
 }
 
 static void delayed_pid_free(struct rcu_head *rhp)
 {
-	struct pid_kddm_object *obj =
-		container_of(rhp, struct pid_kddm_object, rcu);
+	struct pid_gdm_object *obj =
+		container_of(rhp, struct pid_gdm_object, rcu);
 
-	kmem_cache_free(pid_kddm_obj_cachep, obj);
+	kmem_cache_free(pid_gdm_obj_cachep, obj);
 }
 
 static int pid_remove_object(void *object,
-			     struct kddm_set *set, objid_t objid)
+			     struct gdm_set *set, objid_t objid)
 {
-	struct pid_kddm_object *obj = object;
+	struct pid_gdm_object *obj = object;
 	struct pid *pid = obj->pid;
 
-	spin_lock(&pid_kddm_lock);
-	pid->kddm_obj = NULL;
+	spin_lock(&pid_gdm_lock);
+	pid->gdm_obj = NULL;
 	obj->pid = NULL;
-	spin_unlock(&pid_kddm_lock);
+	spin_unlock(&pid_gdm_lock);
 	free_pid(pid);
 
 	rcu_read_lock();
@@ -162,7 +162,7 @@ static struct iolinker_struct pid_io_linker = {
 	.default_owner = global_pid_default_owner,
 };
 
-static void __get_pid(struct pid_kddm_object *obj)
+static void __get_pid(struct pid_gdm_object *obj)
 {
 	obj->attach_pending++;
 	if (!obj->active) {
@@ -174,15 +174,15 @@ static void __get_pid(struct pid_kddm_object *obj)
 static struct pid *no_pid(int nr)
 {
 	struct pid_namespace *ns;
-	struct pid_kddm_object *obj;
+	struct pid_gdm_object *obj;
 	struct pid *pid;
 
-	obj = _kddm_grab_object_no_ft(pid_kddm_set, nr);
+	obj = _gdm_grab_object_no_ft(pid_gdm_set, nr);
 	if (IS_ERR(obj))
 		return NULL;
 	BUG_ON(!obj);
 
-	spin_lock(&pid_kddm_lock);
+	spin_lock(&pid_gdm_lock);
 	rcu_read_lock();
 	pid = find_kpid(nr); /* Double check once locked */
 	rcu_read_unlock();
@@ -198,22 +198,22 @@ static struct pid *no_pid(int nr)
 		if (!pid)
 			goto out_unlock;
 		obj->pid = pid;
-		pid->kddm_obj = obj;
+		pid->gdm_obj = obj;
 	}
-	BUG_ON(pid->kddm_obj != obj);
+	BUG_ON(pid->gdm_obj != obj);
 
 	__get_pid(obj);
 
 out_unlock:
-	spin_unlock(&pid_kddm_lock);
-	_kddm_put_object(pid_kddm_set, nr);
+	spin_unlock(&pid_gdm_lock);
+	_gdm_put_object(pid_gdm_set, nr);
 
 	return pid;
 }
 
 struct pid *krg_get_pid(int nr)
 {
-	struct pid_kddm_object *obj;
+	struct pid_gdm_object *obj;
 	struct pid *pid;
 
 	rcu_read_lock();
@@ -227,46 +227,46 @@ struct pid *krg_get_pid(int nr)
 	if (!pid)
 		return no_pid(nr);
 
-	spin_lock(&pid_kddm_lock);
-	obj = pid->kddm_obj;
+	spin_lock(&pid_gdm_lock);
+	obj = pid->gdm_obj;
 	BUG_ON(!obj);
 	BUG_ON(obj->pid != pid);
 
 	if (likely(obj->active)) {
 		obj->attach_pending++;
-		spin_unlock(&pid_kddm_lock);
+		spin_unlock(&pid_gdm_lock);
 		return pid;
 	}
-	/* Slow path: we must grab the kddm object. */
-	spin_unlock(&pid_kddm_lock);
+	/* Slow path: we must grab the gdm object. */
+	spin_unlock(&pid_gdm_lock);
 
-	obj = _kddm_grab_object_no_ft(pid_kddm_set, nr);
+	obj = _gdm_grab_object_no_ft(pid_gdm_set, nr);
 	if (IS_ERR(obj))
 		return NULL;
-	BUG_ON(obj != pid->kddm_obj);
+	BUG_ON(obj != pid->gdm_obj);
 	BUG_ON(obj->pid != pid);
 
-	spin_lock(&pid_kddm_lock);
+	spin_lock(&pid_gdm_lock);
 	__get_pid(obj);
-	spin_unlock(&pid_kddm_lock);
+	spin_unlock(&pid_gdm_lock);
 
-	_kddm_put_object(pid_kddm_set, nr);
+	_gdm_put_object(pid_gdm_set, nr);
 
 	return pid;
 }
 
 void krg_end_get_pid(struct pid *pid)
 {
-	struct pid_kddm_object *obj = pid->kddm_obj;
+	struct pid_gdm_object *obj = pid->gdm_obj;
 
-	spin_lock(&pid_kddm_lock);
+	spin_lock(&pid_gdm_lock);
 	BUG_ON(!obj);
 	obj->attach_pending--;
 	BUG_ON(obj->attach_pending < 0);
-	spin_unlock(&pid_kddm_lock);
+	spin_unlock(&pid_gdm_lock);
 }
 
-static int may_put_pid(struct pid_kddm_object *obj)
+static int may_put_pid(struct pid_gdm_object *obj)
 {
 	struct pid *pid = obj->pid;
 	int tmp;
@@ -281,18 +281,18 @@ static int may_put_pid(struct pid_kddm_object *obj)
 	return 1;
 }
 
-static void __put_pid(struct pid_kddm_object *obj)
+static void __put_pid(struct pid_gdm_object *obj)
 {
 	struct pid *pid = obj->pid;
 	int nr = pid_knr(pid);
 	int may_put;
 	int grabbed = 0;
 
-	/* Try to avoid grabing the kddm object */
+	/* Try to avoid grabing the gdm object */
 	read_lock(&tasklist_lock);
-	spin_lock(&pid_kddm_lock);
+	spin_lock(&pid_gdm_lock);
 	may_put = may_put_pid(obj);
-	spin_unlock(&pid_kddm_lock);
+	spin_unlock(&pid_gdm_lock);
 	if (!may_put)
 		goto release_work;
 	read_unlock(&tasklist_lock);
@@ -300,13 +300,13 @@ static void __put_pid(struct pid_kddm_object *obj)
 	/* The pid seems to be unused locally. Have to check globally. */
 	/* Prevent pidmaps from changing host nodes. */
 	pidmap_map_read_lock();
-	fkddm_grab_object(kddm_def_ns, PID_KDDM_ID, nr,
-			  KDDM_NO_FT_REQ | KDDM_DONT_KILL);
+	fgdm_grab_object(gdm_def_ns, PID_GDM_ID, nr,
+			  GDM_NO_FT_REQ | GDM_DONT_KILL);
 	grabbed = 1;
 
 	read_lock(&tasklist_lock);
 
-	spin_lock(&pid_kddm_lock);
+	spin_lock(&pid_gdm_lock);
 	may_put = may_put_pid(obj);
 	if (may_put) {
 		obj->active = 0;
@@ -315,7 +315,7 @@ static void __put_pid(struct pid_kddm_object *obj)
 			/* Still used elsewhere */
 			may_put = 0;
 	}
-	spin_unlock(&pid_kddm_lock);
+	spin_unlock(&pid_gdm_lock);
 
 release_work:
 	spin_lock(&put_pid_wq_lock);
@@ -325,10 +325,10 @@ release_work:
 	read_unlock(&tasklist_lock);
 
 	if (may_put) {
-		_kddm_remove_frozen_object(pid_kddm_set, nr);
+		_gdm_remove_frozen_object(pid_gdm_set, nr);
 		pidmap_map_read_unlock();
 	} else if (grabbed) {
-		_kddm_put_object(pid_kddm_set, nr);
+		_gdm_put_object(pid_gdm_set, nr);
 		pidmap_map_read_unlock();
 	}
 }
@@ -337,7 +337,7 @@ release_work:
 static void put_pid_worker(struct work_struct *work)
 {
 	LIST_HEAD(work_list);
-	struct pid_kddm_object *obj, *n;
+	struct pid_gdm_object *obj, *n;
 
 	/* Remove the current job-list */
 	spin_lock(&put_pid_wq_lock);
@@ -350,16 +350,16 @@ static void put_pid_worker(struct work_struct *work)
 
 /*
  * Only place where IRQs may be disabled. This induces lockdep to believe that
- * deadlocks can occur whenever an IRQ handler takes pid_kddm_lock or
+ * deadlocks can occur whenever an IRQ handler takes pid_gdm_lock or
  * put_pid_wq_lock, but we know that no IRQ handler can do this.
  */
 void krg_put_pid(struct pid *pid)
 {
-	struct pid_kddm_object *obj;
+	struct pid_gdm_object *obj;
 
 	lockdep_off();
-	spin_lock(&pid_kddm_lock);
-	obj = pid->kddm_obj;
+	spin_lock(&pid_gdm_lock);
+	obj = pid->gdm_obj;
 	spin_lock(&put_pid_wq_lock);
 	lockdep_on();
 
@@ -371,30 +371,30 @@ void krg_put_pid(struct pid *pid)
 
 	lockdep_off();
 	spin_unlock(&put_pid_wq_lock);
-	spin_unlock(&pid_kddm_lock);
+	spin_unlock(&pid_gdm_lock);
 	lockdep_on();
 
 	if (!obj)
 		free_pid(pid);
 }
 
-static int create_pid_kddm_object(struct pid *pid, int early)
+static int create_pid_gdm_object(struct pid *pid, int early)
 {
 	int nr = pid_knr(pid);
-	struct pid_kddm_object *obj;
-	struct task_kddm_object *task_obj;
+	struct pid_gdm_object *obj;
+	struct task_gdm_object *task_obj;
 
-	obj = _kddm_grab_object(pid_kddm_set, nr);
+	obj = _gdm_grab_object(pid_gdm_set, nr);
 	if (IS_ERR(obj)) {
-		_kddm_put_object(pid_kddm_set, nr);
+		_gdm_put_object(pid_gdm_set, nr);
 		return PTR_ERR(obj);
 	}
 	BUG_ON(!obj);
 	task_obj = krg_task_readlock(nr);
 
-	spin_lock(&pid_kddm_lock);
-	BUG_ON(early && pid->kddm_obj);
-	if (!pid->kddm_obj) {
+	spin_lock(&pid_gdm_lock);
+	BUG_ON(early && pid->gdm_obj);
+	if (!pid->gdm_obj) {
 		obj->pid = pid;
 		obj->active = 1;
 		if (early)
@@ -409,20 +409,20 @@ static int create_pid_kddm_object(struct pid *pid, int early)
 			rcu_assign_pointer(obj->task_obj, task_obj);
 			rcu_assign_pointer(obj->task_obj->pid_obj, obj);
 		}
-		pid->kddm_obj = obj;
+		pid->gdm_obj = obj;
 	}
-	BUG_ON(pid->kddm_obj != obj);
-	spin_unlock(&pid_kddm_lock);
+	BUG_ON(pid->gdm_obj != obj);
+	spin_unlock(&pid_gdm_lock);
 
 	krg_task_unlock(nr);
-	_kddm_put_object(pid_kddm_set, nr);
+	_gdm_put_object(pid_gdm_set, nr);
 
 	return 0;
 }
 
-int cr_create_pid_kddm_object(struct pid *pid)
+int cr_create_pid_gdm_object(struct pid *pid)
 {
-	return create_pid_kddm_object(pid, 0);
+	return create_pid_gdm_object(pid, 0);
 }
 
 int export_pid(struct epm_action *action,
@@ -435,9 +435,9 @@ int export_pid(struct epm_action *action,
 	if (!(nr & GLOBAL_PID_MASK))
 		return -EPERM;
 
-	if (ORIG_NODE(nr) == hcc_node_id && !pid->kddm_obj
+	if (ORIG_NODE(nr) == hcc_node_id && !pid->gdm_obj
 	    && action->type != EPM_CHECKPOINT) {
-		retval = create_pid_kddm_object(pid, 0);
+		retval = create_pid_gdm_object(pid, 0);
 		if (retval)
 			return retval;
 	}
@@ -496,7 +496,7 @@ static int __reserve_pid(pid_t nr)
 	 * this is not always mandatory but really difficult
 	 * to know when it is or not
 	 */
-	r = create_pid_kddm_object(pid, 1);
+	r = create_pid_gdm_object(pid, 1);
 	if (r)
 		goto error;
 
@@ -648,26 +648,26 @@ void unimport_pid(struct pid_link *link)
 {
 	struct pid *pid = link->pid;
 
-	if (pid->kddm_obj)
+	if (pid->gdm_obj)
 		krg_end_get_pid(pid);
 	krg_put_pid(pid);
 }
 
 /* Must be called under rcu_read_lock() */
-struct task_kddm_object *krg_pid_task(struct pid *pid)
+struct task_gdm_object *krg_pid_task(struct pid *pid)
 {
-	struct pid_kddm_object *obj;
+	struct pid_gdm_object *obj;
 
-	obj = rcu_dereference(pid->kddm_obj);
+	obj = rcu_dereference(pid->gdm_obj);
 	if (obj)
 		return rcu_dereference(obj->task_obj);
 	return NULL;
 }
 
 /* Must be called under rcu_read_lock() */
-void krg_pid_unlink_task(struct pid_kddm_object *obj)
+void krg_pid_unlink_task(struct pid_gdm_object *obj)
 {
-	struct task_kddm_object *task_obj;
+	struct task_gdm_object *task_obj;
 
 	if (obj) {
 		task_obj = rcu_dereference(obj->task_obj);
@@ -709,18 +709,18 @@ int krg_pid_link_task(pid_t pid)
 	return r;
 }
 
-static void __pid_link_task(struct pid *pid, struct task_kddm_object *task_obj)
+static void __pid_link_task(struct pid *pid, struct task_gdm_object *task_obj)
 {
-	if (task_obj && pid && pid->kddm_obj) {
-		rcu_assign_pointer(pid->kddm_obj->task_obj, task_obj);
-		rcu_assign_pointer(task_obj->pid_obj, pid->kddm_obj);
+	if (task_obj && pid && pid->gdm_obj) {
+		rcu_assign_pointer(pid->gdm_obj->task_obj, task_obj);
+		rcu_assign_pointer(task_obj->pid_obj, pid->gdm_obj);
 	}
 }
 
 int __krg_pid_link_task(pid_t nr)
 {
 	struct pid *pid;
-	struct task_kddm_object *task_obj;
+	struct task_gdm_object *task_obj;
 	int r = 0;
 
 	pid = krg_get_pid(nr);
@@ -762,17 +762,17 @@ void epm_pid_start(void)
 #ifdef CONFIG_DEBUG_SLAB
 	cache_flags |= SLAB_POISON;
 #endif
-	pid_kddm_obj_cachep = KMEM_CACHE(pid_kddm_object, cache_flags);
+	pid_gdm_obj_cachep = KMEM_CACHE(pid_gdm_object, cache_flags);
 
 	INIT_WORK(&put_pid_work, put_pid_worker);
 
 	register_io_linker(PID_LINKER, &pid_io_linker);
-	pid_kddm_set = create_new_kddm_set(kddm_def_ns,
-					   PID_KDDM_ID,
+	pid_gdm_set = create_new_gdm_set(gdm_def_ns,
+					   PID_GDM_ID,
 					   PID_LINKER,
-					   KDDM_CUSTOM_DEF_OWNER,
+					   GDM_CUSTOM_DEF_OWNER,
 					   0, 0);
-	if (IS_ERR(pid_kddm_set))
+	if (IS_ERR(pid_gdm_set))
 		OOM;
 
 	rpc_register_int(PROC_RESERVE_PID, handle_reserve_pid, 0);

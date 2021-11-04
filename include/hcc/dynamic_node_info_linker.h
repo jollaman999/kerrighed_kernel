@@ -10,8 +10,8 @@
 #include <linux/hardirq.h>
 #include <linux/procfs_internal.h>
 #include <hcc/sys/types.h>
-#include <kddm/kddm.h>
-#include <kddm/object_server.h>
+#include <gdm/gdm.h>
+#include <gdm/object_server.h>
 #include <asm/hcc/meminfo.h>
 
 /*--------------------------------------------------------------------------*
@@ -83,7 +83,7 @@ typedef struct {
  *                                                                          *
  *--------------------------------------------------------------------------*/
 
-extern struct kddm_set *dynamic_node_info_kddm_set;
+extern struct gdm_set *dynamic_node_info_gdm_set;
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -103,8 +103,8 @@ int dynamic_node_info_init(void);
 static inline
 krg_dynamic_node_info_t *get_dynamic_node_info(hcc_node_t nodeid)
 {
-	return _fkddm_get_object(dynamic_node_info_kddm_set, nodeid,
-				 KDDM_NO_FREEZE|KDDM_NO_FT_REQ);
+	return _fgdm_get_object(dynamic_node_info_gdm_set, nodeid,
+				 GDM_NO_FREEZE|GDM_NO_FT_REQ);
 }
 
 #endif /* DYNAMIC_NODE_INFO_LINKER_H */

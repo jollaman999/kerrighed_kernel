@@ -1113,7 +1113,7 @@ int handle_forward_setpgid(struct rpc_desc *desc, void *_msg, size_t size)
 
 static int krg_forward_setpgid(hcc_node_t node, pid_t pid, pid_t pgid)
 {
-	struct children_kddm_object *children_obj = current->children_obj;
+	struct children_gdm_object *children_obj = current->children_obj;
 	pid_t parent, real_parent;
 	struct setpgid_message msg;
 	int retval = -ESRCH;
@@ -1132,13 +1132,13 @@ out:
 }
 
 static
-struct children_kddm_object *
+struct children_gdm_object *
 krg_prepare_setpgid(pid_t pid, pid_t pgid, hcc_node_t *nodep)
 {
-	struct children_kddm_object *parent_children_obj = NULL;
+	struct children_gdm_object *parent_children_obj = NULL;
 	pid_t real_parent_tgid;
 	hcc_node_t node = KERRIGHED_NODE_ID_NONE;
-	struct task_kddm_object *task_obj;
+	struct task_gdm_object *task_obj;
 	struct timespec backoff_time = {
 		.tv_sec = 1,
 		.tv_nsec = 0
@@ -1191,7 +1191,7 @@ out:
 
 static
 void krg_cleanup_setpgid(pid_t pid, pid_t pgid,
-			 struct children_kddm_object *parent_children_obj,
+			 struct children_gdm_object *parent_children_obj,
 			 hcc_node_t node,
 			 bool success)
 {
@@ -1207,7 +1207,7 @@ void krg_cleanup_setpgid(pid_t pid, pid_t pgid,
 
 SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 {
-	struct children_kddm_object *parent_children_obj;
+	struct children_gdm_object *parent_children_obj;
 	hcc_node_t node;
 	int err;
 
@@ -1410,7 +1410,7 @@ SYSCALL_DEFINE0(setsid)
 	struct pid *sid = task_pid(group_leader);
 	pid_t session = pid_vnr(sid);
 #ifdef CONFIG_KRG_EPM
-	struct children_kddm_object *parent_children_obj = NULL;
+	struct children_gdm_object *parent_children_obj = NULL;
 	pid_t real_parent_tgid;
 #endif /* CONFIG_KRG_EPM */
 	int err = -EPERM;

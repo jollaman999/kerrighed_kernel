@@ -29,7 +29,7 @@
 #include <hcc/krgsyms.h>
 #include <hcc/krginit.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/file_stat.h>
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>
@@ -205,7 +205,7 @@ void cr_free_mm_exclusions(struct app_struct *app)
 static int cr_export_one_page(struct app_struct *app, ghost_t *ghost,
 			      struct vm_area_struct *vma, unsigned long addr)
 {
-	struct kddm_set *set = NULL;
+	struct gdm_set *set = NULL;
 	unsigned long pfn;
 	spinlock_t *ptl;
 	struct page *page = NULL;
@@ -230,10 +230,10 @@ static int cr_export_one_page(struct app_struct *app, ghost_t *ghost,
 		if (pte)
 			pte_unmap_unlock(pte, ptl);
 
-		set = vma->vm_mm->anon_vma_kddm_set;
+		set = vma->vm_mm->anon_vma_gdm_set;
 		if (set) {
 			objid = addr / PAGE_SIZE;
-			page = kddm_get_object_no_ft(kddm_def_ns, set->id,
+			page = gdm_get_object_no_ft(gdm_def_ns, set->id,
 						     objid);
 			prot = vma->vm_page_prot;
 			put_page = 1;
@@ -273,7 +273,7 @@ unmap:
 
 exit:
 	if (put_page)
-		kddm_put_object(kddm_def_ns, set->id, objid);
+		gdm_put_object(gdm_def_ns, set->id, objid);
 
 	return nr_exported;
 }
@@ -380,10 +380,10 @@ static int export_one_vma (struct epm_action *action,
 	krgsyms_val_t vm_ops_type, initial_vm_ops_type;
 	int r;
 
-	/* First, check if we need to link the VMA to the anon kddm_set */
+	/* First, check if we need to link the VMA to the anon gdm_set */
 
-	if (tsk->mm->anon_vma_kddm_set)
-		check_link_vma_to_anon_memory_kddm_set (vma);
+	if (tsk->mm->anon_vma_gdm_set)
+		check_link_vma_to_anon_memory_gdm_set (vma);
 
 	/* Export the vm_area_struct */
 	r = ghost_write (ghost, vma, sizeof (struct vm_area_struct));
@@ -655,8 +655,8 @@ int export_mm_struct(struct epm_action *action,
 		  /* else fall through */
 
 	  case EPM_MIGRATE:
-		  if (mm->anon_vma_kddm_set == NULL) {
-			  r = init_anon_vma_kddm_set(tsk, mm);
+		  if (mm->anon_vma_gdm_set == NULL) {
+			  r = init_anon_vma_gdm_set(tsk, mm);
 			  if (r)
 				  goto exit_put_mm;
 		  }
@@ -974,7 +974,7 @@ static int import_one_vma (struct epm_action *action,
 
 	if (action->type == EPM_REMOTE_CLONE
 	    && !(action->remote_clone.clone_flags & CLONE_VM)) {
-		check_link_vma_to_anon_memory_kddm_set (vma);
+		check_link_vma_to_anon_memory_gdm_set (vma);
 		vma->vm_flags &= ~VM_LOCKED;
 	}
 
@@ -1220,8 +1220,8 @@ static inline int do_import_mm_struct(struct epm_action *action,
 
 		  atomic_set(&mm->mm_ltasks, 0);
 		  mm->mm_id = 0;
-		  mm->anon_vma_kddm_set = NULL;
-		  mm->anon_vma_kddm_id = KDDM_SET_UNUSED;
+		  mm->anon_vma_gdm_set = NULL;
+		  mm->anon_vma_gdm_id = GDM_SET_UNUSED;
 		  break;
 
 	  default:
@@ -1263,7 +1263,7 @@ int import_mm_struct (struct epm_action *action,
                       struct task_struct *tsk)
 {
 	struct mm_struct *mm = NULL;
-	struct kddm_set *set;
+	struct gdm_set *set;
 	int r;
 
 	if (action->type == EPM_CHECKPOINT
@@ -1316,7 +1316,7 @@ int import_mm_struct (struct epm_action *action,
 	if (r)
 		goto err;
 
-	set = mm->anon_vma_kddm_set;
+	set = mm->anon_vma_gdm_set;
 
 	krg_put_mm (mm->mm_id);
 

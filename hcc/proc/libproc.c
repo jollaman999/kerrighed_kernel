@@ -7,10 +7,10 @@
 #include <hcc/sys/types.h>
 #include <hcc/krginit.h>
 #include <hcc/pid.h>
-#include <kddm/io_linker.h>
+#include <gdm/io_linker.h>
 
-/* Generic function to assign a default owner to a pid-named kddm object */
-hcc_node_t global_pid_default_owner(struct kddm_set *set, objid_t objid,
+/* Generic function to assign a default owner to a pid-named gdm object */
+hcc_node_t global_pid_default_owner(struct gdm_set *set, objid_t objid,
 					  const krgnodemask_t *nodes,
 					  int nr_nodes)
 {

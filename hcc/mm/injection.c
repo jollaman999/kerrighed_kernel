@@ -16,7 +16,7 @@
 
 #include <net/krgrpc/rpc.h>
 #include <net/krgrpc/rpcid.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/hotplug.h>
 #include <hcc/dynamic_node_info_linker.h>
 #include "injection.h"
@@ -213,7 +213,7 @@ set_mem_usage:
 
 
 
-/************************** KDDM shrinker ************************/
+/************************** GDM shrinker ************************/
 
 static int flush_page(struct page *page,
 		      struct mm_struct *mm,
@@ -221,14 +221,14 @@ static int flush_page(struct page *page,
 		      pte_t *pte,
 		      spinlock_t *ptl)
 {
-	struct kddm_set *set = mm->anon_vma_kddm_set;
+	struct gdm_set *set = mm->anon_vma_gdm_set;
 	hcc_node_t dest_node;
 	int r = SWAP_FAIL;
 
 	pte_unmap_unlock(pte, ptl);
 
-	/* Check if the KDDM has not been destroyed since the page selection */
-	if (mm->anon_vma_kddm_set == NULL)
+	/* Check if the GDM has not been destroyed since the page selection */
+	if (mm->anon_vma_gdm_set == NULL)
 		return SWAP_FAIL;
 
 	/* mm_id == 0 means the mm is being freed */
@@ -241,7 +241,7 @@ static int flush_page(struct page *page,
 		dest_node = KERRIGHED_NODE_ID_NONE;
 
 	SetPageSwapCache(page);
-	r = _kddm_flush_object(set, objid, dest_node);
+	r = _gdm_flush_object(set, objid, dest_node);
 	ClearPageSwapCache(page);
 
 	if (r) {

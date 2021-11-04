@@ -319,10 +319,10 @@ union proc_distant_op {
 			 char *buf, size_t count);
 };
 
-struct task_kddm_object;
+struct task_gdm_object;
 
 struct proc_distant_pid_info {
-	struct task_kddm_object *task_obj;
+	struct task_gdm_object *task_obj;
 	pid_t pid;
 	hcc_node_t prob_node;
 	int dumpable;

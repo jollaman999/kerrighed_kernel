@@ -1,7 +1,7 @@
 /*
  *  Kerrighed/modules/ipc/semundolst_io_linker.c
  *
- *  KDDM SEM undo proc list Linker.
+ *  GDM SEM undo proc list Linker.
  *
  *  Copyright (C) 2007-2008 Matthieu Fertré - INRIA
  */
@@ -11,13 +11,13 @@
 #include <linux/ipc.h>
 #include <linux/ipc_namespace.h>
 #include <net/krgrpc/rpc.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 
 #include "semundolst_io_linker.h"
 
 /*****************************************************************************/
 /*                                                                           */
-/*                         SEM Undo list KDDM IO FUNCTIONS                   */
+/*                         SEM Undo list GDM IO FUNCTIONS                   */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -45,15 +45,15 @@ static inline struct semundo_list_object * __undolist_alloc(void)
 	return undo_list;
 }
 
-/** Handle a kddm set sem_undo_list alloc
+/** Handle a gdm set sem_undo_list alloc
  *  @author Matthieu Fertré
  *
  *  @param  obj_entry  Kddm object descriptor.
  *  @param  set       Kddm set descriptor
  *  @param  objid     Id of the object to create.
  */
-int undolist_alloc_object (struct kddm_obj * obj_entry,
-			   struct kddm_set * set,
+int undolist_alloc_object (struct gdm_obj * obj_entry,
+			   struct gdm_set * set,
 			   objid_t objid)
 {
 	struct semundo_list_object *undo_list;
@@ -67,7 +67,7 @@ int undolist_alloc_object (struct kddm_obj * obj_entry,
 }
 
 
-/** Handle a kddm set sem_undo_list first touch
+/** Handle a gdm set sem_undo_list first touch
  *  @author Matthieu Fertré
  *
  *  @param  obj_entry  Kddm object descriptor.
@@ -76,8 +76,8 @@ int undolist_alloc_object (struct kddm_obj * obj_entry,
  *
  *  @return  0 if everything is ok. Negative value otherwise.
  */
-int undolist_first_touch (struct kddm_obj * obj_entry,
-			  struct kddm_set * set,
+int undolist_first_touch (struct gdm_obj * obj_entry,
+			  struct gdm_set * set,
 			  objid_t objid,
 			  int flags)
 {
@@ -85,7 +85,7 @@ int undolist_first_touch (struct kddm_obj * obj_entry,
 	return -EINVAL;
 }
 
-/** Handle a kddm sem_undo_list remove.
+/** Handle a gdm sem_undo_list remove.
  *  @author Matthieu Fertré
  *
  *  @param  obj_entry  Descriptor of the object to remove.
@@ -93,7 +93,7 @@ int undolist_first_touch (struct kddm_obj * obj_entry,
  *  @param  padeid    Id of the object to remove.
  */
 int undolist_remove_object (void *object,
-			    struct kddm_set * set,
+			    struct gdm_set * set,
 			    objid_t objid)
 {
 	struct semundo_list_object *undo_list;
@@ -106,15 +106,15 @@ int undolist_remove_object (void *object,
 	return 0;
 }
 
-/** Invalidate a kddm sem_undo_list
+/** Invalidate a gdm sem_undo_list
  *  @author Matthieu Fertré
  *
  *  @param  obj_entry  Descriptor of the object to invalidate.
  *  @param  set       Kddm set descriptor
  *  @param  objid     Id of the object to invalidate
  */
-int undolist_invalidate_object (struct kddm_obj * obj_entry,
-				struct kddm_set * set,
+int undolist_invalidate_object (struct gdm_obj * obj_entry,
+				struct gdm_set * set,
 				objid_t objid)
 {
 	struct semundo_list_object *undo_list;
@@ -133,8 +133,8 @@ int undolist_invalidate_object (struct kddm_obj * obj_entry,
  *  @param  object    The object to export data from.
  */
 int undolist_export_object (struct rpc_desc *desc,
-			    struct kddm_set *set,
-			    struct kddm_obj *obj_entry,
+			    struct gdm_set *set,
+			    struct gdm_obj *obj_entry,
 			    objid_t objid,
 			    int flags)
 {
@@ -173,8 +173,8 @@ error:
  *  @param  buffer    Data to import in the object.
  */
 int undolist_import_object (struct rpc_desc *desc,
-			    struct kddm_set *set,
-			    struct kddm_obj *obj_entry,
+			    struct gdm_set *set,
+			    struct gdm_obj *obj_entry,
 			    objid_t objid,
 			    int flags)
 {

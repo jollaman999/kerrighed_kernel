@@ -13,7 +13,7 @@
 #include <linux/ipc_namespace.h>
 #include <linux/nsproxy.h>
 #include <linux/msg.h>
-#include <kddm/kddm.h>
+#include <gdm/gdm.h>
 #include <hcc/namespace.h>
 #include <hcc/krg_syscalls.h>
 #include <hcc/krg_services.h>
@@ -60,9 +60,9 @@ int krg_ipc_get_maxid(struct ipc_ids* ids)
 	ipcmap_object_t *ipc_map;
 	int max_id;
 
-	ipc_map = _kddm_get_object(ids->krgops->map_kddm_set, 0);
+	ipc_map = _gdm_get_object(ids->krgops->map_gdm_set, 0);
 	max_id = ipc_map->alloc_map - 1;
-	_kddm_put_object(ids->krgops->map_kddm_set, 0);
+	_gdm_put_object(ids->krgops->map_gdm_set, 0);
 
 	return max_id;
 }
@@ -72,10 +72,10 @@ int krg_ipc_get_new_id(struct ipc_ids* ids)
 	ipcmap_object_t *ipc_map, *max_id;
 	int i = 1, id = -1, offset;
 
-	max_id = _kddm_grab_object(ids->krgops->map_kddm_set, 0);
+	max_id = _gdm_grab_object(ids->krgops->map_gdm_set, 0);
 
 	while (id == -1) {
-		ipc_map = _kddm_grab_object(ids->krgops->map_kddm_set, i);
+		ipc_map = _gdm_grab_object(ids->krgops->map_gdm_set, i);
 
 		if (ipc_map->alloc_map != ULONG_MAX) {
 			offset = find_first_zero_bit(&ipc_map->alloc_map,
@@ -90,11 +90,11 @@ int krg_ipc_get_new_id(struct ipc_ids* ids)
 			}
 		}
 
-		_kddm_put_object(ids->krgops->map_kddm_set, i);
+		_gdm_put_object(ids->krgops->map_gdm_set, i);
 		i++;
 	}
 
-	_kddm_put_object(ids->krgops->map_kddm_set, 0);
+	_gdm_put_object(ids->krgops->map_gdm_set, 0);
 
 	return id;
 }
@@ -104,12 +104,12 @@ int krg_ipc_get_this_id(struct ipc_ids *ids, int id)
 	ipcmap_object_t *ipc_map, *max_id;
 	int i, offset, ret = 0;
 
-	max_id = _kddm_grab_object(ids->krgops->map_kddm_set, 0);
+	max_id = _gdm_grab_object(ids->krgops->map_gdm_set, 0);
 
 	offset = id % BITS_PER_LONG;
 	i = (id - offset)/BITS_PER_LONG +1;
 
-	ipc_map = _kddm_grab_object(ids->krgops->map_kddm_set, i);
+	ipc_map = _gdm_grab_object(ids->krgops->map_gdm_set, i);
 
 	if (test_and_set_bit(offset, &ipc_map->alloc_map)) {
 		ret = -EBUSY;
@@ -120,8 +120,8 @@ int krg_ipc_get_this_id(struct ipc_ids *ids, int id)
 		max_id->alloc_map = id + 1;
 
 out_id_unavailable:
-	_kddm_put_object(ids->krgops->map_kddm_set, i);
-	_kddm_put_object(ids->krgops->map_kddm_set, 0);
+	_gdm_put_object(ids->krgops->map_gdm_set, i);
+	_gdm_put_object(ids->krgops->map_gdm_set, 0);
 
 	return ret;
 }
@@ -136,42 +136,42 @@ void krg_ipc_rmid(struct ipc_ids* ids, int index)
 	i = 1 + index / BITS_PER_LONG;
 	offset = index % BITS_PER_LONG;
 
-	ipc_map = _kddm_grab_object(ids->krgops->map_kddm_set, i);
+	ipc_map = _gdm_grab_object(ids->krgops->map_gdm_set, i);
 
 	BUG_ON(!test_bit(offset, &ipc_map->alloc_map));
 
 	clear_bit(offset, &ipc_map->alloc_map);
 
-	_kddm_put_object(ids->krgops->map_kddm_set, i);
+	_gdm_put_object(ids->krgops->map_gdm_set, i);
 
 	/* Check if max_id must be adjusted */
 
-	max_id = _kddm_grab_object(ids->krgops->map_kddm_set, 0);
+	max_id = _gdm_grab_object(ids->krgops->map_gdm_set, 0);
 
 	if (max_id->alloc_map != index + 1)
 		goto done;
 
 	for (; i > 0; i--) {
 
-		ipc_map = _kddm_grab_object(ids->krgops->map_kddm_set, i);
+		ipc_map = _gdm_grab_object(ids->krgops->map_gdm_set, i);
 		if (ipc_map->alloc_map != 0) {
 			for (; offset >= 0; offset--) {
 				if (test_bit (offset, &ipc_map->alloc_map)) {
 					max_id->alloc_map = 1 + offset +
 						(i - 1) * BITS_PER_LONG;
-					_kddm_put_object(
-						ids->krgops->map_kddm_set, i);
+					_gdm_put_object(
+						ids->krgops->map_gdm_set, i);
 					goto done;
 				}
 			}
 		}
 		offset = 31;
-		_kddm_put_object(ids->krgops->map_kddm_set, i);
+		_gdm_put_object(ids->krgops->map_gdm_set, i);
 	}
 
 	max_id->alloc_map = 0;
 done:
-	_kddm_put_object(ids->krgops->map_kddm_set, 0);
+	_gdm_put_object(ids->krgops->map_gdm_set, 0);
 
 	return;
 }
@@ -285,13 +285,13 @@ static void do_cleanup_ipc_objects (unique_id_t set_id)
 {
 	ipcmap_object_t *ipc_map;
 
-	ipc_map = kddm_grab_object_no_ft(kddm_def_ns, set_id, 0);
+	ipc_map = gdm_grab_object_no_ft(gdm_def_ns, set_id, 0);
 	if (ipc_map) {
 		BUG_ON (ipc_map->alloc_map != 0);
-		kddm_remove_frozen_object(kddm_def_ns, set_id, 0);
+		gdm_remove_frozen_object(gdm_def_ns, set_id, 0);
 	}
 	else
-		kddm_put_object(kddm_def_ns, set_id, 0);
+		gdm_put_object(gdm_def_ns, set_id, 0);
 }
 
 
@@ -300,9 +300,9 @@ static void do_cleanup_ipc_objects (unique_id_t set_id)
  */
 void cleanup_ipc_objects ()
 {
-	do_cleanup_ipc_objects (MSGMAP_KDDM_ID);
-	do_cleanup_ipc_objects (SEMMAP_KDDM_ID);
-	do_cleanup_ipc_objects (SHMMAP_KDDM_ID);
+	do_cleanup_ipc_objects (MSGMAP_GDM_ID);
+	do_cleanup_ipc_objects (SEMMAP_GDM_ID);
+	do_cleanup_ipc_objects (SHMMAP_GDM_ID);
 }
 
 

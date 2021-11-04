@@ -65,7 +65,7 @@ static inline int anon_vma(struct vm_area_struct *vma)
 	if (!vma->vm_file)
 		return 1;
 
-	return (vma->anon_vma || vma->vm_flags & VM_KDDM);
+	return (vma->anon_vma || vma->vm_flags & VM_GDM);
 }
 
 void mm_struct_pin(struct mm_struct *mm);
