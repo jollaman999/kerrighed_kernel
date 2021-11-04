@@ -2,7 +2,7 @@
 # HCC RPC Configuration
 #
 
-config HCCRPC
+config GRPC
 	bool "HCC RPC Protocol"
 	depends on TIPC
 	---help---
