@@ -1,10 +1,10 @@
 #
-# Makefile for the Linux TIPC layer
+# Makefile for the Linux GIPC layer
 #
 
-obj-$(CONFIG_TIPC) := tipc.o
+obj-$(CONFIG_GIPC) := gipc.o
 
-tipc-y	+= addr.o bcast.o bearer.o config.o cluster.o \
+gipc-y	+= addr.o bcast.o bearer.o config.o cluster.o \
 	   core.o handler.o link.o discover.o msg.o  \
 	   name_distr.o  subscr.o name_table.o net.o  \
 	   netlink.o node.o node_subscr.o port.o ref.o  \
