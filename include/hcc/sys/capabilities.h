@@ -3,22 +3,22 @@
  * @author Innogrid HCC
  */
 
-#ifndef _HCC_CAPABILITIES_H
-#define _HCC_CAPABILITIES_H
+#ifndef _HCC_GCAPABILITIES_H
+#define _HCC_GCAPABILITIES_H
 
 enum {
-       CAP_CHANGE_HCC_CAP = 0,
-       CAP_CAN_MIGRATE,
-       CAP_DISTANT_FORK,
-       CAP_FORK_DELAY,
-       CAP_CHECKPOINTABLE,
-       CAP_USE_REMOTE_MEMORY,
-       CAP_USE_INTRA_CLUSTER_KERSTREAMS,
-       CAP_USE_INTER_CLUSTER_KERSTREAMS,
-       CAP_USE_WORLD_VISIBLE_KERSTREAMS,
-       CAP_SEE_LOCAL_PROC_STAT,
-       CAP_DEBUG,
-       CAP_SYSCALL_EXIT_HOOK,
+       CAP_CHANGE_HCC_GCAP = 0,
+       GCAP_CAN_MIGRATE,
+       GCAP_DISTANT_FORK,
+       GCAP_FORK_DELAY,
+       GCAP_CHECKPOINTABLE,
+       GCAP_USE_REMOTE_MEMORY,
+       GCAP_USE_INTRA_CLUSTER_KERSTREAMS,
+       GCAP_USE_INTER_CLUSTER_KERSTREAMS,
+       GCAP_USE_WORLD_VISIBLE_KERSTREAMS,
+       GCAP_SEE_LOCAL_PROC_STAT,
+       GCAP_DEBUG,
+       GCAP_SYSCALL_EXIT_HOOK,
        CAP_SIZE /* keep as last capability */
 };
 
@@ -36,4 +36,4 @@ typedef struct hcc_cap_pid_desc
 	hcc_cap_t *caps;
 } hcc_cap_pid_t;
 
-#endif /* _HCC_CAPABILITIES_H */
+#endif /* _HCC_GCAPABILITIES_H */

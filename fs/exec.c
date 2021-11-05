@@ -56,7 +56,7 @@
 #include <linux/fs_struct.h>
 #include <linux/pipe_fs_i.h>
 #include <linux/oom.h>
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 #include <hcc/capabilities.h>
 #endif
 #ifdef CONFIG_HCC_PROC
@@ -1404,7 +1404,7 @@ int prepare_binprm(struct linux_binprm *bprm)
 		return retval;
 	bprm->cred_prepared = 1;
 
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 	retval = hcc_cap_prepare_binprm(bprm);
 	if (retval)
 		return retval;
@@ -1625,7 +1625,7 @@ int do_execve(const char * filename,
 	/* execve succeeded */
 	current->fs->in_exec = 0;
 	current->in_execve = 0;
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 	hcc_cap_finish_exec(bprm);
 #endif
 	acct_update_integrals(current);

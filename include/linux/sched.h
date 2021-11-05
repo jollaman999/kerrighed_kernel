@@ -92,7 +92,7 @@ struct sched_param {
 #include <linux/latencytop.h>
 #include <linux/cred.h>
 #include <linux/percpu-rwsem.h>
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 #include <hcc/capabilities.h>
 #endif
 #ifdef CONFIG_HCC_EPM
@@ -1773,7 +1773,7 @@ struct task_struct {
 	} memcg_oom;
 #endif
 #endif /* __GENKYSMS__ */
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 	kernel_hcc_cap_t hcc_caps;
 	atomic_t hcc_cap_used[CAP_SIZE];
 	atomic_t hcc_cap_unavailable[CAP_SIZE];

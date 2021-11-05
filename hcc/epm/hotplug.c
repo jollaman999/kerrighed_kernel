@@ -35,7 +35,7 @@ static int epm_remove(const hccnodemask_t *vector)
 		if (!tsk->nsproxy->hcc_ns)
 			continue;
 
-		if (cap_raised(tsk->hcc_caps.effective, CAP_CAN_MIGRATE)) {
+		if (cap_raised(tsk->hcc_caps.effective, GCAP_CAN_MIGRATE)) {
 			/* have to migrate this process */
 			printk("try to migrate %d %s to %d\n",
 			       task_pid_knr(tsk), tsk->comm, dest_node);
@@ -53,7 +53,7 @@ static int epm_remove(const hccnodemask_t *vector)
 			continue;
 		}
 
-		if (cap_raised(tsk->hcc_caps.effective, CAP_USE_REMOTE_MEMORY)) {
+		if (cap_raised(tsk->hcc_caps.effective, GCAP_USE_REMOTE_MEMORY)) {
 			/* have to kill this process */
 			printk("epm_remove: have to kill %d (%s)\n",
 			       task_pid_knr(tsk), tsk->comm);

@@ -3,10 +3,10 @@
  * @author Jean Parpaillon (c) Inria 2006
  */
 
-#ifndef _HCC_CAPABILITIES_H_INTERNAL
-#define _HCC_CAPABILITIES_H_INTERNAL
+#ifndef _HCC_GCAPABILITIES_H_INTERNAL
+#define _HCC_GCAPABILITIES_H_INTERNAL
 
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 
 #include <linux/capability.h>
 #include <hcc/sys/capabilities.h>
@@ -21,47 +21,47 @@ typedef struct kernel_hcc_cap_struct {
 /*
  * MACROS
  */
-#define __HCC_CAP_SUPPORTED_BASE CAP_TO_MASK(CAP_CHANGE_HCC_CAP)
+#define __HCC_GCAP_SUPPORTED_BASE CAP_TO_MASK(CAP_CHANGE_HCC_GCAP)
 #ifdef CONFIG_CLUSTER_WIDE_PROC_INFRA
-#define __HCC_CAP_SUPPORTED_PROCFS CAP_TO_MASK(CAP_SEE_LOCAL_PROC_STAT)
+#define __HCC_GCAP_SUPPORTED_PROCFS CAP_TO_MASK(GCAP_SEE_LOCAL_PROC_STAT)
 #else
-#define __HCC_CAP_SUPPORTED_PROCFS 0
+#define __HCC_GCAP_SUPPORTED_PROCFS 0
 #endif
 #ifdef CONFIG_HCC_MM
-#define __HCC_CAP_SUPPORTED_MM CAP_TO_MASK(CAP_USE_REMOTE_MEMORY)
+#define __HCC_GCAP_SUPPORTED_MM CAP_TO_MASK(GCAP_USE_REMOTE_MEMORY)
 #else
-#define __HCC_CAP_SUPPORTED_MM 0
+#define __HCC_GCAP_SUPPORTED_MM 0
 #endif
 #ifdef CONFIG_HCC_EPM
-#define __HCC_CAP_SUPPORTED_EPM CAP_TO_MASK(CAP_CAN_MIGRATE)	 \
-				|CAP_TO_MASK(CAP_DISTANT_FORK)   \
-				|CAP_TO_MASK(CAP_CHECKPOINTABLE)
+#define __HCC_GCAP_SUPPORTED_EPM CAP_TO_MASK(GCAP_CAN_MIGRATE)	 \
+				|CAP_TO_MASK(GCAP_DISTANT_FORK)   \
+				|CAP_TO_MASK(GCAP_CHECKPOINTABLE)
 #else
-#define __HCC_CAP_SUPPORTED_EPM 0
+#define __HCC_GCAP_SUPPORTED_EPM 0
 #endif
-#define __HCC_CAP_SUPPORTED_DEBUG 0
+#define __HCC_GCAP_SUPPORTED_DEBUG 0
 #ifdef CONFIG_HCC_SYSCALL_EXIT_HOOK
-#define __HCC_CAP_SUPPORTED_SEH CAP_TO_MASK(CAP_SYSCALL_EXIT_HOOK)
+#define __HCC_GCAP_SUPPORTED_SEH CAP_TO_MASK(GCAP_SYSCALL_EXIT_HOOK)
 #else
-#define __HCC_CAP_SUPPORTED_SEH 0
+#define __HCC_GCAP_SUPPORTED_SEH 0
 #endif
 
 #if _KERNEL_CAPABILITY_U32S != 2
 #error Fix up hand-coded capability macro initializers
 #endif
 
-#define HCC_CAP_SUPPORTED ((kernel_cap_t){{ __HCC_CAP_SUPPORTED_BASE   \
-					   |__HCC_CAP_SUPPORTED_PROCFS \
-					   |__HCC_CAP_SUPPORTED_MM     \
-					   |__HCC_CAP_SUPPORTED_EPM    \
-					   |__HCC_CAP_SUPPORTED_DEBUG  \
-					   |__HCC_CAP_SUPPORTED_SEH, 0 }})
+#define HCC_GCAP_SUPPORTED ((kernel_cap_t){{ __HCC_GCAP_SUPPORTED_BASE   \
+					   |__HCC_GCAP_SUPPORTED_PROCFS \
+					   |__HCC_GCAP_SUPPORTED_MM     \
+					   |__HCC_GCAP_SUPPORTED_EPM    \
+					   |__HCC_GCAP_SUPPORTED_DEBUG  \
+					   |__HCC_GCAP_SUPPORTED_SEH, 0 }})
 
-#define HCC_CAP_INIT_PERM_SET HCC_CAP_SUPPORTED
-#define HCC_CAP_INIT_EFF_SET \
-	((kernel_cap_t){{ CAP_TO_MASK(CAP_CHANGE_HCC_CAP), 0 }})
-#define HCC_CAP_INIT_INH_PERM_SET HCC_CAP_INIT_PERM_SET
-#define HCC_CAP_INIT_INH_EFF_SET HCC_CAP_INIT_EFF_SET
+#define HCC_GCAP_INIT_PERM_SET HCC_GCAP_SUPPORTED
+#define HCC_GCAP_INIT_EFF_SET \
+	((kernel_cap_t){{ CAP_TO_MASK(CAP_CHANGE_HCC_GCAP), 0 }})
+#define HCC_GCAP_INIT_INH_PERM_SET HCC_GCAP_INIT_PERM_SET
+#define HCC_GCAP_INIT_INH_EFF_SET HCC_GCAP_INIT_EFF_SET
 
 struct task_struct;
 struct linux_binprm;
@@ -73,6 +73,6 @@ void hcc_cap_fork(struct task_struct *task, unsigned long clone_flags);
 int hcc_cap_prepare_binprm(struct linux_binprm *bprm);
 void hcc_cap_finish_exec(struct linux_binprm *bprm);
 
-#endif /* CONFIG_HCC_CAP */
+#endif /* CONFIG_HCC_GCAP */
 
-#endif /* _HCC_CAPABILITIES_H_INTERNAL */
+#endif /* _HCC_GCAPABILITIES_H_INTERNAL */

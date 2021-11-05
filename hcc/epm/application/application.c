@@ -494,20 +494,20 @@ int hcc_copy_application(struct task_struct *task)
 		return 0;
 
 	/* father is no more checkpointable? */
-	if (!cap_raised(current->hcc_caps.effective, CAP_CHECKPOINTABLE) &&
+	if (!cap_raised(current->hcc_caps.effective, GCAP_CHECKPOINTABLE) &&
 	    current->application)
 		unregister_task_to_app(current->application, current);
 
 
 	/* did we get the CHECKPOINTABLE capability? */
-	if (!cap_raised(task->hcc_caps.effective, CAP_CHECKPOINTABLE))
+	if (!cap_raised(task->hcc_caps.effective, GCAP_CHECKPOINTABLE))
 		return 0;
 
 	/*
 	 * father is CHECKPOINTABLE but is not associatied to an application,
 	 * fix it!
 	 */
-	if (cap_raised(current->hcc_caps.effective, CAP_CHECKPOINTABLE) &&
+	if (cap_raised(current->hcc_caps.effective, GCAP_CHECKPOINTABLE) &&
 	    !current->application)
 		r = create_application(current);
 
@@ -545,14 +545,14 @@ int export_application(struct epm_action *action,
 	BUG_ON(!task);
 
 	/* leave an application if no more checkpointable */
-	if (!cap_raised(task->hcc_caps.effective, CAP_CHECKPOINTABLE) &&
+	if (!cap_raised(task->hcc_caps.effective, GCAP_CHECKPOINTABLE) &&
 	    task->application)
 		unregister_task_to_app(task->application, task);
 
 	/* Lazy creation of application (step 2/2) */
 	/* If process is checkpointable but not in an application
 	   and action = REMOTE_CLONE, create the application */
-	if (cap_raised(task->hcc_caps.effective, CAP_CHECKPOINTABLE) &&
+	if (cap_raised(task->hcc_caps.effective, GCAP_CHECKPOINTABLE) &&
 	    !task->application && action->type == EPM_REMOTE_CLONE)
 		create_application(task);
 
@@ -581,7 +581,7 @@ int import_application(struct epm_action *action,
 	if (action->type == EPM_CHECKPOINT)
 		return 0;
 
-	if (!cap_raised(task->hcc_caps.effective, CAP_CHECKPOINTABLE))
+	if (!cap_raised(task->hcc_caps.effective, GCAP_CHECKPOINTABLE))
 		return 0;
 
 	if (app_id == -1) {

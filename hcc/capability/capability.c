@@ -123,7 +123,7 @@ static int hcc_set_cap(struct task_struct *tsk,
 		goto out;
 
 	res = -ENOSYS;
-	tmp_cap = HCC_CAP_SUPPORTED;
+	tmp_cap = HCC_GCAP_SUPPORTED;
 	if (!cap_issubset(requested_cap->permitted, tmp_cap))
 		goto out;
 
@@ -133,7 +133,7 @@ static int hcc_set_cap(struct task_struct *tsk,
 
 	task_lock(tsk);
 
-	if (!cap_raised(caps->effective, CAP_CHANGE_HCC_CAP))
+	if (!cap_raised(caps->effective, CAP_CHANGE_HCC_GCAP))
 		goto out_unlock;
 
 	res = -EBUSY;
@@ -545,7 +545,7 @@ out:
 static int proc_get_supported_cap(void __user *arg)
 {
 	int __user *set = arg;
-	return put_user(HCC_CAP_SUPPORTED.cap[0], set);
+	return put_user(HCC_GCAP_SUPPORTED.cap[0], set);
 }
 
 int init_hcc_cap(void)

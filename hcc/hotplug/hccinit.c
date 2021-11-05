@@ -87,7 +87,7 @@ deffct(dvfs);
 #ifdef CONFIG_HCC_GIPC
 deffct(keripc);
 #endif
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 deffct(hcc_cap);
 #endif
 #ifdef CONFIG_HCC_PROCFS
@@ -393,7 +393,7 @@ int init_hcc_upper_layers(void)
 		goto err_keripc;
 #endif
 
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 	if (init_hcc_cap())
 		goto err_hcc_cap;
 #endif
@@ -446,7 +446,7 @@ int init_hcc_upper_layers(void)
 	cleanup_proc();
       err_proc:
 #endif
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 	cleanup_hcc_cap();
       err_hcc_cap:
 #endif

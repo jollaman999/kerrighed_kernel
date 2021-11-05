@@ -421,22 +421,22 @@ int sys_vfork(struct pt_regs *regs)
 {
 #ifdef CONFIG_HCC_EPM
 	int retval, restore;
-#ifdef CONFIG_HCC_CAP
-	if (can_use_hcc_cap(current, CAP_DISTANT_FORK))
+#ifdef CONFIG_HCC_GCAP
+	if (can_use_hcc_cap(current, GCAP_DISTANT_FORK))
 	{
-		restore = can_parent_inherite_hcc_cap(current, CAP_DISTANT_FORK);
+		restore = can_parent_inherite_hcc_cap(current, GCAP_DISTANT_FORK);
 		if (restore) {
-			cap_lower(current->hcc_caps.effective, CAP_DISTANT_FORK);
-			cap_lower(current->hcc_caps.inheritable_effective, CAP_DISTANT_FORK);
+			cap_lower(current->hcc_caps.effective, GCAP_DISTANT_FORK);
+			cap_lower(current->hcc_caps.inheritable_effective, GCAP_DISTANT_FORK);
 		}
 #endif
 		retval = hcc_do_fork(CLONE_VFORK | SIGCHLD,
 					 regs->sp, regs, 0,
 					 NULL, NULL, 0);
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 		if (restore) {
-			cap_raise(current->hcc_caps.effective, CAP_DISTANT_FORK);
-			cap_raise(current->hcc_caps.inheritable_effective, CAP_DISTANT_FORK);
+			cap_raise(current->hcc_caps.effective, GCAP_DISTANT_FORK);
+			cap_raise(current->hcc_caps.inheritable_effective, GCAP_DISTANT_FORK);
 		}
 #endif
 		if (retval > 0)

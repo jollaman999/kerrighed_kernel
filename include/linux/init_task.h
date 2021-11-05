@@ -11,7 +11,7 @@
 #include <linux/user_namespace.h>
 #include <linux/securebits.h>
 #include <net/net_namespace.h>
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 #include <hcc/capabilities.h>
 #endif
 
@@ -126,15 +126,15 @@ extern struct cred init_cred;
 # define INIT_PERF_EVENTS(tsk)
 #endif
 
-#ifdef CONFIG_HCC_CAP
-#define INIT_HCC_CAP .hcc_caps = {			    \
-	.permitted = HCC_CAP_INIT_PERM_SET,		    \
-	.effective = HCC_CAP_INIT_EFF_SET,		    \
-	.inheritable_permitted = HCC_CAP_INIT_INH_PERM_SET, \
-	.inheritable_effective = HCC_CAP_INIT_INH_EFF_SET   \
+#ifdef CONFIG_HCC_GCAP
+#define INIT_HCC_GCAP .hcc_caps = {			    \
+	.permitted = HCC_GCAP_INIT_PERM_SET,		    \
+	.effective = HCC_GCAP_INIT_EFF_SET,		    \
+	.inheritable_permitted = HCC_GCAP_INIT_INH_PERM_SET, \
+	.inheritable_effective = HCC_GCAP_INIT_INH_EFF_SET   \
 },
 #else
-#define INIT_HCC_CAP
+#define INIT_HCC_GCAP
 #endif
 
 #ifdef CONFIG_HCC_GDM
@@ -212,7 +212,7 @@ extern struct cred init_cred;
 	INIT_FTRACE_GRAPH						\
 	INIT_TRACE_RECURSION						\
 	INIT_TASK_RCU_PREEMPT(tsk)					\
-	INIT_HCC_CAP							\
+	INIT_HCC_GCAP							\
 	INIT_GDM							\
 }
 

@@ -1,3 +1,3 @@
-obj-$(CONFIG_HCC_CAP) += capability.o
+obj-$(CONFIG_HCC_GCAP) += capability.o
 
 EXTRA_CFLAGS += -Wall -Werror

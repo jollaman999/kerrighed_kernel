@@ -48,12 +48,12 @@ struct linux_binprm{
 	struct file * file;
 	struct cred *cred;	/* new credentials */
 	int unsafe;		/* how unsafe this exec is (mask of LSM_UNSAFE_*) */
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 	/* The model needs changes with filesystem support ... */
 #if 0
 	kernel_cap_t hcc_cap_permitted, hcc_cap_forced, hcc_cap_effective;
 #endif /* 0 */
-#endif /* CONFIG_HCC_CAP */
+#endif /* CONFIG_HCC_GCAP */
 	unsigned int per_clear;	/* bits to clear in current->personality */
 	int argc, envc;
 	char * filename;	/* Name of binary as seen by procps */

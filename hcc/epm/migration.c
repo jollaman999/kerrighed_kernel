@@ -30,7 +30,7 @@
 #include <hcc/hccinit.h>
 #include <hcc/remote_cred.h>
 #include <hcc/remote_syscall.h>
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 #include <hcc/capabilities.h>
 #endif
 #ifdef CONFIG_HCC_SYSCALL_EXIT_HOOK
@@ -117,10 +117,10 @@ int __may_migrate(struct task_struct *task)
 	return (pid_alive(task)
 		/* check permissions */
 		&& permissions_ok(task)
-#ifdef CONFIG_HCC_CAP
+#ifdef CONFIG_HCC_GCAP
 		/* check capabilities */
-		&& can_use_hcc_cap(task, CAP_CAN_MIGRATE)
-#endif /* CONFIG_HCC_CAP */
+		&& can_use_hcc_cap(task, GCAP_CAN_MIGRATE)
+#endif /* CONFIG_HCC_GCAP */
 		&& !hcc_action_pending(task, EPM_MIGRATE)
 		/* Implementation limitation */
 		&& migration_implemented(task));
@@ -161,8 +161,8 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 	 * For instance fork() may have created a thread right after the
 	 * migration request.
 	 */
-#ifdef CONFIG_HCC_CAP
-	if (!can_use_hcc_cap(tsk, CAP_CAN_MIGRATE))
+#ifdef CONFIG_HCC_GCAP
+	if (!can_use_hcc_cap(tsk, GCAP_CAN_MIGRATE))
 		return -ENOSYS;
 #endif
 	if (!migration_implemented(tsk))
