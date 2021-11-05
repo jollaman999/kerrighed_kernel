@@ -4,7 +4,7 @@
 
 config HCC_GRPC
 	bool "HCC RPC Protocol"
-	depends on GIPC
+	depends on TIPC
 	---help---
 	  Cluster-aware Remote Procedure Call (RPC) framework.
 

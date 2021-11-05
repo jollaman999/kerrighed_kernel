@@ -184,7 +184,7 @@ endif
 source "net/dccp/Kconfig"
 source "net/sctp/Kconfig"
 source "net/rds/Kconfig"
-source "net/gipc/Kconfig"
+source "net/tipc/Kconfig"
 source "net/grpc/Kconfig"
 source "net/atm/Kconfig"
 source "net/802/Kconfig"
