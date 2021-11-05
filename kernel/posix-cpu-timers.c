@@ -10,7 +10,7 @@
 #include <linux/kernel_stat.h>
 #include <trace/events/timer.h>
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/hccsyms.h>
 #endif
 
@@ -1697,7 +1697,7 @@ struct k_clock clock_posix_cpu = {
 	.timer_get	= posix_cpu_timer_get,
 };
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 int posix_cpu_timers_hccsyms_register(void)
 {
 	return hccsyms_register(HCCSYMS_POSIX_CPU_NSLEEP_RESTART,
@@ -1708,7 +1708,7 @@ int posix_cpu_timers_hccsyms_unregister(void)
 {
 	return hccsyms_unregister(HCCSYMS_POSIX_CPU_NSLEEP_RESTART);
 }
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 static __init int init_posix_cpu_timers(void)
 {

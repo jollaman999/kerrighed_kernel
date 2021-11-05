@@ -14,15 +14,15 @@ static __always_inline struct task_struct *get_current(void)
 	return percpu_read_stable(current_task);
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #define hcc_current (get_current()->effective_current)
 #define current ({							\
 	struct task_struct *__cur = get_current();			\
 	__cur->effective_current ? __cur->effective_current : __cur;	\
 })
-#else /* !CONFIG_HCC_EPM */
+#else /* !CONFIG_HCC_GPM */
 #define current get_current()
-#endif /* !CONFIG_HCC_EPM */
+#endif /* !CONFIG_HCC_GPM */
 
 #endif /* __ASSEMBLY__ */
 

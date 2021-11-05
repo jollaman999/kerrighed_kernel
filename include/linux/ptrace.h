@@ -99,7 +99,7 @@
 #include <linux/compiler.h>		/* For unlikely.  */
 #include <linux/sched.h>		/* For struct task_struct.  */
 #include <linux/err.h>			/* for IS_ERR_VALUE */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/children.h>
 #endif
 
@@ -129,17 +129,17 @@ extern void exit_ptrace(struct task_struct *tracer);
 extern int __ptrace_may_access(struct task_struct *task, unsigned int mode);
 /* Returns true on success, false on denial. */
 extern bool ptrace_may_access(struct task_struct *task, unsigned int mode);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 extern
 int hcc_ptrace_link(struct task_struct *task, struct task_struct *tracer);
 extern void hcc_ptrace_unlink(struct task_struct *task);
 extern void hcc_ptrace_reparent_ptraced(struct task_struct *real_parent,
 					struct task_struct *task);
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 static inline int ptrace_reparented(struct task_struct *child)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 /*
  * if (child->parent == baby_sitter || child->real_parent == baby_sitter)
  *		return child->task_obj->parent != child->task_obj->real_parent;
@@ -150,7 +150,7 @@ static inline int ptrace_reparented(struct task_struct *child)
 static inline void ptrace_link(struct task_struct *child,
 			       struct task_struct *new_parent)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (unlikely(child->ptrace)) {
 		int ret = hcc_ptrace_link(child, new_parent);
 		BUG_ON(ret);
@@ -224,7 +224,7 @@ static inline void ptrace_init_task(struct task_struct *child, bool ptrace)
 	child->ptrace = 0;
 	if (unlikely(ptrace) && (current->ptrace & PT_PTRACED)) {
 		child->ptrace = current->ptrace;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		ptrace_link(child, current->parent);
 #else
 		__ptrace_link(child, current->parent);

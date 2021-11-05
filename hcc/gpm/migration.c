@@ -46,7 +46,7 @@
 #include <net/grpc/rpc.h>
 #include "remote_clone.h"
 #include "network_ghost.h"
-#include "epm_internal.h"
+#include "gpm_internal.h"
 
 #ifdef CONFIG_HCC_SCHED
 ATOMIC_NOTIFIER_HEAD(kmh_migration_send_start);
@@ -121,7 +121,7 @@ int __may_migrate(struct task_struct *task)
 		/* check capabilities */
 		&& can_use_hcc_cap(task, GCAP_CAN_MIGRATE)
 #endif /* CONFIG_HCC_GCAP */
-		&& !hcc_action_pending(task, EPM_MIGRATE)
+		&& !hcc_action_pending(task, GPM_MIGRATE)
 		/* Implementation limitation */
 		&& migration_implemented(task));
 }
@@ -143,13 +143,13 @@ void migration_aborted(struct task_struct *tsk)
 #ifdef CONFIG_HCC_SCHED
 	atomic_notifier_call_chain(&kmh_migration_aborted, 0, tsk);
 #endif
-	hcc_action_stop(tsk, EPM_MIGRATE);
+	hcc_action_stop(tsk, GPM_MIGRATE);
 }
 
 static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 			   hcc_node_t target)
 {
-	struct epm_action migration;
+	struct gpm_action migration;
 	struct rpc_desc *desc;
 	pid_t remote_pid;
 
@@ -168,11 +168,11 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 	if (!migration_implemented(tsk))
 		return -ENOSYS;
 
-	desc = rpc_begin(RPC_EPM_MIGRATE, target);
+	desc = rpc_begin(RPC_GPM_MIGRATE, target);
 	if (!desc)
 		return -ENOMEM;
 
-	migration.type = EPM_MIGRATE;
+	migration.type = GPM_MIGRATE;
 	migration.migrate.pid = task_pid_knr(tsk);
 	migration.migrate.target = target;
 	migration.migrate.source = hcc_node_id;
@@ -225,8 +225,8 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 	} else {
 		BUG_ON(remote_pid != task_pid_knr(tsk));
 
-		tsk->epm_type = EPM_MIGRATE;
-		tsk->epm_target = target;
+		tsk->gpm_type = GPM_MIGRATE;
+		tsk->gpm_target = target;
 
 		/* Do not notify a task having done vfork() */
 		cleanup_vfork_done(tsk);
@@ -260,7 +260,7 @@ static void hcc_task_migrate(int sig, struct siginfo *info,
  */
 static void handle_migrate(struct rpc_desc *desc, void *msg, size_t size)
 {
-	struct epm_action *action = msg;
+	struct gpm_action *action = msg;
 	struct task_struct *task;
 
 #ifdef CONFIG_HCC_SCHED
@@ -272,15 +272,15 @@ static void handle_migrate(struct rpc_desc *desc, void *msg, size_t size)
 		return;
 	}
 
-	task->epm_type = action->type;
-	task->epm_source = action->migrate.source;
-	task->epm_target = action->migrate.target;
+	task->gpm_type = action->type;
+	task->gpm_source = action->migrate.source;
+	task->gpm_target = action->migrate.target;
 
 #ifdef CONFIG_HCC_SCHED
 	action->migrate.end_date = current_kernel_time();
 	atomic_notifier_call_chain(&kmh_migration_recv_end, 0, action);
 #endif
-	hcc_action_stop(task, EPM_MIGRATE);
+	hcc_action_stop(task, GPM_MIGRATE);
 
 	wake_up_new_task(task, CLONE_VM);
 }
@@ -304,7 +304,7 @@ static int do_migrate_process(struct task_struct *task,
 		return -ENOSYS;
 	}
 
-	retval = hcc_action_start(task, EPM_MIGRATE);
+	retval = hcc_action_start(task, GPM_MIGRATE);
 	if (retval)
 		return retval;
 
@@ -480,10 +480,10 @@ void hcc_syscall_exit(long syscall_nr)
 }
 #endif
 
-int epm_migration_start(void)
+int gpm_migration_start(void)
 {
 	hcc_handler[HCC_SIG_MIGRATE] = hcc_task_migrate;
-	if (rpc_register_void(RPC_EPM_MIGRATE, handle_migrate, 0))
+	if (rpc_register_void(RPC_GPM_MIGRATE, handle_migrate, 0))
 		BUG();
 	if (rpc_register_int(PROC_REQUEST_MIGRATION,
 			     handle_migrate_remote_process, 0))
@@ -492,6 +492,6 @@ int epm_migration_start(void)
 	return 0;
 }
 
-void epm_migration_exit(void)
+void gpm_migration_exit(void)
 {
 }

@@ -64,10 +64,10 @@ extern int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
 extern int proc_pid_statm(struct seq_file *m, struct pid_namespace *ns,
 				struct pid *pid, struct task_struct *task);
 
-#ifdef CONFIG_HCC_EPM
-int epm_type_show(struct task_struct *task, char *buffer);
-int epm_source_show(struct task_struct *task, char *buffer);
-int epm_target_show(struct task_struct *task, char *buffer);
+#ifdef CONFIG_HCC_GPM
+int gpm_type_show(struct task_struct *task, char *buffer);
+int gpm_source_show(struct task_struct *task, char *buffer);
+int gpm_target_show(struct task_struct *task, char *buffer);
 #endif
 
 extern struct dentry *hcc_proc_pid_lookup(struct inode *dir,

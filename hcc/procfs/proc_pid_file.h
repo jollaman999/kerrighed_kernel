@@ -25,10 +25,10 @@ int hcc_proc_pid_schedstat(struct proc_distant_pid_info *task, char *buffer);
 int hcc_proc_pid_oom_score(struct proc_distant_pid_info *task, char *buffer);
 int hcc_proc_tgid_io_accounting(struct proc_distant_pid_info *task,
 				char *buffer);
-#ifdef CONFIG_HCC_EPM
-int hcc_proc_epm_type_show(struct proc_distant_pid_info *task, char *buffer);
-int hcc_proc_epm_source_show(struct proc_distant_pid_info *task, char *buffer);
-int hcc_proc_epm_target_show(struct proc_distant_pid_info *task, char *buffer);
+#ifdef CONFIG_HCC_GPM
+int hcc_proc_gpm_type_show(struct proc_distant_pid_info *task, char *buffer);
+int hcc_proc_gpm_source_show(struct proc_distant_pid_info *task, char *buffer);
+int hcc_proc_gpm_target_show(struct proc_distant_pid_info *task, char *buffer);
 #endif
 
 /* ONE() entries */

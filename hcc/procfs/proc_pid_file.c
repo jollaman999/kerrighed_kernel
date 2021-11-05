@@ -504,41 +504,41 @@ int hcc_proc_tgid_io_accounting(struct proc_distant_pid_info *task, char *buffer
 }
 #endif
 
-#ifdef CONFIG_HCC_EPM
-static void handle_read_epm_type_show(struct rpc_desc *desc,
+#ifdef CONFIG_HCC_GPM
+static void handle_read_gpm_type_show(struct rpc_desc *desc,
 						void *_msg, size_t size)
 {
-	handle_generic_proc_read(desc, _msg, epm_type_show,
-				 REQ_PROC_EPM_TYPE_SHOW);
+	handle_generic_proc_read(desc, _msg, gpm_type_show,
+				 REQ_PROC_GPM_TYPE_SHOW);
 }
 
-int hcc_proc_epm_type_show(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_gpm_type_show(struct proc_distant_pid_info *task, char *buffer)
 {
-	return generic_proc_read(task, buffer, REQ_PROC_EPM_TYPE_SHOW);
+	return generic_proc_read(task, buffer, REQ_PROC_GPM_TYPE_SHOW);
 }
 
-static void handle_read_epm_source_show(struct rpc_desc *desc,
+static void handle_read_gpm_source_show(struct rpc_desc *desc,
 						void *_msg, size_t size)
 {
-	handle_generic_proc_read(desc, _msg, epm_source_show,
-				 REQ_PROC_EPM_SOURCE_SHOW);
+	handle_generic_proc_read(desc, _msg, gpm_source_show,
+				 REQ_PROC_GPM_SOURCE_SHOW);
 }
 
-int hcc_proc_epm_source_show(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_gpm_source_show(struct proc_distant_pid_info *task, char *buffer)
 {
-	return generic_proc_read(task, buffer, REQ_PROC_EPM_SOURCE_SHOW);
+	return generic_proc_read(task, buffer, REQ_PROC_GPM_SOURCE_SHOW);
 }
 
-static void handle_read_epm_target_show(struct rpc_desc *desc,
+static void handle_read_gpm_target_show(struct rpc_desc *desc,
 						void *_msg, size_t size)
 {
-	handle_generic_proc_read(desc, _msg, epm_target_show,
-				 REQ_PROC_EPM_TARGET_SHOW);
+	handle_generic_proc_read(desc, _msg, gpm_target_show,
+				 REQ_PROC_GPM_TARGET_SHOW);
 }
 
-int hcc_proc_epm_target_show(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_gpm_target_show(struct proc_distant_pid_info *task, char *buffer)
 {
-	return generic_proc_read(task, buffer, REQ_PROC_EPM_TARGET_SHOW);
+	return generic_proc_read(task, buffer, REQ_PROC_GPM_TARGET_SHOW);
 }
 #endif
 
@@ -956,10 +956,10 @@ void proc_pid_file_init(void)
 	rpc_register_void(REQ_PROC_TGID_IO_ACCOUNTING,
 			  handle_read_proc_tgid_io_accounting, 0);
 #endif
-#ifdef CONFIG_HCC_EPM
-	rpc_register_void(REQ_PROC_EPM_TYPE_SHOW, handle_read_epm_type_show, 0);
-	rpc_register_void(REQ_PROC_EPM_SOURCE_SHOW, handle_read_epm_source_show, 0);
-	rpc_register_void(REQ_PROC_EPM_TARGET_SHOW, handle_read_epm_target_show, 0);
+#ifdef CONFIG_HCC_GPM
+	rpc_register_void(REQ_PROC_GPM_TYPE_SHOW, handle_read_gpm_type_show, 0);
+	rpc_register_void(REQ_PROC_GPM_SOURCE_SHOW, handle_read_gpm_source_show, 0);
+	rpc_register_void(REQ_PROC_GPM_TARGET_SHOW, handle_read_gpm_target_show, 0);
 #endif
 	/* ONE() entries */
 	rpc_register_void(REQ_PROC_PID_STATUS, handle_read_proc_pid_status, 0);

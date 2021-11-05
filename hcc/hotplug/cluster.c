@@ -43,7 +43,7 @@
 #include <hcc/task.h>
 #include <hcc/pid.h>
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/signal.h>
 #include <hcc/children.h>
 #endif
@@ -386,7 +386,7 @@ static bool hcc_container_may_conflict(struct hcc_namespace *ns)
 
 static int hcc_container_cleanup(struct hcc_namespace *ns)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	pidmap_map_cleanup(ns);
 #endif
 #ifdef CONFIG_HCC_GIPC

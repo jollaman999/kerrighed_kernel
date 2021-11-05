@@ -227,7 +227,7 @@ int global_config_pack_item(struct rpc_desc *desc, struct config_item *item);
  */
 struct config_item *global_config_unpack_get_item(struct rpc_desc *desc);
 
-struct epm_action;
+struct gpm_action;
 
 /**
  * Export information to a ghost so that a peer config_item can be reached on a
@@ -240,7 +240,7 @@ struct epm_action;
  * @return		0 if successful, or
  *			negative error code
  */
-int export_global_config_item(struct epm_action *action, ghost_t *ghost,
+int export_global_config_item(struct gpm_action *action, ghost_t *ghost,
 			      struct config_item *item);
 /**
  * Import information from a ghost and get a reference on a globalized
@@ -256,7 +256,7 @@ int export_global_config_item(struct epm_action *action, ghost_t *ghost,
  * @return		0 if ghost import successful, or
  *			negative error code
  */
-int import_global_config_item(struct epm_action *action, ghost_t *ghost,
+int import_global_config_item(struct gpm_action *action, ghost_t *ghost,
 			      struct config_item **item_p);
 
 #endif /* __HCC_SCHEDULER_GLOBAL_CONFIG_H__ */

@@ -91,7 +91,7 @@ extern void spd_release_page(struct splice_pipe_desc *, unsigned int);
 
 extern const struct pipe_buf_operations page_cache_pipe_buf_ops;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 extern long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
 			   loff_t *ppos, size_t len, unsigned int flags);
 

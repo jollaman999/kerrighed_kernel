@@ -44,7 +44,7 @@ struct regular_file_hcc_desc {
 	};
 };
 
-struct epm_action;
+struct gpm_action;
 struct dvfs_file_struct;
 union export_args;
 
@@ -72,7 +72,7 @@ int end_import_dvfs_file(unsigned long dvfs_objid,
 			 struct dvfs_file_struct *dvfs_file,
 			 struct file *file, int first_import);
 
-int cr_link_to_file(struct epm_action *action, ghost_t *ghost,
+int cr_link_to_file(struct gpm_action *action, ghost_t *ghost,
 		    struct task_struct *task, struct file **returned_file);
 
 int get_pipe_file_hcc_desc(struct file *file, void **desc, int *desc_size);

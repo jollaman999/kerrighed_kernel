@@ -23,7 +23,7 @@ struct migration_infos_struct {
 
 typedef struct migration_infos_struct migration_infos_t;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
 #ifdef CONFIG_HCC_SCHED
 #include <linux/notifier.h>
@@ -57,6 +57,6 @@ int migrate_linux_threads(pid_t pid,
 /* Used by hcc_release_task() */
 void migration_aborted(struct task_struct *tsk);
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 #endif /* __HCC_MIGRATION_H__ */

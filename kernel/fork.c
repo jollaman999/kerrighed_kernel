@@ -82,7 +82,7 @@
 #include <hcc/task.h>
 #include <hcc/hccinit.h>
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/action.h>
 #include <hcc/signal.h>
 #include <hcc/children.h>
@@ -157,7 +157,7 @@ int nr_processes(void)
 		kmem_cache_alloc_node(task_struct_cachep, GFP_KERNEL, node)
 # define free_task_struct(tsk)			\
 		kmem_cache_free(task_struct_cachep, (tsk))
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 struct kmem_cache *task_struct_cachep;
@@ -184,7 +184,7 @@ static inline void free_thread_info(struct thread_info *ti)
 #endif
 
 /* SLAB cache for signal_struct structures (tsk->signal) */
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 struct kmem_cache *signal_cachep;
@@ -297,7 +297,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
 	int node = tsk_fork_get_node(orig);
 	int err;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current)
 #endif
 	prepare_to_copy(orig);
@@ -560,7 +560,7 @@ struct mm_struct * mm_init(struct mm_struct * mm, struct task_struct *p)
 #ifdef CONFIG_HCC_GMM
 	atomic_set(&mm->mm_tasks, 1);
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	atomic_set(&mm->mm_ltasks, 1);
 	init_rwsem(&mm->remove_sem);
 #endif
@@ -650,7 +650,7 @@ void mmput(struct mm_struct *mm)
 			spin_unlock(&mmlist_lock);
 		}
 		put_swap_token(mm);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		BUG_ON(atomic_read(&mm->mm_ltasks) != 0);
 #endif
 		if (mm->binfmt)
@@ -714,7 +714,7 @@ static void complete_vfork_done(struct task_struct *tsk)
 	vfork = tsk->vfork_done;
 	if (likely(vfork)) {
 		tsk->vfork_done = NULL;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		if (tsk->remote_vfork_done)
 			hcc_vfork_done(vfork);
 		else
@@ -724,14 +724,14 @@ static void complete_vfork_done(struct task_struct *tsk)
 	task_unlock(tsk);
 }
 
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 int wait_for_vfork_done(struct task_struct *child,
 				struct completion *vfork)
 {
 	int killed;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct completion *vfork_done;
 #endif
 
@@ -741,12 +741,12 @@ int wait_for_vfork_done(struct task_struct *child,
 
 	if (killed) {
 		task_lock(child);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		vfork_done = child->vfork_done;
 		if (vfork_done) {
 #endif
 		child->vfork_done = NULL;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		}
 		if (child->remote_vfork_done)
 			hcc_vfork_done(vfork_done);
@@ -757,7 +757,7 @@ int wait_for_vfork_done(struct task_struct *child,
 	put_task_struct(child);
 	return killed;
 }
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 EXPORT_SYMBOL(wait_for_vfork_done);
 #endif
 
@@ -794,7 +794,7 @@ void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 
 	/* Get rid of any cached register state */
 	deactivate_mm(tsk, mm);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (mm)
 		atomic_dec(&mm->mm_ltasks);
 #endif
@@ -871,7 +871,7 @@ struct mm_struct *dup_mm(struct task_struct *tsk)
 	return mm;
 
 free_pt:
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	atomic_dec(&mm->mm_ltasks);
 #endif
 	/* don't put binfmt in mmput, we haven't got module yet */
@@ -915,12 +915,12 @@ static int copy_mm(unsigned long clone_flags, struct task_struct * tsk)
 		return 0;
 
 	if (clone_flags & CLONE_VM) {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		atomic_inc(&oldmm->mm_ltasks);
 #endif
 		atomic_inc(&oldmm->mm_users);
 #ifdef CONFIG_HCC_GMM
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		/* Forking the ghost do not create a real new task. No need
 		 * to inc the mm_task counter */
 		if (!hcc_current)
@@ -1032,7 +1032,7 @@ static int copy_sighand(unsigned long clone_flags, struct task_struct *tsk)
 {
 	struct sighand_struct *sig;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (hcc_current && !in_hcc_do_fork())
 		/*
 		 * This is a process migration or restart: sighand_struct is
@@ -1043,13 +1043,13 @@ static int copy_sighand(unsigned long clone_flags, struct task_struct *tsk)
 	if (!hcc_current)
 #endif
 	if (clone_flags & CLONE_SIGHAND) {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		sig = current->sighand;
 		if (sig->gdm_obj)
 			hcc_sighand_writelock(sig->hcc_objid);
 #endif
 		atomic_inc(&current->sighand->count);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		if (sig->gdm_obj) {
 			hcc_sighand_share(current);
 			hcc_sighand_unlock(sig->hcc_objid);
@@ -1063,7 +1063,7 @@ static int copy_sighand(unsigned long clone_flags, struct task_struct *tsk)
 		return -ENOMEM;
 	atomic_set(&sig->count, 1);
 	memcpy(sig->action, current->sighand->action, sizeof(sig->action));
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	/*
 	 * Too early to allocate the GDM object, will do it once we know the
 	 * pid.
@@ -1086,7 +1086,7 @@ void __cleanup_sighand(struct sighand_struct *sighand)
 /*
  * Initialize POSIX timer handling for a thread group.
  */
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 void posix_cpu_timers_init_group(struct signal_struct *sig)
@@ -1121,7 +1121,7 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 {
 	struct signal_struct *sig;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (hcc_current && !in_hcc_do_fork()) {
 		/*
 		 * This is a process migration or restart: signal_struct is
@@ -1134,7 +1134,7 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	if (!hcc_current)
 #endif
 	if (clone_flags & CLONE_THREAD)
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	{
 		if (current->signal->gdm_obj)
 			hcc_signal_writelock(current->signal);
@@ -1189,12 +1189,12 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	sig->sum_sched_runtime = 0;
 	taskstats_tgid_init(sig);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current)
 #endif
 	task_lock(current->group_leader);
 	memcpy(sig->rlim, current->signal->rlim, sizeof sig->rlim);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current)
 #endif
 	task_unlock(current->group_leader);
@@ -1206,7 +1206,7 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	tty_audit_fork(sig);
 	sched_autogroup_fork(sig);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	/*
 	 * Too early to allocate the GDM object, will do it once the tgid is
 	 * known.
@@ -1290,7 +1290,7 @@ static void posix_cpu_timers_init(struct task_struct *tsk)
  * parts of the process environment (as per the clone
  * flags). The actual kick-off is left to the caller.
  */
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 struct task_struct *copy_process(unsigned long clone_flags,
@@ -1397,7 +1397,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		goto bad_fork_cleanup_count;
 
 	p->did_exec = 0;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current)
 #endif
 	delayacct_tsk_init(p);	/* Must remain after dup_task_struct() */
@@ -1405,13 +1405,13 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	INIT_LIST_HEAD(&p->children);
 	INIT_LIST_HEAD(&p->sibling);
 	rcu_copy_process(p);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current)
 #endif
 	p->vfork_done = NULL;
 	spin_lock_init(&p->alloc_lock);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	clear_tsk_thread_flag(p, TIF_SIGPENDING);
 #endif
 	init_sigpending(&p->pending);
@@ -1426,12 +1426,12 @@ struct task_struct *copy_process(unsigned long clone_flags,
 
 	p->default_timer_slack_ns = current->timer_slack_ns;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current || in_hcc_do_fork()) {
 #endif
 	task_io_accounting_init(&p->ioac);
 	acct_clear_integrals(p);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	}
 #endif
 
@@ -1533,7 +1533,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	if (retval)
 		goto bad_fork_cleanup_io;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current)
 #endif
 	if (pid != &init_struct_pid) {
@@ -1548,10 +1548,10 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	if (clone_flags & CLONE_THREAD)
 		p->tgid = current->tgid;
 
-#ifdef CONFIG_HCC_EPM
-	p->epm_type = EPM_NO_ACTION;
-	p->epm_source = hcc_node_id;
-	p->epm_target = hcc_node_id;
+#ifdef CONFIG_HCC_GPM
+	p->gpm_type = GPM_NO_ACTION;
+	p->gpm_source = hcc_node_id;
+	p->gpm_target = hcc_node_id;
 #endif
 
 	if (current->nsproxy != p->nsproxy) {
@@ -1564,7 +1564,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	/*
 	 * Clear TID on mm_release()?
 	 */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current || in_hcc_do_fork())
 #endif
 	p->clear_child_tid = (clone_flags & CLONE_CHILD_CLEARTID) ? child_tidptr: NULL;
@@ -1579,7 +1579,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	/*
 	 * sigaltstack should be cleared when sharing the same VM
 	 */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current)
 #endif
 	if ((clone_flags & (CLONE_VM|CLONE_VFORK)) == CLONE_VM)
@@ -1597,13 +1597,13 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	clear_all_latency_tracing(p);
 
 	/* ok, now we should be set up.. */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current) {
 #endif
 	p->exit_signal = (clone_flags & CLONE_THREAD) ? -1 : (clone_flags & CSIGNAL);
 	p->pdeath_signal = 0;
 	p->exit_state = 0;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	} else {
 		p->exit_signal = clone_flags & CSIGNAL;
 		if (in_hcc_do_fork()) {
@@ -1627,7 +1627,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	cgroup_fork_callbacks(p);
 	cgroup_callbacks_done = 1;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	hcc_sighand_alloc(p, clone_flags);
 	hcc_signal_alloc(p, pid, clone_flags);
 
@@ -1644,7 +1644,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #ifdef CONFIG_HCC_PROC
 	retval = hcc_task_alloc(p, pid);
 	if (retval)
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		goto bad_fork_cleanup_children;
 #else
 		goto bad_fork_free_pid;
@@ -1671,7 +1671,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		p->real_parent = current;
 		p->parent_exec_id = current->self_exec_id;
 	}
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current
 	    && p->real_parent == baby_sitter && !p->parent_children_obj)
 		/*
@@ -1681,7 +1681,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		 * only be the local child reaper.
 		 */
 		p->real_parent = task_active_pid_ns(current)->child_reaper;
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 	spin_lock(&current->sighand->siglock);
 
@@ -1694,7 +1694,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	 * thread can't slip out of an OOM kill (or normal SIGKILL).
  	 */
 	recalc_sigpending();
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	/* Only check if inside a remote clone() */
 	if (!hcc_current || in_hcc_do_fork())
 #endif
@@ -1711,7 +1711,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #endif
 	}
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	retval = hcc_children_fork(p, pid, clone_flags);
 	if (retval) {
 		spin_unlock(&current->sighand->siglock);
@@ -1722,13 +1722,13 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		goto bad_fork_free_hcc_task;
 #endif
 	}
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current || !thread_group_leader(hcc_current))
 #endif
 	if (clone_flags & CLONE_THREAD) {
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 		atomic_inc(&current->signal->count);
 		atomic_inc(&current->signal->live);
 #endif
@@ -1737,11 +1737,11 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	}
 
 	if (likely(p->pid)) {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		if (p->real_parent != baby_sitter)
 #endif
 		list_add_tail(&p->sibling, &p->real_parent->children);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		attach_pid(p, PIDTYPE_PID, pid);
 #endif
 		tracehook_finish_clone(p, clone_flags, trace);
@@ -1760,7 +1760,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 			list_add_tail_rcu(&p->tasks, &init_task.tasks);
 			__get_cpu_var(process_counts)++;
 		}
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 		attach_pid(p, PIDTYPE_PID, pid);
 #endif
 		nr_threads++;
@@ -1775,7 +1775,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #ifdef CONFIG_HCC_PROC
 	hcc_task_commit(p);
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	hcc_children_commit_fork(p);
 #endif
 	proc_new_task(p);
@@ -1797,7 +1797,7 @@ bad_fork_free_hcc_sched:
 bad_fork_free_hcc_task:
 	hcc_task_abort(p);
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 bad_fork_cleanup_children:
 	hcc_children_abort_fork(p);
 bad_fork_cleanup_application:
@@ -1805,7 +1805,7 @@ bad_fork_cleanup_application:
 		hcc_exit_application(p);
 #endif
 bad_fork_free_pid:
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current)
 #endif
 	if (pid != &init_struct_pid)
@@ -1818,12 +1818,12 @@ bad_fork_cleanup_namespaces:
 bad_fork_cleanup_mm:
 #ifdef CONFIG_HCC_GMM
 	if (p->mm && p->mm->mm_id && (clone_flags & CLONE_VM))
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		if (!hcc_current)
 #endif
 			HCCFCT(kh_mm_release)(p->mm, 1);
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (p->mm)
 		atomic_dec(&p->mm->mm_ltasks);
 #endif
@@ -1835,27 +1835,27 @@ bad_fork_cleanup_mm:
 		mmput(p->mm);
 	}
 bad_fork_cleanup_signal:
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current || in_hcc_do_fork())
 #endif
  	if (!(clone_flags & CLONE_THREAD))
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	{
 	    struct signal_struct *locked_sig = hcc_signal_exit(p->signal);
 #endif
 		__cleanup_signal(p->signal);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		hcc_signal_unlock(locked_sig);
 	}
 #endif
 
 bad_fork_cleanup_sighand:
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current || in_hcc_do_fork())
 		hcc_sighand_cleanup(p->sighand);
 #else
 	__cleanup_sighand(p->sighand);
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 bad_fork_cleanup_fs:
 	exit_fs(p); /* blocking */
 bad_fork_cleanup_files:
@@ -1879,7 +1879,7 @@ bad_fork_cleanup_cgroup:
 	if (clone_flags & CLONE_THREAD)
 		threadgroup_change_end(current);
 	cgroup_exit(p, cgroup_callbacks_done);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current)
 #endif
 	delayacct_tsk_free(p);
@@ -1893,7 +1893,7 @@ fork_out:
 #ifdef CONFIG_HCC_HOTPLUG
 	current->create_hcc_ns = saved_create_hcc_ns;
 #endif
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 	/*
 	 * HACK. A buggy subsystem can clear TIF_SIGPENDING in between.
 	 * In particular, there are a lot of sigprocmask() users, and
@@ -1982,7 +1982,7 @@ long do_fork(unsigned long clone_flags,
 	if (likely(user_mode(regs)))
 		trace = tracehook_prepare_clone(clone_flags);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #ifdef CONFIG_HCC_GCAP
 	nr = 0;
 	if (can_use_hcc_cap(current, GCAP_DISTANT_FORK))
@@ -2007,7 +2007,7 @@ long do_fork(unsigned long clone_flags,
 	}
 #endif
 	/* Give a chance to local fork */
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 #ifdef CONFIG_HCC_PROC
 	down_read(&hcc_init_sem);
 #endif
@@ -2029,7 +2029,7 @@ long do_fork(unsigned long clone_flags,
 
 		if (clone_flags & CLONE_VFORK) {
 			p->vfork_done = &vfork;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 			p->remote_vfork_done = 0;
 #endif
 			init_completion(&vfork);

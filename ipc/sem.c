@@ -91,7 +91,7 @@
 #ifdef CONFIG_HCC_GIPC
 #include <linux/random.h>
 #include <hcc/pid.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/action.h>
 #endif
 #include "hccsem.h"
@@ -1954,7 +1954,7 @@ sleep_again:
 		goto out_free;
 	}
 
-#if defined(CONFIG_HCC_GIPC) && defined(CONFIG_HCC_EPM)
+#if defined(CONFIG_HCC_GIPC) && defined(CONFIG_HCC_GPM)
 	if (hcc_action_any_pending(current)) {
 #ifdef CONFIG_HCC_DEBUG
 		printk("%s:%d - action hcc! --> need replay!!\n",

@@ -76,7 +76,7 @@ static inline bool is_hcc_pid_ns_root(struct pid_namespace *ns)
 struct pid_namespace *find_get_hcc_pid_ns(void);
 #endif
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns);
 #endif
 

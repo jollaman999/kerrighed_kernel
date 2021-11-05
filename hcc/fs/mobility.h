@@ -11,7 +11,7 @@
 #include <hcc/ghost_types.h>
 #include <linux/hcc_hashtable.h>
 
-struct epm_action;
+struct gpm_action;
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -20,9 +20,9 @@ struct epm_action;
  *--------------------------------------------------------------------------*/
 
 struct dvfs_mobility_operations {
-  int (*file_export) (struct epm_action *,
+  int (*file_export) (struct gpm_action *,
 		      ghost_t *, struct task_struct *, int, struct file *);
-  int (*file_import) (struct epm_action *,
+  int (*file_import) (struct gpm_action *,
 		      ghost_t *, struct task_struct *, struct file **);
 };
 

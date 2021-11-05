@@ -15,7 +15,7 @@ config HCC
 	select HCC_FAF if !HCC_DEVEL
 	select HCC_GIPC if !HCC_DEVEL
 	select HCC_PROC if !HCC_DEVEL
-	select HCC_EPM if !HCC_DEVEL
+	select HCC_GPM if !HCC_DEVEL
 	select HCC_SCHED if !HCC_DEVEL
 	help
 	  Say Y if you want to use the HCC features.	
@@ -202,7 +202,7 @@ config HCC_PROC
 
 	  If unsure, say Y.
 
-config HCC_EPM
+config HCC_GPM
 	bool "KerEPM"
 	depends on HCC && HCC_PROC && HCC_CAP && HCC_GMM && (HCC_DVFS || HCC_FAF)
 	help
@@ -212,7 +212,7 @@ config HCC_EPM
 	  If unsure, say Y.
 
 config HCC_GIPC_EPM
-       def_bool HCC_GIPC && HCC_EPM
+       def_bool HCC_GIPC && HCC_GPM
 
 menuconfig HCC_SCHED
 	bool "HCC support for global scheduling"
@@ -235,7 +235,7 @@ if HCC_SCHED
 
 config HCC_SCHED_COMPAT
 	bool "Compile components needed to emulate HCC 2.3 hard-coded scheduler"
-	depends on HCC_SCHED && HCC_EPM
+	depends on HCC_SCHED && HCC_GPM
 	default y
 	help
 	  This option selects the components needed to obtain the same
@@ -276,7 +276,7 @@ config HCC_SCHED_MEM_PROBE
 
 config HCC_SCHED_MIGRATION_PROBE
 	tristate "Migration probe"
-	depends on HCC_EPM && m
+	depends on HCC_GPM && m
 	default n
 	help
 	  Probe counting the number of ongoing task migrations out of a node
@@ -337,7 +337,7 @@ config HCC_SCHED_ECHO_POLICY
 
 config HCC_SCHED_MOSIX_LOAD_BALANCER
 	tristate "MOSIX-like load balancing policy"
-	depends on HCC_EPM && m
+	depends on HCC_GPM && m
 	default n
 	help
 	  Migration-based load balancing policy using simplified algorithms

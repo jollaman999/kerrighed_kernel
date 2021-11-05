@@ -37,12 +37,12 @@
 #include <hcc/action.h>
 #include <hcc/debug.h>
 #include <asm/ptrace.h>
-#include "epm_internal.h"
+#include "gpm_internal.h"
 
 /* Export */
 
 /* Arch helpers */
-int export_exec_domain(struct epm_action *action,
+int export_exec_domain(struct gpm_action *action,
 		       ghost_t *ghost, struct task_struct *task)
 {
 	if (task_thread_info(task)->exec_domain != &default_exec_domain)
@@ -51,7 +51,7 @@ int export_exec_domain(struct epm_action *action,
 	return 0;
 }
 
-int export_restart_block(struct epm_action *action,
+int export_restart_block(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	struct thread_info *ti = task_thread_info(task);
@@ -78,13 +78,13 @@ out:
 
 /* export_sched() is located in kernel/sched.c */
 
-static int export_preempt_notifiers(struct epm_action *action,
+static int export_preempt_notifiers(struct gpm_action *action,
 				   ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
-	if (action->type != EPM_REMOTE_CLONE) {
+	if (action->type != GPM_REMOTE_CLONE) {
 		if (!hlist_empty(&task->preempt_notifiers))
 			err = -EBUSY;
 	}
@@ -93,7 +93,7 @@ static int export_preempt_notifiers(struct epm_action *action,
 	return err;
 }
 
-static int export_sched_info(struct epm_action *action,
+static int export_sched_info(struct gpm_action *action,
 			     ghost_t *ghost, struct task_struct *tsk)
 {
 	/* Nothing to do... */
@@ -102,7 +102,7 @@ static int export_sched_info(struct epm_action *action,
 
 /* export_mm() is located in hcc/mm/mobility.c */
 
-static int export_binfmt(struct epm_action *action,
+static int export_binfmt(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	int binfmt_id;
@@ -114,31 +114,31 @@ static int export_binfmt(struct epm_action *action,
 	return ghost_write(ghost, &binfmt_id, sizeof(int));
 }
 
-static int export_children(struct epm_action *action,
+static int export_children(struct gpm_action *action,
 			   ghost_t *ghost, struct task_struct *task)
 {
 	/* Managed by children gdm object */
 	return 0;
 }
 
-static int export_group_leader(struct epm_action *action,
+static int export_group_leader(struct gpm_action *action,
 			       ghost_t *ghost, struct task_struct *task)
 {
 	pid_t tgid = task_tgid_knr(task);
 	int err = 0;
 
-	if (action->type == EPM_CHECKPOINT && !thread_group_leader(task))
+	if (action->type == GPM_CHECKPOINT && !thread_group_leader(task))
 		err = ghost_write(ghost, &tgid, sizeof(tgid));
 
 	return err;
 }
 
-static int export_ptraced(struct epm_action *action,
+static int export_ptraced(struct gpm_action *action,
 			  ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
 
-	if (action->type != EPM_REMOTE_CLONE) {
+	if (action->type != GPM_REMOTE_CLONE) {
 		/* TODO */
 		if (!list_empty(&task->ptraced))
 			err = -EBUSY;
@@ -147,7 +147,7 @@ static int export_ptraced(struct epm_action *action,
 	return err;
 }
 
-static int export_bts(struct epm_action *action,
+static int export_bts(struct gpm_action *action,
 		      ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
@@ -161,7 +161,7 @@ static int export_bts(struct epm_action *action,
 	return err;
 }
 
-static int export_pids(struct epm_action *action,
+static int export_pids(struct gpm_action *action,
 		       ghost_t *ghost, struct task_struct *task)
 {
 	enum pid_type type, max_type;
@@ -174,15 +174,15 @@ static int export_pids(struct epm_action *action,
 		goto out;
 #endif /* CONFIG_HCC_SCHED */
 
-	if ((action->type == EPM_REMOTE_CLONE
+	if ((action->type == GPM_REMOTE_CLONE
 	     && (action->remote_clone.clone_flags & CLONE_THREAD))
-	    || (action->type != EPM_REMOTE_CLONE && !thread_group_leader(task)))
+	    || (action->type != GPM_REMOTE_CLONE && !thread_group_leader(task)))
 		max_type = PIDTYPE_PID + 1;
 	else
 		max_type = PIDTYPE_MAX;
 
 	type = PIDTYPE_PID;
-	if (action->type == EPM_REMOTE_CLONE)
+	if (action->type == GPM_REMOTE_CLONE)
 		type++;
 
 	for (; type < max_type; type++) {
@@ -212,7 +212,7 @@ err:
 	goto out;
 }
 
-static void post_export_pids(struct epm_action *action,
+static void post_export_pids(struct gpm_action *action,
 			     ghost_t *ghost, struct task_struct *task)
 {
 #ifdef CONFIG_HCC_SCHED
@@ -222,13 +222,13 @@ static void post_export_pids(struct epm_action *action,
 
 /* export_vfork_done() is located in hcc/epm/remote_clone.c */
 
-static int export_cpu_timers(struct epm_action *action,
+static int export_cpu_timers(struct gpm_action *action,
 			     ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
 
 	/* TODO */
-	if (action->type != EPM_REMOTE_CLONE) {
+	if (action->type != GPM_REMOTE_CLONE) {
 		if (!list_empty(&task->cpu_timers[0])
 		    || !list_empty(&task->cpu_timers[1])
 		    || !list_empty(&task->cpu_timers[2]))
@@ -250,7 +250,7 @@ static int export_cpu_timers(struct epm_action *action,
 
 /* export_files_struct() is located in hcc/fs/mobility.c */
 
-static int export_uts_namespace(struct epm_action *action,
+static int export_uts_namespace(struct gpm_action *action,
 				ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
@@ -262,7 +262,7 @@ static int export_uts_namespace(struct epm_action *action,
 	return err;
 }
 
-static int export_net_namespace(struct epm_action *action,
+static int export_net_namespace(struct gpm_action *action,
 				ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
@@ -274,7 +274,7 @@ static int export_net_namespace(struct epm_action *action,
 	return err;
 }
 
-static int export_nsproxy(struct epm_action *action,
+static int export_nsproxy(struct gpm_action *action,
 			  ghost_t *ghost, struct task_struct *task)
 {
 	int retval;
@@ -305,12 +305,12 @@ out:
 
 /* export_private_signals() is located in hcc/epm/signal.c */
 
-static int export_notifier(struct epm_action *action,
+static int export_notifier(struct gpm_action *action,
 			   ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
 
-	if (action->type != EPM_REMOTE_CLONE) {
+	if (action->type != GPM_REMOTE_CLONE) {
 		/* TODO */
 		if (task->notifier)
 			err = -EBUSY;
@@ -321,19 +321,19 @@ static int export_notifier(struct epm_action *action,
 
 /* export_audit_context() is located in kernel/auditsc.c */
 
-static int export_exec_ids(struct epm_action *action,
+static int export_exec_ids(struct gpm_action *action,
 			   ghost_t *ghost, struct task_struct *task)
 {
 	return 0;
 }
 
-static int export_rt_mutexes(struct epm_action *action,
+static int export_rt_mutexes(struct gpm_action *action,
 			     ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
 
 #ifdef CONFIG_RT_MUTEXES
-	if (action->type != EPM_REMOTE_CLONE) {
+	if (action->type != GPM_REMOTE_CLONE) {
 		/* TODO */
 		if (!plist_head_empty(&task->pi_waiters) || task->pi_blocked_on)
 			err = -EBUSY;
@@ -343,7 +343,7 @@ static int export_rt_mutexes(struct epm_action *action,
 	return err;
 }
 
-static int export_io_context(struct epm_action *action,
+static int export_io_context(struct gpm_action *action,
 			     ghost_t *ghost, struct task_struct *task)
 {
 #ifdef CONFIG_BLOCK
@@ -358,12 +358,12 @@ static int export_io_context(struct epm_action *action,
 #endif
 }
 
-static int export_last_siginfo(struct epm_action *action,
+static int export_last_siginfo(struct gpm_action *action,
 			       ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
 
-	if (action->type != EPM_REMOTE_CLONE) {
+	if (action->type != GPM_REMOTE_CLONE) {
 		/* TODO (ptrace) */
 		if (task->last_siginfo)
 			err = -EBUSY;
@@ -374,7 +374,7 @@ static int export_last_siginfo(struct epm_action *action,
 
 /* export_cgroups() is located in kernel/cgroup.c */
 
-static int export_pi_state(struct epm_action *action,
+static int export_pi_state(struct gpm_action *action,
 			   ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
@@ -387,7 +387,7 @@ static int export_pi_state(struct epm_action *action,
 	return err;
 }
 
-static int export_mempolicy(struct epm_action *action,
+static int export_mempolicy(struct gpm_action *action,
 			    ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
@@ -400,25 +400,25 @@ static int export_mempolicy(struct epm_action *action,
 	return err;
 }
 
-static int export_delays(struct epm_action *action,
+static int export_delays(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
 
 #ifdef CONFIG_TASK_DELAY_ACCT
-	if (action->type != EPM_REMOTE_CLONE && task->delays)
+	if (action->type != GPM_REMOTE_CLONE && task->delays)
 		err = ghost_write(ghost, task->delays, sizeof(*task->delays));
 #endif
 
 	return err;
 }
 
-static int export_hcc_structs(struct epm_action *action,
+static int export_hcc_structs(struct gpm_action *action,
 			      ghost_t *ghost, struct task_struct *task)
 {
 	int retval = 0;
 
-	if (action->type == EPM_MIGRATE) {
+	if (action->type == GPM_MIGRATE) {
 		/*
 		 * The task gdm object must be linked to at most one task in
 		 * the cluster, and after import_hcc_structs() it will be
@@ -447,7 +447,7 @@ static int export_hcc_structs(struct epm_action *action,
  *  @return		0 if everything ok.
  *			Negative value otherwise.
  */
-static int export_task(struct epm_action *action,
+static int export_task(struct gpm_action *action,
 		       ghost_t *ghost,
 		       struct task_struct *task,
 		       struct pt_regs *l_regs)
@@ -607,14 +607,14 @@ error_pids:
 	goto error;
 }
 
-static void post_export_task(struct epm_action *action,
+static void post_export_task(struct gpm_action *action,
 			     ghost_t *ghost,
 			     struct task_struct *task)
 {
 	post_export_pids(action, ghost, task);
 }
 
-int export_process(struct epm_action *action,
+int export_process(struct gpm_action *action,
 		   ghost_t *ghost,
 		   struct task_struct *task,
 		   struct pt_regs *regs)
@@ -637,7 +637,7 @@ error_app:
 	goto error;
 }
 
-void post_export_process(struct epm_action *action,
+void post_export_process(struct gpm_action *action,
 			 ghost_t *ghost,
 			 struct task_struct *task)
 {
@@ -648,12 +648,12 @@ void post_export_process(struct epm_action *action,
 
 /* Regular helpers */
 
-static void unimport_hcc_structs(struct epm_action  *action,
+static void unimport_hcc_structs(struct gpm_action  *action,
 				 struct task_struct *task)
 {
 	switch (action->type) {
-	case EPM_REMOTE_CLONE:
-	case EPM_CHECKPOINT:
+	case GPM_REMOTE_CLONE:
+	case GPM_CHECKPOINT:
 		__hcc_task_free(task);
 		break;
 	default:
@@ -766,11 +766,11 @@ void unimport_group_leader(struct task_struct *task)
 }
 
 static
-void unimport_children(struct epm_action *action, struct task_struct *task)
+void unimport_children(struct gpm_action *action, struct task_struct *task)
 {
 	switch (action->type) {
-	case EPM_REMOTE_CLONE:
-	case EPM_CHECKPOINT:
+	case GPM_REMOTE_CLONE:
+	case GPM_CHECKPOINT:
 		__hcc_children_writelock(task);
 		hcc_children_exit(task);
 		break;
@@ -804,7 +804,7 @@ static void unimport_preempt_notifiers(struct task_struct *task)
 
 /* No arch helpers */
 
-static void unimport_task(struct epm_action *action,
+static void unimport_task(struct gpm_action *action,
 			  struct task_struct *ghost_task)
 {
 	unimport_io_context(ghost_task);
@@ -860,13 +860,13 @@ static void unimport_task(struct epm_action *action,
 
 /* Arch helpers */
 
-struct exec_domain *import_exec_domain(struct epm_action *action,
+struct exec_domain *import_exec_domain(struct gpm_action *action,
 				       ghost_t *ghost)
 {
 	return &default_exec_domain;
 }
 
-int import_restart_block(struct epm_action *action,
+int import_restart_block(struct gpm_action *action,
 			 ghost_t *ghost, struct restart_block *p)
 {
 	enum hccsyms_val fn_id;
@@ -890,7 +890,7 @@ err_read:
 
 /* import_sched() is located in kernel/sched.c */
 
-static int import_preempt_notifiers(struct epm_action *action,
+static int import_preempt_notifiers(struct gpm_action *action,
 				    ghost_t *ghost, struct task_struct *task)
 {
 #ifdef CONFIG_PREEMPT_NOTIFIERS
@@ -899,7 +899,7 @@ static int import_preempt_notifiers(struct epm_action *action,
 	return 0;
 }
 
-static int import_sched_info(struct epm_action *action,
+static int import_sched_info(struct gpm_action *action,
 			     ghost_t *ghost, struct task_struct *task)
 {
 #if defined(CONFIG_SCHEDSTATS) || defined(CONFIG_TASK_DELAY_ACCT)
@@ -910,7 +910,7 @@ static int import_sched_info(struct epm_action *action,
 
 /* import_mm() is located in hcc/mm/mobility.c */
 
-static int import_binfmt(struct epm_action *action,
+static int import_binfmt(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	int binfmt_id;
@@ -924,20 +924,20 @@ out:
 	return err;
 }
 
-static int import_children(struct epm_action *action,
+static int import_children(struct gpm_action *action,
 			   ghost_t *ghost, struct task_struct *task)
 {
 	int r = 0;
 
 	switch (action->type) {
-	case EPM_MIGRATE:
+	case GPM_MIGRATE:
 		task->children_obj = __hcc_children_readlock(task);
 		BUG_ON(!task->children_obj);
 		hcc_children_unlock(task->children_obj);
 		break;
 
-	case EPM_REMOTE_CLONE:
-	case EPM_CHECKPOINT:
+	case GPM_REMOTE_CLONE:
+	case GPM_CHECKPOINT:
 		/*
 		 * C/R: children are restored later in
 		 * app_restart.c:local_restore_children_objects()
@@ -961,7 +961,7 @@ static int import_children(struct epm_action *action,
 	return r;
 }
 
-static int import_group_leader(struct epm_action *action,
+static int import_group_leader(struct gpm_action *action,
 			       ghost_t *ghost, struct task_struct *task)
 {
 	struct task_struct *leader = task;
@@ -973,7 +973,7 @@ static int import_group_leader(struct epm_action *action,
 	 * otherwise.
 	 */
 	if (task->pid != task->tgid) {
-		BUG_ON(action->type != EPM_CHECKPOINT);
+		BUG_ON(action->type != GPM_CHECKPOINT);
 
 		err = ghost_read(ghost, &tgid, sizeof(tgid));
 		if (err)
@@ -990,14 +990,14 @@ out:
 	return err;
 }
 
-static int import_ptraced(struct epm_action *action,
+static int import_ptraced(struct gpm_action *action,
 			  ghost_t *ghost, struct task_struct *task)
 {
 	/* TODO */
 	return 0;
 }
 
-static int import_bts(struct epm_action *action,
+static int import_bts(struct gpm_action *action,
 		      ghost_t *ghost, struct task_struct *task)
 {
 #ifdef CONFIG_X86_PTRACE_BTS
@@ -1006,16 +1006,16 @@ static int import_bts(struct epm_action *action,
 	return 0;
 }
 
-static int import_pids(struct epm_action *action,
+static int import_pids(struct gpm_action *action,
 		       ghost_t *ghost, struct task_struct *task)
 {
 	enum pid_type type, max_type;
 	bool leader;
 	int retval = 0;
 
-	leader = !((action->type == EPM_REMOTE_CLONE
+	leader = !((action->type == GPM_REMOTE_CLONE
 		    && (action->remote_clone.clone_flags & CLONE_THREAD))
-		   || (action->type != EPM_REMOTE_CLONE
+		   || (action->type != GPM_REMOTE_CLONE
 		       && task->pid != task->tgid));
 	if (!leader)
 		max_type = PIDTYPE_PID + 1;
@@ -1023,7 +1023,7 @@ static int import_pids(struct epm_action *action,
 		max_type = PIDTYPE_MAX;
 
 	type = PIDTYPE_PID;
-	if (action->type == EPM_REMOTE_CLONE) {
+	if (action->type == GPM_REMOTE_CLONE) {
 		struct pid *pid = alloc_pid(task->nsproxy->pid_ns);
 		if (!pid) {
 			retval = -ENOMEM;
@@ -1065,7 +1065,7 @@ out:
 
 /* import_vfork_done() is located in hcc/epm/remote_clone.c */
 
-static int import_cpu_timers(struct epm_action *action,
+static int import_cpu_timers(struct gpm_action *action,
 			     ghost_t *ghost, struct task_struct *task)
 {
 	/* TODO */
@@ -1082,7 +1082,7 @@ static int import_cpu_timers(struct epm_action *action,
 
 /* import_files_struct() is located in hcc/fs/mobility.c */
 
-static int import_uts_namespace(struct epm_action *action,
+static int import_uts_namespace(struct gpm_action *action,
 				ghost_t *ghost, struct task_struct *task)
 {
 	struct uts_namespace *ns = task->nsproxy->hcc_ns->root_nsproxy.uts_ns;
@@ -1093,7 +1093,7 @@ static int import_uts_namespace(struct epm_action *action,
 	return 0;
 }
 
-static int import_net_namespace(struct epm_action *action,
+static int import_net_namespace(struct gpm_action *action,
 				ghost_t *ghost, struct task_struct *task)
 {
 	struct net *ns = task->nsproxy->hcc_ns->root_nsproxy.net_ns;
@@ -1104,7 +1104,7 @@ static int import_net_namespace(struct epm_action *action,
 	return 0;
 }
 
-static int import_nsproxy(struct epm_action *action,
+static int import_nsproxy(struct gpm_action *action,
 			  ghost_t *ghost, struct task_struct *task)
 {
 	struct nsproxy *ns;
@@ -1151,7 +1151,7 @@ err:
 
 /* import_private_signals() is located in hcc/epm/signal.c */
 
-static int import_notifier(struct epm_action *action,
+static int import_notifier(struct gpm_action *action,
 			   ghost_t *ghost, struct task_struct *task)
 {
 	/* TODO */
@@ -1160,23 +1160,23 @@ static int import_notifier(struct epm_action *action,
 
 /* import_audit_context() is located in kernel/auditsc.c */
 
-static int import_exec_ids(struct epm_action *action,
+static int import_exec_ids(struct gpm_action *action,
 			   ghost_t *ghost, struct task_struct *task)
 {
-	if (action->type == EPM_REMOTE_CLONE
+	if (action->type == GPM_REMOTE_CLONE
 	    && !(action->remote_clone.clone_flags & (CLONE_PARENT|CLONE_THREAD)))
 		task->parent_exec_id = task->self_exec_id;
 	return 0;
 }
 
-static int import_rt_mutexes(struct epm_action *action,
+static int import_rt_mutexes(struct gpm_action *action,
 			     ghost_t *ghost, struct task_struct *task)
 {
 	/* TODO */
 	return 0;
 }
 
-static int import_io_context(struct epm_action *action,
+static int import_io_context(struct gpm_action *action,
 			     ghost_t *ghost, struct task_struct *task)
 {
 #ifdef CONFIG_BLOCK
@@ -1207,7 +1207,7 @@ static int import_io_context(struct epm_action *action,
 	return 0;
 }
 
-static int import_last_siginfo(struct epm_action *action,
+static int import_last_siginfo(struct gpm_action *action,
 			       ghost_t *ghost, struct task_struct *task)
 {
 	/* TODO (ptrace) */
@@ -1216,28 +1216,28 @@ static int import_last_siginfo(struct epm_action *action,
 
 /* import_cgroups() is located in kernel/cgroup.c */
 
-static int import_pi_state(struct epm_action *action,
+static int import_pi_state(struct gpm_action *action,
 			   ghost_t *ghost, struct task_struct *task)
 {
 	/* TODO */
 	return 0;
 }
 
-static int import_mempolicy(struct epm_action *action,
+static int import_mempolicy(struct gpm_action *action,
 			    ghost_t *ghost, struct task_struct *task)
 {
 	/* TODO */
 	return 0;
 }
 
-static int import_delays(struct epm_action *action,
+static int import_delays(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
 #ifdef CONFIG_TASK_DELAY_ACCT
 	struct task_delay_info *delays;
 
-	if (!task->delays || action->type == EPM_REMOTE_CLONE) {
+	if (!task->delays || action->type == GPM_REMOTE_CLONE) {
 		delayacct_tsk_init(task);
 		goto out;
 	}
@@ -1263,7 +1263,7 @@ out:
 	return err;
 }
 
-static int import_hcc_structs(struct epm_action *action,
+static int import_hcc_structs(struct gpm_action *action,
 			      ghost_t *ghost, struct task_struct *tsk)
 {
 	struct task_struct *reaper;
@@ -1273,7 +1273,7 @@ static int import_hcc_structs(struct epm_action *action,
 	struct task_gdm_object *obj;
 	int retval = 0, dummy;
 
-	if (action->type == EPM_MIGRATE) {
+	if (action->type == GPM_MIGRATE) {
 		/* Synchronize with export_hcc_structs() */
 		retval = ghost_read(ghost, &dummy, sizeof(dummy));
 		if (retval)
@@ -1282,7 +1282,7 @@ static int import_hcc_structs(struct epm_action *action,
 
 	/* Initialization of the shared part of the task_struct */
 
-	if (action->type == EPM_REMOTE_CLONE) {
+	if (action->type == GPM_REMOTE_CLONE) {
 		if (action->remote_clone.clone_flags & CLONE_THREAD) {
 			struct task_gdm_object *item;
 
@@ -1311,15 +1311,15 @@ static int import_hcc_structs(struct epm_action *action,
 	BUG_ON(!obj);
 
 	switch (action->type) {
-	case EPM_REMOTE_CLONE:
+	case GPM_REMOTE_CLONE:
 		obj->parent = parent_pid;
 		obj->real_parent = real_parent_pid;
 		obj->real_parent_tgid = real_parent_tgid;
 		obj->group_leader = group_leader_pid;
 		break;
-	case EPM_MIGRATE:
+	case GPM_MIGRATE:
 		break;
-	case EPM_CHECKPOINT:
+	case GPM_CHECKPOINT:
 		/*
 		 * Initialization of the (real) parent pid and real parent
 		 * tgid in case of restart
@@ -1359,7 +1359,7 @@ out:
  *  @return		The task struct of the imported process.
  *			Error code otherwise.
  */
-static struct task_struct *import_task(struct epm_action *action,
+static struct task_struct *import_task(struct gpm_action *action,
 				       ghost_t *ghost,
 				       struct pt_regs *l_regs)
 {
@@ -1459,14 +1459,14 @@ static struct task_struct *import_task(struct epm_action *action,
 	task->lockdep_recursion = 0;
 #endif
 	/* End of lock debugging stuff */
-	if (action->type == EPM_CHECKPOINT)
+	if (action->type == GPM_CHECKPOINT)
 		task->journal_info = NULL;
 	else
 		BUG_ON(task->journal_info);
 	BUG_ON(task->bio_list);
 	BUG_ON(task->bio_tail);
 	BUG_ON(task->reclaim_state);
-	if (action->type == EPM_CHECKPOINT)
+	if (action->type == GPM_CHECKPOINT)
 		task->backing_dev_info = NULL;
 	else
 		BUG_ON(task->backing_dev_info);
@@ -1710,14 +1710,14 @@ void free_ghost_process(struct task_struct *ghost)
 	free_ghost_task(ghost);
 }
 
-static int register_pids(struct task_struct *task, struct epm_action *action)
+static int register_pids(struct task_struct *task, struct gpm_action *action)
 {
 	enum pid_type type;
 
 	for (type = 0; type < PIDTYPE_MAX; type++) {
 		if (!thread_group_leader(task) && type > PIDTYPE_PID)
 			break;
-		if ((type != PIDTYPE_PID || action->type != EPM_REMOTE_CLONE)
+		if ((type != PIDTYPE_PID || action->type != GPM_REMOTE_CLONE)
 		    && task->pids[type].pid->gdm_obj)
 			hcc_end_get_pid(task->pids[type].pid);
 	}
@@ -1739,7 +1739,7 @@ static int register_pids(struct task_struct *task, struct epm_action *action)
 static
 struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 						  struct pt_regs *l_regs,
-						  struct epm_action *action)
+						  struct gpm_action *action)
 {
 	struct pid *pid;
 	struct task_struct *newTsk;
@@ -1762,7 +1762,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	tskRecv->parent = tskRecv->real_parent = baby_sitter;
 
 	/* Re-attach to the children gdm object of the parent. */
-	if (action->type == EPM_REMOTE_CLONE) {
+	if (action->type == GPM_REMOTE_CLONE) {
 		real_parent_tgid = action->remote_clone.from_tgid;
 		/* We need writelock to declare the new child later. */
 		parent_children_obj = hcc_children_writelock(real_parent_tgid);
@@ -1804,7 +1804,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	parent_tidptr = NULL;
 	child_tidptr = NULL;
 
-	if (action->type == EPM_REMOTE_CLONE) {
+	if (action->type == GPM_REMOTE_CLONE) {
 		/* Adjust do_fork parameters */
 
 		/*
@@ -1832,7 +1832,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	if (IS_ERR(newTsk)) {
 		__hcc_task_unlock(tskRecv);
 
-		if (action->type == EPM_REMOTE_CLONE)
+		if (action->type == GPM_REMOTE_CLONE)
 			hcc_children_unlock(tskRecv->parent_children_obj);
 		hcc_children_put(parent_children_obj);
 
@@ -1849,17 +1849,17 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	BUG_ON(!newTsk->children_obj);
 
 	BUG_ON(newTsk->exit_signal != (flags & CSIGNAL));
-	BUG_ON(action->type == EPM_MIGRATE &&
+	BUG_ON(action->type == GPM_MIGRATE &&
 	       newTsk->exit_signal != tskRecv->exit_signal);
 
-	if (action->type == EPM_CHECKPOINT)
+	if (action->type == GPM_CHECKPOINT)
 		newTsk->exit_signal = tskRecv->exit_signal;
 
 	/* TODO: distributed threads */
 	BUG_ON(newTsk->group_leader->pid != newTsk->tgid);
 	BUG_ON(newTsk->task_obj->group_leader != task_tgid_knr(newTsk));
 
-	if (action->type == EPM_REMOTE_CLONE) {
+	if (action->type == GPM_REMOTE_CLONE) {
 		retval = hcc_new_child(parent_children_obj,
 				       action->remote_clone.from_pid,
 				       newTsk);
@@ -1872,7 +1872,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 			      action->remote_clone.from_pid);
 	}
 
-	if (action->type == EPM_MIGRATE || action->type == EPM_CHECKPOINT)
+	if (action->type == GPM_MIGRATE || action->type == GPM_CHECKPOINT)
 		newTsk->did_exec = tskRecv->did_exec;
 
 	__hcc_task_unlock(tskRecv);
@@ -1880,8 +1880,8 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	retval = register_pids(newTsk, action);
 	BUG_ON(retval);
 
-	if (action->type == EPM_MIGRATE
-	    || action->type == EPM_CHECKPOINT) {
+	if (action->type == GPM_MIGRATE
+	    || action->type == GPM_CHECKPOINT) {
 		/*
 		 * signals should be copied from the ghost, as do_fork does not
 		 * clone the signal queue
@@ -1911,8 +1911,8 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 
 	newTsk->files->next_fd = tskRecv->files->next_fd;
 
-	if (action->type == EPM_MIGRATE
-	    || action->type == EPM_CHECKPOINT) {
+	if (action->type == GPM_MIGRATE
+	    || action->type == GPM_CHECKPOINT) {
 		/* Remember process times until now (cleared by do_fork) */
 		newTsk->utime = tskRecv->utime;
 		/* stime will be updated later to account for migration time */
@@ -1946,7 +1946,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	return newTsk;
 }
 
-struct task_struct *import_process(struct epm_action *action,
+struct task_struct *import_process(struct gpm_action *action,
 				   ghost_t *ghost)
 {
 	struct task_struct *ghost_task;
@@ -1956,7 +1956,7 @@ struct task_struct *import_process(struct epm_action *action,
 
 	/* Process importation */
 
-	if (action->type == EPM_MIGRATE) {
+	if (action->type == GPM_MIGRATE) {
 		/*
 		 * Ensure that no task struct survives from a previous stay of
 		 * the process on this node.

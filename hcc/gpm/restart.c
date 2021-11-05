@@ -35,7 +35,7 @@
  *  @return		New Tasks's UNIX PID if success, NULL if failure
  */
 static
-struct task_struct *restart_task_from_ghost(struct epm_action *action,
+struct task_struct *restart_task_from_ghost(struct gpm_action *action,
 					    pid_t pid,
 					    ghost_t *ghost)
 {
@@ -71,7 +71,7 @@ exit:
  *  @return		New task if success, PTR_ERR if failure
  */
 static
-struct task_struct *restart_task_from_disk(struct epm_action *action,
+struct task_struct *restart_task_from_disk(struct gpm_action *action,
 					   pid_t pid,
 					   long app_id,
 					   int chkpt_sn)
@@ -113,7 +113,7 @@ struct task_struct *restart_task_from_disk(struct epm_action *action,
  *  @return		New task if success, PTR_ERR if failure
  */
 static
-struct task_struct *restart_task(struct epm_action *action,
+struct task_struct *restart_task(struct gpm_action *action,
 				 pid_t pid, long app_id,
 				 int chkpt_sn)
 {
@@ -141,14 +141,14 @@ struct task_struct *restart_task(struct epm_action *action,
 struct task_struct *restart_process(struct app_struct *app, pid_t pid,
 				    int flags)
 {
-	struct epm_action action;
+	struct gpm_action action;
 	struct task_struct *task;
 
 	/* Check if the process has not been already restarted */
 	if (find_task_by_kpid(pid) != NULL)
 		return ERR_PTR(-EALREADY);
 
-	action.type = EPM_CHECKPOINT;
+	action.type = GPM_CHECKPOINT;
 	action.restart.shared = CR_LINK_ONLY;
 	action.restart.app = app;
 	action.restart.flags = flags;

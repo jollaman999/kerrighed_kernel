@@ -10,7 +10,7 @@
 #include <linux/wait.h>
 #include <hcc/faf.h>
 
-struct epm_action;
+struct gpm_action;
 struct dvfs_file_struct;
 
 /*--------------------------------------------------------------------------*
@@ -31,7 +31,7 @@ void faf_init (void);
 void faf_finalize (void);
 
 int check_activate_faf(struct task_struct *tsk, int index, struct file *file,
-		       struct epm_action *action);
+		       struct gpm_action *action);
 
 void check_last_faf_client_close(struct file *file,
 				 struct dvfs_file_struct *dvfs_file);

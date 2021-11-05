@@ -11,7 +11,7 @@
 #include <linux/workqueue.h>
 #include <linux/rcupdate.h>
 #include <hcc/task.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <linux/uaccess.h>
 #include <linux/tracehook.h>
 #include <linux/task_io_accounting_ops.h>
@@ -28,19 +28,19 @@
 #include <hcc/scheduler/info.h>
 #endif
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/workqueue.h>
 #endif
 #include <net/grpc/rpcid.h>
 #include <net/grpc/rpc.h>
 #include <hcc/task.h>
 #include <hcc/hcc_exit.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/action.h>
 #include <hcc/migration.h>
 #endif
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
 static void delay_release_task_worker(struct work_struct *work);
 static DECLARE_WORK(delay_release_task_work, delay_release_task_worker);
@@ -531,19 +531,19 @@ void hcc_finish_exit_ptrace_task(struct task_struct *task,
 	__hcc_task_unlock(task);
 }
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 void *hcc_prepare_exit_notify(struct task_struct *task)
 {
 	void *cookie = NULL;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	pid_t real_parent_tgid = 0;
 	pid_t real_parent_pid = 0;
 	pid_t parent_pid = 0;
 	hcc_node_t parent_node = HCC_NODE_ID_NONE;
 #endif
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (rcu_dereference(task->parent_children_obj))
 		cookie = parent_children_writelock_pid_location_lock(
 				task,
@@ -551,7 +551,7 @@ void *hcc_prepare_exit_notify(struct task_struct *task)
 				&real_parent_pid,
 				&parent_pid,
 				&parent_node);
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 	if (task->task_obj) {
 		if (cookie)
@@ -559,12 +559,12 @@ void *hcc_prepare_exit_notify(struct task_struct *task)
 		else
 			__hcc_task_writelock(task);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		tasklist_write_lock_irq();
 		hcc_update_parents(task, cookie, parent_pid, real_parent_pid,
 				   parent_node);
 		write_unlock_irq(&tasklist_lock);
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 	}
 
 	return cookie;
@@ -572,7 +572,7 @@ void *hcc_prepare_exit_notify(struct task_struct *task)
 
 void hcc_finish_exit_notify(struct task_struct *task, int signal, void *cookie)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (cookie) {
 		struct children_gdm_object *parent_children_obj = cookie;
 		pid_t parent_pid;
@@ -598,7 +598,7 @@ void hcc_finish_exit_notify(struct task_struct *task, int signal, void *cookie)
 		}
 		hcc_children_unlock(parent_children_obj);
 	}
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 	if (task->task_obj)
 		__hcc_task_unlock(task);
@@ -606,21 +606,21 @@ void hcc_finish_exit_notify(struct task_struct *task, int signal, void *cookie)
 
 void hcc_release_task(struct task_struct *p)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	hcc_exit_application(p);
 	hcc_unhash_process(p);
 	if (p->exit_state != EXIT_MIGRATION) {
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 		hcc_task_free(p);
-#ifdef CONFIG_HCC_EPM
-		if (hcc_action_pending(p, EPM_MIGRATE))
+#ifdef CONFIG_HCC_GPM
+		if (hcc_action_pending(p, GPM_MIGRATE))
 			/* Migration aborted because p died before */
 			migration_aborted(p);
 	}
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
 /*
  * To chain the tasks to release in the worker, we overload the children field
@@ -719,14 +719,14 @@ void notify_remote_child_reaper(pid_t zombie_pid,
 		  &msg, sizeof(msg));
 }
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 /**
  * @author Innogrid HCC
  */
 void proc_hcc_exit_start(void)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	rpc_register_void(PROC_DO_NOTIFY_PARENT, handle_do_notify_parent, 0);
 	rpc_register_void(PROC_NOTIFY_REMOTE_CHILD_REAPER,
 			  handle_notify_remote_child_reaper, 0);

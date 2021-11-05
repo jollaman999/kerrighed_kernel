@@ -95,16 +95,16 @@ void *get_imported_shared_object(struct app_struct *app,
 
 struct shared_object_operations {
 	size_t restart_data_size;
-	int (*export_now) (struct epm_action *, ghost_t *, struct task_struct *,
+	int (*export_now) (struct gpm_action *, ghost_t *, struct task_struct *,
 			   union export_args *);
 
 	/* export_user_info is used to export information to a readable file to
 	 * userspace
 	 */
-	int (*export_user_info) (struct epm_action *, ghost_t *, unsigned long,
+	int (*export_user_info) (struct gpm_action *, ghost_t *, unsigned long,
 				 struct export_obj_info *);
 
-	int (*import_now) (struct epm_action *, ghost_t *, struct task_struct *,
+	int (*import_now) (struct gpm_action *, ghost_t *, struct task_struct *,
 			   int, void  **, size_t *);
 	int (*import_complete) (struct task_struct *, void *);
 	int (*delete) (struct task_struct *, void *);

@@ -87,7 +87,7 @@ struct file *create_file_entry_from_hcc_desc (struct task_struct *task,
  *            Negative value otherwise.
  */
 static struct file *import_regular_file_from_hcc_desc(
-	struct epm_action *action,
+	struct gpm_action *action,
 	struct task_struct *task,
 	struct regular_file_hcc_desc *desc)
 {
@@ -120,16 +120,16 @@ static struct file *import_regular_file_from_hcc_desc(
 	return file;
 }
 
-int check_flush_file (struct epm_action *action,
+int check_flush_file (struct gpm_action *action,
 		      fl_owner_t id,
 		      struct file *file)
 {
 	int err = 0;
 
 	switch (action->type) {
-	case EPM_REMOTE_CLONE:
-	case EPM_MIGRATE:
-	case EPM_CHECKPOINT:
+	case GPM_REMOTE_CLONE:
+	case GPM_MIGRATE:
+	case GPM_CHECKPOINT:
 		  if (file->f_dentry) {
 			  if (file->f_op && file->f_op->flush)
 				  err = file->f_op->flush(file, id);
@@ -337,7 +337,7 @@ struct cr_file_link {
 	void *desc;
 };
 
-static int __cr_link_to_file(struct epm_action *action, ghost_t *ghost,
+static int __cr_link_to_file(struct gpm_action *action, ghost_t *ghost,
 			     struct task_struct *task,
 			     struct cr_file_link *file_link,
 			     struct file **returned_file)
@@ -401,7 +401,7 @@ exit:
 	return r;
 }
 
-int cr_link_to_file(struct epm_action *action, ghost_t *ghost,
+int cr_link_to_file(struct gpm_action *action, ghost_t *ghost,
 		    struct task_struct *task, struct file **returned_file)
 {
 	int r;
@@ -409,7 +409,7 @@ int cr_link_to_file(struct epm_action *action, ghost_t *ghost,
 	enum shared_obj_type type;
 	struct cr_file_link *file_link;
 
-	BUG_ON(action->type != EPM_CHECKPOINT);
+	BUG_ON(action->type != GPM_CHECKPOINT);
 
 	/* files are linked while loading files_struct or mm_struct */
 	BUG_ON(action->restart.shared != CR_LOAD_NOW);
@@ -469,7 +469,7 @@ err_bad_data:
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-int regular_file_export (struct epm_action *action,
+int regular_file_export (struct gpm_action *action,
 			 ghost_t *ghost,
                          struct task_struct *task,
                          int index,
@@ -477,7 +477,7 @@ int regular_file_export (struct epm_action *action,
 {
 	int r = 0;
 
-	BUG_ON(action->type == EPM_CHECKPOINT
+	BUG_ON(action->type == GPM_CHECKPOINT
 	       && action->checkpoint.shared == CR_SAVE_LATER);
 
 	check_flush_file(action, task->files, file);
@@ -487,7 +487,7 @@ int regular_file_export (struct epm_action *action,
 	return r;
 }
 
-int __regular_file_import_from_desc(struct epm_action *action,
+int __regular_file_import_from_desc(struct gpm_action *action,
 				    struct regular_file_hcc_desc *desc,
 				    struct task_struct *task,
 				    struct file **returned_file)
@@ -518,7 +518,7 @@ exit:
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-int regular_file_import(struct epm_action *action,
+int regular_file_import(struct gpm_action *action,
 			ghost_t *ghost,
 			struct task_struct *task,
 			struct file **returned_file)
@@ -526,7 +526,7 @@ int regular_file_import(struct epm_action *action,
 	struct regular_file_hcc_desc *desc;
 	int desc_size, r = 0;
 
-	BUG_ON(action->type == EPM_CHECKPOINT);
+	BUG_ON(action->type == GPM_CHECKPOINT);
 
 	r = ghost_read_file_hcc_desc(ghost, (void **)(&desc), &desc_size);
 	if (r)
@@ -546,7 +546,7 @@ struct dvfs_mobility_operations dvfs_mobility_regular_ops = {
 	.file_import = regular_file_import,
 };
 
-static int cr_export_now_file(struct epm_action *action, ghost_t *ghost,
+static int cr_export_now_file(struct gpm_action *action, ghost_t *ghost,
 			      struct task_struct *task,
 			      union export_args *args)
 {
@@ -586,7 +586,7 @@ error:
 	return r;
 }
 
-int cr_export_user_info_file(struct epm_action *action, ghost_t *ghost,
+int cr_export_user_info_file(struct gpm_action *action, ghost_t *ghost,
 			     unsigned long key, struct export_obj_info *export)
 {
 	int r, index, keylen, nodelen;
@@ -834,7 +834,7 @@ error:
 /* if *returned_data is not NULL, the file checkpointed must be
  * replaced. Thus, we just read the ghost.
  */
-static int cr_import_now_file(struct epm_action *action,
+static int cr_import_now_file(struct gpm_action *action,
 			      ghost_t *ghost,
 			      struct task_struct *fake,
 			      int local_only,

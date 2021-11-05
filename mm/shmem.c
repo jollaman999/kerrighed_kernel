@@ -72,7 +72,7 @@ static struct vfsmount *shm_mnt;
 #include <asm/uaccess.h>
 #include <asm/pgtable.h>
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/hccsyms.h>
 #endif
 
@@ -193,7 +193,7 @@ static inline void shmem_unacct_blocks(unsigned long flags, long pages)
 
 static const struct super_operations shmem_ops;
 static const struct address_space_operations shmem_aops;
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 const struct file_operations shmem_file_operations;
@@ -2852,7 +2852,7 @@ static const struct address_space_operations shmem_aops = {
 	.error_remove_page = generic_error_remove_page,
 };
 
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 const struct file_operations shmem_file_operations = {
@@ -2971,7 +2971,7 @@ int __init shmem_init(void)
 		goto out2;
 	}
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	error = hccsyms_register(HCCSYMS_VM_OPS_SHMEM, (void *)&shmem_vm_ops);
 	if (error) {
 		printk(KERN_ERR "Could not register shmem_vm_ops\n");
@@ -2989,7 +2989,7 @@ int __init shmem_init(void)
 	return 0;
 
 out1:
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	hccsyms_unregister(HCCSYMS_VM_OPS_SHMEM);
 out1_1:
 #endif

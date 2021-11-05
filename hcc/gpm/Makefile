@@ -1,11 +1,11 @@
 #
-# HCC's Enhanced Process Management (EPM)
+# HCC's Enhanced Process Management (GPM)
 #
 
-obj-$(CONFIG_HCC_EPM) := hcc_epm.o
-obj-$(CONFIG_HCC_EPM) += application/
+obj-$(CONFIG_HCC_GPM) := hcc_gpm.o
+obj-$(CONFIG_HCC_GPM) += application/
 
-hcc_epm-y := epm.o \
+hcc_gpm-y := gpm.o \
 	signal.o sighand.o children.o pid.o pidmap.o \
 	action.o ghost.o network_ghost.o \
 	remote_clone.o migration.o checkpoint.o restart.o \

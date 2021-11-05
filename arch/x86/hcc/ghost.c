@@ -14,7 +14,7 @@
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>
 
-struct epm_action;
+struct gpm_action;
 
 void prepare_to_export(struct task_struct *task)
 {
@@ -23,7 +23,7 @@ void prepare_to_export(struct task_struct *task)
 
 /* struct thread_info */
 
-int export_thread_info(struct epm_action *action,
+int export_thread_info(struct gpm_action *action,
 		       ghost_t *ghost, struct task_struct *task)
 {
 	int r;
@@ -47,7 +47,7 @@ static void __free_thread_info(struct thread_info *ti)
 	free_thread_info(ti);
 }
 
-int import_thread_info(struct epm_action *action,
+int import_thread_info(struct gpm_action *action,
 		       ghost_t *ghost, struct task_struct *task)
 {
 	struct thread_info *p;
@@ -95,7 +95,7 @@ void free_ghost_thread_info(struct task_struct *ghost)
 	free_thread_info(ghost->stack);
 }
 
-int export_thread_struct(struct epm_action *action,
+int export_thread_struct(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk)
 {
 	int r = -EBUSY;
@@ -129,7 +129,7 @@ out:
 	return r;
 }
 
-int import_thread_struct(struct epm_action *action,
+int import_thread_struct(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk)
 {
 	int r;

@@ -36,7 +36,7 @@
 #include <hcc/ghost_helpers.h>
 #include <hcc/app_shared.h>
 #include <hcc/ghost_helpers.h>
-#include "../epm_internal.h"
+#include "../gpm_internal.h"
 #include "app_utils.h"
 
 /*--------------------------------------------------------------------------*/
@@ -463,7 +463,7 @@ void destroy_shared_objects(struct app_struct *app,
 /*--------------------------------------------------------------------------*/
 
 static int __export_one_shared_object_kernel(ghost_t *ghost,
-					     struct epm_action *action,
+					     struct gpm_action *action,
 					     struct shared_object *this)
 {
 	int r = 0;
@@ -496,7 +496,7 @@ error:
 
 static int export_one_shared_object(ghost_t *ghost,
 				    ghost_t *user_ghost,
-				    struct epm_action *action,
+				    struct gpm_action *action,
 				    struct shared_object *this)
 {
 	int r;
@@ -533,10 +533,10 @@ static int export_shared_objects(ghost_t *ghost,
 {
 	int r = 0;
 	enum shared_obj_type end = NO_OBJ;
-	struct epm_action action;
+	struct gpm_action action;
 	struct rb_node *node, *next_node;
 
-	action.type = EPM_CHECKPOINT;
+	action.type = GPM_CHECKPOINT;
 	action.checkpoint.shared = CR_SAVE_NOW;
 
 	node = rb_first(&app->shared_objects.root);
@@ -937,7 +937,7 @@ err_clear_shared:
 /*--------------------------------------------------------------------------*/
 
 
-static int import_one_shared_object(ghost_t *ghost, struct epm_action *action,
+static int import_one_shared_object(ghost_t *ghost, struct gpm_action *action,
 				    struct task_struct *fake,
 				    enum shared_obj_type type)
 {
@@ -1021,10 +1021,10 @@ static int import_shared_objects(ghost_t *ghost, struct app_struct *app,
 				 struct task_struct *fake)
 {
 	int r;
-	struct epm_action action;
+	struct gpm_action action;
 	enum shared_obj_type type = NO_OBJ;
 
-	action.type = EPM_CHECKPOINT;
+	action.type = GPM_CHECKPOINT;
 	action.restart.shared = CR_LOAD_NOW;
 	action.restart.app = app;
 

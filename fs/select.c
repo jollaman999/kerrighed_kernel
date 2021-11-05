@@ -30,7 +30,7 @@
 #ifdef CONFIG_HCC_FAF
 #include <hcc/faf.h>
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/hccsyms.h>
 #endif
 
@@ -1086,7 +1086,7 @@ SYSCALL_DEFINE5(ppoll, struct pollfd __user *, ufds, unsigned int, nfds,
 }
 #endif /* HAVE_SET_RESTORE_SIGMASK */
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 int select_hccsyms_register(void)
 {
 	return hccsyms_register(HCCSYMS_DO_RESTART_POLL, do_restart_poll);
@@ -1096,4 +1096,4 @@ int select_hccsyms_unregister(void)
 {
 	return hccsyms_unregister(HCCSYMS_DO_RESTART_POLL);
 }
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */

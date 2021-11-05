@@ -292,7 +292,7 @@ error:
 	return r;
 }
 
-int epm_procfs_start(void)
+int gpm_procfs_start(void)
 {
 	int r;
 	int err = -EINVAL;
@@ -373,7 +373,7 @@ err:
 	return err;
 }
 
-void epm_procfs_exit(void)
+void gpm_procfs_exit(void)
 {
 	unregister_proc_service(KSYS_PROCESS_MIGRATION);
 	unregister_proc_service(KSYS_THREAD_MIGRATION);

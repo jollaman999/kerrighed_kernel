@@ -74,7 +74,7 @@ static inline struct task_struct *find_task_by_kpid(pid_t pid)
 }
 
 /* PID location */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 int hcc_set_pid_location(struct task_struct *task);
 int hcc_unset_pid_location(struct task_struct *task);
 #endif
@@ -130,7 +130,7 @@ static inline struct task_struct *find_task_by_kpid(pid_t pid)
 
 #endif /* !CONFIG_HCC_PROC */
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
 /* Task GDM object link */
 struct pid_gdm_object;
@@ -179,6 +179,6 @@ static inline struct pid_namespace *node_pidmap(hcc_node_t node)
 	return NULL;
 }
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 #endif /* __HCC_PID_H__ */

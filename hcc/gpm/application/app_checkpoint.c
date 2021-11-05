@@ -28,7 +28,7 @@
 #include "app_frontier.h"
 #include "app_utils.h"
 #include "../checkpoint.h"
-#include "../epm_internal.h"
+#include "../gpm_internal.h"
 
 /*--------------------------------------------------------------------------*/
 

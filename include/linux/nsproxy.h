@@ -10,7 +10,7 @@ struct ipc_namespace;
 struct pid_namespace;
 struct fs_struct;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 struct kmem_cache;
 
 extern struct kmem_cache *nsproxy_cachep;

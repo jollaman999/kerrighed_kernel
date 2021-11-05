@@ -61,7 +61,7 @@ struct pid
 	/* lists of tasks that use this pid */
 	struct hlist_head tasks[PIDTYPE_MAX];
 	struct rcu_head rcu;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct pid_gdm_object *gdm_obj;
 #endif
 #ifdef CONFIG_HCC_SCHED
@@ -124,12 +124,12 @@ extern struct pid *find_vpid(int nr);
 extern struct pid *find_get_pid(int nr);
 extern struct pid *find_ge_pid(int nr, struct pid_namespace *);
 int next_pidmap(struct pid_namespace *pid_ns, unsigned int last);
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 extern struct pid *alloc_pid(struct pid_namespace *ns);
 #endif
 extern void free_pid(struct pid *pid);
 extern void disable_pid_allocation(struct pid_namespace *ns);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 extern struct pid *__alloc_pid(struct pid_namespace *ns, const int *req_nr);
 extern int reserve_pidmap(struct pid_namespace *ns, int nr);
 extern void __free_pidmap(struct upid *upid);
@@ -140,7 +140,7 @@ static inline struct pid *alloc_pid(struct pid_namespace *ns)
 {
 	return __alloc_pid(ns, NULL);
 }
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 /*
  * ns_of_pid() returns the pid namespace in which the specified pid was

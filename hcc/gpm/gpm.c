@@ -11,7 +11,7 @@
 #include <hcc/hotplug.h>
 #include <hcc/hccsyms.h>
 #include <hcc/debug.h>
-#include "epm_internal.h"
+#include "gpm_internal.h"
 
 struct task_struct *baby_sitter;
 
@@ -94,25 +94,25 @@ int init_epm(void)
 
 	init_baby_sitter();
 
-	epm_signal_start();
-	epm_sighand_start();
-	epm_children_start();
+	gpm_signal_start();
+	gpm_sighand_start();
+	gpm_children_start();
 
-	epm_pidmap_start();
-	epm_pid_start();
+	gpm_pidmap_start();
+	gpm_pid_start();
 
-	epm_remote_clone_start();
+	gpm_remote_clone_start();
 	register_remote_clone_hooks();
 
-	epm_migration_start();
+	gpm_migration_start();
 
 	register_checkpoint_hooks();
 
-	epm_procfs_start();
+	gpm_procfs_start();
 
 	application_cr_server_init();
 
-	epm_hotplug_init();
+	gpm_hotplug_init();
 
 	printk("EPM initialisation: done\n");
 	return 0;
@@ -120,15 +120,15 @@ int init_epm(void)
 
 void cleanup_epm(void)
 {
-	epm_hotplug_cleanup();
+	gpm_hotplug_cleanup();
 	application_cr_server_finalize();
-	epm_procfs_exit();
-	epm_migration_exit();
-	epm_remote_clone_exit();
-	epm_pid_exit();
-	epm_pidmap_exit();
-	epm_children_exit();
-	epm_sighand_exit();
-	epm_signal_exit();
+	gpm_procfs_exit();
+	gpm_migration_exit();
+	gpm_remote_clone_exit();
+	gpm_pid_exit();
+	gpm_pidmap_exit();
+	gpm_children_exit();
+	gpm_sighand_exit();
+	gpm_signal_exit();
 	restart_block_hccsyms_unregister();
 }

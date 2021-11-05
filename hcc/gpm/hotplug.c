@@ -11,20 +11,20 @@
 #include <hcc/hotplug.h>
 #include <hcc/migration.h>
 
-#include "epm_internal.h"
+#include "gpm_internal.h"
 
-static int epm_add(struct hotplug_context *ctx)
+static int gpm_add(struct hotplug_context *ctx)
 {
 	return pidmap_map_add(ctx);
 }
 
 /* migrate all processes that we can migrate */
-static int epm_remove(const hccnodemask_t *vector)
+static int gpm_remove(const hccnodemask_t *vector)
 {
 	struct task_struct *tsk;
 	hcc_node_t dest_node = hcc_node_id;
 
-	printk("epm_remove...\n");
+	printk("gpm_remove...\n");
 
 	/* Here we assume that all nodes of the cluster are not removed */
 	dest_node = hccnode_next_online_in_ring(dest_node);
@@ -55,7 +55,7 @@ static int epm_remove(const hccnodemask_t *vector)
 
 		if (cap_raised(tsk->hcc_caps.effective, GCAP_USE_REMOTE_MEMORY)) {
 			/* have to kill this process */
-			printk("epm_remove: have to kill %d (%s)\n",
+			printk("gpm_remove: have to kill %d (%s)\n",
 			       task_pid_knr(tsk), tsk->comm);
 			continue;
 		}
@@ -65,7 +65,7 @@ static int epm_remove(const hccnodemask_t *vector)
 	return 0;
 }
 
-static int epm_notification(struct notifier_block *nb, hotplug_event_t event,
+static int gpm_notification(struct notifier_block *nb, hotplug_event_t event,
 			    void *data)
 {
 	struct hotplug_context *ctx;
@@ -75,11 +75,11 @@ static int epm_notification(struct notifier_block *nb, hotplug_event_t event,
 	switch(event){
 	case HOTPLUG_NOTIFY_ADD:
 		ctx = data;
-		err = epm_add(ctx);
+		err = gpm_add(ctx);
 		break;
 	case HOTPLUG_NOTIFY_REMOVE:
 		node_set = data;
-		err = epm_remove(&node_set->v);
+		err = gpm_remove(&node_set->v);
 		break;
 	default:
 		err = 0;
@@ -91,12 +91,12 @@ static int epm_notification(struct notifier_block *nb, hotplug_event_t event,
 	return NOTIFY_OK;
 }
 
-int epm_hotplug_init(void)
+int gpm_hotplug_init(void)
 {
-	register_hotplug_notifier(epm_notification, HOTPLUG_PRIO_EPM);
+	register_hotplug_notifier(gpm_notification, HOTPLUG_PRIO_EPM);
 	return 0;
 }
 
-void epm_hotplug_cleanup(void)
+void gpm_hotplug_cleanup(void)
 {
 }

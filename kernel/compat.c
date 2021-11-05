@@ -27,7 +27,7 @@
 #include <linux/ptrace.h>
 #include <linux/module.h>
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/hccsyms.h>
 #endif
 
@@ -785,7 +785,7 @@ long compat_sys_clock_nanosleep(clockid_t which_clock, int flags,
 	return err;
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 int compat_hccsyms_register(void)
 {
 	int err;
@@ -811,7 +811,7 @@ int compat_hccsyms_unregister(void)
 
 	return err;
 }
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 /*
  * We currently only need the following fields from the sigevent

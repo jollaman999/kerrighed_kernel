@@ -18,7 +18,7 @@
 
 struct task_struct;
 struct pid;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 struct pid_gdm_object;
 #endif
 
@@ -49,7 +49,7 @@ struct task_gdm_object {
 	unsigned int dumpable;
 
 	/* The remaining fields are not shared */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct pid_gdm_object *pid_obj;
 #endif
 	struct task_struct *task;
@@ -79,13 +79,13 @@ int hcc_task_alloc(struct task_struct *task, struct pid *pid);
 void hcc_task_fill(struct task_struct *task, unsigned long clone_flags);
 void hcc_task_commit(struct task_struct *task);
 void hcc_task_abort(struct task_struct *task);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 void __hcc_task_free(struct task_struct *task);
 #endif
 void hcc_task_free(struct task_struct *task);
 
 /* exit */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 int hcc_delay_release_task(struct task_struct *task);
 #endif
 void hcc_release_task(struct task_struct *task);

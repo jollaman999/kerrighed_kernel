@@ -371,7 +371,7 @@ out:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-static int export_one_vma (struct epm_action *action,
+static int export_one_vma (struct gpm_action *action,
 			   ghost_t *ghost,
                            struct task_struct *tsk,
                            struct vm_area_struct *vma,
@@ -404,7 +404,7 @@ static int export_one_vma (struct epm_action *action,
 		goto out;
 
 	/* shmem_vm_ops (posix shm) is supported only for checkpoint/restart */
-	if (action->type != EPM_CHECKPOINT
+	if (action->type != GPM_CHECKPOINT
 	    && vma->vm_ops && vm_ops_type == HCCSYMS_VM_OPS_SHMEM)
 		goto out;
 
@@ -435,7 +435,7 @@ out:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int export_vmas (struct epm_action *action,
+int export_vmas (struct gpm_action *action,
 		 ghost_t *ghost,
                  struct task_struct *tsk)
 {
@@ -507,7 +507,7 @@ err:
 	return r;
 }
 
-static int export_mm_counters(struct epm_action *action,
+static int export_mm_counters(struct gpm_action *action,
 			      ghost_t *ghost,
 			      struct mm_struct* mm,
 			      struct mm_struct *exported_mm)
@@ -557,14 +557,14 @@ static int cr_add_exe_file_to_shared_table(struct task_struct *task)
 	return r;
 }
 
-static int cr_export_later_mm_struct(struct epm_action *action,
+static int cr_export_later_mm_struct(struct gpm_action *action,
 				     ghost_t *ghost,
 				     struct task_struct *task)
 {
 	int r;
 	long key;
 
-	BUG_ON(action->type != EPM_CHECKPOINT);
+	BUG_ON(action->type != GPM_CHECKPOINT);
 	BUG_ON(action->checkpoint.shared != CR_SAVE_LATER);
 
 	key = (long)(task->mm);
@@ -594,14 +594,14 @@ exit:
 
 
 
-static inline int do_export_mm_struct(struct epm_action *action,
+static inline int do_export_mm_struct(struct gpm_action *action,
 				      ghost_t *ghost,
 				      struct mm_struct *mm)
 {
 	int r;
 
 	switch (action->type) {
-	  case EPM_CHECKPOINT:
+	  case GPM_CHECKPOINT:
 		  hcc_get_mm(mm->mm_id);
 		  r = ghost_write(ghost, mm, sizeof(struct mm_struct));
 		  hcc_put_mm(mm->mm_id);
@@ -625,7 +625,7 @@ static inline int do_export_mm_struct(struct epm_action *action,
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int export_mm_struct(struct epm_action *action,
+int export_mm_struct(struct gpm_action *action,
 		     ghost_t *ghost,
 		     struct task_struct *tsk)
 {
@@ -636,14 +636,14 @@ int export_mm_struct(struct epm_action *action,
 	exported_mm = mm;
 
 	switch (action->type) {
-	  case EPM_CHECKPOINT:
+	  case GPM_CHECKPOINT:
 		  if (action->checkpoint.shared == CR_SAVE_LATER) {
 			  r = cr_export_later_mm_struct(action, ghost, tsk);
 			  return r;
 		  }
 		  break;
 
-	  case EPM_REMOTE_CLONE:
+	  case GPM_REMOTE_CLONE:
 		  if (!(action->remote_clone.clone_flags & CLONE_VM)) {
 
 			  exported_mm = hcc_dup_mm(tsk, mm);
@@ -654,7 +654,7 @@ int export_mm_struct(struct epm_action *action,
 		  }
 		  /* else fall through */
 
-	  case EPM_MIGRATE:
+	  case GPM_MIGRATE:
 		  if (mm->anon_vma_gdm_set == NULL) {
 			  r = init_anon_vma_gdm_set(tsk, mm);
 			  if (r)
@@ -697,7 +697,7 @@ up_mmap_sem:
 	if (r)
 		goto out;
 
-	if (action->type == EPM_CHECKPOINT) {
+	if (action->type == GPM_CHECKPOINT) {
 		r = cr_export_process_pages(tsk->application, ghost, mm);
 		if (r)
 			goto out;
@@ -805,7 +805,7 @@ err_read:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int cr_import_process_pages(struct epm_action *action,
+int cr_import_process_pages(struct gpm_action *action,
 			    ghost_t *ghost,
 			    struct mm_struct *mm)
 {
@@ -931,7 +931,7 @@ err:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-static int import_one_vma (struct epm_action *action,
+static int import_one_vma (struct gpm_action *action,
 			   ghost_t *ghost,
                            struct task_struct *tsk,
 			   unsigned long *last_end,
@@ -972,13 +972,13 @@ static int import_one_vma (struct epm_action *action,
 
 	BUG_ON (vma->vm_ops == &generic_file_vm_ops && vma->vm_file == NULL);
 
-	if (action->type == EPM_REMOTE_CLONE
+	if (action->type == GPM_REMOTE_CLONE
 	    && !(action->remote_clone.clone_flags & CLONE_VM)) {
 		check_link_vma_to_anon_memory_gdm_set (vma);
 		vma->vm_flags &= ~VM_LOCKED;
 	}
 
-	if (action->type == EPM_CHECKPOINT)
+	if (action->type == GPM_CHECKPOINT)
 		restore_initial_vm_ops(vma);
 
 	if (vm_ops_type == HCCSYMS_VM_OPS_SPECIAL_MAPPING)
@@ -1024,7 +1024,7 @@ static void file_table_fput(void *_file, void *data)
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-static int import_vmas (struct epm_action *action,
+static int import_vmas (struct gpm_action *action,
 			ghost_t *ghost,
 			struct task_struct *tsk)
 {
@@ -1112,7 +1112,7 @@ exit:
 	return r;
 }
 
-static int import_mm_counters(struct epm_action *action,
+static int import_mm_counters(struct gpm_action *action,
 			      ghost_t *ghost,
 			      struct mm_struct* mm)
 {
@@ -1163,7 +1163,7 @@ err:
 	return r;
 }
 
-static int cr_link_to_mm_struct(struct epm_action *action,
+static int cr_link_to_mm_struct(struct gpm_action *action,
 				ghost_t *ghost,
 				struct task_struct *tsk)
 {
@@ -1196,7 +1196,7 @@ err:
 
 
 
-static inline int do_import_mm_struct(struct epm_action *action,
+static inline int do_import_mm_struct(struct gpm_action *action,
 				      ghost_t *ghost,
 				      struct mm_struct **returned_mm)
 {
@@ -1205,7 +1205,7 @@ static inline int do_import_mm_struct(struct epm_action *action,
 	int r = 0;
 
 	switch(action->type) {
-	  case EPM_CHECKPOINT:
+	  case GPM_CHECKPOINT:
 		  mm = allocate_mm();
 		  if (!mm)
 			  goto done;
@@ -1258,7 +1258,7 @@ exit_free_mm:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int import_mm_struct (struct epm_action *action,
+int import_mm_struct (struct gpm_action *action,
 		      ghost_t *ghost,
                       struct task_struct *tsk)
 {
@@ -1266,7 +1266,7 @@ int import_mm_struct (struct epm_action *action,
 	struct gdm_set *set;
 	int r;
 
-	if (action->type == EPM_CHECKPOINT
+	if (action->type == GPM_CHECKPOINT
 	    && action->restart.shared == CR_LINK_ONLY) {
 		r = cr_link_to_mm_struct(action, ghost, tsk);
 		return r;
@@ -1304,11 +1304,11 @@ int import_mm_struct (struct epm_action *action,
 	mm->hiwater_rss = get_mm_rss(mm);
 	mm->hiwater_vm = mm->total_vm;
 
-	if (action->type == EPM_REMOTE_CLONE
+	if (action->type == GPM_REMOTE_CLONE
 	    && !(action->remote_clone.clone_flags & CLONE_VM))
 		mm->locked_vm = 0;
 
-	if (action->type == EPM_CHECKPOINT)
+	if (action->type == GPM_CHECKPOINT)
 		r = cr_import_process_pages(action, ghost, mm);
 	else
 		r = import_mm_struct_end(mm, tsk);
@@ -1337,7 +1337,7 @@ void unimport_mm_struct(struct task_struct *task)
 
 
 
-static int cr_export_now_mm_struct(struct epm_action *action, ghost_t *ghost,
+static int cr_export_now_mm_struct(struct gpm_action *action, ghost_t *ghost,
 				   struct task_struct *task,
 				   union export_args *args)
 {
@@ -1351,7 +1351,7 @@ static int cr_export_now_mm_struct(struct epm_action *action, ghost_t *ghost,
 }
 
 
-static int cr_import_now_mm_struct(struct epm_action *action, ghost_t *ghost,
+static int cr_import_now_mm_struct(struct gpm_action *action, ghost_t *ghost,
 				   struct task_struct *fake, int local_only,
 				   void **returned_data, size_t *data_size)
 {

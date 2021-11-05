@@ -1,7 +1,7 @@
 #ifndef __HCC_CHILDREN_H__
 #define __HCC_CHILDREN_H__
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
 #include <linux/types.h>
 #include <hcc/sys/types.h>
@@ -86,6 +86,6 @@ void hcc_update_parents(struct task_struct *task,
 /* Used by hcc_release_task() */
 void hcc_unhash_process(struct task_struct *tsk);
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 #endif /* __HCC_CHILDREN_H__ */

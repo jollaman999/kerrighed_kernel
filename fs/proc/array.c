@@ -88,7 +88,7 @@
 #ifdef CONFIG_HCC_PROCFS
 #include <hcc/cpu_id.h>
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/children.h>
 #endif
 
@@ -156,7 +156,7 @@ static inline const char *get_task_state(struct task_struct *tsk)
 	unsigned int state = (tsk->state & TASK_REPORT) | tsk->exit_state;
 	const char **p = &task_state_array[0];
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	state &= ~EXIT_MIGRATION;
 #endif
 	while (state) {
@@ -176,7 +176,7 @@ static inline void task_state(struct seq_file *m, struct pid_namespace *ns,
 	pid_t ppid, tpid;
 
 	rcu_read_lock();
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	ppid = hcc_get_real_parent_tgid(p, ns);
 #else
 	ppid = pid_alive(p) ?
@@ -465,7 +465,7 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 		}
 
 		sid = task_session_nr_ns(task, ns);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		/*
 		 * sighand lock is not enough: task or children GDM objects
 		 * can disappear before release_task() locks sighand.

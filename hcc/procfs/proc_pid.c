@@ -408,10 +408,10 @@ static struct hcc_pid_entry hcc_tgid_base_stuff[] = {
 	INF("cmdline",    S_IRUGO, pid_cmdline),
 	ONE("stat",       S_IRUGO, tgid_stat),
 	ONE("statm",      S_IRUGO, pid_statm),
-#ifdef CONFIG_HCC_EPM
-	INF("epm_type",  S_IRUGO, epm_type_show),
-	INF("epm_source",S_IRUGO, epm_source_show),
-	INF("epm_target",S_IRUGO, epm_target_show),
+#ifdef CONFIG_HCC_GPM
+	INF("gpm_type",  S_IRUGO, gpm_type_show),
+	INF("gpm_source",S_IRUGO, gpm_source_show),
+	INF("gpm_target",S_IRUGO, gpm_target_show),
 #endif
 /* 	REG("maps",       S_IRUGO, maps), */
 /* #ifdef CONFIG_NUMA */
@@ -580,7 +580,7 @@ static int hcc_proc_pid_fill_cache(struct file *filp,
 
 	obj = hcc_task_readlock(iter.tgid);
 	if (iter.task
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	    && ((!obj && iter.task->real_parent != baby_sitter)
 		|| (obj && obj->task == iter.task))
 #endif
@@ -590,7 +590,7 @@ static int hcc_proc_pid_fill_cache(struct file *filp,
 		hcc_task_unlock(iter.tgid);
 		return retval;
 	}
-#if defined(CONFIG_HCC_EPM) && defined(CONFIG_HCC_GCAP)
+#if defined(CONFIG_HCC_GPM) && defined(CONFIG_HCC_GCAP)
 	if (can_use_hcc_cap(current, GCAP_SEE_LOCAL_PROC_STAT))
 		return retval;
 #endif
@@ -639,7 +639,7 @@ retry:
 			 * rcu_read_unlock()
 			 */
 			task_obj = rcu_dereference(task->task_obj);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 			if (!task_obj)
 				/* Try again in case task is migrating */
 				task_obj = hcc_pid_task(pid);
@@ -713,7 +713,7 @@ static int fill_next_remote_tgids(hcc_node_t node,
 	struct rpc_desc *desc;
 	pid_t pid_array[PROC_MAXPIDS];
 	int nr_pids;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct pid *pid = NULL;
 #endif
 	int i;
@@ -754,7 +754,7 @@ static int fill_next_remote_tgids(hcc_node_t node,
 		iter.tgid = pid_array[i];
 		filp->f_pos = iter.tgid + offset;
 		iter.task = NULL;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		rcu_read_lock();
 		pid = find_pid_ns(iter.tgid, ns);
 		if (pid) {
@@ -768,9 +768,9 @@ static int fill_next_remote_tgids(hcc_node_t node,
 		    && can_use_hcc_cap(current, GCAP_SEE_LOCAL_PROC_STAT))
 			continue;
 #endif
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 		retval = hcc_proc_pid_fill_cache(filp, dirent, filldir, iter);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		if (iter.task)
 			put_task_struct(iter.task);
 #endif
@@ -802,7 +802,7 @@ static int fill_next_local_tgids(struct file *filp,
 	struct tgid_iter iter;
 	pid_t tgid = filp->f_pos - offset;
 	struct pid *pid;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct task_gdm_object *task_obj;
 #endif
 	int global_mode = tgid & GLOBAL_PID_MASK;
@@ -824,7 +824,7 @@ static int fill_next_local_tgids(struct file *filp,
 		iter.tgid = nr;
 		iter.task = pid_task(pid, PIDTYPE_PID);
 		if (!iter.task) {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #ifdef CONFIG_HCC_GCAP
 			if (can_use_hcc_cap(current, GCAP_SEE_LOCAL_PROC_STAT))
 				continue;
@@ -928,7 +928,7 @@ int hcc_proc_pid_readdir(struct file *filp,
 	for (; node < HCC_MAX_NODES;
 	     node++,
 	     filp->f_pos = GLOBAL_PID_NODE(0, node) + offset) {
-#if defined(CONFIG_HCC_GCAP) && !defined(CONFIG_HCC_EPM)
+#if defined(CONFIG_HCC_GCAP) && !defined(CONFIG_HCC_GPM)
 		if (node != hcc_node_id
 		    && can_use_hcc_cap(current, GCAP_SEE_LOCAL_PROC_STAT))
 			continue;

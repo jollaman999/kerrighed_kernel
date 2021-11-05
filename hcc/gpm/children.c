@@ -1645,7 +1645,7 @@ void hcc_children_cleanup(struct task_struct *task)
 /**
  * @author Innogrid HCC
  */
-void epm_children_start(void)
+void gpm_children_start(void)
 {
 	unsigned long cache_flags = SLAB_PANIC;
 
@@ -1675,7 +1675,7 @@ void epm_children_start(void)
 /**
  * @author Innogrid HCC
  */
-void epm_children_exit(void)
+void gpm_children_exit(void)
 {
 	hashtable_free(hcc_parent_table);
 }

@@ -141,7 +141,7 @@ done:
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-int faf_file_export (struct epm_action *action,
+int faf_file_export (struct gpm_action *action,
 		     ghost_t *ghost,
 		     struct task_struct *task,
 		     int index,
@@ -151,7 +151,7 @@ int faf_file_export (struct epm_action *action,
 	int desc_size;
 	int r = 0;
 
-	BUG_ON(action->type == EPM_CHECKPOINT);
+	BUG_ON(action->type == GPM_CHECKPOINT);
 
 	r = get_faf_file_hcc_desc(file, &desc, &desc_size);
 	if (r)
@@ -174,7 +174,7 @@ error:
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-int faf_file_import (struct epm_action *action,
+int faf_file_import (struct gpm_action *action,
 		     ghost_t *ghost,
 		     struct task_struct *task,
 		     struct file **returned_file)
@@ -183,7 +183,7 @@ int faf_file_import (struct epm_action *action,
 	struct file *file;
 	int r, desc_size;
 
-	BUG_ON(action->type == EPM_CHECKPOINT);
+	BUG_ON(action->type == GPM_CHECKPOINT);
 
 	r = ghost_read_file_hcc_desc(ghost, &desc, &desc_size);
 	if (r)

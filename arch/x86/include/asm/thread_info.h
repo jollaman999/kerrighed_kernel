@@ -99,7 +99,7 @@ struct thread_info {
 #ifdef CONFIG_HCC_FAF
 #define TIF_RUACCESS            29
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #define TIF_MIGRATION		30
 #endif
 
@@ -128,7 +128,7 @@ struct thread_info {
 #ifdef CONFIG_HCC_FAF
 #define _TIF_RUACCESS           (1 << TIF_RUACCESS)
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #define _TIF_MIGRATION		(1 << TIF_MIGRATION)
 #endif
 

@@ -412,7 +412,7 @@ static inline void tracehook_prepare_release_task(struct task_struct *task)
 static inline void tracehook_finish_release_task(struct task_struct *task)
 {
 	ptrace_release_task(task);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	BUG_ON(task->exit_state != EXIT_DEAD && task->exit_state != EXIT_MIGRATION);
 #else
 	BUG_ON(task->exit_state != EXIT_DEAD);
@@ -592,7 +592,7 @@ static inline int tracehook_notify_death(struct task_struct *task,
 					 void **death_cookie, int group_dead)
 {
 	*death_cookie = task_utrace_struct(task);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	/* Remote ptracers are not supported yet. */
 	BUG_ON(task->ptrace && (task->parent == baby_sitter
 				|| task->real_parent == baby_sitter));

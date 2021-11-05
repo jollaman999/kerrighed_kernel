@@ -220,7 +220,7 @@ exit:
 int check_activate_faf(struct task_struct *tsk,
 		       int index,
 		       struct file *file,
-		       struct epm_action *action)
+		       struct gpm_action *action)
 {
 	int r = 0;
 
@@ -229,7 +229,7 @@ int check_activate_faf(struct task_struct *tsk,
 		goto done;
 
 	/* No need to activate FAF for a checkpoint */
-	if (action->type == EPM_CHECKPOINT)
+	if (action->type == GPM_CHECKPOINT)
 		goto done;
 
 /* 	if (file->f_dentry && */

@@ -15,7 +15,7 @@
 #include <linux/module.h>
 #include <linux/err.h>
 #include <hcc/pid.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/ghost.h>
 #include <hcc/action.h>
 #endif
@@ -662,7 +662,7 @@ static void process_set_release(struct config_item *item)
 	kfree(pset);
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
 /*
  * Ghost export / import functions
@@ -673,15 +673,15 @@ static void process_set_release(struct config_item *item)
  * - call export_process_set_links_end
  */
 
-int export_process_set_links_start(struct epm_action *action, ghost_t *ghost,
+int export_process_set_links_start(struct gpm_action *action, ghost_t *ghost,
 				   struct task_struct *task)
 {
-	if (action->type != EPM_MIGRATE && action->type != EPM_REMOTE_CLONE)
+	if (action->type != GPM_MIGRATE && action->type != GPM_REMOTE_CLONE)
 		return 0;
 	return global_config_freeze();
 }
 
-int export_process_set_links(struct epm_action *action, ghost_t *ghost,
+int export_process_set_links(struct gpm_action *action, ghost_t *ghost,
 			     struct pid *pid, enum pid_type type)
 {
 	struct process_set_element **elements;
@@ -690,7 +690,7 @@ int export_process_set_links(struct epm_action *action, ghost_t *ghost,
 	int nr_links, nr;
 	int err;
 
-	if (action->type != EPM_MIGRATE && action->type != EPM_REMOTE_CLONE)
+	if (action->type != GPM_MIGRATE && action->type != GPM_REMOTE_CLONE)
 		return 0;
 
 	/*
@@ -758,14 +758,14 @@ out_unlock:
 	return err;
 }
 
-void export_process_set_links_end(struct epm_action *action, ghost_t *ghost,
+void export_process_set_links_end(struct gpm_action *action, ghost_t *ghost,
 				  struct task_struct *task)
 {
-	if (action->type == EPM_MIGRATE || action->type == EPM_REMOTE_CLONE)
+	if (action->type == GPM_MIGRATE || action->type == GPM_REMOTE_CLONE)
 		global_config_thaw();
 }
 
-int import_process_set_links(struct epm_action *action, ghost_t *ghost,
+int import_process_set_links(struct gpm_action *action, ghost_t *ghost,
 			     struct pid *pid, enum pid_type type)
 {
 	struct process_set_element *pset_el;
@@ -773,7 +773,7 @@ int import_process_set_links(struct epm_action *action, ghost_t *ghost,
 	int nr_links, nr;
 	int err;
 
-	if (action->type != EPM_MIGRATE && action->type != EPM_REMOTE_CLONE)
+	if (action->type != GPM_MIGRATE && action->type != GPM_REMOTE_CLONE)
 		return 0;
 
 	err = ghost_read(ghost, &nr_links, sizeof(nr_links));
@@ -819,4 +819,4 @@ out:
 	return err;
 }
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */

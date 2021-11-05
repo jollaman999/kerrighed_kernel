@@ -39,7 +39,7 @@
 #include <hcc/hccinit.h>
 #include <hcc/remote_syscall.h>
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/hcc_exit.h>
 #include <hcc/action.h>
 #include <hcc/hcc_signal.h>
@@ -136,7 +136,7 @@ static inline int has_pending_signals(sigset_t *signal, sigset_t *blocked)
 
 #define PENDING(p,b) has_pending_signals(&(p)->signal, (b))
 
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 int recalc_sigpending_tsk(struct task_struct *t)
@@ -214,7 +214,7 @@ int next_signal(struct sigpending *pending, sigset_t *mask)
  * - this may be called without locks if and only if t == current, otherwise an
  *   appopriate lock must be held to stop the target task from exiting
  */
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 struct sigqueue *__sigqueue_alloc(struct task_struct *t, gfp_t flags,
@@ -247,7 +247,7 @@ struct sigqueue *__sigqueue_alloc(struct task_struct *t, gfp_t flags,
 	return q;
 }
 
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 void __sigqueue_free(struct sigqueue *q)
@@ -1315,13 +1315,13 @@ static int hcc_kill_proc_info(int sig, struct siginfo *info, pid_t pid)
 int
 kill_proc_info(int sig, struct siginfo *info, pid_t pid)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct pid *p;
 	struct task_struct *t;
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 	int error;
 	rcu_read_lock();
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	p = find_vpid(pid);
 	t = pid_task(p, PIDTYPE_PID);
 	if (t && hcc_action_block_any(t)) {
@@ -1331,9 +1331,9 @@ kill_proc_info(int sig, struct siginfo *info, pid_t pid)
 		/* Try a remote syscall */
 		error = -ESRCH;
 	}
-#else /* CONFIG_HCC_EPM */
+#else /* CONFIG_HCC_GPM */
 	error = kill_pid_info(sig, info, find_vpid(pid));
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 	rcu_read_unlock();
 #ifdef CONFIG_HCC_PROC
 	if (error == -ESRCH)
@@ -1696,7 +1696,7 @@ ret:
 	return ret;
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 int send_hcc_signal(int sig, struct siginfo *info, struct task_struct *t)
 {
 	struct sigqueue *q;
@@ -1748,7 +1748,7 @@ static int handle_hcc_signal(int sig, struct siginfo *info,
 
 	return released;
 }
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 /*
  * Let a parent know about the death of a child.
@@ -1787,7 +1787,7 @@ int do_notify_parent(struct task_struct *tsk, int sig)
 	 * correct to rely on this
 	 */
 	rcu_read_lock();
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (tsk->parent == baby_sitter)
 		info.si_pid = task_pid_knr(tsk);
 	else
@@ -1811,7 +1811,7 @@ int do_notify_parent(struct task_struct *tsk, int sig)
 		info.si_status = tsk->exit_code >> 8;
 	}
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (tsk->parent == baby_sitter) {
 		/*
 		 * Current users hold write_lock_irq(&tasklist_lock).
@@ -1826,7 +1826,7 @@ int do_notify_parent(struct task_struct *tsk, int sig)
 			tsk->exit_signal = -1;
 		return ret;
 	}
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 	psig = tsk->parent->sighand;
 	spin_lock_irqsave(&psig->siglock, flags);
 	if (!task_ptrace(tsk) && sig == SIGCHLD &&
@@ -1872,7 +1872,7 @@ void do_notify_parent_cldstop(struct task_struct *tsk, int why)
 		tsk = tsk->group_leader;
 		parent = tsk->real_parent;
 	}
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (parent == baby_sitter)
 		return;
 #endif
@@ -2229,7 +2229,7 @@ relock:
 
 			if (!signr)
 				break; /* will return 0 */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 			if (info->si_code == SI_HCC) {
 				if (handle_hcc_signal(signr, info, regs))
 					/* It released the siglock.  */
@@ -2823,7 +2823,7 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 	struct k_sigaction *k;
 	sigset_t mask;
 	int idx;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	unsigned long sighand_id;
 #endif
 	if (!valid_signal(sig) || sig < 1 || (act && sig_kernel_only(sig)))
@@ -2831,7 +2831,7 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 
 	idx = array_index_nospec(sig - 1, _NSIG);
 	k = &t->sighand->action[idx];
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	down_read(&hcc_init_sem);
 	sighand_id = current->sighand->hcc_objid;
 	if (sighand_id)
@@ -2869,7 +2869,7 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 	}
 
 	spin_unlock_irq(&current->sighand->siglock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (sighand_id)
 		hcc_sighand_unlock(sighand_id);
 	up_read(&hcc_init_sem);

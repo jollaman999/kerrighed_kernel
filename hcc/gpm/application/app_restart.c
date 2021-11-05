@@ -23,7 +23,7 @@
 #include <gdm/gdm.h>
 #include "../pid.h"
 #include "../restart.h"
-#include "../epm_internal.h"
+#include "../gpm_internal.h"
 #include "app_utils.h"
 
 static int restore_app_gdm_object(struct app_gdm_object *obj,

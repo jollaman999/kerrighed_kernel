@@ -128,7 +128,7 @@ static struct dvfs_mobility_operations *get_dvfs_mobility_ops(struct file *file)
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int export_one_open_file (struct epm_action *action,
+int export_one_open_file (struct gpm_action *action,
 			  ghost_t *ghost,
                           struct task_struct *tsk,
                           int index,
@@ -138,9 +138,9 @@ int export_one_open_file (struct epm_action *action,
 	hccsyms_val_t dvfs_ops_type;
 	int r;
 
-	BUG_ON(action->type == EPM_CHECKPOINT);
+	BUG_ON(action->type == GPM_CHECKPOINT);
 
-	if (action->type != EPM_CHECKPOINT
+	if (action->type != GPM_CHECKPOINT
 	    && index != MMAPPED_FILE) {
 		if (!file->f_objid)
 			create_gdm_file_object(file);
@@ -288,7 +288,7 @@ exit:
 	return r;
 }
 
-static int export_vma_phys_file(struct epm_action *action,
+static int export_vma_phys_file(struct gpm_action *action,
 				ghost_t *ghost,
 				struct task_struct *tsk,
 				struct vm_area_struct *vma,
@@ -299,7 +299,7 @@ static int export_vma_phys_file(struct epm_action *action,
 	int export_file = 1;
 	int r;
 
-	if (action->type == EPM_CHECKPOINT) {
+	if (action->type == GPM_CHECKPOINT) {
 		BUG_ON(action->checkpoint.shared != CR_SAVE_NOW);
 		r = cr_write_vma_phys_file_id(ghost, vma);
 		goto done;
@@ -346,7 +346,7 @@ done:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int export_vma_file (struct epm_action *action,
+int export_vma_file (struct gpm_action *action,
 		     ghost_t *ghost,
 		     struct task_struct *tsk,
                      struct vm_area_struct *vma,
@@ -381,7 +381,7 @@ err:
 	return r;
 }
 
-int export_mm_exe_file(struct epm_action *action, ghost_t *ghost,
+int export_mm_exe_file(struct gpm_action *action, ghost_t *ghost,
 		       struct task_struct *tsk)
 {
 	int dump = 0, r = 0;
@@ -393,7 +393,7 @@ int export_mm_exe_file(struct epm_action *action, ghost_t *ghost,
 		if (r)
 			goto exit;
 
-		if (action->type == EPM_CHECKPOINT) {
+		if (action->type == GPM_CHECKPOINT) {
 			BUG_ON(action->checkpoint.shared != CR_SAVE_NOW);
 			r = cr_ghost_write_file_id(ghost, tsk->mm->exe_file, 0);
 		} else
@@ -417,7 +417,7 @@ exit:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int export_open_files (struct epm_action *action,
+int export_open_files (struct gpm_action *action,
 		       ghost_t *ghost,
                        struct task_struct *tsk,
 		       struct fdtable *fdt,
@@ -427,7 +427,7 @@ int export_open_files (struct epm_action *action,
 	int i, r = 0;
 
 	BUG_ON (!tsk);
-	BUG_ON(action->type == EPM_CHECKPOINT);
+	BUG_ON(action->type == GPM_CHECKPOINT);
 
 	/* Export files opened by the process */
 	for (i = 0; i < last_open_fd; i++) {
@@ -623,7 +623,7 @@ err:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int export_files_struct (struct epm_action *action,
+int export_files_struct (struct gpm_action *action,
 			 ghost_t *ghost,
                          struct task_struct *tsk)
 {
@@ -642,7 +642,7 @@ int export_files_struct (struct epm_action *action,
 			goto err;
 	}
 
-	if (action->type == EPM_CHECKPOINT &&
+	if (action->type == GPM_CHECKPOINT &&
 	    action->checkpoint.shared == CR_SAVE_LATER) {
 
 		r = cr_export_later_files_struct(ghost, tsk);
@@ -693,7 +693,7 @@ int export_files_struct (struct epm_action *action,
 			goto exit_put_files;
 	}
 
-	if (action->type == EPM_CHECKPOINT) {
+	if (action->type == GPM_CHECKPOINT) {
 		BUG_ON(action->checkpoint.shared != CR_SAVE_NOW);
 		r = cr_write_open_files_id(ghost, tsk, fdt, last_open_fd);
 	} else
@@ -715,14 +715,14 @@ err:
 	return r;
 }
 
-static int cr_export_later_fs_struct(struct epm_action *action,
+static int cr_export_later_fs_struct(struct gpm_action *action,
 				     ghost_t *ghost,
 				     struct task_struct *task)
 {
 	int r;
 	long key;
 
-	BUG_ON(action->type != EPM_CHECKPOINT);
+	BUG_ON(action->type != GPM_CHECKPOINT);
 	BUG_ON(action->checkpoint.shared != CR_SAVE_LATER);
 
 	key = (long)(task->fs);
@@ -750,14 +750,14 @@ err:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int export_fs_struct (struct epm_action *action,
+int export_fs_struct (struct gpm_action *action,
 		      ghost_t *ghost,
                       struct task_struct *tsk)
 {
 	char *tmp, *file_name;
 	int r, len;
 
-	if (action->type == EPM_CHECKPOINT &&
+	if (action->type == GPM_CHECKPOINT &&
 	    action->checkpoint.shared == CR_SAVE_LATER) {
 		int r;
 		r = cr_export_later_fs_struct(action, ghost, tsk);
@@ -827,7 +827,7 @@ err_write:
 	return r;
 }
 
-int export_mnt_namespace(struct epm_action *action,
+int export_mnt_namespace(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk)
 {
 	/* Nothing done right now... */
@@ -853,7 +853,7 @@ int export_mnt_namespace(struct epm_action *action,
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-int import_one_open_file (struct epm_action *action,
+int import_one_open_file (struct gpm_action *action,
 			  ghost_t *ghost,
                           struct task_struct *task,
 			  int index,
@@ -867,7 +867,7 @@ int import_one_open_file (struct epm_action *action,
 	int first_import = 0;
 	int r = 0;
 
-	BUG_ON(action->type == EPM_CHECKPOINT);
+	BUG_ON(action->type == GPM_CHECKPOINT);
 
 	*returned_file = NULL;
 
@@ -939,7 +939,7 @@ err_read:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int import_open_files (struct epm_action *action,
+int import_open_files (struct gpm_action *action,
 		       ghost_t *ghost,
                        struct task_struct *tsk,
 		       struct files_struct *files,
@@ -948,7 +948,7 @@ int import_open_files (struct epm_action *action,
 {
 	int i, j, r = 0;
 
-	BUG_ON(action->type == EPM_CHECKPOINT);
+	BUG_ON(action->type == GPM_CHECKPOINT);
 
 	/* Reception of the files list and their names */
 	for (i = 0; i < last_open_fd; i++) {
@@ -974,7 +974,7 @@ err:
 	goto exit;
 }
 
-static int cr_link_to_open_files(struct epm_action *action,
+static int cr_link_to_open_files(struct gpm_action *action,
 				 ghost_t *ghost,
 				 struct task_struct *tsk,
 				 struct files_struct *files,
@@ -983,7 +983,7 @@ static int cr_link_to_open_files(struct epm_action *action,
 {
 	int i, r = 0;
 
-	BUG_ON(action->type == EPM_CHECKPOINT
+	BUG_ON(action->type == GPM_CHECKPOINT
 	       && action->restart.shared == CR_LINK_ONLY);
 
 	/* Linking the files in the files_struct */
@@ -1009,7 +1009,7 @@ exit:
 	return r;
 }
 
-static int cr_link_to_files_struct(struct epm_action *action,
+static int cr_link_to_files_struct(struct gpm_action *action,
 				   ghost_t *ghost,
 				   struct task_struct *tsk)
 {
@@ -1045,7 +1045,7 @@ err:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int import_files_struct (struct epm_action *action,
+int import_files_struct (struct gpm_action *action,
 			 ghost_t *ghost,
                          struct task_struct *tsk)
 {
@@ -1063,7 +1063,7 @@ int import_files_struct (struct epm_action *action,
 		BUG_ON (!r && magic != 780574);
 	}
 
-	if (action->type == EPM_CHECKPOINT
+	if (action->type == GPM_CHECKPOINT
 	    && action->restart.shared == CR_LINK_ONLY) {
 		r = cr_link_to_files_struct(action, ghost, tsk);
 		return r;
@@ -1136,7 +1136,7 @@ int import_files_struct (struct epm_action *action,
 		BUG_ON (!r && magic != 280574);
 	}
 
-	if (action->type == EPM_CHECKPOINT)
+	if (action->type == GPM_CHECKPOINT)
 		r = cr_link_to_open_files(action, ghost, tsk, files,
 					  fdt, last_open_fd);
 	else
@@ -1165,7 +1165,7 @@ exit_free_files:
 	return r;
 }
 
-static int cr_link_to_vma_phys_file(struct epm_action *action,
+static int cr_link_to_vma_phys_file(struct gpm_action *action,
 				    ghost_t *ghost,
 				    struct task_struct *tsk,
 				    struct vm_area_struct *vma,
@@ -1216,7 +1216,7 @@ exit:
 	return r;
 }
 
-int import_vma_phys_file(struct epm_action *action,
+int import_vma_phys_file(struct gpm_action *action,
 			 ghost_t *ghost,
 			 struct task_struct *tsk,
 			 struct vm_area_struct *vma,
@@ -1227,7 +1227,7 @@ int import_vma_phys_file(struct epm_action *action,
 	int import_file;
 	int r;
 
-	if (action->type == EPM_CHECKPOINT) {
+	if (action->type == GPM_CHECKPOINT) {
 		r = cr_link_to_vma_phys_file(action, ghost, tsk, vma, &file);
 		if (r || is_anon_shared_mmap(file))
 			goto err;
@@ -1284,7 +1284,7 @@ err:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int import_vma_file (struct epm_action *action,
+int import_vma_file (struct gpm_action *action,
 		     ghost_t *ghost,
                      struct task_struct *tsk,
                      struct vm_area_struct *vma,
@@ -1319,12 +1319,12 @@ err_read:
 	return r;
 }
 
-int import_mm_exe_file(struct epm_action *action, ghost_t *ghost,
+int import_mm_exe_file(struct gpm_action *action, ghost_t *ghost,
 		       struct task_struct *tsk)
 {
 	int dump, r = 0;
 
-	BUG_ON(action->type == EPM_CHECKPOINT
+	BUG_ON(action->type == GPM_CHECKPOINT
 	       && action->restart.shared == CR_LINK_ONLY);
 
 #ifdef CONFIG_PROC_FS
@@ -1333,7 +1333,7 @@ int import_mm_exe_file(struct epm_action *action, ghost_t *ghost,
 		goto exit;
 
 	if (dump) {
-		if (action->type == EPM_CHECKPOINT)
+		if (action->type == GPM_CHECKPOINT)
 			r = cr_link_to_file(action, ghost, tsk,
 					    &tsk->mm->exe_file);
 		else
@@ -1345,7 +1345,7 @@ exit:
 	return r;
 }
 
-static int cr_link_to_fs_struct(struct epm_action *action,
+static int cr_link_to_fs_struct(struct gpm_action *action,
 				ghost_t *ghost,
 				struct task_struct *tsk)
 {
@@ -1381,7 +1381,7 @@ err:
  *  @return  0 if everything ok.
  *           Negative value otherwise.
  */
-int import_fs_struct (struct epm_action *action,
+int import_fs_struct (struct gpm_action *action,
 		      ghost_t *ghost,
                       struct task_struct *tsk)
 {
@@ -1389,7 +1389,7 @@ int import_fs_struct (struct epm_action *action,
 	char *buffer;
 	int r;
 
-	if (action->type == EPM_CHECKPOINT
+	if (action->type == GPM_CHECKPOINT
 	    && action->restart.shared == CR_LINK_ONLY) {
 		r = cr_link_to_fs_struct(action, ghost, tsk);
 		return r;
@@ -1455,7 +1455,7 @@ exit_free_fs:
 	goto exit;
 }
 
-int import_mnt_namespace(struct epm_action *action,
+int import_mnt_namespace(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk)
 {
 	/* TODO */
@@ -1507,7 +1507,7 @@ void dvfs_mobility_finalize (void)
 #endif
 }
 
-static int cr_export_now_files_struct(struct epm_action *action, ghost_t *ghost,
+static int cr_export_now_files_struct(struct gpm_action *action, ghost_t *ghost,
 				      struct task_struct *task,
 				      union export_args *args)
 {
@@ -1521,7 +1521,7 @@ static int cr_export_now_files_struct(struct epm_action *action, ghost_t *ghost,
 	return r;
 }
 
-static int cr_import_now_files_struct(struct epm_action *action, ghost_t *ghost,
+static int cr_import_now_files_struct(struct gpm_action *action, ghost_t *ghost,
 				      struct task_struct *fake, int local_only,
 				      void ** returned_data, size_t *data_size)
 {
@@ -1570,7 +1570,7 @@ struct shared_object_operations cr_shared_files_struct_ops = {
 	.delete            = cr_delete_files_struct,
 };
 
-static int cr_export_now_fs_struct(struct epm_action *action, ghost_t *ghost,
+static int cr_export_now_fs_struct(struct gpm_action *action, ghost_t *ghost,
 				   struct task_struct *task,
 				   union export_args *args)
 {
@@ -1584,7 +1584,7 @@ static int cr_export_now_fs_struct(struct epm_action *action, ghost_t *ghost,
 	return r;
 }
 
-static int cr_import_now_fs_struct(struct epm_action *action, ghost_t *ghost,
+static int cr_import_now_fs_struct(struct gpm_action *action, ghost_t *ghost,
 				   struct task_struct *fake, int local_only,
 				   void ** returned_data, size_t *data_size)
 {

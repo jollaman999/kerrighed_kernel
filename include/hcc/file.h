@@ -9,7 +9,7 @@
 
 #include <gdm/gdm.h>
 
-struct epm_action;
+struct gpm_action;
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -41,9 +41,9 @@ extern const struct file_operations shmem_file_operations;
 
 int create_gdm_file_object(struct file *file);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 void check_file_struct_sharing (int index, struct file *file,
-				struct epm_action *action);
+				struct gpm_action *action);
 #endif
 
 void get_dvfs_file(int index, unsigned long objid);

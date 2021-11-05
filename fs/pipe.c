@@ -25,7 +25,7 @@
 #include <asm/uaccess.h>
 #include <asm/ioctls.h>
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <linux/splice.h>
 #include <hcc/app_shared.h>
 #include <hcc/ghost.h>
@@ -923,7 +923,7 @@ struct pipe_inode_info * alloc_pipe_info(struct inode *inode)
 			init_waitqueue_head(&pipe->wait);
 			pipe->r_counter = pipe->w_counter = 1;
 			pipe->inode = inode;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 			pipe->fread = NULL;
 			pipe->fwrite = NULL;
 #endif
@@ -1060,7 +1060,7 @@ struct file *__create_write_pipe(struct path *path, int flags)
 {
 	struct file *f;
 	int err = -ENFILE;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct pipe_inode_info *pipe;
 #endif
 
@@ -1073,7 +1073,7 @@ struct file *__create_write_pipe(struct path *path, int flags)
 
 	f->f_flags = O_WRONLY | (flags & O_NONBLOCK);
 	f->f_version = 0;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	pipe = path->dentry->d_inode->i_pipe;
 	pipe->fwrite = f;
 #endif
@@ -1124,7 +1124,7 @@ static struct file *alloc_pipe_file(struct path *path, fmode_t mode,
 		const struct file_operations *fop, int flags)
 {
 	struct file *file;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct pipe_inode_info *pipe;
 #endif
 
@@ -1138,7 +1138,7 @@ static struct file *alloc_pipe_file(struct path *path, fmode_t mode,
 	file->f_mode = mode;
 	file->f_flags = O_RDONLY | (flags & O_NONBLOCK);
 	file->f_op = fop;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	pipe = path->dentry->d_inode->i_pipe;
 	pipe->fread = file;
 #endif
@@ -1213,7 +1213,7 @@ int do_pipe_flags(int *fd, int flags)
 	return error;
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
 int cr_add_pipe_inode_to_shared_table(struct task_struct *task,
 				      struct file *file)
@@ -1301,7 +1301,7 @@ out:
 	return ret;
 }
 
-int cr_export_now_pipe_inode(struct epm_action *action, ghost_t *ghost,
+int cr_export_now_pipe_inode(struct gpm_action *action, ghost_t *ghost,
 			     struct task_struct *task,
 			     union export_args *args)
 {
@@ -1356,7 +1356,7 @@ err:
 	return ret;
 }
 
-static int cr_import_now_pipe_inode(struct epm_action *action,
+static int cr_import_now_pipe_inode(struct gpm_action *action,
 				    ghost_t *ghost,
 				    struct task_struct *fake,
 				    int local_only,

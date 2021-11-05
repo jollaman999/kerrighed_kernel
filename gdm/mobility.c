@@ -38,7 +38,7 @@ extern struct kmem_cache *gdm_info_cachep;
  *  @return  0 if everything was OK.
  *           Negative value otherwise.
  */
-int export_gdm_info_struct (struct epm_action *action,
+int export_gdm_info_struct (struct gpm_action *action,
 			     ghost_t *ghost,
 			     struct task_struct *tsk)
 {
@@ -47,12 +47,12 @@ int export_gdm_info_struct (struct epm_action *action,
 	BUG_ON (tsk->gdm_info == NULL);
 
 	switch (action->type) {
-	  case EPM_REMOTE_CLONE:
+	  case GPM_REMOTE_CLONE:
 		  /* */
 		  break;
 
-	  case EPM_CHECKPOINT:
-	  case EPM_MIGRATE:
+	  case GPM_CHECKPOINT:
+	  case GPM_MIGRATE:
 		  r = ghost_write (ghost, tsk->gdm_info,
 				   sizeof(struct gdm_info_struct));
 		  break;
@@ -74,7 +74,7 @@ int export_gdm_info_struct (struct epm_action *action,
 
 
 
-int import_gdm_info_struct (struct epm_action *action,
+int import_gdm_info_struct (struct gpm_action *action,
 			     ghost_t *ghost,
 			     struct task_struct *tsk)
 {
@@ -82,12 +82,12 @@ int import_gdm_info_struct (struct epm_action *action,
 	int r;
 
 	switch (action->type) {
-	  case EPM_REMOTE_CLONE:
+	  case GPM_REMOTE_CLONE:
 		  r = initialize_gdm_info_struct (tsk);
 		  break;
 
-	  case EPM_CHECKPOINT:
-	  case EPM_MIGRATE:
+	  case GPM_CHECKPOINT:
+	  case GPM_MIGRATE:
 		  r = -ENOMEM;
 		  gdm_info = kmem_cache_alloc(gdm_info_cachep,
 					       GFP_KERNEL);

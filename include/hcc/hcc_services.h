@@ -17,7 +17,7 @@
 #define COMM_PROC_BASE 32
 #define KERMM_PROC_BASE 96
 #define KERPROC_PROC_BASE 128
-#define EPM_PROC_BASE 192
+#define GPM_PROC_BASE 192
 #define IPC_PROC_BASE 224
 
 /*
@@ -120,35 +120,35 @@
  */
 
 #define KSYS_PROCESS_MIGRATION         _IOW(HCC_PROC_MAGIC, \
-                                            EPM_PROC_BASE + 0, \
+                                            GPM_PROC_BASE + 0, \
                                             migration_infos_t)
 #define KSYS_THREAD_MIGRATION	       _IOW(HCC_PROC_MAGIC, \
-                                            EPM_PROC_BASE + 1,\
+                                            GPM_PROC_BASE + 1,\
                                             migration_infos_t)
 #define KSYS_APP_FREEZE                _IOW(HCC_PROC_MAGIC, \
-                                            EPM_PROC_BASE + 2, \
+                                            GPM_PROC_BASE + 2, \
                                             struct checkpoint_info)
 #define KSYS_APP_UNFREEZE              _IOW(HCC_PROC_MAGIC, \
-                                            EPM_PROC_BASE + 3, \
+                                            GPM_PROC_BASE + 3, \
                                             struct checkpoint_info)
 #define KSYS_APP_CHKPT                 _IOW(HCC_PROC_MAGIC, \
-                                            EPM_PROC_BASE + 4, \
+                                            GPM_PROC_BASE + 4, \
                                             struct checkpoint_info)
 #define KSYS_APP_RESTART               _IOW(HCC_PROC_MAGIC, \
-                                            EPM_PROC_BASE + 5, \
+                                            GPM_PROC_BASE + 5, \
                                             struct restart_request)
 #define KSYS_APP_SET_USERDATA          _IOW(HCC_PROC_MAGIC, \
-                                            EPM_PROC_BASE + 6, \
+                                            GPM_PROC_BASE + 6, \
                                             __u64)
 #define KSYS_APP_GET_USERDATA          _IOW(HCC_PROC_MAGIC, \
-                                            EPM_PROC_BASE + 7, \
+                                            GPM_PROC_BASE + 7, \
                                             struct app_userdata_request)
 #define KSYS_APP_CR_DISABLE		_IO(HCC_PROC_MAGIC, \
-					   EPM_PROC_BASE + 8)
+					   GPM_PROC_BASE + 8)
 #define KSYS_APP_CR_ENABLE		_IO(HCC_PROC_MAGIC, \
-					   EPM_PROC_BASE + 9)
+					   GPM_PROC_BASE + 9)
 #define KSYS_APP_CR_EXCLUDE		_IOW(HCC_PROC_MAGIC,	\
-					     EPM_PROC_BASE + 10,	\
+					     GPM_PROC_BASE + 10,	\
 					     struct cr_mm_region)
 
 

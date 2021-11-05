@@ -1,5 +1,5 @@
-#ifndef __EPM_PID_H__
-#define __EPM_PID_H__
+#ifndef __GPM_PID_H__
+#define __GPM_PID_H__
 
 #include <linux/types.h>
 #include <hcc/sys/types.h>
@@ -14,4 +14,4 @@ void pid_wait_quiescent(void);
 
 int pidmap_map_alloc(hcc_node_t node);
 
-#endif /* __EPM_PID_H__ */
+#endif /* __GPM_PID_H__ */

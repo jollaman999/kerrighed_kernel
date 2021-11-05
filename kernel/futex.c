@@ -62,7 +62,7 @@
 #include <linux/bootmem.h>
 #include <linux/hugetlb.h>
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/hccsyms.h>
 #endif
 
@@ -2939,7 +2939,7 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
 	return do_futex(uaddr, op, val, tp, uaddr2, val2, val3);
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 int futex_hccsyms_register(void)
 {
 	return hccsyms_register(HCCSYMS_FUTEX_WAIT_RESTART, futex_wait_restart);

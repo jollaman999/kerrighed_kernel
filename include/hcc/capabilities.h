@@ -32,7 +32,7 @@ typedef struct kernel_hcc_cap_struct {
 #else
 #define __HCC_GCAP_SUPPORTED_MM 0
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #define __HCC_GCAP_SUPPORTED_EPM CAP_TO_MASK(GCAP_CAN_MIGRATE)	 \
 				|CAP_TO_MASK(GCAP_DISTANT_FORK)   \
 				|CAP_TO_MASK(GCAP_CHECKPOINTABLE)

@@ -18,7 +18,7 @@
 
 #include <gdm/gdm.h>
 #include <hcc/hotplug.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/action.h>
 #endif
 #include <hcc/file.h>
@@ -58,14 +58,14 @@ int create_gdm_file_object(struct file *file)
 	return 0;
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 /** Check if we need to share a file struct cluster wide and do whatever needed
  *  @author Innogrid HCC
  *
  *  @param file    Struct of the file to check the sharing.
  */
 void check_file_struct_sharing (int index, struct file *file,
-				struct epm_action *action)
+				struct gpm_action *action)
 {
 	/* Do not share the file struct for FAF files or already shared files*/
 	if (file->f_flags & (O_FAF_CLT | O_FAF_SRV | O_HCC_SHARED))
@@ -81,13 +81,13 @@ void check_file_struct_sharing (int index, struct file *file,
 #endif
 
 	switch (action->type) {
-	  case EPM_CHECKPOINT:
+	  case GPM_CHECKPOINT:
 		  goto done;
 
-	  case EPM_REMOTE_CLONE:
+	  case GPM_REMOTE_CLONE:
 		  goto share;
 
-	  case EPM_MIGRATE:
+	  case GPM_MIGRATE:
 		  if (file_count(file) == 1)
 			  goto done;
 		  break;

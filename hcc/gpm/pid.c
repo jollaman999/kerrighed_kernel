@@ -425,7 +425,7 @@ int cr_create_pid_gdm_object(struct pid *pid)
 	return create_pid_gdm_object(pid, 0);
 }
 
-int export_pid(struct epm_action *action,
+int export_pid(struct gpm_action *action,
 	       ghost_t *ghost, struct pid_link *link)
 {
 	struct pid *pid = link->pid;
@@ -436,7 +436,7 @@ int export_pid(struct epm_action *action,
 		return -EPERM;
 
 	if (ORIG_NODE(nr) == hcc_node_id && !pid->gdm_obj
-	    && action->type != EPM_CHECKPOINT) {
+	    && action->type != GPM_CHECKPOINT) {
 		retval = create_pid_gdm_object(pid, 0);
 		if (retval)
 			return retval;
@@ -444,7 +444,7 @@ int export_pid(struct epm_action *action,
 	return ghost_write(ghost, &nr, sizeof(nr));
 }
 
-int export_pid_namespace(struct epm_action *action,
+int export_pid_namespace(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	if (!is_hcc_pid_ns_root(task_active_pid_ns(task))) {
@@ -607,7 +607,7 @@ int end_pid_reservation(pid_t pid)
 /*--------------------------------------------------------------------------*
  *--------------------------------------------------------------------------*/
 
-int import_pid(struct epm_action *action, ghost_t *ghost, struct pid_link *link,
+int import_pid(struct gpm_action *action, ghost_t *ghost, struct pid_link *link,
 	       enum pid_type type)
 {
 	struct pid *pid;
@@ -618,7 +618,7 @@ int import_pid(struct epm_action *action, ghost_t *ghost, struct pid_link *link,
 	if (retval)
 		return retval;
 
-	if (action->type == EPM_CHECKPOINT) {
+	if (action->type == GPM_CHECKPOINT) {
 		if ((action->restart.flags & APP_REPLACE_PGRP)
 		    && type == PIDTYPE_PGID)
 			nr = action->restart.app->restart.substitution_pgrp;
@@ -636,7 +636,7 @@ int import_pid(struct epm_action *action, ghost_t *ghost, struct pid_link *link,
 	return 0;
 }
 
-int import_pid_namespace(struct epm_action *action,
+int import_pid_namespace(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	task->nsproxy->pid_ns = find_get_hcc_pid_ns();
@@ -755,7 +755,7 @@ void pid_wait_quiescent(void)
 	flush_work(&put_pid_work);
 }
 
-void epm_pid_start(void)
+void gpm_pid_start(void)
 {
 	unsigned long cache_flags = SLAB_PANIC;
 
@@ -781,7 +781,7 @@ void epm_pid_start(void)
 			 handle_end_pid_reservation, 0);
 }
 
-void epm_pid_exit(void)
+void gpm_pid_exit(void)
 {
 	return;
 }

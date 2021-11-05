@@ -15,9 +15,9 @@
 #include <hcc/action.h>
 
 static int action_to_cap_mapping[] = {
-	[EPM_MIGRATE] = GCAP_CAN_MIGRATE,
-	[EPM_REMOTE_CLONE] = GCAP_DISTANT_FORK,
-	[EPM_CHECKPOINT] = GCAP_CHECKPOINTABLE,
+	[GPM_MIGRATE] = GCAP_CAN_MIGRATE,
+	[GPM_REMOTE_CLONE] = GCAP_DISTANT_FORK,
+	[GPM_CHECKPOINT] = GCAP_CHECKPOINTABLE,
 };
 
 DEFINE_RWLOCK(hcc_action_lock);
@@ -34,23 +34,23 @@ static inline void action_lock_unlock(void)
 	lockdep_on();
 }
 
-static inline int action_to_flag(hcc_epm_action_t action)
+static inline int action_to_flag(hcc_gpm_action_t action)
 {
-	if (unlikely(action <= EPM_NO_ACTION || action >= EPM_ACTION_MAX))
+	if (unlikely(action <= GPM_NO_ACTION || action >= GPM_ACTION_MAX))
 		return 0;
 	else
 		return 1 << action;
 }
 
-static inline int action_to_cap(hcc_epm_action_t action)
+static inline int action_to_cap(hcc_gpm_action_t action)
 {
-	if (unlikely(action <= EPM_NO_ACTION || action >= EPM_ACTION_MAX))
+	if (unlikely(action <= GPM_NO_ACTION || action >= GPM_ACTION_MAX))
 		return -1;
 	else
 		return action_to_cap_mapping[action];
 }
 
-int hcc_action_disable(struct task_struct *task, hcc_epm_action_t action,
+int hcc_action_disable(struct task_struct *task, hcc_gpm_action_t action,
 		       int inheritable)
 {
 	unsigned long flag;
@@ -77,7 +77,7 @@ int hcc_action_disable(struct task_struct *task, hcc_epm_action_t action,
 	return retval;
 }
 
-int hcc_action_enable(struct task_struct *task, hcc_epm_action_t action,
+int hcc_action_enable(struct task_struct *task, hcc_gpm_action_t action,
 		      int inheritable)
 {
 	atomic_t *array;
@@ -97,7 +97,7 @@ int hcc_action_enable(struct task_struct *task, hcc_epm_action_t action,
 	return 0;
 }
 
-int hcc_action_start(struct task_struct *task, hcc_epm_action_t action)
+int hcc_action_start(struct task_struct *task, hcc_gpm_action_t action)
 {
 	unsigned long flag;
 	int retval = 0;
@@ -120,7 +120,7 @@ int hcc_action_start(struct task_struct *task, hcc_epm_action_t action)
 	return retval;
 }
 
-int hcc_action_stop(struct task_struct *task, hcc_epm_action_t action)
+int hcc_action_stop(struct task_struct *task, hcc_gpm_action_t action)
 {
 	unsigned long flag;
 	int retval = 0;
@@ -136,7 +136,7 @@ int hcc_action_stop(struct task_struct *task, hcc_epm_action_t action)
 	return retval;
 }
 
-int hcc_action_pending(struct task_struct *task, hcc_epm_action_t action)
+int hcc_action_pending(struct task_struct *task, hcc_gpm_action_t action)
 {
 	unsigned long flag;
 	int retval;

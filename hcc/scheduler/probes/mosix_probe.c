@@ -144,7 +144,7 @@ static void mosix_probe_info_free(struct hcc_sched_module_info *info)
 	kfree(to_mosix_probe_info(info));
 }
 
-static int mosix_probe_info_export(struct epm_action *action,
+static int mosix_probe_info_export(struct gpm_action *action,
 				   struct ghost *ghost,
 				   struct hcc_sched_module_info *info)
 {
@@ -153,7 +153,7 @@ static int mosix_probe_info_export(struct epm_action *action,
 }
 
 static struct hcc_sched_module_info *
-mosix_probe_info_import(struct epm_action *action,
+mosix_probe_info_import(struct gpm_action *action,
 			struct ghost *ghost,
 			struct task_struct *task)
 {

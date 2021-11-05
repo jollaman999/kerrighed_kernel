@@ -396,7 +396,7 @@ int pidmap_map_add(struct hotplug_context *ctx)
 	BUG_ON(host_node == hcc_node_id);
 
 	err = -ENOMEM;
-	desc = rpc_begin(EPM_PIDMAP_STEAL, host_node);
+	desc = rpc_begin(GPM_PIDMAP_STEAL, host_node);
 	if (!desc)
 		goto unlock;
 
@@ -425,7 +425,7 @@ cancel:
 	goto end;
 }
 
-void epm_pidmap_start(void)
+void gpm_pidmap_start(void)
 {
 	register_io_linker(PIDMAP_MAP_LINKER, &pidmap_map_io_linker);
 	pidmap_map_gdm_set = create_new_gdm_set(gdm_def_ns,
@@ -436,10 +436,10 @@ void epm_pidmap_start(void)
 	if (IS_ERR(pidmap_map_gdm_set))
 		OOM;
 
-	rpc_register_void(EPM_PIDMAP_STEAL, handle_pidmap_steal, 0);
+	rpc_register_void(GPM_PIDMAP_STEAL, handle_pidmap_steal, 0);
 }
 
-void epm_pidmap_exit(void)
+void gpm_pidmap_exit(void)
 {
 	return;
 }

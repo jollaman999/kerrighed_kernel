@@ -14,7 +14,7 @@
 #include <linux/file.h>
 #include <linux/err.h>
 #include <linux/fs.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/hccsyms.h>
 #endif
 
@@ -108,7 +108,7 @@ static struct linux_binfmt script_format = {
 
 static int __init init_script_binfmt(void)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	int retval;
 
 	hccsyms_register(HCCSYMS_BINFMTS_SCRIPT, &script_format);
@@ -123,7 +123,7 @@ static int __init init_script_binfmt(void)
 
 static void __exit exit_script_binfmt(void)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	hccsyms_unregister(HCCSYMS_BINFMTS_SCRIPT);
 #endif
 	unregister_binfmt(&script_format);

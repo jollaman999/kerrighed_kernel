@@ -47,7 +47,7 @@
 #include <net/grpc/rpcid.h>
 #include <hcc/remote_syscall.h>
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/hccinit.h>
 #include <hcc/pid.h>
 #include <hcc/task.h>
@@ -988,7 +988,7 @@ SYSCALL_DEFINE1(times, struct tms __user *, tbuf)
  * Auch. Had to add the 'did_exec' flag to conform completely to POSIX.
  * LBT 04.03.94
  */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 static int do_setpgid(pid_t pid, pid_t pgid, pid_t parent_session,
 		      struct pid_namespace *ns)
 #else
@@ -998,12 +998,12 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	struct task_struct *p;
 	struct task_struct *group_leader = current->group_leader;
 	struct pid *pgrp;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	bool from_remote_parent = parent_session >= 0;
 #endif
 	int err;
 
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 	if (!pid)
 		pid = task_pid_vnr(group_leader);
 	if (!pgid)
@@ -1018,7 +1018,7 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	tasklist_write_lock_irq();
 
 	err = -ESRCH;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	p = find_task_by_pid_ns(pid, ns);
 #else
 	p = find_task_by_vpid(pid);
@@ -1030,14 +1030,14 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	if (!thread_group_leader(p))
 		goto out;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (from_remote_parent
 	    || same_thread_group(p->real_parent, group_leader)) {
 #else
 	if (same_thread_group(p->real_parent, group_leader)) {
 #endif
 		err = -EPERM;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		if (from_remote_parent) {
 			if (task_session_nr_ns(p, ns) != parent_session)
 				goto out;
@@ -1062,13 +1062,13 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	if (pgid != pid) {
 		struct task_struct *g;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		pgrp = find_pid_ns(pgid, ns);
 #else
 		pgrp = find_vpid(pgid);
 #endif
 		g = pid_task(pgrp, PIDTYPE_PGID);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		if (!g || task_session(g) != task_session(p))
 #else
 		if (!g || task_session(g) != task_session(group_leader))
@@ -1090,7 +1090,7 @@ out:
 	return err;
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 struct setpgid_message {
 	pid_t pid;
 	pid_t pgid;
@@ -1226,7 +1226,7 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	hcc_cleanup_setpgid(pid, pgid, parent_children_obj, node, !err);
 	return err;
 }
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 #ifdef CONFIG_HCC_PROC
 static int do_getpgid(pid_t pid, struct pid_namespace *ns)
@@ -1398,7 +1398,7 @@ void remote_sys_init(void)
 {
 	rpc_register_int(PROC_GETPGID, handle_getpgid, 0);
 	rpc_register_int(PROC_GETSID, handle_getsid, 0);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	rpc_register_int(PROC_FORWARD_SETPGID, handle_forward_setpgid, 0);
 #endif
 }
@@ -1409,19 +1409,19 @@ SYSCALL_DEFINE0(setsid)
 	struct task_struct *group_leader = current->group_leader;
 	struct pid *sid = task_pid(group_leader);
 	pid_t session = pid_vnr(sid);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct children_gdm_object *parent_children_obj = NULL;
 	pid_t real_parent_tgid;
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 	int err = -EPERM;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	down_read(&hcc_init_sem);
 	if (rcu_dereference(current->parent_children_obj))
 		parent_children_obj =
 			hcc_parent_children_writelock(current,
 						      &real_parent_tgid);
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 	tasklist_write_lock_irq();
 	/* Fail if I am already a session leader */
 	if (group_leader->signal->leader)
@@ -1445,14 +1445,14 @@ out:
 		proc_sid_connector(group_leader);
 		sched_autogroup_create_attach(group_leader);
 	}
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (parent_children_obj) {
 		if (err >= 0)
 			hcc_set_child_pgid(parent_children_obj, current);
 		hcc_children_unlock(parent_children_obj);
 	}
 	up_read(&hcc_init_sem);
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 	return err;
 }
 

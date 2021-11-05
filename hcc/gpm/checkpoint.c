@@ -27,7 +27,7 @@
 #include <hcc/remote_cred.h>
 #include <hcc/debug.h>
 #include "ghost.h"
-#include "epm_internal.h"
+#include "gpm_internal.h"
 #include "checkpoint.h"
 
 /*****************************************************************************/
@@ -77,7 +77,7 @@ exit:
  *
  *  @return			0 if everythink ok, negative value otherwise.
  */
-static int checkpoint_task_to_ghost(struct epm_action *action,
+static int checkpoint_task_to_ghost(struct gpm_action *action,
 				    ghost_t *ghost,
 				    struct task_struct *task_to_checkpoint,
 				    struct pt_regs *regs)
@@ -111,7 +111,7 @@ exit:
  *  @return 0			if everythink ok, negative value otherwise.
  */
 static
-int checkpoint_task_on_disk(struct epm_action *action,
+int checkpoint_task_on_disk(struct gpm_action *action,
 			    struct task_struct *task_to_checkpoint,
 			    struct pt_regs *regs)
 {
@@ -140,7 +140,7 @@ int checkpoint_task_on_disk(struct epm_action *action,
  *
  *  @return 0			if everythink ok, negative value otherwise.
  */
-static int checkpoint_task(struct epm_action *action,
+static int checkpoint_task(struct gpm_action *action,
 			   struct task_struct *task_to_checkpoint,
 			   struct pt_regs *regs)
 {
@@ -181,7 +181,7 @@ out:
 static void hcc_task_checkpoint(int sig, struct siginfo *info,
 				struct pt_regs *regs)
 {
-	struct epm_action action;
+	struct gpm_action action;
 	task_state_t *current_state;
 	int r = 0;
 
@@ -213,7 +213,7 @@ static void hcc_task_checkpoint(int sig, struct siginfo *info,
 	 * application is frozen.
 	 */
 	while (current_state->checkpoint.ghost) {
-		action.type = EPM_CHECKPOINT;
+		action.type = GPM_CHECKPOINT;
 		action.checkpoint.shared = CR_SAVE_LATER;
 		r = checkpoint_task(&action, current, regs);
 

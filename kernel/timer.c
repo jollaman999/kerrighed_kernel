@@ -40,7 +40,7 @@
 #include <linux/irq_work.h>
 #include <linux/sched.h>
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/children.h>
 #endif
 #ifdef CONFIG_HCC_SCHED
@@ -1297,7 +1297,7 @@ SYSCALL_DEFINE0(getppid)
 	int pid;
 
 	rcu_read_lock();
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	pid = hcc_get_real_parent_tgid(current, task_active_pid_ns(current));
 #else
 	pid = task_tgid_vnr(current->real_parent);

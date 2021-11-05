@@ -848,7 +848,7 @@ extern bool pfn_modify_allowed(unsigned long pfn, pgprot_t prot);
 
 static inline bool arch_has_pfn_modify_check(void)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	return false;
 #else
 	return boot_cpu_has_bug(X86_BUG_L1TF);

@@ -35,7 +35,7 @@
 #include <linux/init.h>
 #include <linux/flat.h>
 #include <linux/syscalls.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/hccsyms.h>
 #endif
 
@@ -942,7 +942,7 @@ static int load_flat_binary(struct linux_binprm * bprm, struct pt_regs * regs)
 
 static int __init init_flat_binfmt(void)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	int retval;
 
 	hccsyms_register(HCCSYMS_BINFMTS_FLAT, &flat_format);

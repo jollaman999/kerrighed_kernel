@@ -79,7 +79,7 @@ static int task_alloc_object(struct gdm_obj *obj_entry,
 	 * only needed to check local/global pids.
 	 */
 	p->group_leader = objid;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	p->pid_obj = NULL;
 #endif
 	init_rwsem(&p->sem);
@@ -232,7 +232,7 @@ static int task_remove_object(void *object,
 
 	hcc_task_unlink(obj, 0);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	rcu_read_lock();
 	hcc_pid_unlink_task(rcu_dereference(obj->pid_obj));
 	rcu_read_unlock();
@@ -264,7 +264,7 @@ int hcc_task_alloc(struct task_struct *task, struct pid *pid)
 	task->task_obj = NULL;
 	if (!task->nsproxy->hcc_ns)
 		return 0;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (hcc_current)
 		return 0;
 #endif
@@ -296,7 +296,7 @@ void hcc_task_fill(struct task_struct *task, unsigned long clone_flags)
 	BUG_ON((task_tgid_knr(task) & GLOBAL_PID_MASK)
 	       != (task_pid_knr(task) & GLOBAL_PID_MASK));
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (hcc_current)
 		return;
 #endif
@@ -304,7 +304,7 @@ void hcc_task_fill(struct task_struct *task, unsigned long clone_flags)
 		return;
 
 	obj->node = hcc_node_id;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (task->real_parent == baby_sitter) {
 		BUG_ON(!current->task_obj);
 		if (clone_flags & (CLONE_PARENT|CLONE_THREAD)) {
@@ -323,7 +323,7 @@ void hcc_task_fill(struct task_struct *task, unsigned long clone_flags)
 	}
 	/* Keep parent same as real_parent until ptrace is better supported */
 	obj->parent = obj->real_parent;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	/* Distributed threads are not supported yet. */
 	BUG_ON(task->group_leader == baby_sitter);
 #endif
@@ -340,7 +340,7 @@ void hcc_task_abort(struct task_struct *task)
 {
 	struct task_gdm_object *obj = task->task_obj;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (hcc_current)
 		return;
 #endif
@@ -533,7 +533,7 @@ void __hcc_task_unlock(struct task_struct *task)
 	hcc_task_unlock(task_pid_knr(task));
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 /**
  * @author Innogrid HCC
  * Set (or update) the location of pid
@@ -563,13 +563,13 @@ int hcc_unset_pid_location(struct task_struct *task)
 
 	return 0;
 }
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 hcc_node_t hcc_lock_pid_location(pid_t pid)
 {
 	hcc_node_t node = HCC_NODE_ID_NONE;
 	struct task_gdm_object *obj;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct timespec back_off_time = {
 		.tv_sec = 0,
 		.tv_nsec = 1000000 /* 1 ms */
@@ -587,7 +587,7 @@ hcc_node_t hcc_lock_pid_location(pid_t pid)
 			hcc_task_unlock(pid);
 			break;
 		}
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		if (likely(node != HCC_NODE_ID_NONE))
 			break;
 		/*

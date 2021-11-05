@@ -14,7 +14,7 @@
 #include <linux/string.h>
 #include <linux/errno.h>
 #include <linux/err.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/ghost.h>
 #endif
 #include <hcc/scheduler/info.h>
@@ -444,7 +444,7 @@ void hcc_sched_info_free(struct task_struct *task)
 {
 	struct hcc_sched_info *info = rcu_dereference(task->hcc_sched);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (hcc_current)
 		return;
 #endif
@@ -459,9 +459,9 @@ void hcc_sched_info_free(struct task_struct *task)
 	call_rcu(&info->rcu, delayed_free_sched_info);
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
-int export_hcc_sched_info(struct epm_action *action, ghost_t *ghost,
+int export_hcc_sched_info(struct gpm_action *action, ghost_t *ghost,
 			  struct task_struct *task)
 {
 	struct hcc_sched_info *info;
@@ -523,7 +523,7 @@ err_module:
 	goto out;
 }
 
-int import_hcc_sched_info(struct epm_action *action, ghost_t *ghost,
+int import_hcc_sched_info(struct gpm_action *action, ghost_t *ghost,
 			  struct task_struct *task)
 {
 	struct hcc_sched_info *info;
@@ -596,7 +596,7 @@ void unimport_hcc_sched_info(struct task_struct *task)
 	hcc_sched_info_free(task);
 }
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 int hcc_sched_info_start(void)
 {

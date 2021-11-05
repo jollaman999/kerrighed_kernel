@@ -1,7 +1,7 @@
-#ifndef __EPM_INTERNAL_H__
-#define __EPM_INTERNAL_H__
+#ifndef __GPM_INTERNAL_H__
+#define __GPM_INTERNAL_H__
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
 #include <linux/thread_info.h>
 #include <linux/slab.h>
@@ -48,40 +48,40 @@ static inline void free_thread_info(struct thread_info *ti)
 
 struct hotplug_context;
 
-int epm_hotplug_init(void);
-void epm_hotplug_cleanup(void);
+int gpm_hotplug_init(void);
+void gpm_hotplug_cleanup(void);
 
-int epm_signal_start(void);
-void epm_signal_exit(void);
+int gpm_signal_start(void);
+void gpm_signal_exit(void);
 
-int epm_sighand_start(void);
-void epm_sighand_exit(void);
+int gpm_sighand_start(void);
+void gpm_sighand_exit(void);
 
-void epm_children_start(void);
-void epm_children_exit(void);
+void gpm_children_start(void);
+void gpm_children_exit(void);
 
-void epm_pidmap_start(void);
-void epm_pidmap_exit(void);
+void gpm_pidmap_start(void);
+void gpm_pidmap_exit(void);
 int pidmap_map_add(struct hotplug_context *ctx);
 
-void epm_pid_start(void);
-void epm_pid_exit(void);
+void gpm_pid_start(void);
+void gpm_pid_exit(void);
 
-int epm_procfs_start(void);
-void epm_procfs_exit(void);
+int gpm_procfs_start(void);
+void gpm_procfs_exit(void);
 
 void register_remote_clone_hooks(void);
-int epm_remote_clone_start(void);
-void epm_remote_clone_exit(void);
+int gpm_remote_clone_start(void);
+void gpm_remote_clone_exit(void);
 
-int epm_migration_start(void);
-void epm_migration_exit(void);
+int gpm_migration_start(void);
+void gpm_migration_exit(void);
 
 void register_checkpoint_hooks(void);
 
 void application_cr_server_init(void);
 void application_cr_server_finalize(void);
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
-#endif /* __EPM_INTERNAL_H__ */
+#endif /* __GPM_INTERNAL_H__ */

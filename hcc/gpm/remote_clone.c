@@ -47,7 +47,7 @@ int hcc_do_fork(unsigned long clone_flags,
 #else
 	static hcc_node_t distant_node = -1;
 #endif
-	struct epm_action remote_clone;
+	struct gpm_action remote_clone;
 	struct rpc_desc *desc;
 	struct completion vfork;
 	pid_t remote_pid = -1;
@@ -70,7 +70,7 @@ int hcc_do_fork(unsigned long clone_flags,
 		goto out;
 	}
 
-	retval = hcc_action_start(task, EPM_REMOTE_CLONE);
+	retval = hcc_action_start(task, GPM_REMOTE_CLONE);
 	if (retval)
 		goto out;
 
@@ -85,11 +85,11 @@ int hcc_do_fork(unsigned long clone_flags,
 		goto out_action_stop;
 
 	retval = -ENOMEM;
-	desc = rpc_begin(RPC_EPM_REMOTE_CLONE, distant_node);
+	desc = rpc_begin(RPC_GPM_REMOTE_CLONE, distant_node);
 	if (!desc)
 		goto out_action_stop;
 
-	remote_clone.type = EPM_REMOTE_CLONE;
+	remote_clone.type = GPM_REMOTE_CLONE;
 	remote_clone.remote_clone.source = hcc_node_id;
 	remote_clone.remote_clone.target = distant_node;
 	remote_clone.remote_clone.clone_flags = clone_flags;
@@ -110,8 +110,8 @@ int hcc_do_fork(unsigned long clone_flags,
 	if (remote_pid < 0)
 		rpc_cancel(desc);
 	else {
-		task->epm_type = EPM_REMOTE_CLONE;
-		task->epm_target = distant_node;
+		task->gpm_type = GPM_REMOTE_CLONE;
+		task->gpm_target = distant_node;
 	}
 	rpc_end(desc, 0);
 
@@ -119,7 +119,7 @@ int hcc_do_fork(unsigned long clone_flags,
 		wait_for_vfork_done(task, &vfork);
 
 out_action_stop:
-	hcc_action_stop(task, EPM_REMOTE_CLONE);
+	hcc_action_stop(task, GPM_REMOTE_CLONE);
 
 out:
 	return remote_pid;
@@ -127,7 +127,7 @@ out:
 
 static void handle_remote_clone(struct rpc_desc *desc, void *msg, size_t size)
 {
-	struct epm_action *action = msg;
+	struct gpm_action *action = msg;
 	struct task_struct *task;
 
 	task = recv_task(desc, action);
@@ -136,11 +136,11 @@ static void handle_remote_clone(struct rpc_desc *desc, void *msg, size_t size)
 		return;
 	}
 
-	hcc_action_stop(task, EPM_REMOTE_CLONE);
+	hcc_action_stop(task, GPM_REMOTE_CLONE);
 
-	task->epm_type = action->type;
-	task->epm_source = action->remote_clone.source;
-	task->epm_target = action->remote_clone.target;
+	task->gpm_type = action->type;
+	task->gpm_source = action->remote_clone.source;
+	task->gpm_target = action->remote_clone.target;
 
 	wake_up_new_task(task, CLONE_VM);
 }
@@ -160,14 +160,14 @@ static inline void vfork_done_proxy_free(struct vfork_done_proxy *proxy)
 	kmem_cache_free(vfork_done_proxy_cachep, proxy);
 }
 
-int export_vfork_done(struct epm_action *action,
+int export_vfork_done(struct gpm_action *action,
 		      ghost_t *ghost, struct task_struct *task)
 {
 	struct vfork_done_proxy proxy;
 	int retval = 0;
 
 	switch (action->type) {
-	case EPM_MIGRATE:
+	case GPM_MIGRATE:
 		if (!task->vfork_done)
 			break;
 		if (task->remote_vfork_done) {
@@ -178,7 +178,7 @@ int export_vfork_done(struct epm_action *action,
 		}
 		retval = ghost_write(ghost, &proxy, sizeof(proxy));
 		break;
-	case EPM_REMOTE_CLONE:
+	case GPM_REMOTE_CLONE:
 		if (action->remote_clone.clone_flags & CLONE_VFORK) {
 			proxy.waiter_vfork_done = action->remote_clone.vfork;
 			proxy.waiter_node = hcc_node_id;
@@ -210,14 +210,14 @@ out:
 	return retval;
 }
 
-int import_vfork_done(struct epm_action *action,
+int import_vfork_done(struct gpm_action *action,
 		      ghost_t *ghost, struct task_struct *task)
 {
 	struct vfork_done_proxy tmp_proxy;
 	int retval = 0;
 
 	switch (action->type) {
-	case EPM_MIGRATE:
+	case GPM_MIGRATE:
 		if (!task->vfork_done)
 			break;
 
@@ -233,7 +233,7 @@ int import_vfork_done(struct epm_action *action,
 
 		retval = vfork_done_proxy_install(task, &tmp_proxy);
 		break;
-	case EPM_REMOTE_CLONE:
+	case GPM_REMOTE_CLONE:
 		if (action->remote_clone.clone_flags & CLONE_VFORK) {
 			retval = ghost_read(ghost, &tmp_proxy, sizeof(tmp_proxy));
 			if (unlikely(retval))
@@ -293,11 +293,11 @@ void register_remote_clone_hooks(void)
 	hook_register(&cluster_started, (void *)true);
 }
 
-int epm_remote_clone_start(void)
+int gpm_remote_clone_start(void)
 {
 	vfork_done_proxy_cachep = KMEM_CACHE(vfork_done_proxy, SLAB_PANIC);
 
-	if (rpc_register_void(RPC_EPM_REMOTE_CLONE, handle_remote_clone, 0))
+	if (rpc_register_void(RPC_GPM_REMOTE_CLONE, handle_remote_clone, 0))
 		BUG();
 	if (rpc_register_void(PROC_VFORK_DONE, handle_vfork_done, 0))
 		BUG();
@@ -305,6 +305,6 @@ int epm_remote_clone_start(void)
 	return 0;
 }
 
-void epm_remote_clone_exit(void)
+void gpm_remote_clone_exit(void)
 {
 }

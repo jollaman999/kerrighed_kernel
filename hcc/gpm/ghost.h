@@ -3,14 +3,14 @@
  *  @author Innogrid HCC
  */
 
-#ifndef __EPM_GHOST_H__
-#define __EPM_GHOST_H__
+#ifndef __GPM_GHOST_H__
+#define __GPM_GHOST_H__
 
 #include <hcc/ghost_types.h>
 
 struct task_struct;
 struct pt_regs;
-struct epm_action;
+struct gpm_action;
 
 /**
  *  Export a process into a ghost.
@@ -24,11 +24,11 @@ struct epm_action;
  *  @return		0 if everything ok.
  *			Negative value otherwise.
  */
-int export_process(struct epm_action *action,
+int export_process(struct gpm_action *action,
 		   ghost_t *ghost,
 		   struct task_struct *task,
 		   struct pt_regs *regs);
-void post_export_process(struct epm_action *action,
+void post_export_process(struct gpm_action *action,
 			 ghost_t *ghost,
 			 struct task_struct *task);
 
@@ -41,7 +41,7 @@ void post_export_process(struct epm_action *action,
 
  *  @return		Pointer to the imported task struct.
  */
-struct task_struct *import_process(struct epm_action *action,
+struct task_struct *import_process(struct gpm_action *action,
 				   ghost_t *ghost);
 
-#endif /* __EPM_GHOST_H__ */
+#endif /* __GPM_GHOST_H__ */

@@ -28,7 +28,7 @@
 #include <linux/shm.h>
 #include <linux/personality.h>
 #include <linux/init.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/hccsyms.h>
 #endif
 
@@ -292,7 +292,7 @@ static int load_som_library(struct file *f)
 
 static int __init init_som_binfmt(void)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	int retval;
 
 	hccsyms_register(HCCSYMS_BINFMTS_SOM, &som_format);
@@ -308,7 +308,7 @@ static int __init init_som_binfmt(void)
 static void __exit exit_som_binfmt(void)
 {
 	/* Remove the SOM loader. */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	hccsyms_unregister(HCCSYMS_BINFMTS_SOM);
 #endif
 	unregister_binfmt(&som_format);

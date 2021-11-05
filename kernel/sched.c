@@ -78,7 +78,7 @@
 #include <net/grpc/rpcid.h>
 #include <hcc/remote_syscall.h>
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/ghost.h>
 #endif
 #ifdef CONFIG_HCC_SCHED
@@ -2756,7 +2756,7 @@ int wake_up_state(struct task_struct *p, unsigned int state)
  */
 static void __sched_fork(struct task_struct *p)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current || in_hcc_do_fork()) {
 #endif
 	p->se.exec_start		= 0;
@@ -2796,7 +2796,7 @@ static void __sched_fork(struct task_struct *p)
 	p->se.nr_wakeups_idle			= 0;
 
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	}
 #endif
 
@@ -2860,7 +2860,7 @@ void sched_fork(struct task_struct *p, int clone_flags)
 	set_task_cpu(p, cpu);
 
 #if defined(CONFIG_SCHEDSTATS) || defined(CONFIG_TASK_DELAY_ACCT)
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!hcc_current || in_hcc_do_fork())
 #endif
 	if (likely(sched_info_on()))
@@ -6186,13 +6186,13 @@ asmlinkage void __sched schedule(void)
 	unsigned long *switch_count;
 	struct rq *rq;
 	int cpu;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct task_struct *hcc_cur;
 #endif
 
 need_resched:
 	preempt_disable();
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	hcc_cur = hcc_current;
 	hcc_current = NULL;
 #endif
@@ -6261,7 +6261,7 @@ need_resched_nonpreemptible:
 
 	if (unlikely(reacquire_kernel_lock(current) < 0))
 		goto need_resched_nonpreemptible;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	hcc_current = hcc_cur;
 #endif
 	preempt_enable_no_resched();
@@ -7767,13 +7767,13 @@ EXPORT_SYMBOL(__cond_resched_softirq);
  */
 void __sched yield(void)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct task_struct *hcc_cur = hcc_current;
 	hcc_current = NULL;
 #endif
 	set_current_state(TASK_RUNNING);
 	sys_sched_yield();
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	hcc_current = hcc_cur;
 #endif
 }
@@ -7978,15 +7978,15 @@ out_unlock:
 	return retval;
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
-struct epm_action;
+struct gpm_action;
 
 struct task_sched_params {
 	int policy, rt_prio, static_prio;
 };
 
-int export_sched(struct epm_action *action,
+int export_sched(struct gpm_action *action,
 		 ghost_t *ghost, struct task_struct *task)
 {
 	struct task_sched_params params;
@@ -8011,7 +8011,7 @@ int export_sched(struct epm_action *action,
 	return err;
 }
 
-int import_sched(struct epm_action *action,
+int import_sched(struct gpm_action *action,
 		 ghost_t *ghost, struct task_struct *task)
 {
 	struct task_sched_params params;
@@ -8049,7 +8049,7 @@ out:
 	return err;
 }
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 #ifdef CONFIG_HCC_PROC
 void remote_sched_init(void)

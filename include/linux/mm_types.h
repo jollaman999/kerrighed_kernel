@@ -255,7 +255,7 @@ struct mm_struct {
 	atomic_t mm_tasks;			/* How many tasks sharing this mm_struct cluster wide */
 	struct rw_semaphore remove_sem;         /* Protect struct remove during a migration */
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	atomic_t mm_ltasks;			/* How many tasks sharing this mm_struct locally */
 #endif
 	atomic_t mm_users;			/* How many users with user space? */

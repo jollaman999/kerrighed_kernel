@@ -3,7 +3,7 @@
 
 /* HCC signal */
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
 #include <asm/signal.h>
 
@@ -18,6 +18,6 @@ extern hcc_handler_t *hcc_handler[_NSIG];
 
 int send_hcc_signal(int sig, struct siginfo *info, struct task_struct *t);
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 #endif /* __HCC_HCC_SIGNAL_H__ */

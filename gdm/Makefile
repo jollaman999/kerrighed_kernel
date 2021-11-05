@@ -10,6 +10,6 @@ obj-$(CONFIG_HCC_GDM) := gdm.o object.o procfs.o \
 	gdm_grab_object.o gdm_set_object.o gdm_flush_object.o \
 	gdm_remove_object.o gdm_sync_object.o gdm_bench.o gdm_hotplug.o
 
-obj-$(CONFIG_HCC_EPM) += mobility.o
+obj-$(CONFIG_HCC_GPM) += mobility.o
 
 EXTRA_CFLAGS += -Wall -Werror

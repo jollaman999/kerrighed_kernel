@@ -5,7 +5,7 @@
 #ifndef __APPLICATION_H__
 #define __APPLICATION_H__
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
 #include <linux/list.h>
 #include <linux/mutex.h>
@@ -165,11 +165,11 @@ void hcc_exit_application(struct task_struct *task);
 
 /*--------------------------------------------------------------------------*/
 
-int export_application(struct epm_action *action,
+int export_application(struct gpm_action *action,
 		       ghost_t *ghost, struct task_struct *task);
-int import_application(struct epm_action *action,
+int import_application(struct gpm_action *action,
 		       ghost_t *ghost, struct task_struct *task);
-void unimport_application(struct epm_action *action,
+void unimport_application(struct gpm_action *action,
 			  ghost_t *ghost, struct task_struct *task);
 
 /*--------------------------------------------------------------------------*/
@@ -197,6 +197,6 @@ int app_cr_enable(void);
 void application_cr_server_init(void);
 void application_cr_server_finalize(void);
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 #endif /* __APPLICATION_H__ */

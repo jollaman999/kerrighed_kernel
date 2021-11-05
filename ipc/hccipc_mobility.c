@@ -161,7 +161,7 @@ out_put_dentry:
 	goto out;
 }
 
-int export_ipc_namespace(struct epm_action *action,
+int export_ipc_namespace(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	if (task->nsproxy->ipc_ns != task->nsproxy->hcc_ns->root_nsproxy.ipc_ns)
@@ -170,7 +170,7 @@ int export_ipc_namespace(struct epm_action *action,
 	return 0;
 }
 
-int import_ipc_namespace(struct epm_action *action,
+int import_ipc_namespace(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	task->nsproxy->ipc_ns = find_get_hcc_ipcns();
@@ -276,14 +276,14 @@ exit:
 	return r;
 }
 
-static int cr_export_later_sysv_sem(struct epm_action *action,
+static int cr_export_later_sysv_sem(struct gpm_action *action,
 				    ghost_t *ghost,
 				    struct task_struct *task)
 {
 	int r;
 	long key;
 
-	BUG_ON(action->type != EPM_CHECKPOINT);
+	BUG_ON(action->type != GPM_CHECKPOINT);
 	BUG_ON(action->checkpoint.shared != CR_SAVE_LATER);
 
 	/* if this is not true anymore, it's time to change
@@ -308,7 +308,7 @@ err:
 	return r;
 }
 
-int export_sysv_sem(struct epm_action *action,
+int export_sysv_sem(struct gpm_action *action,
 		    ghost_t *ghost, struct task_struct *task)
 {
 	int r;
@@ -316,7 +316,7 @@ int export_sysv_sem(struct epm_action *action,
 
 	BUG_ON(task->sysvsem.undo_list);
 
-	if (action->type == EPM_CHECKPOINT) {
+	if (action->type == GPM_CHECKPOINT) {
 		BUG_ON(action->checkpoint.shared != CR_SAVE_LATER);
 		r = cr_export_later_sysv_sem(action, ghost, task);
 		return r;
@@ -327,7 +327,7 @@ int export_sysv_sem(struct epm_action *action,
 	   - nothing to do on remote fork if CLONE_SYSVSEM is not set
 	   - need to create it if CLONE_SYSVSEM and still not created */
 	if (task->sysvsem.undo_list_id == UNIQUE_ID_NONE
-	    && action->type == EPM_REMOTE_CLONE
+	    && action->type == GPM_REMOTE_CLONE
 	    && (action->remote_clone.clone_flags & CLONE_SYSVSEM)) {
 		r = create_semundo_proc_list(task);
 		if (r)
@@ -335,8 +335,8 @@ int export_sysv_sem(struct epm_action *action,
 	}
 
 	/* does the remote process will use our undo_list ? */
-	if (action->type == EPM_MIGRATE
-	    || (action->type == EPM_REMOTE_CLONE
+	if (action->type == GPM_MIGRATE
+	    || (action->type == GPM_REMOTE_CLONE
 		&& (action->remote_clone.clone_flags & CLONE_SYSVSEM)))
 		undo_list_id = task->sysvsem.undo_list_id;
 
@@ -451,7 +451,7 @@ unimport_semundos:
 	goto err;
 }
 
-static int cr_link_to_sysv_sem(struct epm_action *action,
+static int cr_link_to_sysv_sem(struct gpm_action *action,
 			       ghost_t *ghost,
 			       struct task_struct *task)
 {
@@ -477,13 +477,13 @@ err:
 	return r;
 }
 
-int import_sysv_sem(struct epm_action *action,
+int import_sysv_sem(struct gpm_action *action,
 		    ghost_t *ghost, struct task_struct *task)
 {
 	int r;
 	unique_id_t undo_list_id;
 
-	if (action->type == EPM_CHECKPOINT) {
+	if (action->type == GPM_CHECKPOINT) {
 		BUG_ON(action->restart.shared != CR_LINK_ONLY);
 		r = cr_link_to_sysv_sem(action, ghost, task);
 		return r;
@@ -510,7 +510,7 @@ void unimport_sysv_sem(struct task_struct *task)
 	task->sysvsem.undo_list_id = UNIQUE_ID_NONE;
 }
 
-static int cr_export_now_sysv_sem(struct epm_action *action, ghost_t *ghost,
+static int cr_export_now_sysv_sem(struct gpm_action *action, ghost_t *ghost,
 				  struct task_struct *task,
 				  union export_args *args)
 {
@@ -533,7 +533,7 @@ err:
 }
 
 
-static int cr_import_now_sysv_sem(struct epm_action *action, ghost_t *ghost,
+static int cr_import_now_sysv_sem(struct gpm_action *action, ghost_t *ghost,
 				  struct task_struct *fake, int local_only,
 				  void ** returned_data, size_t *data_size)
 {

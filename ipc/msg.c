@@ -44,7 +44,7 @@
 #include "util.h"
 #ifdef CONFIG_HCC_GIPC
 #include "hccmsg.h"
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/action.h>
 #endif
 #endif
@@ -828,7 +828,7 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 #endif
 		ss_del(&s);
 
-#if defined(CONFIG_HCC_GIPC) && defined(CONFIG_HCC_EPM)
+#if defined(CONFIG_HCC_GIPC) && defined(CONFIG_HCC_GPM)
 		if (hcc_action_any_pending(current)) {
 #ifdef CONFIG_HCC_DEBUG
 			printk("%s:%d - action hcc! --> need replay!!\n",
@@ -1094,7 +1094,7 @@ long do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 
 		list_del(&msr_d.r_list);
 
-#if defined(CONFIG_HCC_GIPC) && defined(CONFIG_HCC_EPM)
+#if defined(CONFIG_HCC_GIPC) && defined(CONFIG_HCC_GPM)
 		if (hcc_action_any_pending(current)) {
 #ifdef CONFIG_HCC_DEBUG
 			printk("%s:%d - action hcc! --> need replay!!\n",

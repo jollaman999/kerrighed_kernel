@@ -6,12 +6,12 @@
 #include <linux/cred.h>
 #include <net/grpc/rpc.h>
 #include <hcc/namespace.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <linux/user_namespace.h>
 #include <linux/security.h>
 #include <hcc/ghost.h>
 
-struct epm_action;
+struct gpm_action;
 #endif
 
 int pack_creds(struct rpc_desc *desc, const struct cred *cred)
@@ -77,9 +77,9 @@ const struct cred *unpack_override_creds(struct rpc_desc *desc)
 	return old_cred;
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
-int export_cred(struct epm_action *action,
+int export_cred(struct gpm_action *action,
 		ghost_t *ghost, struct task_struct *task)
 {
 	const struct cred *cred = __task_cred(task);
@@ -121,7 +121,7 @@ out:
 	return err;
 }
 
-int import_cred(struct epm_action *action,
+int import_cred(struct gpm_action *action,
 		ghost_t *ghost, struct task_struct *task)
 {
 	struct cred tmp_cred;
@@ -229,4 +229,4 @@ void free_ghost_cred(struct task_struct *ghost)
 	put_cred(ghost->real_cred);
 }
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */

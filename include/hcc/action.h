@@ -6,7 +6,7 @@
 #ifndef __HCC_ACTION_H__
 #define __HCC_ACTION_H__
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
 #include <linux/sched.h>
 #include <linux/time.h>
@@ -14,12 +14,12 @@
 #include <hcc/sys/checkpoint.h>
 
 typedef enum {
-	EPM_NO_ACTION,
-	EPM_MIGRATE,
-	EPM_REMOTE_CLONE,
-	EPM_CHECKPOINT,
-	EPM_ACTION_MAX	   /* Always in last position */
-} hcc_epm_action_t;
+	GPM_NO_ACTION,
+	GPM_MIGRATE,
+	GPM_REMOTE_CLONE,
+	GPM_CHECKPOINT,
+	GPM_ACTION_MAX	   /* Always in last position */
+} hcc_gpm_action_t;
 
 typedef enum {
 	CR_SAVE_NOW,
@@ -37,8 +37,8 @@ typedef enum {
 struct task_struct;
 struct completion;
 
-struct epm_action {
-	hcc_epm_action_t type;
+struct gpm_action {
+	hcc_gpm_action_t type;
 	union {
 		struct {
 			pid_t pid;
@@ -70,14 +70,14 @@ struct epm_action {
 	};
 };
 
-static inline hcc_node_t epm_target_node(struct epm_action *action)
+static inline hcc_node_t gpm_target_node(struct gpm_action *action)
 {
 	switch (action->type) {
-	case EPM_MIGRATE:
+	case GPM_MIGRATE:
 		return action->migrate.target;
-	case EPM_REMOTE_CLONE:
+	case GPM_REMOTE_CLONE:
 		return action->remote_clone.target;
-	case EPM_CHECKPOINT:
+	case GPM_CHECKPOINT:
 		return HCC_NODE_ID_NONE;
 	default:
 		BUG();
@@ -122,16 +122,16 @@ static inline void hcc_action_unblock_any(struct task_struct *task)
 	hcc_action_unblock_all();
 }
 
-int hcc_action_disable(struct task_struct *task, hcc_epm_action_t action,
+int hcc_action_disable(struct task_struct *task, hcc_gpm_action_t action,
 		       int inheritable);
-int hcc_action_enable(struct task_struct *task, hcc_epm_action_t action,
+int hcc_action_enable(struct task_struct *task, hcc_gpm_action_t action,
 		      int inheritable);
 
-int hcc_action_start(struct task_struct *task, hcc_epm_action_t action);
-int hcc_action_stop(struct task_struct *task, hcc_epm_action_t action);
+int hcc_action_start(struct task_struct *task, hcc_gpm_action_t action);
+int hcc_action_stop(struct task_struct *task, hcc_gpm_action_t action);
 
-int hcc_action_pending(struct task_struct *task, hcc_epm_action_t action);
+int hcc_action_pending(struct task_struct *task, hcc_gpm_action_t action);
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 #endif /* __HCC_ACTION_H__ */

@@ -253,7 +253,7 @@ extern void oops_exit(void);
 extern int oops_may_print(void);
 NORET_TYPE void do_exit(long error_code)
 	ATTRIB_NORET;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 NORET_TYPE void do_exit_wo_notify(long code)
 	ATTRIB_NORET;
 #endif

@@ -20,7 +20,7 @@
 #include <net/grpc/rpcid.h>
 #include <net/grpc/rpc.h>
 #include <gdm/gdm.h>
-#include "../epm_internal.h"
+#include "../gpm_internal.h"
 #include "../checkpoint.h"
 #include "app_checkpoint.h"
 #include "app_frontier.h"
@@ -536,7 +536,7 @@ void hcc_exit_application(struct task_struct *task)
 
 /*--------------------------------------------------------------------------*/
 
-int export_application(struct epm_action *action,
+int export_application(struct gpm_action *action,
 		       ghost_t *ghost, struct task_struct *task)
 {
 	int r = 0;
@@ -553,7 +553,7 @@ int export_application(struct epm_action *action,
 	/* If process is checkpointable but not in an application
 	   and action = REMOTE_CLONE, create the application */
 	if (cap_raised(task->hcc_caps.effective, GCAP_CHECKPOINTABLE) &&
-	    !task->application && action->type == EPM_REMOTE_CLONE)
+	    !task->application && action->type == GPM_REMOTE_CLONE)
 		create_application(task);
 
 	if (!task->application)
@@ -566,7 +566,7 @@ int export_application(struct epm_action *action,
 	return r;
 }
 
-int import_application(struct epm_action *action,
+int import_application(struct gpm_action *action,
 		       ghost_t *ghost, struct task_struct *task)
 {
 	int r;
@@ -578,7 +578,7 @@ int import_application(struct epm_action *action,
 	if (r)
 		goto out;
 
-	if (action->type == EPM_CHECKPOINT)
+	if (action->type == GPM_CHECKPOINT)
 		return 0;
 
 	if (!cap_raised(task->hcc_caps.effective, GCAP_CHECKPOINTABLE))
@@ -593,7 +593,7 @@ out:
 	return r;
 }
 
-void unimport_application(struct epm_action *action,
+void unimport_application(struct gpm_action *action,
 			  ghost_t *ghost, struct task_struct *task)
 {
 	if (!task->application)
@@ -613,7 +613,7 @@ static void local_cancel_stop(struct app_struct *app)
 	list_for_each_entry(tsk, &app->tasks, next_task) {
 		if (tsk->checkpoint.result == PCUS_RUNNING)
 			goto out;
-		r = hcc_action_stop(tsk->task, EPM_CHECKPOINT);
+		r = hcc_action_stop(tsk->task, GPM_CHECKPOINT);
 		BUG_ON(r);
 		if (tsk->checkpoint.result == PCUS_OPERATION_OK)
 			complete(&tsk->checkpoint.completion);
@@ -643,7 +643,7 @@ static int local_prepare_stop(struct app_struct *app)
 				goto error;
 			}
 
-			r = hcc_action_start(tsk->task, EPM_CHECKPOINT);
+			r = hcc_action_start(tsk->task, GPM_CHECKPOINT);
 			if (r) {
 				ckpt_err(NULL, r,
 					 "hcc_action_start fails for "
@@ -833,7 +833,7 @@ static void __continue_task(task_state_t *tsk, int first_run)
 {
 	BUG_ON(!tsk);
 
-	hcc_action_stop(tsk->task, EPM_CHECKPOINT);
+	hcc_action_stop(tsk->task, GPM_CHECKPOINT);
 	tsk->checkpoint.result = PCUS_RUNNING;
 	tsk->checkpoint.ghost = NULL;
 

@@ -755,14 +755,14 @@ out:
 }
 #endif
 
-static int cr_export_later_signal_struct(struct epm_action *action,
+static int cr_export_later_signal_struct(struct gpm_action *action,
 					 ghost_t *ghost,
 					 struct task_struct *task)
 {
 	int r;
 	long key;
 
-	BUG_ON(action->type != EPM_CHECKPOINT);
+	BUG_ON(action->type != GPM_CHECKPOINT);
 	BUG_ON(action->checkpoint.shared != CR_SAVE_LATER);
 
 	key = (long)(task->signal->hcc_objid);
@@ -781,13 +781,13 @@ err:
 	return r;
 }
 
-int export_signal_struct(struct epm_action *action,
+int export_signal_struct(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk)
 {
 	objid_t hcc_objid = tsk->signal->hcc_objid;
 	int r;
 
-	if (action->type == EPM_CHECKPOINT
+	if (action->type == GPM_CHECKPOINT
 	    && action->checkpoint.shared == CR_SAVE_LATER) {
 		r = cr_export_later_signal_struct(action, ghost, tsk);
 		return r;
@@ -798,13 +798,13 @@ int export_signal_struct(struct epm_action *action,
 		goto err_write;
 
 	switch (action->type) {
-	case EPM_MIGRATE:
+	case GPM_MIGRATE:
 		r = export_sigpending(ghost, tsk, &tsk->signal->shared_pending);
 		if (r)
 			goto err_write;
 		r = export_posix_timers(ghost, tsk);
 		break;
-	case EPM_CHECKPOINT: {
+	case GPM_CHECKPOINT: {
 		struct signal_struct *sig =
 			hcc_signal_readlock(tsk->signal);
 		r = ghost_write(ghost, sig, sizeof(*sig));
@@ -828,7 +828,7 @@ err_write:
 	return r;
 }
 
-static int cr_link_to_signal_struct(struct epm_action *action,
+static int cr_link_to_signal_struct(struct gpm_action *action,
 				    ghost_t *ghost,
 				    struct task_struct *tsk)
 {
@@ -864,7 +864,7 @@ err:
 	return r;
 }
 
-int import_signal_struct(struct epm_action *action,
+int import_signal_struct(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk)
 {
 	objid_t hcc_objid;
@@ -872,7 +872,7 @@ int import_signal_struct(struct epm_action *action,
 	struct signal_struct *sig;
 	int r;
 
-	if (action->type == EPM_CHECKPOINT
+	if (action->type == GPM_CHECKPOINT
 	    && action->restart.shared == CR_LINK_ONLY) {
 		r = cr_link_to_signal_struct(action, ghost, tsk);
 		return r;
@@ -883,7 +883,7 @@ int import_signal_struct(struct epm_action *action,
 		goto err_read;
 
 	switch (action->type) {
-	case EPM_MIGRATE:
+	case GPM_MIGRATE:
 		/* TODO: this will need more locking with distributed threads */
 		obj = __hcc_signal_writelock(hcc_objid);
 		BUG_ON(!obj);
@@ -914,7 +914,7 @@ out_mig_unlock:
 		hcc_signal_unlock(sig);
 		break;
 
-	case EPM_REMOTE_CLONE:
+	case GPM_REMOTE_CLONE:
 		/*
 		 * The structure will be partly copied when creating the
 		 * active process.
@@ -927,7 +927,7 @@ out_mig_unlock:
 		tsk->signal = sig;
 		break;
 
-	case EPM_CHECKPOINT: {
+	case GPM_CHECKPOINT: {
 		struct signal_struct tmp_sig;
 
 		sig = cr_signal_alloc(hcc_objid);
@@ -1038,7 +1038,7 @@ void unimport_signal_struct(struct task_struct *task)
 	unimport_sigpending(task, &task->signal->shared_pending);
 }
 
-static int cr_export_now_signal_struct(struct epm_action *action,
+static int cr_export_now_signal_struct(struct gpm_action *action,
 				       ghost_t *ghost,
 				       struct task_struct *task,
 				       union export_args *args)
@@ -1052,7 +1052,7 @@ static int cr_export_now_signal_struct(struct epm_action *action,
 	return r;
 }
 
-static int cr_import_now_signal_struct(struct epm_action *action,
+static int cr_import_now_signal_struct(struct gpm_action *action,
 				       ghost_t *ghost,
 				       struct task_struct *fake,
 				       int local_only,
@@ -1135,15 +1135,15 @@ struct shared_object_operations cr_shared_signal_struct_ops = {
 
 /* private signals */
 
-int export_private_signals(struct epm_action *action,
+int export_private_signals(struct gpm_action *action,
 			   ghost_t *ghost,
 			   struct task_struct *task)
 {
 	int err = 0;
 
 	switch (action->type) {
-	case EPM_MIGRATE:
-	case EPM_CHECKPOINT:
+	case GPM_MIGRATE:
+	case GPM_CHECKPOINT:
 		err = export_sigpending(ghost, task, &task->pending);
 		break;
 	default:
@@ -1153,15 +1153,15 @@ int export_private_signals(struct epm_action *action,
 	return err;
 }
 
-int import_private_signals(struct epm_action *action,
+int import_private_signals(struct gpm_action *action,
 			   ghost_t *ghost,
 			   struct task_struct *task)
 {
 	int err = 0;
 
 	switch (action->type) {
-	case EPM_MIGRATE:
-	case EPM_CHECKPOINT:
+	case GPM_MIGRATE:
+	case GPM_CHECKPOINT:
 		err = import_sigpending(ghost, task, &task->pending);
 		break;
 	default:
@@ -1177,7 +1177,7 @@ void unimport_private_signals(struct task_struct *task)
 	unimport_sigpending(task, &task->pending);
 }
 
-int epm_signal_start(void)
+int gpm_signal_start(void)
 {
 	unsigned long cache_flags = SLAB_PANIC;
 
@@ -1201,7 +1201,7 @@ int epm_signal_start(void)
 	return 0;
 }
 
-void epm_signal_exit(void)
+void gpm_signal_exit(void)
 {
 	return;
 }

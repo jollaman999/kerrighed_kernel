@@ -13,7 +13,7 @@
 #include <gdm/gdm.h>
 #include <hcc/file.h>
 #include "file_struct_io_linker.h"
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include "mobility.h"
 #include <hcc/regular_file_mgr.h>
 #endif
@@ -38,7 +38,7 @@ int init_dvfs (void)
 	register_io_linker (DVFS_FILE_STRUCT_LINKER,
 			    &dvfs_file_struct_io_linker);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	dvfs_mobility_init();
 #endif
 #ifdef CONFIG_HCC_FAF
@@ -66,7 +66,7 @@ void cleanup_dvfs (void)
 	faf_finalize() ;
 #endif
 	dvfs_file_finalize();
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	dvfs_mobility_finalize();
 #endif
 	printk ("DVFS termination done\n");

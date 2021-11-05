@@ -25,7 +25,7 @@
 #include <linux/personality.h>
 #include <linux/init.h>
 #include <linux/coredump.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/hccsyms.h>
 #endif
 
@@ -459,7 +459,7 @@ out:
 
 static int __init init_aout_binfmt(void)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	int retval;
 
 	hccsyms_register(HCCSYMS_BINFMTS_AOUT, &aout_format);
@@ -474,7 +474,7 @@ static int __init init_aout_binfmt(void)
 
 static void __exit exit_aout_binfmt(void)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	hccsyms_unregister(HCCSYMS_BINFMTS_AOUT);
 #endif
 	unregister_binfmt(&aout_format);

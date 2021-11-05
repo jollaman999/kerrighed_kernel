@@ -63,7 +63,7 @@
 #include <hcc/task.h>
 #include <hcc/hccinit.h>
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/signal.h>
 #endif
 
@@ -917,7 +917,7 @@ static int de_thread(struct task_struct *tsk)
 #ifdef CONFIG_HCC_PROC
 		struct task_gdm_object *obj;
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		struct children_gdm_object *parent_children_obj;
 #endif
 
@@ -936,7 +936,7 @@ static int de_thread(struct task_struct *tsk)
 			schedule();
 		}
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		parent_children_obj = rcu_dereference(tsk->parent_children_obj);
 #endif
 #ifdef CONFIG_HCC_PROC
@@ -945,13 +945,13 @@ static int de_thread(struct task_struct *tsk)
 		BUG_ON(!obj ^ !tsk->task_obj);
 		if (
 		    obj
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		    || parent_children_obj
 #endif
 		   ) {
 			write_unlock_irq(&tasklist_lock);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 			parent_children_obj =
 				hcc_children_prepare_de_thread(tsk);
 #endif
@@ -1015,7 +1015,7 @@ static int de_thread(struct task_struct *tsk)
 		if (obj)
 			__hcc_task_unlock(tsk);
 #endif /* CONFIG_HCC_PROC */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		hcc_children_finish_de_thread(parent_children_obj, tsk);
 #endif
 		threadgroup_change_end(tsk);
@@ -1049,7 +1049,7 @@ no_thread_group:
 		atomic_set(&newsighand->count, 1);
 		memcpy(newsighand->action, oldsighand->action,
 		       sizeof(newsighand->action));
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		down_read(&hcc_init_sem);
 
 		hcc_sighand_alloc_unshared(tsk, newsighand);
@@ -1061,7 +1061,7 @@ no_thread_group:
 		spin_unlock(&oldsighand->siglock);
 		write_unlock_irq(&tasklist_lock);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		hcc_sighand_cleanup(oldsighand);
 
 		up_read(&hcc_init_sem);
@@ -1226,7 +1226,7 @@ void setup_new_exec(struct linux_binprm * bprm)
 	   group */
 
 	current->self_exec_id++;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	hcc_update_self_exec_id(current);
 #endif
 			
@@ -1635,7 +1635,7 @@ int do_execve(const char * filename,
 	return retval;
 
 out:
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	/* Quiet the BUG_ON() in mmput() */
 	if (bprm->mm)
 		atomic_dec(&bprm->mm->mm_ltasks);

@@ -44,7 +44,7 @@
 #include <hcc/hccnodemask.h>
 #include <hcc/hotplug.h>
 #include <hcc/workqueue.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/ghost.h>
 #endif
 #include <hcc/scheduler/global_config.h>
@@ -1469,9 +1469,9 @@ struct config_item *global_config_unpack_get_item(struct rpc_desc *desc)
 	return item;
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
-int export_global_config_item(struct epm_action *action, ghost_t *ghost,
+int export_global_config_item(struct gpm_action *action, ghost_t *ghost,
 			      struct config_item *item)
 {
 	char *path = get_full_path(item, NULL);
@@ -1492,7 +1492,7 @@ put:
 	return err;
 }
 
-int import_global_config_item(struct epm_action *action, ghost_t *ghost,
+int import_global_config_item(struct gpm_action *action, ghost_t *ghost,
 			      struct config_item **item_p)
 {
 	struct config_item *item;
@@ -1524,7 +1524,7 @@ out:
 	return err;
 }
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 static int replicate_config(hcc_node_t node)
 {

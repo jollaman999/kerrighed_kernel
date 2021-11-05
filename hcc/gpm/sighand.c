@@ -399,14 +399,14 @@ void hcc_sighand_cleanup(struct sighand_struct *sig)
 
 /* EPM actions */
 
-static int cr_export_later_sighand_struct(struct epm_action *action,
+static int cr_export_later_sighand_struct(struct gpm_action *action,
 					  ghost_t *ghost,
 					  struct task_struct *task)
 {
 	int r;
 	long key;
 
-	BUG_ON(action->type != EPM_CHECKPOINT);
+	BUG_ON(action->type != GPM_CHECKPOINT);
 	BUG_ON(action->checkpoint.shared != CR_SAVE_LATER);
 
 	key = (long)(task->sighand);
@@ -429,12 +429,12 @@ err:
 	return r;
 }
 
-int export_sighand_struct(struct epm_action *action,
+int export_sighand_struct(struct gpm_action *action,
 			  ghost_t *ghost, struct task_struct *tsk)
 {
 	int r;
 
-	if (action->type == EPM_CHECKPOINT
+	if (action->type == GPM_CHECKPOINT
 	    && action->checkpoint.shared == CR_SAVE_LATER) {
 		r = cr_export_later_sighand_struct(action, ghost, tsk);
 		return r;
@@ -445,7 +445,7 @@ int export_sighand_struct(struct epm_action *action,
 	if (r)
 		goto err_write;
 
-	if (action->type == EPM_CHECKPOINT)
+	if (action->type == GPM_CHECKPOINT)
 		r = ghost_write(ghost,
 				&tsk->sighand->action,
 				sizeof(tsk->sighand->action));
@@ -454,7 +454,7 @@ err_write:
 	return r;
 }
 
-static int cr_link_to_sighand_struct(struct epm_action *action,
+static int cr_link_to_sighand_struct(struct gpm_action *action,
 				     ghost_t *ghost,
 				     struct task_struct *tsk)
 {
@@ -484,13 +484,13 @@ err:
 	return r;
 }
 
-int import_sighand_struct(struct epm_action *action,
+int import_sighand_struct(struct gpm_action *action,
 			  ghost_t *ghost, struct task_struct *tsk)
 {
 	unsigned long hcc_objid;
 	int r;
 
-	if (action->type == EPM_CHECKPOINT
+	if (action->type == GPM_CHECKPOINT
 	    && action->restart.shared == CR_LINK_ONLY) {
 		r = cr_link_to_sighand_struct(action, ghost, tsk);
 		return r;
@@ -501,12 +501,12 @@ int import_sighand_struct(struct epm_action *action,
 		goto err_read;
 
 	switch (action->type) {
-	case EPM_MIGRATE:
+	case GPM_MIGRATE:
 		tsk->sighand = hcc_sighand_writelock(hcc_objid);
 		BUG_ON(!tsk->sighand);
 		hcc_sighand_unlock(hcc_objid);
 		break;
-	case EPM_REMOTE_CLONE:
+	case GPM_REMOTE_CLONE:
 		/*
 		 * The structure will be partly copied when creating the
 		 * active process.
@@ -515,7 +515,7 @@ int import_sighand_struct(struct epm_action *action,
 		BUG_ON(!tsk->sighand);
 		hcc_sighand_unlock(hcc_objid);
 		break;
-	case EPM_CHECKPOINT:
+	case GPM_CHECKPOINT:
 		tsk->sighand = cr_sighand_alloc();
 		hcc_objid = tsk->sighand->hcc_objid;
 
@@ -542,7 +542,7 @@ void unimport_sighand_struct(struct task_struct *task)
 {
 }
 
-static int cr_export_now_sighand_struct(struct epm_action *action,
+static int cr_export_now_sighand_struct(struct gpm_action *action,
 					ghost_t *ghost,
 					struct task_struct *task,
 					union export_args *args)
@@ -558,7 +558,7 @@ static int cr_export_now_sighand_struct(struct epm_action *action,
 }
 
 
-static int cr_import_now_sighand_struct(struct epm_action *action,
+static int cr_import_now_sighand_struct(struct gpm_action *action,
 					ghost_t *ghost,
 					struct task_struct *fake,
 					int local_only,
@@ -618,7 +618,7 @@ struct shared_object_operations cr_shared_sighand_struct_ops = {
 	.delete            = cr_delete_sighand_struct,
 };
 
-int epm_sighand_start(void)
+int gpm_sighand_start(void)
 {
 	unsigned long cache_flags = SLAB_PANIC;
 
@@ -648,6 +648,6 @@ int epm_sighand_start(void)
 	return 0;
 }
 
-void epm_sighand_exit(void)
+void gpm_sighand_exit(void)
 {
 }

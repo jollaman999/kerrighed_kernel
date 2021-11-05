@@ -7,7 +7,7 @@
 
 struct module;
 struct task_struct;
-struct epm_action;
+struct gpm_action;
 struct ghost;
 
 struct hcc_sched_module_info_type {
@@ -21,10 +21,10 @@ struct hcc_sched_module_info_type {
 	/* may be called from interrupt context */
 	void (*free)(struct hcc_sched_module_info *);
 	/* can block */
-	int (*export)(struct epm_action *, struct ghost *,
+	int (*export)(struct gpm_action *, struct ghost *,
 		      struct hcc_sched_module_info *);
 	/* can block */
-	struct hcc_sched_module_info *(*import)(struct epm_action *,
+	struct hcc_sched_module_info *(*import)(struct gpm_action *,
 						struct ghost *,
 						struct task_struct *);
 };

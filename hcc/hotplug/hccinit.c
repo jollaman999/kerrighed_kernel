@@ -96,7 +96,7 @@ deffct(procfs);
 #ifdef CONFIG_HCC_PROC
 deffct(proc);
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 deffct(ghost);
 deffct(epm);
 #endif
@@ -368,7 +368,7 @@ int init_hcc_upper_layers(void)
 		goto err_gdm;
 #endif
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (init_ghost())
 		goto err_ghost;
 #endif
@@ -408,7 +408,7 @@ int init_hcc_upper_layers(void)
 		goto err_procfs;
 #endif
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (init_epm())
 		goto err_epm;
 #endif
@@ -426,7 +426,7 @@ int init_hcc_upper_layers(void)
 	cleanup_scheduler();
       err_sched:
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	cleanup_epm();
       err_epm:
 #endif
@@ -462,7 +462,7 @@ int init_hcc_upper_layers(void)
 	cleanup_stream();
       err_palantir:
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	cleanup_ghost();
       err_ghost:
 #endif

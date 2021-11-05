@@ -83,7 +83,7 @@
 #include <linux/pid_namespace.h>
 #include <linux/fs_struct.h>
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/action.h>
 #endif
 #ifdef CONFIG_HCC_GDM
@@ -719,22 +719,22 @@ int proc_pid_syscall(struct task_struct *task, char *buffer)
 }
 #endif /* CONFIG_HAVE_ARCH_TRACEHOOK */
 
-#ifdef CONFIG_HCC_EPM
-int epm_type_show(struct task_struct *task, char *buffer)
+#ifdef CONFIG_HCC_GPM
+int gpm_type_show(struct task_struct *task, char *buffer)
 {
 	int res = 0;
 
 	task_lock(task);
-	switch (task->epm_type)
+	switch (task->gpm_type)
 	{
-	case EPM_NO_ACTION:
-		res = sprintf(buffer, "EPM_NO_ACTION\n");
+	case GPM_NO_ACTION:
+		res = sprintf(buffer, "GPM_NO_ACTION\n");
 		break;
-	case EPM_MIGRATE:
-		res = sprintf(buffer, "EPM_MIGRATE\n");
+	case GPM_MIGRATE:
+		res = sprintf(buffer, "GPM_MIGRATE\n");
 		break;
-	case EPM_REMOTE_CLONE:
-		res = sprintf(buffer, "EPM_REMOTE_CLONE\n");
+	case GPM_REMOTE_CLONE:
+		res = sprintf(buffer, "GPM_REMOTE_CLONE\n");
 		break;
 	default:
 		res = -EINVAL;
@@ -745,23 +745,23 @@ int epm_type_show(struct task_struct *task, char *buffer)
 	return res;
 }
 
-int epm_source_show(struct task_struct *task, char *buffer)
+int gpm_source_show(struct task_struct *task, char *buffer)
 {
 	int res = 0;
 
 	task_lock(task);
-	res = sprintf(buffer, "%d\n", task->epm_source);
+	res = sprintf(buffer, "%d\n", task->gpm_source);
 	task_unlock(task);
 
 	return res;
 }
 
-int epm_target_show(struct task_struct *task, char *buffer)
+int gpm_target_show(struct task_struct *task, char *buffer)
 {
 	int res = 0;
 
 	task_lock(task);
-	res = sprintf(buffer, "%d\n", task->epm_target);
+	res = sprintf(buffer, "%d\n", task->gpm_target);
 	task_unlock(task);
 
 	return res;
@@ -2169,7 +2169,7 @@ int pid_revalidate(struct dentry *dentry, struct nameidata *nd)
 	struct task_struct *task = get_proc_task(inode);
 	const struct cred *cred;
 
-#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_EPM)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_GPM)
 	if (task && task->exit_state != EXIT_MIGRATION) {
 #else
 	if (task) {
@@ -3215,10 +3215,10 @@ static const struct pid_entry tgid_base_stuff[] = {
 	INF("cmdline",    S_IRUGO, proc_pid_cmdline),
 	ONE("stat",       S_IRUGO, proc_tgid_stat),
 	ONE("statm",      S_IRUGO, proc_pid_statm),
-#ifdef CONFIG_HCC_EPM
-	INF("epm_type",  S_IRUGO, epm_type_show),
-	INF("epm_source",S_IRUGO, epm_source_show),
-	INF("epm_target",S_IRUGO, epm_target_show),
+#ifdef CONFIG_HCC_GPM
+	INF("gpm_type",  S_IRUGO, gpm_type_show),
+	INF("gpm_source",S_IRUGO, gpm_source_show),
+	INF("gpm_target",S_IRUGO, gpm_target_show),
 #endif
 	REG("maps",       S_IRUGO, proc_maps_operations),
 #ifdef CONFIG_NUMA
@@ -3464,7 +3464,7 @@ struct dentry *proc_pid_lookup(struct inode *dir, struct dentry * dentry, struct
 #endif
 
 	result = proc_pid_instantiate(dir, dentry, task, NULL);
-#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_EPM)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_GPM)
 	if (current->nsproxy->hcc_ns
 	    && IS_ERR(result) && task->exit_state == EXIT_MIGRATION) {
 		/*
@@ -3636,10 +3636,10 @@ static const struct pid_entry tid_base_stuff[] = {
 	INF("cmdline",   S_IRUGO, proc_pid_cmdline),
 	ONE("stat",      S_IRUGO, proc_tid_stat),
 	ONE("statm",     S_IRUGO, proc_pid_statm),
-#ifdef CONFIG_HCC_EPM
-	INF("epm_type",  S_IRUGO, epm_type_show),
-	INF("epm_source",S_IRUGO, epm_source_show),
-	INF("epm_target",S_IRUGO, epm_target_show),
+#ifdef CONFIG_HCC_GPM
+	INF("gpm_type",  S_IRUGO, gpm_type_show),
+	INF("gpm_source",S_IRUGO, gpm_source_show),
+	INF("gpm_target",S_IRUGO, gpm_target_show),
 #endif
 #ifdef CONFIG_HCC_GDM
 	INF("gdm",      S_IRUGO, proc_tid_gdm),

@@ -62,7 +62,7 @@
 #include <hcc/hccinit.h>
 #include <hcc/hcc_exit.h>
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <hcc/signal.h>
 #include <hcc/children.h>
 #endif
@@ -113,7 +113,7 @@ static void __exit_signal(struct task_struct *tsk)
 	atomic_dec(&sig->count);
 
 	posix_cpu_timers_exit(tsk);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (tsk->exit_state == EXIT_MIGRATION) {
 		BUG_ON(atomic_read(&sig->count) >= 1);
 		posix_cpu_timers_exit_group(tsk);
@@ -175,7 +175,7 @@ static void __exit_signal(struct task_struct *tsk)
 	tsk->sighand = NULL;
 	spin_unlock(&sighand->siglock);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (tsk->exit_state == EXIT_MIGRATION)
 		hcc_sighand_unpin(sighand);
 	else
@@ -184,7 +184,7 @@ static void __exit_signal(struct task_struct *tsk)
 	clear_tsk_thread_flag(tsk,TIF_SIGPENDING);
 	if (group_dead) {
 		flush_sigqueue(&sig->shared_pending);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		if (tsk->exit_state != EXIT_MIGRATION)
 #endif
 		taskstats_tgid_free(sig);
@@ -193,7 +193,7 @@ static void __exit_signal(struct task_struct *tsk)
 		 * see account_group_exec_runtime().
 		 */
 		task_rq_unlock_wait(tsk);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		if (tsk->exit_state == EXIT_MIGRATION) {
 			hcc_signal_unpin(sig);
 			return;
@@ -217,21 +217,21 @@ void release_task(struct task_struct * p)
 {
 	struct task_struct *leader;
 	int zap_leader;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct signal_struct *locked_sig;
 	unsigned long locked_sighand_id;
 	int delay_notify_parent = 0;
 
 	/*
 	 * Because we may have to release the group leader at the same time and
-	 * because with HCC_EPM this may need to do blocking operations in the
+	 * because with HCC_GPM this may need to do blocking operations in the
 	 * context of an unhashed task (current thread), we make sure that the
 	 * task that will do the job will remain a plain task during the whole
 	 * operation.
 	 */
 	if (hcc_delay_release_task(p))
 		return;
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 repeat:
 #ifdef CONFIG_HCC_SCHED
 	hcc_sched_info_free(p);
@@ -239,14 +239,14 @@ repeat:
 #ifdef CONFIG_HCC_PROC
 	hcc_release_task(p);
 #endif /* CONFIG_HCC_PROC */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	locked_sig = NULL;
 	locked_sighand_id = 0;
 	if (p->exit_state != EXIT_MIGRATION) {
 		locked_sig = hcc_signal_exit(p->signal);
 		locked_sighand_id = hcc_sighand_exit(p->sighand);
 	}
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 	tracehook_prepare_release_task(p);
 	/* don't need to get the RCU readlock here - the process is dead and
 	 * can't be modifying its own credentials */
@@ -267,7 +267,7 @@ repeat:
 	leader = p->group_leader;
 	if (leader != p && thread_group_empty(leader) && leader->exit_state == EXIT_ZOMBIE) {
 		BUG_ON(task_detached(leader));
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		if (leader->parent_children_obj) {
 			delay_notify_parent = 1;
 			leader->flags |= PF_DELAY_NOTIFY;
@@ -293,12 +293,12 @@ repeat:
 			leader->exit_state = EXIT_DEAD;
 	}
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 unlock:
 #endif
 	write_unlock_irq(&tasklist_lock);
 	release_thread(p);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	hcc_children_cleanup(p);
 	if (locked_sighand_id)
 		hcc_sighand_unlock(locked_sighand_id);
@@ -306,7 +306,7 @@ unlock:
 #endif
 	call_rcu(&p->rcu, delayed_put_task_struct);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (delay_notify_parent) {
 		BUG_ON(p == current);
 		delay_notify_parent = 0;
@@ -354,7 +354,7 @@ static int will_become_orphaned_pgrp(struct pid *pgrp, struct task_struct *ignor
 
 	do_each_pid_task(pgrp, PIDTYPE_PGID, p) {
 		if ((p == ignored_task) ||
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		    (p->real_parent == baby_sitter) ||
 #endif
 		    (p->exit_state && thread_group_empty(p)) ||
@@ -415,7 +415,7 @@ kill_orphaned_pgrp(struct task_struct *tsk, struct task_struct *parent)
 		 * we are, and it was the only connection outside.
 		 */
 		ignored_task = NULL;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (parent == baby_sitter)
 		/* TODO: check for orphaned pgrp with remote real_parent */
 		return;
@@ -444,7 +444,7 @@ kill_orphaned_pgrp(struct task_struct *tsk, struct task_struct *parent)
  */
 static void reparent_to_kthreadd(void)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct children_gdm_object *parent_children_obj = NULL;
 	pid_t parent_tgid;
 
@@ -454,7 +454,7 @@ static void reparent_to_kthreadd(void)
 		parent_children_obj = hcc_parent_children_writelock(
 					current,
 					&parent_tgid);
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 	tasklist_write_lock_irq();
 
 	ptrace_unlink(current);
@@ -476,7 +476,7 @@ static void reparent_to_kthreadd(void)
 	atomic_inc(&init_cred.usage);
 	commit_creds(&init_cred);
 	write_unlock_irq(&tasklist_lock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (parent_children_obj) {
 		hcc_set_child_ptraced(parent_children_obj, current, 0);
 		hcc_remove_child(parent_children_obj, current);
@@ -484,7 +484,7 @@ static void reparent_to_kthreadd(void)
 	}
 
 	up_read(&hcc_init_sem);
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 }
 
 void __set_special_pids(struct pid *pid)
@@ -901,14 +901,14 @@ static void reparent_thread(struct task_struct *father, struct task_struct *p,
 static void forget_original_parent(struct task_struct *father)
 {
 	struct task_struct *p, *n, *reaper;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	struct children_gdm_object *children_obj = NULL;
 #endif
 	LIST_HEAD(dead_children);
 
 	exit_ptrace(father);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (rcu_dereference(father->children_obj))
 		children_obj = __hcc_children_writelock(father);
 #endif
@@ -921,7 +921,7 @@ static void forget_original_parent(struct task_struct *father)
 			BUG_ON(task_ptrace(p));
 			p->parent = p->real_parent;
 		}
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		else {
 			BUG_ON(!p->ptrace);
 			hcc_ptrace_reparent_ptraced(father, p);
@@ -930,7 +930,7 @@ static void forget_original_parent(struct task_struct *father)
 		reparent_thread(father, p, &dead_children);
 	}
 	write_unlock_irq(&tasklist_lock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (children_obj) {
 		/* Reparent remote children */
 		hcc_forget_original_remote_parent(father, reaper);
@@ -957,7 +957,7 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 #ifdef CONFIG_HCC_PROC
 	void *hcc_cookie;
 #endif
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	u32 real_parent_self_exec_id;
 #endif
 
@@ -993,7 +993,7 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 	 * we have changed execution domain as these two values started
 	 * the same after a fork.
 	 */
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	/* remote parent aware version of vanilla linux check (below) */
 	real_parent_self_exec_id = hcc_get_real_parent_self_exec_id(tsk,
 								    hcc_cookie);
@@ -1062,7 +1062,7 @@ static void check_stack_usage(void)
 static inline void check_stack_usage(void) {}
 #endif
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 static void exit_migration(struct task_struct *tsk)
 {
 	/* Not a real exit... just a migration. */
@@ -1081,9 +1081,9 @@ static void exit_migration(struct task_struct *tsk)
 
 	release_task(tsk);
 }
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 static NORET_TYPE void __do_exit(long code, bool notify)
 #else
 NORET_TYPE void do_exit(long code)
@@ -1203,7 +1203,7 @@ NORET_TYPE void do_exit(long code)
 	exit_thread();
 	cgroup_exit(tsk, 1);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	/* Do not kill the session when session leader only migrates */
 	if (notify)
 #endif
@@ -1220,7 +1220,7 @@ NORET_TYPE void do_exit(long code)
 	 */
 	perf_event_exit_task(tsk);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!notify)
 		exit_migration(tsk);
 	else
@@ -1274,7 +1274,7 @@ NORET_TYPE void do_exit(long code)
 		cpu_relax();	/* For when BUG is null */
 }
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 NORET_TYPE void do_exit(long code)
 {
 	__do_exit(code, true);
@@ -1288,7 +1288,7 @@ NORET_TYPE void do_exit_wo_notify(long code)
 	/* Avoid "noreturn function does return".  */
 	for (;;);
 }
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 EXPORT_SYMBOL_GPL(do_exit);
 
@@ -1414,7 +1414,7 @@ static int wait_noreap_copyout(struct wait_opts *wo, struct task_struct *p,
  * the lock and this task is uninteresting.  If we return nonzero, we have
  * released the lock and the system call should return.
  */
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
@@ -1434,7 +1434,7 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 
 		get_task_struct(p);
 		read_unlock(&tasklist_lock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		/* If caller is remote, current has no children object. */
 		if (current->children_obj)
 			hcc_children_unlock(current->children_obj);
@@ -1449,7 +1449,7 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 		return wait_noreap_copyout(wo, p, pid, uid, why, status);
 	}
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	/* Do not reap it yet, hcc_delayed_notify_parent() has not finished. */
 	if (p->flags & PF_DELAY_NOTIFY)
 		return 0;
@@ -1466,7 +1466,7 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 
 	traced = ptrace_reparented(p);
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	/* remote call iff p->parent == baby_sitter */
 	if (p->parent != baby_sitter)
 #endif
@@ -1543,7 +1543,7 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 	 * thread can reap it because we set its state to EXIT_DEAD.
 	 */
 	read_unlock(&tasklist_lock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (current->children_obj)
 		hcc_children_unlock(current->children_obj);
 #endif
@@ -1582,7 +1582,7 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 		retval = pid;
 
 	if (traced) {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		struct children_gdm_object *parent_children_obj = NULL;
 		pid_t real_parent_tgid;
 		/* p may be set to NULL while we still need it */
@@ -1609,13 +1609,13 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 			}
 		}
 		write_unlock_irq(&tasklist_lock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 		if (parent_children_obj) {
 			hcc_set_child_ptraced(parent_children_obj, saved_p, 0);
 			hcc_set_child_exit_signal(parent_children_obj, saved_p);
 			hcc_children_unlock(parent_children_obj);
 		}
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 	}
 	if (p != NULL)
 		release_task(p);
@@ -1687,7 +1687,7 @@ unlock_sig:
 	pid = task_pid_vnr(p);
 	why = ptrace ? CLD_TRAPPED : CLD_STOPPED;
 	read_unlock(&tasklist_lock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (current->children_obj)
 		hcc_children_unlock(current->children_obj);
 #endif
@@ -1753,7 +1753,7 @@ static int wait_task_continued(struct wait_opts *wo, struct task_struct *p)
 	pid = task_pid_vnr(p);
 	get_task_struct(p);
 	read_unlock(&tasklist_lock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (current->children_obj)
 		hcc_children_unlock(current->children_obj);
 #endif
@@ -1875,7 +1875,7 @@ static int ptrace_do_wait(struct wait_opts *wo, struct task_struct *tsk)
 	return 0;
 }
 
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static int child_wait_callback(wait_queue_t *wait, unsigned mode,
 				int sync, void *key)
 {
@@ -1895,7 +1895,7 @@ static int child_wait_callback(wait_queue_t *wait, unsigned mode,
 
 void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	wake_up_interruptible_sync(&parent->signal->wait_chldexit);
 #else
 	__wake_up_sync_key(&parent->signal->wait_chldexit,
@@ -1905,7 +1905,7 @@ void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
 
 static long do_wait(struct wait_opts *wo)
 {
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	DECLARE_WAITQUEUE(wait, current);
 #endif
 	struct task_struct *tsk;
@@ -1929,14 +1929,14 @@ repeat:
 	 * it yet.
 	 */
 	wo->notask_error = -ECHILD;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (!current->children_obj)
 #endif
 	if ((wo->wo_type < PIDTYPE_MAX) &&
 	   (!wo->wo_pid || hlist_empty(&wo->wo_pid->tasks[wo->wo_type])))
 		goto notask;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (current->children_obj)
 		__hcc_children_readlock(current);
 #endif
@@ -1957,7 +1957,7 @@ repeat:
 			break;
 	} while_each_thread(current, tsk);
 	read_unlock(&tasklist_lock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (current->children_obj) {
 		int tsk_result;
 
@@ -1988,7 +1988,7 @@ notask:
 	}
 end:
 	__set_current_state(TASK_RUNNING);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	remove_wait_queue(&current->signal->wait_chldexit, &wait);
 	up_read(&hcc_init_sem);
 #else
@@ -2033,7 +2033,7 @@ SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
 
 	wo.wo_type	= type;
 	wo.wo_pid	= pid;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	wo.wo_upid	= upid;
 #endif
 	wo.wo_flags	= options;
@@ -2096,7 +2096,7 @@ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 		pid = find_get_pid(upid);
 	}
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (type == PIDTYPE_PGID) {
 		if (upid == 0)
 			upid = pid_vnr(pid);
@@ -2106,7 +2106,7 @@ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 #endif
 	wo.wo_type	= type;
 	wo.wo_pid	= pid;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	wo.wo_upid	= upid;
 #endif
 	wo.wo_flags	= options | WEXITED;

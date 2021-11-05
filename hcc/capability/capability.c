@@ -11,7 +11,7 @@
 #include <linux/pid_namespace.h>
 #include <linux/rcupdate.h>
 #include <hcc/capabilities.h>
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 #include <linux/pid_namespace.h>
 #include <hcc/children.h>
 #endif
@@ -40,7 +40,7 @@ void hcc_cap_fork(struct task_struct *task, unsigned long clone_flags)
 	kernel_cap_t new_hcc_effective;
 	int i;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (hcc_current && !in_hcc_do_fork())
 		/* Migration/restart: do not recompute hcc caps */
 		return;
@@ -172,12 +172,12 @@ static int hcc_set_father_cap(struct task_struct *tsk,
 	int retval = 0;
 
 	read_lock(&tasklist_lock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (tsk->real_parent != baby_sitter) {
 #endif
 		retval = hcc_set_cap(tsk->real_parent, requested_cap);
 		read_unlock(&tasklist_lock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	} else {
 		struct children_gdm_object *parent_children_obj;
 		pid_t real_parent_tgid;
@@ -278,12 +278,12 @@ static int hcc_get_father_cap(struct task_struct *son,
 	int retval = 0;
 
 	read_lock(&tasklist_lock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (son->real_parent != baby_sitter) {
 #endif
 		retval = hcc_get_cap(son->real_parent, resulting_cap);
 		read_unlock(&tasklist_lock);
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	} else {
 		struct children_gdm_object *parent_children_obj;
 		pid_t real_parent_tgid;

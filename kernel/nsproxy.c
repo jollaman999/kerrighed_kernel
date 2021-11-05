@@ -29,7 +29,7 @@
 #include <hcc/namespace.h>
 #endif
 
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 struct kmem_cache *nsproxy_cachep;

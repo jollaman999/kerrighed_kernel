@@ -80,20 +80,20 @@ static void proc_cleanup_work(struct work_struct *work)
 	pid_ns_release_proc(ns);
 }
 
-#ifndef CONFIG_HCC_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns)
 {
 	struct pid_namespace *ns;
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	unsigned int level = 0;
 #else
 	unsigned int level = parent_pid_ns->level + 1;
 #endif
 	int i, err = -ENOMEM;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 	if (parent_pid_ns)
 		level = parent_pid_ns->level + 1;
 #endif

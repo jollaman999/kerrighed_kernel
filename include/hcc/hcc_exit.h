@@ -3,7 +3,7 @@
 
 struct task_struct;
 
-#ifdef CONFIG_HCC_EPM
+#ifdef CONFIG_HCC_GPM
 
 #include <linux/types.h>
 #include <hcc/sys/types.h>
@@ -55,7 +55,7 @@ void hcc_finish_exit_ptrace_task(struct task_struct *task,
 				 bool dead)
 	__releases(tasklist_lock);
 
-#endif /* CONFIG_HCC_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 #ifdef CONFIG_HCC_PROC
 
