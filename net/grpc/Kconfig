@@ -2,7 +2,7 @@
 # HCC RPC Configuration
 #
 
-config GRPC
+config HCC_GRPC
 	bool "HCC RPC Protocol"
 	depends on GIPC
 	---help---
