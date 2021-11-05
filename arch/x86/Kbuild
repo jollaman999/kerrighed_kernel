@@ -8,7 +8,7 @@ obj-$(CONFIG_XEN) += xen/
 obj-$(CONFIG_LGUEST_GUEST) += lguest/
 
 # HCC SSI cluster support
-obj-$(CONFIG_HCC) += kerrighed/
+obj-$(CONFIG_HCC) += hcc/
 
 obj-y += kernel/
 obj-y += mm/
