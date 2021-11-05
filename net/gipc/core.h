@@ -1,5 +1,5 @@
 /*
- * net/tipc/core.h: Include file for TIPC global declarations
+ * net/gipc/core.h: Include file for GIPC global declarations
  *
  * Copyright (c) 2005-2006, Ericsson AB
  * Copyright (c) 2005-2007, Wind River Systems
@@ -34,15 +34,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TIPC_CORE_H
-#define _TIPC_CORE_H
+#ifndef _GIPC_CORE_H
+#define _GIPC_CORE_H
 
-#include <linux/tipc.h>
-#include <linux/tipc_config.h>
-#include <net/tipc/tipc_msg.h>
-#include <net/tipc/tipc_port.h>
-#include <net/tipc/tipc_bearer.h>
-#include <net/tipc/tipc.h>
+#include <linux/gipc.h>
+#include <linux/gipc_config.h>
+#include <net/gipc/gipc_msg.h>
+#include <net/gipc/gipc_port.h>
+#include <net/gipc/gipc_bearer.h>
+#include <net/gipc/gipc.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
@@ -59,60 +59,60 @@
 #include <linux/vmalloc.h>
 
 /*
- * TIPC sanity test macros
+ * GIPC sanity test macros
  */
 
 #define assert(i)  BUG_ON(!(i))
 
 /*
- * TIPC system monitoring code
+ * GIPC system monitoring code
  */
 
 /*
- * TIPC's print buffer subsystem supports the following print buffers:
+ * GIPC's print buffer subsystem supports the following print buffers:
  *
- * TIPC_NULL : null buffer (i.e. print nowhere)
- * TIPC_CONS : system console
- * TIPC_LOG  : TIPC log buffer
+ * GIPC_NULL : null buffer (i.e. print nowhere)
+ * GIPC_CONS : system console
+ * GIPC_LOG  : GIPC log buffer
  * &buf	     : user-defined buffer (struct print_buf *)
  *
- * Note: TIPC_LOG is configured to echo its output to the system console;
+ * Note: GIPC_LOG is configured to echo its output to the system console;
  *       user-defined buffers can be configured to do the same thing.
  */
 
-extern struct print_buf *const TIPC_NULL;
-extern struct print_buf *const TIPC_CONS;
-extern struct print_buf *const TIPC_LOG;
+extern struct print_buf *const GIPC_NULL;
+extern struct print_buf *const GIPC_CONS;
+extern struct print_buf *const GIPC_LOG;
 
-void tipc_printf(struct print_buf *, const char *fmt, ...);
+void gipc_printf(struct print_buf *, const char *fmt, ...);
 
 /*
- * TIPC_OUTPUT is the destination print buffer for system messages.
+ * GIPC_OUTPUT is the destination print buffer for system messages.
  */
 
-#ifndef TIPC_OUTPUT
-#define TIPC_OUTPUT TIPC_LOG
+#ifndef GIPC_OUTPUT
+#define GIPC_OUTPUT GIPC_LOG
 #endif
 
 /*
- * TIPC can be configured to send system messages to TIPC_OUTPUT
+ * GIPC can be configured to send system messages to GIPC_OUTPUT
  * or to the system console only.
  */
 
-#ifdef CONFIG_TIPC_DEBUG
+#ifdef CONFIG_GIPC_DEBUG
 
-#define err(fmt, arg...)  tipc_printf(TIPC_OUTPUT, \
-					KERN_ERR "TIPC: " fmt, ## arg)
-#define warn(fmt, arg...) tipc_printf(TIPC_OUTPUT, \
-					KERN_WARNING "TIPC: " fmt, ## arg)
-#define info(fmt, arg...) tipc_printf(TIPC_OUTPUT, \
-					KERN_NOTICE "TIPC: " fmt, ## arg)
+#define err(fmt, arg...)  gipc_printf(GIPC_OUTPUT, \
+					KERN_ERR "GIPC: " fmt, ## arg)
+#define warn(fmt, arg...) gipc_printf(GIPC_OUTPUT, \
+					KERN_WARNING "GIPC: " fmt, ## arg)
+#define info(fmt, arg...) gipc_printf(GIPC_OUTPUT, \
+					KERN_NOTICE "GIPC: " fmt, ## arg)
 
 #else
 
-#define err(fmt, arg...)  printk(KERN_ERR "TIPC: " fmt , ## arg)
-#define info(fmt, arg...) printk(KERN_INFO "TIPC: " fmt , ## arg)
-#define warn(fmt, arg...) printk(KERN_WARNING "TIPC: " fmt , ## arg)
+#define err(fmt, arg...)  printk(KERN_ERR "GIPC: " fmt , ## arg)
+#define info(fmt, arg...) printk(KERN_INFO "GIPC: " fmt , ## arg)
+#define warn(fmt, arg...) printk(KERN_WARNING "GIPC: " fmt , ## arg)
 
 #endif
 
@@ -124,34 +124,34 @@ void tipc_printf(struct print_buf *, const char *fmt, ...);
  */
 
 #ifndef DBG_OUTPUT
-#define DBG_OUTPUT TIPC_NULL
+#define DBG_OUTPUT GIPC_NULL
 #endif
 
 /*
- * TIPC can be configured to send debug messages to the specified print buffer
+ * GIPC can be configured to send debug messages to the specified print buffer
  * (typically DBG_OUTPUT) or to suppress them entirely.
  */
 
-#ifdef CONFIG_TIPC_DEBUG
+#ifdef CONFIG_GIPC_DEBUG
 
 #define dbg(fmt, arg...)  \
 	do { \
-		if (DBG_OUTPUT != TIPC_NULL) \
-			tipc_printf(DBG_OUTPUT, fmt, ## arg); \
+		if (DBG_OUTPUT != GIPC_NULL) \
+			gipc_printf(DBG_OUTPUT, fmt, ## arg); \
 	} while (0)
 #define msg_dbg(msg, txt) \
 	do { \
-		if (DBG_OUTPUT != TIPC_NULL) \
-			tipc_msg_dbg(DBG_OUTPUT, msg, txt); \
+		if (DBG_OUTPUT != GIPC_NULL) \
+			gipc_msg_dbg(DBG_OUTPUT, msg, txt); \
 	} while (0)
 #define dump(fmt, arg...) \
 	do { \
-		if (DBG_OUTPUT != TIPC_NULL) \
-			tipc_dump_dbg(DBG_OUTPUT, fmt, ##arg); \
+		if (DBG_OUTPUT != GIPC_NULL) \
+			gipc_dump_dbg(DBG_OUTPUT, fmt, ##arg); \
 	} while (0)
 
-void tipc_msg_dbg(struct print_buf *, struct tipc_msg *, const char *);
-void tipc_dump_dbg(struct print_buf *, const char *fmt, ...);
+void gipc_msg_dbg(struct print_buf *, struct gipc_msg *, const char *);
+void gipc_dump_dbg(struct print_buf *, const char *fmt, ...);
 
 #else
 
@@ -159,14 +159,14 @@ void tipc_dump_dbg(struct print_buf *, const char *fmt, ...);
 #define msg_dbg(msg, txt)	do {} while (0)
 #define dump(fmt, arg...)	do {} while (0)
 
-#define tipc_msg_dbg(...)	do {} while (0)
-#define tipc_dump_dbg(...)	do {} while (0)
+#define gipc_msg_dbg(...)	do {} while (0)
+#define gipc_dump_dbg(...)	do {} while (0)
 
 #endif
 
 
 /*
- * TIPC-specific error codes
+ * GIPC-specific error codes
  */
 
 #define ELINKCONG EAGAIN	/* link congestion <=> resource unavailable */
@@ -175,41 +175,41 @@ void tipc_dump_dbg(struct print_buf *, const char *fmt, ...);
  * Global configuration variables
  */
 
-extern u32 tipc_own_addr;
-extern int tipc_max_zones;
-extern int tipc_max_clusters;
-extern int tipc_max_nodes;
-extern int tipc_max_slaves;
-extern int tipc_max_ports;
-extern int tipc_max_subscriptions;
-extern int tipc_max_publications;
-extern int tipc_net_id;
-extern int tipc_remote_management;
+extern u32 gipc_own_addr;
+extern int gipc_max_zones;
+extern int gipc_max_clusters;
+extern int gipc_max_nodes;
+extern int gipc_max_slaves;
+extern int gipc_max_ports;
+extern int gipc_max_subscriptions;
+extern int gipc_max_publications;
+extern int gipc_net_id;
+extern int gipc_remote_management;
 
 /*
  * Other global variables
  */
 
-extern int tipc_mode;
-extern int tipc_random;
-extern const char tipc_alphabet[];
-extern atomic_t tipc_user_count;
+extern int gipc_mode;
+extern int gipc_random;
+extern const char gipc_alphabet[];
+extern atomic_t gipc_user_count;
 
 
 /*
  * Routines available to privileged subsystems
  */
 
-extern int  tipc_core_start(void);
-extern void tipc_core_stop(void);
-extern int  tipc_core_start_net(unsigned long addr);
-extern void tipc_core_stop_net(void);
-extern int  tipc_handler_start(void);
-extern void tipc_handler_stop(void);
-extern int  tipc_netlink_start(void);
-extern void tipc_netlink_stop(void);
-extern int  tipc_socket_init(void);
-extern void tipc_socket_stop(void);
+extern int  gipc_core_start(void);
+extern void gipc_core_stop(void);
+extern int  gipc_core_start_net(unsigned long addr);
+extern void gipc_core_stop_net(void);
+extern int  gipc_handler_start(void);
+extern void gipc_handler_stop(void);
+extern int  gipc_netlink_start(void);
+extern void gipc_netlink_stop(void);
+extern int  gipc_socket_init(void);
+extern void gipc_socket_stop(void);
 
 static inline int delimit(int val, int min, int max)
 {
@@ -222,12 +222,12 @@ static inline int delimit(int val, int min, int max)
 
 
 /*
- * TIPC timer and signal code
+ * GIPC timer and signal code
  */
 
 typedef void (*Handler) (unsigned long);
 
-u32 tipc_k_signal(Handler routine, unsigned long argument);
+u32 gipc_k_signal(Handler routine, unsigned long argument);
 
 /**
  * k_init_timer - initialize a timer
@@ -301,32 +301,32 @@ static inline void k_term_timer(struct timer_list *timer)
 
 
 /*
- * TIPC message buffer code
+ * GIPC message buffer code
  *
- * TIPC message buffer headroom reserves space for the worst-case
+ * GIPC message buffer headroom reserves space for the worst-case
  * link-level device header (in case the message is sent off-node).
  *
- * Note: Headroom should be a multiple of 4 to ensure the TIPC header fields
+ * Note: Headroom should be a multiple of 4 to ensure the GIPC header fields
  *       are word aligned for quicker access
  */
 
 #define BUF_HEADROOM LL_MAX_HEADER
 
-struct tipc_skb_cb {
+struct gipc_skb_cb {
 	void *handle;
 };
 
-#define TIPC_SKB_CB(__skb) ((struct tipc_skb_cb *)&((__skb)->cb[0]))
+#define GIPC_SKB_CB(__skb) ((struct gipc_skb_cb *)&((__skb)->cb[0]))
 
 
-static inline struct tipc_msg *buf_msg(struct sk_buff *skb)
+static inline struct gipc_msg *buf_msg(struct sk_buff *skb)
 {
-	return (struct tipc_msg *)skb->data;
+	return (struct gipc_msg *)skb->data;
 }
 
 /**
- * buf_acquire - creates a TIPC message buffer
- * @size: message size (including TIPC header)
+ * buf_acquire - creates a GIPC message buffer
+ * @size: message size (including GIPC header)
  *
  * Returns a new buffer with data pointers set to the specified size.
  *
@@ -349,7 +349,7 @@ static inline struct sk_buff *buf_acquire(u32 size)
 }
 
 /**
- * buf_discard - frees a TIPC message buffer
+ * buf_discard - frees a GIPC message buffer
  * @skb: message buffer
  *
  * Frees a message buffer.  If passed NULL, just returns.
@@ -361,7 +361,7 @@ static inline void buf_discard(struct sk_buff *skb)
 }
 
 /**
- * buf_linearize - convert a TIPC message buffer into a single contiguous piece
+ * buf_linearize - convert a GIPC message buffer into a single contiguous piece
  * @skb: message buffer
  *
  * Returns 0 on success.

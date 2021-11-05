@@ -1,5 +1,5 @@
 /*
- * net/tipc/bcast.h: Include file for TIPC broadcast code
+ * net/gipc/bcast.h: Include file for GIPC broadcast code
  *
  * Copyright (c) 2003-2006, Ericsson AB
  * Copyright (c) 2005, Wind River Systems
@@ -34,19 +34,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TIPC_BCAST_H
-#define _TIPC_BCAST_H
+#ifndef _GIPC_BCAST_H
+#define _GIPC_BCAST_H
 
 #define MAX_NODES 4096
 #define WSIZE 32
 
 /**
- * struct tipc_node_map - set of node identifiers
+ * struct gipc_node_map - set of node identifiers
  * @count: # of nodes in set
  * @map: bitmap of node identifiers that are in the set
  */
 
-struct tipc_node_map {
+struct gipc_node_map {
 	u32 count;
 	u32 map[MAX_NODES / WSIZE];
 };
@@ -68,18 +68,18 @@ struct port_list {
 };
 
 
-struct tipc_node;
+struct gipc_node;
 
-extern const char tipc_bclink_name[];
+extern const char gipc_bclink_name[];
 
 
 /**
  * nmap_add - add a node to a node map
  */
 
-static inline void tipc_nmap_add(struct tipc_node_map *nm_ptr, u32 node)
+static inline void gipc_nmap_add(struct gipc_node_map *nm_ptr, u32 node)
 {
-	int n = tipc_node(node);
+	int n = gipc_node(node);
 	int w = n / WSIZE;
 	u32 mask = (1 << (n % WSIZE));
 
@@ -93,9 +93,9 @@ static inline void tipc_nmap_add(struct tipc_node_map *nm_ptr, u32 node)
  * nmap_remove - remove a node from a node map
  */
 
-static inline void tipc_nmap_remove(struct tipc_node_map *nm_ptr, u32 node)
+static inline void gipc_nmap_remove(struct gipc_node_map *nm_ptr, u32 node)
 {
-	int n = tipc_node(node);
+	int n = gipc_node(node);
 	int w = n / WSIZE;
 	u32 mask = (1 << (n % WSIZE));
 
@@ -109,7 +109,7 @@ static inline void tipc_nmap_remove(struct tipc_node_map *nm_ptr, u32 node)
  * nmap_equal - test for equality of node maps
  */
 
-static inline int tipc_nmap_equal(struct tipc_node_map *nm_a, struct tipc_node_map *nm_b)
+static inline int gipc_nmap_equal(struct gipc_node_map *nm_a, struct gipc_node_map *nm_b)
 {
 	return !memcmp(nm_a, nm_b, sizeof(*nm_a));
 }
@@ -121,8 +121,8 @@ static inline int tipc_nmap_equal(struct tipc_node_map *nm_a, struct tipc_node_m
  * @nm_diff: output node map A-B (i.e. nodes of A that are not in B)
  */
 
-static inline void tipc_nmap_diff(struct tipc_node_map *nm_a, struct tipc_node_map *nm_b,
-				  struct tipc_node_map *nm_diff)
+static inline void gipc_nmap_diff(struct gipc_node_map *nm_a, struct gipc_node_map *nm_b,
+				  struct gipc_node_map *nm_diff)
 {
 	int stop = ARRAY_SIZE(nm_a->map);
 	int w;
@@ -146,7 +146,7 @@ static inline void tipc_nmap_diff(struct tipc_node_map *nm_a, struct tipc_node_m
  * port_list_add - add a port to a port list, ensuring no duplicates
  */
 
-static inline void tipc_port_list_add(struct port_list *pl_ptr, u32 port)
+static inline void gipc_port_list_add(struct port_list *pl_ptr, u32 port)
 {
 	struct port_list *item = pl_ptr;
 	int i;
@@ -181,7 +181,7 @@ static inline void tipc_port_list_add(struct port_list *pl_ptr, u32 port)
  * Note: First item is on stack, so it doesn't need to be released
  */
 
-static inline void tipc_port_list_free(struct port_list *pl_ptr)
+static inline void gipc_port_list_free(struct port_list *pl_ptr)
 {
 	struct port_list *item;
 	struct port_list *next;
@@ -193,18 +193,18 @@ static inline void tipc_port_list_free(struct port_list *pl_ptr)
 }
 
 
-int  tipc_bclink_init(void);
-void tipc_bclink_stop(void);
-void tipc_bclink_acknowledge(struct tipc_node *n_ptr, u32 acked);
-int  tipc_bclink_send_msg(struct sk_buff *buf);
-void tipc_bclink_recv_pkt(struct sk_buff *buf);
-u32  tipc_bclink_get_last_sent(void);
-u32  tipc_bclink_acks_missing(struct tipc_node *n_ptr);
-void tipc_bclink_check_gap(struct tipc_node *n_ptr, u32 seqno);
-int  tipc_bclink_stats(char *stats_buf, const u32 buf_size);
-int  tipc_bclink_reset_stats(void);
-int  tipc_bclink_set_queue_limits(u32 limit);
-void tipc_bcbearer_sort(void);
-void tipc_bcbearer_push(void);
+int  gipc_bclink_init(void);
+void gipc_bclink_stop(void);
+void gipc_bclink_acknowledge(struct gipc_node *n_ptr, u32 acked);
+int  gipc_bclink_send_msg(struct sk_buff *buf);
+void gipc_bclink_recv_pkt(struct sk_buff *buf);
+u32  gipc_bclink_get_last_sent(void);
+u32  gipc_bclink_acks_missing(struct gipc_node *n_ptr);
+void gipc_bclink_check_gap(struct gipc_node *n_ptr, u32 seqno);
+int  gipc_bclink_stats(char *stats_buf, const u32 buf_size);
+int  gipc_bclink_reset_stats(void);
+int  gipc_bclink_set_queue_limits(u32 limit);
+void gipc_bcbearer_sort(void);
+void gipc_bcbearer_push(void);
 
 #endif

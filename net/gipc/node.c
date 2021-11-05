@@ -1,5 +1,5 @@
 /*
- * net/tipc/node.c: TIPC node management routines
+ * net/gipc/node.c: GIPC node management routines
  *
  * Copyright (c) 2000-2006, Ericsson AB
  * Copyright (c) 2005-2006, Wind River Systems
@@ -51,18 +51,18 @@
 #include "bearer.h"
 #include "name_distr.h"
 
-void node_print(struct print_buf *buf, struct tipc_node *n_ptr, char *str);
-static void node_lost_contact(struct tipc_node *n_ptr);
-static void node_established_contact(struct tipc_node *n_ptr);
+void node_print(struct print_buf *buf, struct gipc_node *n_ptr, char *str);
+static void node_lost_contact(struct gipc_node *n_ptr);
+static void node_established_contact(struct gipc_node *n_ptr);
 
-struct tipc_node *tipc_nodes = NULL;	/* sorted list of nodes within cluster */
+struct gipc_node *gipc_nodes = NULL;	/* sorted list of nodes within cluster */
 
 static DEFINE_SPINLOCK(node_create_lock);
 
-u32 tipc_own_tag = 0;
+u32 gipc_own_tag = 0;
 
 /**
- * tipc_node_create - create neighboring node
+ * gipc_node_create - create neighboring node
  *
  * Currently, this routine is called by neighbor discovery code, which holds
  * net_lock for reading only.  We must take node_create_lock to ensure a node
@@ -71,15 +71,15 @@ u32 tipc_own_tag = 0;
  * but this is a non-trivial change.)
  */
 
-struct tipc_node *tipc_node_create(u32 addr)
+struct gipc_node *gipc_node_create(u32 addr)
 {
 	struct cluster *c_ptr;
-	struct tipc_node *n_ptr;
-	struct tipc_node **curr_node;
+	struct gipc_node *n_ptr;
+	struct gipc_node **curr_node;
 
 	spin_lock_bh(&node_create_lock);
 
-	for (n_ptr = tipc_nodes; n_ptr; n_ptr = n_ptr->next) {
+	for (n_ptr = gipc_nodes; n_ptr; n_ptr = n_ptr->next) {
 		if (addr < n_ptr->addr)
 			break;
 		if (addr == n_ptr->addr) {
@@ -95,9 +95,9 @@ struct tipc_node *tipc_node_create(u32 addr)
 		return NULL;
 	}
 
-	c_ptr = tipc_cltr_find(addr);
+	c_ptr = gipc_cltr_find(addr);
 	if (!c_ptr) {
-		c_ptr = tipc_cltr_create(addr);
+		c_ptr = gipc_cltr_create(addr);
 	}
 	if (!c_ptr) {
 		spin_unlock_bh(&node_create_lock);
@@ -109,11 +109,11 @@ struct tipc_node *tipc_node_create(u32 addr)
 		spin_lock_init(&n_ptr->lock);
 	INIT_LIST_HEAD(&n_ptr->nsub);
 	n_ptr->owner = c_ptr;
-	tipc_cltr_attach_node(c_ptr, n_ptr);
+	gipc_cltr_attach_node(c_ptr, n_ptr);
 	n_ptr->last_router = -1;
 
 	/* Insert node into ordered list */
-	for (curr_node = &tipc_nodes; *curr_node;
+	for (curr_node = &gipc_nodes; *curr_node;
 	     curr_node = &(*curr_node)->next) {
 		if (addr < (*curr_node)->addr) {
 			n_ptr->next = *curr_node;
@@ -125,13 +125,13 @@ struct tipc_node *tipc_node_create(u32 addr)
 	return n_ptr;
 }
 
-void tipc_node_delete(struct tipc_node *n_ptr)
+void gipc_node_delete(struct gipc_node *n_ptr)
 {
 	if (!n_ptr)
 		return;
 
 #if 0
-	/* Not needed because links are already deleted via tipc_bearer_stop() */
+	/* Not needed because links are already deleted via gipc_bearer_stop() */
 
 	u32 l_num;
 
@@ -146,12 +146,12 @@ void tipc_node_delete(struct tipc_node *n_ptr)
 
 
 /**
- * tipc_node_link_up - handle addition of link
+ * gipc_node_link_up - handle addition of link
  *
  * Link becomes active (alone or shared) or standby, depending on its priority.
  */
 
-void tipc_node_link_up(struct tipc_node *n_ptr, struct link *l_ptr)
+void gipc_node_link_up(struct gipc_node *n_ptr, struct link *l_ptr)
 {
 	struct link **active = &n_ptr->active_links[0];
 
@@ -170,7 +170,7 @@ void tipc_node_link_up(struct tipc_node *n_ptr, struct link *l_ptr)
 		info("New link <%s> becomes standby\n", l_ptr->name);
 		return;
 	}
-	tipc_link_send_duplicate(active[0], l_ptr);
+	gipc_link_send_duplicate(active[0], l_ptr);
 	if (l_ptr->priority == active[0]->priority) {
 		active[0] = l_ptr;
 		return;
@@ -185,7 +185,7 @@ void tipc_node_link_up(struct tipc_node *n_ptr, struct link *l_ptr)
  * node_select_active_links - select active link
  */
 
-static void node_select_active_links(struct tipc_node *n_ptr)
+static void node_select_active_links(struct gipc_node *n_ptr)
 {
 	struct link **active = &n_ptr->active_links[0];
 	u32 i;
@@ -196,7 +196,7 @@ static void node_select_active_links(struct tipc_node *n_ptr)
 	for (i = 0; i < MAX_BEARERS; i++) {
 		struct link *l_ptr = n_ptr->links[i];
 
-		if (!l_ptr || !tipc_link_is_up(l_ptr) ||
+		if (!l_ptr || !gipc_link_is_up(l_ptr) ||
 		    (l_ptr->priority < highest_prio))
 			continue;
 
@@ -210,16 +210,16 @@ static void node_select_active_links(struct tipc_node *n_ptr)
 }
 
 /**
- * tipc_node_link_down - handle loss of link
+ * gipc_node_link_down - handle loss of link
  */
 
-void tipc_node_link_down(struct tipc_node *n_ptr, struct link *l_ptr)
+void gipc_node_link_down(struct gipc_node *n_ptr, struct link *l_ptr)
 {
 	struct link **active;
 
 	n_ptr->working_links--;
 
-	if (!tipc_link_is_active(l_ptr)) {
+	if (!gipc_link_is_active(l_ptr)) {
 		info("Lost standby link <%s> on network plane %c\n",
 		     l_ptr->name, l_ptr->b_ptr->net_plane);
 		return;
@@ -234,39 +234,39 @@ void tipc_node_link_down(struct tipc_node *n_ptr, struct link *l_ptr)
 		active[1] = active[0];
 	if (active[0] == l_ptr)
 		node_select_active_links(n_ptr);
-	if (tipc_node_is_up(n_ptr))
-		tipc_link_changeover(l_ptr);
+	if (gipc_node_is_up(n_ptr))
+		gipc_link_changeover(l_ptr);
 	else
 		node_lost_contact(n_ptr);
 }
 
-int tipc_node_has_active_links(struct tipc_node *n_ptr)
+int gipc_node_has_active_links(struct gipc_node *n_ptr)
 {
 	return (n_ptr &&
 		((n_ptr->active_links[0]) || (n_ptr->active_links[1])));
 }
 
-int tipc_node_has_redundant_links(struct tipc_node *n_ptr)
+int gipc_node_has_redundant_links(struct gipc_node *n_ptr)
 {
 	return (n_ptr->working_links > 1);
 }
 
-static int tipc_node_has_active_routes(struct tipc_node *n_ptr)
+static int gipc_node_has_active_routes(struct gipc_node *n_ptr)
 {
 	return (n_ptr && (n_ptr->last_router >= 0));
 }
 
-int tipc_node_is_up(struct tipc_node *n_ptr)
+int gipc_node_is_up(struct gipc_node *n_ptr)
 {
-	return (tipc_node_has_active_links(n_ptr) || tipc_node_has_active_routes(n_ptr));
+	return (gipc_node_has_active_links(n_ptr) || gipc_node_has_active_routes(n_ptr));
 }
 
-struct tipc_node *tipc_node_attach_link(struct link *l_ptr)
+struct gipc_node *gipc_node_attach_link(struct link *l_ptr)
 {
-	struct tipc_node *n_ptr = tipc_node_find(l_ptr->addr);
+	struct gipc_node *n_ptr = gipc_node_find(l_ptr->addr);
 
 	if (!n_ptr)
-		n_ptr = tipc_node_create(l_ptr->addr);
+		n_ptr = gipc_node_create(l_ptr->addr);
 	if (n_ptr) {
 		u32 bearer_id = l_ptr->b_ptr->identity;
 		char addr_string[16];
@@ -279,7 +279,7 @@ struct tipc_node *tipc_node_attach_link(struct link *l_ptr)
 
 		if (!n_ptr->links[bearer_id]) {
 			n_ptr->links[bearer_id] = l_ptr;
-			tipc_net.zones[tipc_zone(l_ptr->addr)]->links++;
+			gipc_net.zones[gipc_zone(l_ptr->addr)]->links++;
 			n_ptr->link_cnt++;
 			return n_ptr;
 		}
@@ -290,10 +290,10 @@ struct tipc_node *tipc_node_attach_link(struct link *l_ptr)
 	return NULL;
 }
 
-void tipc_node_detach_link(struct tipc_node *n_ptr, struct link *l_ptr)
+void gipc_node_detach_link(struct gipc_node *n_ptr, struct link *l_ptr)
 {
 	n_ptr->links[l_ptr->b_ptr->identity] = NULL;
-	tipc_net.zones[tipc_zone(l_ptr->addr)]->links--;
+	gipc_net.zones[gipc_zone(l_ptr->addr)]->links--;
 	n_ptr->link_cnt--;
 }
 
@@ -343,66 +343,66 @@ void tipc_node_detach_link(struct tipc_node *n_ptr, struct link *l_ptr)
  *
  */
 
-static void node_established_contact(struct tipc_node *n_ptr)
+static void node_established_contact(struct gipc_node *n_ptr)
 {
 	struct cluster *c_ptr;
 
 	dbg("node_established_contact:-> %x\n", n_ptr->addr);
 
 #ifdef CONFIG_HCC_HOTPLUG
-	hcc_node_arrival(tipc_node(n_ptr->addr)-1);
+	hcc_node_arrival(gipc_node(n_ptr->addr)-1);
 #endif
 
-	if (!tipc_node_has_active_routes(n_ptr) && in_own_cluster(n_ptr->addr)) {
-		tipc_k_signal((Handler)tipc_named_node_up, n_ptr->addr);
+	if (!gipc_node_has_active_routes(n_ptr) && in_own_cluster(n_ptr->addr)) {
+		gipc_k_signal((Handler)gipc_named_node_up, n_ptr->addr);
 	}
 
 	/* Syncronize broadcast acks */
-	n_ptr->bclink.acked = tipc_bclink_get_last_sent();
+	n_ptr->bclink.acked = gipc_bclink_get_last_sent();
 
-	if (is_slave(tipc_own_addr))
+	if (is_slave(gipc_own_addr))
 		return;
 	if (!in_own_cluster(n_ptr->addr)) {
 		/* Usage case 1 (see above) */
-		c_ptr = tipc_cltr_find(tipc_own_addr);
+		c_ptr = gipc_cltr_find(gipc_own_addr);
 		if (!c_ptr)
-			c_ptr = tipc_cltr_create(tipc_own_addr);
+			c_ptr = gipc_cltr_create(gipc_own_addr);
 		if (c_ptr)
-			tipc_cltr_bcast_new_route(c_ptr, n_ptr->addr, 1,
-						  tipc_max_nodes);
+			gipc_cltr_bcast_new_route(c_ptr, n_ptr->addr, 1,
+						  gipc_max_nodes);
 		return;
 	}
 
 	c_ptr = n_ptr->owner;
 	if (is_slave(n_ptr->addr)) {
 		/* Usage case 2 (see above) */
-		tipc_cltr_bcast_new_route(c_ptr, n_ptr->addr, 1, tipc_max_nodes);
-		tipc_cltr_send_local_routes(c_ptr, n_ptr->addr);
+		gipc_cltr_bcast_new_route(c_ptr, n_ptr->addr, 1, gipc_max_nodes);
+		gipc_cltr_send_local_routes(c_ptr, n_ptr->addr);
 		return;
 	}
 
 	if (n_ptr->bclink.supported) {
-		tipc_nmap_add(&tipc_cltr_bcast_nodes, n_ptr->addr);
-		if (n_ptr->addr < tipc_own_addr)
-			tipc_own_tag++;
+		gipc_nmap_add(&gipc_cltr_bcast_nodes, n_ptr->addr);
+		if (n_ptr->addr < gipc_own_addr)
+			gipc_own_tag++;
 	}
 
 	/* Case 3 (see above) */
-	tipc_net_send_external_routes(n_ptr->addr);
-	tipc_cltr_send_slave_routes(c_ptr, n_ptr->addr);
-	tipc_cltr_bcast_new_route(c_ptr, n_ptr->addr, LOWEST_SLAVE,
-				  tipc_highest_allowed_slave);
+	gipc_net_send_external_routes(n_ptr->addr);
+	gipc_cltr_send_slave_routes(c_ptr, n_ptr->addr);
+	gipc_cltr_bcast_new_route(c_ptr, n_ptr->addr, LOWEST_SLAVE,
+				  gipc_highest_allowed_slave);
 }
 
-static void node_lost_contact(struct tipc_node *n_ptr)
+static void node_lost_contact(struct gipc_node *n_ptr)
 {
 	struct cluster *c_ptr;
-	struct tipc_node_subscr *ns, *tns;
+	struct gipc_node_subscr *ns, *tns;
 	char addr_string[16];
 	u32 i;
 
 #ifdef CONFIG_HCC_HOTPLUG
-	hcc_node_departure(tipc_node(n_ptr->addr)-1);
+	hcc_node_departure(gipc_node(n_ptr->addr)-1);
 #endif
 
 	/* Clean up broadcast reception remains */
@@ -417,39 +417,39 @@ static void node_lost_contact(struct tipc_node *n_ptr)
 		n_ptr->bclink.defragm = NULL;
 	}
 	if (in_own_cluster(n_ptr->addr) && n_ptr->bclink.supported) {
-		tipc_bclink_acknowledge(n_ptr, mod(n_ptr->bclink.acked + 10000));
+		gipc_bclink_acknowledge(n_ptr, mod(n_ptr->bclink.acked + 10000));
 	}
 
 	/* Update routing tables */
-	if (is_slave(tipc_own_addr)) {
-		tipc_net_remove_as_router(n_ptr->addr);
+	if (is_slave(gipc_own_addr)) {
+		gipc_net_remove_as_router(n_ptr->addr);
 	} else {
 		if (!in_own_cluster(n_ptr->addr)) {
 			/* Case 4 (see above) */
-			c_ptr = tipc_cltr_find(tipc_own_addr);
-			tipc_cltr_bcast_lost_route(c_ptr, n_ptr->addr, 1,
-						   tipc_max_nodes);
+			c_ptr = gipc_cltr_find(gipc_own_addr);
+			gipc_cltr_bcast_lost_route(c_ptr, n_ptr->addr, 1,
+						   gipc_max_nodes);
 		} else {
 			/* Case 5 (see above) */
-			c_ptr = tipc_cltr_find(n_ptr->addr);
+			c_ptr = gipc_cltr_find(n_ptr->addr);
 			if (is_slave(n_ptr->addr)) {
-				tipc_cltr_bcast_lost_route(c_ptr, n_ptr->addr, 1,
-							   tipc_max_nodes);
+				gipc_cltr_bcast_lost_route(c_ptr, n_ptr->addr, 1,
+							   gipc_max_nodes);
 			} else {
 				if (n_ptr->bclink.supported) {
-					tipc_nmap_remove(&tipc_cltr_bcast_nodes,
+					gipc_nmap_remove(&gipc_cltr_bcast_nodes,
 							 n_ptr->addr);
-					if (n_ptr->addr < tipc_own_addr)
-						tipc_own_tag--;
+					if (n_ptr->addr < gipc_own_addr)
+						gipc_own_tag--;
 				}
-				tipc_net_remove_as_router(n_ptr->addr);
-				tipc_cltr_bcast_lost_route(c_ptr, n_ptr->addr,
+				gipc_net_remove_as_router(n_ptr->addr);
+				gipc_cltr_bcast_lost_route(c_ptr, n_ptr->addr,
 							   LOWEST_SLAVE,
-							   tipc_highest_allowed_slave);
+							   gipc_highest_allowed_slave);
 			}
 		}
 	}
-	if (tipc_node_has_active_routes(n_ptr))
+	if (gipc_node_has_active_routes(n_ptr))
 		return;
 
 	info("Lost contact with %s\n",
@@ -462,35 +462,35 @@ static void node_lost_contact(struct tipc_node *n_ptr)
 			continue;
 		l_ptr->reset_checkpoint = l_ptr->next_in_no;
 		l_ptr->exp_msg_count = 0;
-		tipc_link_reset_fragments(l_ptr);
+		gipc_link_reset_fragments(l_ptr);
 	}
 
 	/* Notify subscribers */
 	list_for_each_entry_safe(ns, tns, &n_ptr->nsub, nodesub_list) {
 		ns->node = NULL;
 		list_del_init(&ns->nodesub_list);
-		tipc_k_signal((Handler)ns->handle_node_down,
+		gipc_k_signal((Handler)ns->handle_node_down,
 			      (unsigned long)ns->usr_handle);
 	}
 }
 
 /**
- * tipc_node_select_next_hop - find the next-hop node for a message
+ * gipc_node_select_next_hop - find the next-hop node for a message
  *
  * Called by when cluster local lookup has failed.
  */
 
-struct tipc_node *tipc_node_select_next_hop(u32 addr, u32 selector)
+struct gipc_node *gipc_node_select_next_hop(u32 addr, u32 selector)
 {
-	struct tipc_node *n_ptr;
+	struct gipc_node *n_ptr;
 	u32 router_addr;
 
-	if (!tipc_addr_domain_valid(addr))
+	if (!gipc_addr_domain_valid(addr))
 		return NULL;
 
 	/* Look for direct link to destination processsor */
-	n_ptr = tipc_node_find(addr);
-	if (n_ptr && tipc_node_has_active_links(n_ptr))
+	n_ptr = gipc_node_find(addr);
+	if (n_ptr && gipc_node_has_active_links(n_ptr))
 		return n_ptr;
 
 	/* Cluster local system nodes *must* have direct links */
@@ -498,9 +498,9 @@ struct tipc_node *tipc_node_select_next_hop(u32 addr, u32 selector)
 		return NULL;
 
 	/* Look for cluster local router with direct link to node */
-	router_addr = tipc_node_select_router(n_ptr, selector);
+	router_addr = gipc_node_select_router(n_ptr, selector);
 	if (router_addr)
-		return tipc_node_select(router_addr, selector);
+		return gipc_node_select(router_addr, selector);
 
 	/* Slave nodes can only be accessed within own cluster via a
 	   known router with direct link -- if no router was found,give up */
@@ -508,26 +508,26 @@ struct tipc_node *tipc_node_select_next_hop(u32 addr, u32 selector)
 		return NULL;
 
 	/* Inter zone/cluster -- find any direct link to remote cluster */
-	addr = tipc_addr(tipc_zone(addr), tipc_cluster(addr), 0);
-	n_ptr = tipc_net_select_remote_node(addr, selector);
-	if (n_ptr && tipc_node_has_active_links(n_ptr))
+	addr = gipc_addr(gipc_zone(addr), gipc_cluster(addr), 0);
+	n_ptr = gipc_net_select_remote_node(addr, selector);
+	if (n_ptr && gipc_node_has_active_links(n_ptr))
 		return n_ptr;
 
 	/* Last resort -- look for any router to anywhere in remote zone */
-	router_addr =  tipc_net_select_router(addr, selector);
+	router_addr =  gipc_net_select_router(addr, selector);
 	if (router_addr)
-		return tipc_node_select(router_addr, selector);
+		return gipc_node_select(router_addr, selector);
 
 	return NULL;
 }
 
 /**
- * tipc_node_select_router - select router to reach specified node
+ * gipc_node_select_router - select router to reach specified node
  *
  * Uses a deterministic and fair algorithm for selecting router node.
  */
 
-u32 tipc_node_select_router(struct tipc_node *n_ptr, u32 ref)
+u32 gipc_node_select_router(struct gipc_node *n_ptr, u32 ref)
 {
 	u32 ulim;
 	u32 mask;
@@ -542,7 +542,7 @@ u32 tipc_node_select_router(struct tipc_node *n_ptr, u32 ref)
 	ulim = ((n_ptr->last_router + 1) * 32) - 1;
 
 	/* Start entry must be random */
-	mask = tipc_max_nodes;
+	mask = gipc_max_nodes;
 	while (mask > ulim)
 		mask >>= 1;
 	start = ref & mask;
@@ -562,184 +562,184 @@ u32 tipc_node_select_router(struct tipc_node *n_ptr, u32 ref)
 		assert(r != start);
 	}
 	assert(r && (r <= ulim));
-	return tipc_addr(own_zone(), own_cluster(), r);
+	return gipc_addr(own_zone(), own_cluster(), r);
 }
 
-void tipc_node_add_router(struct tipc_node *n_ptr, u32 router)
+void gipc_node_add_router(struct gipc_node *n_ptr, u32 router)
 {
-	u32 r_num = tipc_node(router);
+	u32 r_num = gipc_node(router);
 
 	n_ptr->routers[r_num / 32] =
 		((1 << (r_num % 32)) | n_ptr->routers[r_num / 32]);
-	n_ptr->last_router = tipc_max_nodes / 32;
+	n_ptr->last_router = gipc_max_nodes / 32;
 	while ((--n_ptr->last_router >= 0) &&
 	       !n_ptr->routers[n_ptr->last_router]);
 }
 
-void tipc_node_remove_router(struct tipc_node *n_ptr, u32 router)
+void gipc_node_remove_router(struct gipc_node *n_ptr, u32 router)
 {
-	u32 r_num = tipc_node(router);
+	u32 r_num = gipc_node(router);
 
 	if (n_ptr->last_router < 0)
 		return;		/* No routes */
 
 	n_ptr->routers[r_num / 32] =
 		((~(1 << (r_num % 32))) & (n_ptr->routers[r_num / 32]));
-	n_ptr->last_router = tipc_max_nodes / 32;
+	n_ptr->last_router = gipc_max_nodes / 32;
 	while ((--n_ptr->last_router >= 0) &&
 	       !n_ptr->routers[n_ptr->last_router]);
 
-	if (!tipc_node_is_up(n_ptr))
+	if (!gipc_node_is_up(n_ptr))
 		node_lost_contact(n_ptr);
 }
 
 #if 0
-void node_print(struct print_buf *buf, struct tipc_node *n_ptr, char *str)
+void node_print(struct print_buf *buf, struct gipc_node *n_ptr, char *str)
 {
 	u32 i;
 
-	tipc_printf(buf, "\n\n%s", str);
+	gipc_printf(buf, "\n\n%s", str);
 	for (i = 0; i < MAX_BEARERS; i++) {
 		if (!n_ptr->links[i])
 			continue;
-		tipc_printf(buf, "Links[%u]: %x, ", i, n_ptr->links[i]);
+		gipc_printf(buf, "Links[%u]: %x, ", i, n_ptr->links[i]);
 	}
-	tipc_printf(buf, "Active links: [%x,%x]\n",
+	gipc_printf(buf, "Active links: [%x,%x]\n",
 		    n_ptr->active_links[0], n_ptr->active_links[1]);
 }
 #endif
 
-u32 tipc_available_nodes(const u32 domain)
+u32 gipc_available_nodes(const u32 domain)
 {
-	struct tipc_node *n_ptr;
+	struct gipc_node *n_ptr;
 	u32 cnt = 0;
 
-	read_lock_bh(&tipc_net_lock);
-	for (n_ptr = tipc_nodes; n_ptr; n_ptr = n_ptr->next) {
+	read_lock_bh(&gipc_net_lock);
+	for (n_ptr = gipc_nodes; n_ptr; n_ptr = n_ptr->next) {
 		if (!in_scope(domain, n_ptr->addr))
 			continue;
-		if (tipc_node_is_up(n_ptr))
+		if (gipc_node_is_up(n_ptr))
 			cnt++;
 	}
-	read_unlock_bh(&tipc_net_lock);
+	read_unlock_bh(&gipc_net_lock);
 	return cnt;
 }
 
-struct sk_buff *tipc_node_get_nodes(const void *req_tlv_area, int req_tlv_space)
+struct sk_buff *gipc_node_get_nodes(const void *req_tlv_area, int req_tlv_space)
 {
 	u32 domain;
 	struct sk_buff *buf;
-	struct tipc_node *n_ptr;
-	struct tipc_node_info node_info;
+	struct gipc_node *n_ptr;
+	struct gipc_node_info node_info;
 	u32 payload_size;
 
-	if (!TLV_CHECK(req_tlv_area, req_tlv_space, TIPC_TLV_NET_ADDR))
-		return tipc_cfg_reply_error_string(TIPC_CFG_TLV_ERROR);
+	if (!TLV_CHECK(req_tlv_area, req_tlv_space, GIPC_TLV_NET_ADDR))
+		return gipc_cfg_reply_error_string(GIPC_CFG_TLV_ERROR);
 
 	domain = ntohl(*(__be32 *)TLV_DATA(req_tlv_area));
-	if (!tipc_addr_domain_valid(domain))
-		return tipc_cfg_reply_error_string(TIPC_CFG_INVALID_VALUE
+	if (!gipc_addr_domain_valid(domain))
+		return gipc_cfg_reply_error_string(GIPC_CFG_INVALID_VALUE
 						   " (network address)");
 
-	read_lock_bh(&tipc_net_lock);
-	if (!tipc_nodes) {
-		read_unlock_bh(&tipc_net_lock);
-		return tipc_cfg_reply_none();
+	read_lock_bh(&gipc_net_lock);
+	if (!gipc_nodes) {
+		read_unlock_bh(&gipc_net_lock);
+		return gipc_cfg_reply_none();
 	}
 
 	/* For now, get space for all other nodes
 	   (will need to modify this when slave nodes are supported */
 
-	payload_size = TLV_SPACE(sizeof(node_info)) * (tipc_max_nodes - 1);
+	payload_size = TLV_SPACE(sizeof(node_info)) * (gipc_max_nodes - 1);
 	if (payload_size > 32768u) {
-		read_unlock_bh(&tipc_net_lock);
-		return tipc_cfg_reply_error_string(TIPC_CFG_NOT_SUPPORTED
+		read_unlock_bh(&gipc_net_lock);
+		return gipc_cfg_reply_error_string(GIPC_CFG_NOT_SUPPORTED
 						   " (too many nodes)");
 	}
-	buf = tipc_cfg_reply_alloc(payload_size);
+	buf = gipc_cfg_reply_alloc(payload_size);
 	if (!buf) {
-		read_unlock_bh(&tipc_net_lock);
+		read_unlock_bh(&gipc_net_lock);
 		return NULL;
 	}
 
 	/* Add TLVs for all nodes in scope */
 
-	for (n_ptr = tipc_nodes; n_ptr; n_ptr = n_ptr->next) {
+	for (n_ptr = gipc_nodes; n_ptr; n_ptr = n_ptr->next) {
 		if (!in_scope(domain, n_ptr->addr))
 			continue;
 		node_info.addr = htonl(n_ptr->addr);
-		node_info.up = htonl(tipc_node_is_up(n_ptr));
-		tipc_cfg_append_tlv(buf, TIPC_TLV_NODE_INFO,
+		node_info.up = htonl(gipc_node_is_up(n_ptr));
+		gipc_cfg_append_tlv(buf, GIPC_TLV_NODE_INFO,
 				    &node_info, sizeof(node_info));
 	}
 
-	read_unlock_bh(&tipc_net_lock);
+	read_unlock_bh(&gipc_net_lock);
 	return buf;
 }
 
-struct sk_buff *tipc_node_get_links(const void *req_tlv_area, int req_tlv_space)
+struct sk_buff *gipc_node_get_links(const void *req_tlv_area, int req_tlv_space)
 {
 	u32 domain;
 	struct sk_buff *buf;
-	struct tipc_node *n_ptr;
-	struct tipc_link_info link_info;
+	struct gipc_node *n_ptr;
+	struct gipc_link_info link_info;
 	u32 payload_size;
 
-	if (!TLV_CHECK(req_tlv_area, req_tlv_space, TIPC_TLV_NET_ADDR))
-		return tipc_cfg_reply_error_string(TIPC_CFG_TLV_ERROR);
+	if (!TLV_CHECK(req_tlv_area, req_tlv_space, GIPC_TLV_NET_ADDR))
+		return gipc_cfg_reply_error_string(GIPC_CFG_TLV_ERROR);
 
 	domain = ntohl(*(__be32 *)TLV_DATA(req_tlv_area));
-	if (!tipc_addr_domain_valid(domain))
-		return tipc_cfg_reply_error_string(TIPC_CFG_INVALID_VALUE
+	if (!gipc_addr_domain_valid(domain))
+		return gipc_cfg_reply_error_string(GIPC_CFG_INVALID_VALUE
 						   " (network address)");
 
-	if (tipc_mode != TIPC_NET_MODE)
-		return tipc_cfg_reply_none();
+	if (gipc_mode != GIPC_NET_MODE)
+		return gipc_cfg_reply_none();
 
-	read_lock_bh(&tipc_net_lock);
+	read_lock_bh(&gipc_net_lock);
 
 	/* Get space for all unicast links + multicast link */
 
 	payload_size = TLV_SPACE(sizeof(link_info)) *
-		(tipc_net.zones[tipc_zone(tipc_own_addr)]->links + 1);
+		(gipc_net.zones[gipc_zone(gipc_own_addr)]->links + 1);
 	if (payload_size > 32768u) {
-		read_unlock_bh(&tipc_net_lock);
-		return tipc_cfg_reply_error_string(TIPC_CFG_NOT_SUPPORTED
+		read_unlock_bh(&gipc_net_lock);
+		return gipc_cfg_reply_error_string(GIPC_CFG_NOT_SUPPORTED
 						   " (too many links)");
 	}
-	buf = tipc_cfg_reply_alloc(payload_size);
+	buf = gipc_cfg_reply_alloc(payload_size);
 	if (!buf) {
-		read_unlock_bh(&tipc_net_lock);
+		read_unlock_bh(&gipc_net_lock);
 		return NULL;
 	}
 
 	/* Add TLV for broadcast link */
 
-	link_info.dest = htonl(tipc_own_addr & 0xfffff00);
+	link_info.dest = htonl(gipc_own_addr & 0xfffff00);
 	link_info.up = htonl(1);
-	strlcpy(link_info.str, tipc_bclink_name, TIPC_MAX_LINK_NAME);
-	tipc_cfg_append_tlv(buf, TIPC_TLV_LINK_INFO, &link_info, sizeof(link_info));
+	strlcpy(link_info.str, gipc_bclink_name, GIPC_MAX_LINK_NAME);
+	gipc_cfg_append_tlv(buf, GIPC_TLV_LINK_INFO, &link_info, sizeof(link_info));
 
 	/* Add TLVs for any other links in scope */
 
-	for (n_ptr = tipc_nodes; n_ptr; n_ptr = n_ptr->next) {
+	for (n_ptr = gipc_nodes; n_ptr; n_ptr = n_ptr->next) {
 		u32 i;
 
 		if (!in_scope(domain, n_ptr->addr))
 			continue;
-		tipc_node_lock(n_ptr);
+		gipc_node_lock(n_ptr);
 		for (i = 0; i < MAX_BEARERS; i++) {
 			if (!n_ptr->links[i])
 				continue;
 			link_info.dest = htonl(n_ptr->addr);
-			link_info.up = htonl(tipc_link_is_up(n_ptr->links[i]));
+			link_info.up = htonl(gipc_link_is_up(n_ptr->links[i]));
 			strcpy(link_info.str, n_ptr->links[i]->name);
-			tipc_cfg_append_tlv(buf, TIPC_TLV_LINK_INFO,
+			gipc_cfg_append_tlv(buf, GIPC_TLV_LINK_INFO,
 					    &link_info, sizeof(link_info));
 		}
-		tipc_node_unlock(n_ptr);
+		gipc_node_unlock(n_ptr);
 	}
 
-	read_unlock_bh(&tipc_net_lock);
+	read_unlock_bh(&gipc_net_lock);
 	return buf;
 }

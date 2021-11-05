@@ -472,9 +472,9 @@ CONFIG_IP_SCTP=m
 CONFIG_SCTP_HMAC_MD5=y
 
 #
-# TIPC Configuration (EXPERIMENTAL)
+# GIPC Configuration (EXPERIMENTAL)
 #
-# CONFIG_TIPC is not set
+# CONFIG_GIPC is not set
 # CONFIG_ATM is not set
 # CONFIG_BRIDGE is not set
 # CONFIG_VLAN_8021Q is not set

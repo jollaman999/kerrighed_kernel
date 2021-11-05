@@ -1,5 +1,5 @@
 /*
- * net/tipc/net.h: Include file for TIPC network routing code
+ * net/gipc/net.h: Include file for GIPC network routing code
  *
  * Copyright (c) 1995-2006, Ericsson AB
  * Copyright (c) 2005, Wind River Systems
@@ -34,13 +34,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TIPC_NET_H
-#define _TIPC_NET_H
+#ifndef _GIPC_NET_H
+#define _GIPC_NET_H
 
 struct _zone;
 
 /**
- * struct network - TIPC network structure
+ * struct network - GIPC network structure
  * @zones: array of pointers to all zones within network
  */
 
@@ -49,16 +49,16 @@ struct network {
 };
 
 
-extern struct network tipc_net;
-extern rwlock_t tipc_net_lock;
+extern struct network gipc_net;
+extern rwlock_t gipc_net_lock;
 
-void tipc_net_remove_as_router(u32 router);
-void tipc_net_send_external_routes(u32 dest);
-void tipc_net_route_msg(struct sk_buff *buf);
-struct tipc_node *tipc_net_select_remote_node(u32 addr, u32 ref);
-u32 tipc_net_select_router(u32 addr, u32 ref);
+void gipc_net_remove_as_router(u32 router);
+void gipc_net_send_external_routes(u32 dest);
+void gipc_net_route_msg(struct sk_buff *buf);
+struct gipc_node *gipc_net_select_remote_node(u32 addr, u32 ref);
+u32 gipc_net_select_router(u32 addr, u32 ref);
 
-int tipc_net_start(u32 addr);
-void tipc_net_stop(void);
+int gipc_net_start(u32 addr);
+void gipc_net_stop(void);
 
 #endif

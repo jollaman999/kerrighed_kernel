@@ -48,7 +48,7 @@ config HCC_TOOLS
 config HCC_COMMUNICATION_FRAMEWORK
        bool "Communication layer"
        depends on HCC
-       select TIPC
+       select GIPC
        select HCC_GRPC
        help
          All-purpose communication layer

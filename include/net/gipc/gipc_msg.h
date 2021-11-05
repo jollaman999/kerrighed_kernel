@@ -1,5 +1,5 @@
 /*
- * include/net/tipc/tipc_msg.h: Include file for privileged access to TIPC message headers
+ * include/net/gipc/gipc_msg.h: Include file for privileged access to GIPC message headers
  * 
  * Copyright (c) 2003-2006, Ericsson AB
  * Copyright (c) 2005, Wind River Systems
@@ -34,18 +34,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NET_TIPC_MSG_H_
-#define _NET_TIPC_MSG_H_
+#ifndef _NET_GIPC_MSG_H_
+#define _NET_GIPC_MSG_H_
 
 #ifdef __KERNEL__
 
-struct tipc_msg {
+struct gipc_msg {
 	__be32 hdr[15];
 };
 
 
 /*
-		TIPC user data message header format, version 2:
+		GIPC user data message header format, version 2:
 
 
        1 0 9 8 7 6 5 4|3 2 1 0 9 8 7 6|5 4 3 2 1 0 9 8|7 6 5 4 3 2 1 0 
@@ -79,125 +79,125 @@ struct tipc_msg {
 
 */
 
-#define TIPC_CONN_MSG	0
-#define TIPC_MCAST_MSG	1
-#define TIPC_NAMED_MSG	2
-#define TIPC_DIRECT_MSG	3
+#define GIPC_CONN_MSG	0
+#define GIPC_MCAST_MSG	1
+#define GIPC_NAMED_MSG	2
+#define GIPC_DIRECT_MSG	3
 
 
-static inline u32 msg_word(struct tipc_msg *m, u32 pos)
+static inline u32 msg_word(struct gipc_msg *m, u32 pos)
 {
 	return ntohl(m->hdr[pos]);
 }
 
-static inline u32 msg_bits(struct tipc_msg *m, u32 w, u32 pos, u32 mask)
+static inline u32 msg_bits(struct gipc_msg *m, u32 w, u32 pos, u32 mask)
 {
 	return (msg_word(m, w) >> pos) & mask;
 }
 
-static inline u32 msg_importance(struct tipc_msg *m)
+static inline u32 msg_importance(struct gipc_msg *m)
 {
 	return msg_bits(m, 0, 25, 0xf);
 }
 
-static inline u32 msg_hdr_sz(struct tipc_msg *m)
+static inline u32 msg_hdr_sz(struct gipc_msg *m)
 {
 	return msg_bits(m, 0, 21, 0xf) << 2;
 }
 
-static inline int msg_short(struct tipc_msg *m)
+static inline int msg_short(struct gipc_msg *m)
 {
 	return (msg_hdr_sz(m) == 24);
 }
 
-static inline u32 msg_size(struct tipc_msg *m)
+static inline u32 msg_size(struct gipc_msg *m)
 {
 	return msg_bits(m, 0, 0, 0x1ffff);
 }
 
-static inline u32 msg_data_sz(struct tipc_msg *m)
+static inline u32 msg_data_sz(struct gipc_msg *m)
 {
 	return (msg_size(m) - msg_hdr_sz(m));
 }
 
-static inline unchar *msg_data(struct tipc_msg *m)
+static inline unchar *msg_data(struct gipc_msg *m)
 {
 	return ((unchar *)m) + msg_hdr_sz(m);
 }
 
-static inline u32 msg_type(struct tipc_msg *m)
+static inline u32 msg_type(struct gipc_msg *m)
 {
 	return msg_bits(m, 1, 29, 0x7);
 }
 
-static inline u32 msg_named(struct tipc_msg *m)
+static inline u32 msg_named(struct gipc_msg *m)
 {
-	return (msg_type(m) == TIPC_NAMED_MSG);
+	return (msg_type(m) == GIPC_NAMED_MSG);
 }
 
-static inline u32 msg_mcast(struct tipc_msg *m)
+static inline u32 msg_mcast(struct gipc_msg *m)
 {
-	return (msg_type(m) == TIPC_MCAST_MSG);
+	return (msg_type(m) == GIPC_MCAST_MSG);
 }
 
-static inline u32 msg_connected(struct tipc_msg *m)
+static inline u32 msg_connected(struct gipc_msg *m)
 {
-	return (msg_type(m) == TIPC_CONN_MSG);
+	return (msg_type(m) == GIPC_CONN_MSG);
 }
 
-static inline u32 msg_errcode(struct tipc_msg *m)
+static inline u32 msg_errcode(struct gipc_msg *m)
 {
 	return msg_bits(m, 1, 25, 0xf);
 }
 
-static inline u32 msg_prevnode(struct tipc_msg *m)
+static inline u32 msg_prevnode(struct gipc_msg *m)
 {
 	return msg_word(m, 3);
 }
 
-static inline u32 msg_origport(struct tipc_msg *m)
+static inline u32 msg_origport(struct gipc_msg *m)
 {
 	return msg_word(m, 4);
 }
 
-static inline u32 msg_destport(struct tipc_msg *m)
+static inline u32 msg_destport(struct gipc_msg *m)
 {
 	return msg_word(m, 5);
 }
 
-static inline u32 msg_mc_netid(struct tipc_msg *m)
+static inline u32 msg_mc_netid(struct gipc_msg *m)
 {
 	return msg_word(m, 5);
 }
 
-static inline u32 msg_orignode(struct tipc_msg *m)
+static inline u32 msg_orignode(struct gipc_msg *m)
 {
 	if (likely(msg_short(m)))
 		return msg_prevnode(m);
 	return msg_word(m, 6);
 }
 
-static inline u32 msg_destnode(struct tipc_msg *m)
+static inline u32 msg_destnode(struct gipc_msg *m)
 {
 	return msg_word(m, 7);
 }
 
-static inline u32 msg_nametype(struct tipc_msg *m)
+static inline u32 msg_nametype(struct gipc_msg *m)
 {
 	return msg_word(m, 8);
 }
 
-static inline u32 msg_nameinst(struct tipc_msg *m)
+static inline u32 msg_nameinst(struct gipc_msg *m)
 {
 	return msg_word(m, 9);
 }
 
-static inline u32 msg_namelower(struct tipc_msg *m)
+static inline u32 msg_namelower(struct gipc_msg *m)
 {
 	return msg_nameinst(m);
 }
 
-static inline u32 msg_nameupper(struct tipc_msg *m)
+static inline u32 msg_nameupper(struct gipc_msg *m)
 {
 	return msg_word(m, 10);
 }

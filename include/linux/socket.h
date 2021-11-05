@@ -192,7 +192,7 @@ struct ucred {
 #define AF_LLC		26	/* Linux LLC			*/
 #define AF_IB		27	/* Native InfiniBand address	*/
 #define AF_CAN		29	/* Controller Area Network      */
-#define AF_TIPC		30	/* TIPC sockets			*/
+#define AF_GIPC		30	/* GIPC sockets			*/
 #define AF_BLUETOOTH	31	/* Bluetooth sockets 		*/
 #define AF_IUCV		32	/* IUCV sockets			*/
 #define AF_RXRPC	33	/* RxRPC sockets 		*/
@@ -233,7 +233,7 @@ struct ucred {
 #define PF_LLC		AF_LLC
 #define PF_IB		AF_IB
 #define PF_CAN		AF_CAN
-#define PF_TIPC		AF_TIPC
+#define PF_GIPC		AF_GIPC
 #define PF_BLUETOOTH	AF_BLUETOOTH
 #define PF_IUCV		AF_IUCV
 #define PF_RXRPC	AF_RXRPC
@@ -304,7 +304,7 @@ struct ucred {
 #define SOL_LLC		268
 #define SOL_DCCP	269
 #define SOL_NETLINK	270
-#define SOL_TIPC	271
+#define SOL_GIPC	271
 #define SOL_RXRPC	272
 #define SOL_PPPOL2TP	273
 #define SOL_BLUETOOTH	274

@@ -1,5 +1,5 @@
 /*
- * net/tipc/subscr.h: Include file for TIPC network topology service
+ * net/gipc/subscr.h: Include file for GIPC network topology service
  *
  * Copyright (c) 2003-2006, Ericsson AB
  * Copyright (c) 2005-2007, Wind River Systems
@@ -34,17 +34,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TIPC_SUBSCR_H
-#define _TIPC_SUBSCR_H
+#ifndef _GIPC_SUBSCR_H
+#define _GIPC_SUBSCR_H
 
 struct subscription;
 
-typedef void (*tipc_subscr_event) (struct subscription *sub,
+typedef void (*gipc_subscr_event) (struct subscription *sub,
 				   u32 found_lower, u32 found_upper,
 				   u32 event, u32 port_ref, u32 node);
 
 /**
- * struct subscription - TIPC network topology subscription object
+ * struct subscription - GIPC network topology subscription object
  * @seq: name sequence associated with subscription
  * @timeout: duration of subscription (in ms)
  * @filter: event filtering to be done for subscription
@@ -58,23 +58,23 @@ typedef void (*tipc_subscr_event) (struct subscription *sub,
  */
 
 struct subscription {
-	struct tipc_name_seq seq;
+	struct gipc_name_seq seq;
 	u32 timeout;
 	u32 filter;
-	tipc_subscr_event event_cb;
+	gipc_subscr_event event_cb;
 	struct timer_list timer;
 	struct list_head nameseq_list;
 	struct list_head subscription_list;
 	u32 server_ref;
 	int swap;
-	struct tipc_event evt;
+	struct gipc_event evt;
 };
 
-int tipc_subscr_overlap(struct subscription *sub,
+int gipc_subscr_overlap(struct subscription *sub,
 			u32 found_lower,
 			u32 found_upper);
 
-void tipc_subscr_report_overlap(struct subscription *sub,
+void gipc_subscr_report_overlap(struct subscription *sub,
 				u32 found_lower,
 				u32 found_upper,
 				u32 event,
@@ -82,9 +82,9 @@ void tipc_subscr_report_overlap(struct subscription *sub,
 				u32 node,
 				int must_report);
 
-int tipc_subscr_start(void);
+int gipc_subscr_start(void);
 
-void tipc_subscr_stop(void);
+void gipc_subscr_stop(void);
 
 
 #endif

@@ -316,9 +316,9 @@ CONFIG_DEFAULT_TCP_CONG="cubic"
 # CONFIG_IP_SCTP is not set
 
 #
-# TIPC Configuration (EXPERIMENTAL)
+# GIPC Configuration (EXPERIMENTAL)
 #
-# CONFIG_TIPC is not set
+# CONFIG_GIPC is not set
 # CONFIG_ATM is not set
 # CONFIG_BRIDGE is not set
 # CONFIG_VLAN_8021Q is not set

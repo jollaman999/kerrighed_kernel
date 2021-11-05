@@ -434,7 +434,7 @@ CONFIG_BRIDGE_NETFILTER=y
 # CONFIG_BRIDGE_NF_EBTABLES is not set
 # CONFIG_IP_DCCP is not set
 # CONFIG_IP_SCTP is not set
-# CONFIG_TIPC is not set
+# CONFIG_GIPC is not set
 # CONFIG_ATM is not set
 CONFIG_STP=m
 CONFIG_GARP=m

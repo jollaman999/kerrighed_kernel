@@ -1,5 +1,5 @@
 /*
- * include/net/tipc/tipc_port.h: Include file for privileged access to TIPC ports
+ * include/net/gipc/gipc_port.h: Include file for privileged access to GIPC ports
  * 
  * Copyright (c) 1994-2007, Ericsson AB
  * Copyright (c) 2005-2008, Wind River Systems
@@ -34,33 +34,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NET_TIPC_PORT_H_
-#define _NET_TIPC_PORT_H_
+#ifndef _NET_GIPC_PORT_H_
+#define _NET_GIPC_PORT_H_
 
 #ifdef __KERNEL__
 
-#include <linux/tipc.h>
+#include <linux/gipc.h>
 #include <linux/skbuff.h>
-#include <net/tipc/tipc_msg.h>
+#include <net/gipc/gipc_msg.h>
 
-#define TIPC_FLOW_CONTROL_WIN 512
+#define GIPC_FLOW_CONTROL_WIN 512
 
 /**
- * struct tipc_port - native TIPC port info available to privileged users
+ * struct gipc_port - native GIPC port info available to privileged users
  * @usr_handle: pointer to additional user-defined information about port
  * @lock: pointer to spinlock for controlling access to port
  * @connected: non-zero if port is currently connected to a peer port
- * @conn_type: TIPC type used when connection was established
- * @conn_instance: TIPC instance used when connection was established
+ * @conn_type: GIPC type used when connection was established
+ * @conn_instance: GIPC instance used when connection was established
  * @conn_unacked: number of unacknowledged messages received from peer port
  * @published: non-zero if port has one or more associated names
  * @congested: non-zero if cannot send because of link or port congestion
  * @max_pkt: maximum packet size "hint" used when building messages sent by port
- * @ref: unique reference to port in TIPC object registry
+ * @ref: unique reference to port in GIPC object registry
  * @phdr: preformatted message header used when sending messages
  */
 
-struct tipc_port {
+struct gipc_port {
         void *usr_handle;
         spinlock_t *lock;
 	int connected;
@@ -71,36 +71,36 @@ struct tipc_port {
 	u32 congested;
 	u32 max_pkt;
 	u32 ref;
-	struct tipc_msg phdr;
+	struct gipc_msg phdr;
 };
 
 #ifdef CONFIG_HCC_GRPC
-struct tipc_port *tipc_createport_raw(void *usr_handle,
-			u32 (*dispatcher)(struct tipc_port *, struct sk_buff *),
-			void (*wakeup)(struct tipc_port *),
+struct gipc_port *gipc_createport_raw(void *usr_handle,
+			u32 (*dispatcher)(struct gipc_port *, struct sk_buff *),
+			void (*wakeup)(struct gipc_port *),
 			const u32 importance, void* user_port);
 #else
-struct tipc_port *tipc_createport_raw(void *usr_handle,
-			u32 (*dispatcher)(struct tipc_port *, struct sk_buff *),
-			void (*wakeup)(struct tipc_port *),
+struct gipc_port *gipc_createport_raw(void *usr_handle,
+			u32 (*dispatcher)(struct gipc_port *, struct sk_buff *),
+			void (*wakeup)(struct gipc_port *),
 			const u32 importance);
 #endif
 
-int tipc_reject_msg(struct sk_buff *buf, u32 err);
+int gipc_reject_msg(struct sk_buff *buf, u32 err);
 
-int tipc_send_buf_fast(struct sk_buff *buf, u32 destnode);
+int gipc_send_buf_fast(struct sk_buff *buf, u32 destnode);
 
-void tipc_acknowledge(u32 port_ref,u32 ack);
+void gipc_acknowledge(u32 port_ref,u32 ack);
 
-struct tipc_port *tipc_get_port(const u32 ref);
+struct gipc_port *gipc_get_port(const u32 ref);
 
-void *tipc_get_handle(const u32 ref);
+void *gipc_get_handle(const u32 ref);
 
 /*
  * The following routines require that the port be locked on entry
  */
 
-int tipc_disconnect_port(struct tipc_port *tp_ptr);
+int gipc_disconnect_port(struct gipc_port *tp_ptr);
 
 
 #endif

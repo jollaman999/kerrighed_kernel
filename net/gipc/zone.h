@@ -1,5 +1,5 @@
 /*
- * net/tipc/zone.h: Include file for TIPC zone management routines
+ * net/gipc/zone.h: Include file for GIPC zone management routines
  *
  * Copyright (c) 2000-2006, Ericsson AB
  * Copyright (c) 2005-2006, Wind River Systems
@@ -34,15 +34,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TIPC_ZONE_H
-#define _TIPC_ZONE_H
+#ifndef _GIPC_ZONE_H
+#define _GIPC_ZONE_H
 
 #include "node_subscr.h"
 #include "net.h"
 
 
 /**
- * struct _zone - TIPC zone structure
+ * struct _zone - GIPC zone structure
  * @addr: network address of zone
  * @clusters: array of pointers to all clusters within zone
  * @links: number of (unicast) links to zone
@@ -54,18 +54,18 @@ struct _zone {
 	u32 links;
 };
 
-struct tipc_node *tipc_zone_select_remote_node(struct _zone *z_ptr, u32 addr, u32 ref);
-u32 tipc_zone_select_router(struct _zone *z_ptr, u32 addr, u32 ref);
-void tipc_zone_remove_as_router(struct _zone *z_ptr, u32 router);
-void tipc_zone_send_external_routes(struct _zone *z_ptr, u32 dest);
-struct _zone *tipc_zone_create(u32 addr);
-void tipc_zone_delete(struct _zone *z_ptr);
-void tipc_zone_attach_cluster(struct _zone *z_ptr, struct cluster *c_ptr);
-u32 tipc_zone_next_node(u32 addr);
+struct gipc_node *gipc_zone_select_remote_node(struct _zone *z_ptr, u32 addr, u32 ref);
+u32 gipc_zone_select_router(struct _zone *z_ptr, u32 addr, u32 ref);
+void gipc_zone_remove_as_router(struct _zone *z_ptr, u32 router);
+void gipc_zone_send_external_routes(struct _zone *z_ptr, u32 dest);
+struct _zone *gipc_zone_create(u32 addr);
+void gipc_zone_delete(struct _zone *z_ptr);
+void gipc_zone_attach_cluster(struct _zone *z_ptr, struct cluster *c_ptr);
+u32 gipc_zone_next_node(u32 addr);
 
-static inline struct _zone *tipc_zone_find(u32 addr)
+static inline struct _zone *gipc_zone_find(u32 addr)
 {
-	return tipc_net.zones[tipc_zone(addr)];
+	return gipc_net.zones[gipc_zone(addr)];
 }
 
 #endif

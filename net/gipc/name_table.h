@@ -1,5 +1,5 @@
 /*
- * net/tipc/name_table.h: Include file for TIPC name table code
+ * net/gipc/name_table.h: Include file for GIPC name table code
  *
  * Copyright (c) 2000-2006, Ericsson AB
  * Copyright (c) 2004-2005, Wind River Systems
@@ -34,8 +34,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TIPC_NAME_TABLE_H
-#define _TIPC_NAME_TABLE_H
+#ifndef _GIPC_NAME_TABLE_H
+#define _GIPC_NAME_TABLE_H
 
 #include "node_subscr.h"
 
@@ -43,10 +43,10 @@ struct subscription;
 struct port_list;
 
 /*
- * TIPC name types reserved for internal TIPC use (both current and planned)
+ * GIPC name types reserved for internal GIPC use (both current and planned)
  */
 
-#define TIPC_ZM_SRV 3  		/* zone master service name type */
+#define GIPC_ZM_SRV 3  		/* zone master service name type */
 
 
 /**
@@ -76,7 +76,7 @@ struct publication {
 	u32 node;
 	u32 ref;
 	u32 key;
-	struct tipc_node_subscr subscr;
+	struct gipc_node_subscr subscr;
 	struct list_head local_list;
 	struct list_head pport_list;
 	struct publication *node_list_next;
@@ -85,24 +85,24 @@ struct publication {
 };
 
 
-extern rwlock_t tipc_nametbl_lock;
+extern rwlock_t gipc_nametbl_lock;
 
-struct sk_buff *tipc_nametbl_get(const void *req_tlv_area, int req_tlv_space);
-u32 tipc_nametbl_translate(u32 type, u32 instance, u32 *node);
-int tipc_nametbl_mc_translate(u32 type, u32 lower, u32 upper, u32 limit,
+struct sk_buff *gipc_nametbl_get(const void *req_tlv_area, int req_tlv_space);
+u32 gipc_nametbl_translate(u32 type, u32 instance, u32 *node);
+int gipc_nametbl_mc_translate(u32 type, u32 lower, u32 upper, u32 limit,
 			 struct port_list *dports);
-int tipc_nametbl_publish_rsv(u32 ref, unsigned int scope,
-			struct tipc_name_seq const *seq);
-struct publication *tipc_nametbl_publish(u32 type, u32 lower, u32 upper,
+int gipc_nametbl_publish_rsv(u32 ref, unsigned int scope,
+			struct gipc_name_seq const *seq);
+struct publication *gipc_nametbl_publish(u32 type, u32 lower, u32 upper,
 				    u32 scope, u32 port_ref, u32 key);
-int tipc_nametbl_withdraw(u32 type, u32 lower, u32 ref, u32 key);
-struct publication *tipc_nametbl_insert_publ(u32 type, u32 lower, u32 upper,
+int gipc_nametbl_withdraw(u32 type, u32 lower, u32 ref, u32 key);
+struct publication *gipc_nametbl_insert_publ(u32 type, u32 lower, u32 upper,
 					u32 scope, u32 node, u32 ref, u32 key);
-struct publication *tipc_nametbl_remove_publ(u32 type, u32 lower,
+struct publication *gipc_nametbl_remove_publ(u32 type, u32 lower,
 					u32 node, u32 ref, u32 key);
-void tipc_nametbl_subscribe(struct subscription *s);
-void tipc_nametbl_unsubscribe(struct subscription *s);
-int tipc_nametbl_init(void);
-void tipc_nametbl_stop(void);
+void gipc_nametbl_subscribe(struct subscription *s);
+void gipc_nametbl_unsubscribe(struct subscription *s);
+int gipc_nametbl_init(void);
+void gipc_nametbl_stop(void);
 
 #endif

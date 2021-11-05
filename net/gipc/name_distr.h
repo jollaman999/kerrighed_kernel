@@ -1,5 +1,5 @@
 /*
- * net/tipc/name_distr.h: Include file for TIPC name distribution code
+ * net/gipc/name_distr.h: Include file for GIPC name distribution code
  *
  * Copyright (c) 2000-2006, Ericsson AB
  * Copyright (c) 2005, Wind River Systems
@@ -34,15 +34,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TIPC_NAME_DISTR_H
-#define _TIPC_NAME_DISTR_H
+#ifndef _GIPC_NAME_DISTR_H
+#define _GIPC_NAME_DISTR_H
 
 #include "name_table.h"
 
-void tipc_named_publish(struct publication *publ);
-void tipc_named_withdraw(struct publication *publ);
-void tipc_named_node_up(unsigned long node);
-void tipc_named_recv(struct sk_buff *buf);
-void tipc_named_reinit(void);
+void gipc_named_publish(struct publication *publ);
+void gipc_named_withdraw(struct publication *publ);
+void gipc_named_node_up(unsigned long node);
+void gipc_named_recv(struct sk_buff *buf);
+void gipc_named_reinit(void);
 
 #endif

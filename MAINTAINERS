@@ -5303,19 +5303,6 @@ L:	alsa-devel@alsa-project.org (moderated for non-subscribers)
 S:	Maintained
 F:	sound/soc/codecs/twl4030*
 
-TIPC NETWORK LAYER
-M:	Per Liden <per.liden@ericsson.com>
-M:	Jon Maloy <jon.maloy@ericsson.com>
-M:	Allan Stephens <allan.stephens@windriver.com>
-L:	tipc-discussion@lists.sourceforge.net
-W:	http://tipc.sourceforge.net/
-W:	http://tipc.cslab.ericsson.net/
-T:	git git://tipc.cslab.ericsson.net/pub/git/tipc.git
-S:	Maintained
-F:	include/linux/tipc*.h
-F:	include/net/tipc/
-F:	net/tipc/
-
 TLAN NETWORK DRIVER
 M:	Samuel Chessman <chessman@tux.org>
 L:	tlan-devel@lists.sourceforge.net (subscribers-only)

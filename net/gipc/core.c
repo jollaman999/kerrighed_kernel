@@ -1,5 +1,5 @@
 /*
- * net/tipc/core.c: TIPC module code
+ * net/gipc/core.c: GIPC module code
  *
  * Copyright (c) 2003-2006, Ericsson AB
  * Copyright (c) 2005-2006, Wind River Systems
@@ -49,228 +49,228 @@
 #include "config.h"
 
 
-#define TIPC_MOD_VER "1.6.4"
+#define GIPC_MOD_VER "1.6.4"
 
-#ifndef CONFIG_TIPC_ZONES
-#define CONFIG_TIPC_ZONES 3
+#ifndef CONFIG_GIPC_ZONES
+#define CONFIG_GIPC_ZONES 3
 #endif
 
-#ifndef CONFIG_TIPC_CLUSTERS
-#define CONFIG_TIPC_CLUSTERS 1
+#ifndef CONFIG_GIPC_CLUSTERS
+#define CONFIG_GIPC_CLUSTERS 1
 #endif
 
-#ifndef CONFIG_TIPC_NODES
-#define CONFIG_TIPC_NODES 255
+#ifndef CONFIG_GIPC_NODES
+#define CONFIG_GIPC_NODES 255
 #endif
 
-#ifndef CONFIG_TIPC_SLAVE_NODES
-#define CONFIG_TIPC_SLAVE_NODES 0
+#ifndef CONFIG_GIPC_SLAVE_NODES
+#define CONFIG_GIPC_SLAVE_NODES 0
 #endif
 
-#ifndef CONFIG_TIPC_PORTS
-#define CONFIG_TIPC_PORTS 8191
+#ifndef CONFIG_GIPC_PORTS
+#define CONFIG_GIPC_PORTS 8191
 #endif
 
-#ifndef CONFIG_TIPC_LOG
-#define CONFIG_TIPC_LOG 0
+#ifndef CONFIG_GIPC_LOG
+#define CONFIG_GIPC_LOG 0
 #endif
 
-/* global variables used by multiple sub-systems within TIPC */
+/* global variables used by multiple sub-systems within GIPC */
 
-int tipc_mode = TIPC_NOT_RUNNING;
-int tipc_random;
-atomic_t tipc_user_count = ATOMIC_INIT(0);
+int gipc_mode = GIPC_NOT_RUNNING;
+int gipc_random;
+atomic_t gipc_user_count = ATOMIC_INIT(0);
 
-const char tipc_alphabet[] =
+const char gipc_alphabet[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.";
 
-/* configurable TIPC parameters */
+/* configurable GIPC parameters */
 
-u32 tipc_own_addr;
-int tipc_max_zones;
-int tipc_max_clusters;
-int tipc_max_nodes;
-int tipc_max_slaves;
-int tipc_max_ports;
-int tipc_max_subscriptions;
-int tipc_max_publications;
-int tipc_net_id;
-int tipc_remote_management;
+u32 gipc_own_addr;
+int gipc_max_zones;
+int gipc_max_clusters;
+int gipc_max_nodes;
+int gipc_max_slaves;
+int gipc_max_ports;
+int gipc_max_subscriptions;
+int gipc_max_publications;
+int gipc_net_id;
+int gipc_remote_management;
 
 
-int tipc_get_mode(void)
+int gipc_get_mode(void)
 {
-	return tipc_mode;
+	return gipc_mode;
 }
 
 /**
- * tipc_core_stop_net - shut down TIPC networking sub-systems
+ * gipc_core_stop_net - shut down GIPC networking sub-systems
  */
 
-void tipc_core_stop_net(void)
+void gipc_core_stop_net(void)
 {
-	tipc_eth_media_stop();
-	tipc_net_stop();
+	gipc_eth_media_stop();
+	gipc_net_stop();
 }
 
 /**
- * start_net - start TIPC networking sub-systems
+ * start_net - start GIPC networking sub-systems
  */
 
-int tipc_core_start_net(unsigned long addr)
+int gipc_core_start_net(unsigned long addr)
 {
 	int res;
 
-	if ((res = tipc_net_start(addr)) ||
-	    (res = tipc_eth_media_start())) {
-		tipc_core_stop_net();
+	if ((res = gipc_net_start(addr)) ||
+	    (res = gipc_eth_media_start())) {
+		gipc_core_stop_net();
 	}
 	return res;
 }
 
 /**
- * tipc_core_stop - switch TIPC from SINGLE NODE to NOT RUNNING mode
+ * gipc_core_stop - switch GIPC from SINGLE NODE to NOT RUNNING mode
  */
 
-void tipc_core_stop(void)
+void gipc_core_stop(void)
 {
-	if (tipc_mode != TIPC_NODE_MODE)
+	if (gipc_mode != GIPC_NODE_MODE)
 		return;
 
-	tipc_mode = TIPC_NOT_RUNNING;
+	gipc_mode = GIPC_NOT_RUNNING;
 
-	tipc_netlink_stop();
-	tipc_handler_stop();
-	tipc_cfg_stop();
-	tipc_subscr_stop();
-	tipc_reg_stop();
-	tipc_nametbl_stop();
-	tipc_ref_table_stop();
-	tipc_socket_stop();
+	gipc_netlink_stop();
+	gipc_handler_stop();
+	gipc_cfg_stop();
+	gipc_subscr_stop();
+	gipc_reg_stop();
+	gipc_nametbl_stop();
+	gipc_ref_table_stop();
+	gipc_socket_stop();
 }
 
 /**
- * tipc_core_start - switch TIPC from NOT RUNNING to SINGLE NODE mode
+ * gipc_core_start - switch GIPC from NOT RUNNING to SINGLE NODE mode
  */
 
-int tipc_core_start(void)
+int gipc_core_start(void)
 {
 	int res;
 
-	if (tipc_mode != TIPC_NOT_RUNNING)
+	if (gipc_mode != GIPC_NOT_RUNNING)
 		return -ENOPROTOOPT;
 
-	get_random_bytes(&tipc_random, sizeof(tipc_random));
-	tipc_mode = TIPC_NODE_MODE;
+	get_random_bytes(&gipc_random, sizeof(gipc_random));
+	gipc_mode = GIPC_NODE_MODE;
 
-	if ((res = tipc_handler_start()) ||
-	    (res = tipc_ref_table_init(tipc_max_ports, tipc_random)) ||
-	    (res = tipc_reg_start()) ||
-	    (res = tipc_nametbl_init()) ||
-	    (res = tipc_k_signal((Handler)tipc_subscr_start, 0)) ||
-	    (res = tipc_k_signal((Handler)tipc_cfg_init, 0)) ||
-	    (res = tipc_netlink_start()) ||
-	    (res = tipc_socket_init())) {
-		tipc_core_stop();
+	if ((res = gipc_handler_start()) ||
+	    (res = gipc_ref_table_init(gipc_max_ports, gipc_random)) ||
+	    (res = gipc_reg_start()) ||
+	    (res = gipc_nametbl_init()) ||
+	    (res = gipc_k_signal((Handler)gipc_subscr_start, 0)) ||
+	    (res = gipc_k_signal((Handler)gipc_cfg_init, 0)) ||
+	    (res = gipc_netlink_start()) ||
+	    (res = gipc_socket_init())) {
+		gipc_core_stop();
 	}
 	return res;
 }
 
 
-static int __init tipc_init(void)
+static int __init gipc_init(void)
 {
 	int res;
 
-	tipc_log_resize(CONFIG_TIPC_LOG);
-	info("Activated (version " TIPC_MOD_VER
+	gipc_log_resize(CONFIG_GIPC_LOG);
+	info("Activated (version " GIPC_MOD_VER
 	     " compiled " __DATE__ " " __TIME__ ")\n");
 
-	tipc_own_addr = 0;
-	tipc_remote_management = 1;
-	tipc_max_publications = 10000;
-	tipc_max_subscriptions = 2000;
-	tipc_max_ports = delimit(CONFIG_TIPC_PORTS, 127, 65536);
-	tipc_max_zones = delimit(CONFIG_TIPC_ZONES, 1, 255);
-	tipc_max_clusters = delimit(CONFIG_TIPC_CLUSTERS, 1, 1);
-	tipc_max_nodes = delimit(CONFIG_TIPC_NODES, 8, 2047);
-	tipc_max_slaves = delimit(CONFIG_TIPC_SLAVE_NODES, 0, 2047);
-	tipc_net_id = 4711;
+	gipc_own_addr = 0;
+	gipc_remote_management = 1;
+	gipc_max_publications = 10000;
+	gipc_max_subscriptions = 2000;
+	gipc_max_ports = delimit(CONFIG_GIPC_PORTS, 127, 65536);
+	gipc_max_zones = delimit(CONFIG_GIPC_ZONES, 1, 255);
+	gipc_max_clusters = delimit(CONFIG_GIPC_CLUSTERS, 1, 1);
+	gipc_max_nodes = delimit(CONFIG_GIPC_NODES, 8, 2047);
+	gipc_max_slaves = delimit(CONFIG_GIPC_SLAVE_NODES, 0, 2047);
+	gipc_net_id = 4711;
 
-	if ((res = tipc_core_start()))
+	if ((res = gipc_core_start()))
 		err("Unable to start in single node mode\n");
 	else
 		info("Started in single node mode\n");
 	return res;
 }
 
-static void __exit tipc_exit(void)
+static void __exit gipc_exit(void)
 {
-	tipc_core_stop_net();
-	tipc_core_stop();
+	gipc_core_stop_net();
+	gipc_core_stop();
 	info("Deactivated\n");
-	tipc_log_resize(0);
+	gipc_log_resize(0);
 }
 
-module_init(tipc_init);
-module_exit(tipc_exit);
+module_init(gipc_init);
+module_exit(gipc_exit);
 
-MODULE_DESCRIPTION("TIPC: Transparent Inter Process Communication");
+MODULE_DESCRIPTION("GIPC: Transparent Inter Process Communication");
 MODULE_LICENSE("Dual BSD/GPL");
-MODULE_VERSION(TIPC_MOD_VER);
+MODULE_VERSION(GIPC_MOD_VER);
 
-/* Native TIPC API for kernel-space applications (see tipc.h) */
+/* Native GIPC API for kernel-space applications (see gipc.h) */
 
-EXPORT_SYMBOL(tipc_attach);
-EXPORT_SYMBOL(tipc_detach);
-EXPORT_SYMBOL(tipc_get_addr);
-EXPORT_SYMBOL(tipc_get_mode);
-EXPORT_SYMBOL(tipc_createport);
-EXPORT_SYMBOL(tipc_deleteport);
-EXPORT_SYMBOL(tipc_ownidentity);
-EXPORT_SYMBOL(tipc_portimportance);
-EXPORT_SYMBOL(tipc_set_portimportance);
-EXPORT_SYMBOL(tipc_portunreliable);
-EXPORT_SYMBOL(tipc_set_portunreliable);
-EXPORT_SYMBOL(tipc_portunreturnable);
-EXPORT_SYMBOL(tipc_set_portunreturnable);
-EXPORT_SYMBOL(tipc_publish);
-EXPORT_SYMBOL(tipc_withdraw);
-EXPORT_SYMBOL(tipc_connect2port);
-EXPORT_SYMBOL(tipc_disconnect);
-EXPORT_SYMBOL(tipc_shutdown);
-EXPORT_SYMBOL(tipc_isconnected);
-EXPORT_SYMBOL(tipc_peer);
-EXPORT_SYMBOL(tipc_ref_valid);
-EXPORT_SYMBOL(tipc_send);
-EXPORT_SYMBOL(tipc_send_buf);
-EXPORT_SYMBOL(tipc_send2name);
-EXPORT_SYMBOL(tipc_forward2name);
-EXPORT_SYMBOL(tipc_send_buf2name);
-EXPORT_SYMBOL(tipc_forward_buf2name);
-EXPORT_SYMBOL(tipc_send2port);
-EXPORT_SYMBOL(tipc_forward2port);
-EXPORT_SYMBOL(tipc_send_buf2port);
-EXPORT_SYMBOL(tipc_forward_buf2port);
-EXPORT_SYMBOL(tipc_multicast);
-/* EXPORT_SYMBOL(tipc_multicast_buf); not available yet */
-EXPORT_SYMBOL(tipc_ispublished);
-EXPORT_SYMBOL(tipc_available_nodes);
+EXPORT_SYMBOL(gipc_attach);
+EXPORT_SYMBOL(gipc_detach);
+EXPORT_SYMBOL(gipc_get_addr);
+EXPORT_SYMBOL(gipc_get_mode);
+EXPORT_SYMBOL(gipc_createport);
+EXPORT_SYMBOL(gipc_deleteport);
+EXPORT_SYMBOL(gipc_ownidentity);
+EXPORT_SYMBOL(gipc_portimportance);
+EXPORT_SYMBOL(gipc_set_portimportance);
+EXPORT_SYMBOL(gipc_portunreliable);
+EXPORT_SYMBOL(gipc_set_portunreliable);
+EXPORT_SYMBOL(gipc_portunreturnable);
+EXPORT_SYMBOL(gipc_set_portunreturnable);
+EXPORT_SYMBOL(gipc_publish);
+EXPORT_SYMBOL(gipc_withdraw);
+EXPORT_SYMBOL(gipc_connect2port);
+EXPORT_SYMBOL(gipc_disconnect);
+EXPORT_SYMBOL(gipc_shutdown);
+EXPORT_SYMBOL(gipc_isconnected);
+EXPORT_SYMBOL(gipc_peer);
+EXPORT_SYMBOL(gipc_ref_valid);
+EXPORT_SYMBOL(gipc_send);
+EXPORT_SYMBOL(gipc_send_buf);
+EXPORT_SYMBOL(gipc_send2name);
+EXPORT_SYMBOL(gipc_forward2name);
+EXPORT_SYMBOL(gipc_send_buf2name);
+EXPORT_SYMBOL(gipc_forward_buf2name);
+EXPORT_SYMBOL(gipc_send2port);
+EXPORT_SYMBOL(gipc_forward2port);
+EXPORT_SYMBOL(gipc_send_buf2port);
+EXPORT_SYMBOL(gipc_forward_buf2port);
+EXPORT_SYMBOL(gipc_multicast);
+/* EXPORT_SYMBOL(gipc_multicast_buf); not available yet */
+EXPORT_SYMBOL(gipc_ispublished);
+EXPORT_SYMBOL(gipc_available_nodes);
 
-/* TIPC API for external bearers (see tipc_bearer.h) */
+/* GIPC API for external bearers (see gipc_bearer.h) */
 
-EXPORT_SYMBOL(tipc_block_bearer);
-EXPORT_SYMBOL(tipc_continue);
-EXPORT_SYMBOL(tipc_disable_bearer);
-EXPORT_SYMBOL(tipc_enable_bearer);
-EXPORT_SYMBOL(tipc_recv_msg);
-EXPORT_SYMBOL(tipc_register_media);
+EXPORT_SYMBOL(gipc_block_bearer);
+EXPORT_SYMBOL(gipc_continue);
+EXPORT_SYMBOL(gipc_disable_bearer);
+EXPORT_SYMBOL(gipc_enable_bearer);
+EXPORT_SYMBOL(gipc_recv_msg);
+EXPORT_SYMBOL(gipc_register_media);
 
-/* TIPC API for external APIs (see tipc_port.h) */
+/* GIPC API for external APIs (see gipc_port.h) */
 
-EXPORT_SYMBOL(tipc_createport_raw);
-EXPORT_SYMBOL(tipc_reject_msg);
-EXPORT_SYMBOL(tipc_send_buf_fast);
-EXPORT_SYMBOL(tipc_acknowledge);
-EXPORT_SYMBOL(tipc_get_port);
-EXPORT_SYMBOL(tipc_get_handle);
+EXPORT_SYMBOL(gipc_createport_raw);
+EXPORT_SYMBOL(gipc_reject_msg);
+EXPORT_SYMBOL(gipc_send_buf_fast);
+EXPORT_SYMBOL(gipc_acknowledge);
+EXPORT_SYMBOL(gipc_get_port);
+EXPORT_SYMBOL(gipc_get_handle);
 

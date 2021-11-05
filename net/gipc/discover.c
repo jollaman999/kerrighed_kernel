@@ -1,5 +1,5 @@
 /*
- * net/tipc/discover.c
+ * net/gipc/discover.c
  *
  * Copyright (c) 2003-2006, Ericsson AB
  * Copyright (c) 2005-2006, Wind River Systems
@@ -42,9 +42,9 @@
 #include "port.h"
 #include "name_table.h"
 
-#define TIPC_LINK_REQ_INIT	125	/* min delay during bearer start up */
-#define TIPC_LINK_REQ_FAST	2000	/* normal delay if bearer has no links */
-#define TIPC_LINK_REQ_SLOW	600000	/* normal delay if bearer has links */
+#define GIPC_LINK_REQ_INIT	125	/* min delay during bearer start up */
+#define GIPC_LINK_REQ_FAST	2000	/* normal delay if bearer has no links */
+#define GIPC_LINK_REQ_SLOW	600000	/* normal delay if bearer has links */
 
 #if 0
 #define  GET_NODE_INFO         300
@@ -72,7 +72,7 @@
  */
 struct link_req {
 	struct bearer *bearer;
-	struct tipc_media_addr dest;
+	struct gipc_media_addr dest;
 	struct sk_buff *buf;
 	struct timer_list timer;
 	unsigned int timer_intv;
@@ -80,12 +80,12 @@ struct link_req {
 
 
 #if 0
-int disc_create_link(const struct tipc_link_create *argv)
+int disc_create_link(const struct gipc_link_create *argv)
 {
 	/*
 	 * Code for inter cluster link setup here
 	 */
-	return TIPC_OK;
+	return GIPC_OK;
 }
 #endif
 
@@ -93,7 +93,7 @@ int disc_create_link(const struct tipc_link_create *argv)
  * disc_lost_link(): A link has lost contact
  */
 
-void tipc_disc_link_event(u32 addr, char *name, int up)
+void gipc_disc_link_event(u32 addr, char *name, int up)
 {
 	if (in_own_cluster(addr))
 		return;
@@ -103,20 +103,20 @@ void tipc_disc_link_event(u32 addr, char *name, int up)
 }
 
 /**
- * tipc_disc_init_msg - initialize a link setup message
+ * gipc_disc_init_msg - initialize a link setup message
  * @type: message type (request or response)
  * @req_links: number of links associated with message
  * @dest_domain: network domain of node(s) which should respond to message
  * @b_ptr: ptr to bearer issuing message
  */
 
-static struct sk_buff *tipc_disc_init_msg(u32 type,
+static struct sk_buff *gipc_disc_init_msg(u32 type,
 					  u32 req_links,
 					  u32 dest_domain,
 					  struct bearer *b_ptr)
 {
 	struct sk_buff *buf = buf_acquire(DSC_H_SIZE);
-	struct tipc_msg *msg;
+	struct gipc_msg *msg;
 
 	if (buf) {
 		msg = buf_msg(buf);
@@ -124,7 +124,7 @@ static struct sk_buff *tipc_disc_init_msg(u32 type,
 		msg_set_non_seq(msg, 1);
 		msg_set_req_links(msg, req_links);
 		msg_set_dest_domain(msg, dest_domain);
-		msg_set_bc_netid(msg, tipc_net_id);
+		msg_set_bc_netid(msg, gipc_net_id);
 		msg_set_media_addr(msg, &b_ptr->publ.addr);
 	}
 	return buf;
@@ -138,31 +138,31 @@ static struct sk_buff *tipc_disc_init_msg(u32 type,
  */
 
 static void disc_dupl_alert(struct bearer *b_ptr, u32 node_addr,
-			    struct tipc_media_addr *media_addr)
+			    struct gipc_media_addr *media_addr)
 {
 	char node_addr_str[16];
 	char media_addr_str[64];
 	struct print_buf pb;
 
 	addr_string_fill(node_addr_str, node_addr);
-	tipc_printbuf_init(&pb, media_addr_str, sizeof(media_addr_str));
-	tipc_media_addr_printf(&pb, media_addr);
-	tipc_printbuf_validate(&pb);
+	gipc_printbuf_init(&pb, media_addr_str, sizeof(media_addr_str));
+	gipc_media_addr_printf(&pb, media_addr);
+	gipc_printbuf_validate(&pb);
 	warn("Duplicate %s using %s seen on <%s>\n",
 	     node_addr_str, media_addr_str, b_ptr->publ.name);
 }
 
 /**
- * tipc_disc_recv_msg - handle incoming link setup message (request or response)
+ * gipc_disc_recv_msg - handle incoming link setup message (request or response)
  * @buf: buffer containing message
  * @b_ptr: bearer that message arrived on
  */
 
-void tipc_disc_recv_msg(struct sk_buff *buf, struct bearer *b_ptr)
+void gipc_disc_recv_msg(struct sk_buff *buf, struct bearer *b_ptr)
 {
 	struct link *link;
-	struct tipc_media_addr media_addr;
-	struct tipc_msg *msg = buf_msg(buf);
+	struct gipc_media_addr media_addr;
+	struct gipc_msg *msg = buf_msg(buf);
 	u32 dest = msg_dest_domain(msg);
 	u32 orig = msg_prevnode(msg);
 	u32 net_id = msg_bc_netid(msg);
@@ -172,40 +172,40 @@ void tipc_disc_recv_msg(struct sk_buff *buf, struct bearer *b_ptr)
 	msg_dbg(msg, "RECV:");
 	buf_discard(buf);
 
-	if (net_id != tipc_net_id)
+	if (net_id != gipc_net_id)
 		return;
-	if (!tipc_addr_domain_valid(dest))
+	if (!gipc_addr_domain_valid(dest))
 		return;
-	if (!tipc_addr_node_valid(orig))
+	if (!gipc_addr_node_valid(orig))
 		return;
-	if (orig == tipc_own_addr) {
+	if (orig == gipc_own_addr) {
 		if (memcmp(&media_addr, &b_ptr->publ.addr, sizeof(media_addr)))
-			disc_dupl_alert(b_ptr, tipc_own_addr, &media_addr);
+			disc_dupl_alert(b_ptr, gipc_own_addr, &media_addr);
 		return;
 	}
-	if (!in_scope(dest, tipc_own_addr))
+	if (!in_scope(dest, gipc_own_addr))
 		return;
-	if (is_slave(tipc_own_addr) && is_slave(orig))
+	if (is_slave(gipc_own_addr) && is_slave(orig))
 		return;
 	if (is_slave(orig) && !in_own_cluster(orig))
 		return;
 	if (in_own_cluster(orig)) {
 		/* Always accept link here */
 		struct sk_buff *rbuf;
-		struct tipc_media_addr *addr;
-		struct tipc_node *n_ptr = tipc_node_find(orig);
+		struct gipc_media_addr *addr;
+		struct gipc_node *n_ptr = gipc_node_find(orig);
 		int link_fully_up;
 
 		if (n_ptr == NULL) {
-			n_ptr = tipc_node_create(orig);
+			n_ptr = gipc_node_create(orig);
 			if (!n_ptr)
 				return;
 		}
 		spin_lock_bh(&n_ptr->lock);
 		link = n_ptr->links[b_ptr->identity];
 		if (!link) {
-			printk("TIPC: creating link\n");
-			link = tipc_link_create(b_ptr, orig, &media_addr);
+			printk("GIPC: creating link\n");
+			link = gipc_link_create(b_ptr, orig, &media_addr);
 			if (!link) {
 				spin_unlock_bh(&n_ptr->lock);
 				return;
@@ -213,21 +213,21 @@ void tipc_disc_recv_msg(struct sk_buff *buf, struct bearer *b_ptr)
 		}
 		addr = &link->media_addr;
 		if (memcmp(addr, &media_addr, sizeof(*addr))) {
-			if (tipc_link_is_up(link) || (!link->started)) {
+			if (gipc_link_is_up(link) || (!link->started)) {
 				disc_dupl_alert(b_ptr, orig, &media_addr);
 				spin_unlock_bh(&n_ptr->lock);
 				return;
 			}
-			printk("TIPC: Resetting link <%s>, peer interface address changed\n",
+			printk("GIPC: Resetting link <%s>, peer interface address changed\n",
 			     link->name);
 			memcpy(addr, &media_addr, sizeof(*addr));
-			tipc_link_reset(link);
+			gipc_link_reset(link);
 		}
 		link_fully_up = (link->state == WORKING_WORKING);
 		spin_unlock_bh(&n_ptr->lock);
 		if ((type == DSC_RESP_MSG) || link_fully_up)
 			return;
-		rbuf = tipc_disc_init_msg(DSC_RESP_MSG, 1, orig, b_ptr);
+		rbuf = gipc_disc_init_msg(DSC_RESP_MSG, 1, orig, b_ptr);
 		if (rbuf != NULL) {
 			msg_dbg(buf_msg(rbuf),"SEND:");
 			b_ptr->media->send_msg(rbuf, &b_ptr->publ, &media_addr);
@@ -237,11 +237,11 @@ void tipc_disc_recv_msg(struct sk_buff *buf, struct bearer *b_ptr)
 }
 
 /**
- * tipc_disc_stop_link_req - stop sending periodic link setup requests
+ * gipc_disc_stop_link_req - stop sending periodic link setup requests
  * @req: ptr to link request structure
  */
 
-void tipc_disc_stop_link_req(struct link_req *req)
+void gipc_disc_stop_link_req(struct link_req *req)
 {
 	if (!req)
 		return;
@@ -253,23 +253,23 @@ void tipc_disc_stop_link_req(struct link_req *req)
 }
 
 /**
- * tipc_disc_update_link_req - update frequency of periodic link setup requests
+ * gipc_disc_update_link_req - update frequency of periodic link setup requests
  * @req: ptr to link request structure
  */
 
-void tipc_disc_update_link_req(struct link_req *req)
+void gipc_disc_update_link_req(struct link_req *req)
 {
 	if (!req)
 		return;
 
-	if (req->timer_intv == TIPC_LINK_REQ_SLOW) {
+	if (req->timer_intv == GIPC_LINK_REQ_SLOW) {
 		if (!req->bearer->nodes.count) {
-			req->timer_intv = TIPC_LINK_REQ_FAST;
+			req->timer_intv = GIPC_LINK_REQ_FAST;
 			k_start_timer(&req->timer, req->timer_intv);
 		}
-	} else if (req->timer_intv == TIPC_LINK_REQ_FAST) {
+	} else if (req->timer_intv == GIPC_LINK_REQ_FAST) {
 		if (req->bearer->nodes.count) {
-			req->timer_intv = TIPC_LINK_REQ_SLOW;
+			req->timer_intv = GIPC_LINK_REQ_SLOW;
 			k_start_timer(&req->timer, req->timer_intv);
 		}
 	} else {
@@ -290,16 +290,16 @@ static void disc_timeout(struct link_req *req)
 
 	req->bearer->media->send_msg(req->buf, &req->bearer->publ, &req->dest);
 
-	if ((req->timer_intv == TIPC_LINK_REQ_SLOW) ||
-	    (req->timer_intv == TIPC_LINK_REQ_FAST)) {
+	if ((req->timer_intv == GIPC_LINK_REQ_SLOW) ||
+	    (req->timer_intv == GIPC_LINK_REQ_FAST)) {
 		/* leave timer interval "as is" if already at a "normal" rate */
 	} else {
 		req->timer_intv *= 2;
-		if (req->timer_intv > TIPC_LINK_REQ_FAST)
-			req->timer_intv = TIPC_LINK_REQ_FAST;
-		if ((req->timer_intv == TIPC_LINK_REQ_FAST) &&
+		if (req->timer_intv > GIPC_LINK_REQ_FAST)
+			req->timer_intv = GIPC_LINK_REQ_FAST;
+		if ((req->timer_intv == GIPC_LINK_REQ_FAST) &&
 		    (req->bearer->nodes.count))
-			req->timer_intv = TIPC_LINK_REQ_SLOW;
+			req->timer_intv = GIPC_LINK_REQ_SLOW;
 	}
 	k_start_timer(&req->timer, req->timer_intv);
 
@@ -307,7 +307,7 @@ static void disc_timeout(struct link_req *req)
 }
 
 /**
- * tipc_disc_init_link_req - start sending periodic link setup requests
+ * gipc_disc_init_link_req - start sending periodic link setup requests
  * @b_ptr: ptr to bearer issuing requests
  * @dest: destination address for request messages
  * @dest_domain: network domain of node(s) which should respond to message
@@ -316,8 +316,8 @@ static void disc_timeout(struct link_req *req)
  * Returns pointer to link request structure, or NULL if unable to create.
  */
 
-struct link_req *tipc_disc_init_link_req(struct bearer *b_ptr,
-					 const struct tipc_media_addr *dest,
+struct link_req *gipc_disc_init_link_req(struct bearer *b_ptr,
+					 const struct gipc_media_addr *dest,
 					 u32 dest_domain,
 					 u32 req_links)
 {
@@ -327,7 +327,7 @@ struct link_req *tipc_disc_init_link_req(struct bearer *b_ptr,
 	if (!req)
 		return NULL;
 
-	req->buf = tipc_disc_init_msg(DSC_REQ_MSG, req_links, dest_domain, b_ptr);
+	req->buf = gipc_disc_init_msg(DSC_REQ_MSG, req_links, dest_domain, b_ptr);
 	if (!req->buf) {
 		kfree(req);
 		return NULL;
@@ -335,7 +335,7 @@ struct link_req *tipc_disc_init_link_req(struct bearer *b_ptr,
 
 	memcpy(&req->dest, dest, sizeof(*dest));
 	req->bearer = b_ptr;
-	req->timer_intv = TIPC_LINK_REQ_INIT;
+	req->timer_intv = GIPC_LINK_REQ_INIT;
 	k_init_timer(&req->timer, (Handler)disc_timeout, (unsigned long)req);
 	k_start_timer(&req->timer, req->timer_intv);
 	return req;
