@@ -14,7 +14,7 @@
 #include <hcc/hccinit.h>
 #include <hcc/hccflags.h>
 
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #include <gdm/gdm.h>
 #include <gdm/io_linker.h>
 

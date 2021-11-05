@@ -4,7 +4,7 @@
  *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 #include <linux/cred.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #include <hcc/namespace.h>
 #ifdef CONFIG_HCC_EPM
 #include <linux/user_namespace.h>

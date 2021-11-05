@@ -30,7 +30,7 @@
 #include <hcc/namespace.h>
 #include <hcc/regular_file_mgr.h>
 #include <hcc/task.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #include <gdm/gdm.h>
 #include <hcc/application.h>
 #include <hcc/ghost_helpers.h>

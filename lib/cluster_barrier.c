@@ -9,7 +9,7 @@
 #include <linux/cluster_barrier.h>
 #include <linux/hcc_hashtable.h>
 #include <linux/unique_id.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 
 #include <hcc/types.h>
 #include <hcc/hotplug.h>

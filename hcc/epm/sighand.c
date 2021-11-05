@@ -18,7 +18,7 @@
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>
 #include <hcc/action.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #include <gdm/gdm.h>
 
 struct sighand_struct_gdm_object {

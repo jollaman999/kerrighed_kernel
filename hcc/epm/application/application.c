@@ -17,8 +17,8 @@
 #include <hcc/ghost_helpers.h>
 #include <hcc/hcc_signal.h>
 #include <hcc/action.h>
-#include <net/hccrpc/rpcid.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpcid.h>
+#include <net/grpc/rpc.h>
 #include <gdm/gdm.h>
 #include "../epm_internal.h"
 #include "../checkpoint.h"

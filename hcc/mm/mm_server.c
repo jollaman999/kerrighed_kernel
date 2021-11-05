@@ -6,7 +6,7 @@
 #include <linux/kernel.h>
 #include <linux/mm.h>
 
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #include "mm_struct.h"
 #include "mm_server.h"
 #include "memory_int_linker.h"

@@ -11,7 +11,7 @@
 #include <linux/security.h>
 #include <linux/ipc_namespace.h>
 #include <linux/ipc.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #include <gdm/gdm.h>
 #include <hcc/pid.h>
 

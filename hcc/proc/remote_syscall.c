@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2019-2021 Innogrid HCC.
  */
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #include <linux/cred.h>
 #include <hcc/remote_cred.h>
 #include <linux/nsproxy.h>

@@ -9,7 +9,7 @@
 #include <hcc/pid.h>
 #include <hcc/action.h>
 #include <hcc/ghost.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #include "ghost.h"
 
 pid_t send_task(struct rpc_desc *desc,

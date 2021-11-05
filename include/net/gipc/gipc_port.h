@@ -74,7 +74,7 @@ struct tipc_port {
 	struct tipc_msg phdr;
 };
 
-#ifdef CONFIG_HCCRPC
+#ifdef CONFIG_HCC_GRPC
 struct tipc_port *tipc_createport_raw(void *usr_handle,
 			u32 (*dispatcher)(struct tipc_port *, struct sk_buff *),
 			void (*wakeup)(struct tipc_port *),

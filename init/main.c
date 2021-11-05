@@ -109,7 +109,7 @@ extern void tc_init(void);
 enum system_states system_state __read_mostly;
 EXPORT_SYMBOL(system_state);
 
-#ifdef CONFIG_HCCRPC
+#ifdef CONFIG_HCC_GRPC
 extern void hcc_init(void);
 #endif
 
@@ -965,7 +965,7 @@ static void run_init_process(char *init_filename)
 static noinline int init_post(void)
 	__releases(kernel_lock)
 {
-#if defined(CONFIG_HCC) || defined(CONFIG_HCCRPC)
+#if defined(CONFIG_HCC) || defined(CONFIG_HCC_GRPC)
 	/* 
 	 * In a perfect world we would like to call global_pid_init and
 	 * hcc_init just after async_synchronize_full
@@ -1060,7 +1060,7 @@ static int __init kernel_init(void * unused)
 		prepare_namespace();
 	}
 
-#if defined(CONFIG_HCC) || defined(CONFIG_HCCRPC)
+#if defined(CONFIG_HCC) || defined(CONFIG_HCC_GRPC)
 	/* need to finish all async __init code before freeing the memory */
 	async_synchronize_full();
 

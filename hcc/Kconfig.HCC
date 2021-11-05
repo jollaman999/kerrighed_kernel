@@ -49,7 +49,7 @@ config HCC_COMMUNICATION_FRAMEWORK
        bool "Communication layer"
        depends on HCC
        select TIPC
-       select HCCRPC
+       select HCC_GRPC
        help
          All-purpose communication layer
 

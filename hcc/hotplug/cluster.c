@@ -35,7 +35,7 @@
 #include <hcc/workqueue.h>
 #include <hcc/hccnodemask.h>
 #include <hcc/namespace.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #ifdef CONFIG_HCC_GDM
 #include <gdm/gdm.h>
 #endif
@@ -420,11 +420,11 @@ static int hcc_container_init(void *arg)
 	commit_creds(cluster_init_helper_cred);
 	cluster_init_helper_cred = NULL;
 
-	/* We can run anywhere, unlike our parent (a hccrpc) */
+	/* We can run anywhere, unlike our parent (a grpc) */
 	set_cpus_allowed_ptr(current, cpu_all_mask);
 
 	/*
-	 * Our parent is a hccrpc, which runs with elevated scheduling priority.
+	 * Our parent is a grpc, which runs with elevated scheduling priority.
 	 * Avoid propagating that into the userspace child.
 	 */
 	set_user_nice(current, 0);

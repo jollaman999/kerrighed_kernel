@@ -227,7 +227,7 @@ static int tipc_create(struct net *net, struct socket *sock, int protocol,
 
 	/* Allocate TIPC port for socket to use */
 
-#ifdef CONFIG_HCCRPC
+#ifdef CONFIG_HCC_GRPC
 	tp_ptr = tipc_createport_raw(sk, &dispatch, &wakeupdispatch,
 				     TIPC_LOW_IMPORTANCE, NULL);
 #else

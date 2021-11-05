@@ -17,8 +17,8 @@
 
 #include <hcc/hcc_services.h>
 #include <hcc/hcc_syscalls.h>
-#include <net/hccrpc/rpcid.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpcid.h>
+#include <net/grpc/rpc.h>
 
 #include "hotplug_internal.h"
 

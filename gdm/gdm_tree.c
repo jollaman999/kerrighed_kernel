@@ -6,7 +6,7 @@
 
 #include <linux/mm.h>
 
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #include <gdm/gdm_tree.h>
 #include <gdm/gdm_types.h>
 #include <gdm/object.h>

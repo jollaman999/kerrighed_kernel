@@ -5,8 +5,8 @@
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
 
-#include <net/hccrpc/rpcid.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpcid.h>
+#include <net/grpc/rpc.h>
 #include <hcc/hotplug.h>
 
 #include "proc.h"

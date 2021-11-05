@@ -9,8 +9,8 @@
 #include <hcc/sys/types.h>
 #include <hcc/hccinit.h>
 
-#include <net/hccrpc/rpcid.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpcid.h>
+#include <net/grpc/rpc.h>
 #include <gdm/gdm.h>
 #include <gdm/object_server.h>
 #include "protocol_action.h"

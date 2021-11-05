@@ -15,7 +15,7 @@
 #include <hcc/hccflags.h>
 #include <linux/cluster_barrier.h>
 #include <linux/unique_id.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #ifdef CONFIG_HCC_PROC
 #include <hcc/pid.h>
 #endif
@@ -73,7 +73,7 @@ deffct(tools);
 #ifdef CONFIG_HCC_HOTPLUG
 deffct(hotplug);
 #endif
-#ifdef CONFIG_HCCRPC
+#ifdef CONFIG_HCC_GRPC
 deffct(rpc);
 #endif
 #ifdef CONFIG_HCC_STREAM
@@ -332,7 +332,7 @@ int init_hcc_communication_system(void)
 
 	hcc_nb_nodes = 0;
 
-#ifdef CONFIG_HCCRPC
+#ifdef CONFIG_HCC_GRPC
 	if (init_rpc())
 		goto err_rpc;
 #endif
@@ -350,7 +350,7 @@ int init_hcc_communication_system(void)
 err_hotplug:
 	cleanup_hotplug();
 #endif
-#ifdef CONFIG_HCCRPC
+#ifdef CONFIG_HCC_GRPC
 err_rpc:
 #endif
 	cleanup_tools();
@@ -466,7 +466,7 @@ int init_hcc_upper_layers(void)
 	cleanup_ghost();
       err_ghost:
 #endif
-#ifdef CONFIG_HCCRPC
+#ifdef CONFIG_HCC_GRPC
 	cleanup_rpc();
 #endif
 	return -1;

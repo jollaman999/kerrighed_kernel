@@ -59,7 +59,7 @@
 #include <net/ipconfig.h>
 #include <net/route.h>
 
-#ifdef CONFIG_HCCRPC
+#ifdef CONFIG_HCC_GRPC
 #include <hcc/hccinit.h>
 #include <hcc/hotplug.h>
 #include <hcc/hccnodemask.h>

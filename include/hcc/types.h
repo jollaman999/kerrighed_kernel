@@ -9,7 +9,7 @@
 
 #define HCCFCT(p) if(p!=NULL) p
 
-#if defined(CONFIG_HCC) || defined(CONFIG_HCCRPC)
+#if defined(CONFIG_HCC) || defined(CONFIG_HCC_GRPC)
 
 typedef unsigned char hcc_session_t;
 typedef int hcc_subsession_t;

@@ -18,8 +18,8 @@
 #include <hcc/sys/types.h>
 #include <hcc/hccinit.h>
 #include <hcc/workqueue.h>
-#include <net/hccrpc/rpcid.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpcid.h>
+#include <net/grpc/rpc.h>
 
 #include "rpc_internal.h"
 
@@ -50,30 +50,30 @@ struct {
 
 void (*rpc_handlers[RPC_HANDLER_MAX])(struct rpc_desc* desc);
 
-#define HCCRPC_INIT_FDTABLE \
+#define HCC_GRPC_INIT_FDTABLE \
 {                                                       \
         .max_fds        = NR_OPEN_DEFAULT,              \
-        .fd             = &hccrpc_files.fd_array[0],    \
-        .close_on_exec  = (fd_set *)&hccrpc_files.close_on_exec_init, \
-        .open_fds       = (fd_set *)&hccrpc_files.open_fds_init,  \
+        .fd             = &grpc_files.fd_array[0],    \
+        .close_on_exec  = (fd_set *)&grpc_files.close_on_exec_init, \
+        .open_fds       = (fd_set *)&grpc_files.open_fds_init,  \
         .rcu            = RCU_HEAD_INIT,                \
         .next           = NULL,                         \
 }
 
-#define HCCRPC_INIT_FILES \
+#define HCC_GRPC_INIT_FILES \
 {                                                       \
         .count          = ATOMIC_INIT(1),               \
-        .fdt            = &hccrpc_files.fdtab,          \
-        .fdtab          = HCCRPC_INIT_FDTABLE,          \
-	.file_lock	= __SPIN_LOCK_UNLOCKED(hccrpc_files.file_lock), \
+        .fdt            = &grpc_files.fdtab,          \
+        .fdtab          = HCC_GRPC_INIT_FDTABLE,          \
+	.file_lock	= __SPIN_LOCK_UNLOCKED(grpc_files.file_lock), \
         .next_fd        = 0,                            \
         .close_on_exec_init = { { 0, } },               \
         .open_fds_init  = { { 0, } },                   \
         .fd_array       = { NULL, }                     \
 }
 
-static struct files_struct hccrpc_files = HCCRPC_INIT_FILES;
-struct task_struct *first_hccrpc = NULL;
+static struct files_struct grpc_files = HCC_GRPC_INIT_FILES;
+struct task_struct *first_grpc = NULL;
 
 static struct completion init_complete;
 
@@ -135,7 +135,7 @@ void rpc_handler_kthread_int(struct rpc_desc* desc){
 };
 
 inline
-void do_hccrpc_handler(struct rpc_desc* desc,
+void do_grpc_handler(struct rpc_desc* desc,
 		       int thread_pool_id){
 	struct __rpc_synchro* __synchro;
 	hcc_node_t client;
@@ -227,9 +227,9 @@ int thread_pool_run(void* _data){
 	}
 
 	/* We don't want to share the init_task.files struct.
-	   We want that hccrpc share their own files struct. */
-	atomic_inc(&hccrpc_files.count);
-	reset_files_struct(&hccrpc_files);
+	   We want that grpc share their own files struct. */
+	atomic_inc(&grpc_files.count);
+	reset_files_struct(&grpc_files);
 
 	thread_pool = &per_cpu(threads_pool, smp_processor_id());
 
@@ -249,9 +249,9 @@ int thread_pool_run(void* _data){
 		thread_pool->desc[j] = NULL;
 
 		/* Here we just want to have a pointer on one
-		   hccrpc. We dont care about the first or the second one */
-		if(!first_hccrpc){
-			first_hccrpc = current;
+		   grpc. We dont care about the first or the second one */
+		if(!first_grpc){
+			first_grpc = current;
 			complete(&init_complete);
 		}
 	}else{
@@ -264,7 +264,7 @@ int thread_pool_run(void* _data){
 	continue_in_waiting_desc:
 		
 		if(desc)
-			do_hccrpc_handler(desc, j);
+			do_grpc_handler(desc, j);
 
 		spin_lock_bh(&waiting_desc_lock);
 		list_for_each_entry_safe(wd, wd_safe,
@@ -319,7 +319,7 @@ void new_thread_worker(struct work_struct *data){
 					 -1, 0)){
 			struct task_struct *tsk;
 
-			tsk = kthread_create(thread_pool_run, NULL, "hccrpc");
+			tsk = kthread_create(thread_pool_run, NULL, "grpc");
 			if (IS_ERR(tsk)) {
 				atomic_inc(&new_thread_data.request[i]);
 				/* Backoff,

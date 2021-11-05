@@ -18,8 +18,8 @@
 #include <gdm/gdm.h>
 #include <gdm/object_server.h>
 #include "protocol_action.h"
-#include <net/hccrpc/rpcid.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpcid.h>
+#include <net/grpc/rpc.h>
 
 int delayed_transfer_write_access (hcc_node_t dest_node, void *msg);
 

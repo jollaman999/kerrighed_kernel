@@ -8,7 +8,7 @@
 #include <linux/slab.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 
 #define __RPC_HEADER_FLAGS_SIGNAL    (1<<0)
 #define __RPC_HEADER_FLAGS_SIGACK    (1<<1)

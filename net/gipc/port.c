@@ -216,7 +216,7 @@ exit:
  * Returns pointer to (locked) TIPC port, or NULL if unable to create it
  */
 
-#ifdef CONFIG_HCCRPC
+#ifdef CONFIG_HCC_GRPC
 struct tipc_port *tipc_createport_raw(void *usr_handle,
 			u32 (*dispatcher)(struct tipc_port *, struct sk_buff *),
 			void (*wakeup)(struct tipc_port *),
@@ -257,7 +257,7 @@ struct tipc_port *tipc_createport_raw(void *usr_handle,
 	p_ptr->congested_link = NULL;
 	p_ptr->dispatcher = dispatcher;
 	p_ptr->wakeup = wakeup;
-#ifdef CONFIG_HCCRPC
+#ifdef CONFIG_HCC_GRPC
 	p_ptr->user_port = user_port;
 #else
 	p_ptr->user_port = NULL;
@@ -1057,7 +1057,7 @@ int tipc_createport(u32 user_ref,
 		warn("Port creation failed, no memory\n");
 		return -ENOMEM;
 	}
-#ifdef CONFIG_HCCRPC
+#ifdef CONFIG_HCC_GRPC
 	p_ptr = (struct port *)tipc_createport_raw(NULL, port_dispatcher,
 						   port_wakeup, importance, up_ptr);
 #else

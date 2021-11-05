@@ -22,8 +22,8 @@
 #include <hcc/remote_cred.h>
 #ifdef CONFIG_HCC_PROC
 #include <hcc/remote_syscall.h>
-#include <net/hccrpc/rpc.h>
-#include <net/hccrpc/rpcid.h>
+#include <net/grpc/rpc.h>
+#include <net/grpc/rpcid.h>
 #endif
 
 int can_use_hcc_cap(struct task_struct *task, int cap)

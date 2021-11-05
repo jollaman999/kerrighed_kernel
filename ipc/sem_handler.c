@@ -12,7 +12,7 @@
 #include <linux/nsproxy.h>
 #include <gdm/gdm.h>
 #include <hcc/pid.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #include <hcc/hotplug.h>
 #include "ipc_handler.h"
 #include "sem_handler.h"

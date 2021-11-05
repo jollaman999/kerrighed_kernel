@@ -8,7 +8,7 @@
 #ifndef __APP_UTILS_H__
 #define __APP_UTILS_H__
 
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 
 static inline int app_wait_returns_from_nodes(struct rpc_desc *desc,
 					      hccnodemask_t nodes)

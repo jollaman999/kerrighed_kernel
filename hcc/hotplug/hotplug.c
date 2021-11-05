@@ -7,8 +7,8 @@
 
 #include <hcc/hotplug.h>
 #include <hcc/namespace.h>
-#include <net/hccrpc/rpcid.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpcid.h>
+#include <net/grpc/rpc.h>
 
 #include "hotplug_internal.h"
 

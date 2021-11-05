@@ -4,7 +4,7 @@
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #include <gdm/gdm.h>
 
 #define NR_TEST_LOOPS 16

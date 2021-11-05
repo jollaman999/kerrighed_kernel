@@ -31,8 +31,8 @@
 #ifdef CONFIG_HCC_EPM
 #include <hcc/workqueue.h>
 #endif
-#include <net/hccrpc/rpcid.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpcid.h>
+#include <net/grpc/rpc.h>
 #include <hcc/task.h>
 #include <hcc/hcc_exit.h>
 #ifdef CONFIG_HCC_EPM

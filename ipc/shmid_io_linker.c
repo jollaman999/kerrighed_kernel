@@ -10,7 +10,7 @@
 #include <linux/ipc_namespace.h>
 #include <linux/ipc.h>
 #include <linux/shmem_fs.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpc.h>
 #include <gdm/gdm.h>
 #include "ipc_handler.h"
 #include "hccshm.h"

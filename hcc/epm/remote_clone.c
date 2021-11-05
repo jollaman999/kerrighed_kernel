@@ -17,8 +17,8 @@
 #ifdef CONFIG_HCC_SCHED
 #include <hcc/scheduler/placement.h>
 #endif
-#include <net/hccrpc/rpcid.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpcid.h>
+#include <net/grpc/rpc.h>
 #include "network_ghost.h"
 
 struct vfork_done_proxy {

@@ -31,8 +31,8 @@
 #include <trace/events/signal.h>
 #include <linux/nospec.h>
 #ifdef CONFIG_HCC_PROC
-#include <net/hccrpc/rpc.h>
-#include <net/hccrpc/rpcid.h>
+#include <net/grpc/rpc.h>
+#include <net/grpc/rpcid.h>
 #include <hcc/pid.h>
 #include <hcc/remote_cred.h>
 #include <hcc/hccnodemask.h>

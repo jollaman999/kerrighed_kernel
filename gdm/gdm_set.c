@@ -18,8 +18,8 @@
 #include <linux/unique_id.h>
 
 #include "process.h"
-#include <net/hccrpc/rpcid.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpcid.h>
+#include <net/grpc/rpc.h>
 
 #include <gdm/gdm.h>
 #include <gdm/gdm_set.h>

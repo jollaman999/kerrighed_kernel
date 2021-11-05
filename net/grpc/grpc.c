@@ -16,8 +16,8 @@
 #include <hcc/hccnodemask.h>
 #include <linux/hcc_hashtable.h>
 
-#include <net/hccrpc/rpcid.h>
-#include <net/hccrpc/rpc.h>
+#include <net/grpc/rpcid.h>
+#include <net/grpc/rpc.h>
 
 #include "rpc_internal.h"
 
@@ -171,7 +171,7 @@ void test(void){
  *
  * Enable a registered RPC
  * We must take the waiting_desc_lock.
- * After each rpc handle, the hccrpc go through the waiting_desc
+ * After each rpc handle, the grpc go through the waiting_desc
  * list, in order to find another desc to process. We must avoid
  * to enable an RPC when such iteration is happened
  *
