@@ -15,7 +15,7 @@
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <linux/proc_fs.h>
-#include <hcc/krgflags.h>
+#include <hcc/hccflags.h>
 #include <hcc/procfs.h>
 
 #include <hcc/hotplug.h>
@@ -25,7 +25,7 @@
 #include <hcc/dynamic_node_info_linker.h>
 #include "dynamic_cpu_info_linker.h"
 
-#define PROC_STAT_DEPEND_ON_CAPABILITY (KERRIGHED_MAX_NODES + 1)
+#define PROC_STAT_DEPEND_ON_CAPABILITY (HCC_MAX_NODES + 1)
 
 extern unsigned int (*kstat_irqs_usr_fn)(unsigned int irq);
 
@@ -34,7 +34,7 @@ extern unsigned int (*kstat_irqs_usr_fn)(unsigned int irq);
 static struct proc_dir_entry *procfs_nodes;	/* /proc/hcc/nodes   */
 static struct proc_dir_entry *procfs_nrnodes;	/* /proc/hcc/nodes/nrnodes */
 
-static void krg_create_seq_entry(char *name,
+static void hcc_create_seq_entry(char *name,
 				 mode_t mode,
 				 struct file_operations *f,
 				 struct proc_dir_entry *parent, void *data)
@@ -56,7 +56,7 @@ static inline int timespec_lt(struct timespec *a, struct timespec *b)
 
 static inline hcc_node_t get_req_node(hcc_node_t nodeid)
 {
-	if (!current->nsproxy->krg_ns) {
+	if (!current->nsproxy->hcc_ns) {
 		if (nodeid == PROC_STAT_DEPEND_ON_CAPABILITY)
 			return hcc_node_id;
 		else
@@ -66,29 +66,29 @@ static inline hcc_node_t get_req_node(hcc_node_t nodeid)
 #ifdef CONFIG_HCC_CAP
 	if (nodeid == PROC_STAT_DEPEND_ON_CAPABILITY) {
 		if (cap_raised
-		    (current->krg_caps.effective, CAP_SEE_LOCAL_PROC_STAT))
+		    (current->hcc_caps.effective, CAP_SEE_LOCAL_PROC_STAT))
 			return hcc_node_id;
 		else
-			return KERRIGHED_MAX_NODES;
+			return HCC_MAX_NODES;
 	}
 #endif
 	return nodeid;
 }
 
 
-static inline krgnodemask_t get_proc_nodes_vector(hcc_node_t nodeid)
+static inline hccnodemask_t get_proc_nodes_vector(hcc_node_t nodeid)
 {
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 	nodeid = get_req_node(nodeid);
-	krgnodes_clear(nodes);
+	hccnodes_clear(nodes);
 
-	if (nodeid == KERRIGHED_MAX_NODES) {
-		if (IS_KERRIGHED_NODE(HCCFLAGS_RUNNING))
-			krgnodes_copy(nodes, krgnode_online_map);
+	if (nodeid == HCC_MAX_NODES) {
+		if (IS_HCC_NODE(HCCFLAGS_RUNNING))
+			hccnodes_copy(nodes, hccnode_online_map);
 		else
-			krgnode_set(hcc_node_id, nodes);
+			hccnode_set(hcc_node_id, nodes);
 	} else
-		krgnode_set(nodeid, nodes);
+		hccnode_set(nodeid, nodes);
 
 	return nodes;
 }
@@ -101,7 +101,7 @@ static void free_stat_buf(int size, void *buf)
 		kfree(buf);
 }
 
-static int krg_proc_stat_open(struct inode *inode,
+static int hcc_proc_stat_open(struct inode *inode,
 			      struct file *file,
 			      int (*show) (struct seq_file *, void *), int size)
 {
@@ -116,7 +116,7 @@ static int krg_proc_stat_open(struct inode *inode,
 	if (!buf)
 		return -ENOMEM;
 
-	res = single_open(file, show, PROC_I(inode)->krg_procfs_private);
+	res = single_open(file, show, PROC_I(inode)->hcc_procfs_private);
 	if (!res) {
 		m = file->private_data;
 		m->buf = buf;
@@ -127,7 +127,7 @@ static int krg_proc_stat_open(struct inode *inode,
 	return res;
 }
 
-static int krg_proc_stat_release(struct inode *inode, struct file *file)
+static int hcc_proc_stat_release(struct inode *inode, struct file *file)
 {
 	struct seq_file *m = file->private_data;
 
@@ -157,12 +157,12 @@ static void init_cpu_info_seq_struct(struct cpu_info_seq_struct *seq_data)
 
 	req_node = get_req_node(seq_data->req_node);
 
-	if (krgnode_online(hcc_node_id)) {
+	if (hccnode_online(hcc_node_id)) {
 		// Init values to parse CPU.
-		if (req_node == KERRIGHED_MAX_NODES) {
+		if (req_node == HCC_MAX_NODES) {
 			// Cluster wide CPU info
-			seq_data->cur_node = nth_online_krgnode(0);
-			seq_data->last_node = KERRIGHED_MAX_NODES - 1;
+			seq_data->cur_node = nth_online_hccnode(0);
+			seq_data->last_node = HCC_MAX_NODES - 1;
 		} else {
 			// Node wide CPU info
 			seq_data->cur_node = req_node;
@@ -179,7 +179,7 @@ static void init_cpu_info_seq_struct(struct cpu_info_seq_struct *seq_data)
 static void go_to_selected_cpu(struct cpu_info_seq_struct *seq_data,
 			       loff_t pos)
 {
-	krg_static_node_info_t *static_node_info = NULL;
+	hcc_static_node_info_t *static_node_info = NULL;
 	int i;
 
 	for (i = seq_data->last_pos; i < pos; i++) {
@@ -187,7 +187,7 @@ static void go_to_selected_cpu(struct cpu_info_seq_struct *seq_data,
 		static_node_info = get_static_node_info(seq_data->cur_node);
 		if (seq_data->cpu_id >= static_node_info->nr_cpu) {
 			seq_data->cur_node =
-				krgnode_next_online(seq_data->cur_node);
+				hccnode_next_online(seq_data->cur_node);
 			seq_data->cpu_id = 0;
 		}
 	}
@@ -197,9 +197,9 @@ static void go_to_selected_cpu(struct cpu_info_seq_struct *seq_data,
 static void *c_start(struct seq_file *m, loff_t *pos)
 {
 	struct cpu_info_seq_struct *seq_data = m->private;
-	krg_static_cpu_info_t *cpu_info;
+	hcc_static_cpu_info_t *cpu_info;
 
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		return cpuinfo_op.start(m, pos);
 
 	if (*pos == 0)
@@ -222,7 +222,7 @@ static void *c_start(struct seq_file *m, loff_t *pos)
 
 static void *c_next(struct seq_file *m, void *v, loff_t *pos)
 {
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		return cpuinfo_op.next(m, v, pos);
 
 	++*pos;
@@ -232,7 +232,7 @@ static void *c_next(struct seq_file *m, void *v, loff_t *pos)
 
 static void c_stop(struct seq_file *m, void *v)
 {
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		cpuinfo_op.stop(m, v);
 }
 
@@ -241,22 +241,22 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 	return cpuinfo_op.show(m, v);
 }
 
-struct seq_operations krg_cpuinfo_op = {
+struct seq_operations hcc_cpuinfo_op = {
 	.start = c_start,
 	.next = c_next,
 	.stop = c_stop,
 	.show = show_cpuinfo,
 };
 
-extern struct seq_operations krg_cpuinfo_op;
+extern struct seq_operations hcc_cpuinfo_op;
 
-static int krg_cpuinfo_open(struct inode *inode, struct file *file)
+static int hcc_cpuinfo_open(struct inode *inode, struct file *file)
 {
 	struct cpu_info_seq_struct *seq_data;
 	struct seq_file *m;
 	int ret;
 
-	ret = seq_open(file, &krg_cpuinfo_op);
+	ret = seq_open(file, &hcc_cpuinfo_op);
 	if (ret < 0)
 		return ret;
 
@@ -266,14 +266,14 @@ static int krg_cpuinfo_open(struct inode *inode, struct file *file)
 		return -ENOMEM;
 	}
 
-	seq_data->req_node = (long)PROC_I(inode)->krg_procfs_private;
+	seq_data->req_node = (long)PROC_I(inode)->hcc_procfs_private;
 	m = file->private_data;
 	m->private = seq_data;
 
 	return 0;
 }
 
-static int krg_cpuinfo_release(struct inode *inode, struct file *file)
+static int hcc_cpuinfo_release(struct inode *inode, struct file *file)
 {
 	struct seq_file *m = file->private_data;
 	kfree(m->private);
@@ -281,11 +281,11 @@ static int krg_cpuinfo_release(struct inode *inode, struct file *file)
 	return seq_release(inode, file);
 }
 
-static struct file_operations proc_krg_cpuinfo_operations = {
-	.open = krg_cpuinfo_open,
+static struct file_operations proc_hcc_cpuinfo_operations = {
+	.open = hcc_cpuinfo_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = krg_cpuinfo_release,
+	.release = hcc_cpuinfo_release,
 };
 
 /****************************************************************************/
@@ -296,14 +296,14 @@ static struct file_operations proc_krg_cpuinfo_operations = {
 
 void
 __attribute__((weak))
-krg_arch_accumulate_meminfo(const krg_dynamic_node_info_t *local_info,
-			    krg_dynamic_node_info_t *global_info)
+hcc_arch_accumulate_meminfo(const hcc_dynamic_node_info_t *local_info,
+			    hcc_dynamic_node_info_t *global_info)
 {
 }
 
 void
 __attribute__((weak))
-krg_arch_report_meminfo(struct seq_file *m, const krg_dynamic_node_info_t *info)
+hcc_arch_report_meminfo(struct seq_file *m, const hcc_dynamic_node_info_t *info)
 {
 }
 
@@ -313,21 +313,21 @@ krg_arch_report_meminfo(struct seq_file *m, const krg_dynamic_node_info_t *info)
 static int show_meminfo(struct seq_file *p, void *v)
 {
 	hcc_node_t nodeid = (long)p->private;
-	krgnodemask_t nodes;
-	krg_dynamic_node_info_t global_dyn_info;
-	krg_dynamic_node_info_t *dyn_info;
+	hccnodemask_t nodes;
+	hcc_dynamic_node_info_t global_dyn_info;
+	hcc_dynamic_node_info_t *dyn_info;
 	hcc_node_t node;
 	long cached;
 	int i;
 
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		return meminfo_proc_show(p, v);
 
 	nodes = get_proc_nodes_vector(nodeid);
 
-	memset(&global_dyn_info, 0, sizeof(krg_dynamic_node_info_t));
+	memset(&global_dyn_info, 0, sizeof(hcc_dynamic_node_info_t));
 
-	for_each_krgnode_mask(node, nodes) {
+	for_each_hccnode_mask(node, nodes) {
 		dyn_info = get_dynamic_node_info(node);
 
 		global_dyn_info.totalram += dyn_info->totalram;
@@ -377,7 +377,7 @@ static int show_meminfo(struct seq_file *p, void *v)
 		global_dyn_info.surplus_huge_pages +=
 			dyn_info->surplus_huge_pages;
 
-		krg_arch_accumulate_meminfo(dyn_info, &global_dyn_info);
+		hcc_arch_accumulate_meminfo(dyn_info, &global_dyn_info);
 	}
 
 #define K(x) ((x) << (PAGE_SHIFT - 10))
@@ -489,7 +489,7 @@ static int show_meminfo(struct seq_file *p, void *v)
 		   1UL << (huge_page_order(&default_hstate) + PAGE_SHIFT - 10));
 #endif
 
-	krg_arch_report_meminfo(p, &global_dyn_info);
+	hcc_arch_report_meminfo(p, &global_dyn_info);
 
 	return 0;
 #undef K
@@ -497,10 +497,10 @@ static int show_meminfo(struct seq_file *p, void *v)
 
 static int meminfo_open(struct inode *inode, struct file *file)
 {
-	return krg_proc_stat_open(inode, file, show_meminfo, 1500);
+	return hcc_proc_stat_open(inode, file, show_meminfo, 1500);
 }
 
-static struct file_operations proc_krg_meminfo_operations = {
+static struct file_operations proc_hcc_meminfo_operations = {
 	.open = meminfo_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
@@ -517,15 +517,15 @@ static struct file_operations proc_krg_meminfo_operations = {
  *  @author Innogrid HCC
  *
  */
-static int krg_show_stat(struct seq_file *p, void *v)
+static int hcc_show_stat(struct seq_file *p, void *v)
 {
 	hcc_node_t req_nodeid = (long)p->private;
-	krg_dynamic_cpu_info_t *dynamic_cpu_info;
+	hcc_dynamic_cpu_info_t *dynamic_cpu_info;
 	struct cpu_usage_stat *stat;
-	krg_dynamic_node_info_t *dynamic_node_info;
-	krg_static_node_info_t *static_node_info;
+	hcc_dynamic_node_info_t *dynamic_node_info;
+	hcc_static_node_info_t *static_node_info;
 	int i, j;
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 	cputime64_t user, nice, system, idle, iowait, irq, softirq, steal;
 	cputime64_t guest;
 	unsigned long long nr_context_switches = 0;
@@ -542,7 +542,7 @@ static int krg_show_stat(struct seq_file *p, void *v)
 	};
 	int head_len;
 
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		return show_stat(p, v);
 
 	nodes = get_proc_nodes_vector(req_nodeid);
@@ -556,7 +556,7 @@ static int krg_show_stat(struct seq_file *p, void *v)
 	 * first without parsing data twice... Yes... Dirty...
 	 */
 	seq_printf(p, "%s", head_blank);
-	for_each_krgnode_mask(node_id, nodes) {
+	for_each_hccnode_mask(node_id, nodes) {
 		static_node_info = get_static_node_info(node_id);
 		dynamic_node_info = get_dynamic_node_info(node_id);
 
@@ -575,7 +575,7 @@ static int krg_show_stat(struct seq_file *p, void *v)
 			stat = &dynamic_cpu_info->stat.cpustat;
 			seq_printf(p,
 				   "cpu%d  %llu %llu %llu %llu %llu %llu %llu %llu %llu\n",
-				   __krg_cpu_id(node_id, i),
+				   __hcc_cpu_id(node_id, i),
 				   (unsigned long long)
 				   cputime64_to_clock_t(stat->user),
 				   (unsigned long long)
@@ -677,14 +677,14 @@ static int stat_open(struct inode *inode, struct file *file)
 	/* minimum size to display an interrupt count : 2 bytes */
 	size += 2 * nr_irqs;
 
-	return krg_proc_stat_open(inode, file, krg_show_stat, size);
+	return hcc_proc_stat_open(inode, file, hcc_show_stat, size);
 }
 
-static struct file_operations proc_krg_stat_operations = {
+static struct file_operations proc_hcc_stat_operations = {
 	.open = stat_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = krg_proc_stat_release,
+	.release = hcc_proc_stat_release,
 };
 
 /****************************************************************************/
@@ -704,20 +704,20 @@ static struct file_operations proc_krg_stat_operations = {
 static int show_loadavg(struct seq_file *p, void *v)
 {
 	hcc_node_t nodeid = (long)p->private;
-	krg_dynamic_node_info_t *dynamic_node_info;
-	krgnodemask_t nodes;
+	hcc_dynamic_node_info_t *dynamic_node_info;
+	hccnodemask_t nodes;
 	hcc_node_t i;
 	int a, b, c, nr_threads, last_pid;
 	long nr_running;
 
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		return loadavg_proc_show(p, v);
 
 	a = b = c = nr_running = nr_threads = last_pid = 0;
 
 	nodes = get_proc_nodes_vector(nodeid);
 
-	for_each_krgnode_mask(i, nodes) {
+	for_each_hccnode_mask(i, nodes) {
 		dynamic_node_info = get_dynamic_node_info(i);
 		a += dynamic_node_info->avenrun[0];
 		b += dynamic_node_info->avenrun[1];
@@ -743,14 +743,14 @@ static int show_loadavg(struct seq_file *p, void *v)
 
 static int loadavg_open(struct inode *inode, struct file *file)
 {
-	return krg_proc_stat_open(inode, file, show_loadavg, 100);
+	return hcc_proc_stat_open(inode, file, show_loadavg, 100);
 }
 
-static struct file_operations proc_krg_loadavg_operations = {
+static struct file_operations proc_hcc_loadavg_operations = {
 	.open = loadavg_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = krg_proc_stat_release,
+	.release = hcc_proc_stat_release,
 };
 
 /****************************************************************************/
@@ -763,7 +763,7 @@ static int show_nodeid(struct seq_file *p, void *v)
 {
 	hcc_node_t nodeid = (long)p->private;
 
-	if (nodeid >= KERRIGHED_MAX_NODES)
+	if (nodeid >= HCC_MAX_NODES)
 		seq_printf(p, "-\n");
 	else
 		seq_printf(p, "%d\n", nodeid);
@@ -773,14 +773,14 @@ static int show_nodeid(struct seq_file *p, void *v)
 
 static int nodeid_open(struct inode *inode, struct file *file)
 {
-	return krg_proc_stat_open(inode, file, show_nodeid, 10);
+	return hcc_proc_stat_open(inode, file, show_nodeid, 10);
 }
 
-static struct file_operations proc_krg_nodeid_operations = {
+static struct file_operations proc_hcc_nodeid_operations = {
 	.open = nodeid_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = krg_proc_stat_release,
+	.release = hcc_proc_stat_release,
 };
 
 /****************************************************************************/
@@ -799,7 +799,7 @@ static struct file_operations proc_krg_nodeid_operations = {
  *
  *  @return  Number of bytes written.
  */
-static int krg_nrnodes_read_proc(char *buffer, char **start, off_t offset,
+static int hcc_nrnodes_read_proc(char *buffer, char **start, off_t offset,
 				 int count, int *eof, void *data)
 {
 	static char mybuffer[64];
@@ -810,9 +810,9 @@ static int krg_nrnodes_read_proc(char *buffer, char **start, off_t offset,
 			       "ONLINE:%d\n"
 			       "PRESENT:%d\n"
 			       "POSSIBLE:%d\n",
-			       num_online_krgnodes(),
-			       num_present_krgnodes(),
-			       num_possible_krgnodes());
+			       num_online_hccnodes(),
+			       num_present_hccnodes(),
+			       num_possible_hccnodes());
 
 	if (offset + count >= len) {
 		count = len - offset;
@@ -841,14 +841,14 @@ static int show_session(struct seq_file *p, void *v)
 
 static int session_open(struct inode *inode, struct file *file)
 {
-	return krg_proc_stat_open(inode, file, show_session, 10);
+	return hcc_proc_stat_open(inode, file, show_session, 10);
 }
 
-static struct file_operations proc_krg_session_operations = {
+static struct file_operations proc_hcc_session_operations = {
 	.open = session_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = krg_proc_stat_release,
+	.release = hcc_proc_stat_release,
 };
 
 /****************************************************************************/
@@ -863,21 +863,21 @@ static struct file_operations proc_krg_session_operations = {
 static int show_uptime(struct seq_file *p, void *v)
 {
 	hcc_node_t nodeid = (long)p->private;
-	krg_dynamic_node_info_t *dynamic_node_info;
+	hcc_dynamic_node_info_t *dynamic_node_info;
 	hcc_node_t i, nr_nodes = 0;
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 	struct timespec uptime;
 	unsigned long long idle = 0;
 	unsigned long idle_mod;
 
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		return uptime_proc_show(p, v);
 
 	nodes = get_proc_nodes_vector(nodeid);
 
 	uptime.tv_sec = uptime.tv_nsec = 0;
 
-	for_each_krgnode_mask(i, nodes) {
+	for_each_hccnode_mask(i, nodes) {
 		dynamic_node_info = get_dynamic_node_info(i);
 		nr_nodes++;
 
@@ -901,14 +901,14 @@ static int show_uptime(struct seq_file *p, void *v)
 
 static int uptime_open(struct inode *inode, struct file *file)
 {
-	return krg_proc_stat_open(inode, file, show_uptime, 100);
+	return hcc_proc_stat_open(inode, file, show_uptime, 100);
 }
 
-static struct file_operations proc_krg_uptime_operations = {
+static struct file_operations proc_hcc_uptime_operations = {
 	.open = uptime_open,
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = krg_proc_stat_release,
+	.release = hcc_proc_stat_release,
 };
 
 /****************************************************************************/
@@ -927,7 +927,7 @@ static struct file_operations proc_krg_uptime_operations = {
  *
  *  @return  Number of bytes written.
  */
-int krg_netdev_read_proc(char *buffer,
+int hcc_netdev_read_proc(char *buffer,
 			 char **start,
 			 off_t offset, int count, int *eof, void *data)
 {
@@ -949,7 +949,7 @@ int create_proc_node_info(hcc_node_t nodeid)
 
 	/* Create the /proc/nodes/node<x> entry */
 
-	if (nodeid == KERRIGHED_MAX_NODES)
+	if (nodeid == HCC_MAX_NODES)
 		snprintf(dir_name, 80, "cluster");
 	else
 		snprintf(dir_name, 80, "node%d", nodeid);
@@ -962,50 +962,50 @@ int create_proc_node_info(hcc_node_t nodeid)
 
 	/* Create entries in /proc/nodes/node<x> */
 
-	if (nodeid != KERRIGHED_MAX_NODES)
-		krg_create_seq_entry("nodeid", 0, &proc_krg_nodeid_operations,
+	if (nodeid != HCC_MAX_NODES)
+		hcc_create_seq_entry("nodeid", 0, &proc_hcc_nodeid_operations,
 				     node_procfs, (void *)((long)nodeid));
-	krg_create_seq_entry("session", 0, &proc_krg_session_operations,
+	hcc_create_seq_entry("session", 0, &proc_hcc_session_operations,
 			     node_procfs, (void *)((long)nodeid));
 #ifdef CONFIG_CLUSTER_WIDE_PROC_CPUINFO
 #define CW_CPUINFO 1
 #else
 #define CW_CPUINFO 0
 #endif
-	if (CW_CPUINFO || nodeid != KERRIGHED_MAX_NODES)
-		krg_create_seq_entry("cpuinfo", 0, &proc_krg_cpuinfo_operations,
+	if (CW_CPUINFO || nodeid != HCC_MAX_NODES)
+		hcc_create_seq_entry("cpuinfo", 0, &proc_hcc_cpuinfo_operations,
 				     node_procfs, (void *)((long)nodeid));
 #ifdef CONFIG_CLUSTER_WIDE_PROC_MEMINFO
 #define CW_MEMINFO 1
 #else
 #define CW_MEMINFO 0
 #endif
-	if (CW_MEMINFO || nodeid != KERRIGHED_MAX_NODES)
-		krg_create_seq_entry("meminfo", 0, &proc_krg_meminfo_operations,
+	if (CW_MEMINFO || nodeid != HCC_MAX_NODES)
+		hcc_create_seq_entry("meminfo", 0, &proc_hcc_meminfo_operations,
 				     node_procfs, (void *)((long)nodeid));
 #ifdef CONFIG_CLUSTER_WIDE_PROC_LOADAVG
 #define CW_LOADAVG 1
 #else
 #define CW_LOADAVG 0
 #endif
-	if (CW_LOADAVG || nodeid != KERRIGHED_MAX_NODES)
-		krg_create_seq_entry("loadavg", 0, &proc_krg_loadavg_operations,
+	if (CW_LOADAVG || nodeid != HCC_MAX_NODES)
+		hcc_create_seq_entry("loadavg", 0, &proc_hcc_loadavg_operations,
 				     node_procfs, (void *)((long)nodeid));
 #ifdef CONFIG_CLUSTER_WIDE_PROC_UPTIME
 #define CW_UPTIME 1
 #else
 #define CW_UPTIME 0
 #endif
-	if (CW_UPTIME || nodeid != KERRIGHED_MAX_NODES)
-		krg_create_seq_entry("uptime", 0, &proc_krg_uptime_operations,
+	if (CW_UPTIME || nodeid != HCC_MAX_NODES)
+		hcc_create_seq_entry("uptime", 0, &proc_hcc_uptime_operations,
 				     node_procfs, (void *)((long)nodeid));
 #ifdef CONFIG_CLUSTER_WIDE_PROC_STAT
 #define CW_STAT 1
 #else
 #define CW_STAT 0
 #endif
-	if (CW_STAT || nodeid != KERRIGHED_MAX_NODES)
-		krg_create_seq_entry("stat", 0, &proc_krg_stat_operations,
+	if (CW_STAT || nodeid != HCC_MAX_NODES)
+		hcc_create_seq_entry("stat", 0, &proc_hcc_stat_operations,
 				     node_procfs, (void *)((long)nodeid));
 
 	if (nodeid == hcc_node_id)
@@ -1045,7 +1045,7 @@ int remove_proc_node_info(hcc_node_t nodeid)
 /** Init HCC proc stuffs.
  *  @author Innogrid HCC
  */
-int krg_procfs_init(void)
+int hcc_procfs_init(void)
 {
 	/* Create the /proc/hcc/nodes entry */
 
@@ -1066,7 +1066,7 @@ int krg_procfs_init(void)
 
 	procfs_nrnodes =
 	    create_proc_read_entry("nrnodes", S_IRUGO, procfs_nodes,
-				   krg_nrnodes_read_proc, NULL);
+				   hcc_nrnodes_read_proc, NULL);
 
 	if (procfs_nrnodes == NULL) {
 		WARNING("Cannot create /proc/hcc/nodes/nrnodes\n");
@@ -1077,28 +1077,28 @@ int krg_procfs_init(void)
 
 #ifdef CONFIG_CLUSTER_WIDE_PROC_CPUINFO
 	remove_proc_entry("cpuinfo", NULL);
-	krg_create_seq_entry("cpuinfo", 0, &proc_krg_cpuinfo_operations,
+	hcc_create_seq_entry("cpuinfo", 0, &proc_hcc_cpuinfo_operations,
 			     NULL,
 			     (void *)((int)PROC_STAT_DEPEND_ON_CAPABILITY));
 #endif
 #ifdef CONFIG_CLUSTER_WIDE_PROC_MEMINFO
 	remove_proc_entry("meminfo", NULL);
-	krg_create_seq_entry("meminfo", 0, &proc_krg_meminfo_operations, NULL,
+	hcc_create_seq_entry("meminfo", 0, &proc_hcc_meminfo_operations, NULL,
 			     (void *)((int)PROC_STAT_DEPEND_ON_CAPABILITY));
 #endif
 #ifdef CONFIG_CLUSTER_WIDE_PROC_LOADAVG
 	remove_proc_entry("loadavg", NULL);
-	krg_create_seq_entry("loadavg", 0, &proc_krg_loadavg_operations, NULL,
+	hcc_create_seq_entry("loadavg", 0, &proc_hcc_loadavg_operations, NULL,
 			     (void *)((int)PROC_STAT_DEPEND_ON_CAPABILITY));
 #endif
 #ifdef CONFIG_CLUSTER_WIDE_PROC_STAT
 	remove_proc_entry("stat", NULL);
-	krg_create_seq_entry("stat", 0, &proc_krg_stat_operations, NULL,
+	hcc_create_seq_entry("stat", 0, &proc_hcc_stat_operations, NULL,
 			     (void *)((int)PROC_STAT_DEPEND_ON_CAPABILITY));
 #endif
 #ifdef CONFIG_CLUSTER_WIDE_PROC_UPTIME
 	remove_proc_entry("uptime", NULL);
-	krg_create_seq_entry("uptime", 0, &proc_krg_uptime_operations, NULL,
+	hcc_create_seq_entry("uptime", 0, &proc_hcc_uptime_operations, NULL,
 			     (void *)((int)PROC_STAT_DEPEND_ON_CAPABILITY));
 #endif
 	/*  proc_net_remove("dev"); */
@@ -1106,7 +1106,7 @@ int krg_procfs_init(void)
 #ifdef CONFIG_CLUSTER_WIDE_PROC_INFRA
 	/* Create the /proc/hcc/nodes/cluster entry */
 
-	create_proc_node_info(KERRIGHED_MAX_NODES);
+	create_proc_node_info(HCC_MAX_NODES);
 #endif
 
 	return 0;
@@ -1115,7 +1115,7 @@ int krg_procfs_init(void)
 /** Finalize HCC proc stuffs.
  *  @author Innogrid HCC
  */
-int krg_procfs_finalize(void)
+int hcc_procfs_finalize(void)
 {
 	procfs_deltree(procfs_nodes);
 

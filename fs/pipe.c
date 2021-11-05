@@ -1445,12 +1445,12 @@ struct shared_object_operations cr_shared_pipe_inode_ops = {
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-int get_pipe_file_krg_desc(struct file *file, void **desc, int *desc_size)
+int get_pipe_file_hcc_desc(struct file *file, void **desc, int *desc_size)
 {
-	struct regular_file_krg_desc *data;
+	struct regular_file_hcc_desc *data;
 	int size, r = -ENOENT;
 
-	size = sizeof(struct regular_file_krg_desc);
+	size = sizeof(struct regular_file_hcc_desc);
 
 	data = kmalloc(size, GFP_KERNEL);
 	if (!data) {
@@ -1469,10 +1469,10 @@ exit:
 	return r;
 }
 
-struct file *reopen_pipe_file_entry_from_krg_desc(struct task_struct *task,
+struct file *reopen_pipe_file_entry_from_hcc_desc(struct task_struct *task,
 						  void *_desc)
 {
-	struct regular_file_krg_desc *desc = _desc;
+	struct regular_file_hcc_desc *desc = _desc;
 	struct path path;
 	struct file *file;
 

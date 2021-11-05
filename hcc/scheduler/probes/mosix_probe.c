@@ -59,7 +59,7 @@ MODULE_DESCRIPTION("CPU load probe based on MOSIX algorithms");
 #define CPU_USE_NEW_DATA 1
 
 struct mosix_probe_info {
-	struct krg_sched_module_info module_info;
+	struct hcc_sched_module_info module_info;
 	unsigned int load;    /**< Estimated load:
 			       * approx. 4 * ticks used in CF ticks */
 	unsigned int last_on; /**< load_ticks + 1 when last put on runqueue,
@@ -70,7 +70,7 @@ struct mosix_probe_info {
 
 static inline
 struct mosix_probe_info *
-to_mosix_probe_info(struct krg_sched_module_info *sched_info)
+to_mosix_probe_info(struct hcc_sched_module_info *sched_info)
 {
 	return container_of(sched_info, struct mosix_probe_info, module_info);
 }
@@ -125,9 +125,9 @@ static void mosix_probe_init_info(struct task_struct *task,
 	info->ran = 0;
 }
 
-static struct krg_sched_module_info *
+static struct hcc_sched_module_info *
 mosix_probe_info_copy(struct task_struct *task,
-		      struct krg_sched_module_info *info)
+		      struct hcc_sched_module_info *info)
 {
 	struct mosix_probe_info *new_info;
 
@@ -139,20 +139,20 @@ mosix_probe_info_copy(struct task_struct *task,
 	return NULL;
 }
 
-static void mosix_probe_info_free(struct krg_sched_module_info *info)
+static void mosix_probe_info_free(struct hcc_sched_module_info *info)
 {
 	kfree(to_mosix_probe_info(info));
 }
 
 static int mosix_probe_info_export(struct epm_action *action,
 				   struct ghost *ghost,
-				   struct krg_sched_module_info *info)
+				   struct hcc_sched_module_info *info)
 {
 	/* nothing to do */
 	return 0;
 }
 
-static struct krg_sched_module_info *
+static struct hcc_sched_module_info *
 mosix_probe_info_import(struct epm_action *action,
 			struct ghost *ghost,
 			struct task_struct *task)
@@ -160,7 +160,7 @@ mosix_probe_info_import(struct epm_action *action,
 	return mosix_probe_info_copy(task, NULL);
 }
 
-static struct krg_sched_module_info_type mosix_probe_module_info_type = {
+static struct hcc_sched_module_info_type mosix_probe_module_info_type = {
 	.name = "mosix probe",
 	.owner = THIS_MODULE,
 	.copy = mosix_probe_info_copy,
@@ -172,9 +172,9 @@ static struct krg_sched_module_info_type mosix_probe_module_info_type = {
 /* Must be called under rcu_read_lock() */
 static struct mosix_probe_info *get_mosix_probe_info(struct task_struct *task)
 {
-	struct krg_sched_module_info *mod_info;
+	struct hcc_sched_module_info *mod_info;
 
-	mod_info = krg_sched_module_info_get(task,
+	mod_info = hcc_sched_module_info_get(task,
 					     &mosix_probe_module_info_type);
 	if (mod_info)
 		return to_mosix_probe_info(mod_info);
@@ -705,7 +705,7 @@ int mosix_probe_init(void)
 	if (err)
 		goto err_other_hooks;
 
-	err = krg_sched_module_info_register(&mosix_probe_module_info_type);
+	err = hcc_sched_module_info_register(&mosix_probe_module_info_type);
 	if (err)
 		goto err_mod_info;
 
@@ -752,7 +752,7 @@ void mosix_probe_exit(void)
 		scheduler_probe_unregister(mosix_probe);
 
 	if (!mod_info_not_registered)
-		krg_sched_module_info_unregister(&mosix_probe_module_info_type);
+		hcc_sched_module_info_unregister(&mosix_probe_module_info_type);
 
 	atomic_notifier_chain_unregister(&kmh_calc_load, &mp_accumulate_load_nb);
 	atomic_notifier_chain_unregister(&kmh_process_off, &mp_process_off_nb);

@@ -10,13 +10,13 @@
 #include <linux/security.h>
 #include <linux/ipc_namespace.h>
 #include <linux/ipc.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 
 #include "ipc_handler.h"
 #include "msg_io_linker.h"
 #include "util.h"
-#include "krgmsg.h"
+#include "hccmsg.h"
 
 struct kmem_cache *msq_object_cachep;
 
@@ -55,7 +55,7 @@ static struct msg_queue *create_local_msq(struct ipc_namespace *ns,
 	INIT_LIST_HEAD(&msq->q_receivers);
 	INIT_LIST_HEAD(&msq->q_senders);
 
-	msq->q_perm.krgops = msg_ids(ns).krgops;
+	msq->q_perm.hccops = msg_ids(ns).hccops;
 	local_msg_unlock(msq);
 
 	return msq;
@@ -176,7 +176,7 @@ int msq_insert_object (struct gdm_obj * obj_entry,
 	} else {
 		struct ipc_namespace *ns;
 
-		ns = find_get_krg_ipcns();
+		ns = find_get_hcc_ipcns();
 		BUG_ON(!ns);
 
 		/* This is the first time the object is inserted locally. We need
@@ -227,7 +227,7 @@ int msq_remove_object(void *object, struct gdm_set *set, objid_t objid)
 	struct msg_queue *msq;
 	struct ipc_namespace *ns;
 
-	ns = find_get_krg_ipcns();
+	ns = find_get_hcc_ipcns();
 	BUG_ON(!ns);
 
 	msq_object = object;

@@ -5,7 +5,7 @@
  */
 #include <linux/wait.h>
 #include <linux/spinlock_types.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 #include <hcc/types.h>
 #include <linux/sched.h>
 enum static_cluster_barrier_id {
@@ -16,8 +16,8 @@ enum static_cluster_barrier_id {
 };
 
 struct cluster_barrier_core {
-	krgnodemask_t nodes_in_barrier;
-	krgnodemask_t nodes_to_wait;
+	hccnodemask_t nodes_in_barrier;
+	hccnodemask_t nodes_to_wait;
 	wait_queue_head_t waiting_tsk;
 	int in_barrier;
 };
@@ -36,7 +36,7 @@ struct cluster_barrier {
 
 struct cluster_barrier *alloc_cluster_barrier(unique_id_t key);
 void free_cluster_barrier(struct cluster_barrier *barrier);
-int cluster_barrier(struct cluster_barrier *barrier, krgnodemask_t *nodes,
+int cluster_barrier(struct cluster_barrier *barrier, hccnodemask_t *nodes,
 		    hcc_node_t master);
 void init_cluster_barrier(void);
 

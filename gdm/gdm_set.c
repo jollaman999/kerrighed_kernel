@@ -13,13 +13,13 @@
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
-#include <linux/krg_hashtable.h>
+#include <hcc/hccnodemask.h>
+#include <linux/hcc_hashtable.h>
 #include <linux/unique_id.h>
 
 #include "process.h"
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 
 #include <gdm/gdm.h>
 #include <gdm/gdm_set.h>
@@ -296,7 +296,7 @@ int find_gdm_set_remotely(struct gdm_set *gdm_set)
 	rpc_unpack(desc, 0, msg, msg_size);
 
 	if (msg->gdm_set_id != GDM_SET_UNUSED) {
-		set_ops = krgsyms_import (msg->set_ops);
+		set_ops = hccsyms_import (msg->set_ops);
 	tree_init_data = set_ops->import(desc, &free_init_data);
 	}
 
@@ -564,7 +564,7 @@ int handle_req_gdm_set_lookup(struct rpc_desc* desc,
 	msg_gdm_set_t *msg;
 	int msg_size = sizeof(msg_gdm_set_t);
 
-	BUG_ON(!krgnode_online(rpc_desc_get_client(desc)));
+	BUG_ON(!hccnode_online(rpc_desc_get_client(desc)));
 
 	gdm_set = local_get_gdm_set(gdm_id.ns_id, gdm_id.set_id);
 
@@ -588,7 +588,7 @@ int handle_req_gdm_set_lookup(struct rpc_desc* desc,
 	msg->link = gdm_set->def_owner;
 	msg->obj_size = gdm_set->obj_size;
 	msg->data_size = gdm_set->private_data_size;
-	msg->set_ops = krgsyms_export (gdm_set->ops);
+	msg->set_ops = hccsyms_export (gdm_set->ops);
 	memcpy(msg->private_data, gdm_set->private_data, gdm_set->private_data_size);
 
 done:
@@ -620,7 +620,7 @@ int __handle_req_gdm_set_destroy(hcc_node_t sender,
 	struct gdm_ns *ns;
 	struct gdm_set *gdm_set;
 
-	BUG_ON(!krgnode_online(sender));
+	BUG_ON(!hccnode_online(sender));
 
 	/* Remove the gdm set from the name space */
 
@@ -665,7 +665,7 @@ int _destroy_gdm_set(struct gdm_set * gdm_set)
 	gdm_id.set_id = gdm_set->id;
 	gdm_id.ns_id = gdm_set->ns->id;
 
-	rpc_async_m(REQ_GDM_SET_DESTROY, &krgnode_online_map,
+	rpc_async_m(REQ_GDM_SET_DESTROY, &hccnode_online_map,
 		    &gdm_id, sizeof(gdm_id_msg_t));
 	return 0;
 }

@@ -8,7 +8,7 @@
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <linux/cred.h>
-#include <linux/krg_hashtable.h>
+#include <linux/hcc_hashtable.h>
 #include <hcc/remote_cred.h>
 #include <hcc/pid.h>
 #include <hcc/libproc.h>
@@ -17,8 +17,8 @@
 #include <hcc/ghost_helpers.h>
 #include <hcc/hcc_signal.h>
 #include <hcc/action.h>
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 #include "../epm_internal.h"
 #include "../checkpoint.h"
@@ -162,9 +162,9 @@ void delete_app(struct app_struct *app)
 	if (r)
 		goto exit_put;
 
-	krgnode_clear(hcc_node_id, obj->nodes);
+	hccnode_clear(hcc_node_id, obj->nodes);
 
-	if (krgnodes_empty(obj->nodes)) {
+	if (hccnodes_empty(obj->nodes)) {
 		_gdm_remove_frozen_object(app_gdm_set, obj->app_id);
 		goto exit;
 	}
@@ -195,8 +195,8 @@ int create_application(struct task_struct *task)
 	obj->app_id = app_id;
 	obj->chkpt_sn = 0;
 
-	krgnodes_clear(obj->nodes);
-	krgnode_set(hcc_node_id, obj->nodes);
+	hccnodes_clear(obj->nodes);
+	hccnode_set(hcc_node_id, obj->nodes);
 	app = new_local_app(app_id);
 	if (IS_ERR(app)) {
 		r = PTR_ERR(app);
@@ -309,7 +309,7 @@ static int register_task_to_appid(long app_id,
 			r = PTR_ERR(app);
 			goto error;
 		}
-		krgnode_set(hcc_node_id, obj->nodes);
+		hccnode_set(hcc_node_id, obj->nodes);
 	}
 	r = register_task_to_app(app, task);
 
@@ -485,29 +485,29 @@ exit:
 
 /*--------------------------------------------------------------------------*/
 
-int krg_copy_application(struct task_struct *task)
+int hcc_copy_application(struct task_struct *task)
 {
 	int r = 0;
 	task->application = NULL;
 
-	if (!task->nsproxy->krg_ns)
+	if (!task->nsproxy->hcc_ns)
 		return 0;
 
 	/* father is no more checkpointable? */
-	if (!cap_raised(current->krg_caps.effective, CAP_CHECKPOINTABLE) &&
+	if (!cap_raised(current->hcc_caps.effective, CAP_CHECKPOINTABLE) &&
 	    current->application)
 		unregister_task_to_app(current->application, current);
 
 
 	/* did we get the CHECKPOINTABLE capability? */
-	if (!cap_raised(task->krg_caps.effective, CAP_CHECKPOINTABLE))
+	if (!cap_raised(task->hcc_caps.effective, CAP_CHECKPOINTABLE))
 		return 0;
 
 	/*
 	 * father is CHECKPOINTABLE but is not associatied to an application,
 	 * fix it!
 	 */
-	if (cap_raised(current->krg_caps.effective, CAP_CHECKPOINTABLE) &&
+	if (cap_raised(current->hcc_caps.effective, CAP_CHECKPOINTABLE) &&
 	    !current->application)
 		r = create_application(current);
 
@@ -528,7 +528,7 @@ err:
 	return r;
 }
 
-void krg_exit_application(struct task_struct *task)
+void hcc_exit_application(struct task_struct *task)
 {
 	if (task->application)
 		unregister_task_to_app(task->application, task);
@@ -545,14 +545,14 @@ int export_application(struct epm_action *action,
 	BUG_ON(!task);
 
 	/* leave an application if no more checkpointable */
-	if (!cap_raised(task->krg_caps.effective, CAP_CHECKPOINTABLE) &&
+	if (!cap_raised(task->hcc_caps.effective, CAP_CHECKPOINTABLE) &&
 	    task->application)
 		unregister_task_to_app(task->application, task);
 
 	/* Lazy creation of application (step 2/2) */
 	/* If process is checkpointable but not in an application
 	   and action = REMOTE_CLONE, create the application */
-	if (cap_raised(task->krg_caps.effective, CAP_CHECKPOINTABLE) &&
+	if (cap_raised(task->hcc_caps.effective, CAP_CHECKPOINTABLE) &&
 	    !task->application && action->type == EPM_REMOTE_CLONE)
 		create_application(task);
 
@@ -581,7 +581,7 @@ int import_application(struct epm_action *action,
 	if (action->type == EPM_CHECKPOINT)
 		return 0;
 
-	if (!cap_raised(task->krg_caps.effective, CAP_CHECKPOINTABLE))
+	if (!cap_raised(task->hcc_caps.effective, CAP_CHECKPOINTABLE))
 		return 0;
 
 	if (app_id == -1) {
@@ -613,7 +613,7 @@ static void local_cancel_stop(struct app_struct *app)
 	list_for_each_entry(tsk, &app->tasks, next_task) {
 		if (tsk->checkpoint.result == PCUS_RUNNING)
 			goto out;
-		r = krg_action_stop(tsk->task, EPM_CHECKPOINT);
+		r = hcc_action_stop(tsk->task, EPM_CHECKPOINT);
 		BUG_ON(r);
 		if (tsk->checkpoint.result == PCUS_OPERATION_OK)
 			complete(&tsk->checkpoint.completion);
@@ -643,10 +643,10 @@ static int local_prepare_stop(struct app_struct *app)
 				goto error;
 			}
 
-			r = krg_action_start(tsk->task, EPM_CHECKPOINT);
+			r = hcc_action_start(tsk->task, EPM_CHECKPOINT);
 			if (r) {
 				ckpt_err(NULL, r,
-					 "krg_action_start fails for "
+					 "hcc_action_start fails for "
 					 "process %d %s",
 					 tsk->task->pid, tsk->task->comm);
 				goto error;
@@ -833,7 +833,7 @@ static void __continue_task(task_state_t *tsk, int first_run)
 {
 	BUG_ON(!tsk);
 
-	krg_action_stop(tsk->task, EPM_CHECKPOINT);
+	hcc_action_stop(tsk->task, EPM_CHECKPOINT);
 	tsk->checkpoint.result = PCUS_RUNNING;
 	tsk->checkpoint.ghost = NULL;
 

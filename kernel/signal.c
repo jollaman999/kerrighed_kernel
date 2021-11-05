@@ -31,16 +31,16 @@
 #include <trace/events/signal.h>
 #include <linux/nospec.h>
 #ifdef CONFIG_HCC_PROC
-#include <net/krgrpc/rpc.h>
-#include <net/krgrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
 #include <hcc/pid.h>
 #include <hcc/remote_cred.h>
-#include <hcc/krgnodemask.h>
-#include <hcc/krginit.h>
+#include <hcc/hccnodemask.h>
+#include <hcc/hccinit.h>
 #include <hcc/remote_syscall.h>
 #endif
 #ifdef CONFIG_HCC_EPM
-#include <hcc/krg_exit.h>
+#include <hcc/hcc_exit.h>
 #include <hcc/action.h>
 #include <hcc/hcc_signal.h>
 #include <hcc/signal.h>
@@ -1210,14 +1210,14 @@ int kill_pid_info(int sig, struct siginfo *info, struct pid *pid)
 
 #ifdef CONFIG_HCC_PROC
 /* Caller guarantees that info->si_pid is 0 if from an ancestor namespace. */
-int __krg_group_send_sig_info(int sig, struct siginfo *info,
+int __hcc_group_send_sig_info(int sig, struct siginfo *info,
 			      struct task_struct *p)
 {
 	return __send_signal(sig, info, p, 1, 0);
 }
 
 /* Caller guarantees that p remains hashed. */
-int krg_group_send_sig_info(int sig, struct siginfo *info,
+int hcc_group_send_sig_info(int sig, struct siginfo *info,
 			    struct task_struct *p,
 			    pid_t session)
 {
@@ -1225,13 +1225,13 @@ int krg_group_send_sig_info(int sig, struct siginfo *info,
 	int ret;
 
 	ret = __check_kill_permission(sig, info, p,
-				      task_active_pid_ns(p)->krg_ns_root,
+				      task_active_pid_ns(p)->hcc_ns_root,
 				      session);
 
 	if (!ret && sig) {
 		ret = -ESRCH;
 		if (lock_task_sighand(p, &flags)) {
-			ret = __krg_group_send_sig_info(sig, info, p);
+			ret = __hcc_group_send_sig_info(sig, info, p);
 			unlock_task_sighand(p, &flags);
 		}
 	}
@@ -1253,7 +1253,7 @@ static int handle_kill_proc_info(struct rpc_desc *desc, void *_msg, size_t size)
 	const struct cred *old_cred;
 	int retval;
 
-	pid = krg_handle_remote_syscall_begin(desc, _msg, size,
+	pid = hcc_handle_remote_syscall_begin(desc, _msg, size,
 					      &msg, &old_cred);
 	if (IS_ERR(pid)) {
 		retval = PTR_ERR(pid);
@@ -1261,12 +1261,12 @@ static int handle_kill_proc_info(struct rpc_desc *desc, void *_msg, size_t size)
 	}
 
 	rcu_read_lock();
-	retval = krg_group_send_sig_info(msg.sig, &msg.info,
+	retval = hcc_group_send_sig_info(msg.sig, &msg.info,
 					 pid_task(pid, PIDTYPE_PID),
 					 msg.session);
 	rcu_read_unlock();
 
-	krg_handle_remote_syscall_end(pid, old_cred);
+	hcc_handle_remote_syscall_end(pid, old_cred);
 
 out:
 	return retval;
@@ -1302,12 +1302,12 @@ static void make_kill_info_msg(struct kill_info_msg *msg, int sig,
 	}
 }
 
-static int krg_kill_proc_info(int sig, struct siginfo *info, pid_t pid)
+static int hcc_kill_proc_info(int sig, struct siginfo *info, pid_t pid)
 {
 	struct kill_info_msg msg;
 
 	make_kill_info_msg(&msg, sig, info, pid);
-	return krg_remote_syscall_simple(PROC_KILL_PROC_INFO, pid,
+	return hcc_remote_syscall_simple(PROC_KILL_PROC_INFO, pid,
 					 &msg, sizeof(msg));
 }
 #endif /* CONFIG_HCC_PROC */
@@ -1324,9 +1324,9 @@ kill_proc_info(int sig, struct siginfo *info, pid_t pid)
 #ifdef CONFIG_HCC_EPM
 	p = find_vpid(pid);
 	t = pid_task(p, PIDTYPE_PID);
-	if (t && krg_action_block_any(t)) {
+	if (t && hcc_action_block_any(t)) {
 		error = kill_pid_info(sig, info, p);
-		krg_action_unblock_any(t);
+		hcc_action_unblock_any(t);
 	} else {
 		/* Try a remote syscall */
 		error = -ESRCH;
@@ -1337,7 +1337,7 @@ kill_proc_info(int sig, struct siginfo *info, pid_t pid)
 	rcu_read_unlock();
 #ifdef CONFIG_HCC_PROC
 	if (error == -ESRCH)
-		error = krg_kill_proc_info(sig, info, pid);
+		error = hcc_kill_proc_info(sig, info, pid);
 #endif /* CONFIG_HCC_PROC */
 	return error;
 }
@@ -1401,7 +1401,7 @@ static int handle_kill_pg_info(struct rpc_desc *desc, void *_msg, size_t size)
 
 	success = 0;
 	do_each_pid_task(pgrp, PIDTYPE_PGID, p) {
-		err = krg_group_send_sig_info(msg->sig, &msg->info, p,
+		err = hcc_group_send_sig_info(msg->sig, &msg->info, p,
 					      msg->session);
 		success |= !err;
 		retval = err;
@@ -1419,26 +1419,26 @@ err_cancel:
 	return -EPIPE;
 }
 
-static int krg_kill_pg_info(int sig, struct siginfo *info, pid_t pgid)
+static int hcc_kill_pg_info(int sig, struct siginfo *info, pid_t pgid)
 {
 	struct kill_info_msg msg;
 	struct rpc_desc *desc;
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 	hcc_node_t node;
 	int retval = -ESRCH;
 
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		goto out;
 
-	if (!is_krg_pid_ns_root(task_active_pid_ns(current)))
+	if (!is_hcc_pid_ns_root(task_active_pid_ns(current)))
 		goto out;
 
 	if (!(pgid & GLOBAL_PID_MASK))
 		goto out;
 
-	krgnodes_copy(nodes, krgnode_online_map);
-	krgnode_clear(hcc_node_id, nodes);
-	if (krgnodes_empty(nodes))
+	hccnodes_copy(nodes, hccnode_online_map);
+	hccnode_clear(hcc_node_id, nodes);
+	if (hccnodes_empty(nodes))
 		goto out;
 
 	desc = rpc_begin_m(PROC_KILL_PG_INFO, &nodes);
@@ -1452,7 +1452,7 @@ static int krg_kill_pg_info(int sig, struct siginfo *info, pid_t pgid)
 		goto err_cancel;
 
 	retval = -ESRCH;
-	for_each_krgnode_mask(node, nodes) {
+	for_each_hccnode_mask(node, nodes) {
 		retval = rpc_wait_return_from(desc, node);
 		if (!retval)
 			break;
@@ -1469,12 +1469,12 @@ err_cancel:
 	goto out_end;
 }
 
-static void krg_kill_all(int sig, struct siginfo *info, int *count, int *retval)
+static void hcc_kill_all(int sig, struct siginfo *info, int *count, int *retval)
 {
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		return;
 
-	if (!is_krg_pid_ns_root(task_active_pid_ns(current)))
+	if (!is_hcc_pid_ns_root(task_active_pid_ns(current)))
 		return;
 }
 #endif /* CONFIG_HCC_PROC */
@@ -1496,7 +1496,7 @@ static int kill_something_info(int sig, struct siginfo *info, pid_t pid)
 		rcu_read_unlock();
 #ifdef CONFIG_HCC_PROC
 		if (ret == -ESRCH)
-			ret = krg_kill_proc_info(sig, info, pid);
+			ret = hcc_kill_proc_info(sig, info, pid);
 #endif /* CONFIG_HCC_PROC */
 		return ret;
 	}
@@ -1509,7 +1509,7 @@ static int kill_something_info(int sig, struct siginfo *info, pid_t pid)
 		read_unlock(&tasklist_lock);
 		if (!pid)
 			pid = -task_pgrp_vnr(current);
-		ret = krg_kill_pg_info(sig, info, -pid) ? ret : 0;
+		ret = hcc_kill_pg_info(sig, info, -pid) ? ret : 0;
 		return ret;
 #endif /* CONFIG_HCC_PROC */
 	} else {
@@ -1527,7 +1527,7 @@ static int kill_something_info(int sig, struct siginfo *info, pid_t pid)
 		}
 #ifdef CONFIG_HCC_PROC
 		read_unlock(&tasklist_lock);
-		krg_kill_all(sig, info, &count, &retval);
+		hcc_kill_all(sig, info, &count, &retval);
 #endif /* CONFIG_HCC_PROC */
 		ret = count ? retval : -ESRCH;
 #ifdef CONFIG_HCC_PROC
@@ -1715,7 +1715,7 @@ int send_hcc_signal(int sig, struct siginfo *info, struct task_struct *t)
 	       current->pid, current->comm, t->pid, t->comm);
 
 	info->si_signo = sig;
-	info->si_code = SI_KERRIGHED;
+	info->si_code = SI_HCC;
 
 	if (!lock_task_sighand(t, &flags))
 		BUG();
@@ -1731,12 +1731,12 @@ int send_hcc_signal(int sig, struct siginfo *info, struct task_struct *t)
 	return 0;
 }
 
-hcc_handler_t *krg_handler[_NSIG];
+hcc_handler_t *hcc_handler[_NSIG];
 
 static int handle_hcc_signal(int sig, struct siginfo *info,
 				   struct pt_regs *regs)
 {
-	hcc_handler_t *kh = krg_handler[sig];
+	hcc_handler_t *kh = hcc_handler[sig];
 	int released = 0;
 
 	if (kh) {
@@ -1820,7 +1820,7 @@ int do_notify_parent(struct task_struct *tsk, int sig)
 		 * reparent_thread()).
 		 */
 		write_unlock_irq(&tasklist_lock);
-		ret = krg_do_notify_parent(tsk, &info);
+		ret = hcc_do_notify_parent(tsk, &info);
 		write_lock_irq(&tasklist_lock);
 		if (ret < 0)
 			tsk->exit_signal = -1;
@@ -2230,7 +2230,7 @@ relock:
 			if (!signr)
 				break; /* will return 0 */
 #ifdef CONFIG_HCC_EPM
-			if (info->si_code == SI_KERRIGHED) {
+			if (info->si_code == SI_HCC) {
 				if (handle_hcc_signal(signr, info, regs))
 					/* It released the siglock.  */
 					goto relock;
@@ -2833,9 +2833,9 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 	k = &t->sighand->action[idx];
 #ifdef CONFIG_HCC_EPM
 	down_read(&hcc_init_sem);
-	sighand_id = current->sighand->krg_objid;
+	sighand_id = current->sighand->hcc_objid;
 	if (sighand_id)
-		krg_sighand_writelock(sighand_id);
+		hcc_sighand_writelock(sighand_id);
 #endif
 
 	spin_lock_irq(&current->sighand->siglock);
@@ -2871,7 +2871,7 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 	spin_unlock_irq(&current->sighand->siglock);
 #ifdef CONFIG_HCC_EPM
 	if (sighand_id)
-		krg_sighand_unlock(sighand_id);
+		hcc_sighand_unlock(sighand_id);
 	up_read(&hcc_init_sem);
 #endif
 	return 0;

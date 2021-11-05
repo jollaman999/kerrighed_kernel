@@ -20,21 +20,21 @@ static int action_to_cap_mapping[] = {
 	[EPM_CHECKPOINT] = CAP_CHECKPOINTABLE,
 };
 
-DEFINE_RWLOCK(krg_action_lock);
+DEFINE_RWLOCK(hcc_action_lock);
 
 static inline void action_lock_lock(void)
 {
 	lockdep_off();
-	write_lock(&krg_action_lock);
+	write_lock(&hcc_action_lock);
 }
 
 static inline void action_lock_unlock(void)
 {
-	write_unlock(&krg_action_lock);
+	write_unlock(&hcc_action_lock);
 	lockdep_on();
 }
 
-static inline int action_to_flag(krg_epm_action_t action)
+static inline int action_to_flag(hcc_epm_action_t action)
 {
 	if (unlikely(action <= EPM_NO_ACTION || action >= EPM_ACTION_MAX))
 		return 0;
@@ -42,7 +42,7 @@ static inline int action_to_flag(krg_epm_action_t action)
 		return 1 << action;
 }
 
-static inline int action_to_cap(krg_epm_action_t action)
+static inline int action_to_cap(hcc_epm_action_t action)
 {
 	if (unlikely(action <= EPM_NO_ACTION || action >= EPM_ACTION_MAX))
 		return -1;
@@ -50,7 +50,7 @@ static inline int action_to_cap(krg_epm_action_t action)
 		return action_to_cap_mapping[action];
 }
 
-int krg_action_disable(struct task_struct *task, krg_epm_action_t action,
+int hcc_action_disable(struct task_struct *task, hcc_epm_action_t action,
 		       int inheritable)
 {
 	unsigned long flag;
@@ -61,15 +61,15 @@ int krg_action_disable(struct task_struct *task, krg_epm_action_t action,
 		return -EINVAL;
 
 	action_lock_lock();
-	if (unlikely(task->krg_action_flags & flag))
+	if (unlikely(task->hcc_action_flags & flag))
 		retval = -EAGAIN;
 	else {
 		atomic_t *array;
 
 		if (inheritable)
-			array = task->krg_cap_unavailable;
+			array = task->hcc_cap_unavailable;
 		else
-			array = task->krg_cap_unavailable_private;
+			array = task->hcc_cap_unavailable_private;
 		atomic_inc(&array[action_to_cap(action)]);
 	}
 	action_lock_unlock();
@@ -77,7 +77,7 @@ int krg_action_disable(struct task_struct *task, krg_epm_action_t action,
 	return retval;
 }
 
-int krg_action_enable(struct task_struct *task, krg_epm_action_t action,
+int hcc_action_enable(struct task_struct *task, hcc_epm_action_t action,
 		      int inheritable)
 {
 	atomic_t *array;
@@ -88,16 +88,16 @@ int krg_action_enable(struct task_struct *task, krg_epm_action_t action,
 		return -EINVAL;
 
 	if (inheritable)
-		array = task->krg_cap_unavailable;
+		array = task->hcc_cap_unavailable;
 	else
-		array = task->krg_cap_unavailable_private;
+		array = task->hcc_cap_unavailable_private;
 	if (unlikely(atomic_add_negative(-1, &array[cap])))
 		BUG();
 
 	return 0;
 }
 
-int krg_action_start(struct task_struct *task, krg_epm_action_t action)
+int hcc_action_start(struct task_struct *task, hcc_epm_action_t action)
 {
 	unsigned long flag;
 	int retval = 0;
@@ -107,20 +107,20 @@ int krg_action_start(struct task_struct *task, krg_epm_action_t action)
 		return -EINVAL;
 
 	action_lock_lock();
-	if (!can_use_krg_cap(task, action_to_cap(action)))
+	if (!can_use_hcc_cap(task, action_to_cap(action)))
 		retval = -EPERM;
-	else if (unlikely(task->krg_action_flags & flag))
+	else if (unlikely(task->hcc_action_flags & flag))
 		retval = -EALREADY;
-	else if (unlikely(task->krg_action_flags))
+	else if (unlikely(task->hcc_action_flags))
 		retval = -EAGAIN;
 	else
-		task->krg_action_flags |= flag;
+		task->hcc_action_flags |= flag;
 	action_lock_unlock();
 
 	return retval;
 }
 
-int krg_action_stop(struct task_struct *task, krg_epm_action_t action)
+int hcc_action_stop(struct task_struct *task, hcc_epm_action_t action)
 {
 	unsigned long flag;
 	int retval = 0;
@@ -130,13 +130,13 @@ int krg_action_stop(struct task_struct *task, krg_epm_action_t action)
 		return -EINVAL;
 
 	action_lock_lock();
-	task->krg_action_flags &= ~flag;
+	task->hcc_action_flags &= ~flag;
 	action_lock_unlock();
 
 	return retval;
 }
 
-int krg_action_pending(struct task_struct *task, krg_epm_action_t action)
+int hcc_action_pending(struct task_struct *task, hcc_epm_action_t action)
 {
 	unsigned long flag;
 	int retval;
@@ -146,7 +146,7 @@ int krg_action_pending(struct task_struct *task, krg_epm_action_t action)
 		return 0;
 
 	action_lock_lock();
-	retval = task->krg_action_flags & flag;
+	retval = task->hcc_action_flags & flag;
 	action_lock_unlock();
 
 	return retval;

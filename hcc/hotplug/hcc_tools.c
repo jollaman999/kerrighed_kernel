@@ -1,21 +1,21 @@
 /** Initilize the tool module.
- *  @file krg_tools.c
+ *  @file hcc_tools.c
  *
  *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <asm/uaccess.h>
 
 #include <hcc/procfs.h>
-#include <hcc/krg_syscalls.h>
-#include <hcc/krg_services.h>
+#include <hcc/hcc_syscalls.h>
+#include <hcc/hcc_services.h>
 
 static int tools_proc_nb_max_nodes(void* arg)
 {
-	int r, v = KERRIGHED_MAX_NODES;
+	int r, v = HCC_MAX_NODES;
 
 	r = 0;
 	
@@ -27,7 +27,7 @@ static int tools_proc_nb_max_nodes(void* arg)
 
 static int tools_proc_nb_max_clusters(void* arg)
 {
-	int r, v = KERRIGHED_MAX_CLUSTERS;
+	int r, v = HCC_MAX_CLUSTERS;
 
 	r = 0;
 
@@ -50,7 +50,7 @@ static int tools_proc_node_id(void *arg)
 
 static int tools_proc_nodes_count(void *arg)
 {
-        int nb_nodes = num_online_krgnodes();
+        int nb_nodes = num_online_hccnodes();
         int r = 0;
 
         if (copy_to_user((void *)arg, (void *)&nb_nodes, sizeof(int)))
@@ -65,7 +65,7 @@ int init_tools(void)
 
 	if ((error = hcc_proc_init()))
 		goto ErrorProc;
-	if ((error = krg_syscalls_init()))
+	if ((error = hcc_syscalls_init()))
 		goto ErrorSys;
 
 	error = register_proc_service(KSYS_NB_MAX_NODES, tools_proc_nb_max_nodes);
@@ -96,7 +96,7 @@ int init_tools(void)
  Done:
 	return error;
 
-	krg_syscalls_finalize();
+	hcc_syscalls_finalize();
  ErrorSys:
 	hcc_proc_finalize();
  ErrorProc:
@@ -107,8 +107,8 @@ EXPORT_SYMBOL(init_tools);
 
 void cleanup_tools(void)
 {
-	krg_syscalls_finalize();
-#ifdef CONFIG_KERRIGHED
+	hcc_syscalls_finalize();
+#ifdef CONFIG_HCC
 	hcc_proc_finalize();
 #endif
 

@@ -239,9 +239,9 @@ extern int group_send_sig_info(int sig, struct siginfo *info, struct task_struct
 extern int __group_send_sig_info(int, struct siginfo *, struct task_struct *);
 #ifdef CONFIG_HCC_PROC
 extern
-int krg_group_send_sig_info(int sig, struct siginfo *info, struct task_struct *p,
+int hcc_group_send_sig_info(int sig, struct siginfo *info, struct task_struct *p,
 			    pid_t session);
-extern int __krg_group_send_sig_info(int, struct siginfo *, struct task_struct *);
+extern int __hcc_group_send_sig_info(int, struct siginfo *, struct task_struct *);
 #endif
 extern long do_rt_tgsigqueueinfo(pid_t tgid, pid_t pid, int sig,
 				 siginfo_t *info);

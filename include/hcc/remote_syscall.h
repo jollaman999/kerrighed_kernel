@@ -7,16 +7,16 @@ struct rpc_desc;
 struct pid;
 struct cred;
 
-struct rpc_desc *krg_remote_syscall_begin(int req, pid_t pid,
+struct rpc_desc *hcc_remote_syscall_begin(int req, pid_t pid,
 					  const void *msg, size_t size);
-void krg_remote_syscall_end(struct rpc_desc *desc, pid_t pid);
-int krg_remote_syscall_simple(int req, pid_t pid, const void *msg, size_t size);
+void hcc_remote_syscall_end(struct rpc_desc *desc, pid_t pid);
+int hcc_remote_syscall_simple(int req, pid_t pid, const void *msg, size_t size);
 
-struct pid *krg_handle_remote_syscall_begin(struct rpc_desc *desc,
+struct pid *hcc_handle_remote_syscall_begin(struct rpc_desc *desc,
 					    const void *_msg, size_t size,
 					    void *msg,
 					    const struct cred **old_cred);
-void krg_handle_remote_syscall_end(struct pid *pid,
+void hcc_handle_remote_syscall_end(struct pid *pid,
 				   const struct cred *old_cred);
 
 void remote_signals_init(void);

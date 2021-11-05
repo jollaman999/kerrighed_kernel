@@ -35,7 +35,7 @@ do {									   \
 		".section .fixup,\"ax\"\n"				   \
 		"3:	cmpq %0,%1\n"					   \
 		"	jne 5f\n"					   \
-		"4: 	movq $krg___strncpy_from_user,%%rax\n"		   \
+		"4: 	movq $hcc___strncpy_from_user,%%rax\n"		   \
 		"	call usercopy_check_ruaccess\n"			   \
 		" 	testq %%rax,%%rax\n"				   \
 		" 	jz 2b\n"					   \
@@ -131,7 +131,7 @@ unsigned long __clear_user(void __user *addr, unsigned long size)
 		"	jne 2b\n"
 		"	pushq %%rax\n"
 		"	pushq %%rdx\n"
-		"	movq $krg___clear_user,%%rax\n"
+		"	movq $hcc___clear_user,%%rax\n"
 		"	movq %[size8],%%rsi\n"
 		"	call usercopy_check_ruaccess\n"
 		"	testq %%rax,%%rax\n"
@@ -209,7 +209,7 @@ long __strnlen_user(const char __user *s, long n)
 				"3:	movq %5,%0\n"
 				"	testq %2,%2\n"
 				"	jnz 2b\n"
-				"	movq $krg___strnlen_user,%%rax\n"
+				"	movq $hcc___strnlen_user,%%rax\n"
 				"	call usercopy_check_ruaccess\n"
 				"	jmp 2b\n"
 				".previous\n"
@@ -263,7 +263,7 @@ long strlen_user(const char __user *s)
 				"3:	movq %5,%0\n"
 				"	testq %2,%2\n"
 				"	jnz 2b\n"
-				"	movq $krg___strnlen_user,%%rax\n"
+				"	movq $hcc___strnlen_user,%%rax\n"
 				"	call usercopy_check_ruaccess\n"
 				"	jmp 2b\n"
 				"4:	movq %5,%0\n"

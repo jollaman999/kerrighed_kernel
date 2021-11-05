@@ -242,7 +242,7 @@ int copy_thread(unsigned long clone_flags, unsigned long sp,
 	*childregs = *regs;
 #ifdef CONFIG_HCC_EPM
 	/* Do not corrupt ax in migration/restart */
-	if (!krg_current || in_krg_do_fork())
+	if (!hcc_current || in_hcc_do_fork())
 #endif
 	childregs->ax = 0;
 	childregs->sp = sp;
@@ -253,7 +253,7 @@ int copy_thread(unsigned long clone_flags, unsigned long sp,
 	p->thread.ip = (unsigned long) ret_from_fork;
 
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current)
+	if (!hcc_current)
 #endif
 	task_user_gs(p) = get_user_gs(regs);
 

@@ -19,13 +19,13 @@
 #include <net/tipc/tipc.h>
 #include <net/tipc/tipc_port.h>
 #include <net/tipc/tipc_bearer.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
-#include <linux/krg_hashtable.h>
+#include <hcc/hccinit.h>
+#include <linux/hcc_hashtable.h>
 
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 
 #include "rpc_internal.h"
 
@@ -62,9 +62,9 @@ struct rx_engine {
 	struct delayed_work run_rx_queue_work;
 };
 
-struct rx_engine tipc_rx_engine[KERRIGHED_MAX_NODES];
+struct rx_engine tipc_rx_engine[HCC_MAX_NODES];
 
-struct workqueue_struct *krgcom_wq;
+struct workqueue_struct *hcccom_wq;
 
 #ifdef CONFIG_64BIT
 
@@ -131,11 +131,11 @@ u32 tipc_port_ref;
 DEFINE_PER_CPU(u32, tipc_send_ref);
 struct tipc_name_seq tipc_seq;
 
-krgnodemask_t nodes_requiring_ack;
-unsigned long last_cleanup_ack[KERRIGHED_MAX_NODES];
+hccnodemask_t nodes_requiring_ack;
+unsigned long last_cleanup_ack[HCC_MAX_NODES];
 static int ack_cleanup_window_size;
-static int consecutive_recv[KERRIGHED_MAX_NODES];
-static int max_consecutive_recv[KERRIGHED_MAX_NODES];
+static int consecutive_recv[HCC_MAX_NODES];
+static int max_consecutive_recv[HCC_MAX_NODES];
 
 void __rpc_put_raw_data(void *data){
 	kfree_skb((struct sk_buff*)data);
@@ -240,7 +240,7 @@ void tipc_send_ack_worker(struct work_struct *work)
 	hcc_node_t node;
 	int err;
 
-	if (next_krgnode(0, nodes_requiring_ack) > KERRIGHED_MAX_NODES)
+	if (next_hccnode(0, nodes_requiring_ack) > HCC_MAX_NODES)
 		return;
 
 	h.from = hcc_node_id;
@@ -250,10 +250,10 @@ void tipc_send_ack_worker(struct work_struct *work)
 	iov[0].iov_base = &h;
 	iov[0].iov_len = sizeof(h);
 
-	for_each_krgnode_mask(node, nodes_requiring_ack) {
+	for_each_hccnode_mask(node, nodes_requiring_ack) {
 		err = send_iovec(node, ARRAY_SIZE(iov), iov);
 		if (!err)
-			krgnode_clear(node, nodes_requiring_ack);
+			hccnode_clear(node, nodes_requiring_ack);
 	}
 }
 
@@ -277,21 +277,21 @@ static void tipc_delayed_tx_worker(struct work_struct *work)
 
 	// browse the waiting list
 	list_for_each_entry_safe(iter, safe, &queue, tx_queue){
-		krgnodemask_t nodes;
+		hccnodemask_t nodes;
 		hcc_node_t link_seq_index, node;
 
 		link_seq_index = iter->link_seq_index;
 		if (link_seq_index) {
 			/* Start with the first node to which we could not
 			 * transmit */
-			krgnodes_setall(nodes);
-			krgnodes_shift_left(nodes, nodes, iter->index);
-			krgnodes_and(nodes, nodes, iter->nodes);
+			hccnodes_setall(nodes);
+			hccnodes_shift_left(nodes, nodes, iter->index);
+			hccnodes_and(nodes, nodes, iter->nodes);
 		} else {
 			/* Transmit to all nodes */
-			krgnodes_copy(nodes, iter->nodes);
+			hccnodes_copy(nodes, iter->nodes);
 		}
-		for_each_krgnode_mask(node, nodes){
+		for_each_hccnode_mask(node, nodes){
 			int err;
 
 			err = __rpc_tx_elem_send(iter, link_seq_index, node);
@@ -367,21 +367,21 @@ static void tipc_retx_worker(struct work_struct *work)
 
 	// browse the waiting list
 	list_for_each_entry_safe_continue(iter, safe, &queue, tx_queue){
-		krgnodemask_t nodes;
+		hccnodemask_t nodes;
 		hcc_node_t link_seq_index, node;
 
 		link_seq_index = iter->link_seq_index;
 		if (link_seq_index) {
 			/* Start with the first node to which we could not
 			 * transmit */
-			krgnodes_setall(nodes);
-			krgnodes_shift_left(nodes, nodes, iter->index);
-			krgnodes_and(nodes, nodes, iter->nodes);
+			hccnodes_setall(nodes);
+			hccnodes_shift_left(nodes, nodes, iter->index);
+			hccnodes_and(nodes, nodes, iter->nodes);
 		} else {
 			/* Transmit to all nodes */
-			krgnodes_copy(nodes, iter->nodes);
+			hccnodes_copy(nodes, iter->nodes);
 		}
-		for_each_krgnode_mask(node, nodes){
+		for_each_hccnode_mask(node, nodes){
 			int err;
 
 			err = __rpc_tx_elem_send(iter, link_seq_index, node);
@@ -445,7 +445,7 @@ static void tipc_cleanup_not_retx_worker(struct work_struct *work)
 		need_to_free = 0;
 		link_seq_index = 0;
 
-		for_each_krgnode_mask(node, iter->nodes){
+		for_each_hccnode_mask(node, iter->nodes){
 
 			iter->h.link_seq_id = iter->link_seq_id[link_seq_index];
 
@@ -485,7 +485,7 @@ void tipc_reachable_node_worker(struct work_struct *work){
 	list_splice_init(&engine->not_retx_queue, &engine->retx_queue);
 	spin_unlock_bh(&tipc_tx_queue_lock);
 
-	queue_delayed_work_on(smp_processor_id(), krgcom_wq,
+	queue_delayed_work_on(smp_processor_id(), hcccom_wq,
 			      &engine->retx_work, 0);
 }
 
@@ -501,7 +501,7 @@ int __rpc_emergency_send_buf_alloc(struct rpc_desc *desc, size_t size)
 	elem = kmalloc(sizeof(*elem) * MAX_EMERGENCY_SEND, GFP_ATOMIC);
 	if (!elem)
 		goto oom;
-	nr_dest = krgnodes_weight(desc->nodes);
+	nr_dest = hccnodes_weight(desc->nodes);
 	for (i = 0; i < MAX_EMERGENCY_SEND; i++) {
 		elem[i] = __rpc_tx_elem_alloc(size, nr_dest);
 		if (!elem[i])
@@ -551,7 +551,7 @@ static struct rpc_tx_elem *next_emergency_send_buf(struct rpc_desc *desc)
 }
 
 int __rpc_send_ll(struct rpc_desc* desc,
-			 krgnodemask_t *nodes,
+			 hccnodemask_t *nodes,
 			 unsigned long seq_id,
 			 int __flags,
 			 const void* data, size_t size,
@@ -562,7 +562,7 @@ int __rpc_send_ll(struct rpc_desc* desc,
 	hcc_node_t node;
 	int link_seq_index;
 
-	elem = __rpc_tx_elem_alloc(size, __krgnodes_weight(nodes));
+	elem = __rpc_tx_elem_alloc(size, __hccnodes_weight(nodes));
 	if (!elem) {
 		if (rpc_flags & RPC_FLAGS_EMERGENCY_BUF)
 			elem = next_emergency_send_buf(desc);
@@ -571,7 +571,7 @@ int __rpc_send_ll(struct rpc_desc* desc,
 	}
 
 	link_seq_index = 0;
-	__for_each_krgnode_mask(node, nodes) {
+	__for_each_hccnode_mask(node, nodes) {
 		rpc_link_seq_id(elem->link_seq_id[link_seq_index], node);
 		link_seq_index++;
 	}
@@ -601,7 +601,7 @@ int __rpc_send_ll(struct rpc_desc* desc,
 	memcpy(elem->data, data, size);
 	elem->iov[1].iov_base = elem->data;
 		
-	__krgnodes_copy(&elem->nodes, nodes);	
+	__hccnodes_copy(&elem->nodes, nodes);	
 
 	preempt_disable();
 	engine = &per_cpu(tipc_tx_engine, smp_processor_id());
@@ -614,13 +614,13 @@ int __rpc_send_ll(struct rpc_desc* desc,
 		lockdep_on();
 
 		/* Schedule the work ASAP */
-		queue_work(krgcom_wq, &engine->delayed_tx_work.work);
+		queue_work(hcccom_wq, &engine->delayed_tx_work.work);
 
 	} else {
 		int err = 0;
 
 		link_seq_index = 0;
-		__for_each_krgnode_mask(node, nodes){
+		__for_each_hccnode_mask(node, nodes){
 
 			err = __rpc_tx_elem_send(elem, link_seq_index, node);
 
@@ -840,7 +840,7 @@ static struct rpc_desc *server_rpc_desc_setup(const struct __rpc_header *h)
 
 	// Since a RPC_RQ_CLT can only be received from one node:
 	// by choice, we decide to use 0 as the corresponding id
-	krgnode_set(0, desc->nodes);
+	hccnode_set(0, desc->nodes);
 
 	desc->desc_id = h->desc_id;
 	desc->type = RPC_RQ_SRV;
@@ -1087,7 +1087,7 @@ static void run_rx_queue_worker(struct work_struct *work)
 
 static void schedule_run_rx_queue(struct rx_engine *engine)
 {
-	queue_delayed_work(krgcom_wq, &engine->run_rx_queue_work, HZ / 2);
+	queue_delayed_work(hcccom_wq, &engine->run_rx_queue_work, HZ / 2);
 }
 
 /*
@@ -1124,7 +1124,7 @@ static void tipc_handler(void *usr_handle,
 			for_each_online_cpu(cpuid){
 				struct tx_engine *engine = &per_cpu(tipc_tx_engine,
 									cpuid);
-				queue_delayed_work_on(cpuid, krgcom_wq,
+				queue_delayed_work_on(cpuid, hcccom_wq,
 							&engine->cleanup_not_retx_work,0);
 
 			}
@@ -1137,15 +1137,15 @@ static void tipc_handler(void *usr_handle,
 
 	// Check if we are not receiving an already received packet
 	if (h->link_seq_id < rpc_link_recv_seq_id[h->from]) {
-		krgnode_set(h->from, nodes_requiring_ack);
-		queue_delayed_work(krgcom_wq, &tipc_ack_work, 0);
+		hccnode_set(h->from, nodes_requiring_ack);
+		queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
 		goto exit;
 	}
 
 	// Check if we are receiving lot of packets but sending none
 	if (consecutive_recv[h->from] >= max_consecutive_recv[h->from]){
-		krgnode_set(h->from, nodes_requiring_ack);
-		queue_delayed_work(krgcom_wq, &tipc_ack_work, 0);
+		hccnode_set(h->from, nodes_requiring_ack);
+		queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
 	}
 	consecutive_recv[h->from]++;
 
@@ -1199,9 +1199,9 @@ u32 port_dispatcher(struct tipc_port *p_ptr, struct sk_buff *buf)
 	 * possible.
 	 */
 	if (msg_errcode(msg) == TIPC_ERR_NO_NAME
-	    && krgnode_present(msg_nameinst(msg))) {
-		queue_delayed_work(krgcom_wq, &tipc_ack_work, REJECT_BACKOFF);
-		queue_delayed_work_on(cpuid, krgcom_wq,
+	    && hccnode_present(msg_nameinst(msg))) {
+		queue_delayed_work(hcccom_wq, &tipc_ack_work, REJECT_BACKOFF);
+		queue_delayed_work_on(cpuid, hcccom_wq,
 				      &engine->reachable_work, REJECT_BACKOFF);
 	}
 
@@ -1220,10 +1220,10 @@ void port_wakeup(struct tipc_port *p_ptr){
 	 * retx by 1 jiffy.
 	 */
 
-	queue_delayed_work(krgcom_wq, &tipc_ack_work, 0);
+	queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
 
-	queue_delayed_work_on(cpuid, krgcom_wq, &engine->retx_work, 1);
-	queue_delayed_work_on(cpuid, krgcom_wq, &engine->delayed_tx_work, 1);
+	queue_delayed_work_on(cpuid, hcccom_wq, &engine->retx_work, 1);
+	queue_delayed_work_on(cpuid, hcccom_wq, &engine->delayed_tx_work, 1);
 }
 
 int comlayer_enable_dev(const char *name)
@@ -1280,26 +1280,26 @@ void comlayer_disable(void)
 	read_unlock(&dev_base_lock);
 }
 
-void krg_node_reachable(hcc_node_t nodeid){
+void hcc_node_reachable(hcc_node_t nodeid){
 	int cpuid;
 
-	queue_delayed_work(krgcom_wq, &tipc_ack_work, 0);
+	queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
 	for_each_online_cpu(cpuid){
 		struct tx_engine *engine = &per_cpu(tipc_tx_engine, cpuid);
 
-		queue_delayed_work_on(cpuid, krgcom_wq,
+		queue_delayed_work_on(cpuid, hcccom_wq,
 				      &engine->reachable_work, 0);
 	}
 }
 
-void krg_node_unreachable(hcc_node_t nodeid){
+void hcc_node_unreachable(hcc_node_t nodeid){
 }
 
 void rpc_enable_lowmem_mode(hcc_node_t nodeid){
 	max_consecutive_recv[nodeid] = MAX_CONSECUTIVE_RECV__LOWMEM_MODE;
 
-	krgnode_set(nodeid, nodes_requiring_ack);
-	queue_delayed_work(krgcom_wq, &tipc_ack_work, 0);
+	hccnode_set(nodeid, nodes_requiring_ack);
+	queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
 }
 
 void rpc_disable_lowmem_mode(hcc_node_t nodeid){
@@ -1313,7 +1313,7 @@ void rpc_enable_local_lowmem_mode(void){
 
 	for_each_online_cpu(cpuid){
 		struct tx_engine *engine = &per_cpu(tipc_tx_engine, cpuid);
-		queue_delayed_work_on(cpuid, krgcom_wq,
+		queue_delayed_work_on(cpuid, hcccom_wq,
 			&engine->cleanup_not_retx_work, 0);
 	}
 }
@@ -1327,7 +1327,7 @@ int comlayer_init(void)
 	int res = 0;
 	long i;
 
-	krgnodes_clear(nodes_requiring_ack);	
+	hccnodes_clear(nodes_requiring_ack);	
 
 	for_each_possible_cpu(i) {
 		struct tx_engine *engine = &per_cpu(tipc_tx_engine, i);
@@ -1345,11 +1345,11 @@ int comlayer_init(void)
 		INIT_DELAYED_WORK(&engine->unreachable_work, tipc_unreachable_node_worker);
 	}
 
-	krgcom_wq = create_workqueue("krgcom");
+	hcccom_wq = create_workqueue("hcccom");
 
 	ack_cleanup_window_size = ACK_CLEANUP_WINDOW_SIZE;
 
-	for (i = 0; i < KERRIGHED_MAX_NODES; i++) {
+	for (i = 0; i < HCC_MAX_NODES; i++) {
 		tipc_rx_engine[i].from = i;
 		skb_queue_head_init(&tipc_rx_engine[i].rx_queue);
 		INIT_DELAYED_WORK(&tipc_rx_engine[i].run_rx_queue_work,

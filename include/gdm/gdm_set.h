@@ -10,8 +10,8 @@
 
 #include <linux/socket.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
-#include <hcc/krgsyms.h>
+#include <hcc/hccinit.h>
+#include <hcc/hccsyms.h>
 
 #include <gdm/gdm_types.h>
 #include <gdm/name_space.h>
@@ -56,16 +56,16 @@ enum
 #define DEFAULT_READAHEAD_WINDOW_SIZE 8
 
 /* Kddm set with round robin distributed default owner */
-#define GDM_RR_DEF_OWNER ((hcc_node_t)(KERRIGHED_MAX_NODES + 1))
+#define GDM_RR_DEF_OWNER ((hcc_node_t)(HCC_MAX_NODES + 1))
 
 /* Kddm set with default owner based on unique ID */
-#define GDM_UNIQUE_ID_DEF_OWNER ((hcc_node_t)(KERRIGHED_MAX_NODES + 2))
+#define GDM_UNIQUE_ID_DEF_OWNER ((hcc_node_t)(HCC_MAX_NODES + 2))
 
 /* Kddm set with a custom default owner policy */
-#define GDM_CUSTOM_DEF_OWNER ((hcc_node_t)(KERRIGHED_MAX_NODES + 3))
+#define GDM_CUSTOM_DEF_OWNER ((hcc_node_t)(HCC_MAX_NODES + 3))
 
 /* MUST ALWAYS BE THE LAST ONE and equal to the highest possible value */
-#define GDM_MAX_DEF_OWNER ((hcc_node_t)(KERRIGHED_MAX_NODES + 4))
+#define GDM_MAX_DEF_OWNER ((hcc_node_t)(HCC_MAX_NODES + 4))
 
 /* Kddm set id reserved for internal system usage (sys_gdm_ns name space). */
 enum
@@ -124,7 +124,7 @@ typedef struct {
 	int obj_size;              /**< Size of objects stored in gdm set */
 	iolinker_id_t linker_id;   /**< Identifier of the io linker  */
 	unsigned long data_size;   /**< Size of set private data to receive */
-	krgsyms_val_t set_ops;     /**< GDM set operations struct ID */
+	hccsyms_val_t set_ops;     /**< GDM set operations struct ID */
 	char private_data[1];
 } msg_gdm_set_t;
 

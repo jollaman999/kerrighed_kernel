@@ -1,8 +1,8 @@
 #ifndef __HCC_RPC__
 #define __HCC_RPC__
 
-#include <net/krgrpc/rpcid.h>
-#include <hcc/krgnodemask.h>
+#include <net/hccrpc/rpcid.h>
+#include <hcc/hccnodemask.h>
 #include <hcc/sys/types.h>
 
 #include <linux/list.h>
@@ -88,9 +88,9 @@ struct rpc_service;
 
 struct rpc_desc {
 	struct rpc_desc_send* desc_send;
-	struct rpc_desc_recv* desc_recv[KERRIGHED_MAX_NODES];
+	struct rpc_desc_recv* desc_recv[HCC_MAX_NODES];
 	struct rpc_service* service;
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 	enum rpc_rq_type type;
 	struct list_head list;
 	int in_interrupt;
@@ -138,7 +138,7 @@ int __rpc_register(enum rpcid rpcid,
 		   unsigned long flags);
 
 struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
-			     krgnodemask_t* nodes);
+			     hccnodemask_t* nodes);
 
 int rpc_cancel(struct rpc_desc* desc);
 
@@ -209,17 +209,17 @@ int rpc_register(enum rpcid rpcid,
 static inline
 struct rpc_desc* rpc_begin(enum rpcid rpcid,
 			   hcc_node_t node){
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 
-	krgnodes_clear(nodes);
-	krgnode_set(node, nodes);
+	hccnodes_clear(nodes);
+	hccnode_set(node, nodes);
 
 	return rpc_begin_m(rpcid, &nodes);
 };
 
 static inline
 int rpc_async_m(enum rpcid rpcid,
-		krgnodemask_t* nodes,
+		hccnodemask_t* nodes,
 		const void* data, size_t size){
 	struct rpc_desc* desc;
 	int err = -ENOMEM;
@@ -241,17 +241,17 @@ static inline
 int rpc_async(enum rpcid rpcid,
 	      hcc_node_t node,
 	      const void* data, size_t size){
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 
-	krgnodes_clear(nodes);
-	krgnode_set(node, nodes);
+	hccnodes_clear(nodes);
+	hccnode_set(node, nodes);
 	
 	return rpc_async_m(rpcid, &nodes, data, size);
 };
 
 static inline
 int rpc_sync_m(enum rpcid rpcid,
-	       krgnodemask_t* nodes,
+	       hccnodemask_t* nodes,
 	       const void* data, size_t size){
 	struct rpc_desc *desc;
 	int rold, r, first, error;
@@ -271,7 +271,7 @@ int rpc_sync_m(enum rpcid rpcid,
 	error = 0;
 	r = 0;
 
-	__for_each_krgnode_mask(i, nodes){
+	__for_each_hccnode_mask(i, nodes){
 		rpc_unpack_type_from(desc, i, rold);
 		if(first){
 			r = rold;
@@ -293,10 +293,10 @@ static inline
 int rpc_sync(enum rpcid rpcid,
 	     hcc_node_t node,
 	     const void* data, size_t size){
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 
-	krgnodes_clear(nodes);
-	krgnode_set(node, nodes);
+	hccnodes_clear(nodes);
+	hccnode_set(node, nodes);
 	
 	return rpc_sync_m(rpcid, &nodes, data, size);
 };
@@ -312,6 +312,6 @@ int rpc_disable_dev(const char *name);
 
 hcc_node_t rpc_desc_get_client(struct rpc_desc *desc);
 
-extern struct task_struct *first_krgrpc;
+extern struct task_struct *first_hccrpc;
 
 #endif

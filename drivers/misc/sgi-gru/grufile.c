@@ -595,7 +595,7 @@ static struct miscdevice gru_miscdev = {
 	.fops		= &gru_fops,
 };
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 const
 #endif
 struct vm_operations_struct gru_vm_ops = {

@@ -3,10 +3,10 @@
  */
 #include <linux/notifier.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/hotplug.h>
 
 #include "proc.h"
@@ -14,20 +14,20 @@
 struct notifier_block;
 
 inline
-void procfs_add(krgnodemask_t * v){
+void procfs_add(hccnodemask_t * v){
 	hcc_node_t i;
 
-	__for_each_krgnode_mask(i, v){
+	__for_each_hccnode_mask(i, v){
 		create_proc_node_info(i);
 	};
 
 };
 
 inline
-void procfs_remove(krgnodemask_t * v){
+void procfs_remove(hccnodemask_t * v){
 	hcc_node_t i;
 
-	__for_each_krgnode_mask(i, v){
+	__for_each_hccnode_mask(i, v){
 		remove_proc_node_info(i);
 	};
 

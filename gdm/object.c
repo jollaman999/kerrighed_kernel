@@ -14,8 +14,8 @@
 #include <linux/module.h>
 
 #include <gdm/gdm.h>
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/object_server.h>
 #include <gdm/object.h>
 #include <gdm/io_linker.h>
@@ -415,12 +415,12 @@ void __sleep_on_gdm_obj(struct gdm_set * set,
 	struct gdm_info_struct *gdm_info = current->gdm_info;
 	wait_queue_t wait;
 #ifdef CONFIG_HCC_EPM
-	struct task_struct *krg_cur = krg_current;
+	struct task_struct *hcc_cur = hcc_current;
 #endif
 
 #ifdef CONFIG_HCC_EPM
-	if (krg_cur)
-		krg_current = NULL;
+	if (hcc_cur)
+		hcc_current = NULL;
 #endif
 
 	ASSERT_OBJ_PATH_LOCKED(set, objid);
@@ -475,8 +475,8 @@ retry:
 		CLEAR_OBJECT_PINNED(obj_entry);
 
 #ifdef CONFIG_HCC_EPM
-	if (krg_cur)
-		krg_current = krg_cur;
+	if (hcc_cur)
+		hcc_current = hcc_cur;
 #endif
 }
 

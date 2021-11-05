@@ -206,7 +206,7 @@ void * mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
 	wait_queue_t wait;
 	gfp_t gfp_temp;
 #ifdef CONFIG_HCC_EPM
-	struct task_struct *krg_cur;
+	struct task_struct *hcc_cur;
 #endif
 
 	might_sleep_if(gfp_mask & __GFP_WAIT);
@@ -236,8 +236,8 @@ repeat_alloc:
 		return NULL;
 
 #ifdef CONFIG_HCC_EPM
-	krg_cur = krg_current;
-	krg_current = NULL;
+	hcc_cur = hcc_current;
+	hcc_current = NULL;
 #endif
 	/* Now start performing page reclaim */
 	gfp_temp = gfp_mask;
@@ -253,7 +253,7 @@ repeat_alloc:
 	}
 	finish_wait(&pool->wait, &wait);
 #ifdef CONFIG_HCC_EPM
-	krg_current = krg_cur;
+	hcc_current = hcc_cur;
 #endif
 
 	goto repeat_alloc;

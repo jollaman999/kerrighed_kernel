@@ -12,11 +12,11 @@
 #include <linux/proc_fs.h>
 #include <linux/binfmts.h>
 #include <asm/mmu_context.h>
-#include <net/krgrpc/rpc.h>
-#include <net/krgrpc/rpcid.h>
-#include <hcc/krginit.h>
+#include <net/hccrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <hcc/hccinit.h>
 #include <asm/uaccess.h>
-#include <hcc/krg_services.h>
+#include <hcc/hcc_services.h>
 #include <gdm/gdm.h>
 #include <hcc/page_table_tree.h>
 #include <hcc/hotplug.h>
@@ -38,9 +38,9 @@ void (*kh_fill_pte)(struct mm_struct *mm, unsigned long addr,
 void (*kh_zap_pte)(struct mm_struct *mm, unsigned long addr,
 		   pte_t *pte) = NULL;
 
-int krg_do_execve(struct task_struct *tsk, struct mm_struct *mm)
+int hcc_do_execve(struct task_struct *tsk, struct mm_struct *mm)
 {
-	if (can_use_krg_cap(current, CAP_USE_REMOTE_MEMORY))
+	if (can_use_hcc_cap(current, CAP_USE_REMOTE_MEMORY))
 		return init_anon_vma_gdm_set(tsk, mm);
 
 	return 0;
@@ -137,7 +137,7 @@ void break_distributed_cow_put(struct gdm_set *set, struct mm_struct *mm)
 /* Duplicate a MM struct for a distant fork. The resulting MM will be used
  * to store pages locally for a remote process through a memory GDM set.
  */
-struct mm_struct *krg_dup_mm(struct task_struct *tsk, struct mm_struct *src_mm)
+struct mm_struct *hcc_dup_mm(struct task_struct *tsk, struct mm_struct *src_mm)
 {
 	struct mm_struct *mm;
 	int err = -ENOMEM;
@@ -220,7 +220,7 @@ void create_mm_struct_object(struct mm_struct *mm)
 
 	atomic_inc(&mm->mm_users); // Get a reference count for the GDM.
 
-	krgnode_set(hcc_node_id, mm->copyset);
+	hccnode_set(hcc_node_id, mm->copyset);
 
 	mm->mm_id = get_unique_id(&mm_struct_unique_id_root);
 
@@ -228,7 +228,7 @@ void create_mm_struct_object(struct mm_struct *mm)
 	BUG_ON(_mm);
 	_gdm_set_object(mm_struct_gdm_set, mm->mm_id, mm);
 
-	krg_put_mm(mm->mm_id);
+	hcc_put_mm(mm->mm_id);
 }
 
 
@@ -259,12 +259,12 @@ static struct mm_struct *kcb_copy_mm(struct task_struct * tsk,
 	mm->mm_id = 0;
 	mm->anon_vma_gdm_set = NULL;
 	mm->anon_vma_gdm_id = 0;
-	krgnodes_clear (mm->copyset);
+	hccnodes_clear (mm->copyset);
 
 	if (clone_flags & CLONE_VFORK)
 		goto done_put;
 
-	if (cap_raised(tsk->krg_caps.effective, CAP_USE_REMOTE_MEMORY) ||
+	if (cap_raised(tsk->hcc_caps.effective, CAP_USE_REMOTE_MEMORY) ||
 	    oldmm->anon_vma_gdm_set) {
 		if (init_anon_vma_gdm_set(tsk, mm) != 0) {
 			BUG();
@@ -288,7 +288,7 @@ int init_anon_vma_gdm_set(struct task_struct *tsk,
 	struct gdm_set *set;
 
 	mm->mm_id = 0;
-	krgnodes_clear (mm->copyset);
+	hccnodes_clear (mm->copyset);
 
 	set = __create_new_gdm_set(gdm_def_ns, 0, &gdm_pt_set_ops, mm,
 				    MEMORY_LINKER, hcc_node_id,
@@ -304,7 +304,7 @@ int init_anon_vma_gdm_set(struct task_struct *tsk,
 
 
 
-void krg_check_vma_link(struct vm_area_struct *vma)
+void hcc_check_vma_link(struct vm_area_struct *vma)
 {
 	BUG_ON (!vma->vm_mm->anon_vma_gdm_set);
 	check_link_vma_to_anon_memory_gdm_set (vma);
@@ -322,9 +322,9 @@ void kcb_mm_get(struct mm_struct *mm)
 		return;
 	}
 
-	krg_grab_mm(mm->mm_id);
+	hcc_grab_mm(mm->mm_id);
 	atomic_inc (&mm->mm_tasks);
-	krg_put_mm(mm->mm_id);
+	hcc_put_mm(mm->mm_id);
 }
 
 
@@ -374,7 +374,7 @@ static void kcb_mm_release(struct mm_struct *mm, int notify)
 		return;
 	}
 
-	krg_grab_mm(mm->mm_id);
+	hcc_grab_mm(mm->mm_id);
 	atomic_dec (&mm->mm_tasks);
 
 	if (atomic_read(&mm->mm_tasks) == 0) {
@@ -387,17 +387,17 @@ static void kcb_mm_release(struct mm_struct *mm, int notify)
 		_destroy_gdm_set(set);
 	}
 	else
-		krg_put_mm(mm->mm_id);
+		hcc_put_mm(mm->mm_id);
 }
 
 
-void krg_do_mmap_region(struct vm_area_struct *vma,
+void hcc_do_mmap_region(struct vm_area_struct *vma,
 			unsigned long flags,
 			unsigned long long vm_flags)
 {
 	struct mm_struct *mm = vma->vm_mm;
 	struct mm_mmap_msg msg;
-	krgnodemask_t copyset;
+	hccnodemask_t copyset;
 
 	if (!mm->anon_vma_gdm_set)
 		return;
@@ -409,7 +409,7 @@ void krg_do_mmap_region(struct vm_area_struct *vma,
 	if (!(vma->vm_flags & VM_GDM))
 		return;
 
-	if (krgnode_is_unique(hcc_node_id, mm->copyset))
+	if (hccnode_is_unique(hcc_node_id, mm->copyset))
 		return;
 
 	msg.mm_id = mm->mm_id;
@@ -419,48 +419,48 @@ void krg_do_mmap_region(struct vm_area_struct *vma,
 	msg.vm_flags = vm_flags;
 	msg.pgoff = vma->vm_pgoff;
 
-	krgnodes_copy(copyset, mm->copyset);
-	krgnode_clear(hcc_node_id, copyset);
+	hccnodes_copy(copyset, mm->copyset);
+	hccnode_clear(hcc_node_id, copyset);
 
 	rpc_sync_m(RPC_MM_MMAP_REGION, &copyset, &msg, sizeof(msg));
 }
 
 
-void krg_do_munmap(struct mm_struct *mm,
+void hcc_do_munmap(struct mm_struct *mm,
 		   unsigned long start,
 		   size_t len)
 {
 	struct mm_mmap_msg msg;
-	krgnodemask_t copyset;
+	hccnodemask_t copyset;
 
 	if (!mm->mm_id)
 		return;
 
-	if (krgnode_is_unique(hcc_node_id, mm->copyset))
+	if (hccnode_is_unique(hcc_node_id, mm->copyset))
 		return;
 
 	msg.mm_id = mm->mm_id;
 	msg.start = start;
 	msg.len = len;
 
-	krgnodes_copy(copyset, mm->copyset);
-	krgnode_clear(hcc_node_id, copyset);
+	hccnodes_copy(copyset, mm->copyset);
+	hccnode_clear(hcc_node_id, copyset);
 
 	rpc_sync_m(RPC_MM_MUNMAP, &copyset, &msg, sizeof(msg));
 }
 
-void krg_do_mremap(struct mm_struct *mm, unsigned long addr,
+void hcc_do_mremap(struct mm_struct *mm, unsigned long addr,
 		   unsigned long old_len, unsigned long new_len,
 		   unsigned long flags, unsigned long new_addr,
 		   unsigned long _new_addr, unsigned long lock_limit)
 {
 	struct mm_mmap_msg msg;
-	krgnodemask_t copyset;
+	hccnodemask_t copyset;
 
 	if (!mm->mm_id)
 		return;
 
-	if (krgnode_is_unique(hcc_node_id, mm->copyset))
+	if (hccnode_is_unique(hcc_node_id, mm->copyset))
 		return;
 
 	msg.mm_id = mm->mm_id;
@@ -472,23 +472,23 @@ void krg_do_mremap(struct mm_struct *mm, unsigned long addr,
 	msg._new_addr = _new_addr;
 	msg.lock_limit = lock_limit;
 
-	krgnodes_copy(copyset, mm->copyset);
-	krgnode_clear(hcc_node_id, copyset);
+	hccnodes_copy(copyset, mm->copyset);
+	hccnode_clear(hcc_node_id, copyset);
 
 	rpc_sync_m(RPC_MM_MREMAP, &copyset, &msg, sizeof(msg));
 }
 
-void krg_do_brk(struct mm_struct *mm,
+void hcc_do_brk(struct mm_struct *mm,
 		unsigned long brk,
 		unsigned long lock_limit,
 		unsigned long data_limit)
 {
 	struct mm_mmap_msg msg;
-	krgnodemask_t copyset;
+	hccnodemask_t copyset;
 
 	BUG_ON (!mm->mm_id);
 
-	if (krgnode_is_unique(hcc_node_id, mm->copyset))
+	if (hccnode_is_unique(hcc_node_id, mm->copyset))
 		return;
 
 	msg.mm_id = mm->mm_id;
@@ -496,50 +496,50 @@ void krg_do_brk(struct mm_struct *mm,
 	msg.lock_limit = lock_limit;
 	msg.data_limit = data_limit;
 
-	krgnodes_copy(copyset, mm->copyset);
-	krgnode_clear(hcc_node_id, copyset);
+	hccnodes_copy(copyset, mm->copyset);
+	hccnode_clear(hcc_node_id, copyset);
 
 	rpc_sync_m(RPC_MM_DO_BRK, &copyset, &msg, sizeof(msg));
 }
 
-int krg_expand_stack(struct vm_area_struct *vma,
+int hcc_expand_stack(struct vm_area_struct *vma,
 		     unsigned long address)
 {
 	struct mm_struct *mm = vma->vm_mm;
 	struct mm_mmap_msg msg;
-	krgnodemask_t copyset;
+	hccnodemask_t copyset;
 	int r;
 
 	BUG_ON (!mm->mm_id);
 
-	if (krgnode_is_unique(hcc_node_id, mm->copyset))
+	if (hccnode_is_unique(hcc_node_id, mm->copyset))
 		return 0;
 
 	msg.mm_id = mm->mm_id;
 	msg.start = vma->vm_start;
 	msg.flags = address;
 
-	krgnodes_copy(copyset, mm->copyset);
-	krgnode_clear(hcc_node_id, copyset);
+	hccnodes_copy(copyset, mm->copyset);
+	hccnode_clear(hcc_node_id, copyset);
 
 	r = rpc_sync_m(RPC_MM_EXPAND_STACK, &copyset, &msg, sizeof(msg));
 
 	return r;
 }
 
-void krg_do_mprotect(struct mm_struct *mm,
+void hcc_do_mprotect(struct mm_struct *mm,
 		     unsigned long start,
 		     size_t len,
 		     unsigned long prot,
 		     int personality)
 {
 	struct mm_mmap_msg msg;
-	krgnodemask_t copyset;
+	hccnodemask_t copyset;
 
 	if (!mm->mm_id)
 		return;
 
-	if (krgnode_is_unique(hcc_node_id, mm->copyset))
+	if (hccnode_is_unique(hcc_node_id, mm->copyset))
 		return;
 
 	msg.mm_id = mm->mm_id;
@@ -548,8 +548,8 @@ void krg_do_mprotect(struct mm_struct *mm,
 	msg.prot = prot;
 	msg.personality = personality;
 
-	krgnodes_copy(copyset, mm->copyset);
-	krgnode_clear(hcc_node_id, copyset);
+	hccnodes_copy(copyset, mm->copyset);
+	hccnode_clear(hcc_node_id, copyset);
 
 	rpc_sync_m(RPC_MM_MPROTECT, &copyset, &msg, sizeof(msg));
 }

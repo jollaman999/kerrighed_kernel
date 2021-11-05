@@ -16,10 +16,10 @@
 #include <linux/file.h>
 #include <linux/fdtable.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <hcc/workqueue.h>
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 
 #include "rpc_internal.h"
 
@@ -53,9 +53,9 @@ void (*rpc_handlers[RPC_HANDLER_MAX])(struct rpc_desc* desc);
 #define HCCRPC_INIT_FDTABLE \
 {                                                       \
         .max_fds        = NR_OPEN_DEFAULT,              \
-        .fd             = &krgrpc_files.fd_array[0],    \
-        .close_on_exec  = (fd_set *)&krgrpc_files.close_on_exec_init, \
-        .open_fds       = (fd_set *)&krgrpc_files.open_fds_init,  \
+        .fd             = &hccrpc_files.fd_array[0],    \
+        .close_on_exec  = (fd_set *)&hccrpc_files.close_on_exec_init, \
+        .open_fds       = (fd_set *)&hccrpc_files.open_fds_init,  \
         .rcu            = RCU_HEAD_INIT,                \
         .next           = NULL,                         \
 }
@@ -63,17 +63,17 @@ void (*rpc_handlers[RPC_HANDLER_MAX])(struct rpc_desc* desc);
 #define HCCRPC_INIT_FILES \
 {                                                       \
         .count          = ATOMIC_INIT(1),               \
-        .fdt            = &krgrpc_files.fdtab,          \
+        .fdt            = &hccrpc_files.fdtab,          \
         .fdtab          = HCCRPC_INIT_FDTABLE,          \
-	.file_lock	= __SPIN_LOCK_UNLOCKED(krgrpc_files.file_lock), \
+	.file_lock	= __SPIN_LOCK_UNLOCKED(hccrpc_files.file_lock), \
         .next_fd        = 0,                            \
         .close_on_exec_init = { { 0, } },               \
         .open_fds_init  = { { 0, } },                   \
         .fd_array       = { NULL, }                     \
 }
 
-static struct files_struct krgrpc_files = HCCRPC_INIT_FILES;
-struct task_struct *first_krgrpc = NULL;
+static struct files_struct hccrpc_files = HCCRPC_INIT_FILES;
+struct task_struct *first_hccrpc = NULL;
 
 static struct completion init_complete;
 
@@ -135,7 +135,7 @@ void rpc_handler_kthread_int(struct rpc_desc* desc){
 };
 
 inline
-void do_krgrpc_handler(struct rpc_desc* desc,
+void do_hccrpc_handler(struct rpc_desc* desc,
 		       int thread_pool_id){
 	struct __rpc_synchro* __synchro;
 	hcc_node_t client;
@@ -222,14 +222,14 @@ int thread_pool_run(void* _data){
 	 */
 	if (thread_pool_init_fs()) {
 		if(atomic_inc_return(&new_thread_data.request[smp_processor_id()]) == 1)
-			queue_delayed_work(krg_nb_wq, &new_thread_data.dwork, 0);
+			queue_delayed_work(hcc_nb_wq, &new_thread_data.dwork, 0);
 		return -EAGAIN;
 	}
 
 	/* We don't want to share the init_task.files struct.
-	   We want that krgrpc share their own files struct. */
-	atomic_inc(&krgrpc_files.count);
-	reset_files_struct(&krgrpc_files);
+	   We want that hccrpc share their own files struct. */
+	atomic_inc(&hccrpc_files.count);
+	reset_files_struct(&hccrpc_files);
 
 	thread_pool = &per_cpu(threads_pool, smp_processor_id());
 
@@ -249,9 +249,9 @@ int thread_pool_run(void* _data){
 		thread_pool->desc[j] = NULL;
 
 		/* Here we just want to have a pointer on one
-		   krgrpc. We dont care about the first or the second one */
-		if(!first_krgrpc){
-			first_krgrpc = current;
+		   hccrpc. We dont care about the first or the second one */
+		if(!first_hccrpc){
+			first_hccrpc = current;
 			complete(&init_complete);
 		}
 	}else{
@@ -264,7 +264,7 @@ int thread_pool_run(void* _data){
 	continue_in_waiting_desc:
 		
 		if(desc)
-			do_krgrpc_handler(desc, j);
+			do_hccrpc_handler(desc, j);
 
 		spin_lock_bh(&waiting_desc_lock);
 		list_for_each_entry_safe(wd, wd_safe,
@@ -319,12 +319,12 @@ void new_thread_worker(struct work_struct *data){
 					 -1, 0)){
 			struct task_struct *tsk;
 
-			tsk = kthread_create(thread_pool_run, NULL, "krgrpc");
+			tsk = kthread_create(thread_pool_run, NULL, "hccrpc");
 			if (IS_ERR(tsk)) {
 				atomic_inc(&new_thread_data.request[i]);
 				/* Backoff,
 				 * hope it will be possible next time */
-				queue_delayed_work(krg_nb_wq,
+				queue_delayed_work(hcc_nb_wq,
 						   &new_thread_data.dwork,
 						   HZ);
 				break;
@@ -507,7 +507,7 @@ int rpc_handle_new(struct rpc_desc* desc){
 			return -ENOMEM;
 
 		if(atomic_inc_return(&new_thread_data.request[smp_processor_id()]) == 1)
-			queue_delayed_work(krg_nb_wq, &new_thread_data.dwork, 0);
+			queue_delayed_work(hcc_nb_wq, &new_thread_data.dwork, 0);
 
 	};
 	
@@ -536,7 +536,7 @@ void rpc_wake_up_thread(struct rpc_desc *desc){
 	}else{
 
 		if(atomic_inc_return(&new_thread_data.request[smp_processor_id()]) == 1)
-			queue_delayed_work(krg_nb_wq, &new_thread_data.dwork, 0);
+			queue_delayed_work(hcc_nb_wq, &new_thread_data.dwork, 0);
 
 	}
 };
@@ -570,7 +570,7 @@ int thread_pool_init(void){
 
 	init_completion(&init_complete);
 	atomic_inc(&new_thread_data.request[smp_processor_id()]);
-	queue_delayed_work(krg_nb_wq, &new_thread_data.dwork, 0);
+	queue_delayed_work(hcc_nb_wq, &new_thread_data.dwork, 0);
 	wait_for_completion(&init_complete);
 	
 	return 0;

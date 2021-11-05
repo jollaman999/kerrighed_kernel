@@ -26,10 +26,10 @@ extern struct kmem_cache *faf_client_data_cachep;
  *                                                                          *
  *--------------------------------------------------------------------------*/
 
-struct file *create_faf_file_from_krg_desc(struct task_struct *task,
+struct file *create_faf_file_from_hcc_desc(struct task_struct *task,
 					   void *_desc);
 
-int get_faf_file_krg_desc(struct file *file, void **desc, int *desc_size);
+int get_faf_file_hcc_desc(struct file *file, void **desc, int *desc_size);
 
 /* file will be faffed if not already */
 int send_faf_file_desc(struct rpc_desc *desc, struct file *file);

@@ -9,7 +9,7 @@
 
 #include <linux/fs.h>
 
-extern struct file_operations krg_proc_fd_operations;
-extern struct inode_operations krg_proc_fd_inode_operations;
+extern struct file_operations hcc_proc_fd_operations;
+extern struct inode_operations hcc_proc_fd_inode_operations;
 
 #endif /* __PROC_PID_FD_H__ */

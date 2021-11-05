@@ -72,7 +72,7 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 #endif
 #ifdef CONFIG_HCC_PROCFS
 	if (m->op != &cpuinfo_op)
-		cpu = c->krg_cpu_id;
+		cpu = c->hcc_cpu_id;
 #endif
 	seq_printf(m, "processor\t: %u\n"
 		   "vendor_id\t: %s\n"

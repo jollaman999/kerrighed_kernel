@@ -7,8 +7,8 @@ obj-$(CONFIG_XEN) += xen/
 # lguest paravirtualization support
 obj-$(CONFIG_LGUEST_GUEST) += lguest/
 
-# Kerrighed SSI cluster support
-obj-$(CONFIG_KERRIGHED) += kerrighed/
+# HCC SSI cluster support
+obj-$(CONFIG_HCC) += kerrighed/
 
 obj-y += kernel/
 obj-y += mm/

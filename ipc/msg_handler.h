@@ -12,7 +12,7 @@
 
 struct gdm_set;
 
-struct gdm_set *krgipc_ops_master_set(struct krgipc_ops *ipcops);
+struct gdm_set *hccipc_ops_master_set(struct hccipc_ops *ipcops);
 
 void msg_handler_init(void);
 void msg_handler_finalize(void);

@@ -31,7 +31,7 @@
 #include <hcc/faf.h>
 #endif
 #ifdef CONFIG_HCC_EPM
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -136,7 +136,7 @@ static void free_poll_entry(struct poll_table_entry *entry)
 	remove_wait_queue(entry->wait_address, &entry->wait);
 #ifdef CONFIG_HCC_FAF
 	if (entry->filp->f_flags & O_FAF_CLT)
-		krg_faf_poll_dequeue(entry->filp);
+		hcc_faf_poll_dequeue(entry->filp);
 #endif
 	fput(entry->filp);
 }
@@ -266,11 +266,11 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
 #ifdef CONFIG_HCC_FAF
 check_faf:
 	if (filp->f_flags & O_FAF_CLT) {
-		if (krg_faf_poll_wait(filp, entry != NULL)) {
+		if (hcc_faf_poll_wait(filp, entry != NULL)) {
 			if (entry) {
 				/*
 				 * Don't call free_poll_entry() since it would
-				 * call krg_faf_poll_dequeue().
+				 * call hcc_faf_poll_dequeue().
 				 */
 				remove_wait_queue(wait_address, &entry->wait);
 				fput(filp);
@@ -1087,13 +1087,13 @@ SYSCALL_DEFINE5(ppoll, struct pollfd __user *, ufds, unsigned int, nfds,
 #endif /* HAVE_SET_RESTORE_SIGMASK */
 
 #ifdef CONFIG_HCC_EPM
-int select_krgsyms_register(void)
+int select_hccsyms_register(void)
 {
-	return krgsyms_register(HCCSYMS_DO_RESTART_POLL, do_restart_poll);
+	return hccsyms_register(HCCSYMS_DO_RESTART_POLL, do_restart_poll);
 }
 
-int select_krgsyms_unregister(void)
+int select_hccsyms_unregister(void)
 {
-	return krgsyms_unregister(HCCSYMS_DO_RESTART_POLL);
+	return hccsyms_unregister(HCCSYMS_DO_RESTART_POLL);
 }
 #endif /* CONFIG_HCC_EPM */

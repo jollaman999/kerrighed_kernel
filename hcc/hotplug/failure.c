@@ -10,19 +10,19 @@
 #include <linux/sched.h>
 #include <linux/irqflags.h>
 #include <hcc/hotplug.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <asm/uaccess.h>
 
-#include <hcc/krg_services.h>
-#include <hcc/krg_syscalls.h>
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <hcc/hcc_services.h>
+#include <hcc/hcc_syscalls.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 
 #include "hotplug_internal.h"
 
-krgnodemask_t failure_vector;
+hccnodemask_t failure_vector;
 struct work_struct fail_work;
 struct work_struct recovery_work;
 struct notifier_block *hotplug_failure_notifier_list;
@@ -31,8 +31,8 @@ static void recovery_worker(struct work_struct *data)
 {
 	hcc_node_t i;
 
-	for_each_krgnode_mask(i, failure_vector){
-		clear_krgnode_online(i);
+	for_each_hccnode_mask(i, failure_vector){
+		clear_hccnode_online(i);
 		printk("FAILURE OF %d DECIDED\n", i);
 		printk("should ignore messages from this node\n");
 	}
@@ -45,15 +45,15 @@ static void recovery_worker(struct work_struct *data)
 #endif
 }
 
-void krg_failure(krgnodemask_t * vector)
+void hcc_failure(hccnodemask_t * vector)
 {
 
-	if(__krgnodes_equal(&failure_vector, vector))
+	if(__hccnodes_equal(&failure_vector, vector))
 		return;
 	
-	__krgnodes_copy(&failure_vector, vector);
+	__hccnodes_copy(&failure_vector, vector);
 
-	queue_work(krg_ha_wq, &recovery_work);
+	queue_work(hcc_ha_wq, &recovery_work);
 }
 
 static void handle_node_fail(struct rpc_desc *desc, void *data, size_t size)
@@ -80,7 +80,7 @@ static int nodes_fail(void __user *arg)
 
 	node_set.subclusterid = __node_set.subclusterid;
 
-	err = krgnodemask_copy_from_user(&node_set.v, &__node_set.v);
+	err = hccnodemask_copy_from_user(&node_set.v, &__node_set.v);
 	if (err)
 		return err;
 	

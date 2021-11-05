@@ -135,7 +135,7 @@ int export_one_open_file (struct epm_action *action,
                           struct file *file)
 {
 	struct dvfs_mobility_operations *ops;
-	krgsyms_val_t dvfs_ops_type;
+	hccsyms_val_t dvfs_ops_type;
 	int r;
 
 	BUG_ON(action->type == EPM_CHECKPOINT);
@@ -154,9 +154,9 @@ int export_one_open_file (struct epm_action *action,
 #endif
 	ops = get_dvfs_mobility_ops(file);
 
-	dvfs_ops_type = krgsyms_export(ops);
+	dvfs_ops_type = hccsyms_export(ops);
 
-	r = ghost_write(ghost, &dvfs_ops_type, sizeof(krgsyms_val_t));
+	r = ghost_write(ghost, &dvfs_ops_type, sizeof(hccsyms_val_t));
 	if (r)
 		goto err;
 
@@ -178,7 +178,7 @@ static int get_file_size(struct file *file, loff_t *size)
 #ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT) {
 		struct kstat stat;
-		r = krg_faf_fstat(file, &stat);
+		r = hcc_faf_fstat(file, &stat);
 		if (r)
 			goto exit;
 
@@ -306,7 +306,7 @@ static int export_vma_phys_file(struct epm_action *action,
 	}
 
 	/* Don't try to share SHM files */
-	if (file->f_op == &krg_shm_file_operations)
+	if (file->f_op == &hcc_shm_file_operations)
 		goto export_file;
 
 	if (__hashtable_find(file_table, key))
@@ -831,7 +831,7 @@ int export_mnt_namespace(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk)
 {
 	/* Nothing done right now... */
-	if (tsk->nsproxy->mnt_ns != tsk->nsproxy->krg_ns->root_nsproxy.mnt_ns)
+	if (tsk->nsproxy->mnt_ns != tsk->nsproxy->hcc_ns->root_nsproxy.mnt_ns)
 		return -EPERM;
 	return 0;
 }
@@ -862,7 +862,7 @@ int import_one_open_file (struct epm_action *action,
 	struct dvfs_file_struct *dvfs_file = NULL;
 	struct dvfs_mobility_operations *ops;
 	struct file *file = NULL, *imported_file = NULL;
-	krgsyms_val_t dvfs_ops_type;
+	hccsyms_val_t dvfs_ops_type;
 	unsigned long objid;
 	int first_import = 0;
 	int r = 0;
@@ -878,7 +878,7 @@ int import_one_open_file (struct epm_action *action,
 	if (r)
 		goto err_read;
 
-	ops = krgsyms_import(dvfs_ops_type);
+	ops = hccsyms_import(dvfs_ops_type);
 
 	/* We need to import the file, to avoid leaving unused data in
 	 * the ghost... We can probably do better...
@@ -1459,7 +1459,7 @@ int import_mnt_namespace(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk)
 {
 	/* TODO */
-	tsk->nsproxy->mnt_ns = tsk->nsproxy->krg_ns->root_nsproxy.mnt_ns;
+	tsk->nsproxy->mnt_ns = tsk->nsproxy->hcc_ns->root_nsproxy.mnt_ns;
 	get_mnt_ns(tsk->nsproxy->mnt_ns);
 
 	return 0;
@@ -1490,10 +1490,10 @@ void unimport_fs_struct(struct task_struct *tsk)
 int dvfs_mobility_init(void)
 {
 #ifdef CONFIG_HCC_FAF
-	krgsyms_register(HCCSYMS_DVFS_MOBILITY_FAF_OPS,
+	hccsyms_register(HCCSYMS_DVFS_MOBILITY_FAF_OPS,
 			 &dvfs_mobility_faf_ops);
 #endif
-	krgsyms_register(HCCSYMS_DVFS_MOBILITY_REGULAR_OPS,
+	hccsyms_register(HCCSYMS_DVFS_MOBILITY_REGULAR_OPS,
 			 &dvfs_mobility_regular_ops);
 
 	return 0;
@@ -1501,9 +1501,9 @@ int dvfs_mobility_init(void)
 
 void dvfs_mobility_finalize (void)
 {
-	krgsyms_unregister(HCCSYMS_DVFS_MOBILITY_REGULAR_OPS);
+	hccsyms_unregister(HCCSYMS_DVFS_MOBILITY_REGULAR_OPS);
 #ifdef CONFIG_HCC_FAF
-	krgsyms_unregister(HCCSYMS_DVFS_MOBILITY_FAF_OPS);
+	hccsyms_unregister(HCCSYMS_DVFS_MOBILITY_FAF_OPS);
 #endif
 }
 

@@ -4,18 +4,18 @@
 #include <hcc/sys/types.h>
 
 #ifdef __KERNEL__
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 #endif
 
 #define HCCFCT(p) if(p!=NULL) p
 
-#if defined(CONFIG_KERRIGHED) || defined(CONFIG_HCCRPC)
+#if defined(CONFIG_HCC) || defined(CONFIG_HCCRPC)
 
 typedef unsigned char hcc_session_t;
 typedef int hcc_subsession_t;
 typedef unsigned long unique_id_t;   /**< Unique id type */
 
-#endif /* CONFIG_KERRIGHED */
+#endif /* CONFIG_HCC */
 
 #ifdef __KERNEL__
 
@@ -24,7 +24,7 @@ struct dstream_socket { // shared node-wide
 	unique_id_t id_socket;
 	unique_id_t id_container;
 	struct dstream_interface_ctnr *interface_ctnr;
-	struct stream_socket *krg_socket;
+	struct stream_socket *hcc_socket;
 };
 #endif
 

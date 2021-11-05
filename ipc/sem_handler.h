@@ -14,7 +14,7 @@ int create_semundo_proc_list(struct task_struct *tsk);
 
 struct gdm_set;
 
-struct gdm_set *krgipc_ops_undolist_set(struct krgipc_ops *ipcops);
+struct gdm_set *hccipc_ops_undolist_set(struct hccipc_ops *ipcops);
 struct gdm_set *task_undolist_set(struct task_struct *task);
 
 struct semundo_list_object;

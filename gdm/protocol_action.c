@@ -12,14 +12,14 @@
 #include <linux/workqueue.h>
 #include <linux/spinlock.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
-#include <hcc/krginit.h>
+#include <hcc/hccnodemask.h>
+#include <hcc/hccinit.h>
 
 #include <gdm/gdm.h>
 #include <gdm/object_server.h>
 #include "protocol_action.h"
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 
 int delayed_transfer_write_access (hcc_node_t dest_node, void *msg);
 
@@ -54,7 +54,7 @@ static inline void send_msg_to_object_server(hcc_node_t dest,
 {
 	msg_server_t msg_to_server;
 
-	BUG_ON(dest < 0 || dest > KERRIGHED_MAX_NODES);
+	BUG_ON(dest < 0 || dest > HCC_MAX_NODES);
 
 	msg_to_server.ns_id = ns_id;
 	msg_to_server.set_id = set_id;
@@ -89,7 +89,7 @@ static inline int send_msg_to_object_receiver(hcc_node_t dest,
 	struct rpc_desc *desc;
 	int err = 0;
 
-	BUG_ON(dest < 0 || dest > KERRIGHED_MAX_NODES);
+	BUG_ON(dest < 0 || dest > HCC_MAX_NODES);
 
 	object_send_msg.ns_id = set->ns->id;
 	object_send_msg.set_id = set->id;
@@ -195,9 +195,9 @@ void request_copies_invalidation(struct gdm_set * set,
 				 hcc_node_t sender)
 {
 	msg_server_t msgToServer;
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 
-	BUG_ON(sender < 0 || sender > KERRIGHED_MAX_NODES);
+	BUG_ON(sender < 0 || sender > HCC_MAX_NODES);
 
 	msgToServer.ns_id = set->ns->id;
 	msgToServer.set_id = set->id;
@@ -205,8 +205,8 @@ void request_copies_invalidation(struct gdm_set * set,
 	msgToServer.reply_node = sender;
 
 	DUP2_SET(COPYSET(obj_entry), &nodes);
-	krgnode_clear(hcc_node_id, nodes);
-	krgnode_clear(sender, nodes);
+	hccnode_clear(hcc_node_id, nodes);
+	hccnode_clear(sender, nodes);
 
 	rpc_async_m(REQ_OBJECT_INVALID, &nodes,
 		    &msgToServer, sizeof(msg_server_t));
@@ -234,7 +234,7 @@ int request_copies_remove(struct gdm_set * set,
 	int need_wait = 0;
 	msg_server_t msgToServer;
 
-	BUG_ON(sender < 0 || sender > KERRIGHED_MAX_NODES);
+	BUG_ON(sender < 0 || sender > HCC_MAX_NODES);
 
 	ASSERT_OBJ_PATH_LOCKED(set, objid);
 
@@ -345,7 +345,7 @@ void send_copy_on_write(struct gdm_set * set,
 
 	BUG_ON (!TEST_OBJECT_LOCKED(obj_entry));
 
-	BUG_ON(dest_node < 0 || dest_node > KERRIGHED_MAX_NODES);
+	BUG_ON(dest_node < 0 || dest_node > HCC_MAX_NODES);
 	BUG_ON(object_frozen_or_pinned(obj_entry, set));
 
 	gdm_change_obj_state(set, obj_entry, objid, READ_OWNER);
@@ -392,7 +392,7 @@ int send_copy_on_read(struct gdm_set * set,
 		      int flags)
 {
 	int r ;
-	BUG_ON(dest_node < 0 || dest_node > KERRIGHED_MAX_NODES);
+	BUG_ON(dest_node < 0 || dest_node > HCC_MAX_NODES);
 
 	r = send_msg_to_object_receiver(dest_node, set, objid,
 					obj_entry, READ_COPY, flags, 0);
@@ -420,7 +420,7 @@ void send_no_object(struct gdm_set * set,
 		    int send_ownership)
 {
 	int r = 0;
-	BUG_ON(dest_node < 0 || dest_node > KERRIGHED_MAX_NODES);
+	BUG_ON(dest_node < 0 || dest_node > HCC_MAX_NODES);
 
 	if (send_ownership) {
 		r = change_prob_owner (obj_entry, dest_node);
@@ -450,7 +450,7 @@ void transfer_write_access_and_unlock(struct gdm_set * set,
 {
 	msg_injection_t msg;
 
-	BUG_ON(dest_node < 0 || dest_node > KERRIGHED_MAX_NODES);
+	BUG_ON(dest_node < 0 || dest_node > HCC_MAX_NODES);
 
 	ASSERT_OBJ_PATH_LOCKED(set, objid);
 
@@ -482,7 +482,7 @@ int delayed_transfer_write_access(hcc_node_t dest_node, void *_msg)
 	struct gdm_set *set;
 	struct gdm_obj *obj_entry;
 
-	BUG_ON(dest_node < 0 || dest_node > KERRIGHED_MAX_NODES);
+	BUG_ON(dest_node < 0 || dest_node > HCC_MAX_NODES);
 
 	obj_entry = get_gdm_obj_entry(msg->ns_id, msg->set_id, msg->objid,
 				       &set);
@@ -497,13 +497,13 @@ int delayed_transfer_write_access(hcc_node_t dest_node, void *_msg)
 
 
 
-void merge_ack_set(krgnodemask_t *obj_set,
-		   krgnodemask_t *recv_set)
+void merge_ack_set(hccnodemask_t *obj_set,
+		   hccnodemask_t *recv_set)
 {
-	krgnodemask_t v;
+	hccnodemask_t v;
 
-	__krgnodes_xor(&v, obj_set, recv_set, KERRIGHED_MAX_NODES);
-	__krgnodes_and(obj_set, &v, recv_set, KERRIGHED_MAX_NODES);
+	__hccnodes_xor(&v, obj_set, recv_set, HCC_MAX_NODES);
+	__hccnodes_and(obj_set, &v, recv_set, HCC_MAX_NODES);
 }
 
 
@@ -519,7 +519,7 @@ void send_invalidation_ack(struct gdm_set * set,
 			   objid_t objid,
 			   hcc_node_t dest_node)
 {
-	BUG_ON(dest_node < 0 || dest_node > KERRIGHED_MAX_NODES);
+	BUG_ON(dest_node < 0 || dest_node > HCC_MAX_NODES);
 
 	send_msg_to_object_server(dest_node, INVALIDATION_ACK, set->ns->id,
 				  set->id, objid, 0, hcc_node_id,
@@ -540,7 +540,7 @@ void send_remove_ack(struct gdm_set * set,
 		     hcc_node_t dest_node,
 		     int flags)
 {
-	BUG_ON(dest_node < 0 || dest_node > KERRIGHED_MAX_NODES);
+	BUG_ON(dest_node < 0 || dest_node > HCC_MAX_NODES);
 
 	send_msg_to_object_server(dest_node, REMOVE_ACK, set->ns->id, set->id,
 				  objid, flags, 0, 0);
@@ -561,7 +561,7 @@ void send_remove_ack2(struct gdm_set * set,
 {
 	msg_server_t msg_to_server;
 
-	BUG_ON(dest_node < 0 || dest_node > KERRIGHED_MAX_NODES);
+	BUG_ON(dest_node < 0 || dest_node > HCC_MAX_NODES);
 
 	msg_to_server.ns_id = set->ns->id;
 	msg_to_server.set_id = set->id;
@@ -584,11 +584,11 @@ void send_remove_ack2(struct gdm_set * set,
 void send_remove_object_done(struct gdm_set * set,
 			     objid_t objid,
 			     hcc_node_t dest_node,
-			     krgnodemask_t *rmset)
+			     hccnodemask_t *rmset)
 {
 	rm_done_msg_server_t msg;
 
-	BUG_ON(dest_node < 0 || dest_node > KERRIGHED_MAX_NODES);
+	BUG_ON(dest_node < 0 || dest_node > HCC_MAX_NODES);
 
 	msg.ns_id = set->ns->id;
 	msg.set_id = set->id;
@@ -697,7 +697,7 @@ void send_back_object_first_touch(struct gdm_set * set,
 {
 	msg_server_t msgToServer;
 
-	BUG_ON(dest_node < 0 || dest_node > KERRIGHED_MAX_NODES);
+	BUG_ON(dest_node < 0 || dest_node > HCC_MAX_NODES);
 
 	ASSERT_OBJ_PATH_LOCKED(set, objid);
 
@@ -757,7 +757,7 @@ void send_change_ownership_req(struct gdm_set * set,
 {
 	msg_injection_t changeOwnerMsg;
 
-	BUG_ON(dest_node < 0 || dest_node > KERRIGHED_MAX_NODES);
+	BUG_ON(dest_node < 0 || dest_node > HCC_MAX_NODES);
 
 	ASSERT_OBJ_PATH_LOCKED(set, objid);
 
@@ -783,7 +783,7 @@ void ack_change_object_owner(struct gdm_set * set,
 {
 	msg_server_t msgToServer;
 
-	BUG_ON(dest_node < 0 || dest_node > KERRIGHED_MAX_NODES);
+	BUG_ON(dest_node < 0 || dest_node > HCC_MAX_NODES);
 
 	ASSERT_OBJ_PATH_LOCKED(set, objid);
 
@@ -815,8 +815,8 @@ hcc_node_t choose_injection_node_in_copyset(struct gdm_obj * object)
 {
 	int i = 0, res = -1;
 
-	while (i < KERRIGHED_MAX_NODES && res == -1) {
-		if (krgnode_online(i)
+	while (i < HCC_MAX_NODES && res == -1) {
+		if (hccnode_online(i)
 		    && i != hcc_node_id
 		    && NODE_IN_SET(COPYSET(object), i)) {
 			res = i;

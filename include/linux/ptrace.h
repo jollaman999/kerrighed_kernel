@@ -131,9 +131,9 @@ extern int __ptrace_may_access(struct task_struct *task, unsigned int mode);
 extern bool ptrace_may_access(struct task_struct *task, unsigned int mode);
 #ifdef CONFIG_HCC_EPM
 extern
-int krg_ptrace_link(struct task_struct *task, struct task_struct *tracer);
-extern void krg_ptrace_unlink(struct task_struct *task);
-extern void krg_ptrace_reparent_ptraced(struct task_struct *real_parent,
+int hcc_ptrace_link(struct task_struct *task, struct task_struct *tracer);
+extern void hcc_ptrace_unlink(struct task_struct *task);
+extern void hcc_ptrace_reparent_ptraced(struct task_struct *real_parent,
 					struct task_struct *task);
 #endif /* CONFIG_HCC_EPM */
 
@@ -152,9 +152,9 @@ static inline void ptrace_link(struct task_struct *child,
 {
 #ifdef CONFIG_HCC_EPM
 	if (unlikely(child->ptrace)) {
-		int ret = krg_ptrace_link(child, new_parent);
+		int ret = hcc_ptrace_link(child, new_parent);
 		BUG_ON(ret);
-		ret = krg_set_child_ptraced(child->parent_children_obj,
+		ret = hcc_set_child_ptraced(child->parent_children_obj,
 					    child, 1);
 		BUG_ON(ret);
 		__ptrace_link(child, new_parent);

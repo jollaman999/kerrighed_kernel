@@ -17,24 +17,24 @@
 #include <linux/user_namespace.h>
 #include <net/net_namespace.h>
 #include <hcc/namespace.h>
-#include <hcc/krg_services.h>
-#include <hcc/krg_syscalls.h>
+#include <hcc/hcc_services.h>
+#include <hcc/hcc_syscalls.h>
 
-static struct krg_namespace *krg_ns;
-static DEFINE_SPINLOCK(krg_ns_lock);
+static struct hcc_namespace *hcc_ns;
+static DEFINE_SPINLOCK(hcc_ns_lock);
 
-int copy_krg_ns(struct task_struct *task, struct nsproxy *new)
+int copy_hcc_ns(struct task_struct *task, struct nsproxy *new)
 {
-	struct krg_namespace *ns = task->nsproxy->krg_ns;
+	struct hcc_namespace *ns = task->nsproxy->hcc_ns;
 	struct user_namespace *user_ns = __task_cred(task)->user->user_ns;
 	int retval = 0;
 
-	if (!ns && current->create_krg_ns) {
+	if (!ns && current->create_hcc_ns) {
 		ns = kmalloc(sizeof(*ns), GFP_KERNEL);
 
-		spin_lock_irq(&krg_ns_lock);
-		/* Only one krg_ns can live at once. */
-		if (!krg_ns) {
+		spin_lock_irq(&hcc_ns_lock);
+		/* Only one hcc_ns can live at once. */
+		if (!hcc_ns) {
 			if (ns) {
 				atomic_set(&ns->count, 1);
 
@@ -49,7 +49,7 @@ int copy_krg_ns(struct task_struct *task, struct nsproxy *new)
 				ns->root_nsproxy.pid_ns = new->pid_ns;
 				get_net(new->net_ns);
 				ns->root_nsproxy.net_ns = new->net_ns;
-				ns->root_nsproxy.krg_ns = ns;
+				ns->root_nsproxy.hcc_ns = ns;
 
 				get_user_ns(user_ns);
 				ns->root_user_ns = user_ns;
@@ -57,11 +57,11 @@ int copy_krg_ns(struct task_struct *task, struct nsproxy *new)
 				get_task_struct(task);
 				ns->root_task = task;
 
-				BUG_ON(ns->root_nsproxy.pid_ns->krg_ns_root);
-				ns->root_nsproxy.pid_ns->krg_ns_root =
+				BUG_ON(ns->root_nsproxy.pid_ns->hcc_ns_root);
+				ns->root_nsproxy.pid_ns->hcc_ns_root =
 					ns->root_nsproxy.pid_ns;
 
-				rcu_assign_pointer(krg_ns, ns);
+				rcu_assign_pointer(hcc_ns, ns);
 			} else {
 				retval = -ENOMEM;
 			}
@@ -69,19 +69,19 @@ int copy_krg_ns(struct task_struct *task, struct nsproxy *new)
 			kfree(ns);
 			ns = NULL;
 		}
-		spin_unlock_irq(&krg_ns_lock);
+		spin_unlock_irq(&hcc_ns_lock);
 	} else if (ns) {
-		get_krg_ns(ns);
+		get_hcc_ns(ns);
 	}
 
-	new->krg_ns = ns;
+	new->hcc_ns = ns;
 
 	return retval;
 }
 
-static void delayed_free_krg_ns(struct rcu_head *rcu)
+static void delayed_free_hcc_ns(struct rcu_head *rcu)
 {
-	struct krg_namespace *ns = container_of(rcu, struct krg_namespace, rcu);
+	struct hcc_namespace *ns = container_of(rcu, struct hcc_namespace, rcu);
 
 	BUG_ON(atomic_read(&ns->root_nsproxy.count) != 1);
 	if (ns->root_nsproxy.uts_ns)
@@ -102,24 +102,24 @@ static void delayed_free_krg_ns(struct rcu_head *rcu)
 	kfree(ns);
 }
 
-void free_krg_ns(struct krg_namespace *ns)
+void free_hcc_ns(struct hcc_namespace *ns)
 {
 	unsigned long flags;
 
-	spin_lock_irqsave(&krg_ns_lock, flags);
-	BUG_ON(ns != krg_ns);
-	rcu_assign_pointer(krg_ns, NULL);
-	spin_unlock_irqrestore(&krg_ns_lock, flags);
+	spin_lock_irqsave(&hcc_ns_lock, flags);
+	BUG_ON(ns != hcc_ns);
+	rcu_assign_pointer(hcc_ns, NULL);
+	spin_unlock_irqrestore(&hcc_ns_lock, flags);
 
-	call_rcu(&ns->rcu, delayed_free_krg_ns);
+	call_rcu(&ns->rcu, delayed_free_hcc_ns);
 }
 
-struct krg_namespace *find_get_krg_ns(void)
+struct hcc_namespace *find_get_hcc_ns(void)
 {
-	struct krg_namespace *ns;
+	struct hcc_namespace *ns;
 
 	rcu_read_lock();
-	ns = rcu_dereference(krg_ns);
+	ns = rcu_dereference(hcc_ns);
 	if (ns)
 		if (!atomic_add_unless(&ns->count, 1, 0))
 			ns = NULL;
@@ -128,9 +128,9 @@ struct krg_namespace *find_get_krg_ns(void)
 	return ns;
 }
 
-bool can_create_krg_ns(unsigned long flags)
+bool can_create_hcc_ns(unsigned long flags)
 {
-	return current->create_krg_ns
+	return current->create_hcc_ns
 #ifdef CONFIG_HCC_IPC
 		&& (flags & CLONE_NEWIPC)
 #endif
@@ -140,17 +140,17 @@ bool can_create_krg_ns(unsigned long flags)
 		;
 }
 
-int krg_set_cluster_creator(void __user *arg)
+int hcc_set_cluster_creator(void __user *arg)
 {
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
-	current->create_krg_ns = !!arg;
+	current->create_hcc_ns = !!arg;
 	return 0;
 }
 
 int hotplug_namespace_init(void)
 {
 	return __register_proc_service(KSYS_HOTPLUG_SET_CREATOR,
-				       krg_set_cluster_creator, false);
+				       hcc_set_cluster_creator, false);
 }

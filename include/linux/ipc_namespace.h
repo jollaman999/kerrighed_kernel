@@ -16,7 +16,7 @@
 #define IPCNS_CALLBACK_PRI 0
 
 #ifdef CONFIG_HCC_IPC
-struct krgipc_ops;
+struct hccipc_ops;
 #endif
 
 struct ipc_ids {
@@ -26,7 +26,7 @@ struct ipc_ids {
 	struct rw_semaphore rw_mutex;
 	struct idr ipcs_idr;
 #ifdef CONFIG_HCC_IPC
-	struct krgipc_ops *krgops;
+	struct hccipc_ops *hccops;
 #endif
 };
 

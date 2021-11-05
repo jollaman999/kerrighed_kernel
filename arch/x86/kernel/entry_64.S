@@ -439,7 +439,7 @@ ENTRY(ret_from_fork)
 	call schedule_tail			# rdi: 'prev' task parameter
 
 	GET_THREAD_INFO(%rcx)
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 	btr $TIF_MIGRATION,TI_flags(%rcx)
 	jc ret_from_migration
 	CFI_REMEMBER_STATE
@@ -459,7 +459,7 @@ ENTRY(ret_from_fork)
 	 */
 	jmp  int_ret_from_sys_call
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_EPM
 /*
  * A newly restarted/migrated process directly context switches to
  * ret_from_fork, calls schedule_tail, and jumps into this.
@@ -478,7 +478,7 @@ ret_from_migration:
 	CFI_RESTORE_STATE
 	movl TI_flags(%rcx),%edx
 	jmp int_signal
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_EPM */
 
 	CFI_ENDPROC
 END(ret_from_fork)

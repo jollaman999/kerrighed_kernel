@@ -1589,7 +1589,7 @@ SYSCALL_DEFINE2(flock, unsigned int, fd, unsigned int, cmd)
 
 #ifdef CONFIG_HCC_FAF
 	if (filp->f_flags & O_FAF_CLT) {
-		error = krg_faf_flock(filp, cmd);
+		error = hcc_faf_flock(filp, cmd);
 		goto out_putf;
 	}
 #endif

@@ -8,8 +8,8 @@
 #ifndef __IO_LINKER__
 #define __IO_LINKER__
 
-#include <hcc/krgnodemask.h>
-#include <hcc/krginit.h>
+#include <hcc/hccnodemask.h>
+#include <hcc/hccinit.h>
 #include <hcc/sys/types.h>
 
 #include <gdm/gdm_types.h>
@@ -114,7 +114,7 @@ struct iolinker_struct {
   int (*export_object) (struct rpc_desc *desc, struct gdm_set *set,
 			struct gdm_obj *obj_entry, objid_t objid, int flags);
   hcc_node_t (*default_owner) (struct gdm_set * set, objid_t objid,
-                                     const krgnodemask_t * nodes, int nr_nodes);
+                                     const hccnodemask_t * nodes, int nr_nodes);
   char linker_name[16];
   iolinker_id_t linker_id;
 };

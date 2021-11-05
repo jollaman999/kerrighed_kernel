@@ -13,7 +13,7 @@ struct task_struct;
  * @param parent	creator of the new task
  *
  * @return		a valid node id (at least when computed), or
- *			KERRIGHED_NODE_ID_NONE if no scheduler attached to
+ *			HCC_NODE_ID_NONE if no scheduler attached to
  *			parent cares
  */
 hcc_node_t new_task_node(struct task_struct *parent);

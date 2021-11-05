@@ -43,7 +43,7 @@ int can_be_checkpointed(struct task_struct *task_to_checkpoint)
 	/* Task must live in the HCC container. */
 	rcu_read_lock();
 	nsp = rcu_dereference(task_to_checkpoint->nsproxy);
-	if (!nsp || !nsp->krg_ns) {
+	if (!nsp || !nsp->hcc_ns) {
 		rcu_read_unlock();
 		goto exit;
 	}
@@ -54,7 +54,7 @@ int can_be_checkpointed(struct task_struct *task_to_checkpoint)
 		goto exit;
 
 	/* Check capabilities */
-	if (!can_use_krg_cap(task_to_checkpoint, CAP_CHECKPOINTABLE))
+	if (!can_use_hcc_cap(task_to_checkpoint, CAP_CHECKPOINTABLE))
 		goto exit;
 
 	return 1; /* means true */
@@ -178,7 +178,7 @@ out:
 /*****************************************************************************/
 
 /* Checkpoint signal handler */
-static void krg_task_checkpoint(int sig, struct siginfo *info,
+static void hcc_task_checkpoint(int sig, struct siginfo *info,
 				struct pt_regs *regs)
 {
 	struct epm_action action;
@@ -227,5 +227,5 @@ out:
 
 void register_checkpoint_hooks(void)
 {
-	hook_register(&krg_handler[HCC_SIG_CHECKPOINT], krg_task_checkpoint);
+	hook_register(&hcc_handler[HCC_SIG_CHECKPOINT], hcc_task_checkpoint);
 }

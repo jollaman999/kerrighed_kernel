@@ -74,8 +74,8 @@
 #include <linux/clocksource.h>
 
 #ifdef CONFIG_HCC_PROC
-#include <net/krgrpc/rpc.h>
-#include <net/krgrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
 #include <hcc/remote_syscall.h>
 #endif
 #ifdef CONFIG_HCC_EPM
@@ -2757,7 +2757,7 @@ int wake_up_state(struct task_struct *p, unsigned int state)
 static void __sched_fork(struct task_struct *p)
 {
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current || in_krg_do_fork()) {
+	if (!hcc_current || in_hcc_do_fork()) {
 #endif
 	p->se.exec_start		= 0;
 	p->se.sum_exec_runtime		= 0;
@@ -2861,7 +2861,7 @@ void sched_fork(struct task_struct *p, int clone_flags)
 
 #if defined(CONFIG_SCHEDSTATS) || defined(CONFIG_TASK_DELAY_ACCT)
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current || in_krg_do_fork())
+	if (!hcc_current || in_hcc_do_fork())
 #endif
 	if (likely(sched_info_on()))
 		memset(&p->sched_info, 0, sizeof(p->sched_info));
@@ -6187,14 +6187,14 @@ asmlinkage void __sched schedule(void)
 	struct rq *rq;
 	int cpu;
 #ifdef CONFIG_HCC_EPM
-	struct task_struct *krg_cur;
+	struct task_struct *hcc_cur;
 #endif
 
 need_resched:
 	preempt_disable();
 #ifdef CONFIG_HCC_EPM
-	krg_cur = krg_current;
-	krg_current = NULL;
+	hcc_cur = hcc_current;
+	hcc_current = NULL;
 #endif
 	cpu = smp_processor_id();
 	rq = cpu_rq(cpu);
@@ -6262,7 +6262,7 @@ need_resched_nonpreemptible:
 	if (unlikely(reacquire_kernel_lock(current) < 0))
 		goto need_resched_nonpreemptible;
 #ifdef CONFIG_HCC_EPM
-	krg_current = krg_cur;
+	hcc_current = hcc_cur;
 #endif
 	preempt_enable_no_resched();
 	if (need_resched())
@@ -7243,7 +7243,7 @@ int handle_sched_setscheduler(struct rpc_desc *desc, void *_msg, size_t size)
 	struct task_struct *p;
 	int retval;
 
-	pid = krg_handle_remote_syscall_begin(desc, _msg, size,
+	pid = hcc_handle_remote_syscall_begin(desc, _msg, size,
 					      &msg, &old_cred);
 	if (IS_ERR(pid)) {
 		retval = PTR_ERR(pid);
@@ -7256,20 +7256,20 @@ int handle_sched_setscheduler(struct rpc_desc *desc, void *_msg, size_t size)
 	retval = sched_setscheduler(p, msg.policy, &msg.param);
 	rcu_read_unlock();
 
-	krg_handle_remote_syscall_end(pid, old_cred);
+	hcc_handle_remote_syscall_end(pid, old_cred);
 
 out:
 	return retval;
 }
 
 static
-int krg_sched_setscheduler(pid_t pid, int policy, struct sched_param *param)
+int hcc_sched_setscheduler(pid_t pid, int policy, struct sched_param *param)
 {
 	struct setscheduler_msg msg;
 
 	msg.policy = policy;
 	msg.param = *param;
-	return krg_remote_syscall_simple(PROC_SCHED_SETSCHEDULER, pid,
+	return hcc_remote_syscall_simple(PROC_SCHED_SETSCHEDULER, pid,
 					 &msg, sizeof(msg));
 }
 #endif /* CONFIG_HCC_PROC */
@@ -7294,7 +7294,7 @@ do_sched_setscheduler(pid_t pid, int policy, struct sched_param __user *param)
 	rcu_read_unlock();
 #ifdef CONFIG_HCC_PROC
 	if (!p)
-		retval = krg_sched_setscheduler(pid, policy, &lparam);
+		retval = hcc_sched_setscheduler(pid, policy, &lparam);
 #endif
 
 	return retval;
@@ -7334,7 +7334,7 @@ int handle_sched_getscheduler(struct rpc_desc *desc, void *msg, size_t size)
 	const struct cred *old_cred;
 	int retval;
 
-	pid = krg_handle_remote_syscall_begin(desc, msg, size,
+	pid = hcc_handle_remote_syscall_begin(desc, msg, size,
 					      NULL, &old_cred);
 	if (IS_ERR(pid)) {
 		retval = PTR_ERR(pid);
@@ -7343,15 +7343,15 @@ int handle_sched_getscheduler(struct rpc_desc *desc, void *msg, size_t size)
 
 	retval = sys_sched_getscheduler(pid_vnr(pid));
 
-	krg_handle_remote_syscall_end(pid, old_cred);
+	hcc_handle_remote_syscall_end(pid, old_cred);
 
 out:
 	return retval;
 }
 
-static int krg_sched_getscheduler(pid_t pid)
+static int hcc_sched_getscheduler(pid_t pid)
 {
-	return krg_remote_syscall_simple(PROC_SCHED_GETSCHEDULER, pid,
+	return hcc_remote_syscall_simple(PROC_SCHED_GETSCHEDULER, pid,
 					 NULL, 0);
 }
 #endif /* CONFIG_HCC_PROC */
@@ -7365,7 +7365,7 @@ int handle_sched_getparam(struct rpc_desc *desc, void *msg, size_t size)
 	const struct cred *old_cred;
 	int retval, err;
 
-	pid = krg_handle_remote_syscall_begin(desc, msg, size,
+	pid = hcc_handle_remote_syscall_begin(desc, msg, size,
 					      NULL, &old_cred);
 	if (IS_ERR(pid)) {
 		retval = PTR_ERR(pid);
@@ -7383,18 +7383,18 @@ int handle_sched_getparam(struct rpc_desc *desc, void *msg, size_t size)
 	}
 
 out_end:
-	krg_handle_remote_syscall_end(pid, old_cred);
+	hcc_handle_remote_syscall_end(pid, old_cred);
 
 out:
 	return retval;
 }
 
-static int krg_sched_getparam(pid_t pid, struct sched_param *param)
+static int hcc_sched_getparam(pid_t pid, struct sched_param *param)
 {
 	struct rpc_desc *desc;
 	int res, r;
 
-	desc = krg_remote_syscall_begin(PROC_SCHED_GETPARAM, pid, NULL, 0);
+	desc = hcc_remote_syscall_begin(PROC_SCHED_GETPARAM, pid, NULL, 0);
 	if (IS_ERR(desc)) {
 		r = PTR_ERR(desc);
 		goto out;
@@ -7411,7 +7411,7 @@ static int krg_sched_getparam(pid_t pid, struct sched_param *param)
 		goto err_cancel;
 
 out_end:
-	krg_remote_syscall_end(desc, pid);
+	hcc_remote_syscall_end(desc, pid);
 
 out:
 	return r;
@@ -7448,7 +7448,7 @@ SYSCALL_DEFINE1(sched_getscheduler, pid_t, pid)
 	rcu_read_unlock();
 #ifdef CONFIG_HCC_PROC
 	if (!p)
-		retval = krg_sched_getscheduler(pid);
+		retval = hcc_sched_getscheduler(pid);
 #endif
 
 	return retval;
@@ -7473,7 +7473,7 @@ SYSCALL_DEFINE2(sched_getparam, pid_t, pid, struct sched_param __user *, param)
 #ifdef CONFIG_HCC_PROC
 	if (!p) {
 		read_unlock(&tasklist_lock);
-		retval = krg_sched_getparam(pid, &lp);
+		retval = hcc_sched_getparam(pid, &lp);
 		if (retval)
 			goto out_nounlock;
 		goto copy;
@@ -7768,13 +7768,13 @@ EXPORT_SYMBOL(__cond_resched_softirq);
 void __sched yield(void)
 {
 #ifdef CONFIG_HCC_EPM
-	struct task_struct *krg_cur = krg_current;
-	krg_current = NULL;
+	struct task_struct *hcc_cur = hcc_current;
+	hcc_current = NULL;
 #endif
 	set_current_state(TASK_RUNNING);
 	sys_sched_yield();
 #ifdef CONFIG_HCC_EPM
-	krg_current = krg_cur;
+	hcc_current = hcc_cur;
 #endif
 }
 EXPORT_SYMBOL(yield);

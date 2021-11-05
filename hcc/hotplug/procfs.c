@@ -65,7 +65,7 @@ void procfs_deltree(struct proc_dir_entry *entry)
 }
 EXPORT_SYMBOL(procfs_deltree);
 
-static char *krg_version = "HCC v1.0-RC1 (" HCC_VERSION
+static char *hcc_version = "HCC v1.0-RC1 (" HCC_VERSION
 #ifdef CONFIG_SMP
     " SMP"
 #endif
@@ -108,7 +108,7 @@ int read_version(char *buffer, char **start, off_t offset,
 	static int len;
 
 	if (offset == 0)
-		len = snprintf(mybuffer, 256, "%s\n", krg_version);
+		len = snprintf(mybuffer, 256, "%s\n", hcc_version);
 
 	if (offset + count >= len) {
 		count = len - offset;

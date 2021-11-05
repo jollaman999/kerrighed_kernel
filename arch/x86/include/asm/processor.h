@@ -115,7 +115,7 @@ struct cpuinfo_x86 {
 	u16			cpu_index;
 #endif
 #ifdef CONFIG_HCC_PROCFS
-	int                     krg_cpu_id;
+	int                     hcc_cpu_id;
 	unsigned long           cpu_khz;
 #endif /* CONFIG_HCC_PROCFS */
 	/* RHEL6: deprecated and should use x86_hyper instead */

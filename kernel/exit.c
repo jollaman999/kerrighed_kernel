@@ -59,8 +59,8 @@
 #endif
 #ifdef CONFIG_HCC_PROC
 #include <hcc/task.h>
-#include <hcc/krginit.h>
-#include <hcc/krg_exit.h>
+#include <hcc/hccinit.h>
+#include <hcc/hcc_exit.h>
 #endif
 #ifdef CONFIG_HCC_EPM
 #include <hcc/signal.h>
@@ -177,7 +177,7 @@ static void __exit_signal(struct task_struct *tsk)
 
 #ifdef CONFIG_HCC_EPM
 	if (tsk->exit_state == EXIT_MIGRATION)
-		krg_sighand_unpin(sighand);
+		hcc_sighand_unpin(sighand);
 	else
 #endif
 	__cleanup_sighand(sighand);
@@ -195,7 +195,7 @@ static void __exit_signal(struct task_struct *tsk)
 		task_rq_unlock_wait(tsk);
 #ifdef CONFIG_HCC_EPM
 		if (tsk->exit_state == EXIT_MIGRATION) {
-			krg_signal_unpin(sig);
+			hcc_signal_unpin(sig);
 			return;
 		}
 #endif
@@ -229,22 +229,22 @@ void release_task(struct task_struct * p)
 	 * task that will do the job will remain a plain task during the whole
 	 * operation.
 	 */
-	if (krg_delay_release_task(p))
+	if (hcc_delay_release_task(p))
 		return;
 #endif /* CONFIG_HCC_EPM */
 repeat:
 #ifdef CONFIG_HCC_SCHED
-	krg_sched_info_free(p);
+	hcc_sched_info_free(p);
 #endif
 #ifdef CONFIG_HCC_PROC
-	krg_release_task(p);
+	hcc_release_task(p);
 #endif /* CONFIG_HCC_PROC */
 #ifdef CONFIG_HCC_EPM
 	locked_sig = NULL;
 	locked_sighand_id = 0;
 	if (p->exit_state != EXIT_MIGRATION) {
-		locked_sig = krg_signal_exit(p->signal);
-		locked_sighand_id = krg_sighand_exit(p->sighand);
+		locked_sig = hcc_signal_exit(p->signal);
+		locked_sighand_id = hcc_sighand_exit(p->sighand);
 	}
 #endif /* CONFIG_HCC_EPM */
 	tracehook_prepare_release_task(p);
@@ -299,10 +299,10 @@ unlock:
 	write_unlock_irq(&tasklist_lock);
 	release_thread(p);
 #ifdef CONFIG_HCC_EPM
-	krg_children_cleanup(p);
+	hcc_children_cleanup(p);
 	if (locked_sighand_id)
-		krg_sighand_unlock(locked_sighand_id);
-	krg_signal_unlock(locked_sig);
+		hcc_sighand_unlock(locked_sighand_id);
+	hcc_signal_unlock(locked_sig);
 #endif
 	call_rcu(&p->rcu, delayed_put_task_struct);
 
@@ -311,7 +311,7 @@ unlock:
 		BUG_ON(p == current);
 		delay_notify_parent = 0;
 
-		zap_leader = krg_delayed_notify_parent(leader);
+		zap_leader = hcc_delayed_notify_parent(leader);
 	}
 #endif
 	p = leader;
@@ -451,7 +451,7 @@ static void reparent_to_kthreadd(void)
 	down_read(&hcc_init_sem);
 
 	if (rcu_dereference(current->parent_children_obj))
-		parent_children_obj = krg_parent_children_writelock(
+		parent_children_obj = hcc_parent_children_writelock(
 					current,
 					&parent_tgid);
 #endif /* CONFIG_HCC_EPM */
@@ -478,9 +478,9 @@ static void reparent_to_kthreadd(void)
 	write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_HCC_EPM
 	if (parent_children_obj) {
-		krg_set_child_ptraced(parent_children_obj, current, 0);
-		krg_remove_child(parent_children_obj, current);
-		krg_children_unlock(parent_children_obj);
+		hcc_set_child_ptraced(parent_children_obj, current, 0);
+		hcc_remove_child(parent_children_obj, current);
+		hcc_children_unlock(parent_children_obj);
 	}
 
 	up_read(&hcc_init_sem);
@@ -910,7 +910,7 @@ static void forget_original_parent(struct task_struct *father)
 
 #ifdef CONFIG_HCC_EPM
 	if (rcu_dereference(father->children_obj))
-		children_obj = __krg_children_writelock(father);
+		children_obj = __hcc_children_writelock(father);
 #endif
 	tasklist_write_lock_irq();
 	reaper = find_new_reaper(father);
@@ -924,7 +924,7 @@ static void forget_original_parent(struct task_struct *father)
 #ifdef CONFIG_HCC_EPM
 		else {
 			BUG_ON(!p->ptrace);
-			krg_ptrace_reparent_ptraced(father, p);
+			hcc_ptrace_reparent_ptraced(father, p);
 		}
 #endif
 		reparent_thread(father, p, &dead_children);
@@ -933,8 +933,8 @@ static void forget_original_parent(struct task_struct *father)
 #ifdef CONFIG_HCC_EPM
 	if (children_obj) {
 		/* Reparent remote children */
-		krg_forget_original_remote_parent(father, reaper);
-		krg_children_exit(father);
+		hcc_forget_original_remote_parent(father, reaper);
+		hcc_children_exit(father);
 	}
 #endif
 
@@ -955,7 +955,7 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 	int signal;
 	void *cookie;
 #ifdef CONFIG_HCC_PROC
-	void *krg_cookie;
+	void *hcc_cookie;
 #endif
 #ifdef CONFIG_HCC_EPM
 	u32 real_parent_self_exec_id;
@@ -973,7 +973,7 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 	exit_task_namespaces(tsk);
 
 #ifdef CONFIG_HCC_PROC
-	krg_cookie = krg_prepare_exit_notify(tsk);
+	hcc_cookie = hcc_prepare_exit_notify(tsk);
 #endif /* CONFIG_HCC_PROC */
 	tasklist_write_lock_irq();
 	if (group_dead)
@@ -995,8 +995,8 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 	 */
 #ifdef CONFIG_HCC_EPM
 	/* remote parent aware version of vanilla linux check (below) */
-	real_parent_self_exec_id = krg_get_real_parent_self_exec_id(tsk,
-								    krg_cookie);
+	real_parent_self_exec_id = hcc_get_real_parent_self_exec_id(tsk,
+								    hcc_cookie);
 	if (tsk->exit_signal != SIGCHLD && !task_detached(tsk) &&
 	    (tsk->parent_exec_id != real_parent_self_exec_id ||
 	     tsk->self_exec_id != tsk->parent_exec_id))
@@ -1022,7 +1022,7 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 
 	write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_HCC_PROC
-	krg_finish_exit_notify(tsk, signal, krg_cookie);
+	hcc_finish_exit_notify(tsk, signal, hcc_cookie);
 	/*
 	 * No hcc structure should be accessed after this point,
 	 * since the task may have already been released by its reaper.
@@ -1141,10 +1141,10 @@ NORET_TYPE void do_exit(long code)
 
 #ifdef CONFIG_HCC_HOTPLUG
 	group_dead = atomic_dec_and_test(&tsk->signal->live);
-	if (tsk->nsproxy->krg_ns
-	    && same_thread_group(tsk, tsk->nsproxy->krg_ns->root_task)
+	if (tsk->nsproxy->hcc_ns
+	    && same_thread_group(tsk, tsk->nsproxy->hcc_ns->root_task)
 	    && group_dead)
-		krg_ns_root_exit(tsk->nsproxy->krg_ns);
+		hcc_ns_root_exit(tsk->nsproxy->hcc_ns);
 #endif
 
 #ifdef CONFIG_HCC_PROC
@@ -1437,7 +1437,7 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 #ifdef CONFIG_HCC_EPM
 		/* If caller is remote, current has no children object. */
 		if (current->children_obj)
-			krg_children_unlock(current->children_obj);
+			hcc_children_unlock(current->children_obj);
 #endif
 		if ((exit_code & 0x7f) == 0) {
 			why = CLD_EXITED;
@@ -1450,7 +1450,7 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 	}
 
 #ifdef CONFIG_HCC_EPM
-	/* Do not reap it yet, krg_delayed_notify_parent() has not finished. */
+	/* Do not reap it yet, hcc_delayed_notify_parent() has not finished. */
 	if (p->flags & PF_DELAY_NOTIFY)
 		return 0;
 #endif
@@ -1545,7 +1545,7 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 	read_unlock(&tasklist_lock);
 #ifdef CONFIG_HCC_EPM
 	if (current->children_obj)
-		krg_children_unlock(current->children_obj);
+		hcc_children_unlock(current->children_obj);
 #endif
 
 	retval = wo->wo_rusage
@@ -1590,7 +1590,7 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 
 		if (rcu_dereference(saved_p->parent_children_obj))
 			parent_children_obj =
-				krg_parent_children_writelock(saved_p,
+				hcc_parent_children_writelock(saved_p,
 							      &real_parent_tgid);
 #endif
 		tasklist_write_lock_irq();
@@ -1611,9 +1611,9 @@ int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 		write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_HCC_EPM
 		if (parent_children_obj) {
-			krg_set_child_ptraced(parent_children_obj, saved_p, 0);
-			krg_set_child_exit_signal(parent_children_obj, saved_p);
-			krg_children_unlock(parent_children_obj);
+			hcc_set_child_ptraced(parent_children_obj, saved_p, 0);
+			hcc_set_child_exit_signal(parent_children_obj, saved_p);
+			hcc_children_unlock(parent_children_obj);
 		}
 #endif /* CONFIG_HCC_EPM */
 	}
@@ -1689,7 +1689,7 @@ unlock_sig:
 	read_unlock(&tasklist_lock);
 #ifdef CONFIG_HCC_EPM
 	if (current->children_obj)
-		krg_children_unlock(current->children_obj);
+		hcc_children_unlock(current->children_obj);
 #endif
 
 	if (unlikely(wo->wo_flags & WNOWAIT))
@@ -1755,7 +1755,7 @@ static int wait_task_continued(struct wait_opts *wo, struct task_struct *p)
 	read_unlock(&tasklist_lock);
 #ifdef CONFIG_HCC_EPM
 	if (current->children_obj)
-		krg_children_unlock(current->children_obj);
+		hcc_children_unlock(current->children_obj);
 #endif
 
 	if (!wo->wo_info) {
@@ -1938,7 +1938,7 @@ repeat:
 
 #ifdef CONFIG_HCC_EPM
 	if (current->children_obj)
-		__krg_children_readlock(current);
+		__hcc_children_readlock(current);
 #endif
 
 	set_current_state(TASK_INTERRUPTIBLE);
@@ -1965,7 +1965,7 @@ repeat:
 
 		/* Try all children, even remote ones but don't wait yet */
 		/* Releases children lock */
-		tsk_result = krg_do_wait(current->children_obj, wo);
+		tsk_result = hcc_do_wait(current->children_obj, wo);
 		if (tsk_result)
 			wo->notask_error = tsk_result;
 	}

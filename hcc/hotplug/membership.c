@@ -1,29 +1,29 @@
 #include <linux/notifier.h>
 #include <hcc/hotplug.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 
-static void membership_online_add(krgnodemask_t *vector)
+static void membership_online_add(hccnodemask_t *vector)
 {
 	hcc_node_t i;
 
-	__for_each_krgnode_mask(i, vector){
-		if(krgnode_online(i))
+	__for_each_hccnode_mask(i, vector){
+		if(hccnode_online(i))
 			continue;
-		set_krgnode_online(i);
+		set_hccnode_online(i);
 		hcc_nb_nodes++;
 	}
 }
 
-static void membership_online_remove(krgnodemask_t *vector)
+static void membership_online_remove(hccnodemask_t *vector)
 {
 	hcc_node_t i;
 
-	__for_each_krgnode_mask(i, vector){
-		if(!krgnode_online(i))
+	__for_each_hccnode_mask(i, vector){
+		if(!hccnode_online(i))
 			continue;
-		clear_krgnode_online(i);
+		clear_hccnode_online(i);
 		hcc_nb_nodes--;
 	}
 }
@@ -43,9 +43,9 @@ int membership_online_notification(struct notifier_block *nb,
 
 	case HOTPLUG_NOTIFY_REMOVE_LOCAL:{
 		hcc_node_t node;
-		for_each_online_krgnode(node)
+		for_each_online_hccnode(node)
 			if(node != hcc_node_id)
-				clear_krgnode_online(node);
+				clear_hccnode_online(node);
 	}
 		
 	case HOTPLUG_NOTIFY_REMOVE_ADVERT:{

@@ -14,26 +14,26 @@
 #include <linux/remote_sleep.h>
 
 #include <gdm/gdm.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/hotplug.h>
 #include "ipc_handler.h"
 #include "msg_handler.h"
 #include "msg_io_linker.h"
 #include "ipcmap_io_linker.h"
 #include "util.h"
-#include "krgmsg.h"
-#include "krgipc_mobility.h"
+#include "hccmsg.h"
+#include "hccipc_mobility.h"
 
-struct msgkrgops {
-	struct krgipc_ops krgops;
+struct msghccops {
+	struct hccipc_ops hccops;
 	struct gdm_set *master_gdm_set;
 };
 
-struct gdm_set *krgipc_ops_master_set(struct krgipc_ops *ipcops)
+struct gdm_set *hccipc_ops_master_set(struct hccipc_ops *ipcops)
 {
-	struct msgkrgops *msgops;
+	struct msghccops *msgops;
 
-	msgops = container_of(ipcops, struct msgkrgops, krgops);
+	msgops = container_of(ipcops, struct msghccops, hccops);
 
 	return msgops->master_gdm_set;
 }
@@ -52,7 +52,7 @@ static struct kern_ipc_perm *kcb_ipc_msg_lock(struct ipc_ids *ids, int id)
 
 	index = ipcid_to_idx(id);
 
-	msq_object = _gdm_grab_object_no_ft(ids->krgops->data_gdm_set, index);
+	msq_object = _gdm_grab_object_no_ft(ids->hccops->data_gdm_set, index);
 
 	if (!msq_object)
 		goto error;
@@ -68,7 +68,7 @@ static struct kern_ipc_perm *kcb_ipc_msg_lock(struct ipc_ids *ids, int id)
 	return &(msq->q_perm);
 
 error:
-	_gdm_put_object(ids->krgops->data_gdm_set, index);
+	_gdm_put_object(ids->hccops->data_gdm_set, index);
 
 	return ERR_PTR(-EINVAL);
 }
@@ -88,7 +88,7 @@ static void kcb_ipc_msg_unlock(struct kern_ipc_perm *ipcp)
 
 	index = ipcid_to_idx(ipcp->id);
 
-	_gdm_put_object(ipcp->krgops->data_gdm_set, index);
+	_gdm_put_object(ipcp->hccops->data_gdm_set, index);
 
 	__set_current_state(task_state);
 
@@ -100,12 +100,12 @@ static struct kern_ipc_perm *kcb_ipc_msg_findkey(struct ipc_ids *ids, key_t key)
 	long *key_index;
 	int id = -1;
 
-	key_index = _gdm_get_object_no_ft(ids->krgops->key_gdm_set, key);
+	key_index = _gdm_get_object_no_ft(ids->hccops->key_gdm_set, key);
 
 	if (key_index)
 		id = *key_index;
 
-	_gdm_put_object(ids->krgops->key_gdm_set, key);
+	_gdm_put_object(ids->hccops->key_gdm_set, key);
 
 	if (id != -1)
 		return kcb_ipc_msg_lock(ids, id);
@@ -117,7 +117,7 @@ static struct kern_ipc_perm *kcb_ipc_msg_findkey(struct ipc_ids *ids, key_t key)
  *
  *  @author Innogrid HCC
  */
-int krg_ipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
+int hcc_ipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 {
 	struct gdm_set *master_set;
 	msq_object_t *msq_object;
@@ -125,12 +125,12 @@ int krg_ipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 	long *key_index;
 	int index, err = 0;
 
-	BUG_ON(!msg_ids(ns).krgops);
+	BUG_ON(!msg_ids(ns).hccops);
 
 	index = ipcid_to_idx(msq->q_perm.id);
 
 	msq_object = _gdm_grab_object_manual_ft(
-		msg_ids(ns).krgops->data_gdm_set, index);
+		msg_ids(ns).hccops->data_gdm_set, index);
 
 	BUG_ON(msq_object);
 
@@ -144,33 +144,33 @@ int krg_ipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 	msq_object->local_msq->is_master = 1;
 	msq_object->mobile_msq.q_perm.id = -1;
 
-	_gdm_set_object(msg_ids(ns).krgops->data_gdm_set, index, msq_object);
+	_gdm_set_object(msg_ids(ns).hccops->data_gdm_set, index, msq_object);
 
 	if (msq->q_perm.key != IPC_PRIVATE)
 	{
-		key_index = _gdm_grab_object(msg_ids(ns).krgops->key_gdm_set,
+		key_index = _gdm_grab_object(msg_ids(ns).hccops->key_gdm_set,
 					      msq->q_perm.key);
 		*key_index = index;
-		_gdm_put_object(msg_ids(ns).krgops->key_gdm_set,
+		_gdm_put_object(msg_ids(ns).hccops->key_gdm_set,
 				 msq->q_perm.key);
 	}
 
-	master_set = krgipc_ops_master_set(msg_ids(ns).krgops);
+	master_set = hccipc_ops_master_set(msg_ids(ns).hccops);
 
 	master_node = _gdm_grab_object(master_set, index);
 	*master_node = hcc_node_id;
 
-	msq->q_perm.krgops = msg_ids(ns).krgops;
+	msq->q_perm.hccops = msg_ids(ns).hccops;
 
 	_gdm_put_object(master_set, index);
 
 err_put:
-	_gdm_put_object(msg_ids(ns).krgops->data_gdm_set, index);
+	_gdm_put_object(msg_ids(ns).hccops->data_gdm_set, index);
 
 	return err;
 }
 
-void krg_ipc_msg_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
+void hcc_ipc_msg_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 {
 	int index;
 	key_t key;
@@ -181,20 +181,20 @@ void krg_ipc_msg_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 	key = msq->q_perm.key;
 
 	if (key != IPC_PRIVATE) {
-		_gdm_grab_object_no_ft(ipcp->krgops->key_gdm_set, key);
-		_gdm_remove_frozen_object(ipcp->krgops->key_gdm_set, key);
+		_gdm_grab_object_no_ft(ipcp->hccops->key_gdm_set, key);
+		_gdm_remove_frozen_object(ipcp->hccops->key_gdm_set, key);
 	}
 
-	master_set = krgipc_ops_master_set(ipcp->krgops);
+	master_set = hccipc_ops_master_set(ipcp->hccops);
 
 	_gdm_grab_object_no_ft(master_set, index);
 	_gdm_remove_frozen_object(master_set, index);
 
 	local_msg_unlock(msq);
 
-	_gdm_remove_frozen_object(ipcp->krgops->data_gdm_set, index);
+	_gdm_remove_frozen_object(ipcp->hccops->data_gdm_set, index);
 
-	krg_ipc_rmid(&msg_ids(ns), index);
+	hcc_ipc_rmid(&msg_ids(ns), index);
 }
 
 /*****************************************************************************/
@@ -209,7 +209,7 @@ struct msgsnd_msg
 	size_t msgsz;
 };
 
-long krg_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
+long hcc_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 		    size_t msgsz, int msgflg, struct ipc_namespace *ns,
 		    pid_t tgid)
 {
@@ -224,7 +224,7 @@ long krg_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 
 	index = ipcid_to_idx(msqid);
 
-	master_set = krgipc_ops_master_set(msg_ids(ns).krgops);
+	master_set = hccipc_ops_master_set(msg_ids(ns).hccops);
 
 	master_node = _gdm_get_object_no_ft(master_set, index);
 	if (!master_node) {
@@ -293,7 +293,7 @@ static void handle_do_msg_send(struct rpc_desc *desc, void *_msg, size_t size)
 	struct msgsnd_msg *msg = _msg;
 	struct ipc_namespace *ns;
 
-	ns = find_get_krg_ipcns();
+	ns = find_get_hcc_ipcns();
 	BUG_ON(!ns);
 
 	mtext = kmalloc(msg->msgsz, GFP_KERNEL);
@@ -333,7 +333,7 @@ struct msgrcv_msg
 	size_t msgsz;
 };
 
-long krg_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
+long hcc_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 		    size_t msgsz, long msgtyp, int msgflg,
 		    struct ipc_namespace *ns, pid_t tgid)
 {
@@ -350,7 +350,7 @@ long krg_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	/* TODO: manage ipc namespace */
 	index = ipcid_to_idx(msqid);
 
-	master_set = krgipc_ops_master_set(msg_ids(ns).krgops);
+	master_set = hccipc_ops_master_set(msg_ids(ns).hccops);
 
 	master_node = _gdm_get_object_no_ft(master_set, index);
 	if (!master_node) {
@@ -431,7 +431,7 @@ static void handle_do_msg_rcv(struct rpc_desc *desc, void *_msg, size_t size)
 	struct msgrcv_msg *msg = _msg;
 	struct ipc_namespace *ns;
 
-	ns = find_get_krg_ipcns();
+	ns = find_get_hcc_ipcns();
 	BUG_ON(!ns);
 
 	mtext = kmalloc(msg->msgsz, GFP_KERNEL);
@@ -472,44 +472,44 @@ exit_put_ns:
 /*                                                                           */
 /*****************************************************************************/
 
-int krg_msg_init_ns(struct ipc_namespace *ns)
+int hcc_msg_init_ns(struct ipc_namespace *ns)
 {
 	int r;
 
-	struct msgkrgops *msg_ops = kmalloc(sizeof(struct msgkrgops),
+	struct msghccops *msg_ops = kmalloc(sizeof(struct msghccops),
 					    GFP_KERNEL);
 	if (!msg_ops) {
 		r = -ENOMEM;
 		goto err;
 	}
 
-	msg_ops->krgops.map_gdm_set = create_new_gdm_set(
+	msg_ops->hccops.map_gdm_set = create_new_gdm_set(
 		gdm_def_ns, MSGMAP_GDM_ID, IPCMAP_LINKER,
 		GDM_RR_DEF_OWNER, sizeof(ipcmap_object_t),
 		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(msg_ops->krgops.map_gdm_set)) {
-		r = PTR_ERR(msg_ops->krgops.map_gdm_set);
+	if (IS_ERR(msg_ops->hccops.map_gdm_set)) {
+		r = PTR_ERR(msg_ops->hccops.map_gdm_set);
 		goto err_map;
 	}
 
-	msg_ops->krgops.key_gdm_set = create_new_gdm_set(
+	msg_ops->hccops.key_gdm_set = create_new_gdm_set(
 		gdm_def_ns, MSGKEY_GDM_ID, MSGKEY_LINKER,
 		GDM_RR_DEF_OWNER, sizeof(long),
 		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(msg_ops->krgops.key_gdm_set)) {
-		r = PTR_ERR(msg_ops->krgops.key_gdm_set);
+	if (IS_ERR(msg_ops->hccops.key_gdm_set)) {
+		r = PTR_ERR(msg_ops->hccops.key_gdm_set);
 		goto err_key;
 	}
 
-	msg_ops->krgops.data_gdm_set = create_new_gdm_set(
+	msg_ops->hccops.data_gdm_set = create_new_gdm_set(
 		gdm_def_ns, MSG_GDM_ID, MSG_LINKER,
 		GDM_RR_DEF_OWNER, sizeof(msq_object_t),
 		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(msg_ops->krgops.data_gdm_set)) {
-		r = PTR_ERR(msg_ops->krgops.data_gdm_set);
+	if (IS_ERR(msg_ops->hccops.data_gdm_set)) {
+		r = PTR_ERR(msg_ops->hccops.data_gdm_set);
 		goto err_data;
 	}
 
@@ -523,37 +523,37 @@ int krg_msg_init_ns(struct ipc_namespace *ns)
 		goto err_master;
 	}
 
-	msg_ops->krgops.ipc_lock = kcb_ipc_msg_lock;
-	msg_ops->krgops.ipc_unlock = kcb_ipc_msg_unlock;
-	msg_ops->krgops.ipc_findkey = kcb_ipc_msg_findkey;
+	msg_ops->hccops.ipc_lock = kcb_ipc_msg_lock;
+	msg_ops->hccops.ipc_unlock = kcb_ipc_msg_unlock;
+	msg_ops->hccops.ipc_findkey = kcb_ipc_msg_findkey;
 
-	msg_ids(ns).krgops = &msg_ops->krgops;
+	msg_ids(ns).hccops = &msg_ops->hccops;
 
 	return 0;
 
 err_master:
-	_destroy_gdm_set(msg_ops->krgops.data_gdm_set);
+	_destroy_gdm_set(msg_ops->hccops.data_gdm_set);
 err_data:
-	_destroy_gdm_set(msg_ops->krgops.key_gdm_set);
+	_destroy_gdm_set(msg_ops->hccops.key_gdm_set);
 err_key:
-	_destroy_gdm_set(msg_ops->krgops.map_gdm_set);
+	_destroy_gdm_set(msg_ops->hccops.map_gdm_set);
 err_map:
 	kfree(msg_ops);
 err:
 	return r;
 }
 
-void krg_msg_exit_ns(struct ipc_namespace *ns)
+void hcc_msg_exit_ns(struct ipc_namespace *ns)
 {
-	if (msg_ids(ns).krgops) {
-		struct msgkrgops *msg_ops;
+	if (msg_ids(ns).hccops) {
+		struct msghccops *msg_ops;
 
-		msg_ops = container_of(msg_ids(ns).krgops, struct msgkrgops,
-				       krgops);
+		msg_ops = container_of(msg_ids(ns).hccops, struct msghccops,
+				       hccops);
 
-		_destroy_gdm_set(msg_ops->krgops.map_gdm_set);
-		_destroy_gdm_set(msg_ops->krgops.key_gdm_set);
-		_destroy_gdm_set(msg_ops->krgops.data_gdm_set);
+		_destroy_gdm_set(msg_ops->hccops.map_gdm_set);
+		_destroy_gdm_set(msg_ops->hccops.key_gdm_set);
+		_destroy_gdm_set(msg_ops->hccops.data_gdm_set);
 		_destroy_gdm_set(msg_ops->master_gdm_set);
 
 		kfree(msg_ops);

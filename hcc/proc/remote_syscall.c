@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2019-2021 Innogrid HCC.
  */
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <linux/cred.h>
 #include <hcc/remote_cred.h>
 #include <linux/nsproxy.h>
@@ -24,7 +24,7 @@ struct remote_syscall_header {
 	size_t payload;
 };
 
-struct rpc_desc *krg_remote_syscall_begin(int req, pid_t pid,
+struct rpc_desc *hcc_remote_syscall_begin(int req, pid_t pid,
 					  const void *msg, size_t size)
 {
 	struct remote_syscall_header hdr;
@@ -35,17 +35,17 @@ struct rpc_desc *krg_remote_syscall_begin(int req, pid_t pid,
 	if (!cluster_started)
 		goto err;
 
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		goto err;
 
-	if (!is_krg_pid_ns_root(task_active_pid_ns(current)))
+	if (!is_hcc_pid_ns_root(task_active_pid_ns(current)))
 		goto err;
 
 	if (pid < 0 || !(pid & GLOBAL_PID_MASK))
 		goto err;
 
-	node = krg_lock_pid_location(pid);
-	if (node == KERRIGHED_NODE_ID_NONE)
+	node = hcc_lock_pid_location(pid);
+	if (node == HCC_NODE_ID_NONE)
 		goto err;
 
 	err = -ENOMEM;
@@ -73,23 +73,23 @@ err_cancel:
 	rpc_cancel(desc);
 	rpc_end(desc, 0);
 err_unlock:
-	krg_unlock_pid_location(pid);
+	hcc_unlock_pid_location(pid);
 err:
 	return ERR_PTR(err);
 }
 
-void krg_remote_syscall_end(struct rpc_desc *desc, pid_t pid)
+void hcc_remote_syscall_end(struct rpc_desc *desc, pid_t pid)
 {
 	rpc_end(desc, 0);
-	krg_unlock_pid_location(pid);
+	hcc_unlock_pid_location(pid);
 }
 
-int krg_remote_syscall_simple(int req, pid_t pid, const void *msg, size_t size)
+int hcc_remote_syscall_simple(int req, pid_t pid, const void *msg, size_t size)
 {
 	struct rpc_desc *desc;
 	int ret, err;
 
-	desc = krg_remote_syscall_begin(req, pid, msg, size);
+	desc = hcc_remote_syscall_begin(req, pid, msg, size);
 	if (IS_ERR(desc)) {
 		ret = PTR_ERR(desc);
 		goto out;
@@ -97,13 +97,13 @@ int krg_remote_syscall_simple(int req, pid_t pid, const void *msg, size_t size)
 	err = rpc_unpack_type(desc, ret);
 	if (err)
 		ret = err;
-	krg_remote_syscall_end(desc, pid);
+	hcc_remote_syscall_end(desc, pid);
 
 out:
 	return ret;
 }
 
-struct pid *krg_handle_remote_syscall_begin(struct rpc_desc *desc,
+struct pid *hcc_handle_remote_syscall_begin(struct rpc_desc *desc,
 					    const void *_msg, size_t size,
 					    void *msg,
 					    const struct cred **old_cred)
@@ -138,7 +138,7 @@ err_cancel:
 	return ERR_PTR(err);
 }
 
-void krg_handle_remote_syscall_end(struct pid *pid, const struct cred *old_cred)
+void hcc_handle_remote_syscall_end(struct pid *pid, const struct cred *old_cred)
 {
 	revert_creds(old_cred);
 	put_pid(pid);

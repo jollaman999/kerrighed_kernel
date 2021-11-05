@@ -1159,7 +1159,7 @@ static int ipath_file_vma_fault(struct vm_area_struct *vma,
 	return 0;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct ipath_file_vm_ops = {

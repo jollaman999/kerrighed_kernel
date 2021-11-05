@@ -37,7 +37,7 @@
 #include <asm/mmu_context.h>
 
 #ifdef CONFIG_HCC_MM
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #include <hcc/dynamic_node_info_linker.h>
 #endif
 
@@ -147,7 +147,7 @@ int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
 {
 	long free, allowed;
 #ifdef CONFIG_HCC_MM
-	krg_dynamic_node_info_t *dyn_info;
+	hcc_dynamic_node_info_t *dyn_info;
 	hcc_node_t node;
 #endif
 
@@ -210,10 +210,10 @@ int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
 		/* Now, check for cluster wide memory space if the process
 		 * has the USE_REMOTE_MEMORY capability.
 		 */
-		if (!can_use_krg_cap(current, CAP_USE_REMOTE_MEMORY))
+		if (!can_use_hcc_cap(current, CAP_USE_REMOTE_MEMORY))
 			goto error;
 
-		for_each_online_krgnode(node) {
+		for_each_online_hccnode(node) {
 			if (node == hcc_node_id)
 				continue;
 			dyn_info = get_dynamic_node_info(node);
@@ -401,7 +401,7 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 			   current->signal->rlim[RLIMIT_DATA].rlim_cur);
 
 	if (mm->anon_vma_gdm_set)
-		krg_do_brk(mm, brk,
+		hcc_do_brk(mm, brk,
 			   current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur,
 			   current->signal->rlim[RLIMIT_DATA].rlim_cur);
 
@@ -1491,7 +1491,7 @@ out:
 		make_pages_present(addr, addr + len);
 #ifdef CONFIG_HCC_MM
 	if (!handler_call && mm->anon_vma_gdm_set)
-		krg_do_mmap_region(vma, flags, vm_flags);
+		hcc_do_mmap_region(vma, flags, vm_flags);
 #endif
 	return addr;
 
@@ -2547,7 +2547,7 @@ SYSCALL_DEFINE2(munmap, unsigned long, addr, size_t, len)
 
 #ifdef CONFIG_HCC_MM
 	if (!ret && mm->anon_vma_gdm_set)
-		krg_do_munmap(mm, addr, len);
+		hcc_do_munmap(mm, addr, len);
 #endif
 
 	return ret;
@@ -2690,7 +2690,7 @@ out:
 	perf_event_mmap(vma);
 #ifdef CONFIG_HCC_MM
 	if (mm->anon_vma_gdm_set)
-		krg_check_vma_link(vma);
+		hcc_check_vma_link(vma);
 #endif
 	mm->total_vm += len >> PAGE_SHIFT;
 	if (flags & VM_LOCKED) {
@@ -2925,14 +2925,14 @@ struct vm_operations_struct special_mapping_vmops = {
 };
 
 #ifdef CONFIG_HCC_MM
-int special_mapping_vm_ops_krgsyms_register(void)
+int special_mapping_vm_ops_hccsyms_register(void)
 {
-	return krgsyms_register(HCCSYMS_VM_OPS_SPECIAL_MAPPING, (void *)&special_mapping_vmops);
+	return hccsyms_register(HCCSYMS_VM_OPS_SPECIAL_MAPPING, (void *)&special_mapping_vmops);
 }
 
-int special_mapping_vm_ops_krgsyms_unregister(void)
+int special_mapping_vm_ops_hccsyms_unregister(void)
 {
-	return krgsyms_unregister(HCCSYMS_VM_OPS_SPECIAL_MAPPING);
+	return hccsyms_unregister(HCCSYMS_VM_OPS_SPECIAL_MAPPING);
 }
 #endif
 

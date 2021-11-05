@@ -22,7 +22,7 @@
 
 typedef struct {
 	cpuinfo_t info;
-} krg_static_cpu_info_t;
+} hcc_static_cpu_info_t;
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -48,17 +48,17 @@ int static_cpu_info_init(void);
  *
  *  @return  Structure containing information on the requested CPU.
  */
-static inline krg_static_cpu_info_t *get_static_cpu_info(int node_id,
+static inline hcc_static_cpu_info_t *get_static_cpu_info(int node_id,
 							 int cpu_id)
 {
 	return _fgdm_get_object(static_cpu_info_gdm_set,
-				 __krg_cpu_id(node_id, cpu_id),
+				 __hcc_cpu_id(node_id, cpu_id),
 				 GDM_NO_FREEZE|GDM_NO_FT_REQ);
 }
 
 hcc_node_t cpu_info_default_owner(struct gdm_set *set,
 					objid_t objid,
-					const krgnodemask_t *nodes,
+					const hccnodemask_t *nodes,
 					int nr_nodes);
 
 #endif /* STATIC_CPU_INFO LINKER_H */

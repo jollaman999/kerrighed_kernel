@@ -74,8 +74,8 @@ typedef struct {
 	unsigned long resv_huge_pages;
 	unsigned long surplus_huge_pages;
 
-	krg_arch_meminfo_t arch_meminfo;
-} krg_dynamic_node_info_t;
+	hcc_arch_meminfo_t arch_meminfo;
+} hcc_dynamic_node_info_t;
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -101,7 +101,7 @@ int dynamic_node_info_init(void);
  *  @return  Structure containing information on the requested node.
  */
 static inline
-krg_dynamic_node_info_t *get_dynamic_node_info(hcc_node_t nodeid)
+hcc_dynamic_node_info_t *get_dynamic_node_info(hcc_node_t nodeid)
 {
 	return _fgdm_get_object(dynamic_node_info_gdm_set, nodeid,
 				 GDM_NO_FREEZE|GDM_NO_FT_REQ);

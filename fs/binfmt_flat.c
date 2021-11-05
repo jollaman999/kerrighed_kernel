@@ -36,7 +36,7 @@
 #include <linux/flat.h>
 #include <linux/syscalls.h>
 #ifdef CONFIG_HCC_EPM
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #endif
 
 #include <asm/byteorder.h>
@@ -945,10 +945,10 @@ static int __init init_flat_binfmt(void)
 #ifdef CONFIG_HCC_EPM
 	int retval;
 
-	krgsyms_register(HCCSYMS_BINFMTS_FLAT, &flat_format);
+	hccsyms_register(HCCSYMS_BINFMTS_FLAT, &flat_format);
 	retval = register_binfmt(&flat_format);
 	if (retval)
-		krgsyms_unregister(HCCSYMS_BINFMTS_FLAT);
+		hccsyms_unregister(HCCSYMS_BINFMTS_FLAT);
 	return retval;
 #else
 	return register_binfmt(&flat_format);

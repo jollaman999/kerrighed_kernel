@@ -11,11 +11,11 @@
 
 #include <hcc/version.h>
 #include <hcc/types.h>
-#include <hcc/krginit.h>
-#include <hcc/krgflags.h>
+#include <hcc/hccinit.h>
+#include <hcc/hccflags.h>
 #include <linux/cluster_barrier.h>
 #include <linux/unique_id.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #ifdef CONFIG_HCC_PROC
 #include <hcc/pid.h>
 #endif
@@ -35,7 +35,7 @@ hcc_node_t hcc_nb_nodes = -1;
 /* Min number of node before to start a cluster */
 hcc_node_t hcc_nb_nodes_min = -1;
 
-/* Session id in order to mix several krg in the same physical network */
+/* Session id in order to mix several hcc in the same physical network */
 hcc_session_t hcc_session_id = 0;
 
 /* ID of subcluster in the main one */
@@ -59,13 +59,13 @@ EXPORT_SYMBOL(hcc_cluster_flags);
 int hcc_node_flags;
 EXPORT_SYMBOL(hcc_node_flags);
 
-int __krg_panic__ = 0;
+int __hcc_panic__ = 0;
 
-struct workqueue_struct *krg_wq;
-struct workqueue_struct *krg_nb_wq;
+struct workqueue_struct *hcc_wq;
+struct workqueue_struct *hcc_nb_wq;
 
-struct kobject* krgsys;
-struct kobject* krghotplugsys;
+struct kobject* hccsys;
+struct kobject* hcchotplugsys;
 
 #define deffct(p) extern int init_##p(void); extern void cleanup_##p(void)
 
@@ -88,7 +88,7 @@ deffct(dvfs);
 deffct(keripc);
 #endif
 #ifdef CONFIG_HCC_CAP
-deffct(krg_cap);
+deffct(hcc_cap);
 #endif
 #ifdef CONFIG_HCC_PROCFS
 deffct(procfs);
@@ -147,16 +147,16 @@ __setup("nb_nodes_min=",parse_nb_nodes_min);
 
 /*****************************************************************************/
 /*                                                                           */
-/*                          KERRIGHED INIT FUNCTION                          */
+/*                          HCC INIT FUNCTION                          */
 /*                                                                           */
 /*****************************************************************************/
 
 static inline void check_node_id (int node_id)
 {
-	if ((node_id >= KERRIGHED_MAX_NODES) || (node_id < 0))
+	if ((node_id >= HCC_MAX_NODES) || (node_id < 0))
 	{
 		printk ("Invalid hcc node id %d (Max id = %d)\n",
-			node_id, KERRIGHED_MAX_NODES);
+			node_id, HCC_MAX_NODES);
 		BUG();
 	}
 }
@@ -305,7 +305,7 @@ static void __init init_ids(void)
 		check_node_id(hcc_node_id);
 #ifdef CONFIG_HCC_HOTPLUG
 		universe[hcc_node_id].state = 1;
-		set_krgnode_present(hcc_node_id);
+		set_hccnode_present(hcc_node_id);
 #endif
 	}
 
@@ -358,7 +358,7 @@ err_tools:
 	return -1;
 }
 
-#ifdef CONFIG_KERRIGHED
+#ifdef CONFIG_HCC
 int init_hcc_upper_layers(void)
 {
 	printk("Init HCC distributed services...\n");
@@ -394,8 +394,8 @@ int init_hcc_upper_layers(void)
 #endif
 
 #ifdef CONFIG_HCC_CAP
-	if (init_krg_cap())
-		goto err_krg_cap;
+	if (init_hcc_cap())
+		goto err_hcc_cap;
 #endif
 
 #ifdef CONFIG_HCC_PROC
@@ -447,8 +447,8 @@ int init_hcc_upper_layers(void)
       err_proc:
 #endif
 #ifdef CONFIG_HCC_CAP
-	cleanup_krg_cap();
-      err_krg_cap:
+	cleanup_hcc_cap();
+      err_hcc_cap:
 #endif
 #ifdef CONFIG_HCC_MM
 	cleanup_kermm();
@@ -518,7 +518,7 @@ static struct kobj_attribute kobj_attr_subsession_id =
 static ssize_t max_nodes_show(struct kobject *obj, struct kobj_attribute *attr,
 			      char *page)
 {
-	return sprintf(page, "%d\n", KERRIGHED_MAX_NODES);
+	return sprintf(page, "%d\n", HCC_MAX_NODES);
 }
 static struct kobj_attribute kobj_attr_max_nodes =
 		__ATTR_RO(max_nodes);
@@ -526,7 +526,7 @@ static struct kobj_attribute kobj_attr_max_nodes =
 static ssize_t max_subclusters_show(struct kobject *obj, struct kobj_attribute *attr,
 				    char *page)
 {
-	return sprintf(page, "%d\n", KERRIGHED_MAX_CLUSTERS);
+	return sprintf(page, "%d\n", HCC_MAX_CLUSTERS);
 }
 static struct kobj_attribute kobj_attr_max_subclusters =
 		__ATTR_RO(max_subclusters);
@@ -534,7 +534,7 @@ static struct kobj_attribute kobj_attr_max_subclusters =
 static ssize_t abi_show(struct kobject *obj, struct kobj_attribute *attr,
 			char *page)
 {
-	return sprintf(page, "%s\n", KERRIGHED_ABI);
+	return sprintf(page, "%s\n", HCC_ABI);
 }
 static struct kobj_attribute kobj_attr_abi =
 		__ATTR_RO(abi);
@@ -598,17 +598,17 @@ static struct attribute_group attr_group = {
 static int init_sysfs(void){
 	int r;
 
-	krgsys = kobject_create_and_add("hcc", NULL);
-	if(!krgsys)
+	hccsys = kobject_create_and_add("hcc", NULL);
+	if(!hccsys)
 		return -1;
 
-	krghotplugsys = kobject_create_and_add("hotplug", krgsys);
-	if(!krghotplugsys)
+	hcchotplugsys = kobject_create_and_add("hotplug", hccsys);
+	if(!hcchotplugsys)
 		return -1;
 
-	r = sysfs_create_group(krgsys, &attr_group);
+	r = sysfs_create_group(hccsys, &attr_group);
 	if(r)
-		kobject_put(krgsys);
+		kobject_put(hccsys);
 
 	return 0;
 }
@@ -620,10 +620,10 @@ void __init hcc_init(void){
 	printk("HCC: stage 1\n");
 
 	init_sysfs();
-	krg_wq = create_workqueue("krg");
-	krg_nb_wq = create_workqueue("krgNB");
-	BUG_ON(krg_wq == NULL);
-	BUG_ON(krg_nb_wq == NULL);
+	hcc_wq = create_workqueue("hcc");
+	hcc_nb_wq = create_workqueue("hccNB");
+	BUG_ON(hcc_wq == NULL);
+	BUG_ON(hcc_nb_wq == NULL);
 
 	init_unique_ids();
 	init_node_discovering();
@@ -635,13 +635,13 @@ void __init hcc_init(void){
 
 	init_cluster_barrier();
 
-#ifdef CONFIG_KERRIGHED
+#ifdef CONFIG_HCC
 	if (init_hcc_upper_layers())
 		return;
 #endif
 
-	SET_KERRIGHED_CLUSTER_FLAGS(HCCFLAGS_LOADED);
-	SET_KERRIGHED_NODE_FLAGS(HCCFLAGS_LOADED);
+	SET_HCC_CLUSTER_FLAGS(HCCFLAGS_LOADED);
+	SET_HCC_NODE_FLAGS(HCCFLAGS_LOADED);
 
 	printk("HCC... loaded!\n");
 

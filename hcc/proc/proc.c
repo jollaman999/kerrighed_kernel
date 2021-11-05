@@ -17,7 +17,7 @@ int init_proc(void)
 	printk("Proc initialisation: start\n");
 
 	proc_task_start();
-	proc_krg_exit_start();
+	proc_hcc_exit_start();
 
 	proc_remote_syscalls_start();
 	register_remote_syscalls_hooks();

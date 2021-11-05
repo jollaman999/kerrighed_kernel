@@ -4,7 +4,7 @@
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/rmap.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 
 #include "mm_struct.h"
@@ -84,26 +84,26 @@ int mm_export_object (struct rpc_desc *desc,
 		      int flags)
 {
 	struct mm_struct *mm;
-	krgsyms_val_t unmap_id, get_unmap_id, get_unmap_exec_id;
+	hccsyms_val_t unmap_id, get_unmap_id, get_unmap_exec_id;
 
 	mm = obj_entry->object;
 
-	krgnode_set (desc->client, mm->copyset);
+	hccnode_set (desc->client, mm->copyset);
 
 	rpc_pack(desc, 0, &mm->mm_id, sizeof(unique_id_t));
 	rpc_pack(desc, 0, &mm->anon_vma_gdm_id, sizeof(unique_id_t));
 	rpc_pack(desc, 0, &mm->context.vdso, sizeof(void*));
-	rpc_pack(desc, 0, &mm->copyset, sizeof(krgnodemask_t));
+	rpc_pack(desc, 0, &mm->copyset, sizeof(hccnodemask_t));
 
-	get_unmap_exec_id = krgsyms_export(mm->get_unmapped_exec_area);
+	get_unmap_exec_id = hccsyms_export(mm->get_unmapped_exec_area);
 	BUG_ON(mm->get_unmapped_exec_area && get_unmap_exec_id == HCCSYMS_UNDEF);
 	rpc_pack_type(desc, get_unmap_exec_id);
 
-	get_unmap_id = krgsyms_export(mm->get_unmapped_area);
+	get_unmap_id = hccsyms_export(mm->get_unmapped_area);
 	BUG_ON(mm->get_unmapped_area && get_unmap_id == HCCSYMS_UNDEF);
 	rpc_pack_type(desc, get_unmap_id);
 
-	unmap_id = krgsyms_export(mm->unmap_area);
+	unmap_id = hccsyms_export(mm->unmap_area);
 	BUG_ON(mm->unmap_area && unmap_id == HCCSYMS_UNDEF);
 	rpc_pack_type(desc, unmap_id);
 
@@ -125,7 +125,7 @@ int mm_import_object (struct rpc_desc *desc,
 		      int flags)
 {
 	struct mm_struct *mm;
-	krgsyms_val_t unmap_id, get_unmap_id, get_unmap_exec_id;
+	hccsyms_val_t unmap_id, get_unmap_id, get_unmap_exec_id;
 	struct gdm_set *set;
 	unique_id_t mm_id, gdm_id;
 	void *context_vdso;
@@ -158,24 +158,24 @@ int mm_import_object (struct rpc_desc *desc,
 		mm->context.vdso = context_vdso;
 	}
 
-	r = rpc_unpack(desc, 0, &mm->copyset, sizeof(krgnodemask_t));
+	r = rpc_unpack(desc, 0, &mm->copyset, sizeof(hccnodemask_t));
 	if (r)
 		return r;
 
 	r = rpc_unpack_type(desc, get_unmap_exec_id);
 	if (r)
 		return r;
-	mm->get_unmapped_exec_area = krgsyms_import (get_unmap_exec_id);
+	mm->get_unmapped_exec_area = hccsyms_import (get_unmap_exec_id);
 
 	r = rpc_unpack_type(desc, get_unmap_id);
 	if (r)
 		return r;
-	mm->get_unmapped_area = krgsyms_import (get_unmap_id);
+	mm->get_unmapped_area = hccsyms_import (get_unmap_id);
 
 	r = rpc_unpack_type(desc, unmap_id);
 	if (r)
 		return r;
-	mm->unmap_area = krgsyms_import (unmap_id);
+	mm->unmap_area = hccsyms_import (unmap_id);
 
 	return 0;
 }

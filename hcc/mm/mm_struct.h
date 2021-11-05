@@ -39,9 +39,9 @@ int reinit_mm(struct mm_struct *mm);
 int init_anon_vma_gdm_set(struct task_struct *tsk,
 			   struct mm_struct *mm);
 
-struct mm_struct *krg_dup_mm(struct task_struct *tsk,struct mm_struct *src_mm);
+struct mm_struct *hcc_dup_mm(struct task_struct *tsk,struct mm_struct *src_mm);
 
-static inline struct mm_struct *krg_get_mm(unique_id_t mm_id)
+static inline struct mm_struct *hcc_get_mm(unique_id_t mm_id)
 {
 	if (mm_id)
 		return _gdm_get_object (mm_struct_gdm_set, mm_id);
@@ -49,7 +49,7 @@ static inline struct mm_struct *krg_get_mm(unique_id_t mm_id)
 		return NULL;
 }
 
-static inline struct mm_struct *krg_grab_mm(unique_id_t mm_id)
+static inline struct mm_struct *hcc_grab_mm(unique_id_t mm_id)
 {
 	if (mm_id)
 		return _gdm_grab_object (mm_struct_gdm_set, mm_id);
@@ -59,7 +59,7 @@ static inline struct mm_struct *krg_grab_mm(unique_id_t mm_id)
 
 void kcb_mm_get(struct mm_struct *mm);
 
-static inline void krg_put_mm(unique_id_t mm_id)
+static inline void hcc_put_mm(unique_id_t mm_id)
 {
 	if (mm_id)
 		_gdm_put_object (mm_struct_gdm_set, mm_id);

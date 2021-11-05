@@ -130,7 +130,7 @@ static ssize_t scheduler_port_attribute_store(struct config_item *item,
         ssize_t ret;
 	int handled;
 
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		return -EPERM;
 
 	list = global_config_attr_store_begin(item);
@@ -255,7 +255,7 @@ static int scheduler_port_allow_link(struct config_item *src,
 	struct string_list_object *list;
 	int err;
 
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		return -EPERM;
 
 	/* At most one source connected at a given time */
@@ -313,7 +313,7 @@ err_global_begin:
 static int scheduler_port_allow_drop_link(struct config_item *src,
 					  struct config_item *target)
 {
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		return -EPERM;
 	return 0;
 }
@@ -367,7 +367,7 @@ scheduler_port_make_group(struct config_group *group, const char *name)
 	struct string_list_object *global_list = NULL;
 	int err;
 
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		return ERR_PTR(-EPERM);
 
 	/* At most one source connected at a given time */
@@ -449,7 +449,7 @@ err_global_begin:
 static int scheduler_port_allow_drop_item(struct config_group *group,
 					  struct config_item *item)
 {
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		return -EPERM;
 	return 0;
 }

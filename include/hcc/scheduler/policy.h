@@ -33,9 +33,9 @@ struct scheduler_policy_operations {
 							   * destructor */
 	/* notifier of node set changes */
 	void (*update_node_set)(struct scheduler_policy *policy,
-				const krgnodemask_t *new_set,
-				const krgnodemask_t *removed_set,
-				const krgnodemask_t *added_set);
+				const hccnodemask_t *new_set,
+				const hccnodemask_t *removed_set,
+				const hccnodemask_t *added_set);
 	/* process placement function
 	 * called when a task attached to this policy creates a new task */
 	hcc_node_t (*new_task_node)(struct scheduler_policy *policy,
@@ -165,9 +165,9 @@ static inline void scheduler_policy_put(struct scheduler_policy *policy)
  */
 static inline
 void scheduler_policy_update_node_set(struct scheduler_policy *policy,
-				      const krgnodemask_t *new_set,
-				      const krgnodemask_t *removed_set,
-				      const krgnodemask_t *added_set)
+				      const hccnodemask_t *new_set,
+				      const hccnodemask_t *removed_set,
+				      const hccnodemask_t *added_set)
 {
 	struct scheduler_policy_type *type =
 		container_of(policy->group.cg_item.ci_type,
@@ -199,7 +199,7 @@ hcc_node_t scheduler_policy_new_task_node(struct scheduler_policy *policy,
 			     struct scheduler_policy_type, item_type);
 	if (type->ops->new_task_node)
 		return type->ops->new_task_node(policy, parent);
-	return KERRIGHED_NODE_ID_NONE;
+	return HCC_NODE_ID_NONE;
 }
 
 /**

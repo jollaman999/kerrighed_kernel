@@ -1516,7 +1516,7 @@ SYSCALL_DEFINE3(bind, int, fd, struct sockaddr __user *, umyaddr, int, addrlen)
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (faf_file) {
-		err = krg_faf_bind(faf_file,
+		err = hcc_faf_bind(faf_file,
 				  (struct sockaddr __user *)umyaddr, addrlen);
 		fput_light(faf_file, fput_needed);
 		return err;
@@ -1556,7 +1556,7 @@ SYSCALL_DEFINE2(listen, int, fd, int, backlog)
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (faf_file) {
-		err = krg_faf_listen(faf_file, backlog);
+		err = hcc_faf_listen(faf_file, backlog);
 		fput_light(faf_file, fput_needed);
 		return err;
 	}
@@ -1609,7 +1609,7 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
 #ifdef CONFIG_HCC_FAF
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (faf_file) {
-		err = krg_faf_accept(faf_file, upeer_sockaddr, upeer_addrlen);
+		err = hcc_faf_accept(faf_file, upeer_sockaddr, upeer_addrlen);
 		fput_light(faf_file, fput_needed);
 		goto out;
 	}
@@ -1703,7 +1703,7 @@ SYSCALL_DEFINE3(connect, int, fd, struct sockaddr __user *, uservaddr,
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (faf_file) {
-		err = krg_faf_connect(faf_file, uservaddr, addrlen);
+		err = hcc_faf_connect(faf_file, uservaddr, addrlen);
 		fput_light(faf_file, fput_needed);
 		goto out;
 	}
@@ -1745,7 +1745,7 @@ SYSCALL_DEFINE3(getsockname, int, fd, struct sockaddr __user *, usockaddr,
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (faf_file) {
-		err = krg_faf_getsockname(faf_file, usockaddr, usockaddr_len);
+		err = hcc_faf_getsockname(faf_file, usockaddr, usockaddr_len);
 		fput_light(faf_file, fput_needed);
 		goto out;
 	}
@@ -1786,7 +1786,7 @@ SYSCALL_DEFINE3(getpeername, int, fd, struct sockaddr __user *, usockaddr,
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (faf_file) {
-		err = krg_faf_getpeername(faf_file, usockaddr, usockaddr_len);
+		err = hcc_faf_getpeername(faf_file, usockaddr, usockaddr_len);
 		fput_light(faf_file, fput_needed);
 		return err;
 	}
@@ -1861,7 +1861,7 @@ SYSCALL_DEFINE6(sendto, int, fd, void __user *, buff, size_t, len,
 #ifdef CONFIG_HCC_FAF
 	if (faf_file) {
 		msg.msg_flags = flags;
-		err = krg_faf_sendmsg(faf_file, &msg, len);
+		err = hcc_faf_sendmsg(faf_file, &msg, len);
 		goto out_put;
 	}
 #endif
@@ -1933,7 +1933,7 @@ SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, ubuf, size_t, size,
 	msg.msg_namelen = sizeof(address);
 #ifdef CONFIG_HCC_FAF
 	if (faf_file) {
-		err = krg_faf_recvmsg(faf_file, &msg, size, flags);
+		err = hcc_faf_recvmsg(faf_file, &msg, size, flags);
 		goto check_err;
 	}
 #endif
@@ -1991,7 +1991,7 @@ SYSCALL_DEFINE5(setsockopt, int, fd, int, level, int, optname,
 #ifdef CONFIG_HCC_FAF
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (faf_file) {
-		err = krg_faf_setsockopt(faf_file, level, optname,
+		err = hcc_faf_setsockopt(faf_file, level, optname,
 					 optval, optlen);
 		fput_light(faf_file, fput_needed);
 		return err;
@@ -2033,7 +2033,7 @@ SYSCALL_DEFINE5(getsockopt, int, fd, int, level, int, optname,
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (faf_file) {
-		err = krg_faf_getsockopt(faf_file, level, optname,
+		err = hcc_faf_getsockopt(faf_file, level, optname,
 					 optval, optlen);
 		fput_light(faf_file, fput_needed);
 		return err;
@@ -2073,7 +2073,7 @@ SYSCALL_DEFINE2(shutdown, int, fd, int, how)
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed, &faf_file);
 	if (faf_file) {
-		err = krg_faf_shutdown(faf_file, how);
+		err = hcc_faf_shutdown(faf_file, how);
 		fput_light(faf_file, fput_needed);
 		return err;
 	}
@@ -2198,7 +2198,7 @@ static int __sys_sendmsg(struct socket *sock, struct msghdr __user *msg,
 
 #ifdef CONFIG_HCC_FAF
 	if (faf_file) {
-		err = krg_faf_sendmsg(faf_file, msg_sys, total_len);
+		err = hcc_faf_sendmsg(faf_file, msg_sys, total_len);
 		goto out_freectl;
 	}
 #endif
@@ -2455,7 +2455,7 @@ static int __sys_recvmsg(struct socket *sock, struct msghdr __user *msg,
 
 #ifdef CONFIG_HCC_FAF
 	if (faf_file) {
-		err = krg_faf_recvmsg(faf_file, msg_sys, total_len, flags);
+		err = hcc_faf_recvmsg(faf_file, msg_sys, total_len, flags);
 		goto check_err;
 	}
 #endif

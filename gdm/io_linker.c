@@ -11,17 +11,17 @@
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
-#include <hcc/krgflags.h>
+#include <hcc/hccinit.h>
+#include <hcc/hccflags.h>
 
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 #include <gdm/io_linker.h>
 
 
 struct iolinker_struct *iolinker_list[MAX_IO_LINKER];
 
-krgnodemask_t krgnode_gdm_map;
+hccnodemask_t hccnode_gdm_map;
 hcc_node_t gdm_nb_nodes;
 
 
@@ -409,13 +409,13 @@ int gdm_io_export_object (struct rpc_desc *desc,
 
 hcc_node_t __gdm_io_default_owner (struct gdm_set *set,
 					  objid_t objid,
-					  const krgnodemask_t *nodes,
+					  const hccnodemask_t *nodes,
 					  int nr_nodes)
 {
 	switch (set->def_owner) {
 	  case GDM_RR_DEF_OWNER:
-		  if (likely(__krgnode_isset(hcc_node_id, nodes)))
-			  return __nth_krgnode(objid % nr_nodes, nodes);
+		  if (likely(__hccnode_isset(hcc_node_id, nodes)))
+			  return __nth_hccnode(objid % nr_nodes, nodes);
 		  else
 			  return hcc_node_id;
 
@@ -434,7 +434,7 @@ hcc_node_t __gdm_io_default_owner (struct gdm_set *set,
 hcc_node_t gdm_io_default_owner (struct gdm_set * set, objid_t objid)
 {
 	return __gdm_io_default_owner (set, objid,
-					&krgnode_gdm_map,
+					&hccnode_gdm_map,
 					gdm_nb_nodes);
 }
 
@@ -473,7 +473,7 @@ void io_linker_init (void)
 	int i;
 
 	gdm_nb_nodes = hcc_nb_nodes;
-	krgnodes_copy(krgnode_gdm_map, krgnode_online_map);
+	hccnodes_copy(hccnode_gdm_map, hccnode_online_map);
 
 	for (i = 0; i < MAX_IO_LINKER; i++)
 		iolinker_list[i] = NULL;

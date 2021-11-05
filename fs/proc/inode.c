@@ -64,7 +64,7 @@ static void proc_delete_inode(struct inode *inode)
 	/* Stop tracking associated processes */
 	put_pid(PROC_I(inode)->pid);
 #if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
-	krg_task_put(PROC_I(inode)->distant_proc.task_obj);
+	hcc_task_put(PROC_I(inode)->distant_proc.task_obj);
 	PROC_I(inode)->distant_proc.task_obj = NULL;
 #endif
 
@@ -490,7 +490,7 @@ struct inode *proc_get_inode(struct super_block *sb, unsigned int ino,
 		PROC_I(inode)->fd = 0;
 		PROC_I(inode)->pde = de;
 #ifdef CONFIG_HCC_PROCFS
-		PROC_I(inode)->krg_procfs_private = de->data;
+		PROC_I(inode)->hcc_procfs_private = de->data;
 #endif /* CONFIG_HCC_PROCFS */
 
 		if (de->mode) {

@@ -30,7 +30,7 @@
 #include <hcc/namespace.h>
 #include <hcc/regular_file_mgr.h>
 #include <hcc/task.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 #include <hcc/application.h>
 #include <hcc/ghost_helpers.h>
@@ -369,7 +369,7 @@ void clear_shared_objects(struct app_struct *app)
 struct task_struct *alloc_shared_fake_task_struct(struct app_struct *app)
 {
 	struct task_struct *fake;
-	struct krg_namespace *krg_ns;
+	struct hcc_namespace *hcc_ns;
 
 	fake = alloc_task_struct();
 	if (!fake) {
@@ -383,24 +383,24 @@ struct task_struct *alloc_shared_fake_task_struct(struct app_struct *app)
 		goto exit;
 	}
 
-	krg_ns = find_get_krg_ns();
-	if (!krg_ns) {
+	hcc_ns = find_get_hcc_ns();
+	if (!hcc_ns) {
 		fake = ERR_PTR(-EPERM);
 		goto err_ns;
 	}
 
-	get_uts_ns(krg_ns->root_nsproxy.uts_ns);
-	fake->nsproxy->uts_ns = krg_ns->root_nsproxy.uts_ns;
-	get_ipc_ns(krg_ns->root_nsproxy.ipc_ns);
-	fake->nsproxy->ipc_ns = krg_ns->root_nsproxy.ipc_ns;
-	get_mnt_ns(krg_ns->root_nsproxy.mnt_ns);
-	fake->nsproxy->mnt_ns = krg_ns->root_nsproxy.mnt_ns;
-	get_pid_ns(krg_ns->root_nsproxy.pid_ns);
-	fake->nsproxy->pid_ns = krg_ns->root_nsproxy.pid_ns;
-	get_net(krg_ns->root_nsproxy.net_ns);
-	fake->nsproxy->net_ns = krg_ns->root_nsproxy.net_ns;
+	get_uts_ns(hcc_ns->root_nsproxy.uts_ns);
+	fake->nsproxy->uts_ns = hcc_ns->root_nsproxy.uts_ns;
+	get_ipc_ns(hcc_ns->root_nsproxy.ipc_ns);
+	fake->nsproxy->ipc_ns = hcc_ns->root_nsproxy.ipc_ns;
+	get_mnt_ns(hcc_ns->root_nsproxy.mnt_ns);
+	fake->nsproxy->mnt_ns = hcc_ns->root_nsproxy.mnt_ns;
+	get_pid_ns(hcc_ns->root_nsproxy.pid_ns);
+	fake->nsproxy->pid_ns = hcc_ns->root_nsproxy.pid_ns;
+	get_net(hcc_ns->root_nsproxy.net_ns);
+	fake->nsproxy->net_ns = hcc_ns->root_nsproxy.net_ns;
 
-	fake->nsproxy->krg_ns = krg_ns;
+	fake->nsproxy->hcc_ns = hcc_ns;
 
 	fake->application = app;
 
@@ -669,7 +669,7 @@ err_pack:
 struct dist_shared_index {
 	struct shared_index index;
 	hcc_node_t master_node;
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 };
 
 static void clear_one_dist_shared_index(struct rb_node *node,
@@ -726,8 +726,8 @@ static int rcv_dist_objects_list_from(struct rpc_desc *desc,
 
 		s->index.type = type;
 		s->index.key = key;
-		s->master_node = KERRIGHED_NODE_ID_NONE;
-		krgnodes_clear(s->nodes);
+		s->master_node = HCC_NODE_ID_NONE;
+		hccnodes_clear(s->nodes);
 
 		idx = __insert_shared_index(dist_shared_indexes, &s->index);
 		if (idx != &s->index) {
@@ -737,7 +737,7 @@ static int rcv_dist_objects_list_from(struct rpc_desc *desc,
 
 		BUG_ON(locality == LOCAL_ONLY);
 
-		if (s->master_node == KERRIGHED_NODE_ID_NONE) {
+		if (s->master_node == HCC_NODE_ID_NONE) {
 			if (locality == SHARED_MASTER
 			    || locality == SHARED_ANY)
 				s->master_node = node;
@@ -745,7 +745,7 @@ static int rcv_dist_objects_list_from(struct rpc_desc *desc,
 			/* only one master per object */
 			BUG_ON(locality == SHARED_MASTER);
 
-		krgnode_set(node, s->nodes);
+		hccnode_set(node, s->nodes);
 
 		/* next ! */
 		r = rpc_unpack_type_from(desc, node, type);
@@ -772,7 +772,7 @@ static int send_full_dist_objects_list(struct rpc_desc *desc,
 		idx = container_of(node, struct shared_index, node);
 		this = container_of(idx, struct dist_shared_index, index);
 
-		if (this->master_node == KERRIGHED_NODE_ID_NONE) {
+		if (this->master_node == HCC_NODE_ID_NONE) {
 			/* the master node for this object is
 			 * not implied in the checkpoint
 			 */
@@ -839,7 +839,7 @@ static int rcv_full_dist_objects_list(struct rpc_desc *desc,
 			idx = container_of(node, struct shared_index, node);
 			obj = container_of(idx, struct shared_object, index);
 
-			if (krgnode_is_unique(hcc_node_id, s.nodes))
+			if (hccnode_is_unique(hcc_node_id, s.nodes))
 				obj->checkpoint.locality = LOCAL_ONLY;
 			else if (s.master_node == hcc_node_id)
 				obj->checkpoint.locality = SHARED_MASTER;
@@ -895,7 +895,7 @@ int global_chkpt_shared(struct rpc_desc *desc,
 
 	/* 1) waiting the list of shared objects */
 
-	for_each_krgnode_mask(node, obj->nodes) {
+	for_each_hccnode_mask(node, obj->nodes) {
 		r = rcv_dist_objects_list_from(desc,
 					       &dist_shared_indexes,
 					       node);
@@ -1437,8 +1437,8 @@ static int rcv_substitution_files(struct rpc_desc *desc,
 			goto error;
 		}
 
-		if (node == KERRIGHED_NODE_ID_NONE
-		    || krgnode_isset(node, app->restart.replacing_nodes)) {
+		if (node == HCC_NODE_ID_NONE
+		    || hccnode_isset(node, app->restart.replacing_nodes)) {
 
 			/* the object is useful on this node, add it */
 			obj->index.type = index.type;
@@ -1547,9 +1547,9 @@ static int insert_one_substitution_file(struct rb_root *files,
 		goto err_put_file;
 
 	if (file->f_flags & (O_FAF_SRV|O_FAF_CLT))
-		r = get_faf_file_krg_desc(file, &fdesc, &fdesc_size);
+		r = get_faf_file_hcc_desc(file, &fdesc, &fdesc_size);
 	else
-		r = get_regular_file_krg_desc(file, &fdesc, &fdesc_size);
+		r = get_regular_file_hcc_desc(file, &fdesc, &fdesc_size);
 
 	if (r)
 		goto err_put_file;
@@ -1614,7 +1614,7 @@ static int parse_file_identifier(char *str, enum shared_obj_type *type,
 
 	r = 0;
 
-	if (*node == KERRIGHED_NODE_ID_NONE)
+	if (*node == HCC_NODE_ID_NONE)
 		*type = DVFS_FILE;
 	else
 		*type = LOCAL_FILE;
@@ -1696,7 +1696,7 @@ static int local_restart_shared_objects(struct rpc_desc *desc,
 	ghost_t *ghost;
 
 	/* 1) restore objects for which we are master */
-	for_each_krgnode_mask(node, app->restart.replacing_nodes) {
+	for_each_hccnode_mask(node, app->restart.replacing_nodes) {
 
 		ghost = create_file_ghost(GHOST_READ, app->app_id, chkpt_sn,
 					  "shared_obj_%d.bin", node);
@@ -1760,7 +1760,7 @@ int local_restart_shared(struct rpc_desc *desc,
 
 	__set_ghost_fs(&oldfs);
 
-	nb_nodes = krgnodes_weight(app->restart.replacing_nodes);
+	nb_nodes = hccnodes_weight(app->restart.replacing_nodes);
 
 	ghost_offsets = kzalloc(nb_nodes * sizeof(int), GFP_KERNEL);
 	if (!ghost_offsets) {
@@ -1813,7 +1813,7 @@ static int global_restart_shared_objects(struct rpc_desc *desc,
 	if (err_rpc)
 		goto err_rpc;
 
-	for_each_krgnode_mask(node, obj->nodes) {
+	for_each_hccnode_mask(node, obj->nodes) {
 		r = rcv_restored_dist_objects_list_from(desc,
 							&dist_shared_indexes,
 							node);

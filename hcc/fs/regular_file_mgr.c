@@ -36,8 +36,8 @@
 /*                                                                           */
 /*****************************************************************************/
 
-struct file *reopen_file_entry_from_krg_desc (struct task_struct *task,
-                                              struct regular_file_krg_desc *desc)
+struct file *reopen_file_entry_from_hcc_desc (struct task_struct *task,
+                                              struct regular_file_hcc_desc *desc)
 {
 	struct file *file = NULL;
 
@@ -56,8 +56,8 @@ struct file *reopen_file_entry_from_krg_desc (struct task_struct *task,
 	return file;
 }
 
-struct file *create_file_entry_from_krg_desc (struct task_struct *task,
-                                              struct regular_file_krg_desc *desc)
+struct file *create_file_entry_from_hcc_desc (struct task_struct *task,
+                                              struct regular_file_hcc_desc *desc)
 {
 	struct file *file = NULL;
 
@@ -86,10 +86,10 @@ struct file *create_file_entry_from_krg_desc (struct task_struct *task,
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-static struct file *import_regular_file_from_krg_desc(
+static struct file *import_regular_file_from_hcc_desc(
 	struct epm_action *action,
 	struct task_struct *task,
-	struct regular_file_krg_desc *desc)
+	struct regular_file_hcc_desc *desc)
 {
 	struct file *file;
 
@@ -97,18 +97,18 @@ static struct file *import_regular_file_from_krg_desc(
 	BUG_ON (!desc);
 
 	if (desc->type == PIPE)
-		file = reopen_pipe_file_entry_from_krg_desc(task, desc);
+		file = reopen_pipe_file_entry_from_hcc_desc(task, desc);
 #ifdef CONFIG_HCC_IPC
 	else if (desc->type == SHM)
-		file = reopen_shm_file_entry_from_krg_desc(task, desc);
+		file = reopen_shm_file_entry_from_hcc_desc(task, desc);
 #endif
 	else {
 		desc->file.filename = (char *) &desc[1];
 
 		if (desc->file.ctnrid != GDM_SET_UNUSED)
-			file = create_file_entry_from_krg_desc(task, desc);
+			file = create_file_entry_from_hcc_desc(task, desc);
 		else
-			file = reopen_file_entry_from_krg_desc(task, desc);
+			file = reopen_file_entry_from_hcc_desc(task, desc);
 
 		if (IS_ERR(file))
 			ckpt_err(action, PTR_ERR(file),
@@ -154,22 +154,22 @@ int check_flush_file (struct epm_action *action,
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-int get_regular_file_krg_desc(struct file *file, void **desc,
+int get_regular_file_hcc_desc(struct file *file, void **desc,
 			      int *desc_size)
 {
 	char *tmp, *file_name;
-	struct regular_file_krg_desc *data;
+	struct regular_file_hcc_desc *data;
 	int size = 0, name_len;
 	int r = -ENOENT;
 
 #ifdef CONFIG_HCC_IPC
 	if (is_shm(file)) {
-		r = get_shm_file_krg_desc(file, desc, desc_size);
+		r = get_shm_file_hcc_desc(file, desc, desc_size);
 		goto exit;
 	}
 #endif
 	if (is_anonymous_pipe(file)) {
-		r = get_pipe_file_krg_desc(file, desc, desc_size);
+		r = get_pipe_file_hcc_desc(file, desc, desc_size);
 		goto exit;
 	}
 
@@ -184,7 +184,7 @@ int get_regular_file_krg_desc(struct file *file, void **desc,
 		goto exit_free_page;
 
 	name_len = strlen (file_name) + 1;
-	size = sizeof (struct regular_file_krg_desc) + name_len;
+	size = sizeof (struct regular_file_hcc_desc) + name_len;
 
 	data = kmalloc (size, GFP_KERNEL);
 	if (!data) {
@@ -228,7 +228,7 @@ exit:
 
 /*****************************************************************************/
 
-int ghost_read_file_krg_desc(ghost_t *ghost, void **desc, int *desc_size)
+int ghost_read_file_hcc_desc(ghost_t *ghost, void **desc, int *desc_size)
 {
 	int r;
 	r = ghost_read(ghost, desc_size, sizeof (int));
@@ -250,7 +250,7 @@ error:
 	return r;
 }
 
-int ghost_write_file_krg_desc(ghost_t *ghost, void *desc, int desc_size)
+int ghost_write_file_hcc_desc(ghost_t *ghost, void *desc, int desc_size)
 {
 	int r;
 
@@ -263,17 +263,17 @@ error:
 	return r;
 }
 
-static int ghost_write_regular_file_krg_desc(ghost_t *ghost, struct file *file)
+static int ghost_write_regular_file_hcc_desc(ghost_t *ghost, struct file *file)
 {
 	int r;
 	void *desc;
 	int desc_size;
 
-	r = get_regular_file_krg_desc(file, &desc, &desc_size);
+	r = get_regular_file_hcc_desc(file, &desc, &desc_size);
 	if (r)
 		goto error;
 
-	r = ghost_write_file_krg_desc(ghost, desc, desc_size);
+	r = ghost_write_file_hcc_desc(ghost, desc, desc_size);
 	kfree (desc);
 error:
 	return r;
@@ -378,11 +378,11 @@ static int __cr_link_to_file(struct epm_action *action, ghost_t *ghost,
 		if (!file) {
 #ifdef CONFIG_HCC_FAF
 			if (file_link->desc_type == CR_FILE_FAF_DESC)
-				file = create_faf_file_from_krg_desc(
+				file = create_faf_file_from_hcc_desc(
 							task, file_link->desc);
 			else
 #endif
-				file = import_regular_file_from_krg_desc(
+				file = import_regular_file_from_hcc_desc(
 					action, task, file_link->desc);
 			first_import = 1;
 		}
@@ -482,20 +482,20 @@ int regular_file_export (struct epm_action *action,
 
 	check_flush_file(action, task->files, file);
 
-	r = ghost_write_regular_file_krg_desc(ghost, file);
+	r = ghost_write_regular_file_hcc_desc(ghost, file);
 
 	return r;
 }
 
 int __regular_file_import_from_desc(struct epm_action *action,
-				    struct regular_file_krg_desc *desc,
+				    struct regular_file_hcc_desc *desc,
 				    struct task_struct *task,
 				    struct file **returned_file)
 {
 	int r = 0;
 	struct file *file;
 
-	file = import_regular_file_from_krg_desc(action, task, desc);
+	file = import_regular_file_from_hcc_desc(action, task, desc);
 	if (IS_ERR(file)) {
 		r = PTR_ERR (file);
 		goto exit;
@@ -523,12 +523,12 @@ int regular_file_import(struct epm_action *action,
 			struct task_struct *task,
 			struct file **returned_file)
 {
-	struct regular_file_krg_desc *desc;
+	struct regular_file_hcc_desc *desc;
 	int desc_size, r = 0;
 
 	BUG_ON(action->type == EPM_CHECKPOINT);
 
-	r = ghost_read_file_krg_desc(ghost, (void **)(&desc), &desc_size);
+	r = ghost_read_file_hcc_desc(ghost, (void **)(&desc), &desc_size);
 	if (r)
 		goto exit;
 
@@ -640,7 +640,7 @@ int cr_export_user_info_file(struct epm_action *action, ghost_t *ghost,
 
 	if (file->f_objid)
 		/* if the file is shared, there is no host node */
-		file_node = KERRIGHED_NODE_ID_NONE;
+		file_node = HCC_NODE_ID_NONE;
 	else
 		file_node = hcc_node_id;
 
@@ -739,7 +739,7 @@ static int prepare_restart_data_dvfs_file(struct file *f,
 }
 
 #ifdef CONFIG_HCC_FAF
-void fill_faf_file_krg_desc(faf_client_data_t *data, struct file *file);
+void fill_faf_file_hcc_desc(faf_client_data_t *data, struct file *file);
 
 static int prepare_restart_data_faf_file(struct file *f,
 					 void **returned_data,
@@ -758,7 +758,7 @@ static int prepare_restart_data_faf_file(struct file *f,
 	file_link->from_substitution = false;
 
 	if (f->f_flags & O_FAF_SRV)
-		fill_faf_file_krg_desc(file_link->desc, f);
+		fill_faf_file_hcc_desc(file_link->desc, f);
 	else {
 		BUG_ON(!(f->f_flags & O_FAF_CLT));
 		*(faf_client_data_t*)file_link->desc =
@@ -858,7 +858,7 @@ static int cr_import_now_file(struct epm_action *action,
 	/* We need to read the file description from the ghost
 	 * even if we may not use it
 	 */
-	r = ghost_read_file_krg_desc(ghost, &desc, &desc_size);
+	r = ghost_read_file_hcc_desc(ghost, &desc, &desc_size);
 	if (r)
 		goto error;
 

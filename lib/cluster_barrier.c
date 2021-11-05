@@ -7,13 +7,13 @@
  */
 
 #include <linux/cluster_barrier.h>
-#include <linux/krg_hashtable.h>
+#include <linux/hcc_hashtable.h>
 #include <linux/unique_id.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 
 #include <hcc/types.h>
 #include <hcc/hotplug.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 
 #define TABLE_SIZE 128
 
@@ -50,8 +50,8 @@ struct cluster_barrier *alloc_cluster_barrier(unique_id_t key)
 		return ERR_PTR(-ENOMEM);
 
 	for (i = 0; i < 2; i++) {
-		krgnodes_clear (barrier->core[i].nodes_in_barrier);
-		krgnodes_clear (barrier->core[i].nodes_to_wait);
+		hccnodes_clear (barrier->core[i].nodes_in_barrier);
+		hccnodes_clear (barrier->core[i].nodes_to_wait);
 		init_waitqueue_head(&barrier->core[i].waiting_tsk);
 		barrier->core[i].in_barrier = 0;
 	}
@@ -76,7 +76,7 @@ void free_cluster_barrier(struct cluster_barrier *barrier)
 }
 
 int cluster_barrier(struct cluster_barrier *barrier,
-		    krgnodemask_t *nodes,
+		    hccnodemask_t *nodes,
 		    hcc_node_t master)
 {
 	struct cluster_barrier_core *core_bar;
@@ -84,8 +84,8 @@ int cluster_barrier(struct cluster_barrier *barrier,
 	struct rpc_desc *desc;
 	int err = 0;
 
-	BUG_ON (!__krgnode_isset(hcc_node_id, nodes));
-	BUG_ON (!__krgnode_isset(master, nodes));
+	BUG_ON (!__hccnode_isset(hcc_node_id, nodes));
+	BUG_ON (!__hccnode_isset(master, nodes));
 
 	spin_lock(&barrier->lock);
 	barrier->id.toggle = (barrier->id.toggle + 1) % 2;
@@ -101,7 +101,7 @@ int cluster_barrier(struct cluster_barrier *barrier,
 	desc = rpc_begin(RPC_ENTER_BARRIER, master);
 
 	rpc_pack_type (desc, id);
-	rpc_pack(desc, 0, nodes, sizeof(krgnodemask_t));
+	rpc_pack(desc, 0, nodes, sizeof(hccnodemask_t));
 
 	rpc_end(desc, 0);
 
@@ -125,25 +125,25 @@ static int handle_enter_barrier(struct rpc_desc* desc,
 	struct cluster_barrier_id *id = ((struct cluster_barrier_id *) _msg);
 	struct cluster_barrier_core *core_bar;
 	struct cluster_barrier *barrier;
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 
-	rpc_unpack(desc, 0, &nodes, sizeof(krgnodemask_t));
+	rpc_unpack(desc, 0, &nodes, sizeof(hccnodemask_t));
 
 	barrier = hashtable_find (barrier_table, id->key);
 	BUG_ON(!barrier);
 
 	core_bar = &barrier->core[id->toggle];
 
-	if (krgnodes_empty(core_bar->nodes_to_wait)) {
-		krgnodes_copy(core_bar->nodes_in_barrier, nodes);
-		krgnodes_copy(core_bar->nodes_to_wait, nodes);
+	if (hccnodes_empty(core_bar->nodes_to_wait)) {
+		hccnodes_copy(core_bar->nodes_in_barrier, nodes);
+		hccnodes_copy(core_bar->nodes_to_wait, nodes);
 	}
 	else
-		BUG_ON(!krgnodes_equal(core_bar->nodes_in_barrier, nodes));
+		BUG_ON(!hccnodes_equal(core_bar->nodes_in_barrier, nodes));
 
-	krgnode_clear(desc->client, core_bar->nodes_to_wait);
+	hccnode_clear(desc->client, core_bar->nodes_to_wait);
 
-	if (krgnodes_empty(core_bar->nodes_to_wait)) {
+	if (hccnodes_empty(core_bar->nodes_to_wait)) {
                 rpc_async_m(RPC_EXIT_BARRIER, &core_bar->nodes_in_barrier,
 			    id, sizeof (struct cluster_barrier_id));
 	}

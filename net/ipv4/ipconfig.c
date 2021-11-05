@@ -60,9 +60,9 @@
 #include <net/route.h>
 
 #ifdef CONFIG_HCCRPC
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <hcc/hotplug.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 #endif
 
 #include <asm/uaccess.h>

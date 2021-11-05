@@ -11,7 +11,7 @@
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 #include <hcc/scheduler/filter.h>
 
 MODULE_LICENSE("GPL v2");
@@ -20,8 +20,8 @@ MODULE_DESCRIPTION("Filter to proactively cache remote values");
 
 struct remote_cache_filter {
 	struct scheduler_filter filter;
-	unsigned long remote_values[KERRIGHED_MAX_NODES];
-	krgnodemask_t available_values;
+	unsigned long remote_values[HCC_MAX_NODES];
+	hccnodemask_t available_values;
 	unsigned long polling_period; /* in jiffies */
 	hcc_node_t current_node;
 	struct delayed_work polling_work;
@@ -50,7 +50,7 @@ static void schedule_next_poll(struct remote_cache_filter *rc_filter)
 	unsigned long delay;
 
 	delay = rc_filter->polling_period;
-	if (rc_filter->current_node != KERRIGHED_NODE_ID_NONE)
+	if (rc_filter->current_node != HCC_NODE_ID_NONE)
 		/*
 		 * Last polling phase could not finish within period. Schedule
 		 * next phase ASAP
@@ -126,7 +126,7 @@ static int try_get_remote_values(struct remote_cache_filter *f)
 	int nr = 0;
 	int ret = 0;
 
-	while (current_node != KERRIGHED_NODE_ID_NONE) {
+	while (current_node != HCC_NODE_ID_NONE) {
 		ret = scheduler_filter_simple_get_remote_value(
 			&f->filter,
 			current_node,
@@ -136,12 +136,12 @@ static int try_get_remote_values(struct remote_cache_filter *f)
 			break;
 		nr++;
 		if (ret > 0)
-			krgnode_set(current_node, f->available_values);
+			hccnode_set(current_node, f->available_values);
 		else
-			krgnode_clear(current_node, f->available_values);
-		current_node = krgnode_next_online(current_node);
-		if (current_node == KERRIGHED_MAX_NODES)
-			current_node = KERRIGHED_NODE_ID_NONE;
+			hccnode_clear(current_node, f->available_values);
+		current_node = hccnode_next_online(current_node);
+		if (current_node == HCC_MAX_NODES)
+			current_node = HCC_NODE_ID_NONE;
 	}
 	f->current_node = current_node;
 
@@ -155,9 +155,9 @@ static void get_remote_values(struct remote_cache_filter *rc_filter)
 {
 	hcc_node_t first_node;
 
-	if (rc_filter->current_node == KERRIGHED_NODE_ID_NONE) {
-		first_node = nth_online_krgnode(0);
-		if (first_node != KERRIGHED_MAX_NODES) {
+	if (rc_filter->current_node == HCC_NODE_ID_NONE) {
+		first_node = nth_online_hccnode(0);
+		if (first_node != HCC_MAX_NODES) {
 			rc_filter->current_node = first_node;
 			try_get_remote_values(rc_filter);
 		}
@@ -214,7 +214,7 @@ DEFINE_SCHEDULER_FILTER_GET_REMOTE_VALUE(remote_cache_filter, filter,
 		reschedule_next_poll(f);
 		get_remote_values(f);
 	}
-	if (krgnode_isset(node, f->available_values)) {
+	if (hccnode_isset(node, f->available_values)) {
 		value_p[0] = f->remote_values[node];
 		ret = 1;
 	}
@@ -237,9 +237,9 @@ DEFINE_SCHEDULER_FILTER_NEW(remote_cache_filter, name)
 				    NULL);
 	if (err)
 		goto err_filter;
-	krgnodes_clear(f->available_values);
+	hccnodes_clear(f->available_values);
 	f->polling_period = 0;
-	f->current_node = KERRIGHED_NODE_ID_NONE;
+	f->current_node = HCC_NODE_ID_NONE;
 	INIT_DELAYED_WORK(&f->polling_work, polling_worker);
 	f->active = 0;
 	schedule_next_poll(f);

@@ -72,7 +72,7 @@ void check_file_struct_sharing (int index, struct file *file,
 		goto done;
 
 #ifdef CONFIG_HCC_IPC
-	BUG_ON(file->f_op == &krg_shm_file_operations);
+	BUG_ON(file->f_op == &hcc_shm_file_operations);
 
 	/* Do not share the file struct for HCC SHM files */
 	if (file->f_op == &shm_file_operations ||
@@ -148,7 +148,7 @@ void put_dvfs_file(int index, struct file *file)
  *
  *  @param file    Struct of the file to get the position value.
  */
-loff_t krg_file_pos_read(struct file *file)
+loff_t hcc_file_pos_read(struct file *file)
 {
 	struct dvfs_file_struct *dvfs_file;
 	loff_t pos;
@@ -167,7 +167,7 @@ loff_t krg_file_pos_read(struct file *file)
  *
  *  @param file    Struct of the file to write position value.
  */
-void krg_file_pos_write(struct file *file, loff_t pos)
+void hcc_file_pos_write(struct file *file, loff_t pos)
 {
 	struct dvfs_file_struct *dvfs_file;
 
@@ -183,7 +183,7 @@ void krg_file_pos_write(struct file *file, loff_t pos)
  *
  *  @param file    Struct of the file to decrease usage counter.
  */
-void krg_put_file(struct file *file)
+void hcc_put_file(struct file *file)
 {
 	BUG_ON (file->f_objid == 0);
 

@@ -237,7 +237,7 @@ static inline int ipc_checkid(struct kern_ipc_perm *ipcp, int uid)
 static inline void ipc_lock_by_ptr(struct kern_ipc_perm *perm)
 {
 #ifdef CONFIG_HCC_IPC
-	BUG_ON(perm->krgops);
+	BUG_ON(perm->hccops);
 #endif
 	rcu_read_lock();
 	spin_lock(&perm->lock);
@@ -273,7 +273,7 @@ void unlink_queue(struct sem_array *sma, struct sem_queue *q);
 void msg_rcu_free(struct rcu_head *head);
 void sem_rcu_free(struct rcu_head *head);
 
-struct krgipc_ops {
+struct hccipc_ops {
 	struct gdm_set *map_gdm_set;
 	struct gdm_set *key_gdm_set;
 	struct gdm_set *data_gdm_set;
@@ -286,15 +286,15 @@ struct krgipc_ops {
 int local_ipc_reserveid(struct ipc_ids* ids, struct kern_ipc_perm* new,
                         int size);
 
-int is_krg_ipc(struct ipc_ids *ids);
+int is_hcc_ipc(struct ipc_ids *ids);
 
-int krg_msg_init_ns(struct ipc_namespace *ns);
-int krg_sem_init_ns(struct ipc_namespace *ns);
-int krg_shm_init_ns(struct ipc_namespace *ns);
+int hcc_msg_init_ns(struct ipc_namespace *ns);
+int hcc_sem_init_ns(struct ipc_namespace *ns);
+int hcc_shm_init_ns(struct ipc_namespace *ns);
 
-void krg_msg_exit_ns(struct ipc_namespace *ns);
-void krg_sem_exit_ns(struct ipc_namespace *ns);
-void krg_shm_exit_ns(struct ipc_namespace *ns);
+void hcc_msg_exit_ns(struct ipc_namespace *ns);
+void hcc_sem_exit_ns(struct ipc_namespace *ns);
+void hcc_shm_exit_ns(struct ipc_namespace *ns);
 #endif
 
 #endif

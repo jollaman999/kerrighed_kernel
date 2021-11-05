@@ -1018,7 +1018,7 @@ int filp_close(struct file *filp, fl_owner_t id)
 	fput(filp);
 #ifdef CONFIG_HCC_FAF
 	if ((flags & O_FAF_SRV) && (file_count(filp) == 1))
-		krg_faf_srv_close(filp);
+		hcc_faf_srv_close(filp);
 #endif
 	return retval;
 }

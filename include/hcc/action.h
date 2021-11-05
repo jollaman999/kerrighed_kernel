@@ -19,7 +19,7 @@ typedef enum {
 	EPM_REMOTE_CLONE,
 	EPM_CHECKPOINT,
 	EPM_ACTION_MAX	   /* Always in last position */
-} krg_epm_action_t;
+} hcc_epm_action_t;
 
 typedef enum {
 	CR_SAVE_NOW,
@@ -38,7 +38,7 @@ struct task_struct;
 struct completion;
 
 struct epm_action {
-	krg_epm_action_t type;
+	hcc_epm_action_t type;
 	union {
 		struct {
 			pid_t pid;
@@ -78,7 +78,7 @@ static inline hcc_node_t epm_target_node(struct epm_action *action)
 	case EPM_REMOTE_CLONE:
 		return action->remote_clone.target;
 	case EPM_CHECKPOINT:
-		return KERRIGHED_NODE_ID_NONE;
+		return HCC_NODE_ID_NONE;
 	default:
 		BUG();
 	}
@@ -89,48 +89,48 @@ static inline hcc_node_t epm_target_node(struct epm_action *action)
  * nor outside write_lock(_irq)(&tasklist_lock).
  * Nests outside sighand->lock.
  */
-extern rwlock_t krg_action_lock;
+extern rwlock_t hcc_action_lock;
 
-static inline void krg_action_block_all(void)
+static inline void hcc_action_block_all(void)
 {
-	read_lock(&krg_action_lock);
+	read_lock(&hcc_action_lock);
 }
 
-static inline void krg_action_unblock_all(void)
+static inline void hcc_action_unblock_all(void)
 {
-	read_unlock(&krg_action_lock);
+	read_unlock(&hcc_action_lock);
 }
 
-static inline int krg_action_any_pending(struct task_struct *task)
+static inline int hcc_action_any_pending(struct task_struct *task)
 {
-	return task->krg_action_flags;
+	return task->hcc_action_flags;
 }
 
-static inline int krg_action_block_any(struct task_struct *task)
+static inline int hcc_action_block_any(struct task_struct *task)
 {
 	int pending;
 
-	krg_action_block_all();
-	pending = krg_action_any_pending(task);
+	hcc_action_block_all();
+	pending = hcc_action_any_pending(task);
 	if (pending)
-		krg_action_unblock_all();
+		hcc_action_unblock_all();
 	return !pending;
 }
 
-static inline void krg_action_unblock_any(struct task_struct *task)
+static inline void hcc_action_unblock_any(struct task_struct *task)
 {
-	krg_action_unblock_all();
+	hcc_action_unblock_all();
 }
 
-int krg_action_disable(struct task_struct *task, krg_epm_action_t action,
+int hcc_action_disable(struct task_struct *task, hcc_epm_action_t action,
 		       int inheritable);
-int krg_action_enable(struct task_struct *task, krg_epm_action_t action,
+int hcc_action_enable(struct task_struct *task, hcc_epm_action_t action,
 		      int inheritable);
 
-int krg_action_start(struct task_struct *task, krg_epm_action_t action);
-int krg_action_stop(struct task_struct *task, krg_epm_action_t action);
+int hcc_action_start(struct task_struct *task, hcc_epm_action_t action);
+int hcc_action_stop(struct task_struct *task, hcc_epm_action_t action);
 
-int krg_action_pending(struct task_struct *task, krg_epm_action_t action);
+int hcc_action_pending(struct task_struct *task, hcc_epm_action_t action);
 
 #endif /* CONFIG_HCC_EPM */
 

@@ -12,10 +12,10 @@
 #include <hcc/pid.h>
 #include <hcc/namespace.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 #include <hcc/hotplug.h>
-#include <net/krgrpc/rpc.h>
-#include <net/krgrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
 #include <gdm/gdm.h>
 
 #include "pid.h"
@@ -23,13 +23,13 @@
 #define BITS_PER_PAGE (PAGE_SIZE * 8)
 
 struct pidmap_map {
-	hcc_node_t host[KERRIGHED_MAX_NODES];
+	hcc_node_t host[HCC_MAX_NODES];
 };
 
 static struct gdm_set *pidmap_map_gdm_set;
 static struct pidmap_map pidmap_map;
 static DECLARE_RWSEM(pidmap_map_rwsem);
-static struct pid_namespace *foreign_pidmap[KERRIGHED_MAX_NODES];
+static struct pid_namespace *foreign_pidmap[HCC_MAX_NODES];
 
 static int pidmap_map_alloc_object(struct gdm_obj *obj_entry,
 				   struct gdm_set *set, objid_t objid)
@@ -52,8 +52,8 @@ static int pidmap_map_first_touch(struct gdm_obj *obj_entry,
 		goto out;
 
 	map = obj_entry->object;
-	for (n = 0; n < KERRIGHED_MAX_NODES; n++)
-		map->host[n] = KERRIGHED_NODE_ID_NONE;
+	for (n = 0; n < HCC_MAX_NODES; n++)
+		map->host[n] = HCC_NODE_ID_NONE;
 
 out:
 	return 0;
@@ -158,7 +158,7 @@ int pidmap_map_alloc(hcc_node_t node)
 	if (err)
 		goto out;
 
-	if (pidmap_map.host[node] != KERRIGHED_NODE_ID_NONE)
+	if (pidmap_map.host[node] != HCC_NODE_ID_NONE)
 		goto unlock;
 
 	/*
@@ -191,7 +191,7 @@ struct pid_namespace *node_pidmap(hcc_node_t node)
 	return foreign_pidmap[node];
 }
 
-void krg_free_pidmap(struct upid *upid)
+void hcc_free_pidmap(struct upid *upid)
 {
 	struct pid_namespace *pidmap_ns = node_pidmap(ORIG_NODE(upid->nr));
 	struct upid __upid = {
@@ -203,12 +203,12 @@ void krg_free_pidmap(struct upid *upid)
 		__free_pidmap(&__upid);
 }
 
-void pidmap_map_cleanup(struct krg_namespace *krg_ns)
+void pidmap_map_cleanup(struct hcc_namespace *hcc_ns)
 {
 	hcc_node_t node;
 	struct pid_namespace *ns;
 
-	BUG_ON(num_online_krgnodes());
+	BUG_ON(num_online_hccnodes());
 
 	/*
 	 * Wait until all PIDs are ready to be reused
@@ -220,7 +220,7 @@ void pidmap_map_cleanup(struct krg_namespace *krg_ns)
 
 	_gdm_remove_object(pidmap_map_gdm_set, 0);
 
-	for (node = 0; node < KERRIGHED_MAX_NODES; node++) {
+	for (node = 0; node < HCC_MAX_NODES; node++) {
 		ns = foreign_pidmap[node];
 		if (ns) {
 			BUG_ON(next_pidmap(ns, 1) >= 0);
@@ -280,7 +280,7 @@ static int recv_pidmap(struct rpc_desc *desc,
 
 	i = 1;
 	while ((i = next_pidmap(pidmap_ns, i)) > 0) {
-		err = __krg_pid_link_task(GLOBAL_PID_NODE(i, node));
+		err = __hcc_pid_link_task(GLOBAL_PID_NODE(i, node));
 		if (err)
 			goto err;
 	}
@@ -372,7 +372,7 @@ int pidmap_map_add(struct hotplug_context *ctx)
 	struct rpc_desc *desc;
 	int err;
 
-	if (!krgnode_isset(hcc_node_id, ctx->node_set.v))
+	if (!hccnode_isset(hcc_node_id, ctx->node_set.v))
 		return 0;
 
 	err = pidmap_map_read_lock();
@@ -389,7 +389,7 @@ int pidmap_map_add(struct hotplug_context *ctx)
 		return err;
 
 	host_node = pidmap_node(hcc_node_id);
-	if (host_node == KERRIGHED_NODE_ID_NONE) {
+	if (host_node == HCC_NODE_ID_NONE) {
 		pidmap_map.host[hcc_node_id] = hcc_node_id;
 		goto unlock;
 	}

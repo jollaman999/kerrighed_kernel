@@ -87,7 +87,7 @@
 #include <hcc/action.h>
 #endif
 #ifdef CONFIG_HCC_GDM
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 #include <gdm/gdm.h>
 #endif
 #if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
@@ -829,10 +829,10 @@ static int proc_tid_gdm(struct task_struct *task, char *buffer)
 	len += sprintf (buffer + len, "  * Object:        %p\n",
 			obj_entry->object);
 	len += sprintf (buffer + len, "  * Copy set: ");
-	len += krgnodemask_scnprintf(buffer + len, PAGE_SIZE - len,
+	len += hccnodemask_scnprintf(buffer + len, PAGE_SIZE - len,
 				     obj_entry->master_obj.copyset);
 	len += sprintf (buffer + len, "\n  * Remove set: ");
-	len += krgnodemask_scnprintf(buffer + len, PAGE_SIZE - len,
+	len += hccnodemask_scnprintf(buffer + len, PAGE_SIZE - len,
 				     obj_entry->master_obj.copyset);
 	len += sprintf (buffer + len, "\n  * Waiting processes: ");
 	len += proc_gdm_print_wq (buffer + len, &obj_entry->waiting_tsk);
@@ -2004,7 +2004,7 @@ int do_proc_readlink(struct path *path, char __user *buffer, int buflen)
 
 #ifdef CONFIG_HCC_FAF
 	if (!path->dentry && path->mnt)
-		pathname = krg_faf_d_path((struct file *)path->mnt, tmp, PAGE_SIZE, NULL);
+		pathname = hcc_faf_d_path((struct file *)path->mnt, tmp, PAGE_SIZE, NULL);
 	else
 #endif
 	pathname = d_path(path, tmp, PAGE_SIZE);
@@ -3454,9 +3454,9 @@ struct dentry *proc_pid_lookup(struct inode *dir, struct dentry * dentry, struct
 	if (!task)
 #if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
 	{
-		if (current->nsproxy->krg_ns
-		    && is_krg_pid_ns_root(ns) && (tgid & GLOBAL_PID_MASK))
-			result = krg_proc_pid_lookup(dir, dentry, tgid);
+		if (current->nsproxy->hcc_ns
+		    && is_hcc_pid_ns_root(ns) && (tgid & GLOBAL_PID_MASK))
+			result = hcc_proc_pid_lookup(dir, dentry, tgid);
 #endif
                 goto out;
 #if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
@@ -3465,7 +3465,7 @@ struct dentry *proc_pid_lookup(struct inode *dir, struct dentry * dentry, struct
 
 	result = proc_pid_instantiate(dir, dentry, task, NULL);
 #if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_EPM)
-	if (current->nsproxy->krg_ns
+	if (current->nsproxy->hcc_ns
 	    && IS_ERR(result) && task->exit_state == EXIT_MIGRATION) {
 		/*
 		 * proc_pid_instantiate() may have instantiated dentry, but we
@@ -3474,7 +3474,7 @@ struct dentry *proc_pid_lookup(struct inode *dir, struct dentry * dentry, struct
 		result = ERR_PTR(-ENOMEM);
 		dentry = d_alloc(dentry->d_parent, &dentry->d_name);
 		if (dentry) {
-			result = krg_proc_pid_lookup(dir, dentry, tgid);
+			result = hcc_proc_pid_lookup(dir, dentry, tgid);
 			if (!result)
 				result = dentry;
 			else
@@ -3581,9 +3581,9 @@ int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
 	iter.task = NULL;
 	iter.tgid = filp->f_pos - TGID_OFFSET;
 #if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
-	if (current->nsproxy->krg_ns && is_krg_pid_ns_root(ns)) {
-		/* All filling is done by krg_proc_pid_readdir */
-		if (krg_proc_pid_readdir(filp, dirent, filldir, TGID_OFFSET))
+	if (current->nsproxy->hcc_ns && is_hcc_pid_ns_root(ns)) {
+		/* All filling is done by hcc_proc_pid_readdir */
+		if (hcc_proc_pid_readdir(filp, dirent, filldir, TGID_OFFSET))
 			goto out;
 	} else
 #endif
@@ -3602,7 +3602,7 @@ int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
 		}
 	}
 #if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
-	filp->f_pos = KERRIGHED_PID_MAX_LIMIT + TGID_OFFSET;
+	filp->f_pos = HCC_PID_MAX_LIMIT + TGID_OFFSET;
 #else
 	filp->f_pos = PID_MAX_LIMIT + TGID_OFFSET;
 #endif

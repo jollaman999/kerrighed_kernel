@@ -21,8 +21,8 @@
 #include <linux/statfs.h>
 #include <linux/remote_sleep.h>
 
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/remote_cred.h>
 #include <hcc/physical_fs.h>
 #include <hcc/file.h>

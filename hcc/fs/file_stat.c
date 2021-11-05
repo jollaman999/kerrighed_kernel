@@ -137,7 +137,7 @@ char *get_phys_filename(struct file *file, char *buffer, bool del_ok)
 		bool deleted = false;
 		bool *deleted_param = del_ok ? NULL : &deleted;
 
-		filename = krg_faf_phys_d_path(file, buffer, PAGE_SIZE, deleted_param);
+		filename = hcc_faf_phys_d_path(file, buffer, PAGE_SIZE, deleted_param);
 		if ((!del_ok && deleted) || IS_ERR(filename))
 			filename = NULL;
 	} else

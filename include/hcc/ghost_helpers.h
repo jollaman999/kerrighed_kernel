@@ -2,7 +2,7 @@
 #define __GHOST_HELPERS_H__
 
 #include <hcc/ghost_types.h>
-#include <linux/krg_hashtable.h>
+#include <linux/hcc_hashtable.h>
 
 struct epm_action;
 struct task_struct;
@@ -155,9 +155,9 @@ int cr_add_pipe_inode_to_shared_table(struct task_struct *task,
 
 /* IPC */
 
-int get_shm_file_krg_desc(struct file *file, void **desc, int *desc_size);
+int get_shm_file_hcc_desc(struct file *file, void **desc, int *desc_size);
 
-struct file *reopen_shm_file_entry_from_krg_desc(struct task_struct *task,
+struct file *reopen_shm_file_entry_from_hcc_desc(struct task_struct *task,
 						 void *desc);
 
 int export_ipc_namespace(struct epm_action *action,
@@ -302,12 +302,12 @@ void free_ghost_cgroups(struct task_struct *ghost);
 
 #ifdef CONFIG_HCC_SCHED
 
-int export_krg_sched_info(struct epm_action *action, struct ghost *ghost,
+int export_hcc_sched_info(struct epm_action *action, struct ghost *ghost,
 			  struct task_struct *task);
-int import_krg_sched_info(struct epm_action *action, struct ghost *ghost,
+int import_hcc_sched_info(struct epm_action *action, struct ghost *ghost,
 			  struct task_struct *task);
-void post_import_krg_sched_info(struct task_struct *task);
-void unimport_krg_sched_info(struct task_struct *task);
+void post_import_hcc_sched_info(struct task_struct *task);
+void unimport_hcc_sched_info(struct task_struct *task);
 
 int export_process_set_links_start(struct epm_action *action, ghost_t *ghost,
 				   struct task_struct *task);

@@ -49,13 +49,13 @@ char *physical_d_path(const struct path *path, char *tmp, bool del_ok)
 
 void get_physical_root(struct path *root)
 {
-	struct krg_namespace *krg_ns = find_get_krg_ns();
+	struct hcc_namespace *hcc_ns = find_get_hcc_ns();
 
-	BUG_ON(!krg_ns);
-	root->mnt = krg_ns->root_nsproxy.mnt_ns->root;
+	BUG_ON(!hcc_ns);
+	root->mnt = hcc_ns->root_nsproxy.mnt_ns->root;
 	root->dentry = root->mnt->mnt_root;
 	path_get(root);
-	put_krg_ns(krg_ns);
+	put_hcc_ns(hcc_ns);
 
 	while (d_mountpoint(root->dentry) &&
 	       follow_down(root))
@@ -64,12 +64,12 @@ void get_physical_root(struct path *root)
 
 void chroot_to_physical_root(struct prev_root *prev_root)
 {
-	struct krg_namespace *krg_ns = find_get_krg_ns();
+	struct hcc_namespace *hcc_ns = find_get_hcc_ns();
 	struct fs_struct *fs = current->fs;
 	struct path root, prev_pwd;
 
-	BUG_ON(!krg_ns);
-	put_krg_ns(krg_ns);
+	BUG_ON(!hcc_ns);
+	put_hcc_ns(hcc_ns);
 	BUG_ON(fs->users != 1);
 
 	get_physical_root(&root);
@@ -84,7 +84,7 @@ void chroot_to_physical_root(struct prev_root *prev_root)
 
 	BUG_ON(prev_root->path.mnt->mnt_ns != current->nsproxy->mnt_ns);
 	prev_root->nsproxy = current->nsproxy;
-	rcu_assign_pointer(current->nsproxy, &krg_ns->root_nsproxy);
+	rcu_assign_pointer(current->nsproxy, &hcc_ns->root_nsproxy);
 }
 
 void chroot_to_prev_root(const struct prev_root *prev_root)

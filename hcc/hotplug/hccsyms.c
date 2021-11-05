@@ -2,94 +2,94 @@
  *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #include <linux/module.h>
-#include <linux/krg_hashtable.h>
+#include <linux/hcc_hashtable.h>
 #include <linux/init.h>
 
 /*****************************************************************************/
 /*                                                                           */
-/*                          KERRIGHED KSYM MANAGEMENT                        */
+/*                          HCC KSYM MANAGEMENT                        */
 /*                                                                           */
 /*****************************************************************************/
 
 
 #define HCCSYMS_HTABLE_SIZE 256
 
-static hashtable_t *krgsyms_htable;
-static void* krgsyms_table[HCCSYMS_TABLE_SIZE];
+static hashtable_t *hccsyms_htable;
+static void* hccsyms_table[HCCSYMS_TABLE_SIZE];
 
-int krgsyms_register(enum krgsyms_val v, void* p)
+int hccsyms_register(enum hccsyms_val v, void* p)
 {
 	if( (v < 0) || (v >= HCCSYMS_TABLE_SIZE) ){
-		printk("krgsyms_register: Incorrect krgsym value (%d)\n", v);
+		printk("hccsyms_register: Incorrect hccsym value (%d)\n", v);
 		BUG();
 		return -1;
 	};
 
-	if(krgsyms_table[v])
-		printk("krgsyms_register_symbol(%d, %p): value already set in table\n",
+	if(hccsyms_table[v])
+		printk("hccsyms_register_symbol(%d, %p): value already set in table\n",
 					 v, p);
 
-	if(hashtable_find(krgsyms_htable, (unsigned long)p) != NULL)
+	if(hashtable_find(hccsyms_htable, (unsigned long)p) != NULL)
 	{
-		printk("krgsyms_register_symbol(%d, %p): value already set in htable\n",
+		printk("hccsyms_register_symbol(%d, %p): value already set in htable\n",
 					 v, p);
 		BUG();
 	}
 
-	hashtable_add(krgsyms_htable, (unsigned long)p, (void*)v);
-	krgsyms_table[v] = p;
+	hashtable_add(hccsyms_htable, (unsigned long)p, (void*)v);
+	hccsyms_table[v] = p;
 
 	return 0;
 };
-EXPORT_SYMBOL(krgsyms_register);
+EXPORT_SYMBOL(hccsyms_register);
 
-int krgsyms_unregister(enum krgsyms_val v)
+int hccsyms_unregister(enum hccsyms_val v)
 {
 	void *p;
 
 	if( (v < 0) || (v >= HCCSYMS_TABLE_SIZE) ){
-		printk("krgsyms_unregister: Incorrect krgsym value (%d)\n", v);
+		printk("hccsyms_unregister: Incorrect hccsym value (%d)\n", v);
 		BUG();
 		return -1;
 	};
 
-	p = krgsyms_table[v];
-	krgsyms_table[v] = NULL;
-	hashtable_remove(krgsyms_htable, (unsigned long)p);
+	p = hccsyms_table[v];
+	hccsyms_table[v] = NULL;
+	hashtable_remove(hccsyms_htable, (unsigned long)p);
 
 	return 0;
 };
-EXPORT_SYMBOL(krgsyms_unregister);
+EXPORT_SYMBOL(hccsyms_unregister);
 
-enum krgsyms_val krgsyms_export(void* p)
+enum hccsyms_val hccsyms_export(void* p)
 {
-	return (enum krgsyms_val)hashtable_find(krgsyms_htable, (unsigned long)p);
+	return (enum hccsyms_val)hashtable_find(hccsyms_htable, (unsigned long)p);
 };
 
-void* krgsyms_import(enum krgsyms_val v)
+void* hccsyms_import(enum hccsyms_val v)
 {
 	if( (v < 0) || (v >= HCCSYMS_TABLE_SIZE) ){
-		printk("krgsyms_import: Incorrect krgsym value (%d)\n", v);
+		printk("hccsyms_import: Incorrect hccsym value (%d)\n", v);
 		BUG();
 		return NULL;
 	};
 
-	if ((v!=0) && (krgsyms_table[v] == NULL))
+	if ((v!=0) && (hccsyms_table[v] == NULL))
 	{
-		printk ("undefined krgsymbol (%d)\n", v);
+		printk ("undefined hccsymbol (%d)\n", v);
 		BUG();
 	}
 
-	return krgsyms_table[v];
+	return hccsyms_table[v];
 };
 
-int __init init_krgsyms(void)
+int __init init_hccsyms(void)
 {
-	krgsyms_htable = hashtable_new(HCCSYMS_HTABLE_SIZE);
-	if (!krgsyms_htable)
-		panic("Could not setup krgsyms table!\n");
+	hccsyms_htable = hashtable_new(HCCSYMS_HTABLE_SIZE);
+	if (!hccsyms_htable)
+		panic("Could not setup hccsyms table!\n");
 
 	return 0;
 };

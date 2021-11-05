@@ -43,7 +43,7 @@
 #include <asm/uaccess.h>
 #include "util.h"
 #ifdef CONFIG_HCC_IPC
-#include "krgmsg.h"
+#include "hccmsg.h"
 #ifdef CONFIG_HCC_EPM
 #include <hcc/action.h>
 #endif
@@ -248,8 +248,8 @@ int newque(struct ipc_namespace *ns, struct ipc_params *params)
 	}
 
 #ifdef CONFIG_HCC_IPC
-	if (is_krg_ipc(&msg_ids(ns))) {
-		retval = krg_ipc_msg_newque(ns, msq) ;
+	if (is_hcc_ipc(&msg_ids(ns))) {
+		retval = hcc_ipc_msg_newque(ns, msq) ;
 		if (retval) {
 			/* release locks held by ipc_addid */
 			local_ipc_unlock(&msq->q_perm);
@@ -258,7 +258,7 @@ int newque(struct ipc_namespace *ns, struct ipc_params *params)
 			return retval;
 		}
 	} else
-		msq->q_perm.krgops = NULL;
+		msq->q_perm.hccops = NULL;
 #endif
 
 	msg_unlock(msq);
@@ -323,8 +323,8 @@ static void expunge_all(struct msg_queue *msq, int res)
 #ifdef CONFIG_HCC_IPC
 static void freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 {
-	if (is_krg_ipc(&msg_ids(ns)))
-		krg_ipc_msg_freeque(ns, ipcp);
+	if (is_hcc_ipc(&msg_ids(ns)))
+		hcc_ipc_msg_freeque(ns, ipcp);
 	else
 		local_master_freeque(ns, ipcp);
 }
@@ -727,8 +727,8 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 	if (mtype < 1)
 		return -EINVAL;
 
-	if (is_krg_ipc(&msg_ids(ns)))
-		r = krg_ipc_msgsnd(msqid, mtype, mtext, msgsz, msgflg,
+	if (is_hcc_ipc(&msg_ids(ns)))
+		r = hcc_ipc_msgsnd(msqid, mtype, mtext, msgsz, msgflg,
 				  ns, task_tgid_vnr(current));
 	else {
 		r = __do_msgsnd(msqid, mtype, mtext, msgsz, msgflg,
@@ -829,7 +829,7 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 		ss_del(&s);
 
 #if defined(CONFIG_HCC_IPC) && defined(CONFIG_HCC_EPM)
-		if (krg_action_any_pending(current)) {
+		if (hcc_action_any_pending(current)) {
 #ifdef CONFIG_HCC_DEBUG
 			printk("%s:%d - action hcc! --> need replay!!\n",
 			       __PRETTY_FUNCTION__, __LINE__);
@@ -912,8 +912,8 @@ long do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	long r;
 	struct ipc_namespace *ns = current->nsproxy->ipc_ns;
 
-	if (is_krg_ipc(&msg_ids(ns)))
-		r = krg_ipc_msgrcv(msqid, pmtype, mtext, msgsz, msgtyp, msgflg,
+	if (is_hcc_ipc(&msg_ids(ns)))
+		r = hcc_ipc_msgrcv(msqid, pmtype, mtext, msgsz, msgtyp, msgflg,
 				  ns, task_tgid_vnr(current));
 	else
 		r = __do_msgrcv(msqid, pmtype, mtext, msgsz, msgtyp, msgflg,
@@ -1095,7 +1095,7 @@ long do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 		list_del(&msr_d.r_list);
 
 #if defined(CONFIG_HCC_IPC) && defined(CONFIG_HCC_EPM)
-		if (krg_action_any_pending(current)) {
+		if (hcc_action_any_pending(current)) {
 #ifdef CONFIG_HCC_DEBUG
 			printk("%s:%d - action hcc! --> need replay!!\n",
 			       __PRETTY_FUNCTION__, __LINE__);

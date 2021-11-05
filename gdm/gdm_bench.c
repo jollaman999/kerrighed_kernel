@@ -4,7 +4,7 @@
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 
 #define NR_TEST_LOOPS 16
@@ -359,17 +359,17 @@ int handle_gdm_bench (struct rpc_desc* desc, void *_msg, size_t size)
 int gdm_bench(char *buff, int size)
 {
 	int n, i, master_node = hcc_node_id;
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 
 	if (hcc_nb_nodes < 4) {
 		n = snprintf (buff, size, "Not enough nodes (min nodes: 4)\n");
 		return n;
 	}
 
-	krgnodes_clear(nodes);
+	hccnodes_clear(nodes);
 
 	for (i = master_node + 1; i <= master_node + 3; i++)
-		krgnode_set(i, nodes);
+		hccnode_set(i, nodes);
 
 	rpc_async_m(GDM_BENCH, &nodes, &master_node, sizeof(int));
 

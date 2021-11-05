@@ -643,7 +643,7 @@ SYSCALL_DEFINE3(ioctl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
 
 #ifdef CONFIG_HCC_FAF
 	if (filp->f_flags & O_FAF_CLT) {
-		error = krg_faf_ioctl(filp, cmd, arg);
+		error = hcc_faf_ioctl(filp, cmd, arg);
 		goto out_fput;
 	}
 #endif

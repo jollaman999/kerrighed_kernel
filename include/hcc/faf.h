@@ -29,71 +29,71 @@ typedef struct faf_client_data {
 	unsigned int is_named_pipe:1;
 } faf_client_data_t;
 
-off_t krg_faf_lseek(struct file *file, off_t offset,
+off_t hcc_faf_lseek(struct file *file, off_t offset,
 		    unsigned int origin);
-long krg_faf_llseek(struct file *file, unsigned long offset_high,
+long hcc_faf_llseek(struct file *file, unsigned long offset_high,
 		    unsigned long offset_low, loff_t *result,
 		    unsigned int origin);
-ssize_t krg_faf_read(struct file *file, char *buf, size_t count, loff_t *pos);
-ssize_t krg_faf_write(struct file *file, const char *buf,
+ssize_t hcc_faf_read(struct file *file, char *buf, size_t count, loff_t *pos);
+ssize_t hcc_faf_write(struct file *file, const char *buf,
 		      size_t count, loff_t *pos);
-ssize_t krg_faf_readv(struct file *file, const struct iovec __user *vec,
+ssize_t hcc_faf_readv(struct file *file, const struct iovec __user *vec,
 		      unsigned long vlen, loff_t *pos);
-ssize_t krg_faf_writev(struct file *file, const struct iovec __user *vec,
+ssize_t hcc_faf_writev(struct file *file, const struct iovec __user *vec,
 		       unsigned long vlen, loff_t *pos);
-long krg_faf_fcntl(struct file *file, unsigned int cmd,
+long hcc_faf_fcntl(struct file *file, unsigned int cmd,
 		   unsigned long arg);
-long krg_faf_fcntl64(struct file *file, unsigned int cmd,
+long hcc_faf_fcntl64(struct file *file, unsigned int cmd,
 		     unsigned long arg);
-long krg_faf_ioctl(struct file *file, unsigned int cmd,
+long hcc_faf_ioctl(struct file *file, unsigned int cmd,
 		   unsigned long arg);
-long krg_faf_fstat(struct file *file, struct kstat *stat);
-long krg_faf_fstatfs(struct file *file, struct statfs *statfs);
-long krg_faf_fsync(struct file *file);
-long krg_faf_flock(struct file *file, unsigned int cmd);
-char *krg_faf_d_path(const struct file *file, char *buffer, int size, bool *deleted);
-char *krg_faf_phys_d_path(const struct file *file, char *buff, int size, bool *deleted);
-int krg_faf_do_path_lookup(struct file *file, const char *name,
+long hcc_faf_fstat(struct file *file, struct kstat *stat);
+long hcc_faf_fstatfs(struct file *file, struct statfs *statfs);
+long hcc_faf_fsync(struct file *file);
+long hcc_faf_flock(struct file *file, unsigned int cmd);
+char *hcc_faf_d_path(const struct file *file, char *buffer, int size, bool *deleted);
+char *hcc_faf_phys_d_path(const struct file *file, char *buff, int size, bool *deleted);
+int hcc_faf_do_path_lookup(struct file *file, const char *name,
 			   unsigned int flags, struct nameidata *nd);
-void krg_faf_srv_close(struct file *file);
+void hcc_faf_srv_close(struct file *file);
 
 struct sockaddr;
 struct msghdr;
 
-long krg_faf_bind(struct file *file, struct sockaddr __user *umyaddr,
+long hcc_faf_bind(struct file *file, struct sockaddr __user *umyaddr,
 		  int addrlen);
-long krg_faf_connect(struct file *file,
+long hcc_faf_connect(struct file *file,
 		     struct sockaddr __user *uservaddr, int addrlen);
-long krg_faf_listen(struct file *file, int backlog);
-long krg_faf_accept(struct file *file,
+long hcc_faf_listen(struct file *file, int backlog);
+long hcc_faf_accept(struct file *file,
 		    struct sockaddr __user *upeer_sockaddr,
 		    int __user *upeer_addrlen);
-long krg_faf_getsockname(struct file *file,
+long hcc_faf_getsockname(struct file *file,
 			 struct sockaddr __user *usockaddr,
 			 int __user *usockaddr_len);
-long krg_faf_getpeername(struct file *file,
+long hcc_faf_getpeername(struct file *file,
 			 struct sockaddr __user *usockaddr,
 			 int __user *usockaddr_len);
-long krg_faf_shutdown(struct file *file, int how);
-long krg_faf_setsockopt(struct file *file, int level, int optname,
+long hcc_faf_shutdown(struct file *file, int how);
+long hcc_faf_setsockopt(struct file *file, int level, int optname,
 			char __user *optval, int optlen);
-long krg_faf_getsockopt(struct file *file, int level, int optname,
+long hcc_faf_getsockopt(struct file *file, int level, int optname,
 			char __user *optval, int __user *optlen);
-ssize_t krg_faf_sendmsg(struct file *file, struct msghdr *msg,
+ssize_t hcc_faf_sendmsg(struct file *file, struct msghdr *msg,
 			size_t total_len);
-ssize_t krg_faf_recvmsg(struct file *file, struct msghdr *msg,
+ssize_t hcc_faf_recvmsg(struct file *file, struct msghdr *msg,
 			size_t total_len, unsigned int flags);
-int krg_faf_poll_wait(struct file *file, int wait);
-void krg_faf_poll_dequeue(struct file *file);
+int hcc_faf_poll_wait(struct file *file, int wait);
+void hcc_faf_poll_dequeue(struct file *file);
 
 /* Remote user access */
-unsigned long krg_copy_user_generic(void *to, const void *from,
+unsigned long hcc_copy_user_generic(void *to, const void *from,
 				    unsigned long n, int zerorest);
-long krg___strncpy_from_user(char *dst, const char __user *src,
+long hcc___strncpy_from_user(char *dst, const char __user *src,
 			     unsigned long count);
-unsigned long krg___strnlen_user(const char __user *str,
+unsigned long hcc___strnlen_user(const char __user *str,
 					  unsigned long n);
-unsigned long krg___clear_user(void __user *mem, unsigned long len);
+unsigned long hcc___clear_user(void __user *mem, unsigned long len);
 
 /* functions used by other subsystems */
 int setup_faf_file_if_needed(struct file *file);

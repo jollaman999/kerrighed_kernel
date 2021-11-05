@@ -13,12 +13,12 @@
 #include <linux/spinlock.h>
 #include <linux/lockdep.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
-#include <hcc/krgnodemask.h>
-#include <linux/krg_hashtable.h>
+#include <hcc/hccinit.h>
+#include <hcc/hccnodemask.h>
+#include <linux/hcc_hashtable.h>
 
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 
 #include "rpc_internal.h"
 
@@ -91,10 +91,10 @@ int __rpc_send(struct rpc_desc* desc,
 		break;
 
 	case RPC_RQ_SRV: {
-		krgnodemask_t nodes;
+		hccnodemask_t nodes;
 
-		krgnodes_clear(nodes);
-		krgnode_set(desc->client, nodes);
+		hccnodes_clear(nodes);
+		hccnode_set(desc->client, nodes);
 
 		err = __rpc_send_ll(desc, &nodes, seq_id,
 				    __flags, data, size,
@@ -111,7 +111,7 @@ int __rpc_send(struct rpc_desc* desc,
 }
 
 struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
-			     krgnodemask_t* nodes)
+			     hccnodemask_t* nodes)
 {
 	struct rpc_desc* desc;
 	int i;
@@ -120,7 +120,7 @@ struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
 	if(!desc)
 		goto oom;
 
-	__krgnodes_copy(&desc->nodes, nodes);
+	__hccnodes_copy(&desc->nodes, nodes);
 	desc->type = RPC_RQ_CLT;
 	desc->client = hcc_node_id;
 	
@@ -128,7 +128,7 @@ struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
 	if(!desc->desc_send)
 		goto oom_free_desc;
 
-	for_each_krgnode_mask(i, desc->nodes){
+	for_each_hccnode_mask(i, desc->nodes){
 		desc->desc_recv[i] = rpc_desc_recv_alloc();
 		if(!desc->desc_recv[i])
 			goto oom_free_desc_recv;
@@ -146,7 +146,7 @@ struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
 	return desc;
 
 oom_free_desc_recv:
-	for_each_krgnode_mask(i, desc->nodes)
+	for_each_hccnode_mask(i, desc->nodes)
 		if (desc->desc_recv[i])
 			kmem_cache_free(rpc_desc_recv_cachep,
 					desc->desc_recv[i]);
@@ -212,7 +212,7 @@ int __rpc_end_unpack_clean(struct rpc_desc* desc)
 {
 	int i;
 
-	for_each_krgnode_mask(i, desc->nodes){
+	for_each_hccnode_mask(i, desc->nodes){
 		struct rpc_desc_recv* desc_recv = desc->desc_recv[i];
 
 		desc->desc_recv[i] = NULL;
@@ -242,7 +242,7 @@ int rpc_end(struct rpc_desc* desc, int flags)
 	case RPC_RQ_CLT:{
 		int i;
 
-		for_each_krgnode_mask(i, desc->nodes){
+		for_each_hccnode_mask(i, desc->nodes){
 			__rpc_end_unpack(desc->desc_recv[i]);
 		}
 
@@ -340,7 +340,7 @@ void rpc_cancel_unpack(struct rpc_desc* desc)
 {
 	hcc_node_t node;
 
-	for_each_krgnode_mask(node, desc->nodes)
+	for_each_hccnode_mask(node, desc->nodes)
 		rpc_cancel_unpack_from(desc, node);
 }
 
@@ -651,11 +651,11 @@ rpc_unpack(struct rpc_desc* desc, int flags, void* data, size_t size){
 		// If it's not a single request, the result of this function (in this case)
 		// is UNDEFINED
 
-		BUG_ON(krgnodes_weight(desc->nodes)!=1);
+		BUG_ON(hccnodes_weight(desc->nodes)!=1);
 		
-		node = first_krgnode(desc->nodes);
+		node = first_hccnode(desc->nodes);
 		
-		BUG_ON(node >= KERRIGHED_MAX_NODES);
+		BUG_ON(node >= HCC_MAX_NODES);
 		
 		return __rpc_unpack_from_node(desc, node, flags, data, size);
 	}
@@ -702,7 +702,7 @@ hcc_node_t rpc_wait_return(struct rpc_desc* desc, int* value)
  __restart:
 	
 	spin_lock_bh(&desc->desc_lock);
-	for(node=0;node<KERRIGHED_MAX_NODES;node++){
+	for(node=0;node<HCC_MAX_NODES;node++){
 		if(desc->desc_recv[node]
 		   && atomic_read(&desc->desc_recv[node]->nbunexpected)){
 
@@ -765,7 +765,7 @@ int rpc_wait_all(struct rpc_desc *desc)
 	// (comment definir qu'un retour est acheve ? variable d'etat dans desc_recv ?)
 	// tant qu'il reste des retours a effectuer, on attend et on boucle
 
-	for_each_krgnode_mask(i, desc->nodes){
+	for_each_hccnode_mask(i, desc->nodes){
 
 		if(list_empty(&desc->desc_recv[i]->list_provided_head))
 			continue;

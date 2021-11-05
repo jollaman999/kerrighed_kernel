@@ -13,10 +13,10 @@
 #include <linux/spinlock.h>
 #include <linux/lockdep.h>
 #include <linux/string.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 
 #include "rpc_internal.h"
 
@@ -59,12 +59,12 @@ struct rpc_synchro* rpc_synchro_new(int max,
 		set_bit(i, &ret->mask_packets);
 
 	if(order){
-		for(i=0;i<KERRIGHED_MAX_NODES;i++){
+		for(i=0;i<HCC_MAX_NODES;i++){
 			INIT_RADIX_TREE(&ret->nodes[i].tree.rt, GFP_ATOMIC);
 			spin_lock_init(&ret->nodes[i].tree.lock);
 		}
 	}else{
-		for(i=0;i<KERRIGHED_MAX_NODES;i++)
+		for(i=0;i<HCC_MAX_NODES;i++)
 			__rpc_synchro_init(&ret->nodes[i].tab, max);
 	}
 

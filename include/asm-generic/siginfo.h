@@ -145,7 +145,7 @@ typedef struct siginfo {
 #define SI_USER		0		/* sent by kill, sigsend, raise */
 #define SI_KERNEL	0x80		/* sent by the kernel from somewhere */
 #ifdef CONFIG_HCC_EPM
-#define SI_KERRIGHED	0x90		/* sent by HCC for an EPM action */
+#define SI_HCC	0x90		/* sent by HCC for an EPM action */
 #endif
 #define SI_QUEUE	-1		/* sent by sigqueue */
 #define SI_TIMER __SI_CODE(__SI_TIMER,-2) /* sent by timer expiration */

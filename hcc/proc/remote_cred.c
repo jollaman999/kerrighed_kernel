@@ -4,7 +4,7 @@
  *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 #include <linux/cred.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/namespace.h>
 #ifdef CONFIG_HCC_EPM
 #include <linux/user_namespace.h>
@@ -93,7 +93,7 @@ int export_cred(struct epm_action *action,
 	if (cred->security)
 		return -EBUSY;
 #endif
-	if (cred->user->user_ns != task->nsproxy->krg_ns->root_user_ns)
+	if (cred->user->user_ns != task->nsproxy->hcc_ns->root_user_ns)
 		return -EPERM;
 
 	err = ghost_write(ghost, cred, sizeof(*cred));
@@ -166,7 +166,7 @@ int import_cred(struct epm_action *action,
 	cred->security = NULL;
 #endif
 
-	user = alloc_uid(task->nsproxy->krg_ns->root_user_ns, cred->uid);
+	user = alloc_uid(task->nsproxy->hcc_ns->root_user_ns, cred->uid);
 	if (!user) {
 		err = -ENOMEM;
 		goto out_err;

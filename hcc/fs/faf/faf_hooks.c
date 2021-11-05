@@ -26,8 +26,8 @@
 
 #include <gdm/gdm.h>
 #include <hcc/hotplug.h>
-#include <net/krgrpc/rpc.h>
-#include <net/krgrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
 #include <hcc/file.h>
 #include "../file_struct_io_linker.h"
 
@@ -134,7 +134,7 @@ out:
  *  @param offset  Offset to seek at.
  *  @param origin  Origin of the seek.
  */
-off_t krg_faf_lseek (struct file * file,
+off_t hcc_faf_lseek (struct file * file,
 		     off_t offset,
 		     unsigned int origin)
 {
@@ -167,7 +167,7 @@ off_t krg_faf_lseek (struct file * file,
  *  @param result        ...
  *  @param origin        Origin of the seek.
  */
-long krg_faf_llseek (struct file *file,
+long hcc_faf_llseek (struct file *file,
 		     unsigned long offset_high,
 		     unsigned long offset_low,
 		     loff_t * result,
@@ -203,7 +203,7 @@ long krg_faf_llseek (struct file *file,
  *  @param count         Number of bytes to read.
  *  @param pos           Offset to read from (updated at the end).
  */
-ssize_t krg_faf_read(struct file * file, char *buf, size_t count, loff_t *pos)
+ssize_t hcc_faf_read(struct file * file, char *buf, size_t count, loff_t *pos)
 {
 	faf_client_data_t *data = file->private_data;
 	struct faf_rw_msg msg;
@@ -291,7 +291,7 @@ cancel:
  *  @param count         Number of bytes to write.
  *  @param pos           Offset to write from (updated at the end).
  */
-ssize_t krg_faf_write(struct file * file, const char *buf,
+ssize_t hcc_faf_write(struct file * file, const char *buf,
 		      size_t count, loff_t *pos)
 {
 	faf_client_data_t *data = file->private_data;
@@ -377,7 +377,7 @@ cancel:
 	goto out_end;
 }
 
-ssize_t krg_faf_readv(struct file *file, const struct iovec __user *vec,
+ssize_t hcc_faf_readv(struct file *file, const struct iovec __user *vec,
 		      unsigned long vlen, loff_t *pos)
 {
 	faf_client_data_t *data = file->private_data;
@@ -441,7 +441,7 @@ cancel:
 	goto out_end;
 }
 
-ssize_t krg_faf_writev(struct file *file, const struct iovec __user *vec,
+ssize_t hcc_faf_writev(struct file *file, const struct iovec __user *vec,
 		       unsigned long vlen, loff_t *pos)
 {
 	faf_client_data_t *data = file->private_data;
@@ -512,7 +512,7 @@ cancel:
  *  @param cmd           IOCTL command.
  *  @param arg           IOCTL argument.
  */
-long krg_faf_ioctl (struct file *file,
+long hcc_faf_ioctl (struct file *file,
 		    unsigned int cmd,
 		    unsigned long arg)
 {
@@ -569,7 +569,7 @@ out_err:
  *  @param cmd           FCNTL command.
  *  @param arg           FCNTL argument.
  */
-long krg_faf_fcntl (struct file *file,
+long hcc_faf_fcntl (struct file *file,
 		    unsigned int cmd,
 		    unsigned long arg)
 {
@@ -651,7 +651,7 @@ cancel:
  *  @param cmd           FCNTL command.
  *  @param arg           FCNTL argument.
  */
-long krg_faf_fcntl64 (struct file *file,
+long hcc_faf_fcntl64 (struct file *file,
 		      unsigned int cmd,
 		      unsigned long arg)
 {
@@ -719,7 +719,7 @@ cancel:
  *  @param file          File to do an fcntl to.
  *  @param statbuf       Kernel buffer to store file stats.
  */
-long krg_faf_fstat (struct file *file,
+long hcc_faf_fstat (struct file *file,
 		    struct kstat *statbuf)
 {
 	struct kstat buffer;
@@ -750,7 +750,7 @@ long krg_faf_fstat (struct file *file,
  *  @param file          File to do an fcntl to.
  *  @param statbuf       Kernel buffer to store file stats.
  */
-long krg_faf_fstatfs(struct file *file,
+long hcc_faf_fstatfs(struct file *file,
 		     struct statfs *statfsbuf)
 {
 	struct statfs buffer;
@@ -791,7 +791,7 @@ err_rpc:
  *
  *  @param file          File to do a fsync to.
  */
-long krg_faf_fsync (struct file *file)
+long hcc_faf_fsync (struct file *file)
 {
 	faf_client_data_t *data = file->private_data;
 	struct faf_rw_msg msg;
@@ -809,7 +809,7 @@ long krg_faf_fsync (struct file *file)
  *
  *  @param file          File to do a flock to.
  */
-long krg_faf_flock (struct file *file,
+long hcc_faf_flock (struct file *file,
 		    unsigned int cmd)
 {
 	faf_client_data_t *data = file->private_data;
@@ -849,7 +849,7 @@ cancel:
 	goto out_end;
 }
 
-static char *__krg_faf_d_path(const struct path *root, const struct file *file,
+static char *__hcc_faf_d_path(const struct path *root, const struct file *file,
 			      char *buff, int size, bool *deleted)
 {
 	faf_client_data_t *data = file->private_data;
@@ -905,14 +905,14 @@ err_cancel:
 	goto out_end;
 }
 
-char *krg_faf_phys_d_path(const struct file *file, char *buff, int size,
+char *hcc_faf_phys_d_path(const struct file *file, char *buff, int size,
 			  bool *deleted)
 {
 	struct path root;
 	char *ret;
 
 	get_physical_root(&root);
-	ret = __krg_faf_d_path(&root, file, buff, size, deleted);
+	ret = __hcc_faf_d_path(&root, file, buff, size, deleted);
 	path_put(&root);
 
 	return ret;
@@ -925,7 +925,7 @@ char *krg_faf_phys_d_path(const struct file *file, char *buff, int size,
  *  @param buff     Buffer to store the path in.
  */
 char *
-krg_faf_d_path(const struct file *file, char *buff, int size, bool *deleted)
+hcc_faf_d_path(const struct file *file, char *buff, int size, bool *deleted)
 {
 	struct path root;
 	char *ret;
@@ -935,14 +935,14 @@ krg_faf_d_path(const struct file *file, char *buff, int size, bool *deleted)
 	path_get(&root);
 	read_unlock(&current->fs->lock);
 
-	ret = __krg_faf_d_path(&root, file, buff, size, deleted);
+	ret = __hcc_faf_d_path(&root, file, buff, size, deleted);
 
 	path_put(&root);
 
 	return ret;
 }
 
-int krg_faf_do_path_lookup(struct file *file,
+int hcc_faf_do_path_lookup(struct file *file,
 			   const char *name,
 			   unsigned int flags,
 			   struct nameidata *nd)
@@ -952,7 +952,7 @@ int krg_faf_do_path_lookup(struct file *file,
 	bool deleted;
 	int len, err = 0;
 
-	path = krg_faf_d_path(file, tmp, PAGE_SIZE, &deleted);
+	path = hcc_faf_d_path(file, tmp, PAGE_SIZE, &deleted);
 
 	if (IS_ERR(path)) {
 		err = PTR_ERR(path);
@@ -978,7 +978,7 @@ exit:
 	return err;
 }
 
-long krg_faf_bind (struct file * file,
+long hcc_faf_bind (struct file * file,
 		   struct sockaddr __user *umyaddr,
 		   int addrlen)
 {
@@ -1026,7 +1026,7 @@ cancel:
 
 
 
-long krg_faf_connect (struct file * file,
+long hcc_faf_connect (struct file * file,
 		      struct sockaddr __user *uservaddr,
 		      int addrlen)
 {
@@ -1075,7 +1075,7 @@ cancel:
 	goto out_end;
 }
 
-long krg_faf_listen (struct file * file,
+long hcc_faf_listen (struct file * file,
 		     int backlog)
 {
 	faf_client_data_t *data = file->private_data;
@@ -1091,7 +1091,7 @@ long krg_faf_listen (struct file * file,
 	return r;
 }
 
-long krg_faf_accept(struct file * file,
+long hcc_faf_accept(struct file * file,
 		    struct sockaddr __user *upeer_sockaddr,
 		    int __user *upeer_addrlen)
 {
@@ -1194,7 +1194,7 @@ err_close_faf_file:
 	goto out_put_fd;
 }
 
-long krg_faf_getsockname (struct file * file,
+long hcc_faf_getsockname (struct file * file,
 			  struct sockaddr __user *usockaddr,
 			  int __user *usockaddr_len)
 {
@@ -1226,7 +1226,7 @@ out:
 	return r;
 }
 
-long krg_faf_getpeername (struct file * file,
+long hcc_faf_getpeername (struct file * file,
 			  struct sockaddr __user *usockaddr,
 			  int __user *usockaddr_len)
 {
@@ -1257,7 +1257,7 @@ long krg_faf_getpeername (struct file * file,
 	return r;
 }
 
-long krg_faf_shutdown (struct file * file,
+long hcc_faf_shutdown (struct file * file,
 		       int how)
 {
 	faf_client_data_t *data = file->private_data;
@@ -1273,7 +1273,7 @@ long krg_faf_shutdown (struct file * file,
 	return r;
 }
 
-long krg_faf_setsockopt (struct file * file,
+long hcc_faf_setsockopt (struct file * file,
 			 int level,
 			 int optname,
 			 char __user *optval,
@@ -1324,7 +1324,7 @@ err_cancel:
 	goto out_end;
 }
 
-long krg_faf_getsockopt (struct file * file,
+long hcc_faf_getsockopt (struct file * file,
 			 int level,
 			 int optname,
 			 char __user *optval,
@@ -1375,7 +1375,7 @@ err_cancel:
 	goto out_end;
 }
 
-ssize_t krg_faf_sendmsg(struct file *file, struct msghdr *msghdr,
+ssize_t hcc_faf_sendmsg(struct file *file, struct msghdr *msghdr,
 			size_t total_len)
 {
 	faf_client_data_t *data = file->private_data;
@@ -1419,7 +1419,7 @@ cancel:
 	goto out_end;
 }
 
-ssize_t krg_faf_recvmsg(struct file *file, struct msghdr *msghdr,
+ssize_t hcc_faf_recvmsg(struct file *file, struct msghdr *msghdr,
 			size_t total_len, unsigned int flags)
 {
 	faf_client_data_t *data = file->private_data;
@@ -1473,12 +1473,12 @@ cancel:
 	goto out_end;
 }
 
-void krg_faf_srv_close(struct file *file)
+void hcc_faf_srv_close(struct file *file)
 {
 	check_close_faf_srv_file(file);
 }
 
-int krg_faf_poll_wait(struct file *file, int wait)
+int hcc_faf_poll_wait(struct file *file, int wait)
 {
 	faf_client_data_t *data = file->private_data;
 	struct faf_poll_wait_msg msg;
@@ -1530,7 +1530,7 @@ err_cancel:
 	goto out_end;
 }
 
-void krg_faf_poll_dequeue(struct file *file)
+void hcc_faf_poll_dequeue(struct file *file)
 {
 	faf_client_data_t *data = file->private_data;
 	struct faf_notify_msg msg;
@@ -1561,7 +1561,7 @@ unsigned int faf_poll (struct file *file,
 	set_current_state(old_state);
 	poll_wait(file, &data->poll_wq, wait);
 	if (!wait)
-		krg_faf_poll_wait(file, 0);
+		hcc_faf_poll_wait(file, 0);
 	revents = data->poll_revents;
 	mutex_unlock(&faf_poll_mutex);
 

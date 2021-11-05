@@ -42,7 +42,7 @@
 
 #include <asm/uaccess.h>
 #ifdef CONFIG_HCC_IPC
-#include "krgshm.h"
+#include "hccshm.h"
 #endif
 
 #include "util.h"
@@ -107,9 +107,9 @@ static void do_shm_rmid(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 
 	if (shp->shm_nattch){
 #ifdef CONFIG_HCC_IPC
-		if (is_krg_ipc(&shm_ids(ns))
+		if (is_hcc_ipc(&shm_ids(ns))
 		    && shp->shm_perm.key != IPC_PRIVATE)
-			krg_ipc_shm_rmkey(ns, shp->shm_perm.key);
+			hcc_ipc_shm_rmkey(ns, shp->shm_perm.key);
 #endif
 		shp->shm_perm.mode |= SHM_DEST;
 		/* Do not find it any more */
@@ -258,8 +258,8 @@ static bool shm_may_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 #ifdef CONFIG_HCC_IPC
 static void shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 {
-	if (is_krg_ipc(&shm_ids(ns)))
-		krg_ipc_shm_destroy(ns, shp);
+	if (is_hcc_ipc(&shm_ids(ns)))
+		hcc_ipc_shm_destroy(ns, shp);
 	else
 		local_shm_destroy(ns, shp);
 }
@@ -609,12 +609,12 @@ int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 
 	ns->shm_tot += numpages;
 #ifdef CONFIG_HCC_IPC
-	if (is_krg_ipc(&shm_ids(ns))) {
-		error = krg_ipc_shm_newseg(ns, shp) ;
+	if (is_hcc_ipc(&shm_ids(ns))) {
+		error = hcc_ipc_shm_newseg(ns, shp) ;
 		if (error)
 			goto no_file;
 	} else
-		shp->shm_perm.krgops = NULL;
+		shp->shm_perm.hccops = NULL;
 #endif
 	error = shp->shm_perm.id;
 

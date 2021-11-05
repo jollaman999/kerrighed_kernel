@@ -177,7 +177,7 @@ static inline void task_state(struct seq_file *m, struct pid_namespace *ns,
 
 	rcu_read_lock();
 #ifdef CONFIG_HCC_EPM
-	ppid = krg_get_real_parent_tgid(p, ns);
+	ppid = hcc_get_real_parent_tgid(p, ns);
 #else
 	ppid = pid_alive(p) ?
 		task_tgid_nr_ns(rcu_dereference(p->real_parent), ns) : 0;
@@ -471,7 +471,7 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 		 * can disappear before release_task() locks sighand.
 		 */
 		rcu_read_lock();
-		ppid = krg_get_real_parent_tgid(task, ns);
+		ppid = hcc_get_real_parent_tgid(task, ns);
 		rcu_read_unlock();
 #else
 		ppid = task_tgid_nr_ns(task->real_parent, ns);
@@ -548,7 +548,7 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 		0UL,
 		task->exit_signal,
 #ifdef CONFIG_HCC_PROCFS
-		krg_cpu_id(task_cpu(task)),
+		hcc_cpu_id(task_cpu(task)),
 #else
 		task_cpu(task),
 #endif

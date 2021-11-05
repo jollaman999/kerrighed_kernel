@@ -27,7 +27,7 @@ int init_procfs(void)
 	proc_pid_init();
 #endif
 
-	krg_procfs_init();
+	hcc_procfs_init();
 
 	procfs_hotplug_init();
 
@@ -37,7 +37,7 @@ int init_procfs(void)
 void cleanup_procfs(void)
 {
 	procfs_hotplug_cleanup();
-	krg_procfs_finalize();
+	hcc_procfs_finalize();
 
 #ifdef CONFIG_HCC_PROC
 	proc_pid_finalize();

@@ -36,7 +36,7 @@ struct nsproxy {
 	struct pid_namespace *pid_ns;
 	struct net 	     *net_ns;
 #ifdef CONFIG_HCC_HOTPLUG
-	struct krg_namespace *krg_ns;
+	struct hcc_namespace *hcc_ns;
 #endif
 };
 extern struct nsproxy init_nsproxy;

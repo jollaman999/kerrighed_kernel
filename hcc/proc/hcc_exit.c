@@ -1,5 +1,5 @@
 /*
- *  hcc/proc/krg_exit.c
+ *  hcc/proc/hcc_exit.c
  *
  *  Copyright (C) 2019-2021 Innogrid HCC.
  */
@@ -16,12 +16,12 @@
 #include <linux/tracehook.h>
 #include <linux/task_io_accounting_ops.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <hcc/pid.h>
 #include <hcc/children.h>
 #include <hcc/signal.h>
 #include <hcc/application.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 #include <asm/cputime.h>
 #endif
 #ifdef CONFIG_HCC_SCHED
@@ -31,10 +31,10 @@
 #ifdef CONFIG_HCC_EPM
 #include <hcc/workqueue.h>
 #endif
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/task.h>
-#include <hcc/krg_exit.h>
+#include <hcc/hcc_exit.h>
 #ifdef CONFIG_HCC_EPM
 #include <hcc/action.h>
 #include <hcc/migration.h>
@@ -95,7 +95,7 @@ static void handle_do_notify_parent(struct rpc_desc *desc,
 			sig = -1;
 	}
 	if (valid_signal(sig) && sig > 0)
-		__krg_group_send_sig_info(sig, &req->info, parent);
+		__hcc_group_send_sig_info(sig, &req->info, parent);
 	wake_up_interruptible_sync(&parent->signal->wait_chldexit);
 	spin_unlock_irq(&psig->siglock);
 
@@ -110,7 +110,7 @@ static void handle_do_notify_parent(struct rpc_desc *desc,
  * Expects task->task_obj locked and up to date regarding parent and
  * parent_node
  */
-int krg_do_notify_parent(struct task_struct *task, struct siginfo *info)
+int hcc_do_notify_parent(struct task_struct *task, struct siginfo *info)
 {
 	struct notify_parent_request req;
 	int ret;
@@ -119,7 +119,7 @@ int krg_do_notify_parent(struct task_struct *task, struct siginfo *info)
 	int err = -ENOMEM;
 
 	BUG_ON(task->parent != baby_sitter);
-	BUG_ON(parent_node == KERRIGHED_NODE_ID_NONE);
+	BUG_ON(parent_node == HCC_NODE_ID_NONE);
 	BUG_ON(parent_node == hcc_node_id);
 
 	req.parent_pid = task->task_obj->parent;
@@ -153,9 +153,9 @@ err:
 
 /*
  * If return value is not NULL, all variables are set, and the children gdm
- * object will have to be unlocked with krg_children_unlock(@return),
+ * object will have to be unlocked with hcc_children_unlock(@return),
  * and parent pid location will have to be unlocked with
- * krg_unlock_pid_location(*parent_pid_p)
+ * hcc_unlock_pid_location(*parent_pid_p)
  *
  * If return value is NULL, parent has no children gdm object. It is up to the
  * caller to know whether original parent died or is still alive and never had a
@@ -174,36 +174,36 @@ parent_children_writelock_pid_location_lock(struct task_struct *task,
 	pid_t real_parent_pid;
 	pid_t parent_pid;
 	struct task_gdm_object *obj;
-	hcc_node_t parent_node = KERRIGHED_NODE_ID_NONE;
+	hcc_node_t parent_node = HCC_NODE_ID_NONE;
 	struct timespec backoff_time = {
 		.tv_sec = 1,
 		.tv_nsec = 0
 	};	/* 1 second */
 
 	/*
-	 * Similar to krg_lock_pid_location but we need to acquire
+	 * Similar to hcc_lock_pid_location but we need to acquire
 	 * parent_children_writelock at the same time without deadlocking with
 	 * migration
 	 */
 	for (;;) {
-		children_obj = krg_parent_children_writelock(task,
+		children_obj = hcc_parent_children_writelock(task,
 							     &real_parent_tgid);
 		if (!children_obj)
 			break;
-		krg_get_parent(children_obj, task,
+		hcc_get_parent(children_obj, task,
 			       &parent_pid, &real_parent_pid);
-		obj = krg_task_readlock(parent_pid);
+		obj = hcc_task_readlock(parent_pid);
 		BUG_ON(!obj);
 		parent_node = obj->node;
-		if (parent_node != KERRIGHED_NODE_ID_NONE)
+		if (parent_node != HCC_NODE_ID_NONE)
 			break;
-		krg_task_unlock(parent_pid);
-		krg_children_unlock(children_obj);
+		hcc_task_unlock(parent_pid);
+		hcc_children_unlock(children_obj);
 
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule_timeout(timespec_to_jiffies(&backoff_time) + 1);
 	}
-	BUG_ON(children_obj && parent_node == KERRIGHED_NODE_ID_NONE);
+	BUG_ON(children_obj && parent_node == HCC_NODE_ID_NONE);
 
 	/*
 	 * If children_obj is not NULL, then children_obj is write-locked and
@@ -219,7 +219,7 @@ parent_children_writelock_pid_location_lock(struct task_struct *task,
 	return children_obj;
 }
 
-int krg_delayed_notify_parent(struct task_struct *leader)
+int hcc_delayed_notify_parent(struct task_struct *leader)
 {
 	struct children_gdm_object *parent_children_obj;
 	pid_t real_parent_tgid;
@@ -233,7 +233,7 @@ int krg_delayed_notify_parent(struct task_struct *leader)
 				&real_parent_pid,
 				&parent_pid,
 				&parent_node);
-	__krg_task_writelock_nested(leader);
+	__hcc_task_writelock_nested(leader);
 
 	tasklist_write_lock_irq();
 	BUG_ON(task_detached(leader));
@@ -241,7 +241,7 @@ int krg_delayed_notify_parent(struct task_struct *leader)
 	 * Needed to check whether we were reparented to init, and to
 	 * know which task to notify in case parent is still remote
 	 */
-	krg_update_parents(leader, parent_children_obj,
+	hcc_update_parents(leader, parent_children_obj,
 			   parent_pid, real_parent_pid, parent_node);
 
 	do_notify_parent(leader, leader->exit_signal);
@@ -252,9 +252,9 @@ int krg_delayed_notify_parent(struct task_struct *leader)
 	leader->flags &= ~PF_DELAY_NOTIFY;
 	write_unlock_irq(&tasklist_lock);
 
-	__krg_task_unlock(leader);
+	__hcc_task_unlock(leader);
 	if (parent_children_obj) {
-		krg_unlock_pid_location(parent_pid);
+		hcc_unlock_pid_location(parent_pid);
 		if (zap_leader)
 			/*
 			 * Parent was not interested by notification,
@@ -263,8 +263,8 @@ int krg_delayed_notify_parent(struct task_struct *leader)
 			 * anymore. Remove leader from its children gdm
 			 * object before parent can access it again.
 			 */
-			krg_remove_child(parent_children_obj, leader);
-		krg_children_unlock(parent_children_obj);
+			hcc_remove_child(parent_children_obj, leader);
+		hcc_children_unlock(parent_children_obj);
 	}
 
 	return zap_leader;
@@ -369,7 +369,7 @@ err_cancel:
 	rpc_cancel(desc);
 }
 
-int krg_wait_task_zombie(struct wait_opts *wo,
+int hcc_wait_task_zombie(struct wait_opts *wo,
 			 struct remote_child *child)
 {
 	struct wait_task_request req;
@@ -385,7 +385,7 @@ int krg_wait_task_zombie(struct wait_opts *wo,
 	 * change afterwards, but this will be needed to support hot removal of
 	 * nodes with zombie migration.
 	 */
-	BUG_ON(!krgnode_online(child->node));
+	BUG_ON(!hccnode_online(child->node));
 
 	desc = rpc_begin(PROC_WAIT_TASK_ZOMBIE, child->node);
 	if (!desc)
@@ -473,7 +473,7 @@ err_cancel:
 }
 
 struct children_gdm_object *
-krg_prepare_exit_ptrace_task(struct task_struct *tracer,
+hcc_prepare_exit_ptrace_task(struct task_struct *tracer,
 			     struct task_struct *task)
 {
 	struct children_gdm_object *obj;
@@ -495,21 +495,21 @@ krg_prepare_exit_ptrace_task(struct task_struct *tracer,
 			&parent_pid,
 			&parent_node);
 	if (obj)
-		__krg_task_writelock_nested(task);
+		__hcc_task_writelock_nested(task);
 	else
-		__krg_task_writelock(task);
+		__hcc_task_writelock(task);
 
-	krg_set_child_ptraced(obj, task, 0);
+	hcc_set_child_ptraced(obj, task, 0);
 
 	tasklist_write_lock_irq();
 	BUG_ON(!task->ptrace);
 
-	krg_update_parents(task, obj, parent_pid, real_parent_pid, parent_node);
+	hcc_update_parents(task, obj, parent_pid, real_parent_pid, parent_node);
 
 	return obj;
 }
 
-void krg_finish_exit_ptrace_task(struct task_struct *task,
+void hcc_finish_exit_ptrace_task(struct task_struct *task,
 				 struct children_gdm_object *obj,
 				 bool dead)
 {
@@ -523,24 +523,24 @@ void krg_finish_exit_ptrace_task(struct task_struct *task,
 	write_unlock_irq(&tasklist_lock);
 
 	if (obj) {
-		krg_unlock_pid_location(parent_pid);
+		hcc_unlock_pid_location(parent_pid);
 		if (dead)
-			krg_remove_child(obj, task);
-		krg_children_unlock(obj);
+			hcc_remove_child(obj, task);
+		hcc_children_unlock(obj);
 	}
-	__krg_task_unlock(task);
+	__hcc_task_unlock(task);
 }
 
 #endif /* CONFIG_HCC_EPM */
 
-void *krg_prepare_exit_notify(struct task_struct *task)
+void *hcc_prepare_exit_notify(struct task_struct *task)
 {
 	void *cookie = NULL;
 #ifdef CONFIG_HCC_EPM
 	pid_t real_parent_tgid = 0;
 	pid_t real_parent_pid = 0;
 	pid_t parent_pid = 0;
-	hcc_node_t parent_node = KERRIGHED_NODE_ID_NONE;
+	hcc_node_t parent_node = HCC_NODE_ID_NONE;
 #endif
 
 #ifdef CONFIG_HCC_EPM
@@ -555,13 +555,13 @@ void *krg_prepare_exit_notify(struct task_struct *task)
 
 	if (task->task_obj) {
 		if (cookie)
-			__krg_task_writelock_nested(task);
+			__hcc_task_writelock_nested(task);
 		else
-			__krg_task_writelock(task);
+			__hcc_task_writelock(task);
 
 #ifdef CONFIG_HCC_EPM
 		tasklist_write_lock_irq();
-		krg_update_parents(task, cookie, parent_pid, real_parent_pid,
+		hcc_update_parents(task, cookie, parent_pid, real_parent_pid,
 				   parent_node);
 		write_unlock_irq(&tasklist_lock);
 #endif /* CONFIG_HCC_EPM */
@@ -570,7 +570,7 @@ void *krg_prepare_exit_notify(struct task_struct *task)
 	return cookie;
 }
 
-void krg_finish_exit_notify(struct task_struct *task, int signal, void *cookie)
+void hcc_finish_exit_notify(struct task_struct *task, int signal, void *cookie)
 {
 #ifdef CONFIG_HCC_EPM
 	if (cookie) {
@@ -581,7 +581,7 @@ void krg_finish_exit_notify(struct task_struct *task, int signal, void *cookie)
 			parent_pid = task->task_obj->parent;
 		else
 			parent_pid = task_pid_knr(task->parent);
-		krg_unlock_pid_location(parent_pid);
+		hcc_unlock_pid_location(parent_pid);
 
 		if (signal == DEATH_REAP) {
 			/*
@@ -590,30 +590,30 @@ void krg_finish_exit_notify(struct task_struct *task, int signal, void *cookie)
 			 * as a child anymore. Remove tsk from its children gdm
 			 * object before parent can access it again.
 			 */
-			krg_remove_child(parent_children_obj, task);
+			hcc_remove_child(parent_children_obj, task);
 		} else {
-			krg_set_child_exit_signal(parent_children_obj, task);
-			krg_set_child_exit_state(parent_children_obj, task);
-			krg_set_child_location(parent_children_obj, task);
+			hcc_set_child_exit_signal(parent_children_obj, task);
+			hcc_set_child_exit_state(parent_children_obj, task);
+			hcc_set_child_location(parent_children_obj, task);
 		}
-		krg_children_unlock(parent_children_obj);
+		hcc_children_unlock(parent_children_obj);
 	}
 #endif /* CONFIG_HCC_EPM */
 
 	if (task->task_obj)
-		__krg_task_unlock(task);
+		__hcc_task_unlock(task);
 }
 
-void krg_release_task(struct task_struct *p)
+void hcc_release_task(struct task_struct *p)
 {
 #ifdef CONFIG_HCC_EPM
-	krg_exit_application(p);
-	krg_unhash_process(p);
+	hcc_exit_application(p);
+	hcc_unhash_process(p);
 	if (p->exit_state != EXIT_MIGRATION) {
 #endif /* CONFIG_HCC_EPM */
-		krg_task_free(p);
+		hcc_task_free(p);
 #ifdef CONFIG_HCC_EPM
-		if (krg_action_pending(p, EPM_MIGRATE))
+		if (hcc_action_pending(p, EPM_MIGRATE))
 			/* Migration aborted because p died before */
 			migration_aborted(p);
 	}
@@ -645,7 +645,7 @@ static void delay_release_task_worker(struct work_struct *work)
 	}
 }
 
-int krg_delay_release_task(struct task_struct *task)
+int hcc_delay_release_task(struct task_struct *task)
 {
 	int delayed;
 
@@ -661,7 +661,7 @@ int krg_delay_release_task(struct task_struct *task)
 		list_add_tail(&task->children, &tasks_to_release);
 		spin_unlock(&tasks_to_release_lock);
 
-		queue_work(krg_wq, &delay_release_task_work);
+		queue_work(hcc_wq, &delay_release_task_work);
 	}
 
 	return delayed;
@@ -679,14 +679,14 @@ static void handle_notify_remote_child_reaper(struct rpc_desc *desc,
 	struct task_struct *zombie;
 	bool release = false;
 
-	krg_task_writelock(msg->zombie_pid);
+	hcc_task_writelock(msg->zombie_pid);
 	tasklist_write_lock_irq();
 
 	zombie = find_task_by_kpid(msg->zombie_pid);
 	BUG_ON(!zombie);
 
 	/* Real parent died and let us reparent zombie to local init. */
-	krg_reparent_to_local_child_reaper(zombie);
+	hcc_reparent_to_local_child_reaper(zombie);
 
 	BUG_ON(zombie->exit_state != EXIT_ZOMBIE);
 	BUG_ON(zombie->exit_signal == -1);
@@ -699,7 +699,7 @@ static void handle_notify_remote_child_reaper(struct rpc_desc *desc,
 	}
 
 	write_unlock_irq(&tasklist_lock);
-	krg_task_unlock(msg->zombie_pid);
+	hcc_task_unlock(msg->zombie_pid);
 
 	if (release)
 		release_task(zombie);
@@ -712,7 +712,7 @@ void notify_remote_child_reaper(pid_t zombie_pid,
 		.zombie_pid = zombie_pid
 	};
 
-	BUG_ON(zombie_location == KERRIGHED_NODE_ID_NONE);
+	BUG_ON(zombie_location == HCC_NODE_ID_NONE);
 	BUG_ON(zombie_location == hcc_node_id);
 
 	rpc_async(PROC_NOTIFY_REMOTE_CHILD_REAPER, zombie_location,
@@ -724,7 +724,7 @@ void notify_remote_child_reaper(pid_t zombie_pid,
 /**
  * @author Innogrid HCC
  */
-void proc_krg_exit_start(void)
+void proc_hcc_exit_start(void)
 {
 #ifdef CONFIG_HCC_EPM
 	rpc_register_void(PROC_DO_NOTIFY_PARENT, handle_do_notify_parent, 0);
@@ -737,6 +737,6 @@ void proc_krg_exit_start(void)
 /**
  * @author Innogrid HCC
  */
-void proc_krg_exit_exit(void)
+void proc_hcc_exit_exit(void)
 {
 }

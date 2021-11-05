@@ -119,8 +119,8 @@ typedef unsigned long objid_t;
  *  Type used to store the copy set.
  */
 typedef struct {
-	krgnodemask_t copyset;   /**< Machines owning an object to invalidate */
-	krgnodemask_t rmset;     /**< Machines owning an object to remove */
+	hccnodemask_t copyset;   /**< Machines owning an object to invalidate */
+	hccnodemask_t rmset;     /**< Machines owning an object to remove */
 } masterObj_t;
 
 

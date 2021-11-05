@@ -341,7 +341,7 @@ struct proc_inode {
 	union proc_op op;
 	struct proc_dir_entry *pde;
 #ifdef CONFIG_HCC_PROCFS
-	void *krg_procfs_private;
+	void *hcc_procfs_private;
 #ifdef CONFIG_HCC_PROC
 	struct proc_distant_pid_info distant_proc;
 #endif

@@ -23,9 +23,9 @@
 #include <linux/rcupdate.h>
 #include <net/net_namespace.h>
 #include <gdm/gdm_info.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <hcc/namespace.h>
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #include <hcc/children.h>
 #include <hcc/task.h>
 #include <hcc/signal.h>
@@ -55,10 +55,10 @@ int export_restart_block(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	struct thread_info *ti = task_thread_info(task);
-	enum krgsyms_val fn_id;
+	enum hccsyms_val fn_id;
 	int r;
 
-	fn_id = krgsyms_export(ti->restart_block.fn);
+	fn_id = hccsyms_export(ti->restart_block.fn);
 	if (fn_id == HCCSYMS_UNDEF) {
 		r = -EBUSY;
 		goto out;
@@ -107,7 +107,7 @@ static int export_binfmt(struct epm_action *action,
 {
 	int binfmt_id;
 
-	binfmt_id = krgsyms_export(task->mm->binfmt);
+	binfmt_id = hccsyms_export(task->mm->binfmt);
 	if (binfmt_id == HCCSYMS_UNDEF)
 		return -EPERM;
 
@@ -255,7 +255,7 @@ static int export_uts_namespace(struct epm_action *action,
 {
 	int err = 0;
 
-	if (task->nsproxy->uts_ns != task->nsproxy->krg_ns->root_nsproxy.uts_ns)
+	if (task->nsproxy->uts_ns != task->nsproxy->hcc_ns->root_nsproxy.uts_ns)
 		/* UTS namespace sharing is not implemented yet */
 		err = -EPERM;
 
@@ -267,7 +267,7 @@ static int export_net_namespace(struct epm_action *action,
 {
 	int err = 0;
 
-	if (task->nsproxy->net_ns != task->nsproxy->krg_ns->root_nsproxy.net_ns)
+	if (task->nsproxy->net_ns != task->nsproxy->hcc_ns->root_nsproxy.net_ns)
 		/* Net namespace sharing is not implemented yet */
 		err = -EPERM;
 
@@ -279,7 +279,7 @@ static int export_nsproxy(struct epm_action *action,
 {
 	int retval;
 
-	BUG_ON(!task->nsproxy->krg_ns);
+	BUG_ON(!task->nsproxy->hcc_ns);
 
 	retval = export_uts_namespace(action, ghost, task);
 	if (retval)
@@ -413,7 +413,7 @@ static int export_delays(struct epm_action *action,
 	return err;
 }
 
-static int export_krg_structs(struct epm_action *action,
+static int export_hcc_structs(struct epm_action *action,
 			      ghost_t *ghost, struct task_struct *task)
 {
 	int retval = 0;
@@ -421,14 +421,14 @@ static int export_krg_structs(struct epm_action *action,
 	if (action->type == EPM_MIGRATE) {
 		/*
 		 * The task gdm object must be linked to at most one task in
-		 * the cluster, and after import_krg_structs() it will be
+		 * the cluster, and after import_hcc_structs() it will be
 		 * linked to the migrated task.
-		 * Unlink and let import_krg_structs() proceed.
+		 * Unlink and let import_hcc_structs() proceed.
 		 *
 		 * Now that pids are globalized, remote procfs can see that task
 		 * even without a link to its task gdm object.
 		 */
-		krg_task_unlink(task->task_obj, 1);
+		hcc_task_unlink(task->task_obj, 1);
 		retval = ghost_write(ghost, &retval, sizeof(retval));
 	}
 
@@ -507,7 +507,7 @@ static int export_task(struct epm_action *action,
 		GOTO_ERROR;
 
 #ifdef CONFIG_HCC_SCHED
-	r = export_krg_sched_info(action, ghost, task);
+	r = export_hcc_sched_info(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
 #endif
@@ -561,7 +561,7 @@ static int export_task(struct epm_action *action,
 	r = export_children(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
-	r = export_krg_structs(action, ghost, task);
+	r = export_hcc_structs(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
 	r = export_gdm_info_struct(action, ghost, task);
@@ -648,13 +648,13 @@ void post_export_process(struct epm_action *action,
 
 /* Regular helpers */
 
-static void unimport_krg_structs(struct epm_action  *action,
+static void unimport_hcc_structs(struct epm_action  *action,
 				 struct task_struct *task)
 {
 	switch (action->type) {
 	case EPM_REMOTE_CLONE:
 	case EPM_CHECKPOINT:
-		__krg_task_free(task);
+		__hcc_task_free(task);
 		break;
 	default:
 		break;
@@ -771,8 +771,8 @@ void unimport_children(struct epm_action *action, struct task_struct *task)
 	switch (action->type) {
 	case EPM_REMOTE_CLONE:
 	case EPM_CHECKPOINT:
-		__krg_children_writelock(task);
-		krg_children_exit(task);
+		__hcc_children_writelock(task);
+		hcc_children_exit(task);
 		break;
 	default:
 		break;
@@ -817,7 +817,7 @@ static void unimport_task(struct epm_action *action,
 	unimport_signal_struct(ghost_task);
 	unimport_private_signals(ghost_task);
 	unimport_gdm_info_struct(ghost_task);
-	unimport_krg_structs(action, ghost_task);
+	unimport_hcc_structs(action, ghost_task);
 	unimport_children(action, ghost_task);
 	unimport_sched(ghost_task);
 	unimport_cgroups(ghost_task);
@@ -834,7 +834,7 @@ static void unimport_task(struct epm_action *action,
 #endif
 	unimport_sched_info(ghost_task);
 #ifdef CONFIG_HCC_SCHED
-	unimport_krg_sched_info(ghost_task);
+	unimport_hcc_sched_info(ghost_task);
 #endif
 	unimport_group_leader(ghost_task);
 	unimport_pids(ghost_task);
@@ -869,7 +869,7 @@ struct exec_domain *import_exec_domain(struct epm_action *action,
 int import_restart_block(struct epm_action *action,
 			 ghost_t *ghost, struct restart_block *p)
 {
-	enum krgsyms_val fn_id;
+	enum hccsyms_val fn_id;
 	int r;
 
 	r = ghost_read(ghost, &fn_id, sizeof(fn_id));
@@ -878,7 +878,7 @@ int import_restart_block(struct epm_action *action,
 	r = ghost_read(ghost, p, sizeof(*p));
 	if (r)
 		goto err_read;
-	p->fn = krgsyms_import(fn_id);
+	p->fn = hccsyms_import(fn_id);
 
 err_read:
 	return r;
@@ -919,7 +919,7 @@ static int import_binfmt(struct epm_action *action,
 	err = ghost_read(ghost, &binfmt_id, sizeof(int));
 	if (err)
 		goto out;
-	task->mm->binfmt = krgsyms_import(binfmt_id);
+	task->mm->binfmt = hccsyms_import(binfmt_id);
 out:
 	return err;
 }
@@ -931,9 +931,9 @@ static int import_children(struct epm_action *action,
 
 	switch (action->type) {
 	case EPM_MIGRATE:
-		task->children_obj = __krg_children_readlock(task);
+		task->children_obj = __hcc_children_readlock(task);
 		BUG_ON(!task->children_obj);
-		krg_children_unlock(task->children_obj);
+		hcc_children_unlock(task->children_obj);
 		break;
 
 	case EPM_REMOTE_CLONE:
@@ -943,12 +943,12 @@ static int import_children(struct epm_action *action,
 		 * app_restart.c:local_restore_children_objects()
 		 */
 		if (thread_group_leader(task)) {
-			task->children_obj = krg_children_alloc(task);
+			task->children_obj = hcc_children_alloc(task);
 		} else {
-			task->children_obj = __krg_children_writelock(task);
+			task->children_obj = __hcc_children_writelock(task);
 			BUG_ON(!task->children_obj);
-			__krg_children_share(task);
-			krg_children_unlock(task->children_obj);
+			__hcc_children_share(task);
+			hcc_children_unlock(task->children_obj);
 		}
 		if (!task->children_obj)
 			r = -ENOMEM;
@@ -1085,7 +1085,7 @@ static int import_cpu_timers(struct epm_action *action,
 static int import_uts_namespace(struct epm_action *action,
 				ghost_t *ghost, struct task_struct *task)
 {
-	struct uts_namespace *ns = task->nsproxy->krg_ns->root_nsproxy.uts_ns;
+	struct uts_namespace *ns = task->nsproxy->hcc_ns->root_nsproxy.uts_ns;
 
 	get_uts_ns(ns);
 	task->nsproxy->uts_ns = ns;
@@ -1096,7 +1096,7 @@ static int import_uts_namespace(struct epm_action *action,
 static int import_net_namespace(struct epm_action *action,
 				ghost_t *ghost, struct task_struct *task)
 {
-	struct net *ns = task->nsproxy->krg_ns->root_nsproxy.net_ns;
+	struct net *ns = task->nsproxy->hcc_ns->root_nsproxy.net_ns;
 
 	get_net(ns);
 	task->nsproxy->net_ns = ns;
@@ -1117,7 +1117,7 @@ static int import_nsproxy(struct epm_action *action,
 
 	atomic_set(&ns->count, 1);
 
-	ns->krg_ns = find_get_krg_ns();
+	ns->hcc_ns = find_get_hcc_ns();
 
 	retval = import_uts_namespace(action, ghost, task);
 	if (retval)
@@ -1263,7 +1263,7 @@ out:
 	return err;
 }
 
-static int import_krg_structs(struct epm_action *action,
+static int import_hcc_structs(struct epm_action *action,
 			      ghost_t *ghost, struct task_struct *tsk)
 {
 	struct task_struct *reaper;
@@ -1274,7 +1274,7 @@ static int import_krg_structs(struct epm_action *action,
 	int retval = 0, dummy;
 
 	if (action->type == EPM_MIGRATE) {
-		/* Synchronize with export_krg_structs() */
+		/* Synchronize with export_hcc_structs() */
 		retval = ghost_read(ghost, &dummy, sizeof(dummy));
 		if (retval)
 			goto out;
@@ -1286,13 +1286,13 @@ static int import_krg_structs(struct epm_action *action,
 		if (action->remote_clone.clone_flags & CLONE_THREAD) {
 			struct task_gdm_object *item;
 
-			item = krg_task_readlock(action->remote_clone.from_pid);
+			item = hcc_task_readlock(action->remote_clone.from_pid);
 			BUG_ON(!item);
 			parent_pid = item->parent;
 			real_parent_pid = item->real_parent;
 			real_parent_tgid = item->real_parent_tgid;
 			BUG_ON(item->group_leader != action->remote_clone.from_tgid);
-			krg_task_unlock(action->remote_clone.from_pid);
+			hcc_task_unlock(action->remote_clone.from_pid);
 
 			group_leader_pid = action->remote_clone.from_tgid;
 		} else {
@@ -1307,7 +1307,7 @@ static int import_krg_structs(struct epm_action *action,
 	 * Not a simple write lock because with REMOTE_CLONE and CHECKPOINT the
 	 * task container object does not exist yet.
 	 */
-	obj = krg_task_create_writelock(task_pid_knr(tsk));
+	obj = hcc_task_create_writelock(task_pid_knr(tsk));
 	BUG_ON(!obj);
 
 	switch (action->type) {
@@ -1342,7 +1342,7 @@ static int import_krg_structs(struct epm_action *action,
 		BUG();
 	}
 
-	krg_task_unlock(obj->pid);
+	hcc_task_unlock(obj->pid);
 
 out:
 	return retval;
@@ -1506,9 +1506,9 @@ static struct task_struct *import_task(struct epm_action *action,
 		goto err_group_leader;
 
 #ifdef CONFIG_HCC_SCHED
-	retval = import_krg_sched_info(action, ghost, task);
+	retval = import_hcc_sched_info(action, ghost, task);
 	if (retval)
-		goto err_krg_sched_info;
+		goto err_hcc_sched_info;
 #endif
 
 	retval = import_sched_info(action, ghost, task);
@@ -1561,9 +1561,9 @@ static struct task_struct *import_task(struct epm_action *action,
 	retval = import_children(action, ghost, task);
 	if (retval)
 		goto err_children;
-	retval = import_krg_structs(action, ghost, task);
+	retval = import_hcc_structs(action, ghost, task);
 	if (retval)
-		goto err_krg_structs;
+		goto err_hcc_structs;
 	retval = import_gdm_info_struct(action, ghost, task);
 	if (retval)
 		goto err_gdm_info_struct;
@@ -1616,8 +1616,8 @@ err_signal_struct:
 err_signals:
 	unimport_gdm_info_struct(task);
 err_gdm_info_struct:
-	unimport_krg_structs(action, task);
-err_krg_structs:
+	unimport_hcc_structs(action, task);
+err_hcc_structs:
 	unimport_children(action, task);
 err_children:
 	unimport_sched(task);
@@ -1647,8 +1647,8 @@ err_mm_struct:
 	unimport_sched_info(task);
 err_sched_info:
 #ifdef CONFIG_HCC_SCHED
-	unimport_krg_sched_info(task);
-err_krg_sched_info:
+	unimport_hcc_sched_info(task);
+err_hcc_sched_info:
 #endif
 	unimport_group_leader(task);
 err_group_leader:
@@ -1719,7 +1719,7 @@ static int register_pids(struct task_struct *task, struct epm_action *action)
 			break;
 		if ((type != PIDTYPE_PID || action->type != EPM_REMOTE_CLONE)
 		    && task->pids[type].pid->gdm_obj)
-			krg_end_get_pid(task->pids[type].pid);
+			hcc_end_get_pid(task->pids[type].pid);
 	}
 
 	return 0;
@@ -1765,32 +1765,32 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	if (action->type == EPM_REMOTE_CLONE) {
 		real_parent_tgid = action->remote_clone.from_tgid;
 		/* We need writelock to declare the new child later. */
-		parent_children_obj = krg_children_writelock(real_parent_tgid);
+		parent_children_obj = hcc_children_writelock(real_parent_tgid);
 		BUG_ON(!parent_children_obj);
-		krg_children_get(parent_children_obj);
+		hcc_children_get(parent_children_obj);
 		rcu_assign_pointer(tskRecv->parent_children_obj,
 				   parent_children_obj);
 	} else {
 		pid_t parent, real_parent;
 
 		/*
-		 * We must not call krg_parent_children_readlock since we are
+		 * We must not call hcc_parent_children_readlock since we are
 		 * restoring here the data needed for this function to work.
 		 */
-		obj = __krg_task_readlock(tskRecv);
+		obj = __hcc_task_readlock(tskRecv);
 		real_parent_tgid = obj->real_parent_tgid;
-		__krg_task_unlock(tskRecv);
+		__hcc_task_unlock(tskRecv);
 
 		parent_children_obj =
-			krg_children_readlock(real_parent_tgid);
-		if (!krg_get_parent(parent_children_obj, tskRecv,
+			hcc_children_readlock(real_parent_tgid);
+		if (!hcc_get_parent(parent_children_obj, tskRecv,
 				    &parent, &real_parent)) {
-			krg_children_get(parent_children_obj);
+			hcc_children_get(parent_children_obj);
 			rcu_assign_pointer(tskRecv->parent_children_obj,
 					   parent_children_obj);
 		}
 		if (parent_children_obj)
-			krg_children_unlock(parent_children_obj);
+			hcc_children_unlock(parent_children_obj);
 	}
 
 	flags = (tskRecv->exit_signal & CSIGNAL) | CLONE_VM | CLONE_THREAD
@@ -1822,19 +1822,19 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	pid = task_pid(tskRecv);
 	BUG_ON(!pid);
 
-	obj = __krg_task_writelock(tskRecv);
+	obj = __hcc_task_writelock(tskRecv);
 
-	krg_current = tskRecv;
+	hcc_current = tskRecv;
 	newTsk = copy_process(flags, stack_start, l_regs, stack_size,
 			      child_tidptr, pid, 0);
-	krg_current = NULL;
+	hcc_current = NULL;
 
 	if (IS_ERR(newTsk)) {
-		__krg_task_unlock(tskRecv);
+		__hcc_task_unlock(tskRecv);
 
 		if (action->type == EPM_REMOTE_CLONE)
-			krg_children_unlock(tskRecv->parent_children_obj);
-		krg_children_put(parent_children_obj);
+			hcc_children_unlock(tskRecv->parent_children_obj);
+		hcc_children_put(parent_children_obj);
 
 		return newTsk;
 	}
@@ -1860,11 +1860,11 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	BUG_ON(newTsk->task_obj->group_leader != task_tgid_knr(newTsk));
 
 	if (action->type == EPM_REMOTE_CLONE) {
-		retval = krg_new_child(parent_children_obj,
+		retval = hcc_new_child(parent_children_obj,
 				       action->remote_clone.from_pid,
 				       newTsk);
 
-		krg_children_unlock(parent_children_obj);
+		hcc_children_unlock(parent_children_obj);
 		if (retval)
 			PANIC("Remote child %d of %d created"
 			      " but could not be registered!",
@@ -1875,7 +1875,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	if (action->type == EPM_MIGRATE || action->type == EPM_CHECKPOINT)
 		newTsk->did_exec = tskRecv->did_exec;
 
-	__krg_task_unlock(tskRecv);
+	__hcc_task_unlock(tskRecv);
 
 	retval = register_pids(newTsk, action);
 	BUG_ON(retval);
@@ -1937,11 +1937,11 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	join_local_relatives(newTsk);
 
 #ifdef CONFIG_HCC_SCHED
-	post_import_krg_sched_info(newTsk);
+	post_import_hcc_sched_info(newTsk);
 #endif
 
 	/* Now the process can be made world-wide visible. */
-	krg_set_pid_location(newTsk);
+	hcc_set_pid_location(newTsk);
 
 	return newTsk;
 }

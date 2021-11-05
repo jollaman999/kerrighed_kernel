@@ -15,7 +15,7 @@
  *                                                                          *
  *--------------------------------------------------------------------------*/
 
-extern struct vm_operations_struct _krg_shmem_vmops;
-extern struct file_operations krg_shm_file_operations;
+extern struct vm_operations_struct _hcc_shmem_vmops;
+extern struct file_operations hcc_shm_file_operations;
 
 #endif

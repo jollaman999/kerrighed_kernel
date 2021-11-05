@@ -10,7 +10,7 @@
 #include <linux/socket.h>
 #include <linux/sched.h>
 
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/action.h>
 #include <hcc/faf.h>
 #include <hcc/file.h>
@@ -38,7 +38,7 @@ int setup_faf_file(struct file *file)
 {
 	unsigned int server_fd = 0;
 	int res = 0;
-	struct files_struct *files = first_krgrpc->files;
+	struct files_struct *files = first_hccrpc->files;
 
 	/* Install the file in the destination task file array */
 	if (file->f_flags & O_FAF_SRV) {
@@ -46,7 +46,7 @@ int setup_faf_file(struct file *file)
 		goto out;
 	}
 
-	server_fd = __get_unused_fd(first_krgrpc);
+	server_fd = __get_unused_fd(first_hccrpc);
 	if (server_fd < 0) {
 		res = server_fd;
 		goto out;
@@ -75,7 +75,7 @@ out:
  */
 int close_faf_file(struct file * file)
 {
-        struct files_struct *files = first_krgrpc->files;
+        struct files_struct *files = first_hccrpc->files;
         struct file * faf_file;
         struct fdtable *fdt;
         int fd = file->f_faf_srv_index;

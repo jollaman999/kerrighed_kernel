@@ -1534,7 +1534,7 @@ out_unlock:
 	return err;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const 
 #endif
 struct vm_operations_struct ubifs_file_vm_ops = {

@@ -22,7 +22,7 @@ typedef struct {
 	int nr_cpu;		/* Number of CPU on the node */
 	unsigned long totalram;	/* Total usable main memory size */
 	unsigned long totalhigh;	/* Total high memory size */
-} krg_static_node_info_t;
+} hcc_static_node_info_t;
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -47,7 +47,7 @@ int static_node_info_init(void);
  *
  *  @return  Structure containing information on the requested node.
  */
-static inline krg_static_node_info_t *get_static_node_info(int node_id)
+static inline hcc_static_node_info_t *get_static_node_info(int node_id)
 {
 	return _fgdm_get_object(static_node_info_gdm_set, node_id,
 				 GDM_NO_FREEZE|GDM_NO_FT_REQ);
@@ -55,7 +55,7 @@ static inline krg_static_node_info_t *get_static_node_info(int node_id)
 
 hcc_node_t node_info_default_owner(struct gdm_set *set,
 					 objid_t objid,
-					 const krgnodemask_t *nodes,
+					 const hccnodemask_t *nodes,
 					 int nr_nodes);
 
 #endif /* STATIC_NODE_INFO_LINKER_H */

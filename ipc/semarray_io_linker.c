@@ -11,14 +11,14 @@
 #include <linux/security.h>
 #include <linux/ipc_namespace.h>
 #include <linux/ipc.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 #include <hcc/pid.h>
 
 #include "ipc_handler.h"
 #include "semarray_io_linker.h"
 #include "util.h"
-#include "krgsem.h"
+#include "hccsem.h"
 
 struct kmem_cache *semarray_object_cachep;
 
@@ -62,7 +62,7 @@ struct sem_array *create_local_sem(struct ipc_namespace *ns,
 	INIT_LIST_HEAD(&sma->list_id);
 	INIT_LIST_HEAD(&sma->remote_sem_pending);
 
-	sma->sem_perm.krgops = sem_ids(ns).krgops;
+	sma->sem_perm.hccops = sem_ids(ns).hccops;
 	sem_unlock(sma, -1);
 
 	return sma;
@@ -208,7 +208,7 @@ int semarray_insert_object (struct gdm_obj * obj_entry,
 	if (!sem_object->local_sem) {
 		struct ipc_namespace *ns;
 
-		ns = find_get_krg_ipcns();
+		ns = find_get_hcc_ipcns();
 		BUG_ON(!ns);
 
 		/* This is the first time the object is inserted locally.
@@ -286,7 +286,7 @@ int semarray_remove_object(void *object, struct gdm_set * set,
 	if (sem_object) {
 		struct ipc_namespace *ns;
 
-		ns = find_get_krg_ipcns();
+		ns = find_get_hcc_ipcns();
 		BUG_ON(!ns);
 
 		sma = sem_object->local_sem;

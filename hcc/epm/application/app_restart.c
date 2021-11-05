@@ -18,8 +18,8 @@
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>
 #include <hcc/physical_fs.h>
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 #include "../pid.h"
 #include "../restart.h"
@@ -282,7 +282,7 @@ static int restore_local_app(long app_id, int chkpt_sn,
 			goto err_read;
 		}
 
-		krgnodes_clear(app->restart.replacing_nodes);
+		hccnodes_clear(app->restart.replacing_nodes);
 	} else {
 		do {
 			__set_current_state(TASK_UNINTERRUPTIBLE);
@@ -291,7 +291,7 @@ static int restore_local_app(long app_id, int chkpt_sn,
 		} while (app == NULL);
 	}
 
-	krgnode_set(node_id, app->restart.replacing_nodes);
+	hccnode_set(node_id, app->restart.replacing_nodes);
 
 	app->chkpt_sn = chkpt_sn;
 
@@ -405,20 +405,20 @@ __find_node_for_restart(hcc_node_t *first_avail_node,
 	int n;
 
 	/* looking for a node not involved in the application */
-	for (n = krgnode_next_online(*first_avail_node);
-	     n < KERRIGHED_MAX_NODES;
-	     n = krgnode_next_online(n)) {
+	for (n = hccnode_next_online(*first_avail_node);
+	     n < HCC_MAX_NODES;
+	     n = hccnode_next_online(n)) {
 
-		if (!krgnode_isset(n, obj->nodes)) {
-			krgnode_set(n, obj->nodes);
+		if (!hccnode_isset(n, obj->nodes)) {
+			hccnode_set(n, obj->nodes);
 			goto out;
 		}
 	}
 
 	/* all nodes are implied in the application,
 	   selecting the first existing node... */
-	for (n = krgnode_next_online(0); n < KERRIGHED_MAX_NODES;
-	     n = krgnode_next_online(n)) {
+	for (n = hccnode_next_online(0); n < HCC_MAX_NODES;
+	     n = hccnode_next_online(n)) {
 		*first_avail_node = n+1;
 		*duplicate = 1;
 		goto out;
@@ -435,7 +435,7 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 {
 	struct rpc_desc *desc;
 	struct init_restart_msg msg;
-	krgnodemask_t nodes, nodes_to_replace;
+	hccnodemask_t nodes, nodes_to_replace;
 	hcc_node_t prev_available_node = 0;
 	hcc_node_t node, recovery_node;
 	int duplicate = 0;
@@ -472,16 +472,16 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 	}
 
 	/* prepare nodes vector */
-	krgnodes_clear(nodes);
-	krgnodes_clear(nodes_to_replace);
-	for_each_krgnode_mask(node, obj->nodes){
-		if (likely(krgnode_online(node)))
-			krgnode_set(node, nodes);
+	hccnodes_clear(nodes);
+	hccnodes_clear(nodes_to_replace);
+	for_each_hccnode_mask(node, obj->nodes){
+		if (likely(hccnode_online(node)))
+			hccnode_set(node, nodes);
 		else
-			krgnode_set(node, nodes_to_replace);
+			hccnode_set(node, nodes_to_replace);
 	}
 
-	if (!krgnodes_empty(nodes)) {
+	if (!hccnodes_empty(nodes)) {
 		desc = rpc_begin_m(APP_INIT_RESTART, &nodes);
 
 		r = rpc_pack_type(desc, msg);
@@ -498,13 +498,13 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 
 	/* some nodes may be unavailable */
 	msg.recovery = 1;
-	for_each_krgnode_mask(node, nodes_to_replace) {
+	for_each_hccnode_mask(node, nodes_to_replace) {
 		duplicate = 0;
 
 		recovery_node = __find_node_for_restart(
 			&prev_available_node, &duplicate, obj, node);
 
-		krgnode_set(recovery_node, nodes);
+		hccnode_set(recovery_node, nodes);
 
 		desc = rpc_begin(APP_INIT_RESTART, recovery_node);
 		r = rpc_pack_type(desc, msg);
@@ -530,7 +530,7 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 		rpc_end(desc, 0);
 	}
 
-	krgnodes_copy(obj->nodes, nodes);
+	hccnodes_copy(obj->nodes, nodes);
 exit:
 	return r;
 
@@ -753,7 +753,7 @@ err:
 }
 
 static inline int get_orphan_sessions_and_pgrps(struct rpc_desc *desc,
-						krgnodemask_t nodes,
+						hccnodemask_t nodes,
 						pids_list_t *orphan_pids)
 {
 	hcc_node_t node;
@@ -762,7 +762,7 @@ static inline int get_orphan_sessions_and_pgrps(struct rpc_desc *desc,
 	INIT_LIST_HEAD(&orphan_pids->pids);
 	orphan_pids->nb = 0;
 
-	for_each_krgnode_mask(node, nodes) {
+	for_each_hccnode_mask(node, nodes) {
 		int local_orphans;
 		pid_t pid;
 
@@ -900,7 +900,7 @@ static int local_restore_task_object(struct app_struct *app)
 
 		if (t->restart.parent != 1) {
 
-			task->task_obj = __krg_task_writelock(task);
+			task->task_obj = __hcc_task_writelock(task);
 
 			tasklist_write_lock_irq();
 
@@ -915,7 +915,7 @@ static int local_restore_task_object(struct app_struct *app)
 
 			write_unlock_irq(&tasklist_lock);
 
-			__krg_task_unlock(task);
+			__hcc_task_unlock(task);
 		}
 
 		BUG_ON(task->task_obj->group_leader != t->restart.tgid);
@@ -933,14 +933,14 @@ static inline int task_restore_children_object(task_state_t *t)
 		goto exit;
 
 	BUG_ON(!(t->restart.real_parent_tgid & GLOBAL_PID_MASK));
-	obj = krg_children_writelock(t->restart.real_parent_tgid);
+	obj = hcc_children_writelock(t->restart.real_parent_tgid);
 
-	r = krg_new_child(obj, t->restart.real_parent, t->task);
+	r = hcc_new_child(obj, t->restart.real_parent, t->task);
 
 	t->task->parent_children_obj = obj;
-	krg_children_get(t->task->parent_children_obj);
+	hcc_children_get(t->task->parent_children_obj);
 
-	krg_children_unlock(obj);
+	hcc_children_unlock(obj);
 
 exit:
 	return r;
@@ -985,7 +985,7 @@ static inline void local_join_relatives(struct app_struct *app)
 		tsk = t->task;
 
 		join_local_relatives(tsk);
-		krg_pid_link_task(task_pid_knr(tsk));
+		hcc_pid_link_task(task_pid_knr(tsk));
 	}
 }
 

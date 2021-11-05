@@ -26,26 +26,26 @@
 
 #ifdef CONFIG_HCC_EPM
 #include <hcc/action.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <hcc/children.h>
-#include <hcc/krg_exit.h>
+#include <hcc/hcc_exit.h>
 #endif
 
 
 #ifdef CONFIG_HCC_EPM
 /* Helpers to make ptrace and migration mutually exclusive */
 
-int krg_ptrace_link(struct task_struct *task, struct task_struct *tracer)
+int hcc_ptrace_link(struct task_struct *task, struct task_struct *tracer)
 {
 	struct task_struct *parent;
 	int retval;
 
 	/* Lock to-be-ptraced task on this node */
-	retval = krg_action_disable(task, EPM_MIGRATE, 0);
+	retval = hcc_action_disable(task, EPM_MIGRATE, 0);
 	if (retval)
 		goto bad_task;
 	/* Lock tracer on this node */
-	retval = krg_action_disable(tracer, EPM_MIGRATE, 0);
+	retval = hcc_action_disable(tracer, EPM_MIGRATE, 0);
 	if (retval)
 		goto bad_tracer;
 	/* Lock parent on this node */
@@ -54,7 +54,7 @@ int krg_ptrace_link(struct task_struct *task, struct task_struct *tracer)
 	if (parent == baby_sitter)
 		goto bad_parent;
 	if (!is_container_init(parent) && parent != tracer) {
-		retval = krg_action_disable(parent, EPM_MIGRATE, 0);
+		retval = hcc_action_disable(parent, EPM_MIGRATE, 0);
 		if (retval)
 			goto bad_parent;
 	}
@@ -62,29 +62,29 @@ int krg_ptrace_link(struct task_struct *task, struct task_struct *tracer)
 	return 0;
 
 bad_parent:
-	krg_action_enable(tracer, EPM_MIGRATE, 0);
+	hcc_action_enable(tracer, EPM_MIGRATE, 0);
 bad_tracer:
-	krg_action_enable(task, EPM_MIGRATE, 0);
+	hcc_action_enable(task, EPM_MIGRATE, 0);
 bad_task:
 	return retval;
 }
 
 /* Assumes at least read_lock on tasklist */
 /* Called with write_lock_irq on tasklist */
-void krg_ptrace_unlink(struct task_struct *task)
+void hcc_ptrace_unlink(struct task_struct *task)
 {
 	BUG_ON(task->real_parent == baby_sitter);
 	if (!is_container_init(task->real_parent)
 	    && task->real_parent != task->parent)
-		krg_action_enable(task->real_parent, EPM_MIGRATE, 0);
+		hcc_action_enable(task->real_parent, EPM_MIGRATE, 0);
 	BUG_ON(task->parent == baby_sitter);
-	krg_action_enable(task->parent, EPM_MIGRATE, 0);
-	krg_action_enable(task, EPM_MIGRATE, 0);
+	hcc_action_enable(task->parent, EPM_MIGRATE, 0);
+	hcc_action_enable(task, EPM_MIGRATE, 0);
 }
 
 /* Assumes at least read_lock on tasklist */
 /* Called with write_lock_irq on tasklist */
-void krg_ptrace_reparent_ptraced(struct task_struct *real_parent,
+void hcc_ptrace_reparent_ptraced(struct task_struct *real_parent,
 				 struct task_struct *task)
 {
 	/*
@@ -94,14 +94,14 @@ void krg_ptrace_reparent_ptraced(struct task_struct *real_parent,
 	 */
 
 	/* Not really needed as long as zombies do not migrate... */
-	krg_action_enable(real_parent, EPM_MIGRATE, 0);
+	hcc_action_enable(real_parent, EPM_MIGRATE, 0);
 	/* new real_parent has already been assigned. */
 	BUG_ON(task->real_parent == baby_sitter);
 	if (!is_container_init(task->real_parent)
 	    && task->real_parent != task->parent) {
 		int retval;
 
-		retval = krg_action_disable(task->real_parent, EPM_MIGRATE, 0);
+		retval = hcc_action_disable(task->real_parent, EPM_MIGRATE, 0);
 		BUG_ON(retval);
 	}
 }
@@ -476,7 +476,7 @@ void __ptrace_unlink(struct task_struct *child)
 	BUG_ON(!child->ptrace);
 
 #ifdef CONFIG_HCC_EPM
-	krg_ptrace_unlink(child);
+	hcc_ptrace_unlink(child);
 #endif
 	child->ptrace = 0;
 	child->parent = child->real_parent;
@@ -552,7 +552,7 @@ int ptrace_attach(struct task_struct *task)
 	parent_children_obj = rcu_dereference(task->parent_children_obj);
 	if (parent_children_obj)
 		parent_children_obj =
-			krg_parent_children_writelock(task, &real_parent_tgid);
+			hcc_parent_children_writelock(task, &real_parent_tgid);
 #endif /* CONFIG_HCC_EPM */
 
 	task_lock(task);
@@ -561,12 +561,12 @@ int ptrace_attach(struct task_struct *task)
 	if (retval)
 		goto unlock_creds;
 #ifdef CONFIG_HCC_EPM
-	retval = krg_set_child_ptraced(parent_children_obj, task, 1);
+	retval = hcc_set_child_ptraced(parent_children_obj, task, 1);
 	if (retval)
 		goto unlock_creds;
-	retval = krg_ptrace_link(task, current);
+	retval = hcc_ptrace_link(task, current);
 	if (retval) {
-		krg_set_child_ptraced(parent_children_obj, task, 0);
+		hcc_set_child_ptraced(parent_children_obj, task, 0);
 		goto unlock_creds;
 	}
 #endif /* CONFIG_HCC_EPM */
@@ -590,7 +590,7 @@ unlock_tasklist:
 	write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_HCC_EPM
 	if (parent_children_obj)
-		krg_children_unlock(parent_children_obj);
+		hcc_children_unlock(parent_children_obj);
 	up_read(&hcc_init_sem);
 #endif /* CONFIG_HCC_EPM */
 unlock_creds:
@@ -618,7 +618,7 @@ int ptrace_traceme(void)
 	parent_children_obj = rcu_dereference(current->parent_children_obj);
 	if (parent_children_obj)
 		parent_children_obj =
-			krg_parent_children_writelock(current, &real_parent_tgid);
+			hcc_parent_children_writelock(current, &real_parent_tgid);
 #endif /* CONFIG_HCC_EPM */
 	write_lock_irq(&tasklist_lock);
 	/* Are we already being traced? */
@@ -631,12 +631,12 @@ int ptrace_traceme(void)
 		ret = security_ptrace_traceme(current->parent);
 #ifdef CONFIG_HCC_EPM
 		if (!ret)
-			ret = krg_set_child_ptraced(parent_children_obj,
+			ret = hcc_set_child_ptraced(parent_children_obj,
 						    current, 1);
 		if (!ret) {
-			ret = krg_ptrace_link(current, current->parent);
+			ret = hcc_ptrace_link(current, current->parent);
 			if (ret)
-				krg_set_child_ptraced(parent_children_obj,
+				hcc_set_child_ptraced(parent_children_obj,
 						      current, 0);
 		}
 #endif /* CONFIG_HCC_EPM */
@@ -654,18 +654,18 @@ int ptrace_traceme(void)
 		else if (!ret) {
 			/*
 			 * Since tracer should have been real_parent, it's ok
-			 * to call krg_ptrace_unlink() without having called
+			 * to call hcc_ptrace_unlink() without having called
 			 * __ptrace_link() before.
 			 */
-			krg_ptrace_unlink(current);
-			krg_set_child_ptraced(parent_children_obj, current, 0);
+			hcc_ptrace_unlink(current);
+			hcc_set_child_ptraced(parent_children_obj, current, 0);
 		}
 #endif /* CONFIG_HCC_EPM */
 	}
 	write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_HCC_EPM
 	if (parent_children_obj)
-		krg_children_unlock(parent_children_obj);
+		hcc_children_unlock(parent_children_obj);
 	up_read(&hcc_init_sem);
 #endif /* CONFIG_HCC_EPM */
 
@@ -692,7 +692,7 @@ int ptrace_detach(struct task_struct *child, unsigned int data)
 	parent_children_obj = rcu_dereference(child->parent_children_obj);
 	if (parent_children_obj)
 		parent_children_obj =
-			krg_parent_children_writelock(child, &real_parent_tgid);
+			hcc_parent_children_writelock(child, &real_parent_tgid);
 #endif /* CONFIG_HCC_EPM */
 	write_lock_irq(&tasklist_lock);
 	/*
@@ -703,7 +703,7 @@ int ptrace_detach(struct task_struct *child, unsigned int data)
 		child->exit_code = data;
 		dead = __ptrace_detach(current, child);
 #ifdef CONFIG_HCC_EPM
-		krg_set_child_ptraced(parent_children_obj, child, 0);
+		hcc_set_child_ptraced(parent_children_obj, child, 0);
 #endif
 		if (!child->exit_state)
 			wake_up_process(child);
@@ -711,7 +711,7 @@ int ptrace_detach(struct task_struct *child, unsigned int data)
 	write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_HCC_EPM
 	if (parent_children_obj)
-		krg_children_unlock(parent_children_obj);
+		hcc_children_unlock(parent_children_obj);
 #endif /* CONFIG_HCC_EPM */
 
 	if (unlikely(dead))
@@ -750,11 +750,11 @@ void exit_ptrace(struct task_struct *tracer)
 	BUG_ON(!list_empty(&tracer->ptraced));
 #ifdef CONFIG_HCC_EPM
 	list_for_each_entry_safe(p, n, &ptraced, ptrace_entry) {
-		parent_children_obj = krg_prepare_exit_ptrace_task(tracer, p);
+		parent_children_obj = hcc_prepare_exit_ptrace_task(tracer, p);
 		dead = __ptrace_detach(tracer, p);
 		if (dead)
 			list_add(&p->ptrace_entry, &ptrace_dead);
-		krg_finish_exit_ptrace_task(p, parent_children_obj, dead);
+		hcc_finish_exit_ptrace_task(p, parent_children_obj, dead);
 	}
 	BUG_ON(!list_empty(&ptraced));
 #endif /* CONFIG_HCC_EPM */

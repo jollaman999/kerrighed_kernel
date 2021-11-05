@@ -94,7 +94,7 @@
 #ifdef CONFIG_HCC_EPM
 #include <hcc/action.h>
 #endif
-#include "krgsem.h"
+#include "hccsem.h"
 #endif
 
 /* sem_undo_list controls shared access to the list of sem_undo structures
@@ -284,9 +284,9 @@ void sem_unlock(struct sem_array *sma, int locknum)
 	if (locknum == -1) {
 		struct kern_ipc_perm *perm = &(sma)->sem_perm;
 #ifdef CONFIG_HCC_IPC
-		if (perm->krgops) {
+		if (perm->hccops) {
 			rcu_read_lock();
-			perm->krgops->ipc_unlock(perm);
+			perm->hccops->ipc_unlock(perm);
 		} else
 #endif
 		spin_unlock(&perm->lock);
@@ -460,15 +460,15 @@ int newary(struct ipc_namespace *ns, struct ipc_params *params)
 #ifdef CONFIG_HCC_IPC
 	INIT_LIST_HEAD(&sma->remote_sem_pending);
 
-	if (is_krg_ipc(&sem_ids(ns))) {
-		retval = krg_ipc_sem_newary(ns, sma, nsems);
+	if (is_hcc_ipc(&sem_ids(ns))) {
+		retval = hcc_ipc_sem_newary(ns, sma, nsems);
 		if (retval) {
 			ipc_rcu_putref(sma, sem_rcu_free);
 			return retval;
 		}
 	} else
 
-	sma->sem_perm.krgops = NULL;
+	sma->sem_perm.hccops = NULL;
 
 	id = ipc_addid(&sem_ids(ns), &sma->sem_perm, ns->sc_semmni,
 		       params->requested_id);
@@ -627,7 +627,7 @@ static void wake_up_sem_queue(struct sem_queue *q, int error)
 	q->status = IN_WAKEUP;
 #ifdef CONFIG_HCC_IPC
 	if (remote)
-		krg_ipc_sem_wakeup_process(q, error);
+		hcc_ipc_sem_wakeup_process(q, error);
 	else
 #endif
 	wake_up_process(q->sleeper);
@@ -754,7 +754,7 @@ static int update_queue(struct sem_array *sma, int semnum)
 	   keep the sem for it */
 	int remote = 0, loop = 0;
 
-	if (sma->sem_perm.krgops) {
+	if (sma->sem_perm.hccops) {
 		remote = get_random_int()%2;
 		loop = 1;
 	}
@@ -1002,8 +1002,8 @@ static void free_un(struct rcu_head *head)
 static void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 {
 #ifdef CONFIG_HCC_IPC
-	if (is_krg_ipc(&sem_ids(ns)))
-		krg_ipc_sem_freeary(ns, ipcp);
+	if (is_hcc_ipc(&sem_ids(ns)))
+		hcc_ipc_sem_freeary(ns, ipcp);
 	else
 		local_freeary(ns, ipcp);
 }
@@ -1019,7 +1019,7 @@ static void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 	int i;
 
 #ifdef CONFIG_HCC_IPC
-	if (is_krg_ipc(&sem_ids(ns)))
+	if (is_hcc_ipc(&sem_ids(ns)))
 		BUG_ON(!list_empty(&sma->list_id));
 #endif
 
@@ -1808,7 +1808,7 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 	}
 
 #ifdef CONFIG_HCC_IPC
-	if (is_krg_ipc(&sem_ids(ns)))
+	if (is_hcc_ipc(&sem_ids(ns)))
 		un = NULL;
 	else
 #endif
@@ -1858,8 +1858,8 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 		goto out_unlock_free;
 
 #ifdef CONFIG_HCC_IPC
-	if (undos && sma->sem_perm.krgops) {
-		un = krg_ipc_sem_find_undo(sma);
+	if (undos && sma->sem_perm.hccops) {
+		un = hcc_ipc_sem_find_undo(sma);
 		if (IS_ERR(un)) {
 			error = PTR_ERR(un);
 			goto out_unlock_free;
@@ -1955,7 +1955,7 @@ sleep_again:
 	}
 
 #if defined(CONFIG_HCC_IPC) && defined(CONFIG_HCC_EPM)
-	if (krg_action_any_pending(current)) {
+	if (hcc_action_any_pending(current)) {
 #ifdef CONFIG_HCC_DEBUG
 		printk("%s:%d - action hcc! --> need replay!!\n",
 		       __PRETTY_FUNCTION__, __LINE__);
@@ -2018,8 +2018,8 @@ int copy_semundo(unsigned long clone_flags, struct task_struct *tsk)
 
 	ns = task_nsproxy(tsk)->ipc_ns;
 
-	if (is_krg_ipc(&sem_ids(ns)))
-		return krg_ipc_sem_copy_semundo(clone_flags, tsk);
+	if (is_hcc_ipc(&sem_ids(ns)))
+		return hcc_ipc_sem_copy_semundo(clone_flags, tsk);
 
 	return __copy_semundo(clone_flags, tsk);
 }
@@ -2191,16 +2191,16 @@ void exit_sem(struct task_struct *tsk)
 
 	ns = task_nsproxy(tsk);
 	if (!ns) { /* it happens when cleaning a failing fork */
-		if (krg_current)
-			ns = task_nsproxy(krg_current);
+		if (hcc_current)
+			ns = task_nsproxy(hcc_current);
 		else
 			ns = task_nsproxy(current);
 	}
 
 	ipcns = ns->ipc_ns;
 
-	if (is_krg_ipc(&sem_ids(ipcns)))
-		krg_ipc_sem_exit_sem(ipcns, tsk);
+	if (is_hcc_ipc(&sem_ids(ipcns)))
+		hcc_ipc_sem_exit_sem(ipcns, tsk);
 
 	/* let call __exit_sem in case process has been created
 	 * before the HCC loading

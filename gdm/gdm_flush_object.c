@@ -88,7 +88,7 @@ try_again:
 	case WRITE_OWNER:
 		/* Local copy is the only one. Let's inject it ! */
 send_copy:
-		if (dest == KERRIGHED_NODE_ID_NONE) {
+		if (dest == HCC_NODE_ID_NONE) {
 			res = -ENOSPC;
 			break;
 		}

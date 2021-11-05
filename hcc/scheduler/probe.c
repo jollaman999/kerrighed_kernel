@@ -13,7 +13,7 @@
 #include <linux/kernel.h>
 #include <linux/jiffies.h>
 #include <linux/string.h>
-#include <hcc/krgflags.h>
+#include <hcc/hccflags.h>
 #include <hcc/scheduler/pipe.h>
 #include <hcc/scheduler/global_config.h>
 #include <hcc/scheduler/probe.h>
@@ -27,9 +27,9 @@
  * kernel. By doing this, it extends set of resource properties that are being
  * measured.
  * The probe module is loaded by issuing
- * "mkdir /config/krg_scheduler/probes/<probe_name>" command. When probe is
+ * "mkdir /config/hcc_scheduler/probes/<probe_name>" command. When probe is
  * loaded it starts measuring its system characteristic. Probes can also be
- * deactivated by issuing "rmdir /config/krg_scheduler/probes/<probe_name>"
+ * deactivated by issuing "rmdir /config/hcc_scheduler/probes/<probe_name>"
  * command from user space.
  *
  * @author Innogrid HCC
@@ -155,7 +155,7 @@ static ssize_t scheduler_probe_attribute_store(struct config_item *item,
 	struct string_list_object *list;
 	ssize_t ret = 0;
 
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		return -EPERM;
 
 	if (probe_attr->store) {
@@ -379,7 +379,7 @@ ssize_t scheduler_probe_source_attribute_store(struct config_item *item,
 	ssize_t ret;
 	int handled;
 
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		return -EPERM;
 
 	list = global_config_attr_store_begin(item);
@@ -714,7 +714,7 @@ void scheduler_probe_unregister(struct scheduler_probe *probe)
 
 /**
  * This is a configfs callback function, which is invoked every time user
- * tries to create directory in "/krg_scheduler/probes/" subdirectory. It
+ * tries to create directory in "/hcc_scheduler/probes/" subdirectory. It
  * is used for loading probe's module, initializing and activating it.
  *
  * Note: the function is already synchronized since configfs takes care of
@@ -730,11 +730,11 @@ static struct config_group *probes_make_group(struct config_group *group,
 	int err;
 
 	ret = ERR_PTR(-EPERM);
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		goto out;
 
 	if (!(current->flags & PF_KTHREAD)
-	    && !IS_KERRIGHED_NODE(HCCFLAGS_RUNNING))
+	    && !IS_HCC_NODE(HCCFLAGS_RUNNING))
 		goto out;
 
 	global_probes = global_config_make_item_begin(&group->cg_item, name);
@@ -837,14 +837,14 @@ static void scheduler_probe_drop(struct global_config_item *item)
 static int probes_allow_drop_item(struct config_group *group,
 				  struct config_item *item)
 {
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		return -EPERM;
 	return 0;
 }
 
 /**
  * This is a configfs callback function, which is invoked every time user
- * tries to remove directory in "/krg_scheduler/probes/" subdirectory.
+ * tries to remove directory in "/hcc_scheduler/probes/" subdirectory.
  * It is used for deactivating chosen probe.
  *
  * Note: the function is already synchronized since configfs takes care of

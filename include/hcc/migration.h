@@ -54,7 +54,7 @@ int migrate_linux_threads(pid_t pid,
 			  enum migration_scope scope,
 			  hcc_node_t dest_node);
 
-/* Used by krg_release_task() */
+/* Used by hcc_release_task() */
 void migration_aborted(struct task_struct *tsk);
 
 #endif /* CONFIG_HCC_EPM */

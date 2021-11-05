@@ -5,7 +5,7 @@
 #ifdef __KERNEL__
 
 #include <linux/proc_fs.h>
-#include <hcc/krg_services.h>
+#include <hcc/hcc_services.h>
 #include <gdm/gdm_types.h>
 
 #endif // __KERNEL__

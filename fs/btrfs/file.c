@@ -1581,7 +1581,7 @@ out:
 	return ret > 0 ? -EIO : ret;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct btrfs_file_vm_ops = {

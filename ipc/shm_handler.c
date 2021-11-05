@@ -13,7 +13,7 @@
 #include <linux/msg.h>
 #include <gdm/gdm.h>
 #include <hcc/hotplug.h>
-#include "krgshm.h"
+#include "hccshm.h"
 #include "ipc_handler.h"
 #include "shm_handler.h"
 #include "shmid_io_linker.h"
@@ -36,7 +36,7 @@ static struct kern_ipc_perm *kcb_ipc_shm_lock(struct ipc_ids *ids, int id)
 
 	index = ipcid_to_idx(id);
 
-	shp_object = _gdm_grab_object_no_ft(ids->krgops->data_gdm_set, index);
+	shp_object = _gdm_grab_object_no_ft(ids->hccops->data_gdm_set, index);
 
 	if (!shp_object)
 		goto error;
@@ -55,7 +55,7 @@ static struct kern_ipc_perm *kcb_ipc_shm_lock(struct ipc_ids *ids, int id)
 	return &(shp->shm_perm);
 
 error:
-	_gdm_put_object(ids->krgops->data_gdm_set, index);
+	_gdm_put_object(ids->hccops->data_gdm_set, index);
 	rcu_read_unlock();
 
 	return ERR_PTR(-EINVAL);
@@ -70,7 +70,7 @@ static void kcb_ipc_shm_unlock(struct kern_ipc_perm *ipcp)
 	if (ipcp->deleted)
 		deleted = 1;
 
-	_gdm_put_object(ipcp->krgops->data_gdm_set, index);
+	_gdm_put_object(ipcp->hccops->data_gdm_set, index);
 
 	if (!deleted)
 		spin_unlock(&ipcp->lock);
@@ -83,12 +83,12 @@ static struct kern_ipc_perm *kcb_ipc_shm_findkey(struct ipc_ids *ids, key_t key)
 	long *key_index;
 	int id = -1;
 
-	key_index = _gdm_get_object_no_ft(ids->krgops->key_gdm_set, key);
+	key_index = _gdm_get_object_no_ft(ids->hccops->key_gdm_set, key);
 
 	if (key_index)
 		id = *key_index;
 
-	_gdm_put_object(ids->krgops->key_gdm_set, key);
+	_gdm_put_object(ids->hccops->key_gdm_set, key);
 
 	if (id != -1)
 		return kcb_ipc_shm_lock(ids, id);
@@ -100,19 +100,19 @@ static struct kern_ipc_perm *kcb_ipc_shm_findkey(struct ipc_ids *ids, key_t key)
  *
  *  @author Innogrid HCC
  */
-int krg_ipc_shm_newseg (struct ipc_namespace *ns, struct shmid_kernel *shp)
+int hcc_ipc_shm_newseg (struct ipc_namespace *ns, struct shmid_kernel *shp)
 {
 	shmid_object_t *shp_object;
 	struct gdm_set *gdm;
 	long *key_index;
 	int index, err;
 
-	BUG_ON(!shm_ids(ns).krgops);
+	BUG_ON(!shm_ids(ns).hccops);
 
 	index = ipcid_to_idx(shp->shm_perm.id);
 
 	shp_object = _gdm_grab_object_manual_ft(
-		shm_ids(ns).krgops->data_gdm_set, index);
+		shm_ids(ns).hccops->data_gdm_set, index);
 
 	BUG_ON(shp_object);
 
@@ -133,38 +133,38 @@ int krg_ipc_shm_newseg (struct ipc_namespace *ns, struct shmid_kernel *shp)
 	}
 
 	shp->shm_file->f_dentry->d_inode->i_mapping->gdm_set = gdm;
-	shp->shm_file->f_op = &krg_shm_file_operations;
+	shp->shm_file->f_op = &hcc_shm_file_operations;
 
 	shp_object->set_id = gdm->id;
 
 	shp_object->local_shp = shp;
 
-	_gdm_set_object(shm_ids(ns).krgops->data_gdm_set, index, shp_object);
+	_gdm_set_object(shm_ids(ns).hccops->data_gdm_set, index, shp_object);
 
 	if (shp->shm_perm.key != IPC_PRIVATE)
 	{
-		key_index = _gdm_grab_object(shm_ids(ns).krgops->key_gdm_set,
+		key_index = _gdm_grab_object(shm_ids(ns).hccops->key_gdm_set,
 					      shp->shm_perm.key);
 		*key_index = index;
-		_gdm_put_object (shm_ids(ns).krgops->key_gdm_set,
+		_gdm_put_object (shm_ids(ns).hccops->key_gdm_set,
 				  shp->shm_perm.key);
 	}
 
-	shp->shm_perm.krgops = shm_ids(ns).krgops;
+	shp->shm_perm.hccops = shm_ids(ns).hccops;
 
 err_put:
-	_gdm_put_object(shm_ids(ns).krgops->data_gdm_set, index);
+	_gdm_put_object(shm_ids(ns).hccops->data_gdm_set, index);
 
 	return 0;
 
 }
 
-void krg_ipc_shm_rmkey(struct ipc_namespace *ns, key_t key)
+void hcc_ipc_shm_rmkey(struct ipc_namespace *ns, key_t key)
 {
-	_gdm_remove_object(shm_ids(ns).krgops->key_gdm_set, key);
+	_gdm_remove_object(shm_ids(ns).hccops->key_gdm_set, key);
 }
 
-void krg_ipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
+void hcc_ipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 {
 	struct gdm_set *mm_set;
 	int index;
@@ -176,16 +176,16 @@ void krg_ipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 	mm_set = shp->shm_file->f_dentry->d_inode->i_mapping->gdm_set;
 
 	if (key != IPC_PRIVATE) {
-		_gdm_grab_object_no_ft(shm_ids(ns).krgops->key_gdm_set, key);
-		_gdm_remove_frozen_object(shm_ids(ns).krgops->key_gdm_set, key);
+		_gdm_grab_object_no_ft(shm_ids(ns).hccops->key_gdm_set, key);
+		_gdm_remove_frozen_object(shm_ids(ns).hccops->key_gdm_set, key);
 	}
 
 	local_shm_unlock(shp);
 
-	_gdm_remove_frozen_object(shm_ids(ns).krgops->data_gdm_set, index);
+	_gdm_remove_frozen_object(shm_ids(ns).hccops->data_gdm_set, index);
 	_destroy_gdm_set(mm_set);
 
-	krg_ipc_rmid(&shm_ids(ns), index);
+	hcc_ipc_rmid(&shm_ids(ns), index);
 }
 
 /*****************************************************************************/
@@ -194,11 +194,11 @@ void krg_ipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 /*                                                                           */
 /*****************************************************************************/
 
-int krg_shm_init_ns(struct ipc_namespace *ns)
+int hcc_shm_init_ns(struct ipc_namespace *ns)
 {
 	int r;
 
-	struct krgipc_ops *shm_ops = kmalloc(sizeof(struct krgipc_ops),
+	struct hccipc_ops *shm_ops = kmalloc(sizeof(struct hccipc_ops),
 					     GFP_KERNEL);
 	if (!shm_ops) {
 		r = -ENOMEM;
@@ -242,7 +242,7 @@ int krg_shm_init_ns(struct ipc_namespace *ns)
 	shm_ops->ipc_unlock = kcb_ipc_shm_unlock;
 	shm_ops->ipc_findkey = kcb_ipc_shm_findkey;
 
-	shm_ids(ns).krgops = shm_ops;
+	shm_ids(ns).hccops = shm_ops;
 
 	return 0;
 
@@ -256,15 +256,15 @@ err:
 	return r;
 }
 
-void krg_shm_exit_ns(struct ipc_namespace *ns)
+void hcc_shm_exit_ns(struct ipc_namespace *ns)
 {
-	if (shm_ids(ns).krgops) {
+	if (shm_ids(ns).hccops) {
 
-		_destroy_gdm_set(shm_ids(ns).krgops->data_gdm_set);
-		_destroy_gdm_set(shm_ids(ns).krgops->key_gdm_set);
-		_destroy_gdm_set(shm_ids(ns).krgops->map_gdm_set);
+		_destroy_gdm_set(shm_ids(ns).hccops->data_gdm_set);
+		_destroy_gdm_set(shm_ids(ns).hccops->key_gdm_set);
+		_destroy_gdm_set(shm_ids(ns).hccops->map_gdm_set);
 
-		kfree(shm_ids(ns).krgops);
+		kfree(shm_ids(ns).hccops);
 	}
 }
 
@@ -278,7 +278,7 @@ void shm_handler_init(void)
 	register_io_linker(SHMID_LINKER, &shmid_linker);
 	register_io_linker(SHMKEY_LINKER, &shmkey_linker);
 
-	krgsyms_register(HCCSYMS_VM_OPS_SHM, &shm_vm_ops);
+	hccsyms_register(HCCSYMS_VM_OPS_SHM, &shm_vm_ops);
 
 	printk("Shm Server configured\n");
 }

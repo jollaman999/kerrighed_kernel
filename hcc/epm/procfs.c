@@ -12,8 +12,8 @@
 
 #include <linux/proc_fs.h>
 #include <linux/uaccess.h>
-#include <hcc/krg_syscalls.h>
-#include <hcc/krg_services.h>
+#include <hcc/hcc_syscalls.h>
+#include <hcc/hcc_services.h>
 #include <hcc/procfs.h>
 #include <hcc/migration.h>
 #include "migration.h"

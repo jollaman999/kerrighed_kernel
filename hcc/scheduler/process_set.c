@@ -297,7 +297,7 @@ struct config_item *process_subset_make_item(struct config_group *group,
 	int err;
 
 	err = -EPERM;
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		goto err;
 
 	global_ids = global_config_make_item_begin(&group->cg_item, name);
@@ -364,7 +364,7 @@ err:
 static int process_subset_allow_drop_item(struct config_group *group,
 					  struct config_item *item)
 {
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		return -EPERM;
 	return 0;
 }
@@ -541,7 +541,7 @@ static ssize_t pset_attribute_store(struct config_item *item,
 	struct process_set *pset = to_process_set(item);
 	ssize_t ret = 0;
 
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		return -EPERM;
 
 	if (pset_attr->store) {
@@ -699,12 +699,12 @@ int export_process_set_links(struct epm_action *action, ghost_t *ghost,
 	 * link/unlink are done in make_item/drop_item operations or in
 	 * import_process_set_links with the mutex held.
 	 */
-	mutex_lock(&krg_scheduler_subsys.su_mutex);
+	mutex_lock(&hcc_scheduler_subsys.su_mutex);
 
 	nr_links = 0;
 	/*
 	 * No need to acquire process_set_link_lock since all mutations of
-	 * process set links are protected by krg_scheduler_subsys.su_mutex
+	 * process set links are protected by hcc_scheduler_subsys.su_mutex
 	 */
 	hlist_for_each(pos, &pid->process_sets[type])
 		nr_links++;
@@ -753,7 +753,7 @@ int export_process_set_links(struct epm_action *action, ghost_t *ghost,
 out_free:
 	kfree(elements);
 out_unlock:
-	mutex_unlock(&krg_scheduler_subsys.su_mutex);
+	mutex_unlock(&hcc_scheduler_subsys.su_mutex);
 
 	return err;
 }
@@ -796,7 +796,7 @@ int import_process_set_links(struct epm_action *action, ghost_t *ghost,
 		 * Taking the subsystem mutex blocks all other calls of
 		 * __process_set_element_link and process_set_element_unlink
 		 */
-		mutex_lock(&krg_scheduler_subsys.su_mutex);
+		mutex_lock(&hcc_scheduler_subsys.su_mutex);
 		/*
 		 * item must not be added to a pid list of links unless it is
 		 * still linked in configfs.
@@ -810,7 +810,7 @@ int import_process_set_links(struct epm_action *action, ghost_t *ghost,
 		if (process_set_element_in_subset(pset_el)
 		    && !process_set_element_linked(pset_el))
 			__process_set_element_link(pset_el, pid, type);
-		mutex_unlock(&krg_scheduler_subsys.su_mutex);
+		mutex_unlock(&hcc_scheduler_subsys.su_mutex);
 
 		config_item_put(item);
 	}

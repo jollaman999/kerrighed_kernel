@@ -1,5 +1,5 @@
-#ifndef __KERRIGHED_PID_H__
-#define __KERRIGHED_PID_H__
+#ifndef __HCC_PID_H__
+#define __HCC_PID_H__
 
 #ifdef CONFIG_HCC_PROC
 
@@ -8,8 +8,8 @@
 #include <linux/threads.h>
 #include <linux/types.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccinit.h>
+#include <hcc/hccnodemask.h>
 
 /*
  * WARNING: procfs and futex need at least the 2 MSbits free (in procfs: 1 for
@@ -29,14 +29,14 @@
 /** extract the original node id of a HCC PID */
 #define ORIG_NODE(pid) ((pid) >> PID_NODE_SHIFT)
 
-#define KERRIGHED_PID_MAX_LIMIT GLOBAL_PID_NODE(0, KERRIGHED_MAX_NODES)
+#define HCC_PID_MAX_LIMIT GLOBAL_PID_NODE(0, HCC_MAX_NODES)
 
 /* HCC container's PID numbers */
 static inline pid_t pid_knr(struct pid *pid)
 {
 	struct pid_namespace *ns = ns_of_pid(pid);
-	if (ns && ns->krg_ns_root)
-		return pid_nr_ns(pid, ns->krg_ns_root);
+	if (ns && ns->hcc_ns_root)
+		return pid_nr_ns(pid, ns->hcc_ns_root);
 	return 0;
 }
 
@@ -62,7 +62,7 @@ static inline pid_t task_session_knr(struct task_struct *task)
 
 static inline struct pid *find_kpid(int nr)
 {
-	struct pid_namespace *ns = find_get_krg_pid_ns();
+	struct pid_namespace *ns = find_get_hcc_pid_ns();
 	struct pid *pid = find_pid_ns(nr, ns);
 	put_pid_ns(ns);
 	return pid;
@@ -75,14 +75,14 @@ static inline struct task_struct *find_task_by_kpid(pid_t pid)
 
 /* PID location */
 #ifdef CONFIG_HCC_EPM
-int krg_set_pid_location(struct task_struct *task);
-int krg_unset_pid_location(struct task_struct *task);
+int hcc_set_pid_location(struct task_struct *task);
+int hcc_unset_pid_location(struct task_struct *task);
 #endif
-hcc_node_t krg_lock_pid_location(pid_t pid);
-void krg_unlock_pid_location(pid_t pid);
+hcc_node_t hcc_lock_pid_location(pid_t pid);
+void hcc_unlock_pid_location(pid_t pid);
 
 /* Global PID, foreign pidmap aware iterator */
-struct pid *krg_find_ge_pid(int nr, struct pid_namespace *pid_ns,
+struct pid *hcc_find_ge_pid(int nr, struct pid_namespace *pid_ns,
 			    struct pid_namespace *pidmap_ns);
 
 #else /* !CONFIG_HCC_PROC */
@@ -138,15 +138,15 @@ struct task_gdm_object;
 struct pid;
 
 /* Must be called under rcu_read_lock() */
-struct task_gdm_object *krg_pid_task(struct pid *pid);
+struct task_gdm_object *hcc_pid_task(struct pid *pid);
 
 /* Must be called under rcu_read_lock() */
-void krg_pid_unlink_task(struct pid_gdm_object *obj);
+void hcc_pid_unlink_task(struct pid_gdm_object *obj);
 
 /* Pid reference tracking */
-struct pid *krg_get_pid(int nr);
-void krg_end_get_pid(struct pid *pid);
-void krg_put_pid(struct pid *pid);
+struct pid *hcc_get_pid(int nr);
+void hcc_end_get_pid(struct pid *pid);
+void hcc_put_pid(struct pid *pid);
 
 /* Foreign pidmaps */
 int pidmap_map_read_lock(void);
@@ -154,9 +154,9 @@ void pidmap_map_read_unlock(void);
 hcc_node_t pidmap_node(hcc_node_t node);
 struct pid_namespace *node_pidmap(hcc_node_t node);
 
-void pidmap_map_cleanup(struct krg_namespace *krg_ns);
+void pidmap_map_cleanup(struct hcc_namespace *hcc_ns);
 
-void krg_free_pidmap(struct upid *upid);
+void hcc_free_pidmap(struct upid *upid);
 
 #elif defined(CONFIG_HCC_PROC)
 
@@ -171,7 +171,7 @@ static inline void pidmap_map_read_unlock(void)
 
 static inline hcc_node_t pidmap_node(hcc_node_t node)
 {
-	return krgnode_online(node) ? node : KERRIGHED_NODE_ID_NONE;
+	return hccnode_online(node) ? node : HCC_NODE_ID_NONE;
 }
 
 static inline struct pid_namespace *node_pidmap(hcc_node_t node)
@@ -181,4 +181,4 @@ static inline struct pid_namespace *node_pidmap(hcc_node_t node)
 
 #endif /* CONFIG_HCC_EPM */
 
-#endif /* __KERRIGHED_PID_H__ */
+#endif /* __HCC_PID_H__ */

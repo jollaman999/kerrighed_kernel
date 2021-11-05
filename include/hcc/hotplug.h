@@ -2,7 +2,7 @@
 #define __HOTPLUG__
 
 #include <linux/kref.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 
 enum {
 	HOTPLUG_PRIO_SCHED_POST,
@@ -36,18 +36,18 @@ enum {
 
 struct hotplug_node_set {
 	int subclusterid;
-	krgnodemask_t v;
+	hccnodemask_t v;
 };
 
 struct hotplug_context {
-	struct krg_namespace *ns;
+	struct hcc_namespace *ns;
 	struct hotplug_node_set node_set;
 	struct kref kref;
 };
 
 struct notifier_block;
 
-struct hotplug_context *hotplug_ctx_alloc(struct krg_namespace *ns);
+struct hotplug_context *hotplug_ctx_alloc(struct hcc_namespace *ns);
 void hotplug_ctx_release(struct kref *kref);
 
 static inline void hotplug_ctx_get(struct hotplug_context *ctx)
@@ -76,13 +76,13 @@ struct universe_elem {
 	int state;
 	int subid;
 };
-extern struct universe_elem universe[KERRIGHED_MAX_NODES];
+extern struct universe_elem universe[HCC_MAX_NODES];
 
 extern void (*kh_cluster_autostart)(void);
 extern void (*kh_node_reachable)(hcc_node_t nodeid);
 extern void (*kh_node_unreachable)(hcc_node_t nodeid);
 
-void krg_node_arrival(hcc_node_t nodeid);
-void krg_node_departure(hcc_node_t nodeid);
+void hcc_node_arrival(hcc_node_t nodeid);
+void hcc_node_departure(hcc_node_t nodeid);
 
 #endif

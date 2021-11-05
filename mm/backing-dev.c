@@ -776,13 +776,13 @@ long congestion_wait(int sync, long timeout)
 #ifdef CONFIG_HCC_EPM
 long congestion_wait(int rw, long timeout)
 {
-	struct task_struct *krg_cur;
+	struct task_struct *hcc_cur;
 	long ret;
 
-	krg_cur = krg_current;
-	krg_current = NULL;
+	hcc_cur = hcc_current;
+	hcc_current = NULL;
 	ret = __congestion_wait(rw, timeout);
-	krg_current = krg_cur;
+	hcc_current = hcc_cur;
 
 	return ret;
 }

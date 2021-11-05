@@ -3,7 +3,7 @@
 
 #ifndef __ASSEMBLY__
 
-typedef enum krgsyms_val {
+typedef enum hccsyms_val {
 	HCCSYMS_UNDEF, // Must be the first one
 	HCCSYMS_VM_OPS_NULL,
 	HCCSYMS_VM_OPS_SHM,
@@ -49,15 +49,15 @@ typedef enum krgsyms_val {
 	HCCSYMS_DVFS_MOBILITY_REGULAR_OPS,
 
 	HCCSYMS_TABLE_SIZE // Must be the last one
-} krgsyms_val_t;
+} hccsyms_val_t;
 
-int krgsyms_register(enum krgsyms_val v, void* p);
-int krgsyms_unregister(enum krgsyms_val v);
+int hccsyms_register(enum hccsyms_val v, void* p);
+int hccsyms_unregister(enum hccsyms_val v);
 
-enum krgsyms_val krgsyms_export(void* p);
-void* krgsyms_import(enum krgsyms_val v);
+enum hccsyms_val hccsyms_export(void* p);
+void* hccsyms_import(enum hccsyms_val v);
 
-extern int init_krgsyms(void);
+extern int init_hccsyms(void);
 
 #endif /* __ASSEMBLY__ */
 

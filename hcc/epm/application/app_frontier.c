@@ -10,11 +10,11 @@
 #include <linux/cred.h>
 #include <hcc/remote_cred.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <hcc/pid.h>
 #include <hcc/application.h>
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include "../checkpoint.h"
 
 /*--------------------------------------------------------------------------*
@@ -111,14 +111,14 @@ static inline long __get_appid_from_local_pid(pid_t pid)
 long get_appid_from_pid(pid_t pid)
 {
 	struct rpc_desc *desc;
-	hcc_node_t n = KERRIGHED_NODE_ID_NONE;
+	hcc_node_t n = HCC_NODE_ID_NONE;
 	struct getappid_request_msg msg;
 	long app_id;
 	int err = 0;
 
 	/* lock the task to be sure it does not exit */
-	n = krg_lock_pid_location(pid);
-	if (n == KERRIGHED_NODE_ID_NONE)
+	n = hcc_lock_pid_location(pid);
+	if (n == HCC_NODE_ID_NONE)
 		return -ESRCH;
 
 	/* the task is local */
@@ -150,7 +150,7 @@ out_end:
 	rpc_end(desc, 0);
 
 out_unlock:
-	krg_unlock_pid_location(pid);
+	hcc_unlock_pid_location(pid);
 	if (err)
 		return err;
 	return app_id;

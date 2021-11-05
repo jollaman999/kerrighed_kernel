@@ -92,15 +92,15 @@ static struct nsproxy *create_new_namespaces(unsigned long flags,
 	}
 
 #ifdef CONFIG_HCC_HOTPLUG
-	err = copy_krg_ns(tsk, new_nsp);
+	err = copy_hcc_ns(tsk, new_nsp);
 	if (err)
-		goto out_krg;
+		goto out_hcc;
 #endif
 
 	return new_nsp;
 
 #ifdef CONFIG_HCC_HOTPLUG
-out_krg:
+out_hcc:
 	if (new_nsp->net_ns)
 		put_net(new_nsp->net_ns);
 #endif
@@ -173,8 +173,8 @@ out:
 void free_nsproxy(struct nsproxy *ns)
 {
 #ifdef CONFIG_HCC_HOTPLUG
-	if (ns->krg_ns)
-		put_krg_ns(ns->krg_ns);
+	if (ns->hcc_ns)
+		put_hcc_ns(ns->hcc_ns);
 #endif
 	if (ns->mnt_ns)
 		put_mnt_ns(ns->mnt_ns);

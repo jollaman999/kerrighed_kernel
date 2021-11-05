@@ -53,7 +53,7 @@ static int snd_us428ctls_vm_fault(struct vm_area_struct *area,
 	return 0;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct us428ctls_vm_ops = {

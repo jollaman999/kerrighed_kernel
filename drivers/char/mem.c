@@ -313,7 +313,7 @@ static inline int private_mapping_ok(struct vm_area_struct *vma)
 	return 1;
 }
 #endif
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct mmap_mem_ops = {

@@ -7,14 +7,14 @@
 
 #include <hcc/hotplug.h>
 #include <hcc/namespace.h>
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 
 #include "hotplug_internal.h"
 
-struct workqueue_struct *krg_ha_wq;
+struct workqueue_struct *hcc_ha_wq;
 
-struct hotplug_context *hotplug_ctx_alloc(struct krg_namespace *ns)
+struct hotplug_context *hotplug_ctx_alloc(struct hcc_namespace *ns)
 {
 	struct hotplug_context *ctx;
 
@@ -23,7 +23,7 @@ struct hotplug_context *hotplug_ctx_alloc(struct krg_namespace *ns)
 	if (!ctx)
 		return NULL;
 
-	get_krg_ns(ns);
+	get_hcc_ns(ns);
 	ctx->ns = ns;
 	kref_init(&ctx->kref);
 
@@ -35,14 +35,14 @@ void hotplug_ctx_release(struct kref *kref)
 	struct hotplug_context *ctx;
 
 	ctx = container_of(kref, struct hotplug_context, kref);
-	put_krg_ns(ctx->ns);
+	put_hcc_ns(ctx->ns);
 	kfree(ctx);
 }
 
 int init_hotplug(void)
 {
-	krg_ha_wq = create_workqueue("krgHA");
-	BUG_ON(krg_ha_wq == NULL);
+	hcc_ha_wq = create_workqueue("hccHA");
+	BUG_ON(hcc_ha_wq == NULL);
 
 	hotplug_hooks_init();
 

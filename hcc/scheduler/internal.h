@@ -8,7 +8,7 @@ struct hotplug_context;
 #define PROBES_NAME "probes"
 #define SCHEDULERS_NAME "schedulers"
 
-extern struct configfs_subsystem krg_scheduler_subsys;
+extern struct configfs_subsystem hcc_scheduler_subsys;
 
 struct global_config_attrs;
 
@@ -47,8 +47,8 @@ static inline int nr_def_groups(struct config_group *def_groups[])
 
 /* Subsystems initializers / cleaners */
 
-int krg_sched_info_start(void);
-void krg_sched_info_exit(void);
+int hcc_sched_info_start(void);
+void hcc_sched_info_exit(void);
 
 int global_lock_start(void);
 void global_lock_exit(void);

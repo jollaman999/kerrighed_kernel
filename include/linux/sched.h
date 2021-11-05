@@ -511,7 +511,7 @@ struct sighand_struct {
 	spinlock_t		siglock;
 	wait_queue_head_t	signalfd_wqh;
 #ifdef CONFIG_HCC_EPM
-	objid_t			krg_objid;
+	objid_t			hcc_objid;
 	struct sighand_struct_gdm_object *gdm_obj;
 #endif
 };
@@ -733,7 +733,7 @@ struct signal_struct {
 #endif /* CONFIG_AUDIT */
 #endif /* __GENKSYMS__ */
 #ifdef CONFIG_HCC_EPM
-	objid_t krg_objid;
+	objid_t hcc_objid;
 	struct signal_struct_gdm_object *gdm_obj;
 #endif
 };
@@ -821,7 +821,7 @@ struct user_struct {
 	unsigned long unix_inflight;	/* How many files in flight in unix sockets */
 #endif
 #ifdef CONFIG_HCC_EPM
-	objid_t krg_objid;
+	objid_t hcc_objid;
 	struct signal_struct_gdm_object *gdm_obj;
 #endif
 };
@@ -1457,7 +1457,7 @@ struct task_struct {
 	unsigned in_execve:1;	/* Tell the LSMs that the process is doing an
 				 * execve */
 #ifdef CONFIG_HCC_HOTPLUG
-	unsigned create_krg_ns:1;
+	unsigned create_hcc_ns:1;
 #endif
 #ifdef CONFIG_HCC_EPM
 	unsigned remote_vfork_done:1;
@@ -1774,10 +1774,10 @@ struct task_struct {
 #endif
 #endif /* __GENKYSMS__ */
 #ifdef CONFIG_HCC_CAP
-	kernel_krg_cap_t krg_caps;
-	atomic_t krg_cap_used[CAP_SIZE];
-	atomic_t krg_cap_unavailable[CAP_SIZE];
-	atomic_t krg_cap_unavailable_private[CAP_SIZE];
+	kernel_hcc_cap_t hcc_caps;
+	atomic_t hcc_cap_used[CAP_SIZE];
+	atomic_t hcc_cap_unavailable[CAP_SIZE];
+	atomic_t hcc_cap_unavailable_private[CAP_SIZE];
 #endif
 #ifdef CONFIG_HCC_GDM
 	struct gdm_info_struct *gdm_info;
@@ -1786,14 +1786,14 @@ struct task_struct {
 	struct task_gdm_object *task_obj;
 #endif
 #ifdef CONFIG_HCC_EPM
-	int krg_action_flags;
+	int hcc_action_flags;
 	struct task_struct *effective_current;
 	struct children_gdm_object *parent_children_obj;
 	struct children_gdm_object *children_obj;
 	struct app_struct *application;
 #endif
 #ifdef CONFIG_HCC_SCHED
-	struct krg_sched_info *krg_sched;
+	struct hcc_sched_info *hcc_sched;
 #endif
 
 };
@@ -2510,16 +2510,16 @@ struct task_struct *copy_process(unsigned long clone_flags,
 				 struct pid *pid,
 				 int trace);
 /* remote clone */
-int krg_do_fork(unsigned long clone_flags,
+int hcc_do_fork(unsigned long clone_flags,
 		unsigned long stack_start,
 		struct pt_regs *regs,
 		unsigned long stack_size,
 		int *parent_tidptr,
 		int *child_tidptr,
 		int trace);
-bool in_krg_do_fork(void);
+bool in_hcc_do_fork(void);
 /* vfork with remote child */
-void krg_vfork_done(struct completion *vfork_done);
+void hcc_vfork_done(struct completion *vfork_done);
 #endif /* CONFIG_HCC_EPM */
 
 extern void __set_task_comm(struct task_struct *tsk, char *from, bool exec);

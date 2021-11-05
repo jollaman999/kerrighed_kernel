@@ -83,7 +83,7 @@ static ssize_t scheduler_policy_attribute_store(struct config_item *item,
 	struct string_list_object *list;
 	ssize_t ret = -EACCES;
 
-	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->krg_ns)
+	if (!(current->flags & PF_KTHREAD) && !current->nsproxy->hcc_ns)
 		return -EPERM;
 
 	if (policy_attr->store) {

@@ -40,7 +40,7 @@
 
 #ifdef CONFIG_HCC_PROC
 #include <hcc/pid.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #endif
 
 #define pid_hashfn(nr, ns)	\
@@ -85,7 +85,7 @@ struct pid_namespace init_pid_ns = {
 	.level = 0,
 	.child_reaper = &init_task,
 #ifdef CONFIG_HCC_PROC
-	.krg_ns_root = NULL,
+	.hcc_ns_root = NULL,
 	.global = 0,
 #endif
 	.proc_inum = PROC_PID_INIT_INO,
@@ -146,7 +146,7 @@ static void free_pidmap(struct upid *upid)
 {
 	if ((upid->nr & GLOBAL_PID_MASK)
 	    && ORIG_NODE(upid->nr) != hcc_node_id)
-		krg_free_pidmap(upid);
+		hcc_free_pidmap(upid);
 	else
 		__free_pidmap(upid);
 }
@@ -399,7 +399,7 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 		goto out;
 #ifdef CONFIG_HCC_EPM
 	pid->gdm_obj = NULL;
-	BUG_ON(req_nr && !is_krg_pid_ns_root(ns));
+	BUG_ON(req_nr && !is_hcc_pid_ns_root(ns));
 #endif
 
 	tmp = ns;
@@ -529,7 +529,7 @@ static void __change_pid(struct task_struct *task, enum pid_type type,
 			return;
 
 #ifdef CONFIG_HCC_EPM
-	krg_put_pid(pid);
+	hcc_put_pid(pid);
 #else
 	free_pid(pid);
 #endif
@@ -708,7 +708,7 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
 }
 
 #ifdef CONFIG_HCC_PROC
-struct pid *krg_find_ge_pid(int nr, struct pid_namespace *pid_ns,
+struct pid *hcc_find_ge_pid(int nr, struct pid_namespace *pid_ns,
 			    struct pid_namespace *pidmap_ns)
 {
 	hcc_node_t node = ORIG_NODE(nr);

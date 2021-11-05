@@ -9,14 +9,14 @@ struct vm_area_struct;
 
 
 /** HCC Hooks **/
-int krg_ipc_shm_newseg(struct ipc_namespace *ns, struct shmid_kernel * shp);
-void krg_ipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp);
-void krg_ipc_shm_rmkey(struct ipc_namespace *ns, key_t key);
+int hcc_ipc_shm_newseg(struct ipc_namespace *ns, struct shmid_kernel * shp);
+void hcc_ipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp);
+void hcc_ipc_shm_rmkey(struct ipc_namespace *ns, key_t key);
 
 /** Exported variables  **/
 
 extern struct vm_operations_struct shm_vm_ops;
-extern struct vm_operations_struct krg_shmem_vm_ops;
+extern struct vm_operations_struct hcc_shmem_vm_ops;
 
 extern const struct file_operations shm_file_operations;
 

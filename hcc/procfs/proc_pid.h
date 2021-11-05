@@ -11,7 +11,7 @@
 #include <linux/fs.h>
 
 static inline
-struct proc_distant_pid_info *get_krg_proc_task(struct inode *inode)
+struct proc_distant_pid_info *get_hcc_proc_task(struct inode *inode)
 {
 	return &PROC_I(inode)->distant_proc;
 }

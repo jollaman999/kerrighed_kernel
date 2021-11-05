@@ -1,5 +1,5 @@
 /** Hashtable management interface
- *  @file krg_hashtable.h
+ *  @file hcc_hashtable.h
  *
  *  Definition of hashtable management functions.
  *  @author Innogrid HCC

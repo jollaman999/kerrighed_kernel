@@ -8,16 +8,16 @@
 #ifndef __APP_UTILS_H__
 #define __APP_UTILS_H__
 
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 
 static inline int app_wait_returns_from_nodes(struct rpc_desc *desc,
-					      krgnodemask_t nodes)
+					      hccnodemask_t nodes)
 {
 	hcc_node_t node;
 	int ret, r=0;
 	enum rpc_error error;
 
-	for_each_krgnode_mask(node, nodes) {
+	for_each_hccnode_mask(node, nodes) {
 		error = rpc_unpack_type_from(desc, node, ret);
 		if (error) /* unpack has failed */
 			r = error;
@@ -48,7 +48,7 @@ err_rpc:
 }
 
 static inline int ask_nodes_to_continue(struct rpc_desc *desc,
-					krgnodemask_t nodes,
+					hccnodemask_t nodes,
 					int result)
 {
 	int r;

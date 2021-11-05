@@ -23,8 +23,8 @@
 #include <hcc/pid.h>
 #include <hcc/remote_cred.h>
 
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/task.h>
 #include "proc_pid.h"
 
@@ -39,7 +39,7 @@ struct environ_read_msg {
 static int do_handle_environ_read(struct task_struct *task,
 				  char *buf, size_t count, loff_t *ppos)
 {
-	struct pid_namespace *ns = find_get_krg_pid_ns();
+	struct pid_namespace *ns = find_get_hcc_pid_ns();
 	struct vfsmount *mnt = ns->proc_mnt;
 	struct file *file;
 	struct nameidata nd;
@@ -137,7 +137,7 @@ static int do_environ_read(struct file *file, struct proc_distant_pid_info *task
 	loff_t new_pos;
 	int err;
 
-	BUG_ON(task->prob_node == KERRIGHED_NODE_ID_NONE);
+	BUG_ON(task->prob_node == HCC_NODE_ID_NONE);
 
 	msg.pid = task->pid;
 	msg.count = count;
@@ -184,23 +184,23 @@ out_err:
 	goto out;
 }
 
-static ssize_t krg_proc_pid_environ_read(struct file *file, char __user *buf,
+static ssize_t hcc_proc_pid_environ_read(struct file *file, char __user *buf,
 					 size_t count, loff_t *ppos)
 {
 	struct proc_distant_pid_info *task =
-		get_krg_proc_task(file->f_dentry->d_inode);
+		get_hcc_proc_task(file->f_dentry->d_inode);
 	unsigned long page;
 	size_t c = count;
 	loff_t pos = *ppos;
 	int ret = -ESRCH;
 
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		goto out_no_task;
 
 	/* TODO: if pid is reused in between, we may think the entry is still
 	 * valid! */
-	task->prob_node = krg_lock_pid_location(task->pid);
-	if (task->prob_node == KERRIGHED_NODE_ID_NONE)
+	task->prob_node = hcc_lock_pid_location(task->pid);
+	if (task->prob_node == HCC_NODE_ID_NONE)
 		/* Task is dead. */
 		goto out_no_task;
 
@@ -227,13 +227,13 @@ static ssize_t krg_proc_pid_environ_read(struct file *file, char __user *buf,
 out_free:
 	free_page(page);
 out:
-	krg_unlock_pid_location(task->pid);
+	hcc_unlock_pid_location(task->pid);
 out_no_task:
 	return ret;
 }
 
-const struct file_operations krg_proc_pid_environ_operations = {
-	.read		= krg_proc_pid_environ_read,
+const struct file_operations hcc_proc_pid_environ_operations = {
+	.read		= hcc_proc_pid_environ_read,
 };
 
 /* INF() entries */
@@ -242,24 +242,24 @@ const struct file_operations krg_proc_pid_environ_operations = {
 
 #define PROC_BLOCK_SIZE (3*1024)	/* 4K page size but our output routines use some slack for overruns */
 
-static ssize_t krg_proc_info_read(struct file *file, char *buf,
+static ssize_t hcc_proc_info_read(struct file *file, char *buf,
 				  size_t count, loff_t *ppos)
 {
 	struct inode *inode = file->f_dentry->d_inode;
 	unsigned long page;
 	ssize_t length;
-	struct proc_distant_pid_info *task = get_krg_proc_task(inode);
+	struct proc_distant_pid_info *task = get_hcc_proc_task(inode);
 
 	length = -ESRCH;
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		goto out_no_task;
 
 	/*
 	 * TODO: if pid is reused in between, we may think the entry is still
 	 * valid!
 	 */
-	task->prob_node = krg_lock_pid_location(task->pid);
-	if (task->prob_node == KERRIGHED_NODE_ID_NONE)
+	task->prob_node = hcc_lock_pid_location(task->pid);
+	if (task->prob_node == HCC_NODE_ID_NONE)
 		/* Task is dead. */
 		goto out_no_task;
 
@@ -277,13 +277,13 @@ static ssize_t krg_proc_info_read(struct file *file, char *buf,
 
 	free_page(page);
 out:
-	krg_unlock_pid_location(task->pid);
+	hcc_unlock_pid_location(task->pid);
 out_no_task:
 	return length;
 }
 
-const struct file_operations krg_proc_info_file_operations = {
-	.read = krg_proc_info_read,
+const struct file_operations hcc_proc_info_file_operations = {
+	.read = hcc_proc_info_read,
 };
 
 /* Helpers */
@@ -359,7 +359,7 @@ static int generic_proc_read(struct proc_distant_pid_info *task,
 	int bytes_read;
 	int err;
 
-	BUG_ON(task->prob_node == KERRIGHED_NODE_ID_NONE);
+	BUG_ON(task->prob_node == HCC_NODE_ID_NONE);
 
 	msg.pid = task->pid;
 
@@ -407,7 +407,7 @@ static void handle_read_proc_pid_cmdline(struct rpc_desc *desc,
 				 REQ_PROC_PID_CMDLINE);
 }
 
-int krg_proc_pid_cmdline(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_pid_cmdline(struct proc_distant_pid_info *task, char *buffer)
 {
 	return generic_proc_read(task, buffer, REQ_PROC_PID_CMDLINE);
 }
@@ -419,7 +419,7 @@ static void handle_read_proc_pid_auxv(struct rpc_desc *desc,
 				 REQ_PROC_PID_CMDLINE);
 }
 
-int krg_proc_pid_auxv(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_pid_auxv(struct proc_distant_pid_info *task, char *buffer)
 {
 	return generic_proc_read(task, buffer, REQ_PROC_PID_AUXV);
 }
@@ -431,7 +431,7 @@ static void handle_read_proc_pid_limits(struct rpc_desc *desc,
 				 REQ_PROC_PID_LIMITS);
 }
 
-int krg_proc_pid_limits(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_pid_limits(struct proc_distant_pid_info *task, char *buffer)
 {
 	return generic_proc_read(task, buffer, REQ_PROC_PID_LIMITS);
 }
@@ -444,7 +444,7 @@ static void handle_read_proc_pid_syscall(struct rpc_desc *desc,
 				 REQ_PROC_PID_SYSCALL);
 }
 
-int krg_proc_pid_syscall(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_pid_syscall(struct proc_distant_pid_info *task, char *buffer)
 {
 	return generic_proc_read(task, buffer, REQ_PROC_PID_SYSCALL);
 }
@@ -458,7 +458,7 @@ static void handle_read_proc_pid_wchan(struct rpc_desc *desc,
 				 REQ_PROC_PID_WCHAN);
 }
 
-int krg_proc_pid_wchan(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_pid_wchan(struct proc_distant_pid_info *task, char *buffer)
 {
 	return generic_proc_read(task, buffer, REQ_PROC_PID_WCHAN);
 }
@@ -472,7 +472,7 @@ static void handle_read_proc_pid_schedstat(struct rpc_desc *desc,
 				 REQ_PROC_PID_SCHEDSTAT);
 }
 
-int krg_proc_pid_schedstat(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_pid_schedstat(struct proc_distant_pid_info *task, char *buffer)
 {
 	return generic_proc_read(task, buffer, REQ_PROC_PID_SCHEDSTAT);
 }
@@ -485,7 +485,7 @@ static void handle_read_proc_pid_oom_score(struct rpc_desc *desc,
 				 REQ_PROC_PID_OOM_SCORE);
 }
 
-int krg_proc_pid_oom_score(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_pid_oom_score(struct proc_distant_pid_info *task, char *buffer)
 {
 	return generic_proc_read(task, buffer, REQ_PROC_PID_OOM_SCORE);
 }
@@ -498,7 +498,7 @@ static void handle_read_proc_tgid_io_accounting(struct rpc_desc *desc,
 				 REQ_PROC_TGID_IO_ACCOUNTING);
 }
 
-int krg_proc_tgid_io_accounting(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_tgid_io_accounting(struct proc_distant_pid_info *task, char *buffer)
 {
 	return generic_proc_read(task, buffer, REQ_PROC_TGID_IO_ACCOUNTING);
 }
@@ -512,7 +512,7 @@ static void handle_read_epm_type_show(struct rpc_desc *desc,
 				 REQ_PROC_EPM_TYPE_SHOW);
 }
 
-int krg_proc_epm_type_show(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_epm_type_show(struct proc_distant_pid_info *task, char *buffer)
 {
 	return generic_proc_read(task, buffer, REQ_PROC_EPM_TYPE_SHOW);
 }
@@ -524,7 +524,7 @@ static void handle_read_epm_source_show(struct rpc_desc *desc,
 				 REQ_PROC_EPM_SOURCE_SHOW);
 }
 
-int krg_proc_epm_source_show(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_epm_source_show(struct proc_distant_pid_info *task, char *buffer)
 {
 	return generic_proc_read(task, buffer, REQ_PROC_EPM_SOURCE_SHOW);
 }
@@ -536,7 +536,7 @@ static void handle_read_epm_target_show(struct rpc_desc *desc,
 				 REQ_PROC_EPM_TARGET_SHOW);
 }
 
-int krg_proc_epm_target_show(struct proc_distant_pid_info *task, char *buffer)
+int hcc_proc_epm_target_show(struct proc_distant_pid_info *task, char *buffer)
 {
 	return generic_proc_read(task, buffer, REQ_PROC_EPM_TARGET_SHOW);
 }
@@ -545,29 +545,29 @@ int krg_proc_epm_target_show(struct proc_distant_pid_info *task, char *buffer)
 /* ONE() entries */
 
 /* Common part */
-static ssize_t krg_proc_single_read(struct file *file, char __user *buf,
+static ssize_t hcc_proc_single_read(struct file *file, char __user *buf,
 				    size_t count, loff_t *ppos)
 {
 	struct inode *inode = file->f_dentry->d_inode;
 	struct pid_namespace *ns;
-	struct proc_distant_pid_info *task = get_krg_proc_task(inode);
+	struct proc_distant_pid_info *task = get_hcc_proc_task(inode);
 	unsigned long page;
 	size_t c = count;
 	ssize_t length;
 
 	ns = inode->i_sb->s_fs_info;
-	BUG_ON(!is_krg_pid_ns_root(ns));
+	BUG_ON(!is_hcc_pid_ns_root(ns));
 
 	length = -ESRCH;
-	if (!current->nsproxy->krg_ns)
+	if (!current->nsproxy->hcc_ns)
 		goto out_no_task;
 
 	/*
 	 * TODO: if pid is reused in between, we may think the entry is still
 	 * valid!
 	 */
-	task->prob_node = krg_lock_pid_location(task->pid);
-	if (task->prob_node == KERRIGHED_NODE_ID_NONE)
+	task->prob_node = hcc_lock_pid_location(task->pid);
+	if (task->prob_node == HCC_NODE_ID_NONE)
 		/* Task is dead. */
 		goto out_no_task;
 
@@ -593,28 +593,28 @@ out_free:
 	free_page(page);
 
 out:
-	krg_unlock_pid_location(task->pid);
+	hcc_unlock_pid_location(task->pid);
 out_no_task:
 	return length;
 }
 
-struct krg_proc_single_private {
+struct hcc_proc_single_private {
 	void (*release)(struct inode *inode, struct file *file);
 	void *data;
 };
 
-int krg_proc_single_release(struct inode *inode, struct file *file)
+int hcc_proc_single_release(struct inode *inode, struct file *file)
 {
-	struct krg_proc_single_private *private = file->private_data;
+	struct hcc_proc_single_private *private = file->private_data;
 
 	if (private)
 		private->release(inode, file);
 	return 0;
 }
 
-const struct file_operations krg_proc_single_file_operations = {
-	.read = krg_proc_single_read,
-	.release = krg_proc_single_release,
+const struct file_operations hcc_proc_single_file_operations = {
+	.read = hcc_proc_single_read,
+	.release = hcc_proc_single_release,
 };
 
 /* Helpers */
@@ -632,7 +632,7 @@ struct anonymous_proc_single_data {
 	proc_show_t *proc_show;
 };
 
-static int krg_proc_handler_single_show(struct seq_file *m, void *v)
+static int hcc_proc_handler_single_show(struct seq_file *m, void *v)
 {
 	struct anonymous_proc_single_data *data = m->private;
 	struct task_struct *task = data->task;
@@ -641,7 +641,7 @@ static int krg_proc_handler_single_show(struct seq_file *m, void *v)
 }
 
 static
-int krg_proc_handler_single_release(struct inode *inode, struct file *file)
+int hcc_proc_handler_single_release(struct inode *inode, struct file *file)
 {
 	struct seq_file *m = file->private_data;
 	struct anonymous_proc_single_data *data = m->private;
@@ -652,13 +652,13 @@ int krg_proc_handler_single_release(struct inode *inode, struct file *file)
 	return single_release(inode, file);
 }
 
-static const struct file_operations krg_proc_handler_single_file_operations = {
+static const struct file_operations hcc_proc_handler_single_file_operations = {
 	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = krg_proc_handler_single_release,
+	.release = hcc_proc_handler_single_release,
 };
 
-static int krg_proc_handler_single_getfd(struct task_struct *task,
+static int hcc_proc_handler_single_getfd(struct task_struct *task,
 					 struct pid_namespace *ns,
 					 proc_show_t *proc_show)
 {
@@ -676,8 +676,8 @@ static int krg_proc_handler_single_getfd(struct task_struct *task,
 	data->ns = ns;
 	data->proc_show = proc_show;
 
-	fd = anon_inode_getfd("krg-proc-handler-single",
-			      &krg_proc_handler_single_file_operations,
+	fd = anon_inode_getfd("hcc-proc-handler-single",
+			      &hcc_proc_handler_single_file_operations,
 			      NULL,
 			      O_RDWR);
 	if (fd < 0)
@@ -685,7 +685,7 @@ static int krg_proc_handler_single_getfd(struct task_struct *task,
 
 	file = fget(fd);
 	BUG_ON(!file);
-	err = single_open(file, krg_proc_handler_single_show, data);
+	err = single_open(file, hcc_proc_handler_single_show, data);
 	fput(file);
 	if (err) {
 		sys_close(fd);
@@ -708,7 +708,7 @@ static void handle_generic_proc_show(struct rpc_desc *desc, void *_msg,
 				     enum rpcid REQ)
 {
 	struct generic_proc_show_msg *msg = _msg;
-	struct pid_namespace *ns = find_get_krg_pid_ns();
+	struct pid_namespace *ns = find_get_hcc_pid_ns();
 	struct task_struct *tsk;
 	const struct cred *old_cred = NULL;
 	unsigned long page = 0;
@@ -734,7 +734,7 @@ static void handle_generic_proc_show(struct rpc_desc *desc, void *_msg,
 	if (!page)
 		goto out_err;
 
-	res = krg_proc_handler_single_getfd(tsk, ns, proc_show);
+	res = hcc_proc_handler_single_getfd(tsk, ns, proc_show);
 	if (res < 0)
 		goto out_err;
 	fd = res;
@@ -786,7 +786,7 @@ out_err:
 
 static void generic_proc_show_release(struct inode *inode, struct file *file)
 {
-	struct krg_proc_single_private *private = file->private_data;
+	struct hcc_proc_single_private *private = file->private_data;
 	struct rpc_desc *desc = private->data;
 	size_t count = 0;
 	int err;
@@ -804,14 +804,14 @@ static int generic_proc_show(struct file *file,
 			     enum rpcid req)
 {
 	struct generic_proc_show_msg msg;
-	struct krg_proc_single_private *private = file->private_data;
+	struct hcc_proc_single_private *private = file->private_data;
 	struct pid_namespace *ns = file->f_dentry->d_sb->s_fs_info;
 	struct rpc_desc *desc;
 	int bytes_read;
 	int err;
 
-	BUG_ON(task->prob_node == KERRIGHED_NODE_ID_NONE);
-	BUG_ON(!is_krg_pid_ns_root(ns));
+	BUG_ON(task->prob_node == HCC_NODE_ID_NONE);
+	BUG_ON(!is_hcc_pid_ns_root(ns));
 
 	msg.pid = task->pid;
 
@@ -873,7 +873,7 @@ static void handle_read_proc_pid_status(struct rpc_desc *desc,
 				 REQ_PROC_PID_STATUS);
 }
 
-int krg_proc_pid_status(struct file *file, struct proc_distant_pid_info *task,
+int hcc_proc_pid_status(struct file *file, struct proc_distant_pid_info *task,
 			char *buf, size_t count)
 {
 	return generic_proc_show(file, task, buf, count, REQ_PROC_PID_STATUS);
@@ -886,7 +886,7 @@ static void handle_read_proc_pid_personality(struct rpc_desc *desc,
 				 REQ_PROC_PID_PERSONALITY);
 }
 
-int krg_proc_pid_personality(struct file *file,
+int hcc_proc_pid_personality(struct file *file,
 			     struct proc_distant_pid_info *task,
 			     char *buf, size_t count)
 {
@@ -900,7 +900,7 @@ static void handle_read_proc_tgid_stat(struct rpc_desc *desc,
 				 REQ_PROC_TGID_STAT);
 }
 
-int krg_proc_tgid_stat(struct file *file, struct proc_distant_pid_info *task,
+int hcc_proc_tgid_stat(struct file *file, struct proc_distant_pid_info *task,
 		       char *buf, size_t count)
 {
 	return generic_proc_show(file, task, buf, count, REQ_PROC_TGID_STAT);
@@ -913,7 +913,7 @@ static void handle_read_proc_pid_statm(struct rpc_desc *desc,
 				 REQ_PROC_PID_STATM);
 }
 
-int krg_proc_pid_statm(struct file *file, struct proc_distant_pid_info *task,
+int hcc_proc_pid_statm(struct file *file, struct proc_distant_pid_info *task,
 		       char *buf, size_t count)
 {
 	return generic_proc_show(file, task, buf, count, REQ_PROC_PID_STATM);
@@ -927,7 +927,7 @@ static void handle_read_proc_pid_stack(struct rpc_desc *desc,
 				 REQ_PROC_PID_STACK);
 }
 
-int krg_proc_pid_stack(struct file *file, struct proc_distant_pid_info *task,
+int hcc_proc_pid_stack(struct file *file, struct proc_distant_pid_info *task,
 		       char *buf, size_t count)
 {
 	return generic_proc_show(file, task, buf, count, REQ_PROC_PID_STACK);

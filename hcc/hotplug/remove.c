@@ -12,17 +12,17 @@
 #include <linux/workqueue.h>
 #include <linux/device.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
-#include <hcc/krginit.h>
+#include <hcc/hccnodemask.h>
+#include <hcc/hccinit.h>
 #include <hcc/hashtable.h>
 #include <hcc/hotplug.h>
-#include <hcc/krgflags.h>
+#include <hcc/hccflags.h>
 #include <asm/uaccess.h>
 #include <asm/ioctl.h>
 
 #include <tools/workqueue.h>
-#include <tools/krg_syscalls.h>
-#include <tools/krg_services.h>
+#include <tools/hcc_syscalls.h>
+#include <tools/hcc_services.h>
 #include <rpc/rpc.h>
 
 #include "hotplug_internal.h"
@@ -32,7 +32,7 @@ void do_local_node_remove(struct hotplug_node_set *node_set)
 {
 	hcc_node_t node;
 
-	SET_KERRIGHED_NODE_FLAGS(HCCFLAGS_STOPPING);
+	SET_HCC_NODE_FLAGS(HCCFLAGS_STOPPING);
 	printk("do_local_node_remove\n");
 
 	printk("...notify local\n");
@@ -41,16 +41,16 @@ void do_local_node_remove(struct hotplug_node_set *node_set)
 	hotplug_remove_notify(node_set, HOTPLUG_NOTIFY_REMOVE_DISTANT);
 
 	printk("...confirm\n");
-	rpc_sync_m(NODE_REMOVE_CONFIRM, &krgnode_online_map, node_set, sizeof(*node_set));
+	rpc_sync_m(NODE_REMOVE_CONFIRM, &hccnode_online_map, node_set, sizeof(*node_set));
 
-	CLEAR_KERRIGHED_NODE_FLAGS(HCCFLAGS_RUNNING);
+	CLEAR_HCC_NODE_FLAGS(HCCFLAGS_RUNNING);
 
-	for_each_online_krgnode(node)
+	for_each_online_hccnode(node)
 		if(node != hcc_node_id)
-			clear_krgnode_online(node);
+			clear_hccnode_online(node);
 
 	hooks_stop();
-	SET_KERRIGHED_NODE_FLAGS(HCCFLAGS_STOPPED);
+	SET_HCC_NODE_FLAGS(HCCFLAGS_STOPPED);
 
 #if 0
 	printk("...sleep\n");
@@ -58,7 +58,7 @@ void do_local_node_remove(struct hotplug_node_set *node_set)
 	schedule_timeout(10*HZ);
 
 	printk("...try to reboot\n");
-	queue_work(krg_nb_wq, &fail_work);
+	queue_work(hcc_nb_wq, &fail_work);
 #endif
 }
 
@@ -77,7 +77,7 @@ static void handle_node_remove(struct rpc_desc *desc, void *data, size_t size)
 	printk("handle_node_remove\n");
 	node_set = data;
 
-	if(!krgnode_isset(hcc_node_id, node_set->v)){
+	if(!hccnode_isset(hcc_node_id, node_set->v)){
 		do_other_node_remove(node_set);
 		return;
 	}
@@ -107,7 +107,7 @@ inline void __fwd_remove_cb(struct hotplug_node_set *node_set)
 	printk("__fwd_remove_cb: begin (%d / %d)\n", node_set->subclusterid, hcc_subsession_id);
 	if (node_set->subclusterid == hcc_subsession_id) {
 
-		rpc_async_m(NODE_REMOVE, &krgnode_online_map, node_set, sizeof(*node_set));
+		rpc_async_m(NODE_REMOVE, &hccnode_online_map, node_set, sizeof(*node_set));
 		
 	} else {
 		hcc_node_t node;
@@ -115,11 +115,11 @@ inline void __fwd_remove_cb(struct hotplug_node_set *node_set)
 		printk("__fwd_remove_cb: m1\n");
 		node = 0;
 		while ((universe[node].subid != node_set->subclusterid)
-		       && (node < KERRIGHED_MAX_NODES))
+		       && (node < HCC_MAX_NODES))
 			node++;
-		printk("__fwd_remove_cb: m2 (%d/%d)\n", node, KERRIGHED_MAX_NODES);
+		printk("__fwd_remove_cb: m2 (%d/%d)\n", node, HCC_MAX_NODES);
 
-		if (node == KERRIGHED_MAX_NODES) {
+		if (node == HCC_MAX_NODES) {
 			BUG();
 			printk
 			    ("WARNING: here we have no idea... may be the next one will be more luky!\n");
@@ -146,18 +146,18 @@ static int nodes_remove(void __user *arg)
 		return -EFAULT;
 
 	node_set.subclusterid = __node_set.subclusterid;
-	err = krgnodemask_copy_from_user(&node_set.v, &__node_set.v);
+	err = hccnodemask_copy_from_user(&node_set.v, &__node_set.v);
 	if (err)
 		return err;
 
-	if (!krgnodes_subset(node_set.v, krgnode_present_map))
+	if (!hccnodes_subset(node_set.v, hccnode_present_map))
 		return -ENONET;
 
-	if (!krgnodes_subset(node_set.v, krgnode_online_map))
+	if (!hccnodes_subset(node_set.v, hccnode_online_map))
 		return -EPERM;
 
 	/* TODO: Really required? */
-	if (krgnode_isset(hcc_node_id, node_set.v))
+	if (hccnode_isset(hcc_node_id, node_set.v))
 		return -EPERM;
 
 	__fwd_remove_cb(&node_set);
@@ -194,7 +194,7 @@ static int nodes_poweroff(void __user *arg)
 
 	node_set.subclusterid = __node_set.subclusterid;
 
-	err = krgnodemask_copy_from_user(&node_set.v, &__node_set.v);
+	err = hccnodemask_copy_from_user(&node_set.v, &__node_set.v);
 	if (err)
 		return err;
 

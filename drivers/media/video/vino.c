@@ -3857,7 +3857,7 @@ static void vino_vm_close(struct vm_area_struct *vma)
 	dprintk("vino_vm_close(): count = %d\n", fb->map_count);
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct vino_vm_ops = {

@@ -4,7 +4,7 @@
 #include <linux/ipc.h>
 #ifdef CONFIG_HCC_IPC
 #include <linux/unique_id.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <hcc/types.h>
 #endif
 

@@ -567,7 +567,7 @@ static void ep_unregister_pollwait(struct eventpoll *ep, struct epitem *epi)
 		kmem_cache_free(pwq_cache, pwq);
 #ifdef CONFIG_HCC_FAF
 		if (epi->ffd.file->f_flags & O_FAF_CLT)
-			krg_faf_poll_dequeue(epi->ffd.file);
+			hcc_faf_poll_dequeue(epi->ffd.file);
 #endif
 	}
 }
@@ -1056,12 +1056,12 @@ static void ep_ptable_queue_proc(struct file *file, wait_queue_head_t *whead,
 	}
 #ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT) {
-		if (krg_faf_poll_wait(file, pwq != NULL)) {
+		if (hcc_faf_poll_wait(file, pwq != NULL)) {
 			if (pwq) {
 				/*
 				 * Don't let ep_unregister_pollwait() do the
 				 * cleanup, since it would call
-				 * krg_faf_poll_dequeue().
+				 * hcc_faf_poll_dequeue().
 				 */
 				list_del(&pwq->llink);
 				remove_wait_queue(whead, &pwq->wait);

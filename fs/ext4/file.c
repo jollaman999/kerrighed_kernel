@@ -130,7 +130,7 @@ ext4_file_write(struct kiocb *iocb, const struct iovec *iov,
 
 	return ret;
 }
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const 
 #endif
 struct vm_operations_struct ext4_file_vm_ops = {

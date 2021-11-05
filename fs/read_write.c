@@ -211,7 +211,7 @@ loff_t vfs_llseek(struct file *file, loff_t offset, int origin)
 #ifdef CONFIG_HCC_DVFS
 	loff_t pos;
 	if (file->f_flags & O_HCC_SHARED)
-		file->f_pos = krg_file_pos_read(file);
+		file->f_pos = hcc_file_pos_read(file);
 #endif
 	fn = no_llseek;
 	if (file->f_mode & FMODE_LSEEK) {
@@ -222,7 +222,7 @@ loff_t vfs_llseek(struct file *file, loff_t offset, int origin)
 #ifdef CONFIG_HCC_DVFS
 	pos = fn(file, offset, origin);
 	if (file->f_flags & O_HCC_SHARED)
-		krg_file_pos_write(file, file->f_pos);
+		hcc_file_pos_write(file, file->f_pos);
 	return pos;
 #else
 	return fn(file, offset, origin);
@@ -243,7 +243,7 @@ SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, origin)
 
 #ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT) {
-		retval = krg_faf_lseek(file, offset, origin);
+		retval = hcc_faf_lseek(file, offset, origin);
 		fput_light(file, fput_needed);
 		return retval;
 	}
@@ -281,7 +281,7 @@ SYSCALL_DEFINE5(llseek, unsigned int, fd, unsigned long, offset_high,
 
 #ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT) {
-		retval = krg_faf_llseek(file, offset_high, offset_low,
+		retval = hcc_faf_llseek(file, offset_high, offset_low,
 					&offset, origin);
 	} else {
 #endif
@@ -379,7 +379,7 @@ ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
 		return -EBADF;
 #ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
-		return krg_faf_read(file, buf, count, pos);
+		return hcc_faf_read(file, buf, count, pos);
 #endif
 	if (!file->f_op || (!file->f_op->read && !file->f_op->aio_read))
 		return -EINVAL;
@@ -438,7 +438,7 @@ ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_
 		return -EBADF;
 #ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
-		return krg_faf_write(file, buf, count, pos);
+		return hcc_faf_write(file, buf, count, pos);
 #endif
 	if (!file->f_op || (!file->f_op->write && !file->f_op->aio_write))
 		return -EINVAL;
@@ -785,7 +785,7 @@ ssize_t vfs_readv(struct file *file, const struct iovec __user *vec,
 		return -EBADF;
 #ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
-		return krg_faf_readv(file, vec, vlen, pos);
+		return hcc_faf_readv(file, vec, vlen, pos);
 #endif
 	if (!file->f_op || (!file->f_op->aio_read && !file->f_op->read))
 		return -EINVAL;
@@ -802,7 +802,7 @@ ssize_t vfs_writev(struct file *file, const struct iovec __user *vec,
 		return -EBADF;
 #ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
-		return krg_faf_writev(file, vec, vlen, pos);
+		return hcc_faf_writev(file, vec, vlen, pos);
 #endif
 	if (!file->f_op || (!file->f_op->aio_write && !file->f_op->write))
 		return -EINVAL;

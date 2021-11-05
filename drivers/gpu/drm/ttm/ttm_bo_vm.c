@@ -275,7 +275,7 @@ static void ttm_bo_vm_close(struct vm_area_struct *vma)
 	vma->vm_private_data = NULL;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct ttm_bo_vm_ops = {

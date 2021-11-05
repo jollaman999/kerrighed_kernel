@@ -1298,7 +1298,7 @@ SYSCALL_DEFINE0(getppid)
 
 	rcu_read_lock();
 #ifdef CONFIG_HCC_EPM
-	pid = krg_get_real_parent_tgid(current, task_active_pid_ns(current));
+	pid = hcc_get_real_parent_tgid(current, task_active_pid_ns(current));
 #else
 	pid = task_tgid_vnr(current->real_parent);
 #endif

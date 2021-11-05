@@ -29,7 +29,7 @@
 #include <linux/syscalls.h>
 #include <linux/fs.h>
 #ifdef CONFIG_HCC_EPM
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -730,14 +730,14 @@ static int __init init_misc_binfmt(void)
 	int err = register_filesystem(&bm_fs_type);
 	if (!err) {
 #ifdef CONFIG_HCC_EPM
-		krgsyms_register(HCCSYMS_BINFMTS_MISC, &misc_format);
+		hccsyms_register(HCCSYMS_BINFMTS_MISC, &misc_format);
 #endif
 		err = register_binfmt(&misc_format);
 		if (err)
 			unregister_filesystem(&bm_fs_type);
 #ifdef CONFIG_HCC_EPM
 		if (err)
-			krgsyms_unregister(HCCSYMS_BINFMTS_MISC);
+			hccsyms_unregister(HCCSYMS_BINFMTS_MISC);
 #endif
 	}
 	return err;
@@ -746,7 +746,7 @@ static int __init init_misc_binfmt(void)
 static void __exit exit_misc_binfmt(void)
 {
 #ifdef CONFIG_HCC_EPM
-	krgsyms_unregister(HCCSYMS_BINFMTS_MISC);
+	hccsyms_unregister(HCCSYMS_BINFMTS_MISC);
 #endif
 	unregister_binfmt(&misc_format);
 	unregister_filesystem(&bm_fs_type);

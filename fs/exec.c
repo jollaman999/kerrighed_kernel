@@ -61,7 +61,7 @@
 #endif
 #ifdef CONFIG_HCC_PROC
 #include <hcc/task.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #endif
 #ifdef CONFIG_HCC_EPM
 #include <hcc/signal.h>
@@ -661,7 +661,7 @@ int setup_arg_pages(struct linux_binprm *bprm,
 
 #ifdef CONFIG_HCC_MM
 	if (mm->anon_vma_gdm_set)
-		krg_check_vma_link(vma);
+		hcc_check_vma_link(vma);
 #endif
 
 #ifdef CONFIG_STACK_GROWSUP
@@ -953,12 +953,12 @@ static int de_thread(struct task_struct *tsk)
 
 #ifdef CONFIG_HCC_EPM
 			parent_children_obj =
-				krg_children_prepare_de_thread(tsk);
+				hcc_children_prepare_de_thread(tsk);
 #endif
-			krg_task_free(tsk);
+			hcc_task_free(tsk);
 
 			if (obj)
-				__krg_task_writelock(leader);
+				__hcc_task_writelock(leader);
 
 			write_lock_irq(&tasklist_lock);
 		}
@@ -1013,10 +1013,10 @@ static int de_thread(struct task_struct *tsk)
 #ifdef CONFIG_HCC_PROC
 		/* tsk has taken leader's pid. */
 		if (obj)
-			__krg_task_unlock(tsk);
+			__hcc_task_unlock(tsk);
 #endif /* CONFIG_HCC_PROC */
 #ifdef CONFIG_HCC_EPM
-		krg_children_finish_de_thread(parent_children_obj, tsk);
+		hcc_children_finish_de_thread(parent_children_obj, tsk);
 #endif
 		threadgroup_change_end(tsk);
 
@@ -1052,7 +1052,7 @@ no_thread_group:
 #ifdef CONFIG_HCC_EPM
 		down_read(&hcc_init_sem);
 
-		krg_sighand_alloc_unshared(tsk, newsighand);
+		hcc_sighand_alloc_unshared(tsk, newsighand);
 #endif
 
 		tasklist_write_lock_irq();
@@ -1062,7 +1062,7 @@ no_thread_group:
 		write_unlock_irq(&tasklist_lock);
 
 #ifdef CONFIG_HCC_EPM
-		krg_sighand_cleanup(oldsighand);
+		hcc_sighand_cleanup(oldsighand);
 
 		up_read(&hcc_init_sem);
 #else
@@ -1227,7 +1227,7 @@ void setup_new_exec(struct linux_binprm * bprm)
 
 	current->self_exec_id++;
 #ifdef CONFIG_HCC_EPM
-	krg_update_self_exec_id(current);
+	hcc_update_self_exec_id(current);
 #endif
 			
 	flush_signal_handlers(current, 0);
@@ -1405,7 +1405,7 @@ int prepare_binprm(struct linux_binprm *bprm)
 	bprm->cred_prepared = 1;
 
 #ifdef CONFIG_HCC_CAP
-	retval = krg_cap_prepare_binprm(bprm);
+	retval = hcc_cap_prepare_binprm(bprm);
 	if (retval)
 		return retval;
 #endif
@@ -1618,7 +1618,7 @@ int do_execve(const char * filename,
 		goto out;
 
 #ifdef CONFIG_HCC_MM
-	retval = krg_do_execve(current, current->mm);
+	retval = hcc_do_execve(current, current->mm);
 	if (retval)
 		goto out;
 #endif
@@ -1626,7 +1626,7 @@ int do_execve(const char * filename,
 	current->fs->in_exec = 0;
 	current->in_execve = 0;
 #ifdef CONFIG_HCC_CAP
-	krg_cap_finish_exec(bprm);
+	hcc_cap_finish_exec(bprm);
 #endif
 	acct_update_integrals(current);
 	free_bprm(bprm);

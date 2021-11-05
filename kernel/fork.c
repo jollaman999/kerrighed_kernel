@@ -80,7 +80,7 @@
 #endif
 #ifdef CONFIG_HCC_PROC
 #include <hcc/task.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #endif
 #ifdef CONFIG_HCC_EPM
 #include <hcc/action.h>
@@ -298,7 +298,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
 	int err;
 
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current)
+	if (!hcc_current)
 #endif
 	prepare_to_copy(orig);
 
@@ -716,7 +716,7 @@ static void complete_vfork_done(struct task_struct *tsk)
 		tsk->vfork_done = NULL;
 #ifdef CONFIG_HCC_EPM
 		if (tsk->remote_vfork_done)
-			krg_vfork_done(vfork);
+			hcc_vfork_done(vfork);
 		else
 #endif
 		complete(vfork);
@@ -749,7 +749,7 @@ int wait_for_vfork_done(struct task_struct *child,
 #ifdef CONFIG_HCC_EPM
 		}
 		if (child->remote_vfork_done)
-			krg_vfork_done(vfork_done);
+			hcc_vfork_done(vfork_done);
 #endif
 		task_unlock(child);
 	}
@@ -923,7 +923,7 @@ static int copy_mm(unsigned long clone_flags, struct task_struct * tsk)
 #ifdef CONFIG_HCC_EPM
 		/* Forking the ghost do not create a real new task. No need
 		 * to inc the mm_task counter */
-		if (!krg_current)
+		if (!hcc_current)
 #endif
 			HCCFCT(kh_mm_get)(oldmm);
 #endif
@@ -1033,26 +1033,26 @@ static int copy_sighand(unsigned long clone_flags, struct task_struct *tsk)
 	struct sighand_struct *sig;
 
 #ifdef CONFIG_HCC_EPM
-	if (krg_current && !in_krg_do_fork())
+	if (hcc_current && !in_hcc_do_fork())
 		/*
 		 * This is a process migration or restart: sighand_struct is
 		 * already setup.
 		 */
 		return 0;
 
-	if (!krg_current)
+	if (!hcc_current)
 #endif
 	if (clone_flags & CLONE_SIGHAND) {
 #ifdef CONFIG_HCC_EPM
 		sig = current->sighand;
 		if (sig->gdm_obj)
-			krg_sighand_writelock(sig->krg_objid);
+			hcc_sighand_writelock(sig->hcc_objid);
 #endif
 		atomic_inc(&current->sighand->count);
 #ifdef CONFIG_HCC_EPM
 		if (sig->gdm_obj) {
-			krg_sighand_share(current);
-			krg_sighand_unlock(sig->krg_objid);
+			hcc_sighand_share(current);
+			hcc_sighand_unlock(sig->hcc_objid);
 		}
 #endif
 		return 0;
@@ -1068,7 +1068,7 @@ static int copy_sighand(unsigned long clone_flags, struct task_struct *tsk)
 	 * Too early to allocate the GDM object, will do it once we know the
 	 * pid.
 	 */
-	sig->krg_objid = 0;
+	sig->hcc_objid = 0;
 	sig->gdm_obj = NULL;
 #endif
 	return 0;
@@ -1122,7 +1122,7 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	struct signal_struct *sig;
 
 #ifdef CONFIG_HCC_EPM
-	if (krg_current && !in_krg_do_fork()) {
+	if (hcc_current && !in_hcc_do_fork()) {
 		/*
 		 * This is a process migration or restart: signal_struct is
 		 * already setup.
@@ -1131,20 +1131,20 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 		return 0;
 	}
 
-	if (!krg_current)
+	if (!hcc_current)
 #endif
 	if (clone_flags & CLONE_THREAD)
 #ifdef CONFIG_HCC_EPM
 	{
 		if (current->signal->gdm_obj)
-			krg_signal_writelock(current->signal);
+			hcc_signal_writelock(current->signal);
 
 		atomic_inc(&current->signal->count);
 		atomic_inc(&current->signal->live);
 
 		if (current->signal->gdm_obj) {
-			krg_signal_share(current->signal);
-			krg_signal_unlock(current->signal);
+			hcc_signal_share(current->signal);
+			hcc_signal_unlock(current->signal);
 		}
 
 		return 0;
@@ -1190,12 +1190,12 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	taskstats_tgid_init(sig);
 
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current)
+	if (!hcc_current)
 #endif
 	task_lock(current->group_leader);
 	memcpy(sig->rlim, current->signal->rlim, sizeof sig->rlim);
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current)
+	if (!hcc_current)
 #endif
 	task_unlock(current->group_leader);
 
@@ -1211,7 +1211,7 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	 * Too early to allocate the GDM object, will do it once the tgid is
 	 * known.
 	 */
-	sig->krg_objid = 0;
+	sig->hcc_objid = 0;
 	sig->gdm_obj = NULL;
 #endif
 #ifdef CONFIG_CGROUPS
@@ -1302,7 +1302,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 					int trace)
 {
 #ifdef CONFIG_HCC_HOTPLUG
-	int saved_create_krg_ns;
+	int saved_create_hcc_ns;
 #endif
 	int retval;
 	struct task_struct *p;
@@ -1346,8 +1346,8 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		return ERR_PTR(-EINVAL);
 
 #ifdef CONFIG_HCC_HOTPLUG
-	saved_create_krg_ns = current->create_krg_ns;
-	current->create_krg_ns = can_create_krg_ns(clone_flags);
+	saved_create_hcc_ns = current->create_hcc_ns;
+	current->create_hcc_ns = can_create_hcc_ns(clone_flags);
 #endif
 
 	retval = security_task_create(clone_flags);
@@ -1360,7 +1360,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		goto fork_out;
 
 #ifdef CONFIG_HCC_HOTPLUG
-	p->create_krg_ns = 0;
+	p->create_hcc_ns = 0;
 #endif
 	tracehook_init_task(p);
 
@@ -1398,7 +1398,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 
 	p->did_exec = 0;
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current)
+	if (!hcc_current)
 #endif
 	delayacct_tsk_init(p);	/* Must remain after dup_task_struct() */
 	copy_flags(clone_flags, p);
@@ -1406,7 +1406,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	INIT_LIST_HEAD(&p->sibling);
 	rcu_copy_process(p);
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current)
+	if (!hcc_current)
 #endif
 	p->vfork_done = NULL;
 	spin_lock_init(&p->alloc_lock);
@@ -1427,7 +1427,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	p->default_timer_slack_ns = current->timer_slack_ns;
 
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current || in_krg_do_fork()) {
+	if (!hcc_current || in_hcc_do_fork()) {
 #endif
 	task_io_accounting_init(&p->ioac);
 	acct_clear_integrals(p);
@@ -1492,7 +1492,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	sched_fork(p, clone_flags);
 
 #ifdef CONFIG_HCC_CAP
-	krg_cap_fork(p, clone_flags);
+	hcc_cap_fork(p, clone_flags);
 #endif /* CONFIG_HCC_CAP */
 
 #ifdef CONFIG_HCC_GDM
@@ -1534,7 +1534,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		goto bad_fork_cleanup_io;
 
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current)
+	if (!hcc_current)
 #endif
 	if (pid != &init_struct_pid) {
 		retval = -ENOMEM;
@@ -1565,7 +1565,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	 * Clear TID on mm_release()?
 	 */
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current || in_krg_do_fork())
+	if (!hcc_current || in_hcc_do_fork())
 #endif
 	p->clear_child_tid = (clone_flags & CLONE_CHILD_CLEARTID) ? child_tidptr: NULL;
 #ifdef CONFIG_FUTEX
@@ -1580,7 +1580,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	 * sigaltstack should be cleared when sharing the same VM
 	 */
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current)
+	if (!hcc_current)
 #endif
 	if ((clone_flags & (CLONE_VM|CLONE_VFORK)) == CLONE_VM)
 		p->sas_ss_sp = p->sas_ss_size = 0;
@@ -1598,7 +1598,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 
 	/* ok, now we should be set up.. */
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current) {
+	if (!hcc_current) {
 #endif
 	p->exit_signal = (clone_flags & CLONE_THREAD) ? -1 : (clone_flags & CSIGNAL);
 	p->pdeath_signal = 0;
@@ -1606,7 +1606,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #ifdef CONFIG_HCC_EPM
 	} else {
 		p->exit_signal = clone_flags & CSIGNAL;
-		if (in_krg_do_fork()) {
+		if (in_hcc_do_fork()) {
 			/* Remote clone */
 			p->pdeath_signal = 0;
 			p->exit_state = 0;
@@ -1628,21 +1628,21 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	cgroup_callbacks_done = 1;
 
 #ifdef CONFIG_HCC_EPM
-	krg_sighand_alloc(p, clone_flags);
-	krg_signal_alloc(p, pid, clone_flags);
+	hcc_sighand_alloc(p, clone_flags);
+	hcc_signal_alloc(p, pid, clone_flags);
 
-	if (!krg_current) {
-		retval = krg_copy_application(p);
+	if (!hcc_current) {
+		retval = hcc_copy_application(p);
 		if (retval)
 			goto bad_fork_free_pid;
 	}
 
-	retval = krg_children_prepare_fork(p, pid, clone_flags);
+	retval = hcc_children_prepare_fork(p, pid, clone_flags);
 	if (retval)
 		goto bad_fork_cleanup_application;
 #endif
 #ifdef CONFIG_HCC_PROC
-	retval = krg_task_alloc(p, pid);
+	retval = hcc_task_alloc(p, pid);
 	if (retval)
 #ifdef CONFIG_HCC_EPM
 		goto bad_fork_cleanup_children;
@@ -1651,10 +1651,10 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #endif
 #endif
 #ifdef CONFIG_HCC_SCHED
-	retval = krg_sched_info_copy(p);
+	retval = hcc_sched_info_copy(p);
 	if (retval)
 #ifdef CONFIG_HCC_PROC
-		goto bad_fork_free_krg_task;
+		goto bad_fork_free_hcc_task;
 #else
 		goto bad_fork_free_pid;
 #endif
@@ -1672,7 +1672,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		p->parent_exec_id = current->self_exec_id;
 	}
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current
+	if (!hcc_current
 	    && p->real_parent == baby_sitter && !p->parent_children_obj)
 		/*
 		 * parent died (remotely) and current is still attached to
@@ -1696,36 +1696,36 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	recalc_sigpending();
 #ifdef CONFIG_HCC_EPM
 	/* Only check if inside a remote clone() */
-	if (!krg_current || in_krg_do_fork())
+	if (!hcc_current || in_hcc_do_fork())
 #endif
 	if (signal_pending(current)) {
 		spin_unlock(&current->sighand->siglock);
 		write_unlock_irq(&tasklist_lock);
 		retval = -ERESTARTNOINTR;
 #if defined(CONFIG_HCC_SCHED)
-		goto bad_fork_free_krg_sched;
+		goto bad_fork_free_hcc_sched;
 #elif defined(CONFIG_HCC_PROC)
-		goto bad_fork_free_krg_task;
+		goto bad_fork_free_hcc_task;
 #else
 		goto bad_fork_free_pid;
 #endif
 	}
 
 #ifdef CONFIG_HCC_EPM
-	retval = krg_children_fork(p, pid, clone_flags);
+	retval = hcc_children_fork(p, pid, clone_flags);
 	if (retval) {
 		spin_unlock(&current->sighand->siglock);
 		write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_HCC_SCHED
-		goto bad_fork_free_krg_sched;
+		goto bad_fork_free_hcc_sched;
 #else
-		goto bad_fork_free_krg_task;
+		goto bad_fork_free_hcc_task;
 #endif
 	}
 #endif /* CONFIG_HCC_EPM */
 
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current || !thread_group_leader(krg_current))
+	if (!hcc_current || !thread_group_leader(hcc_current))
 #endif
 	if (clone_flags & CLONE_THREAD) {
 #ifndef CONFIG_HCC_EPM
@@ -1766,17 +1766,17 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		nr_threads++;
 	}
 #ifdef CONFIG_HCC_PROC
-	krg_task_fill(p, clone_flags);
+	hcc_task_fill(p, clone_flags);
 #endif
 
 	total_forks++;
 	spin_unlock(&current->sighand->siglock);
 	write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_HCC_PROC
-	krg_task_commit(p);
+	hcc_task_commit(p);
 #endif
 #ifdef CONFIG_HCC_EPM
-	krg_children_commit_fork(p);
+	hcc_children_commit_fork(p);
 #endif
 	proc_new_task(p);
 	proc_fork_connector(p);
@@ -1785,28 +1785,28 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		threadgroup_change_end(current);
 	perf_event_fork(p);
 #ifdef CONFIG_HCC_HOTPLUG
-	current->create_krg_ns = saved_create_krg_ns;
+	current->create_hcc_ns = saved_create_hcc_ns;
 #endif
 	return p;
 
 #ifdef CONFIG_HCC_SCHED
-bad_fork_free_krg_sched:
-	krg_sched_info_free(p);
+bad_fork_free_hcc_sched:
+	hcc_sched_info_free(p);
 #endif
 #ifdef CONFIG_HCC_PROC
-bad_fork_free_krg_task:
-	krg_task_abort(p);
+bad_fork_free_hcc_task:
+	hcc_task_abort(p);
 #endif
 #ifdef CONFIG_HCC_EPM
 bad_fork_cleanup_children:
-	krg_children_abort_fork(p);
+	hcc_children_abort_fork(p);
 bad_fork_cleanup_application:
-	if (!krg_current)
-		krg_exit_application(p);
+	if (!hcc_current)
+		hcc_exit_application(p);
 #endif
 bad_fork_free_pid:
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current)
+	if (!hcc_current)
 #endif
 	if (pid != &init_struct_pid)
 		free_pid(pid);
@@ -1819,7 +1819,7 @@ bad_fork_cleanup_mm:
 #ifdef CONFIG_HCC_MM
 	if (p->mm && p->mm->mm_id && (clone_flags & CLONE_VM))
 #ifdef CONFIG_HCC_EPM
-		if (!krg_current)
+		if (!hcc_current)
 #endif
 			HCCFCT(kh_mm_release)(p->mm, 1);
 #endif
@@ -1836,23 +1836,23 @@ bad_fork_cleanup_mm:
 	}
 bad_fork_cleanup_signal:
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current || in_krg_do_fork())
+	if (!hcc_current || in_hcc_do_fork())
 #endif
  	if (!(clone_flags & CLONE_THREAD))
 #ifdef CONFIG_HCC_EPM
 	{
-	    struct signal_struct *locked_sig = krg_signal_exit(p->signal);
+	    struct signal_struct *locked_sig = hcc_signal_exit(p->signal);
 #endif
 		__cleanup_signal(p->signal);
 #ifdef CONFIG_HCC_EPM
-		krg_signal_unlock(locked_sig);
+		hcc_signal_unlock(locked_sig);
 	}
 #endif
 
 bad_fork_cleanup_sighand:
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current || in_krg_do_fork())
-		krg_sighand_cleanup(p->sighand);
+	if (!hcc_current || in_hcc_do_fork())
+		hcc_sighand_cleanup(p->sighand);
 #else
 	__cleanup_sighand(p->sighand);
 #endif /* CONFIG_HCC_EPM */
@@ -1880,7 +1880,7 @@ bad_fork_cleanup_cgroup:
 		threadgroup_change_end(current);
 	cgroup_exit(p, cgroup_callbacks_done);
 #ifdef CONFIG_HCC_EPM
-	if (!krg_current)
+	if (!hcc_current)
 #endif
 	delayacct_tsk_free(p);
 	module_put(task_thread_info(p)->exec_domain->module);
@@ -1891,7 +1891,7 @@ bad_fork_free:
 	free_task(p);
 fork_out:
 #ifdef CONFIG_HCC_HOTPLUG
-	current->create_krg_ns = saved_create_krg_ns;
+	current->create_hcc_ns = saved_create_hcc_ns;
 #endif
 #ifndef CONFIG_HCC_EPM
 	/*
@@ -1985,20 +1985,20 @@ long do_fork(unsigned long clone_flags,
 #ifdef CONFIG_HCC_EPM
 #ifdef CONFIG_HCC_CAP
 	nr = 0;
-	if (can_use_krg_cap(current, CAP_DISTANT_FORK))
+	if (can_use_hcc_cap(current, CAP_DISTANT_FORK))
 	{
-		restore = can_parent_inherite_krg_cap(current, CAP_DISTANT_FORK);
+		restore = can_parent_inherite_hcc_cap(current, CAP_DISTANT_FORK);
 		if (restore) {
-			cap_lower(current->krg_caps.effective, CAP_DISTANT_FORK);
-			cap_lower(current->krg_caps.inheritable_effective, CAP_DISTANT_FORK);
+			cap_lower(current->hcc_caps.effective, CAP_DISTANT_FORK);
+			cap_lower(current->hcc_caps.inheritable_effective, CAP_DISTANT_FORK);
 		}
 #endif
-		nr = krg_do_fork(clone_flags, stack_start, regs, stack_size,
+		nr = hcc_do_fork(clone_flags, stack_start, regs, stack_size,
 				 parent_tidptr, child_tidptr, trace);
 #ifdef CONFIG_HCC_CAP
 		if (restore) {
-			cap_raise(current->krg_caps.effective, CAP_DISTANT_FORK);
-			cap_raise(current->krg_caps.inheritable_effective, CAP_DISTANT_FORK);
+			cap_raise(current->hcc_caps.effective, CAP_DISTANT_FORK);
+			cap_raise(current->hcc_caps.inheritable_effective, CAP_DISTANT_FORK);
 		}
 #endif
 		if (nr > 0)
@@ -2187,13 +2187,13 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 	struct nsproxy *new_nsproxy = NULL;
 	int do_sysvsem = 0;
 #ifdef CONFIG_HCC_HOTPLUG
-	int saved_create_krg_ns;
+	int saved_create_hcc_ns;
 #endif
 	int err;
 
 #ifdef CONFIG_HCC_HOTPLUG
-	saved_create_krg_ns = current->create_krg_ns;
-	current->create_krg_ns = 0;
+	saved_create_hcc_ns = current->create_hcc_ns;
+	current->create_hcc_ns = 0;
 #endif
 
 	/*
@@ -2283,7 +2283,7 @@ bad_unshare_cleanup_fs:
 
 bad_unshare_out:
 #ifdef CONFIG_HCC_HOTPLUG
-	current->create_krg_ns = saved_create_krg_ns;
+	current->create_hcc_ns = saved_create_hcc_ns;
 #endif
 	return err;
 }

@@ -1469,7 +1469,7 @@ extern unsigned long stack_guard_gap;
 
 /* Do stack extension */
 #ifdef CONFIG_HCC_MM
-extern int krg_expand_stack(struct vm_area_struct *vma, unsigned long address);
+extern int hcc_expand_stack(struct vm_area_struct *vma, unsigned long address);
 extern int __expand_stack(struct vm_area_struct *vma, unsigned long address);
 static inline int expand_stack(struct vm_area_struct *vma,
 			       unsigned long address)
@@ -1478,7 +1478,7 @@ static inline int expand_stack(struct vm_area_struct *vma,
 
 	err = __expand_stack(vma, address);
 	if (!err && vma->vm_mm->anon_vma_gdm_set)
-		krg_expand_stack(vma, address);
+		hcc_expand_stack(vma, address);
 
 	return err;
 }

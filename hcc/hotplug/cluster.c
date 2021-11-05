@@ -24,18 +24,18 @@
 #include <asm/uaccess.h>
 #include <asm/ioctl.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <hcc/hotplug.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 
-#include <hcc/krgflags.h>
+#include <hcc/hccflags.h>
 
-#include <hcc/krg_syscalls.h>
-#include <hcc/krg_services.h>
+#include <hcc/hcc_syscalls.h>
+#include <hcc/hcc_services.h>
 #include <hcc/workqueue.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 #include <hcc/namespace.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #ifdef CONFIG_HCC_GDM
 #include <gdm/gdm.h>
 #endif
@@ -61,7 +61,7 @@ enum {
 	CLUSTER_DEF,
 };
 
-static char clusters_status[KERRIGHED_MAX_CLUSTERS];
+static char clusters_status[HCC_MAX_CLUSTERS];
 
 static struct hotplug_context *cluster_start_ctx;
 static struct cluster_start_msg {
@@ -97,11 +97,11 @@ static char *cluster_init_helper_envp[] = {
 	NULL
 };
 static struct cred *cluster_init_helper_cred;
-static struct krg_namespace *cluster_init_helper_ns;
+static struct hcc_namespace *cluster_init_helper_ns;
 static struct completion cluster_init_helper_ready;
 
-static struct completion krg_container_continue;
-static struct completion krg_container_done;
+static struct completion hcc_container_continue;
+static struct completion hcc_container_done;
 
 static ssize_t isolate_uts_show(struct kobject *obj,
 				struct kobj_attribute *attr,
@@ -317,17 +317,17 @@ static struct attribute_group attr_group = {
 	.attrs = attrs,
 };
 
-static void krg_container_abort(int err)
+static void hcc_container_abort(int err)
 {
-	put_krg_ns(cluster_init_helper_ns);
+	put_hcc_ns(cluster_init_helper_ns);
 	cluster_init_helper_ns = ERR_PTR(err);
 	complete(&cluster_init_helper_ready);
 }
 
-void krg_ns_root_exit(struct krg_namespace *ns)
+void hcc_ns_root_exit(struct hcc_namespace *ns)
 {
 	if (ns == cluster_init_helper_ns)
-		krg_container_abort(-EAGAIN);
+		hcc_container_abort(-EAGAIN);
 
 	printk(KERN_WARNING "hcc: Root task exiting! Leaking zombies.\n");
 	set_current_state(TASK_UNINTERRUPTIBLE);
@@ -335,7 +335,7 @@ void krg_ns_root_exit(struct krg_namespace *ns)
 }
 
 /* ns->root_task must be blocked and alive to get a reliable result */
-static bool krg_container_may_conflict(struct krg_namespace *ns)
+static bool hcc_container_may_conflict(struct hcc_namespace *ns)
 {
 	struct task_struct *root_task = ns->root_task;
 	struct task_struct *g, *t;
@@ -356,10 +356,10 @@ static bool krg_container_may_conflict(struct krg_namespace *ns)
 			continue;
 
 #ifdef CONFIG_HCC_PROC
-		if (task_active_pid_ns(t)->krg_ns_root == ns->root_nsproxy.pid_ns)
+		if (task_active_pid_ns(t)->hcc_ns_root == ns->root_nsproxy.pid_ns)
 #else
 		nsp = task_nsproxy(t);
-		if (nsp && nsp->krg_ns == ns)
+		if (nsp && nsp->hcc_ns == ns)
 #endif
 		{
 			conflict = true;
@@ -384,7 +384,7 @@ static bool krg_container_may_conflict(struct krg_namespace *ns)
 	return conflict;
 }
 
-static int krg_container_cleanup(struct krg_namespace *ns)
+static int hcc_container_cleanup(struct hcc_namespace *ns)
 {
 #ifdef CONFIG_HCC_EPM
 	pidmap_map_cleanup(ns);
@@ -396,17 +396,17 @@ static int krg_container_cleanup(struct krg_namespace *ns)
 	return 0;
 }
 
-static void krg_container_run(void)
+static void hcc_container_run(void)
 {
 	complete(&cluster_init_helper_ready);
 
-	wait_for_completion(&krg_container_continue);
-	complete(&krg_container_done);
+	wait_for_completion(&hcc_container_continue);
+	complete(&hcc_container_done);
 }
 
-static int krg_container_init(void *arg)
+static int hcc_container_init(void *arg)
 {
-	struct krg_namespace *ns;
+	struct hcc_namespace *ns;
 	int err;
 
 	/* Unblock all signals */
@@ -420,23 +420,23 @@ static int krg_container_init(void *arg)
 	commit_creds(cluster_init_helper_cred);
 	cluster_init_helper_cred = NULL;
 
-	/* We can run anywhere, unlike our parent (a krgrpc) */
+	/* We can run anywhere, unlike our parent (a hccrpc) */
 	set_cpus_allowed_ptr(current, cpu_all_mask);
 
 	/*
-	 * Our parent is a krgrpc, which runs with elevated scheduling priority.
+	 * Our parent is a hccrpc, which runs with elevated scheduling priority.
 	 * Avoid propagating that into the userspace child.
 	 */
 	set_user_nice(current, 0);
 
 	BUG_ON(cluster_init_helper_ns);
-	ns = current->nsproxy->krg_ns;
+	ns = current->nsproxy->hcc_ns;
 	if (!ns) {
 		cluster_init_helper_ns = ERR_PTR(-EPERM);
 		complete(&cluster_init_helper_ready);
 		return 0;
 	}
-	get_krg_ns(ns);
+	get_hcc_ns(ns);
 	cluster_init_helper_ns = ns;
 
 	err = kernel_execve(cluster_init_helper_path,
@@ -447,22 +447,22 @@ static int krg_container_init(void *arg)
 	       "hcc: Could not execute container init '%s': err=%d\n",
 	       cluster_init_helper_path, err);
 
-	krg_container_abort(err);
+	hcc_container_abort(err);
 
 	return 0;
 }
 
-static int __create_krg_container(void *arg)
+static int __create_hcc_container(void *arg)
 {
 	unsigned long clone_flags;
 	int ret;
 
-	ret = krg_set_cluster_creator((void *)1);
+	ret = hcc_set_cluster_creator((void *)1);
 	if (ret)
 		goto err;
 	clone_flags = cluster_init_opt_clone_flags|SIGCHLD;
-	ret = kernel_thread(krg_container_init, NULL, clone_flags);
-	krg_set_cluster_creator(NULL);
+	ret = kernel_thread(hcc_container_init, NULL, clone_flags);
+	hcc_set_cluster_creator(NULL);
 	if (ret < 0)
 		goto err;
 
@@ -477,12 +477,12 @@ err:
 }
 
 static
-struct krg_namespace *create_krg_container(struct krg_namespace *ns)
+struct hcc_namespace *create_hcc_container(struct hcc_namespace *ns)
 {
 	struct task_struct *t;
 
 	if (ns) {
-		put_krg_ns(ns);
+		put_hcc_ns(ns);
 		return NULL;
 	}
 
@@ -494,7 +494,7 @@ struct krg_namespace *create_krg_container(struct krg_namespace *ns)
 	if (!cluster_init_helper_cred)
 		return NULL;
 
-	t = kthread_run(__create_krg_container, NULL, "krg_init_helper");
+	t = kthread_run(__create_hcc_container, NULL, "hcc_init_helper");
 	if (IS_ERR(t)) {
 		put_cred(cluster_init_helper_cred);
 		cluster_init_helper_cred = NULL;
@@ -527,7 +527,7 @@ static int send_kernel_version(struct rpc_desc *desc)
 	if (err)
 		goto error;
 
-	for_each_krgnode_mask(node, desc->nodes) {
+	for_each_hccnode_mask(node, desc->nodes) {
 		err = rpc_unpack_type_from(desc, node, ret);
 		if (err)
 			goto error;
@@ -606,7 +606,7 @@ static void handle_cluster_start(struct rpc_desc *desc, void *data, size_t size)
 		spin_lock(&cluster_start_lock);
 		if (cluster_start_ctx
 		    && msg->seq_id == cluster_start_msg.seq_id) {
-			BUG_ON(!krgnodes_equal(msg->node_set.v,
+			BUG_ON(!hccnodes_equal(msg->node_set.v,
 					       cluster_start_ctx->node_set.v));
 			hotplug_ctx_get(cluster_start_ctx);
 			ctx = cluster_start_ctx;
@@ -624,15 +624,15 @@ static void handle_cluster_start(struct rpc_desc *desc, void *data, size_t size)
 	}
 
 	if (!master) {
-		struct krg_namespace *ns;
+		struct hcc_namespace *ns;
 
-		init_completion(&krg_container_continue);
-		ns = create_krg_container(find_get_krg_ns());
+		init_completion(&hcc_container_continue);
+		ns = create_hcc_container(find_get_hcc_ns());
 		if (!ns)
 			goto cancel;
 
 		ctx = hotplug_ctx_alloc(ns);
-		put_krg_ns(ns);
+		put_hcc_ns(ns);
 		if (!ctx)
 			goto cancel;
 		ctx->node_set = msg->node_set;
@@ -654,26 +654,26 @@ static void handle_cluster_start(struct rpc_desc *desc, void *data, size_t size)
 
 	rpc_enable_all();
 
-	SET_KERRIGHED_CLUSTER_FLAGS(HCCFLAGS_RUNNING);
-	SET_KERRIGHED_NODE_FLAGS(HCCFLAGS_RUNNING);
+	SET_HCC_CLUSTER_FLAGS(HCCFLAGS_RUNNING);
+	SET_HCC_NODE_FLAGS(HCCFLAGS_RUNNING);
 	clusters_status[hcc_subsession_id] = CLUSTER_DEF;
 
 	page = (char *)__get_free_page(GFP_KERNEL);
 	if (page) {
-		ret = krgnodelist_scnprintf(page, PAGE_SIZE, ctx->node_set.v);
+		ret = hccnodelist_scnprintf(page, PAGE_SIZE, ctx->node_set.v);
 		BUG_ON(ret >= PAGE_SIZE);
 		printk("HCC is running on %d nodes: %s\n",
-		       krgnodes_weight(ctx->node_set.v), page);
+		       hccnodes_weight(ctx->node_set.v), page);
 		free_page((unsigned long)page);
 	} else {
-		printk("HCC is running on %d nodes\n", num_online_krgnodes());
+		printk("HCC is running on %d nodes\n", num_online_hccnodes());
 	}
 	complete_all(&cluster_started);
 
 	if (!master) {
-		init_completion(&krg_container_done);
-		complete(&krg_container_continue);
-		wait_for_completion(&krg_container_done);
+		init_completion(&hcc_container_done);
+		complete(&hcc_container_continue);
+		wait_for_completion(&hcc_container_done);
 	}
 
 out:
@@ -699,7 +699,7 @@ static void cluster_start_worker(struct work_struct *work)
 	if (!page)
 		goto out;
 
-	ret = krgnodelist_scnprintf(page, PAGE_SIZE,
+	ret = hccnodelist_scnprintf(page, PAGE_SIZE,
 				    cluster_start_ctx->node_set.v);
 	BUG_ON(ret >= PAGE_SIZE);
 	printk("hcc: [ADD] Setting up new nodes %s ...\n", page);
@@ -718,8 +718,8 @@ static void cluster_start_worker(struct work_struct *work)
 	if (err)
 		goto cancel;
 
-	for_each_krgnode_mask(node, cluster_start_ctx->node_set.v) {
-		printk("for each krgnode %d\n",node);
+	for_each_hccnode_mask(node, cluster_start_ctx->node_set.v) {
+		printk("for each hccnode %d\n",node);
 		err = rpc_unpack_type_from(desc, node, ret);
 		if (err)
 			goto cancel;
@@ -772,10 +772,10 @@ int do_cluster_start(struct hotplug_context *ctx)
 			hotplug_ctx_get(ctx);
 			cluster_start_ctx = ctx;
 			cluster_start_msg.seq_id++;
-			krgnodes_or(cluster_start_msg.node_set.v,
+			hccnodes_or(cluster_start_msg.node_set.v,
 					ctx->node_set.v,
-					krgnode_online_map);
-			queue_work(krg_wq, &cluster_start_work);
+					hccnode_online_map);
+			queue_work(hcc_wq, &cluster_start_work);
 		}
 	}
 	spin_unlock(&cluster_start_lock);
@@ -788,7 +788,7 @@ static void do_cluster_wait_for_start(void)
 	wait_for_completion(&cluster_started);
 }
 
-static int boot_node_ready(struct krg_namespace *ns)
+static int boot_node_ready(struct hcc_namespace *ns)
 {
 	struct hotplug_context *ctx;
 	int r;
@@ -800,7 +800,7 @@ static int boot_node_ready(struct krg_namespace *ns)
 	if (!ctx)
 		return -ENOMEM;
 	ctx->node_set.subclusterid = 0;
-	ctx->node_set.v = krgnodemask_of_node(hcc_node_id);
+	ctx->node_set.v = hccnodemask_of_node(hcc_node_id);
 
 	r = do_cluster_start(ctx);
 	hotplug_ctx_put(ctx);
@@ -811,22 +811,22 @@ static int boot_node_ready(struct krg_namespace *ns)
 	return r;
 }
 
-static int other_node_ready(struct krg_namespace *ns)
+static int other_node_ready(struct hcc_namespace *ns)
 {
 	BUG_ON(ns != cluster_init_helper_ns);
 
-	if (krg_container_may_conflict(ns))
+	if (hcc_container_may_conflict(ns))
 		return -EBUSY;
-	if (krg_container_cleanup(ns))
+	if (hcc_container_cleanup(ns))
 		return -EBUSY;
 
-	krg_container_run();
+	hcc_container_run();
 	return 0;
 }
 
 static int node_ready(void __user *arg)
 {
-	struct krg_namespace *ns = current->nsproxy->krg_ns;
+	struct hcc_namespace *ns = current->nsproxy->hcc_ns;
 
 	if (!ns)
 		return -EPERM;
@@ -844,7 +844,7 @@ static int cluster_restart(void *arg)
 	if (!capable(CAP_SYS_BOOT))
 		return -EPERM;
 
-	rpc_async_m(NODE_FAIL, &krgnode_online_map,
+	rpc_async_m(NODE_FAIL, &hccnode_online_map,
 		    &unused, sizeof(unused));
 	
 	return 0;
@@ -876,7 +876,7 @@ static int cluster_stop(void *arg)
 	if (!capable(CAP_SYS_BOOT))
 		return -EPERM;
 
-	rpc_async_m(NODE_POWEROFF, &krgnode_online_map,
+	rpc_async_m(NODE_POWEROFF, &hccnode_online_map,
 		    &unused, sizeof(unused));
 	
 	return 0;
@@ -891,7 +891,7 @@ static int cluster_status(void __user *arg)
 	if (!access_ok(VERIFY_WRITE, uclusters, sizeof(*uclusters)))
 		goto out;
 
-	for (bcl = 0; bcl < KERRIGHED_MAX_CLUSTERS; bcl++)
+	for (bcl = 0; bcl < HCC_MAX_CLUSTERS; bcl++)
 		if (__put_user(clusters_status[bcl], &uclusters->clusters[bcl]))
 			goto out;
 	r = 0;
@@ -911,15 +911,15 @@ static int cluster_nodes(void __user *arg)
 	if (get_user(unodes, &nodes_arg->nodes))
 		goto out;
 
-	if (!access_ok(VERIFY_WRITE, unodes, KERRIGHED_MAX_NODES))
+	if (!access_ok(VERIFY_WRITE, unodes, HCC_MAX_NODES))
 		goto out;
 
-	for (bcl = 0; bcl < KERRIGHED_MAX_NODES; bcl++) {
-		if (krgnode_online(bcl))
+	for (bcl = 0; bcl < HCC_MAX_NODES; bcl++) {
+		if (hccnode_online(bcl))
 			state = HOTPLUG_NODE_ONLINE;
-		else if (krgnode_present(bcl))
+		else if (hccnode_present(bcl))
 			state = HOTPLUG_NODE_PRESENT;
-		else if (krgnode_possible(bcl))
+		else if (hccnode_possible(bcl))
 			state = HOTPLUG_NODE_POSSIBLE;
 		else
 			state = HOTPLUG_NODE_INVALID;
@@ -932,17 +932,17 @@ out:
 	return r;
 }
 
-int krgnodemask_copy_from_user(krgnodemask_t *dstp, __krgnodemask_t *srcp)
+int hccnodemask_copy_from_user(hccnodemask_t *dstp, __hccnodemask_t *srcp)
 {
 	int r;
 
-	r = find_next_bit(srcp->bits, KERRIGHED_HARD_MAX_NODES,
-			  KERRIGHED_MAX_NODES);
+	r = find_next_bit(srcp->bits, HCC_HARD_MAX_NODES,
+			  HCC_MAX_NODES);
 
-	if (r >= KERRIGHED_MAX_NODES && r < KERRIGHED_HARD_MAX_NODES)
+	if (r >= HCC_MAX_NODES && r < HCC_HARD_MAX_NODES)
 		return -EINVAL;
 
-	bitmap_copy(dstp->bits, srcp->bits, KERRIGHED_MAX_NODES);
+	bitmap_copy(dstp->bits, srcp->bits, HCC_MAX_NODES);
 
 	return 0;
 }
@@ -951,10 +951,10 @@ int hotplug_cluster_init(void)
 {
 	int bcl;
 
-	if (sysfs_create_group(krghotplugsys, &attr_group))
+	if (sysfs_create_group(hcchotplugsys, &attr_group))
 		panic("Couldn't initialize /sys/hcc/hotplug!\n");
 
-	for (bcl = 0; bcl < KERRIGHED_MAX_CLUSTERS; bcl++) {
+	for (bcl = 0; bcl < HCC_MAX_CLUSTERS; bcl++) {
 		clusters_status[bcl] = CLUSTER_UNDEF;
 	}
 

@@ -76,7 +76,7 @@
 #include <trace/boot.h>
 
 #ifdef CONFIG_HCC_HOTPLUG
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #endif
 
 #include <asm/io.h>
@@ -936,7 +936,7 @@ static void __init do_basic_setup(void)
 	cpuset_init_smp();
 	usermodehelper_init();
 #ifdef CONFIG_HCC_HOTPLUG
-	init_krgsyms();
+	init_hccsyms();
 #endif
 	shmem_init();	
 	driver_init();
@@ -965,7 +965,7 @@ static void run_init_process(char *init_filename)
 static noinline int init_post(void)
 	__releases(kernel_lock)
 {
-#if defined(CONFIG_KERRIGHED) || defined(CONFIG_HCCRPC)
+#if defined(CONFIG_HCC) || defined(CONFIG_HCCRPC)
 	/* 
 	 * In a perfect world we would like to call global_pid_init and
 	 * hcc_init just after async_synchronize_full
@@ -1060,7 +1060,7 @@ static int __init kernel_init(void * unused)
 		prepare_namespace();
 	}
 
-#if defined(CONFIG_KERRIGHED) || defined(CONFIG_HCCRPC)
+#if defined(CONFIG_HCC) || defined(CONFIG_HCCRPC)
 	/* need to finish all async __init code before freeing the memory */
 	async_synchronize_full();
 

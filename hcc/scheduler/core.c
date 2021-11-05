@@ -12,15 +12,15 @@
 
 #include "internal.h"
 
-static struct config_item_type krg_scheduler_type = {
+static struct config_item_type hcc_scheduler_type = {
 	.ct_owner = THIS_MODULE,
 };
 
-struct configfs_subsystem krg_scheduler_subsys = {
+struct configfs_subsystem hcc_scheduler_subsys = {
 	.su_group = {
 		.cg_item = {
-			.ci_namebuf = "krg_scheduler",
-			.ci_type = &krg_scheduler_type,
+			.ci_namebuf = "hcc_scheduler",
+			.ci_type = &hcc_scheduler_type,
 		}
 	}
 };
@@ -90,9 +90,9 @@ int init_scheduler(void)
 	struct config_group **defs = NULL;
 
 	/* per task informations framework */
-	ret = krg_sched_info_start();
+	ret = hcc_sched_info_start();
 	if (ret)
-		goto err_krg_sched_info;
+		goto err_hcc_sched_info;
 
 	/* initialize global mechanisms to replicate configfs operations */
 	ret = global_lock_start();
@@ -109,8 +109,8 @@ int init_scheduler(void)
 		goto err_remote_pipe;
 
 	/* initialize and register configfs subsystem. */
-	config_group_init(&krg_scheduler_subsys.su_group);
-	mutex_init(&krg_scheduler_subsys.su_mutex);
+	config_group_init(&hcc_scheduler_subsys.su_group);
+	mutex_init(&hcc_scheduler_subsys.su_mutex);
 
 	/* add probes, sched_policies to scheduler. */
 	defs = kcalloc(3, sizeof (struct config_group *), GFP_KERNEL);
@@ -134,9 +134,9 @@ int init_scheduler(void)
 		goto err_init;
 	}
 
-	krg_scheduler_subsys.su_group.default_groups = defs;
+	hcc_scheduler_subsys.su_group.default_groups = defs;
 
-	ret = configfs_register_subsystem(&krg_scheduler_subsys);
+	ret = configfs_register_subsystem(&hcc_scheduler_subsys);
 
 	if (ret) {
 		printk(KERN_ERR "[%s] error %d: cannot register subsystem!\n",
@@ -159,7 +159,7 @@ int init_scheduler(void)
 
 err_hotplug:
 
-	configfs_unregister_subsystem(&krg_scheduler_subsys);
+	configfs_unregister_subsystem(&hcc_scheduler_subsys);
 err_register:
 
 err_init:
@@ -182,8 +182,8 @@ err_string_list:
 	global_lock_exit();
 err_global_lock:
 
-	krg_sched_info_exit();
-err_krg_sched_info:
+	hcc_sched_info_exit();
+err_hcc_sched_info:
 
 	return ret;
 }

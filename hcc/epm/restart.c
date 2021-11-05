@@ -49,7 +49,7 @@ struct task_struct *restart_task_from_ghost(struct epm_action *action,
 	BUG_ON(!newTsk);
 
 	/* Link pid gdm object and task gdm obj */
-	err = krg_pid_link_task(pid);
+	err = hcc_pid_link_task(pid);
 	if (err) {
 		newTsk = ERR_PTR(err);
 		goto exit;

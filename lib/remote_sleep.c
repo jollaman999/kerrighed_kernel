@@ -6,7 +6,7 @@
 #include <linux/sched.h>
 #include <linux/signal.h>
 #include <linux/errno.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 
 int remote_sleep_prepare(struct rpc_desc *desc)
 {

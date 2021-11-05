@@ -15,7 +15,7 @@ static __always_inline struct task_struct *get_current(void)
 }
 
 #ifdef CONFIG_HCC_EPM
-#define krg_current (get_current()->effective_current)
+#define hcc_current (get_current()->effective_current)
 #define current ({							\
 	struct task_struct *__cur = get_current();			\
 	__cur->effective_current ? __cur->effective_current : __cur;	\

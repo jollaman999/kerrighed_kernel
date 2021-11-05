@@ -29,28 +29,28 @@ struct remote_child {
 };
 
 /* do_wait() hook */
-int krg_do_wait(struct children_gdm_object *obj, struct wait_opts *wo);
+int hcc_do_wait(struct children_gdm_object *obj, struct wait_opts *wo);
 
-/* Used by krg_do_wait() */
-int krg_wait_task_zombie(struct wait_opts *wo,
+/* Used by hcc_do_wait() */
+int hcc_wait_task_zombie(struct wait_opts *wo,
 			 struct remote_child *child);
 
 /* do_notify_parent() hook */
-int krg_do_notify_parent(struct task_struct *task, struct siginfo *info);
+int hcc_do_notify_parent(struct task_struct *task, struct siginfo *info);
 
 /* Used by remote (zombie) child reparenting */
 void notify_remote_child_reaper(pid_t zombie_pid,
 				hcc_node_t zombie_location);
 
 /* Delayed do_notify_parent() in release_task() */
-int krg_delayed_notify_parent(struct task_struct *leader);
+int hcc_delayed_notify_parent(struct task_struct *leader);
 
 /* exit_ptrace() hooks */
 struct children_gdm_object *
-krg_prepare_exit_ptrace_task(struct task_struct *tracer,
+hcc_prepare_exit_ptrace_task(struct task_struct *tracer,
 			     struct task_struct *task)
 	__acquires(tasklist_lock);
-void krg_finish_exit_ptrace_task(struct task_struct *task,
+void hcc_finish_exit_ptrace_task(struct task_struct *task,
 				 struct children_gdm_object *obj,
 				 bool dead)
 	__releases(tasklist_lock);
@@ -61,8 +61,8 @@ void krg_finish_exit_ptrace_task(struct task_struct *task,
 
 /* exit_notify() hooks */
 
-void *krg_prepare_exit_notify(struct task_struct *task);
-void krg_finish_exit_notify(struct task_struct *task, int signal, void *cookie);
+void *hcc_prepare_exit_notify(struct task_struct *task);
+void hcc_finish_exit_notify(struct task_struct *task, int signal, void *cookie);
 
 #endif /* CONFIG_HCC_PROC */
 

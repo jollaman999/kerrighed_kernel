@@ -160,7 +160,7 @@ void map_gdm_page(struct vm_area_struct *vma,
 	update_mmu_cache(vma, address, pte);
 	pte_unmap_unlock(ptep, ptl);
 
-	if (cap_raised(current->krg_caps.effective, CAP_USE_REMOTE_MEMORY))
+	if (cap_raised(current->hcc_caps.effective, CAP_USE_REMOTE_MEMORY))
 		SetPageMigratable(page);
 }
 

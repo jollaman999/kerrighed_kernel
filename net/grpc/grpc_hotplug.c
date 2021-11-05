@@ -4,14 +4,14 @@
 
 #include <linux/notifier.h>
 #include <linux/kernel.h>
-#include <hcc/krgnodemask.h>
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <hcc/hccnodemask.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/hotplug.h>
 
 #include "rpc_internal.h"
 
-static void rpc_remove(krgnodemask_t * vector)
+static void rpc_remove(hccnodemask_t * vector)
 {
 	printk("Have to send all the tx_queue before stopping the node\n");
 };
@@ -23,7 +23,7 @@ static void rpc_remove(krgnodemask_t * vector)
  *
  */
 
-#ifdef CONFIG_KERRIGHED
+#ifdef CONFIG_HCC
 static int rpc_notification(struct notifier_block *nb, hotplug_event_t event,
 			    void *data){
 	struct hotplug_node_set *node_set = data;
@@ -41,7 +41,7 @@ static int rpc_notification(struct notifier_block *nb, hotplug_event_t event,
 #endif
 
 int rpc_hotplug_init(void){
-#ifdef CONFIG_KERRIGHED
+#ifdef CONFIG_HCC
 	register_hotplug_notifier(rpc_notification, HOTPLUG_PRIO_RPC);
 #endif
 	return 0;

@@ -36,7 +36,7 @@ int __register_proc_service(unsigned int cmd, proc_service_function_t fun,
 int register_proc_service(unsigned int cmd, proc_service_function_t fun);
 int unregister_proc_service(unsigned int cmd);
 
-int krg_syscalls_init(void);
-int krg_syscalls_finalize(void);
+int hcc_syscalls_init(void);
+int hcc_syscalls_finalize(void);
 
 #endif				/* __HCC_SYSCALLS__ */

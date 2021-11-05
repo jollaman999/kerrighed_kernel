@@ -26,8 +26,8 @@
 #include <linux/notifier.h>
 #include <hcc/hcc_signal.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
-#include <hcc/krginit.h>
+#include <hcc/hccnodemask.h>
+#include <hcc/hccinit.h>
 #include <hcc/remote_cred.h>
 #include <hcc/remote_syscall.h>
 #ifdef CONFIG_HCC_CAP
@@ -42,8 +42,8 @@
 #include <hcc/action.h>
 #include <hcc/migration.h>
 #include <hcc/hotplug.h>
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include "remote_clone.h"
 #include "network_ghost.h"
 #include "epm_internal.h"
@@ -67,7 +67,7 @@ static int migration_implemented(struct task_struct *task)
 {
 	int ret = 0;
 
-	if (!task->sighand->krg_objid || !task->signal->krg_objid
+	if (!task->sighand->hcc_objid || !task->signal->hcc_objid
 	    || !task->task_obj || !task->children_obj
 	    || (task->real_parent != baby_sitter
 		&& !is_container_init(task->real_parent)
@@ -119,9 +119,9 @@ int __may_migrate(struct task_struct *task)
 		&& permissions_ok(task)
 #ifdef CONFIG_HCC_CAP
 		/* check capabilities */
-		&& can_use_krg_cap(task, CAP_CAN_MIGRATE)
+		&& can_use_hcc_cap(task, CAP_CAN_MIGRATE)
 #endif /* CONFIG_HCC_CAP */
-		&& !krg_action_pending(task, EPM_MIGRATE)
+		&& !hcc_action_pending(task, EPM_MIGRATE)
 		/* Implementation limitation */
 		&& migration_implemented(task));
 }
@@ -143,7 +143,7 @@ void migration_aborted(struct task_struct *tsk)
 #ifdef CONFIG_HCC_SCHED
 	atomic_notifier_call_chain(&kmh_migration_aborted, 0, tsk);
 #endif
-	krg_action_stop(tsk, EPM_MIGRATE);
+	hcc_action_stop(tsk, EPM_MIGRATE);
 }
 
 static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
@@ -162,7 +162,7 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 	 * migration request.
 	 */
 #ifdef CONFIG_HCC_CAP
-	if (!can_use_krg_cap(tsk, CAP_CAN_MIGRATE))
+	if (!can_use_hcc_cap(tsk, CAP_CAN_MIGRATE))
 		return -ENOSYS;
 #endif
 	if (!migration_implemented(tsk))
@@ -178,18 +178,18 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 	migration.migrate.source = hcc_node_id;
 	migration.migrate.start_date = current_kernel_time();
 
-	krg_unset_pid_location(tsk);
+	hcc_unset_pid_location(tsk);
 
-	__krg_task_writelock(tsk);
+	__hcc_task_writelock(tsk);
 	leave_all_relatives(tsk);
-	__krg_task_unlock(tsk);
+	__hcc_task_unlock(tsk);
 
 	/*
 	 * Prevent the migrated task from removing the sighand_struct and
 	 * signal_struct copies before migration cleanup ends
 	 */
-	krg_sighand_pin(tsk->sighand);
-	krg_signal_pin(tsk->signal);
+	hcc_sighand_pin(tsk->sighand);
+	hcc_signal_pin(tsk->signal);
 	mm_struct_pin(tsk->mm);
 
 	remote_pid = send_task(desc, tsk, regs, &migration);
@@ -203,25 +203,25 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 
 		mm_struct_unpin(tsk->mm);
 
-		krg_signal_writelock(tsk->signal);
-		krg_signal_unlock(tsk->signal);
-		krg_signal_unpin(tsk->signal);
+		hcc_signal_writelock(tsk->signal);
+		hcc_signal_unlock(tsk->signal);
+		hcc_signal_unpin(tsk->signal);
 
-		krg_sighand_writelock(tsk->sighand->krg_objid);
-		krg_sighand_unlock(tsk->sighand->krg_objid);
-		krg_sighand_unpin(tsk->sighand);
+		hcc_sighand_writelock(tsk->sighand->hcc_objid);
+		hcc_sighand_unlock(tsk->sighand->hcc_objid);
+		hcc_sighand_unpin(tsk->sighand);
 
-		obj = __krg_task_writelock(tsk);
+		obj = __hcc_task_writelock(tsk);
 		BUG_ON(!obj);
 		tasklist_write_lock_irq();
 		obj->task = tsk;
 		tsk->task_obj = obj;
 		write_unlock_irq(&tasklist_lock);
-		__krg_task_unlock(tsk);
+		__hcc_task_unlock(tsk);
 
 		join_local_relatives(tsk);
 
-		krg_set_pid_location(tsk);
+		hcc_set_pid_location(tsk);
 	} else {
 		BUG_ON(remote_pid != task_pid_knr(tsk));
 
@@ -235,7 +235,7 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 	return remote_pid > 0 ? 0 : remote_pid;
 }
 
-static void krg_task_migrate(int sig, struct siginfo *info,
+static void hcc_task_migrate(int sig, struct siginfo *info,
 			     struct pt_regs *regs)
 {
 	struct task_struct *tsk = current;
@@ -280,7 +280,7 @@ static void handle_migrate(struct rpc_desc *desc, void *msg, size_t size)
 	action->migrate.end_date = current_kernel_time();
 	atomic_notifier_call_chain(&kmh_migration_recv_end, 0, action);
 #endif
-	krg_action_stop(task, EPM_MIGRATE);
+	hcc_action_stop(task, EPM_MIGRATE);
 
 	wake_up_new_task(task, CLONE_VM);
 }
@@ -292,7 +292,7 @@ static int do_migrate_process(struct task_struct *task,
 	struct siginfo info;
 	int retval;
 
-	if (!krgnode_online(destination_node_id))
+	if (!hccnode_online(destination_node_id))
 		return -ENONET;
 
 	if (destination_node_id == hcc_node_id)
@@ -304,7 +304,7 @@ static int do_migrate_process(struct task_struct *task,
 		return -ENOSYS;
 	}
 
-	retval = krg_action_start(task, EPM_MIGRATE);
+	retval = hcc_action_start(task, EPM_MIGRATE);
 	if (retval)
 		return retval;
 
@@ -388,7 +388,7 @@ static int handle_migrate_remote_process(struct rpc_desc *desc,
 	const struct cred *old_cred;
 	int retval;
 
-	pid = krg_handle_remote_syscall_begin(desc, _msg, size,
+	pid = hcc_handle_remote_syscall_begin(desc, _msg, size,
 					      &msg, &old_cred);
 	if (IS_ERR(pid)) {
 		retval = PTR_ERR(pid);
@@ -396,7 +396,7 @@ static int handle_migrate_remote_process(struct rpc_desc *desc,
 	}
 	retval = __migrate_linux_threads(pid_task(pid, PIDTYPE_PID), msg.scope,
 					 msg.destination_node_id);
-	krg_handle_remote_syscall_end(pid, old_cred);
+	hcc_handle_remote_syscall_end(pid, old_cred);
 out:
 	return retval;
 }
@@ -411,7 +411,7 @@ static int migrate_remote_process(pid_t pid,
 	msg.scope = scope;
 	msg.destination_node_id = destination_node_id;
 
-	return krg_remote_syscall_simple(PROC_REQUEST_MIGRATION, pid,
+	return hcc_remote_syscall_simple(PROC_REQUEST_MIGRATION, pid,
 					 &msg, sizeof(msg));
 }
 
@@ -424,7 +424,7 @@ int migrate_linux_threads(pid_t pid,
 
 	/* Check the destination node */
 	/* Just an optimization to avoid doing a useless remote request */
-	if (!krgnode_online(dest_node))
+	if (!hccnode_online(dest_node))
 		return -ENONET;
 
 	rcu_read_lock();
@@ -453,7 +453,7 @@ EXPORT_SYMBOL(migrate_linux_threads);
  */
 int sys_migrate_process(pid_t tgid, hcc_node_t dest_node)
 {
-	if (dest_node < 0 || dest_node >= KERRIGHED_MAX_NODES)
+	if (dest_node < 0 || dest_node >= HCC_MAX_NODES)
 		return -EINVAL;
 	return migrate_linux_threads(tgid, MIGR_GLOBAL_PROCESS, dest_node);
 }
@@ -467,22 +467,22 @@ int sys_migrate_process(pid_t tgid, hcc_node_t dest_node)
  */
 int sys_migrate_thread(pid_t pid, hcc_node_t dest_node)
 {
-	if (dest_node < 0 || dest_node >= KERRIGHED_MAX_NODES)
+	if (dest_node < 0 || dest_node >= HCC_MAX_NODES)
 		return -EINVAL;
 	return migrate_linux_threads(pid, MIGR_THREAD, dest_node);
 }
 
 #ifdef CONFIG_HCC_SYSCALL_EXIT_HOOK
-void krg_syscall_exit(long syscall_nr)
+void hcc_syscall_exit(long syscall_nr)
 {
 	__migrate_linux_threads(current, MIGR_LOCAL_PROCESS,
-				krgnode_next_online_in_ring(hcc_node_id));
+				hccnode_next_online_in_ring(hcc_node_id));
 }
 #endif
 
 int epm_migration_start(void)
 {
-	krg_handler[HCC_SIG_MIGRATE] = krg_task_migrate;
+	hcc_handler[HCC_SIG_MIGRATE] = hcc_task_migrate;
 	if (rpc_register_void(RPC_EPM_MIGRATE, handle_migrate, 0))
 		BUG();
 	if (rpc_register_int(PROC_REQUEST_MIGRATION,

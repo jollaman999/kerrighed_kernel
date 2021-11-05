@@ -13,10 +13,10 @@
 #include <linux/elf.h>
 #include <hcc/pid.h>
 #include <hcc/task.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/task.h>
 #include <hcc/pid.h>
 #include "proc_pid.h"
@@ -30,7 +30,7 @@
  * as arguments.
  */
 
-struct krg_pid_entry {
+struct hcc_pid_entry {
 	char *name;
 	int len;
 	mode_t mode;
@@ -50,27 +50,27 @@ struct krg_pid_entry {
 
 #define DIR(NAME, MODE, OTYPE)							\
 	NOD(NAME, (S_IFDIR|(MODE)),						\
-		&krg_proc_##OTYPE##_inode_operations,				\
-		&krg_proc_##OTYPE##_operations,					\
+		&hcc_proc_##OTYPE##_inode_operations,				\
+		&hcc_proc_##OTYPE##_operations,					\
 		{} )
 #define LNK(NAME, OTYPE)					\
 	NOD(NAME, (S_IFLNK|S_IRWXUGO),				\
-		&krg_proc_pid_link_inode_operations, NULL,	\
-		{ .proc_get_link = &krg_proc_##OTYPE##_link } )
+		&hcc_proc_pid_link_inode_operations, NULL,	\
+		{ .proc_get_link = &hcc_proc_##OTYPE##_link } )
 #define REG(NAME, MODE, OTYPE)				\
 	NOD(NAME, (S_IFREG|(MODE)), NULL,		\
-		&krg_proc_##OTYPE##_operations, {})
+		&hcc_proc_##OTYPE##_operations, {})
 #define INF(NAME, MODE, OTYPE)				\
 	NOD(NAME, (S_IFREG|(MODE)),			\
-		NULL, &krg_proc_info_file_operations,	\
-		{ .proc_read = &krg_proc_##OTYPE } )
+		NULL, &hcc_proc_info_file_operations,	\
+		{ .proc_read = &hcc_proc_##OTYPE } )
 #define ONE(NAME, MODE, OTYPE)				\
 	NOD(NAME, (S_IFREG|(MODE)),			\
-		NULL, &krg_proc_single_file_operations,	\
-		{ .proc_show = &krg_proc_##OTYPE } )
+		NULL, &hcc_proc_single_file_operations,	\
+		{ .proc_show = &hcc_proc_##OTYPE } )
 
 static
-unsigned int krg_pid_entry_count_dirs(const struct krg_pid_entry *entries,
+unsigned int hcc_pid_entry_count_dirs(const struct hcc_pid_entry *entries,
 				      unsigned int n)
 {
 	unsigned int i;
@@ -85,7 +85,7 @@ unsigned int krg_pid_entry_count_dirs(const struct krg_pid_entry *entries,
 	return count;
 }
 
-static struct inode *krg_proc_pid_make_inode(struct super_block *sb,
+static struct inode *hcc_proc_pid_make_inode(struct super_block *sb,
 					     struct proc_distant_pid_info *task)
 {
 	struct inode *inode;
@@ -101,8 +101,8 @@ static struct inode *krg_proc_pid_make_inode(struct super_block *sb,
 	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
 	inode->i_op = &proc_def_inode_operations;
 
-	ei = get_krg_proc_task(inode);
-	krg_task_get(task->task_obj);
+	ei = get_hcc_proc_task(inode);
+	hcc_task_get(task->task_obj);
 	*ei = *task;
 
 	inode->i_uid = 0;
@@ -116,7 +116,7 @@ out:
 	return inode;
 }
 
-static int krg_pid_getattr(struct vfsmount *mnt, struct dentry *dentry,
+static int hcc_pid_getattr(struct vfsmount *mnt, struct dentry *dentry,
 			   struct kstat *stat)
 {
 	struct inode *inode = dentry->d_inode;
@@ -126,8 +126,8 @@ static int krg_pid_getattr(struct vfsmount *mnt, struct dentry *dentry,
 
 	stat->uid = 0;
 	stat->gid = 0;
-	task = get_krg_proc_task(inode);
-	if (krg_task_alive(task->task_obj)) {
+	task = get_hcc_proc_task(inode);
+	if (hcc_task_alive(task->task_obj)) {
 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
 		    task->dumpable) {
 			stat->uid = task->euid;
@@ -138,23 +138,23 @@ static int krg_pid_getattr(struct vfsmount *mnt, struct dentry *dentry,
 	return 0;
 }
 
-static int krg_pid_revalidate(struct dentry *dentry, struct nameidata *nd)
+static int hcc_pid_revalidate(struct dentry *dentry, struct nameidata *nd)
 {
 	/* We need to check that the pid still exists in the system */
 	struct inode *inode = dentry->d_inode;
-	struct proc_distant_pid_info *ei = get_krg_proc_task(inode);
+	struct proc_distant_pid_info *ei = get_hcc_proc_task(inode);
 	struct task_gdm_object *obj;
 	long state = EXIT_DEAD;
 
 	/*
-	 * Optimization: avoid doing krg_task_readlock() when it is obviously
+	 * Optimization: avoid doing hcc_task_readlock() when it is obviously
 	 * useless.
 	 */
-	if (!krg_task_alive(ei->task_obj))
+	if (!hcc_task_alive(ei->task_obj))
 		goto drop;
 	/* If pid is reused in between, the former task_obj field is dead. */
-	obj = krg_task_readlock(ei->pid);
-	if (!krg_task_alive(ei->task_obj) || !obj)
+	obj = hcc_task_readlock(ei->pid);
+	if (!hcc_task_alive(ei->task_obj) || !obj)
 		goto unlock;
 
 	BUG_ON(obj != ei->task_obj);
@@ -179,7 +179,7 @@ static int krg_pid_revalidate(struct dentry *dentry, struct nameidata *nd)
 	}
 
 unlock:
-	krg_task_unlock(ei->pid);
+	hcc_task_unlock(ei->pid);
 
 	if (state != EXIT_DEAD)
 		return 1;
@@ -188,31 +188,31 @@ drop:
 	return 0;
 }
 
-static int krg_pid_delete_dentry(struct dentry *dentry)
+static int hcc_pid_delete_dentry(struct dentry *dentry)
 {
-	struct proc_distant_pid_info *ei = get_krg_proc_task(dentry->d_inode);
+	struct proc_distant_pid_info *ei = get_hcc_proc_task(dentry->d_inode);
 
 	/*
 	 * If the task is local, we want the dentry to be regenerated with
 	 * vanilla procfs operations.
 	 */
-	if (!krg_task_alive(ei->task_obj)
+	if (!hcc_task_alive(ei->task_obj)
 	    || ei->task_obj->node == hcc_node_id)
 		return 1;
 
 	return 0;
 }
 
-static struct dentry_operations krg_pid_dentry_operations = {
-	.d_revalidate = krg_pid_revalidate,
-	.d_delete = krg_pid_delete_dentry,
+static struct dentry_operations hcc_pid_dentry_operations = {
+	.d_revalidate = hcc_pid_revalidate,
+	.d_delete = hcc_pid_delete_dentry,
 };
 
 typedef struct dentry *instantiate_t(struct inode *, struct dentry *,
 				     struct proc_distant_pid_info *,
 				     const void *);
 
-static int krg_proc_fill_cache(struct file *filp,
+static int hcc_proc_fill_cache(struct file *filp,
 			       void *dirent, filldir_t filldir,
 			       char *name, int len,
 			       instantiate_t instantiate,
@@ -257,21 +257,21 @@ end_instantiate:
 	return filldir(dirent, name, len, filp->f_pos, ino, type);
 }
 
-static struct dentry *krg_proc_pident_instantiate(struct inode *dir,
+static struct dentry *hcc_proc_pident_instantiate(struct inode *dir,
 						  struct dentry *dentry,
 						  struct proc_distant_pid_info *task,
 						  const void *ptr)
 {
-	const struct krg_pid_entry *p = ptr;
+	const struct hcc_pid_entry *p = ptr;
 	struct inode *inode;
 	struct proc_distant_pid_info *new_info;
 	struct dentry *error = ERR_PTR(-ENOENT);
 
-	inode = krg_proc_pid_make_inode(dir->i_sb, task);
+	inode = hcc_proc_pid_make_inode(dir->i_sb, task);
 	if (!inode)
 		goto out;
 
-	new_info = get_krg_proc_task(inode);
+	new_info = get_hcc_proc_task(inode);
 	inode->i_mode = p->mode;
 	if (S_ISDIR(inode->i_mode))
 		inode->i_nlink = 2;	/* Use getattr to fix if necessary */
@@ -280,27 +280,27 @@ static struct dentry *krg_proc_pident_instantiate(struct inode *dir,
 	if (p->fop)
 		inode->i_fop = p->fop;
 	new_info->op = p->op;
-	dentry->d_op = &krg_pid_dentry_operations;
+	dentry->d_op = &hcc_pid_dentry_operations;
 	d_add(dentry, inode);
 	/* Close the race of the process dying before we return the dentry */
-	if (krg_pid_revalidate(dentry, NULL))
+	if (hcc_pid_revalidate(dentry, NULL))
 		error = NULL;
 out:
 	return error;
 }
 
-struct dentry *krg_proc_pident_lookup(struct inode *dir,
+struct dentry *hcc_proc_pident_lookup(struct inode *dir,
 				      struct dentry *dentry,
-				      const struct krg_pid_entry *ents,
+				      const struct hcc_pid_entry *ents,
 				      unsigned int nents)
 {
 	struct dentry *error;
-	struct proc_distant_pid_info *task = get_krg_proc_task(dir);
-	const struct krg_pid_entry *p, *last;
+	struct proc_distant_pid_info *task = get_hcc_proc_task(dir);
+	const struct hcc_pid_entry *p, *last;
 
 	error = ERR_PTR(-ENOENT);
 
-	if (!krg_task_alive(task->task_obj))
+	if (!hcc_task_alive(task->task_obj))
 		goto out;
 
 	/*
@@ -317,35 +317,35 @@ struct dentry *krg_proc_pident_lookup(struct inode *dir,
 	if (p > last)
 		goto out;
 
-	error = krg_proc_pident_instantiate(dir, dentry, task, p);
+	error = hcc_proc_pident_instantiate(dir, dentry, task, p);
 out:
 	return error;
 }
 
-static int krg_proc_pident_fill_cache(struct file *filp,
+static int hcc_proc_pident_fill_cache(struct file *filp,
 				      void *dirent, filldir_t filldir,
 				      struct proc_distant_pid_info *task,
-				      const struct krg_pid_entry *p)
+				      const struct hcc_pid_entry *p)
 {
-	return krg_proc_fill_cache(filp, dirent, filldir, p->name, p->len,
-				   krg_proc_pident_instantiate, task, p);
+	return hcc_proc_fill_cache(filp, dirent, filldir, p->name, p->len,
+				   hcc_proc_pident_instantiate, task, p);
 }
 
-static int krg_proc_pident_readdir(struct file *filp,
+static int hcc_proc_pident_readdir(struct file *filp,
 				   void *dirent, filldir_t filldir,
-				   const struct krg_pid_entry *ents,
+				   const struct hcc_pid_entry *ents,
 				   unsigned int nents)
 {
 	int i;
 	struct dentry *dentry = filp->f_path.dentry;
 	struct inode *inode = dentry->d_inode;
-	struct proc_distant_pid_info *task = get_krg_proc_task(inode);
-	const struct krg_pid_entry *p, *last;
+	struct proc_distant_pid_info *task = get_hcc_proc_task(inode);
+	const struct hcc_pid_entry *p, *last;
 	ino_t ino;
 	int ret;
 
 	ret = -ENOENT;
-	if (!krg_task_alive(task->task_obj))
+	if (!hcc_task_alive(task->task_obj))
 		goto out;
 
 	ret = 0;
@@ -374,7 +374,7 @@ static int krg_proc_pident_readdir(struct file *filp,
 		p = ents + i;
 		last = &ents[nents - 1];
 		while (p <= last) {
-			if (krg_proc_pident_fill_cache(filp, dirent, filldir, task, p) < 0)
+			if (hcc_proc_pident_fill_cache(filp, dirent, filldir, task, p) < 0)
 				goto out;
 			filp->f_pos++;
 			p++;
@@ -387,7 +387,7 @@ out:
 }
 
 /* Unsupported entries are commented out */
-static struct krg_pid_entry krg_tgid_base_stuff[] = {
+static struct hcc_pid_entry hcc_tgid_base_stuff[] = {
 /* 	DIR("task",       S_IRUGO|S_IXUGO, task), */
 	DIR("fd",         S_IRUSR|S_IXUSR, fd),
 /*      DIR("fdinfo",     S_IRUSR|S_IXUSR, proc_fdinfo_inode_operations, proc_fdinfo_operations), */
@@ -467,36 +467,36 @@ static struct krg_pid_entry krg_tgid_base_stuff[] = {
 #endif
 };
 
-static int krg_proc_tgid_base_readdir(struct file *filp,
+static int hcc_proc_tgid_base_readdir(struct file *filp,
 				      void *dirent, filldir_t filldir)
 {
-	return krg_proc_pident_readdir(filp, dirent, filldir,
-				       krg_tgid_base_stuff,
-				       ARRAY_SIZE(krg_tgid_base_stuff));
+	return hcc_proc_pident_readdir(filp, dirent, filldir,
+				       hcc_tgid_base_stuff,
+				       ARRAY_SIZE(hcc_tgid_base_stuff));
 }
 
-static struct file_operations krg_proc_tgid_base_operations = {
+static struct file_operations hcc_proc_tgid_base_operations = {
 	.read		= generic_read_dir,
-	.readdir	= krg_proc_tgid_base_readdir,
+	.readdir	= hcc_proc_tgid_base_readdir,
 };
 
-static struct dentry *krg_proc_tgid_base_lookup(struct inode *dir,
+static struct dentry *hcc_proc_tgid_base_lookup(struct inode *dir,
 						struct dentry *dentry,
 						struct nameidata *nd)
 {
-	return krg_proc_pident_lookup(dir, dentry,
-				      krg_tgid_base_stuff,
-				      ARRAY_SIZE(krg_tgid_base_stuff));
+	return hcc_proc_pident_lookup(dir, dentry,
+				      hcc_tgid_base_stuff,
+				      ARRAY_SIZE(hcc_tgid_base_stuff));
 }
 
-static struct inode_operations krg_proc_tgid_base_inode_operations = {
-	.lookup = krg_proc_tgid_base_lookup,
-	.getattr = krg_pid_getattr,
+static struct inode_operations hcc_proc_tgid_base_inode_operations = {
+	.lookup = hcc_proc_tgid_base_lookup,
+	.getattr = hcc_pid_getattr,
 	.setattr = proc_setattr,
 };
 
 static
-struct dentry *krg_proc_pid_instantiate(struct inode *dir,
+struct dentry *hcc_proc_pid_instantiate(struct inode *dir,
 					struct dentry *dentry,
 					struct proc_distant_pid_info *task,
 					const void *ptr)
@@ -504,24 +504,24 @@ struct dentry *krg_proc_pid_instantiate(struct inode *dir,
 	struct dentry *error = ERR_PTR(-ENOENT);
 	struct inode *inode;
 
-	inode =	krg_proc_pid_make_inode(dir->i_sb, task);
+	inode =	hcc_proc_pid_make_inode(dir->i_sb, task);
 	if (!inode)
 		goto out;
 
 	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
-	inode->i_op = &krg_proc_tgid_base_inode_operations;
-	inode->i_fop = &krg_proc_tgid_base_operations;
+	inode->i_op = &hcc_proc_tgid_base_inode_operations;
+	inode->i_fop = &hcc_proc_tgid_base_operations;
 	inode->i_flags |= S_IMMUTABLE;
 
-	inode->i_nlink = 2 + krg_pid_entry_count_dirs(krg_tgid_base_stuff,
-						      ARRAY_SIZE(krg_tgid_base_stuff));
+	inode->i_nlink = 2 + hcc_pid_entry_count_dirs(hcc_tgid_base_stuff,
+						      ARRAY_SIZE(hcc_tgid_base_stuff));
 
-	dentry->d_op = &krg_pid_dentry_operations;
+	dentry->d_op = &hcc_pid_dentry_operations;
 
 	d_add(dentry, inode);
 	/*
 	 * There is no race of the process dying before we return the dentry
-	 * because either krg_proc_pid_lookup() or krg_proc_pid_fill_cache()
+	 * because either hcc_proc_pid_lookup() or hcc_proc_pid_fill_cache()
 	 * has locked the task gdm object.
 	 */
 	error = NULL;
@@ -529,7 +529,7 @@ out:
 	return error;
 }
 
-struct dentry *krg_proc_pid_lookup(struct inode *dir,
+struct dentry *hcc_proc_pid_lookup(struct inode *dir,
 				   struct dentry *dentry, pid_t tgid)
 {
 	/* try and locate pid in the cluster */
@@ -538,11 +538,11 @@ struct dentry *krg_proc_pid_lookup(struct inode *dir,
 	struct task_gdm_object *obj;
 
 #ifdef CONFIG_HCC_CAP
-	if (can_use_krg_cap(current, CAP_SEE_LOCAL_PROC_STAT))
+	if (can_use_hcc_cap(current, CAP_SEE_LOCAL_PROC_STAT))
 		goto out_no_task;
 #endif
 
-	obj = krg_task_readlock(tgid);
+	obj = hcc_task_readlock(tgid);
 	if (!obj)
 		goto out;
 
@@ -553,10 +553,10 @@ struct dentry *krg_proc_pid_lookup(struct inode *dir,
 	task.egid = obj->egid;
 	task.prob_node = obj->node;
 
-	result = krg_proc_pid_instantiate(dir, dentry, &task, NULL);
+	result = hcc_proc_pid_instantiate(dir, dentry, &task, NULL);
 
 out:
-	krg_task_unlock(tgid);
+	hcc_task_unlock(tgid);
 out_no_task:
 	return result;
 }
@@ -568,7 +568,7 @@ struct pid_list_msg {
 	pid_t next_tgid;
 };
 
-static int krg_proc_pid_fill_cache(struct file *filp,
+static int hcc_proc_pid_fill_cache(struct file *filp,
 				   void *dirent, filldir_t filldir,
 				   struct tgid_iter iter)
 {
@@ -578,7 +578,7 @@ static int krg_proc_pid_fill_cache(struct file *filp,
 	struct task_gdm_object *obj;
 	int retval = 0;
 
-	obj = krg_task_readlock(iter.tgid);
+	obj = hcc_task_readlock(iter.tgid);
 	if (iter.task
 #ifdef CONFIG_HCC_EPM
 	    && ((!obj && iter.task->real_parent != baby_sitter)
@@ -587,18 +587,18 @@ static int krg_proc_pid_fill_cache(struct file *filp,
 	    ) {
 		/* Task is local and not a remaining part of a migrated task. */
 		retval = proc_pid_fill_cache(filp, dirent, filldir, iter);
-		krg_task_unlock(iter.tgid);
+		hcc_task_unlock(iter.tgid);
 		return retval;
 	}
 #if defined(CONFIG_HCC_EPM) && defined(CONFIG_HCC_CAP)
-	if (can_use_krg_cap(current, CAP_SEE_LOCAL_PROC_STAT))
+	if (can_use_hcc_cap(current, CAP_SEE_LOCAL_PROC_STAT))
 		return retval;
 #endif
 
 	if (obj) {
 		proc_task.task_obj = obj;
 		proc_task.pid = iter.tgid;
-		if (obj->node == KERRIGHED_NODE_ID_NONE)
+		if (obj->node == HCC_NODE_ID_NONE)
 			proc_task.prob_node = hcc_node_id;
 		else
 			proc_task.prob_node = obj->node;
@@ -606,11 +606,11 @@ static int krg_proc_pid_fill_cache(struct file *filp,
 		proc_task.euid = obj->euid;
 		proc_task.egid = obj->egid;
 
-		retval = krg_proc_fill_cache(filp, dirent, filldir, name, len,
-					     krg_proc_pid_instantiate,
+		retval = hcc_proc_fill_cache(filp, dirent, filldir, name, len,
+					     hcc_proc_pid_instantiate,
 					     &proc_task, NULL);
 	}
-	krg_task_unlock(iter.tgid);
+	hcc_task_unlock(iter.tgid);
 
 	return retval;
 }
@@ -626,7 +626,7 @@ static struct task_gdm_object *next_tgid(pid_t tgid,
 
 retry:
 	task_obj = NULL;
-	pid = krg_find_ge_pid(tgid, pid_ns, pidmap_ns);
+	pid = hcc_find_ge_pid(tgid, pid_ns, pidmap_ns);
 	if (pid) {
 		tgid = pid_nr_ns(pid, pid_ns) + 1;
 		task = pid_task(pid, PIDTYPE_PID);
@@ -642,9 +642,9 @@ retry:
 #ifdef CONFIG_HCC_EPM
 			if (!task_obj)
 				/* Try again in case task is migrating */
-				task_obj = krg_pid_task(pid);
+				task_obj = hcc_pid_task(pid);
 		} else {
-			task_obj = krg_pid_task(pid);
+			task_obj = hcc_pid_task(pid);
 #endif
 		}
 		if (!task_obj || task_obj->group_leader != task_obj->pid)
@@ -658,7 +658,7 @@ static void handle_req_available_tgids(struct rpc_desc *desc,
 				       void *_msg, size_t size)
 {
 	struct pid_list_msg *msg = _msg;
-	struct pid_namespace *pid_ns = find_get_krg_pid_ns();
+	struct pid_namespace *pid_ns = find_get_hcc_pid_ns();
 	struct pid_namespace *pidmap_ns;
 	pid_t pid_array[PROC_MAXPIDS];
 	pid_t tgid;
@@ -719,10 +719,10 @@ static int fill_next_remote_tgids(hcc_node_t node,
 	int i;
 	int retval;
 
-	BUG_ON(!is_krg_pid_ns_root(ns));
+	BUG_ON(!is_hcc_pid_ns_root(ns));
 
 	host_node = pidmap_node(node);
-	if (host_node == KERRIGHED_NODE_ID_NONE)
+	if (host_node == HCC_NODE_ID_NONE)
 		return 0;
 
 	msg.node = node;
@@ -765,11 +765,11 @@ static int fill_next_remote_tgids(hcc_node_t node,
 		rcu_read_unlock();
 #ifdef CONFIG_HCC_CAP
 		if (!iter.task
-		    && can_use_krg_cap(current, CAP_SEE_LOCAL_PROC_STAT))
+		    && can_use_hcc_cap(current, CAP_SEE_LOCAL_PROC_STAT))
 			continue;
 #endif
 #endif /* CONFIG_HCC_EPM */
-		retval = krg_proc_pid_fill_cache(filp, dirent, filldir, iter);
+		retval = hcc_proc_pid_fill_cache(filp, dirent, filldir, iter);
 #ifdef CONFIG_HCC_EPM
 		if (iter.task)
 			put_task_struct(iter.task);
@@ -809,7 +809,7 @@ static int fill_next_local_tgids(struct file *filp,
 	int nr;
 	int retval;
 
-	BUG_ON(!is_krg_pid_ns_root(ns));
+	BUG_ON(!is_hcc_pid_ns_root(ns));
 
 	rcu_read_lock();
 	for (;;) {
@@ -826,11 +826,11 @@ static int fill_next_local_tgids(struct file *filp,
 		if (!iter.task) {
 #ifdef CONFIG_HCC_EPM
 #ifdef CONFIG_HCC_CAP
-			if (can_use_krg_cap(current, CAP_SEE_LOCAL_PROC_STAT))
+			if (can_use_hcc_cap(current, CAP_SEE_LOCAL_PROC_STAT))
 				continue;
 #endif
 			/* Maybe a migrated thread group leader */
-			task_obj = krg_pid_task(pid);
+			task_obj = hcc_pid_task(pid);
 			if (!task_obj
 			    || task_obj->pid != task_obj->group_leader)
 #endif
@@ -844,7 +844,7 @@ static int fill_next_local_tgids(struct file *filp,
 		rcu_read_unlock();
 
 		filp->f_pos = iter.tgid + offset;
-		retval = krg_proc_pid_fill_cache(filp, dirent, filldir, iter);
+		retval = hcc_proc_pid_fill_cache(filp, dirent, filldir, iter);
 		if (iter.task)
 			put_task_struct(iter.task);
 		if (retval < 0)
@@ -894,7 +894,7 @@ static int fill_next_tgids(hcc_node_t node,
 	return retval;
 }
 
-int krg_proc_pid_readdir(struct file *filp,
+int hcc_proc_pid_readdir(struct file *filp,
 			 void *dirent, filldir_t filldir,
 			 loff_t offset)
 {
@@ -903,7 +903,7 @@ int krg_proc_pid_readdir(struct file *filp,
 	int retval = 0;
 
 	if ((unsigned long) filp->f_pos >=
-	    (unsigned long)(KERRIGHED_PID_MAX_LIMIT + offset))
+	    (unsigned long)(HCC_PID_MAX_LIMIT + offset))
 		goto out;
 
 	/* First local PIDs */
@@ -925,12 +925,12 @@ int krg_proc_pid_readdir(struct file *filp,
 	if (retval)
 		goto out;
 	node = ORIG_NODE(tgid);
-	for (; node < KERRIGHED_MAX_NODES;
+	for (; node < HCC_MAX_NODES;
 	     node++,
 	     filp->f_pos = GLOBAL_PID_NODE(0, node) + offset) {
 #if defined(CONFIG_HCC_CAP) && !defined(CONFIG_HCC_EPM)
 		if (node != hcc_node_id
-		    && can_use_krg_cap(current, CAP_SEE_LOCAL_PROC_STAT))
+		    && can_use_hcc_cap(current, CAP_SEE_LOCAL_PROC_STAT))
 			continue;
 #endif
 

@@ -3,19 +3,19 @@
 
 #define sc_semmni       sem_ctls[3]
 
-int krg_ipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma, int nsems);
+int hcc_ipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma, int nsems);
 
-void krg_ipc_sem_freeary(struct ipc_namespace *ns,
+void hcc_ipc_sem_freeary(struct ipc_namespace *ns,
 			 struct kern_ipc_perm *ipcp);
 
-void krg_ipc_sem_wakeup_process(struct sem_queue *q, int error);
+void hcc_ipc_sem_wakeup_process(struct sem_queue *q, int error);
 
-int krg_ipc_sem_copy_semundo(unsigned long clone_flags,
+int hcc_ipc_sem_copy_semundo(unsigned long clone_flags,
 			     struct task_struct *tsk);
 
-struct sem_undo *krg_ipc_sem_find_undo(struct sem_array* sma);
+struct sem_undo *hcc_ipc_sem_find_undo(struct sem_array* sma);
 
-void krg_ipc_sem_exit_sem(struct ipc_namespace *ns, struct task_struct * tsk);
+void hcc_ipc_sem_exit_sem(struct ipc_namespace *ns, struct task_struct * tsk);
 
 int newary(struct ipc_namespace *ns, struct ipc_params *params);
 

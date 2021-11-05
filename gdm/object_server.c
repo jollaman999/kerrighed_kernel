@@ -7,10 +7,10 @@
 
 #include <linux/kernel.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 #include <gdm/object_server.h>
 #include "protocol_action.h"
@@ -62,7 +62,7 @@ static inline int __handle_invalidation_ack (hcc_node_t sender,
 	struct gdm_set *set;
 	hcc_node_t dest;
 
-	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
+	BUG_ON (sender < 0 || sender > HCC_MAX_NODES);
 
 	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
@@ -199,7 +199,7 @@ void handle_remove_ack (struct rpc_desc* desc,
 	struct gdm_obj *obj_entry;
 	struct gdm_set *set;
 
-	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
+	BUG_ON (desc->client < 0 || desc->client > HCC_MAX_NODES);
 
 	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
@@ -253,7 +253,7 @@ void handle_remove_ack2 (struct rpc_desc* desc,
 	struct gdm_obj *obj_entry;
 	struct gdm_set *set;
 
-	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
+	BUG_ON (desc->client < 0 || desc->client > HCC_MAX_NODES);
 
 	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
@@ -297,7 +297,7 @@ void handle_remove_done (struct rpc_desc* desc,
 	struct gdm_obj *obj_entry;
 	struct gdm_set *set;
 
-	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
+	BUG_ON (desc->client < 0 || desc->client > HCC_MAX_NODES);
 
 	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
@@ -337,7 +337,7 @@ int __handle_object_invalidation (hcc_node_t sender,
 	struct gdm_obj *obj_entry;
 	struct gdm_set *set;
 
-	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
+	BUG_ON (sender < 0 || sender > HCC_MAX_NODES);
 
 	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
@@ -413,7 +413,7 @@ static inline int __handle_object_remove_req (hcc_node_t sender,
 	struct gdm_set *set;
 	int flag = 0;
 
-	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
+	BUG_ON (sender < 0 || sender > HCC_MAX_NODES);
 
 	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
@@ -504,7 +504,7 @@ static inline int __handle_send_ownership_req (hcc_node_t sender,
 	struct gdm_obj *obj_entry;
 	struct gdm_set *set;
 
-	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
+	BUG_ON (sender < 0 || sender > HCC_MAX_NODES);
 
 	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
@@ -559,7 +559,7 @@ void handle_change_ownership_ack (struct rpc_desc* desc,
 	struct gdm_obj *obj_entry;
 	struct gdm_set *set;
 
-	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
+	BUG_ON (desc->client < 0 || desc->client > HCC_MAX_NODES);
 
 	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id, msg->objid,
 					&set);
@@ -597,7 +597,7 @@ void handle_object_receive (struct rpc_desc* desc,
 	masterObj_t master_info;
 	int res, dont_insert = 0 ;
 
-	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
+	BUG_ON (desc->client < 0 || desc->client > HCC_MAX_NODES);
 
 	if (msg->object_state & GDM_OWNER_OBJ) {
 		res = rpc_unpack(desc, 0, &master_info, sizeof(masterObj_t));
@@ -724,7 +724,7 @@ int __handle_no_object (hcc_node_t sender,
 	struct gdm_obj *obj_entry;
 	struct gdm_set *set;
 
-	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
+	BUG_ON (sender < 0 || sender > HCC_MAX_NODES);
 
 	obj_entry = get_alloc_gdm_obj_entry (msg->ns_id, msg->set_id,
 					      msg->objid, &set);
@@ -791,12 +791,12 @@ void handle_receive_write_access (struct rpc_desc* desc,
 	struct gdm_obj *obj_entry;
 	struct gdm_set *set;
 
-	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
+	BUG_ON (desc->client < 0 || desc->client > HCC_MAX_NODES);
 
 	obj_entry = get_alloc_gdm_obj_entry (msg->ns_id, msg->set_id,
 					      msg->objid, &set);
 
-	krgnodes_copy(obj_entry->master_obj.rmset, msg->owner_info.rmset);
+	hccnodes_copy(obj_entry->master_obj.rmset, msg->owner_info.rmset);
 
 	switch (OBJ_STATE(obj_entry)) {
 	  case WAIT_OBJ_WRITE:
@@ -842,7 +842,7 @@ static inline int __handle_object_copy_req (hcc_node_t sender,
 	int send_ownership = msg->flags & GDM_SEND_OWNERSHIP;
 	int r;
 
-	BUG_ON (sender < 0 || sender > KERRIGHED_MAX_NODES);
+	BUG_ON (sender < 0 || sender > HCC_MAX_NODES);
 
 	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id,
 					msg->objid, &set);
@@ -1167,7 +1167,7 @@ void handle_send_back_first_touch_req (struct rpc_desc* desc,
 	struct gdm_set *set;
 	struct gdm_obj *obj_entry;
 
-	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
+	BUG_ON (desc->client < 0 || desc->client > HCC_MAX_NODES);
 
 	obj_entry = get_gdm_obj_entry (msg->ns_id, msg->set_id,
 					msg->objid, &set);
@@ -1206,7 +1206,7 @@ static int handle_change_prob_owner_req(struct rpc_desc* desc,
 	struct gdm_set *set;
 	struct gdm_ns *ns;
 
-	BUG_ON (desc->client < 0 || desc->client > KERRIGHED_MAX_NODES);
+	BUG_ON (desc->client < 0 || desc->client > HCC_MAX_NODES);
 
 	ns = gdm_ns_get (msg->ns_id);
 	set = __find_get_gdm_set(ns, msg->set_id, GDM_LOCK_FREE);

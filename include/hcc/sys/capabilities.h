@@ -3,11 +3,11 @@
  * @author Innogrid HCC
  */
 
-#ifndef _KERRIGHED_CAPABILITIES_H
-#define _KERRIGHED_CAPABILITIES_H
+#ifndef _HCC_CAPABILITIES_H
+#define _HCC_CAPABILITIES_H
 
 enum {
-       CAP_CHANGE_KERRIGHED_CAP = 0,
+       CAP_CHANGE_HCC_CAP = 0,
        CAP_CAN_MIGRATE,
        CAP_DISTANT_FORK,
        CAP_FORK_DELAY,
@@ -22,18 +22,18 @@ enum {
        CAP_SIZE /* keep as last capability */
 };
 
-typedef struct krg_cap_struct
+typedef struct hcc_cap_struct
 {
-	int krg_cap_effective;
-	int krg_cap_permitted;
-	int krg_cap_inheritable_permitted;
-	int krg_cap_inheritable_effective;
-} krg_cap_t;
+	int hcc_cap_effective;
+	int hcc_cap_permitted;
+	int hcc_cap_inheritable_permitted;
+	int hcc_cap_inheritable_effective;
+} hcc_cap_t;
 
-typedef struct krg_cap_pid_desc
+typedef struct hcc_cap_pid_desc
 {
 	pid_t pid;
-	krg_cap_t *caps;
-} krg_cap_pid_t;
+	hcc_cap_t *caps;
+} hcc_cap_pid_t;
 
-#endif /* _KERRIGHED_CAPABILITIES_H */
+#endif /* _HCC_CAPABILITIES_H */

@@ -630,7 +630,7 @@ static inline int is_kernel_context(struct gru_thread_state *gts)
  */
 struct gru_unload_context_req;
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 const
 #endif
 extern struct vm_operations_struct gru_vm_ops;

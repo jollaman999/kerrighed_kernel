@@ -16,8 +16,8 @@
 #include <hcc/pid.h>
 #include <hcc/task.h>
 #include <hcc/workqueue.h>
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/hotplug.h>
 #include <gdm/gdm.h>
 #include <gdm/object_server.h>
@@ -143,7 +143,7 @@ static int pid_remove_object(void *object,
 	free_pid(pid);
 
 	rcu_read_lock();
-	krg_pid_unlink_task(obj);
+	hcc_pid_unlink_task(obj);
 	rcu_read_unlock();
 
 	call_rcu(&obj->rcu, delayed_pid_free);
@@ -192,7 +192,7 @@ static struct pid *no_pid(int nr)
 	 */
 
 	if (!pid) {
-		ns = find_get_krg_pid_ns();
+		ns = find_get_hcc_pid_ns();
 		pid = __alloc_pid(ns, &nr);
 		put_pid_ns(ns);
 		if (!pid)
@@ -211,7 +211,7 @@ out_unlock:
 	return pid;
 }
 
-struct pid *krg_get_pid(int nr)
+struct pid *hcc_get_pid(int nr)
 {
 	struct pid_gdm_object *obj;
 	struct pid *pid;
@@ -255,7 +255,7 @@ struct pid *krg_get_pid(int nr)
 	return pid;
 }
 
-void krg_end_get_pid(struct pid *pid)
+void hcc_end_get_pid(struct pid *pid)
 {
 	struct pid_gdm_object *obj = pid->gdm_obj;
 
@@ -353,7 +353,7 @@ static void put_pid_worker(struct work_struct *work)
  * deadlocks can occur whenever an IRQ handler takes pid_gdm_lock or
  * put_pid_wq_lock, but we know that no IRQ handler can do this.
  */
-void krg_put_pid(struct pid *pid)
+void hcc_put_pid(struct pid *pid)
 {
 	struct pid_gdm_object *obj;
 
@@ -366,7 +366,7 @@ void krg_put_pid(struct pid *pid)
 	if (obj && obj->active && list_empty(&obj->wq)) {
 		BUG_ON(obj->pid != pid);
 		list_add_tail(&obj->wq, &put_pid_wq_head);
-		queue_work(krg_wq, &put_pid_work);
+		queue_work(hcc_wq, &put_pid_work);
 	}
 
 	lockdep_off();
@@ -390,7 +390,7 @@ static int create_pid_gdm_object(struct pid *pid, int early)
 		return PTR_ERR(obj);
 	}
 	BUG_ON(!obj);
-	task_obj = krg_task_readlock(nr);
+	task_obj = hcc_task_readlock(nr);
 
 	spin_lock(&pid_gdm_lock);
 	BUG_ON(early && pid->gdm_obj);
@@ -414,7 +414,7 @@ static int create_pid_gdm_object(struct pid *pid, int early)
 	BUG_ON(pid->gdm_obj != obj);
 	spin_unlock(&pid_gdm_lock);
 
-	krg_task_unlock(nr);
+	hcc_task_unlock(nr);
 	_gdm_put_object(pid_gdm_set, nr);
 
 	return 0;
@@ -447,7 +447,7 @@ int export_pid(struct epm_action *action,
 int export_pid_namespace(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
-	if (!is_krg_pid_ns_root(task_active_pid_ns(task))) {
+	if (!is_hcc_pid_ns_root(task_active_pid_ns(task))) {
 		PANIC("Cannot export processes"
 		      " using a non default PID namespace!\n");
 		return -EINVAL;
@@ -462,7 +462,7 @@ int export_pid_namespace(struct epm_action *action,
 static int __reserve_pid(pid_t nr)
 {
 	hcc_node_t orig_node = ORIG_NODE(nr);
-	struct pid_namespace *pid_ns = find_get_krg_pid_ns();
+	struct pid_namespace *pid_ns = find_get_hcc_pid_ns();
 	struct pid_namespace *pidmap_ns;
 	struct pid *pid;
 	int r;
@@ -536,7 +536,7 @@ int reserve_pid(pid_t pid)
 		goto out;
 
 	host_node = pidmap_node(orig_node);
-	if (host_node == KERRIGHED_NODE_ID_NONE) {
+	if (host_node == HCC_NODE_ID_NONE) {
 		pidmap_map_read_unlock();
 
 		r = pidmap_map_alloc(orig_node);
@@ -546,7 +546,7 @@ int reserve_pid(pid_t pid)
 		pidmap_map_read_lock();
 
 		host_node = pidmap_node(orig_node);
-		BUG_ON(host_node == KERRIGHED_NODE_ID_NONE);
+		BUG_ON(host_node == HCC_NODE_ID_NONE);
 	}
 
 	r = rpc_sync(PROC_RESERVE_PID, host_node, &msg, sizeof(msg));
@@ -568,8 +568,8 @@ static void __end_pid_reservation(int nr)
 	pid = find_kpid(nr);
 	BUG_ON(!pid);
 
-	krg_end_get_pid(pid);
-	krg_put_pid(pid);
+	hcc_end_get_pid(pid);
+	hcc_put_pid(pid);
 	rcu_read_unlock();
 }
 
@@ -595,7 +595,7 @@ int end_pid_reservation(pid_t pid)
 		return r;
 
 	host_node = pidmap_node(ORIG_NODE(pid));
-	BUG_ON(host_node == KERRIGHED_NODE_ID_NONE);
+	BUG_ON(host_node == HCC_NODE_ID_NONE);
 
 	r = rpc_sync(PROC_END_PID_RESERVATION, host_node, &msg, sizeof(msg));
 
@@ -627,7 +627,7 @@ int import_pid(struct epm_action *action, ghost_t *ghost, struct pid_link *link,
 			nr = action->restart.app->restart.substitution_sid;
 	}
 
-	pid = krg_get_pid(nr);
+	pid = hcc_get_pid(nr);
 	if (!pid)
 		return -ENOMEM;
 	INIT_HLIST_NODE(&link->node);
@@ -639,7 +639,7 @@ int import_pid(struct epm_action *action, ghost_t *ghost, struct pid_link *link,
 int import_pid_namespace(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
-	task->nsproxy->pid_ns = find_get_krg_pid_ns();
+	task->nsproxy->pid_ns = find_get_hcc_pid_ns();
 
 	return 0;
 }
@@ -649,12 +649,12 @@ void unimport_pid(struct pid_link *link)
 	struct pid *pid = link->pid;
 
 	if (pid->gdm_obj)
-		krg_end_get_pid(pid);
-	krg_put_pid(pid);
+		hcc_end_get_pid(pid);
+	hcc_put_pid(pid);
 }
 
 /* Must be called under rcu_read_lock() */
-struct task_gdm_object *krg_pid_task(struct pid *pid)
+struct task_gdm_object *hcc_pid_task(struct pid *pid)
 {
 	struct pid_gdm_object *obj;
 
@@ -665,7 +665,7 @@ struct task_gdm_object *krg_pid_task(struct pid *pid)
 }
 
 /* Must be called under rcu_read_lock() */
-void krg_pid_unlink_task(struct pid_gdm_object *obj)
+void hcc_pid_unlink_task(struct pid_gdm_object *obj)
 {
 	struct task_gdm_object *task_obj;
 
@@ -686,7 +686,7 @@ struct pid_link_task_msg {
 	pid_t pid;
 };
 
-int krg_pid_link_task(pid_t pid)
+int hcc_pid_link_task(pid_t pid)
 {
 	struct pid_link_task_msg msg;
 	hcc_node_t host_node;
@@ -700,7 +700,7 @@ int krg_pid_link_task(pid_t pid)
 		return r;
 
 	host_node = pidmap_node(ORIG_NODE(pid));
-	BUG_ON(host_node == KERRIGHED_NODE_ID_NONE);
+	BUG_ON(host_node == HCC_NODE_ID_NONE);
 
 	r = rpc_sync(PROC_PID_LINK_TASK, host_node, &msg, sizeof(msg));
 
@@ -717,24 +717,24 @@ static void __pid_link_task(struct pid *pid, struct task_gdm_object *task_obj)
 	}
 }
 
-int __krg_pid_link_task(pid_t nr)
+int __hcc_pid_link_task(pid_t nr)
 {
 	struct pid *pid;
 	struct task_gdm_object *task_obj;
 	int r = 0;
 
-	pid = krg_get_pid(nr);
+	pid = hcc_get_pid(nr);
 	if (!pid) {
 		r = -ENOMEM;
 		goto out;
 	}
-	task_obj = krg_task_readlock(nr);
+	task_obj = hcc_task_readlock(nr);
 
 	__pid_link_task(pid, task_obj);
 
-	krg_task_unlock(nr);
-	krg_end_get_pid(pid);
-	krg_put_pid(pid);
+	hcc_task_unlock(nr);
+	hcc_end_get_pid(pid);
+	hcc_put_pid(pid);
 
 out:
 	return r;
@@ -744,7 +744,7 @@ static int handle_pid_link_task(struct rpc_desc *desc, void *_msg, size_t size)
 {
 	struct pid_link_task_msg *msg = _msg;
 
-	return __krg_pid_link_task(msg->pid);
+	return __hcc_pid_link_task(msg->pid);
 }
 
 /*--------------------------------------------------------------------------*

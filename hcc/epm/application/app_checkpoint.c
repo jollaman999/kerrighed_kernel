@@ -22,8 +22,8 @@
 #include <hcc/ghost_helpers.h>
 #include <hcc/remote_cred.h>
 #include <hcc/physical_fs.h>
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 #include "app_frontier.h"
 #include "app_utils.h"
@@ -128,11 +128,11 @@ static inline int write_task_parent_links(task_state_t *t,
 	if (r)
 		goto error;
 
-	obj = krg_parent_children_readlock(t->task, &real_parent_tgid);
+	obj = hcc_parent_children_readlock(t->task, &real_parent_tgid);
 	if (obj) {
-		r = krg_get_parent(obj, t->task, &parent, &real_parent);
+		r = hcc_get_parent(obj, t->task, &parent, &real_parent);
 		BUG_ON(r);
-		krg_children_unlock(obj);
+		hcc_children_unlock(obj);
 	} else {
 		struct task_struct *reaper =
 			task_active_pid_ns(t->task)->child_reaper;

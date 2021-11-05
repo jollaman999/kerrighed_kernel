@@ -6,7 +6,7 @@
 #include <linux/socket.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include "faf_tools.h"
 
 static

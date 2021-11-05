@@ -7,8 +7,8 @@
 #include <linux/radix-tree.h>
 #include <linux/slab.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
-#include <net/krgrpc/rpc.h>
+#include <hcc/hccnodemask.h>
+#include <net/hccrpc/rpc.h>
 
 #define __RPC_HEADER_FLAGS_SIGNAL    (1<<0)
 #define __RPC_HEADER_FLAGS_SIGACK    (1<<1)
@@ -74,7 +74,7 @@ struct rpc_synchro {
 	union {
 		struct __rpc_synchro tab;
 		struct __rpc_synchro_tree tree;
-	} nodes[KERRIGHED_MAX_NODES];
+	} nodes[HCC_MAX_NODES];
 	struct list_head list_synchro;
 	char label[16];
 };
@@ -109,7 +109,7 @@ struct rpc_desc_elem {
 };
 
 struct rpc_tx_elem {
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 	hcc_node_t index;
 	hcc_node_t link_seq_index;
 	void *data;
@@ -122,11 +122,11 @@ struct rpc_tx_elem {
 extern struct rpc_service** rpc_services;
 
 struct hashtable_t;
-extern struct hashtable_t* desc_srv[KERRIGHED_MAX_NODES];
+extern struct hashtable_t* desc_srv[HCC_MAX_NODES];
 extern struct hashtable_t* desc_clt;
 extern unsigned long rpc_desc_id;
-extern unsigned long rpc_desc_done_id[KERRIGHED_MAX_NODES];
-extern spinlock_t rpc_desc_done_lock[KERRIGHED_MAX_NODES];
+extern unsigned long rpc_desc_done_id[HCC_MAX_NODES];
+extern spinlock_t rpc_desc_done_lock[HCC_MAX_NODES];
 
 extern struct kmem_cache* rpc_desc_cachep;
 extern struct kmem_cache* rpc_desc_send_cachep;
@@ -141,9 +141,9 @@ extern struct list_head waiting_desc;
 
 extern struct list_head list_synchro_head;
 
-extern unsigned long rpc_link_send_seq_id[KERRIGHED_MAX_NODES];
-extern unsigned long rpc_link_send_ack_id[KERRIGHED_MAX_NODES];
-extern unsigned long rpc_link_recv_seq_id[KERRIGHED_MAX_NODES];
+extern unsigned long rpc_link_send_seq_id[HCC_MAX_NODES];
+extern unsigned long rpc_link_send_ack_id[HCC_MAX_NODES];
+extern unsigned long rpc_link_recv_seq_id[HCC_MAX_NODES];
 
 struct rpc_desc* rpc_desc_alloc(void);
 struct rpc_desc_send* rpc_desc_send_alloc(void);
@@ -167,7 +167,7 @@ void rpc_new_desc_id_unlock(void);
 int __rpc_emergency_send_buf_alloc(struct rpc_desc *desc, size_t size);
 void __rpc_emergency_send_buf_free(struct rpc_desc *desc);
 int __rpc_send_ll(struct rpc_desc* desc,
-		  krgnodemask_t *nodes,
+		  hccnodemask_t *nodes,
 		  unsigned long seq_id,
 		  int __flags,
 		  const void* data, size_t size,

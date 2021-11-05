@@ -6,24 +6,24 @@
 #include <linux/list.h>
 #include <linux/kernel.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
-#include <hcc/krginit.h>
-#include <linux/krg_hashtable.h>
+#include <hcc/hccnodemask.h>
+#include <hcc/hccinit.h>
+#include <linux/hcc_hashtable.h>
 #include <linux/cluster_barrier.h>
 
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/hotplug.h>
 #include <gdm/gdm.h>
 #include "protocol_action.h"
 
 struct cluster_barrier *gdm_barrier;
 
-extern krgnodemask_t krgnode_gdm_map;
+extern hccnodemask_t hccnode_gdm_map;
 extern hcc_node_t gdm_nb_nodes;
 extern hcc_node_t __gdm_io_default_owner (struct gdm_set *set,
 						 objid_t objid,
-						 const krgnodemask_t *nodes,
+						 const hccnodemask_t *nodes,
 						 int nr_nodes);
 
 
@@ -35,7 +35,7 @@ extern hcc_node_t __gdm_io_default_owner (struct gdm_set *set,
 
 struct browse_add_param {
 	struct gdm_set *set;
-	krgnodemask_t new_nodes_map;
+	hccnodemask_t new_nodes_map;
 	hcc_node_t new_nb_nodes;
 };
 
@@ -126,20 +126,20 @@ static void add_browse_sets(void *_set, void *_data)
 
 };
 
-static void set_add(krgnodemask_t * vector)
+static void set_add(hccnodemask_t * vector)
 {
 	struct browse_add_param param;
         hcc_node_t node;
 
-	if(__krgnode_isset(hcc_node_id, vector))
+	if(__hccnode_isset(hcc_node_id, vector))
 		rpc_enable(GDM_CHANGE_PROB_OWNER);
 
-	krgnodes_copy(param.new_nodes_map, krgnode_online_map);
+	hccnodes_copy(param.new_nodes_map, hccnode_online_map);
 
 	param.new_nb_nodes = hcc_nb_nodes;
-	__for_each_krgnode_mask(node, vector) {
-		if (!krgnode_online(node)) {
-			krgnode_set(node, param.new_nodes_map);
+	__for_each_hccnode_mask(node, vector) {
+		if (!hccnode_online(node)) {
+			hccnode_set(node, param.new_nodes_map);
 			param.new_nb_nodes++;
 		}
 	};
@@ -147,20 +147,20 @@ static void set_add(krgnodemask_t * vector)
 	freeze_gdm();
 
 	cluster_barrier(gdm_barrier, &param.new_nodes_map,
-			__first_krgnode(&param.new_nodes_map));
+			__first_hccnode(&param.new_nodes_map));
 
 	__hashtable_foreach_data(gdm_def_ns->gdm_set_table,
 				 add_browse_sets, &param);
 
 	cluster_barrier(gdm_barrier, &param.new_nodes_map,
-			__first_krgnode(&param.new_nodes_map));
+			__first_hccnode(&param.new_nodes_map));
 
 	gdm_nb_nodes = param.new_nb_nodes;
-	krgnodes_copy(krgnode_gdm_map, param.new_nodes_map);
+	hccnodes_copy(hccnode_gdm_map, param.new_nodes_map);
 
 	unfreeze_gdm();
 
-	if(!__krgnode_isset(hcc_node_id, vector))
+	if(!__hccnode_isset(hcc_node_id, vector))
 		return;
 
 	rpc_enable(REQ_OBJECT_COPY);
@@ -196,7 +196,7 @@ static int browse_remove(unsigned long objid, void *_obj_entry,
 	case READ_OWNER:
 		up (&gdm_def_ns->table_sem);
 		_gdm_flush_object(gdm_set, objid,
-				   krgnode_next_online_in_ring(hcc_node_id));
+				   hccnode_next_online_in_ring(hcc_node_id));
 		down (&gdm_def_ns->table_sem);
 		return -1;
 		break;
@@ -206,7 +206,7 @@ static int browse_remove(unsigned long objid, void *_obj_entry,
 	case WRITE_OWNER:
 		// we have to flush this object
 		_gdm_flush_object(gdm_set, objid,
-				   krgnode_next_online_in_ring(hcc_node_id));
+				   hccnode_next_online_in_ring(hcc_node_id));
 		break;
 
 	case WAIT_ACK_INV:
@@ -253,7 +253,7 @@ static void gdm_set_remove_cb(void *_gdm_set, void *_data)
 
 };
 
-static void set_remove(krgnodemask_t * vector)
+static void set_remove(hccnodemask_t * vector)
 {
 
 	printk("set_remove...\n");
@@ -273,7 +273,7 @@ static void set_remove(krgnodemask_t * vector)
 
 #if 0
 
-extern krgnodemask_t failure_vector;
+extern hccnodemask_t failure_vector;
 
 /*
  * comm transact: set_copyset
@@ -286,7 +286,7 @@ static void handle_set_copyset(struct rpc_desc *desc)
 	struct gdm_obj *obj_entry;
 	gdm_set_id_t set_id;
 	objid_t objid;
-	krgnodemask_t map;
+	hccnodemask_t map;
 	hcc_node_t true_owner;
 	hcc_node_t potential_owner;
 
@@ -303,7 +303,7 @@ static void handle_set_copyset(struct rpc_desc *desc)
 	// we have to look our probeOwner in order to decide if we relay the rq (and take care) or not
 
 	// Is it my request ?
-	if (krgnode_isset(hcc_node_id, map)) {
+	if (hccnode_isset(hcc_node_id, map)) {
 		// Yes it is (since I'm already in the copyset)
 
 		obj_entry = _get_gdm_obj_entry(gdm_def_ns, set_id,
@@ -322,15 +322,15 @@ static void handle_set_copyset(struct rpc_desc *desc)
 				gdm_change_obj_state(set, obj_entry, objid, READ_OWNER);
 				change_prob_owner(obj_entry, hcc_node_id);
 
-				krgnodes_copy(obj_entry->master_obj.copyset, map);
+				hccnodes_copy(obj_entry->master_obj.copyset, map);
 
 				/* TODO: have to check if the set is HARDLINKED */
-				if (nth_online_krgnode(objid % hcc_nb_nodes) !=
+				if (nth_online_hccnode(objid % hcc_nb_nodes) !=
 				    hcc_node_id) {
 					struct rpc_desc *desc;
 
 					desc = rpc_begin(GDM_ADVERTISE_OWNER,
-							 nth_online_krgnode(objid % hcc_nb_nodes));
+							 nth_online_hccnode(objid % hcc_nb_nodes));
 					rpc_pack_type(desc, set_id);
 					rpc_pack_type(desc, objid);
 					rpc_end(desc, 0);
@@ -376,7 +376,7 @@ static void handle_set_copyset(struct rpc_desc *desc)
 
 		// The owner is unknown (until now), may be I could become the next one
 		if (OBJ_STATE(obj_entry) == READ_COPY) {
-			krgnode_set(hcc_node_id, map);
+			hccnode_set(hcc_node_id, map);
 
 			// update our probOwner to potentiel owner
 			change_prob_owner(obj_entry, potential_owner);
@@ -391,7 +391,7 @@ static void handle_set_copyset(struct rpc_desc *desc)
 		};
 
 		// By default, if probOwner failed: update to potential_owner
-		if(krgnode_isset(get_prob_owner(obj_entry), failure_vector))
+		if(hccnode_isset(get_prob_owner(obj_entry), failure_vector))
 			change_prob_owner(obj_entry, potential_owner);
 
 	unlock_forward_rq:
@@ -402,7 +402,7 @@ static void handle_set_copyset(struct rpc_desc *desc)
 
 	forward_rq:
 		// Forward the request
-		new_desc = rpc_begin(krgnode_next_online_in_ring(hcc_node_id),
+		new_desc = rpc_begin(hccnode_next_online_in_ring(hcc_node_id),
 				     GDM_COPYSET);
 		rpc_pack_type(new_desc, set_id);
 		rpc_pack_type(new_desc, objid);
@@ -417,7 +417,7 @@ static void handle_set_copyset(struct rpc_desc *desc)
 /*
  * comm transact: advertise_owner
  */
-static krgnodemask_t select_sync;
+static hccnodemask_t select_sync;
 
 static void handle_select_owner(struct rpc_desc *desc)
 {
@@ -425,7 +425,7 @@ static void handle_select_owner(struct rpc_desc *desc)
 	struct gdm_obj *obj_entry;
 	gdm_set_id_t set_id;
 	objid_t objid;
-	krgnodemask_t copyset;
+	hccnodemask_t copyset;
 	hcc_node_t sender;
 	int sync;
 
@@ -435,14 +435,14 @@ static void handle_select_owner(struct rpc_desc *desc)
 	rpc_unpack_type(desc, copyset);
 	rpc_unpack_type(desc, sync);
 
-	if (sync != KERRIGHED_NODE_ID_NONE) {
-		krgnode_set(sync, select_sync);
+	if (sync != HCC_NODE_ID_NONE) {
+		hccnode_set(sync, select_sync);
 
 		// forward to the next node ?
-		if (krgnode_next_online_in_ring(hcc_node_id) != sender)
-			rpc_forward(desc, krgnode_next_online_in_ring(hcc_node_id));
+		if (hccnode_next_online_in_ring(hcc_node_id) != sender)
+			rpc_forward(desc, hccnode_next_online_in_ring(hcc_node_id));
 
-		if (!krgnodes_equal(select_sync, krgnode_online_map)) {
+		if (!hccnodes_equal(select_sync, hccnode_online_map)) {
 			// We have to wait for another sync
 			return;
 		} else {
@@ -475,11 +475,11 @@ static void handle_select_owner(struct rpc_desc *desc)
 	};
 
 	// TODO: optimisation: ici on peut envoyer au suivant du copyset
-	if (krgnode_next_online_in_ring(hcc_node_id) != sender) {
+	if (hccnode_next_online_in_ring(hcc_node_id) != sender) {
 		struct rpc_desc *new_desc;
 
 		new_desc = rpc_begin(GDM_SELECT_OWNER,
-				     krgnode_next_online_in_ring(hcc_node_id));
+				     hccnode_next_online_in_ring(hcc_node_id));
 		rpc_pack_type(new_desc, sender);
 		rpc_pack_type(new_desc, set_id);
 		rpc_pack_type(new_desc, objid);
@@ -523,26 +523,26 @@ static int browse_failure(unsigned long objid, void *_obj_entry,
 		goto exit;
 
 	if (gdm_ft_linked(set)) {
-		if (!krgnode_online(get_prob_owner(obj_entry))){
+		if (!hccnode_online(get_prob_owner(obj_entry))){
 			printk("browse_failure: TODO: set %ld is FT Linked\n",
 			       set->id);
 			change_prob_owner(obj_entry, hcc_node_id);
 		}
 	} else {
-		if (krgnode_online(get_prob_owner(obj_entry)))
+		if (hccnode_online(get_prob_owner(obj_entry)))
 			correct_prob_owner = 1;
 
-		if (!krgnode_online(get_prob_owner(obj_entry))
+		if (!hccnode_online(get_prob_owner(obj_entry))
 		    || get_prob_owner(obj_entry) == hcc_node_id)
 			change_prob_owner(obj_entry,
-			  nth_online_krgnode(objid % hcc_nb_nodes));
+			  nth_online_hccnode(objid % hcc_nb_nodes));
 
 	};
 
 	switch (OBJ_STATE(obj_entry)) {
 	case READ_COPY:{
 		struct rpc_desc *desc;
-		krgnodemask_t copyset;
+		hccnodemask_t copyset;
 		hcc_node_t unknown = -1;
 
 		// Does our prob-chain still valid ?
@@ -555,11 +555,11 @@ static int browse_failure(unsigned long objid, void *_obj_entry,
 		set_object_frozen(obj_entry, set);
 
 		// start a ring-request in order to compute the new copyset
-		krgnodes_clear(copyset);
-		krgnode_set(hcc_node_id, copyset);
+		hccnodes_clear(copyset);
+		hccnode_set(hcc_node_id, copyset);
 
 		desc = rpc_begin(GDM_COPYSET,
-				 krgnode_next_online_in_ring(hcc_node_id));
+				 hccnode_next_online_in_ring(hcc_node_id));
 		rpc_pack_type(desc, set->id);
 		rpc_pack_type(desc, objid);
 		rpc_pack_type(desc, copyset);
@@ -648,7 +648,7 @@ static void gdm_set_failure_cb(void *_set, void *_data)
 static int browse_select_owner(objid_t objid, void *_obj_entry,
 			       void *_data)
 {
-	krgnodemask_t *vector_fail = _data;
+	hccnodemask_t *vector_fail = _data;
 	struct gdm_obj * obj_entry = (struct gdm_obj *)_obj_entry;
 
 	BUG_ON(!vector_fail);
@@ -656,7 +656,7 @@ static int browse_select_owner(objid_t objid, void *_obj_entry,
 	if (I_AM_OWNER(obj_entry)) {
 		hcc_node_t node;
 
-		__for_each_krgnode_mask(node, vector_fail){
+		__for_each_hccnode_mask(node, vector_fail){
 			REMOVE_FROM_SET(COPYSET(obj_entry), node);
 		};
 
@@ -683,20 +683,20 @@ static void gdm_set_select_owner_cb(void *_set, void *_data)
  * 7. Clean the object that loose the owner
  *    (try to elect a new ownership, destroy non correctible entries, SEGFAULT corresponding processes)
  */
-static void set_failure(krgnodemask_t * vector)
+static void set_failure(hccnodemask_t * vector)
 {
 	struct rpc_desc *desc;
 	objid_t objid = 0;
 	gdm_set_id_t set_id = 0;
 	int sync = hcc_node_id;
-	krgnodemask_t v;
+	hccnodemask_t v;
 
 	down (&gdm_def_ns->table_sem);
 
 	__hashtable_foreach_data(gdm_def_ns->gdm_set_table,
 				 gdm_set_clean_failure_cb, vector);
 
-	krgnode_set(hcc_node_id, select_sync);
+	hccnode_set(hcc_node_id, select_sync);
 
 	__hashtable_foreach_data(gdm_def_ns->gdm_set_table,
 				 gdm_set_select_owner_cb, vector);
@@ -706,7 +706,7 @@ static void set_failure(krgnodemask_t * vector)
 	up (&gdm_def_ns->table_sem);
 
 	desc = rpc_begin(GDM_SELECT_OWNER,
-			 krgnode_next_online_in_ring(hcc_node_id));
+			 hccnode_next_online_in_ring(hcc_node_id));
 	rpc_pack_type(desc, hcc_node_id);
 	rpc_pack_type(desc, set_id);
 	rpc_pack_type(desc, objid);

@@ -10,10 +10,10 @@
 #include <linux/ipc_namespace.h>
 #include <linux/ipc.h>
 #include <linux/shmem_fs.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 #include "ipc_handler.h"
-#include "krgshm.h"
+#include "hccshm.h"
 #include "util.h"
 #include "shmid_io_linker.h"
 #include "shm_memory_linker.h"
@@ -72,14 +72,14 @@ struct shmid_kernel *create_local_shp (struct ipc_namespace *ns,
 
 	shp->shm_file->f_dentry->d_inode->i_ino = shp->shm_perm.id;
 	shp->shm_file->f_dentry->d_inode->i_mapping->gdm_set = set;
-	shp->shm_file->f_op = &krg_shm_file_operations;
+	shp->shm_file->f_op = &hcc_shm_file_operations;
 	shp->mlock_user = NULL;
 
 	put_gdm_set(set);
 
 	ns->shm_tot += (shp->shm_segsz + PAGE_SIZE -1) >> PAGE_SHIFT;
 
-	shp->shm_perm.krgops = shm_ids(ns).krgops;
+	shp->shm_perm.hccops = shm_ids(ns).hccops;
 
 	local_shm_unlock(shp);
 
@@ -164,7 +164,7 @@ int shmid_insert_object (struct gdm_obj * obj_entry,
 	/* This is the first time the object is inserted locally. We need
 	 * to allocate kernel shm structures.
 	 */
-	ns = find_get_krg_ipcns();
+	ns = find_get_hcc_ipcns();
 	BUG_ON(!ns);
 
 	shp = create_local_shp(ns, &shp_object->mobile_shp, shp_object->set_id);
@@ -217,7 +217,7 @@ int shmid_remove_object (void *object,
 	if (shp_object) {
 		struct ipc_namespace *ns;
 
-		ns = find_get_krg_ipcns();
+		ns = find_get_hcc_ipcns();
 		BUG_ON(!ns);
 
 		shp = shp_object->local_shp;

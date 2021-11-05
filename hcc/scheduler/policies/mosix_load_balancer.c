@@ -18,8 +18,8 @@
 #include <linux/spinlock.h>
 #include <linux/rculist.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
-#include <hcc/krginit.h>
+#include <hcc/hccnodemask.h>
+#include <hcc/hccinit.h>
 #include <hcc/pid.h>
 #include <hcc/migration.h>
 #include <hcc/scheduler/policy.h>
@@ -165,17 +165,17 @@ no_load:
 }
 
 hcc_node_t __find_target_node(struct mosix_load_balancer *lb,
-				    const krgnodemask_t *nodes,
+				    const hccnodemask_t *nodes,
 				    unsigned long high_load)
 {
 	unsigned long lowest_remote_load, remote_load;
-	hcc_node_t target_node = KERRIGHED_NODE_ID_NONE;
+	hcc_node_t target_node = HCC_NODE_ID_NONE;
 	hcc_node_t i;
 	int ret;
 
 	lowest_remote_load = high_load;
 
-	__for_each_krgnode_mask(i, nodes) {
+	__for_each_hccnode_mask(i, nodes) {
 		if (unlikely(i == hcc_node_id))
 			continue;
 
@@ -194,14 +194,14 @@ hcc_node_t __find_target_node(struct mosix_load_balancer *lb,
 /**
  * If some node have an estimated processor load lower than the local one,
  *  return the node having the lowest load;
- *  otherwise, return KERRIGHED_NODE_ID_NONE.
+ *  otherwise, return HCC_NODE_ID_NONE.
  */
 hcc_node_t find_target_node(struct mosix_load_balancer *lb,
 				  unsigned long current_load)
 {
 	struct scheduler *s = scheduler_policy_get_scheduler(&lb->policy);
-	krgnodemask_t nodes;
-	hcc_node_t target_node = KERRIGHED_NODE_ID_NONE;
+	hccnodemask_t nodes;
+	hcc_node_t target_node = HCC_NODE_ID_NONE;
 
 	if (s) {
 		scheduler_get_node_set(s, &nodes);
@@ -227,7 +227,7 @@ static void balance(struct mosix_load_balancer *lb, unsigned long current_load)
 
 	/* Second, check whether migrating the task could improve balance */
 	target_node = find_target_node(lb, current_load);
-	if (target_node == KERRIGHED_NODE_ID_NONE)
+	if (target_node == HCC_NODE_ID_NONE)
 		goto out_put_pid;
 
 	/* Third, migrate the selected task to the selected node */
@@ -247,13 +247,13 @@ out:
 
 /* Expell migratable tasks we manage */
 static void __expell_all(struct mosix_load_balancer *lb,
-			 const krgnodemask_t *nodes)
+			 const hccnodemask_t *nodes)
 {
 	struct scheduler *scheduler;
 	struct process_set *processes;
 	struct task_struct *t;
 	hcc_node_t node;
-	hcc_node_t fallback_node = __first_krgnode(nodes);
+	hcc_node_t fallback_node = __first_hccnode(nodes);
 	int err;
 
 	scheduler = scheduler_policy_get_scheduler(&lb->policy);
@@ -276,7 +276,7 @@ static void __expell_all(struct mosix_load_balancer *lb,
 		}
 
 		node = __find_target_node(lb, nodes, ULONG_MAX);
-		if (node == KERRIGHED_NODE_ID_NONE)
+		if (node == HCC_NODE_ID_NONE)
 			node = fallback_node;
 
 		err = __migrate_linux_threads(t, MIGR_LOCAL_PROCESS, node);
@@ -296,12 +296,12 @@ put_scheduler:
 
 static
 void mosix_load_balancer_update_node_set(struct scheduler_policy *policy,
-					 const krgnodemask_t *new_set,
-					 const krgnodemask_t *removed_set,
-					 const krgnodemask_t *added_set)
+					 const hccnodemask_t *new_set,
+					 const hccnodemask_t *removed_set,
+					 const hccnodemask_t *added_set)
 {
 	struct mosix_load_balancer *lb = to_mosix_load_balancer(policy);
-	if (__krgnode_isset(hcc_node_id, removed_set))
+	if (__hccnode_isset(hcc_node_id, removed_set))
 		__expell_all(lb, new_set);
 }
 

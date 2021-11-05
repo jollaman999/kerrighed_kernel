@@ -6,7 +6,7 @@
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
-#include <linux/krg_hashtable.h>
+#include <linux/hcc_hashtable.h>
 #include <linux/module.h>
 
 #include <gdm/gdm.h>

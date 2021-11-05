@@ -43,12 +43,12 @@
 #include <linux/kprobes.h>
 #include <linux/user_namespace.h>
 #ifdef CONFIG_HCC_PROC
-#include <net/krgrpc/rpc.h>
-#include <net/krgrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
 #include <hcc/remote_syscall.h>
 #endif
 #ifdef CONFIG_HCC_EPM
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <hcc/pid.h>
 #include <hcc/task.h>
 #include <hcc/children.h>
@@ -1104,21 +1104,21 @@ int handle_forward_setpgid(struct rpc_desc *desc, void *_msg, size_t size)
 	struct pid_namespace *ns;
 	int retval;
 
-	ns = find_get_krg_pid_ns();
+	ns = find_get_hcc_pid_ns();
 	retval = do_setpgid(msg->pid, msg->pgid, msg->parent_session, ns);
 	put_pid_ns(ns);
 
 	return retval;
 }
 
-static int krg_forward_setpgid(hcc_node_t node, pid_t pid, pid_t pgid)
+static int hcc_forward_setpgid(hcc_node_t node, pid_t pid, pid_t pgid)
 {
 	struct children_gdm_object *children_obj = current->children_obj;
 	pid_t parent, real_parent;
 	struct setpgid_message msg;
 	int retval = -ESRCH;
 
-	if (__krg_get_parent(children_obj, pid, &parent, &real_parent))
+	if (__hcc_get_parent(children_obj, pid, &parent, &real_parent))
 		goto out;
 
 	msg.pid = pid;
@@ -1133,11 +1133,11 @@ out:
 
 static
 struct children_gdm_object *
-krg_prepare_setpgid(pid_t pid, pid_t pgid, hcc_node_t *nodep)
+hcc_prepare_setpgid(pid_t pid, pid_t pgid, hcc_node_t *nodep)
 {
 	struct children_gdm_object *parent_children_obj = NULL;
 	pid_t real_parent_tgid;
-	hcc_node_t node = KERRIGHED_NODE_ID_NONE;
+	hcc_node_t node = HCC_NODE_ID_NONE;
 	struct task_gdm_object *task_obj;
 	struct timespec backoff_time = {
 		.tv_sec = 1,
@@ -1146,15 +1146,15 @@ krg_prepare_setpgid(pid_t pid, pid_t pgid, hcc_node_t *nodep)
 
 	down_read(&hcc_init_sem);
 
-	if (!current->nsproxy->krg_ns
-	    || !is_krg_pid_ns_root(task_active_pid_ns(current))
+	if (!current->nsproxy->hcc_ns
+	    || !is_hcc_pid_ns_root(task_active_pid_ns(current))
 	    || !(pid & GLOBAL_PID_MASK))
 		goto out;
 
 	if (pid == current->tgid) {
 		if (rcu_dereference(current->parent_children_obj))
 			parent_children_obj =
-				krg_parent_children_writelock(current,
+				hcc_parent_children_writelock(current,
 							      &real_parent_tgid);
 		goto out;
 	}
@@ -1164,21 +1164,21 @@ krg_prepare_setpgid(pid_t pid, pid_t pgid, hcc_node_t *nodep)
 
 
 	for (;;) {
-		parent_children_obj = __krg_children_writelock(current);
+		parent_children_obj = __hcc_children_writelock(current);
 		BUG_ON(!parent_children_obj);
 
-		task_obj = krg_task_readlock(pid);
+		task_obj = hcc_task_readlock(pid);
 		if (!task_obj) {
-			krg_task_unlock(pid);
+			hcc_task_unlock(pid);
 			break;
 		}
 		node = task_obj->node;
-		if (node != KERRIGHED_NODE_ID_NONE)
+		if (node != HCC_NODE_ID_NONE)
 			break;
 
 		/* We might deadlock with migration. Back off. */
-		krg_task_unlock(pid);
-		krg_children_unlock(parent_children_obj);
+		hcc_task_unlock(pid);
+		hcc_children_unlock(parent_children_obj);
 
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule_timeout(timespec_to_jiffies(&backoff_time) + 1);
@@ -1190,17 +1190,17 @@ out:
 }
 
 static
-void krg_cleanup_setpgid(pid_t pid, pid_t pgid,
+void hcc_cleanup_setpgid(pid_t pid, pid_t pgid,
 			 struct children_gdm_object *parent_children_obj,
 			 hcc_node_t node,
 			 bool success)
 {
 	if (parent_children_obj) {
-		if (node != KERRIGHED_NODE_ID_NONE)
-			krg_task_unlock(pid);
+		if (node != HCC_NODE_ID_NONE)
+			hcc_task_unlock(pid);
 		if (success)
-			__krg_set_child_pgid(parent_children_obj, pid, pgid);
-		krg_children_unlock(parent_children_obj);
+			__hcc_set_child_pgid(parent_children_obj, pid, pgid);
+		hcc_children_unlock(parent_children_obj);
 	}
 	up_read(&hcc_init_sem);
 }
@@ -1218,12 +1218,12 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
 	if (pgid < 0)
 		return -EINVAL;
 
-	parent_children_obj = krg_prepare_setpgid(pid, pgid, &node);
-	if (node != hcc_node_id && node != KERRIGHED_NODE_ID_NONE)
-		err = krg_forward_setpgid(node, pid, pgid);
+	parent_children_obj = hcc_prepare_setpgid(pid, pgid, &node);
+	if (node != hcc_node_id && node != HCC_NODE_ID_NONE)
+		err = hcc_forward_setpgid(node, pid, pgid);
 	else
 		err = do_setpgid(pid, pgid, -1, task_active_pid_ns(current));
-	krg_cleanup_setpgid(pid, pgid, parent_children_obj, node, !err);
+	hcc_cleanup_setpgid(pid, pgid, parent_children_obj, node, !err);
 	return err;
 }
 #endif /* CONFIG_HCC_EPM */
@@ -1275,24 +1275,24 @@ static int handle_getpgid(struct rpc_desc *desc, void *msg, size_t size)
 	const struct cred *old_cred;
 	int retval;
 
-	pid = krg_handle_remote_syscall_begin(desc, msg, size,
+	pid = hcc_handle_remote_syscall_begin(desc, msg, size,
 					      NULL, &old_cred);
 	if (IS_ERR(pid)) {
 		retval = PTR_ERR(pid);
 		goto out;
 	}
 
-	retval = do_getpgid(pid_knr(pid), ns_of_pid(pid)->krg_ns_root);
+	retval = do_getpgid(pid_knr(pid), ns_of_pid(pid)->hcc_ns_root);
 
-	krg_handle_remote_syscall_end(pid, old_cred);
+	hcc_handle_remote_syscall_end(pid, old_cred);
 
 out:
 	return retval;
 }
 
-static int krg_getpgid(pid_t pid)
+static int hcc_getpgid(pid_t pid)
 {
-	return krg_remote_syscall_simple(PROC_GETPGID, pid, NULL, 0);
+	return hcc_remote_syscall_simple(PROC_GETPGID, pid, NULL, 0);
 }
 
 SYSCALL_DEFINE1(getpgid, pid_t, pid)
@@ -1301,7 +1301,7 @@ SYSCALL_DEFINE1(getpgid, pid_t, pid)
 
 	retval = do_getpgid(pid, task_active_pid_ns(current));
 	if (retval == -ESRCH)
-		retval = krg_getpgid(pid);
+		retval = hcc_getpgid(pid);
 
 	return retval;
 }
@@ -1363,24 +1363,24 @@ static int handle_getsid(struct rpc_desc *desc, void *msg, size_t size)
 	const struct cred *old_cred;
 	int retval;
 
-	pid = krg_handle_remote_syscall_begin(desc, msg, size,
+	pid = hcc_handle_remote_syscall_begin(desc, msg, size,
 					      NULL, &old_cred);
 	if (IS_ERR(pid)) {
 		retval = PTR_ERR(pid);
 		goto out;
 	}
 
-	retval = do_getsid(pid_knr(pid), ns_of_pid(pid)->krg_ns_root);
+	retval = do_getsid(pid_knr(pid), ns_of_pid(pid)->hcc_ns_root);
 
-	krg_handle_remote_syscall_end(pid, old_cred);
+	hcc_handle_remote_syscall_end(pid, old_cred);
 
 out:
 	return retval;
 }
 
-static int krg_getsid(pid_t pid)
+static int hcc_getsid(pid_t pid)
 {
-	return krg_remote_syscall_simple(PROC_GETSID, pid, NULL, 0);;
+	return hcc_remote_syscall_simple(PROC_GETSID, pid, NULL, 0);;
 }
 
 SYSCALL_DEFINE1(getsid, pid_t, pid)
@@ -1389,7 +1389,7 @@ SYSCALL_DEFINE1(getsid, pid_t, pid)
 
 	retval = do_getsid(pid, task_active_pid_ns(current));
 	if (retval == -ESRCH)
-		retval = krg_getsid(pid);
+		retval = hcc_getsid(pid);
 
 	return retval;
 }
@@ -1419,7 +1419,7 @@ SYSCALL_DEFINE0(setsid)
 	down_read(&hcc_init_sem);
 	if (rcu_dereference(current->parent_children_obj))
 		parent_children_obj =
-			krg_parent_children_writelock(current,
+			hcc_parent_children_writelock(current,
 						      &real_parent_tgid);
 #endif /* CONFIG_HCC_EPM */
 	tasklist_write_lock_irq();
@@ -1448,8 +1448,8 @@ out:
 #ifdef CONFIG_HCC_EPM
 	if (parent_children_obj) {
 		if (err >= 0)
-			krg_set_child_pgid(parent_children_obj, current);
-		krg_children_unlock(parent_children_obj);
+			hcc_set_child_pgid(parent_children_obj, current);
+		hcc_children_unlock(parent_children_obj);
 	}
 	up_read(&hcc_init_sem);
 #endif /* CONFIG_HCC_EPM */

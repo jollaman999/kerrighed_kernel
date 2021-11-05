@@ -10,14 +10,14 @@
 #include <linux/errno.h>
 #include <linux/err.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
-#include <hcc/krginit.h>
+#include <hcc/hccnodemask.h>
+#include <hcc/hccinit.h>
 #include <hcc/workqueue.h>
 #include <hcc/scheduler/pipe.h>
 #include <hcc/scheduler/global_config.h>
 #include <hcc/scheduler/remote_pipe.h>
-#include <net/krgrpc/rpc.h>
-#include <net/krgrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
 
 static void handle_pipe_get_remote_value(struct rpc_desc *desc)
 {
@@ -143,7 +143,7 @@ static int start_pipe_get_remote_value(
 	size_t in_size = sink->type->get_value_types.in_type_size;
 	int err;
 
-	if (!krgnode_online(node))
+	if (!hccnode_online(node))
 		return -EINVAL;
 	if (node == hcc_node_id)
 		return scheduler_source_get_value(local_pipe->source,
@@ -171,7 +171,7 @@ static int start_pipe_get_remote_value(
 	show_desc->desc = desc;
 	show_desc->node = node;
 	show_desc->value_p = value_p;
-	queue_work(krg_wq, &show_desc->work);
+	queue_work(hcc_wq, &show_desc->work);
 	return -EAGAIN;
 
 err_cancel:
@@ -201,13 +201,13 @@ int scheduler_pipe_get_remote_value(
 		return -EINVAL;
 
 	spin_lock(&show_desc->lock);
-	if (show_desc->node != KERRIGHED_NODE_ID_NONE
+	if (show_desc->node != HCC_NODE_ID_NONE
 	    && (show_desc->node != node
 		|| show_desc->value_p != value_p)) {
 		ret = -EINVAL;
 	} else if (show_desc->pending) {
 		ret = -EAGAIN;
-	} else if (show_desc->node == KERRIGHED_NODE_ID_NONE) {
+	} else if (show_desc->node == HCC_NODE_ID_NONE) {
 		/* Start a new asynchronous request */
 		ret = start_pipe_get_remote_value(sink,
 						  local_pipe,
@@ -216,7 +216,7 @@ int scheduler_pipe_get_remote_value(
 						  in_value_p, in_nr);
 	} else {
 		/* A result is ready and matches the current call. */
-		show_desc->node = KERRIGHED_NODE_ID_NONE;
+		show_desc->node = HCC_NODE_ID_NONE;
 		ret = min((int) nr, show_desc->ret);
 	}
 	spin_unlock(&show_desc->lock);
@@ -230,7 +230,7 @@ void scheduler_sink_remote_pipe_init(struct scheduler_sink *sink)
 
 	show_desc->pending = 0;
 	INIT_WORK(&show_desc->work, pipe_get_remote_value_worker);
-	show_desc->node = KERRIGHED_NODE_ID_NONE;
+	show_desc->node = HCC_NODE_ID_NONE;
 	spin_lock_init(&show_desc->lock);
 }
 
@@ -246,7 +246,7 @@ void scheduler_sink_remote_pipe_disconnect(struct scheduler_sink *sink)
 	 * Fortunately, the three chains do not happen to merge in any path :)
 	 */
 	lockdep_off();
-	flush_workqueue(krg_wq);
+	flush_workqueue(hcc_wq);
 	lockdep_on();
 }
 

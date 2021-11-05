@@ -6,10 +6,10 @@
 
 #include <linux/kernel.h>
 #include <linux/sched.h>
-#include <linux/krg_hashtable.h>
+#include <linux/hcc_hashtable.h>
 #include <hcc/ghost.h>
 #include <hcc/hotplug.h>
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #include <hcc/debug.h>
 #include "epm_internal.h"
 
@@ -32,56 +32,56 @@ static void init_baby_sitter(void)
 }
 
 /* HCCsyms to register for restart_blocks in ghost processes */
-extern int compat_krgsyms_register(void);
-extern int hrtimer_krgsyms_register(void);
-extern int posix_cpu_timers_krgsyms_register(void);
-extern int select_krgsyms_register(void);
-extern int futex_krgsyms_register(void);
-extern int compat_krgsyms_unregister(void);
-extern int hrtimer_krgsyms_unregister(void);
-extern int posix_cpu_timers_krgsyms_unregister(void);
-extern int select_krgsyms_unregister(void);
-extern int futex_krgsyms_unregister(void);
+extern int compat_hccsyms_register(void);
+extern int hrtimer_hccsyms_register(void);
+extern int posix_cpu_timers_hccsyms_register(void);
+extern int select_hccsyms_register(void);
+extern int futex_hccsyms_register(void);
+extern int compat_hccsyms_unregister(void);
+extern int hrtimer_hccsyms_unregister(void);
+extern int posix_cpu_timers_hccsyms_unregister(void);
+extern int select_hccsyms_unregister(void);
+extern int futex_hccsyms_unregister(void);
 
-static int restart_block_krgsyms_register(void)
+static int restart_block_hccsyms_register(void)
 {
 	int retval;
 
-	retval = krgsyms_register(HCCSYMS_DO_NO_RESTART_SYSCALL,
+	retval = hccsyms_register(HCCSYMS_DO_NO_RESTART_SYSCALL,
 			do_no_restart_syscall);
 #ifdef CONFIG_COMPAT
 	if (!retval)
-		retval = compat_krgsyms_register();
+		retval = compat_hccsyms_register();
 #endif
 	if (!retval)
-		retval = hrtimer_krgsyms_register();
+		retval = hrtimer_hccsyms_register();
 	if (!retval)
-		retval = posix_cpu_timers_krgsyms_register();
+		retval = posix_cpu_timers_hccsyms_register();
 	if (!retval)
-		retval = select_krgsyms_register();
+		retval = select_hccsyms_register();
 	if (!retval)
-		retval = futex_krgsyms_register();
+		retval = futex_hccsyms_register();
 
 	return retval;
 }
 
-static int restart_block_krgsyms_unregister(void)
+static int restart_block_hccsyms_unregister(void)
 {
 	int retval;
 
-	retval = krgsyms_unregister(HCCSYMS_DO_NO_RESTART_SYSCALL);
+	retval = hccsyms_unregister(HCCSYMS_DO_NO_RESTART_SYSCALL);
 #ifdef CONFIG_COMPAT
 	if (!retval)
-		retval = compat_krgsyms_unregister();
+		retval = compat_hccsyms_unregister();
 #endif
 	if (!retval)
-		retval = hrtimer_krgsyms_unregister();
+		retval = hrtimer_hccsyms_unregister();
 	if (!retval)
-		retval = posix_cpu_timers_krgsyms_unregister();
+		retval = posix_cpu_timers_hccsyms_unregister();
 	if (!retval)
-		retval = select_krgsyms_unregister();
+		retval = select_hccsyms_unregister();
 	if (!retval)
-		retval = futex_krgsyms_unregister();
+		retval = futex_hccsyms_unregister();
 
 	return retval;
 }
@@ -90,7 +90,7 @@ int init_epm(void)
 {
 	printk("EPM initialisation: start\n");
 
-	restart_block_krgsyms_register();
+	restart_block_hccsyms_register();
 
 	init_baby_sitter();
 
@@ -130,5 +130,5 @@ void cleanup_epm(void)
 	epm_children_exit();
 	epm_sighand_exit();
 	epm_signal_exit();
-	restart_block_krgsyms_unregister();
+	restart_block_hccsyms_unregister();
 }

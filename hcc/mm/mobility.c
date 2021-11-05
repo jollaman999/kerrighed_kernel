@@ -26,9 +26,9 @@
 #include <asm/pgalloc.h>
 #include <asm/tlbflush.h>
 #include <asm/pgtable.h>
-#include <hcc/krgsyms.h>
-#include <hcc/krginit.h>
-#include <net/krgrpc/rpc.h>
+#include <hcc/hccsyms.h>
+#include <hcc/hccinit.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 #include <hcc/file_stat.h>
 #include <hcc/ghost.h>
@@ -377,7 +377,7 @@ static int export_one_vma (struct epm_action *action,
                            struct vm_area_struct *vma,
 			   hashtable_t *file_table)
 {
-	krgsyms_val_t vm_ops_type, initial_vm_ops_type;
+	hccsyms_val_t vm_ops_type, initial_vm_ops_type;
 	int r;
 
 	/* First, check if we need to link the VMA to the anon gdm_set */
@@ -399,7 +399,7 @@ static int export_one_vma (struct epm_action *action,
 	/* Define and export the vm_ops type of the vma */
 
 	r = -EPERM;
-	vm_ops_type = krgsyms_export((void *)vma->vm_ops);
+	vm_ops_type = hccsyms_export((void *)vma->vm_ops);
 	if (vma->vm_ops && vm_ops_type == HCCSYMS_UNDEF)
 		goto out;
 
@@ -408,17 +408,17 @@ static int export_one_vma (struct epm_action *action,
 	    && vma->vm_ops && vm_ops_type == HCCSYMS_VM_OPS_SHMEM)
 		goto out;
 
-	initial_vm_ops_type = krgsyms_export((void *)vma->initial_vm_ops);
+	initial_vm_ops_type = hccsyms_export((void *)vma->initial_vm_ops);
 	if (vma->initial_vm_ops && initial_vm_ops_type == HCCSYMS_UNDEF)
 		goto out;
 
 	BUG_ON(vma->vm_private_data && vm_ops_type != HCCSYMS_VM_OPS_SPECIAL_MAPPING);
 
-	r = ghost_write (ghost, &vm_ops_type, sizeof (krgsyms_val_t));
+	r = ghost_write (ghost, &vm_ops_type, sizeof (hccsyms_val_t));
 	if (r)
 		goto out;
 
-	r = ghost_write (ghost, &initial_vm_ops_type, sizeof (krgsyms_val_t));
+	r = ghost_write (ghost, &initial_vm_ops_type, sizeof (hccsyms_val_t));
 
 out:
 	return r;
@@ -602,9 +602,9 @@ static inline int do_export_mm_struct(struct epm_action *action,
 
 	switch (action->type) {
 	  case EPM_CHECKPOINT:
-		  krg_get_mm(mm->mm_id);
+		  hcc_get_mm(mm->mm_id);
 		  r = ghost_write(ghost, mm, sizeof(struct mm_struct));
-		  krg_put_mm(mm->mm_id);
+		  hcc_put_mm(mm->mm_id);
 		  break;
 
 	  default:
@@ -646,7 +646,7 @@ int export_mm_struct(struct epm_action *action,
 	  case EPM_REMOTE_CLONE:
 		  if (!(action->remote_clone.clone_flags & CLONE_VM)) {
 
-			  exported_mm = krg_dup_mm(tsk, mm);
+			  exported_mm = hcc_dup_mm(tsk, mm);
 			  if (IS_ERR(exported_mm))
 				  return PTR_ERR(exported_mm);
 
@@ -938,7 +938,7 @@ static int import_one_vma (struct epm_action *action,
 			   hashtable_t *file_table)
 {
 	struct vm_area_struct *vma;
-	krgsyms_val_t vm_ops_type, initial_vm_ops_type;
+	hccsyms_val_t vm_ops_type, initial_vm_ops_type;
 	int r;
 
 	vma = kmem_cache_alloc(vm_area_cachep, GFP_KERNEL);
@@ -960,15 +960,15 @@ static int import_one_vma (struct epm_action *action,
 #endif
 
 	/* Import the vm_ops type of the vma */
-	r = ghost_read(ghost, &vm_ops_type, sizeof (krgsyms_val_t));
+	r = ghost_read(ghost, &vm_ops_type, sizeof (hccsyms_val_t));
 	if (r)
 		goto err_vm_ops;
-	r = ghost_read(ghost, &initial_vm_ops_type, sizeof (krgsyms_val_t));
+	r = ghost_read(ghost, &initial_vm_ops_type, sizeof (hccsyms_val_t));
 	if (r)
 		goto err_vm_ops;
 
-	vma->vm_ops = krgsyms_import(vm_ops_type);
-	vma->initial_vm_ops = krgsyms_import (initial_vm_ops_type);
+	vma->vm_ops = hccsyms_import(vm_ops_type);
+	vma->initial_vm_ops = hccsyms_import (initial_vm_ops_type);
 
 	BUG_ON (vma->vm_ops == &generic_file_vm_ops && vma->vm_file == NULL);
 
@@ -1228,7 +1228,7 @@ static inline int do_import_mm_struct(struct epm_action *action,
 		  r = ghost_read (ghost, &mm_id, sizeof (unique_id_t));
 		  if (r)
 			  return r;
-		  mm = krg_get_mm(mm_id);
+		  mm = hcc_get_mm(mm_id);
 		  if (mm)
 			  /* Reflect the belonging to the ghost task struct */
 			  atomic_inc(&mm->mm_users);
@@ -1318,12 +1318,12 @@ int import_mm_struct (struct epm_action *action,
 
 	set = mm->anon_vma_gdm_set;
 
-	krg_put_mm (mm->mm_id);
+	hcc_put_mm (mm->mm_id);
 
 	return 0;
 
 err:
-	krg_put_mm (mm->mm_id);
+	hcc_put_mm (mm->mm_id);
 	unimport_mm_struct(tsk);
 	return r;
 }

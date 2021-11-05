@@ -21,7 +21,7 @@ struct gdm_set *static_node_info_gdm_set;
 
 hcc_node_t node_info_default_owner(struct gdm_set *set,
 					 objid_t objid,
-					 const krgnodemask_t *nodes,
+					 const hccnodemask_t *nodes,
 					 int nr_nodes)
 {
 	return objid;
@@ -39,7 +39,7 @@ static struct iolinker_struct static_node_info_io_linker = {
 
 int static_node_info_init()
 {
-	krg_static_node_info_t *static_node_info;
+	hcc_static_node_info_t *static_node_info;
 
 	register_io_linker(STATIC_NODE_INFO_LINKER,
 			   &static_node_info_io_linker);
@@ -51,7 +51,7 @@ int static_node_info_init()
 				    STATIC_NODE_INFO_GDM_ID,
 				    STATIC_NODE_INFO_LINKER,
 				    GDM_CUSTOM_DEF_OWNER,
-				    sizeof(krg_static_node_info_t),
+				    sizeof(hcc_static_node_info_t),
 				    0);
 	if (IS_ERR(static_node_info_gdm_set))
 		OOM;

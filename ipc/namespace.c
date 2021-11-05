@@ -17,31 +17,31 @@
 #include "util.h"
 
 #ifdef CONFIG_HCC_IPC
-static int krg_init_ipc_ns(struct ipc_namespace *ns)
+static int hcc_init_ipc_ns(struct ipc_namespace *ns)
 {
 	int err = 0;
 
-	if (!current->create_krg_ns)
+	if (!current->create_hcc_ns)
 		goto exit;
 
-	err = krg_sem_init_ns(ns);
+	err = hcc_sem_init_ns(ns);
 	if (err)
 		goto err_sem;
 
-	err = krg_msg_init_ns(ns);
+	err = hcc_msg_init_ns(ns);
 	if (err)
 		goto err_msg;
 
-	err = krg_shm_init_ns(ns);
+	err = hcc_shm_init_ns(ns);
 	if (err)
 		goto err_shm;
 
 	return err;
 
 err_shm:
-	krg_msg_exit_ns(ns);
+	hcc_msg_exit_ns(ns);
 err_msg:
-	krg_sem_exit_ns(ns);
+	hcc_sem_exit_ns(ns);
 err_sem:
 exit:
 	return err;
@@ -76,7 +76,7 @@ static struct ipc_namespace *create_ipc_ns(void)
 	shm_init_ns(ns);
 
 #ifdef CONFIG_HCC_IPC
-	err = krg_init_ipc_ns(ns);
+	err = hcc_init_ipc_ns(ns);
 	if (err) {
 		kfree(ns);
 		return ERR_PTR(err);
@@ -148,9 +148,9 @@ static void free_ipc_ns(struct ipc_namespace *ns)
 	msg_exit_ns(ns);
 	shm_exit_ns(ns);
 #ifdef CONFIG_HCC_IPC
-	krg_sem_exit_ns(ns);
-	krg_msg_exit_ns(ns);
-	krg_shm_exit_ns(ns);
+	hcc_sem_exit_ns(ns);
+	hcc_msg_exit_ns(ns);
+	hcc_shm_exit_ns(ns);
 #endif
 	proc_free_inum(ns->proc_inum);
 	kfree(ns);

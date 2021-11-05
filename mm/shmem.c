@@ -73,7 +73,7 @@ static struct vfsmount *shm_mnt;
 #include <asm/pgtable.h>
 
 #ifdef CONFIG_HCC_EPM
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #endif
 
 /*
@@ -2972,7 +2972,7 @@ int __init shmem_init(void)
 	}
 
 #ifdef CONFIG_HCC_EPM
-	error = krgsyms_register(HCCSYMS_VM_OPS_SHMEM, (void *)&shmem_vm_ops);
+	error = hccsyms_register(HCCSYMS_VM_OPS_SHMEM, (void *)&shmem_vm_ops);
 	if (error) {
 		printk(KERN_ERR "Could not register shmem_vm_ops\n");
 		goto out1_1;
@@ -2990,7 +2990,7 @@ int __init shmem_init(void)
 
 out1:
 #ifdef CONFIG_HCC_EPM
-	krgsyms_unregister(HCCSYMS_VM_OPS_SHMEM);
+	hccsyms_unregister(HCCSYMS_VM_OPS_SHMEM);
 out1_1:
 #endif
 	unregister_filesystem(&shmem_fs_type);

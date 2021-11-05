@@ -399,7 +399,7 @@ static void uvc_vm_close(struct vm_area_struct *vma)
 	buffer->vma_use_count--;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct uvc_vm_ops = {

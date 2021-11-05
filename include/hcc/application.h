@@ -81,7 +81,7 @@ struct app_gdm_object {
 	int chkpt_sn;
 
 	app_state_t state;
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 
 	__u64 user_data;
 };
@@ -111,7 +111,7 @@ struct app_struct {
 		} checkpoint;
 
 		struct {
-			krgnodemask_t replacing_nodes;
+			hccnodemask_t replacing_nodes;
 			pid_t substitution_pgrp;
 			pid_t substitution_sid;
 		} restart;
@@ -160,8 +160,8 @@ int get_local_tasks_chkpt_result(struct app_struct* app);
 
 /*--------------------------------------------------------------------------*/
 
-int krg_copy_application(struct task_struct *task);
-void krg_exit_application(struct task_struct *task);
+int hcc_copy_application(struct task_struct *task);
+void hcc_exit_application(struct task_struct *task);
 
 /*--------------------------------------------------------------------------*/
 

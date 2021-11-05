@@ -66,7 +66,7 @@ int vfs_fstat(unsigned int fd, struct kstat *stat)
 	if (f) {
 #ifdef CONFIG_HCC_FAF
 		if (f->f_flags & O_FAF_CLT) {
-			error = krg_faf_fstat(f, stat);
+			error = hcc_faf_fstat(f, stat);
 			fput(f);
 			return error;
 		}
@@ -101,7 +101,7 @@ retry:
 	if ((!path.dentry) && (path.mnt)) {
 		struct file *file = (struct file *)path.mnt;
 		get_file (file);
-		error = krg_faf_fstat(file, stat);
+		error = hcc_faf_fstat(file, stat);
 		fput(file);
 		return error;
 	}

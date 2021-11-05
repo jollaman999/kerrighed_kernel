@@ -8,7 +8,7 @@
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/completion.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <hcc/sys/types.h>
 #include <hcc/pid.h>
 #include <hcc/hotplug.h>
@@ -17,8 +17,8 @@
 #ifdef CONFIG_HCC_SCHED
 #include <hcc/scheduler/placement.h>
 #endif
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 #include "network_ghost.h"
 
 struct vfork_done_proxy {
@@ -33,7 +33,7 @@ static void *cluster_started;
 extern int wait_for_vfork_done(struct task_struct *child,
 				struct completion *vfork);
 
-int krg_do_fork(unsigned long clone_flags,
+int hcc_do_fork(unsigned long clone_flags,
 		unsigned long stack_start,
 		struct pt_regs *regs,
 		unsigned long stack_size,
@@ -64,13 +64,13 @@ int krg_do_fork(unsigned long clone_flags,
 		/* Unsupported clone flags are requested. Abort */
 		goto out;
 
-	if (!task->sighand->krg_objid || !task->signal->krg_objid
+	if (!task->sighand->hcc_objid || !task->signal->hcc_objid
 	    || !task->task_obj || !task->children_obj) {
 		retval = -EPERM;
 		goto out;
 	}
 
-	retval = krg_action_start(task, EPM_REMOTE_CLONE);
+	retval = hcc_action_start(task, EPM_REMOTE_CLONE);
 	if (retval)
 		goto out;
 
@@ -79,7 +79,7 @@ int krg_do_fork(unsigned long clone_flags,
 #else
 	if (distant_node < 0)
 		distant_node = hcc_node_id;
-	distant_node = krgnode_next_online_in_ring(distant_node);
+	distant_node = hccnode_next_online_in_ring(distant_node);
 #endif
 	if (distant_node < 0 || distant_node == hcc_node_id)
 		goto out_action_stop;
@@ -119,7 +119,7 @@ int krg_do_fork(unsigned long clone_flags,
 		wait_for_vfork_done(task, &vfork);
 
 out_action_stop:
-	krg_action_stop(task, EPM_REMOTE_CLONE);
+	hcc_action_stop(task, EPM_REMOTE_CLONE);
 
 out:
 	return remote_pid;
@@ -136,7 +136,7 @@ static void handle_remote_clone(struct rpc_desc *desc, void *msg, size_t size)
 		return;
 	}
 
-	krg_action_stop(task, EPM_REMOTE_CLONE);
+	hcc_action_stop(task, EPM_REMOTE_CLONE);
 
 	task->epm_type = action->type;
 	task->epm_source = action->remote_clone.source;
@@ -145,9 +145,9 @@ static void handle_remote_clone(struct rpc_desc *desc, void *msg, size_t size)
 	wake_up_new_task(task, CLONE_VM);
 }
 
-bool in_krg_do_fork(void)
+bool in_hcc_do_fork(void)
 {
-	return task_tgid_knr(krg_current) != krg_current->signal->krg_objid;
+	return task_tgid_knr(hcc_current) != hcc_current->signal->hcc_objid;
 }
 
 static inline struct vfork_done_proxy *vfork_done_proxy_alloc(void)
@@ -279,7 +279,7 @@ static void handle_vfork_done(struct rpc_desc *desc, void *data, size_t size)
 	complete(vfork_done);
 }
 
-void krg_vfork_done(struct completion *vfork_done)
+void hcc_vfork_done(struct completion *vfork_done)
 {
 	struct vfork_done_proxy *proxy = (struct vfork_done_proxy *)vfork_done;
 

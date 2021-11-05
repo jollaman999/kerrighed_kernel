@@ -1,9 +1,9 @@
 #ifndef __HOTPLUG_INTERNAL__
 #define __HOTPLUG_INTERNAL__
 
-extern struct kobject *krghotplugsys;
+extern struct kobject *hcchotplugsys;
 
-extern struct workqueue_struct *krg_ha_wq;
+extern struct workqueue_struct *hcc_ha_wq;
 
 extern struct work_struct fail_work;
 
@@ -18,9 +18,9 @@ int __nodes_add(struct hotplug_context *ctx);
 int repair_monitor(void);
 void update_heartbeat(void);
 
-int krgnodemask_copy_from_user(krgnodemask_t *dst, __krgnodemask_t *from);
+int hccnodemask_copy_from_user(hccnodemask_t *dst, __hccnodemask_t *from);
 
-int krg_set_cluster_creator(void __user *arg);
+int hcc_set_cluster_creator(void __user *arg);
 
 int heartbeat_init(void);
 int hotplug_add_init(void);

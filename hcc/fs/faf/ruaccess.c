@@ -17,7 +17,7 @@
 #include <linux/errno.h>
 #include <hcc/faf.h>
 #include <hcc/hotplug.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 
 
 enum ruaccess_op {
@@ -227,7 +227,7 @@ out_err:
 
 #define DO_RUACCESS(req, ret) do_ruaccess(&req, &ret, NULL)
 
-unsigned long krg_copy_user_generic(void *to, const void *from,
+unsigned long hcc_copy_user_generic(void *to, const void *from,
 				    unsigned long n, int zerorest)
 {
 	struct ruaccess_req req = {
@@ -295,7 +295,7 @@ static void handle_copy(const struct ruaccess_req *req, void *buf,
 	*ret = n;
 }
 
-long krg___strncpy_from_user(char *dst, const char __user *src,
+long hcc___strncpy_from_user(char *dst, const char __user *src,
 			     unsigned long count)
 {
 	struct ruaccess_req req = {
@@ -330,7 +330,7 @@ static void handle_strncpy(const struct ruaccess_req *req, void *buf,
 	*ret = (unsigned long)res;
 }
 
-unsigned long krg___strnlen_user(const char __user *str, unsigned long n)
+unsigned long hcc___strnlen_user(const char __user *str, unsigned long n)
 {
 	struct ruaccess_req req = {
 		.op = RUACCESS_STRNLEN,
@@ -367,7 +367,7 @@ static void handle_strnlen(const struct ruaccess_req *req, void *buf,
 		*ret = strnlen_user(str, n);
 }
 
-unsigned long krg___clear_user(void __user *mem, unsigned long len)
+unsigned long hcc___clear_user(void __user *mem, unsigned long len)
 {
 	struct ruaccess_req req = {
 		.op = RUACCESS_CLEAR,

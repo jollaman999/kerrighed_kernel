@@ -1384,7 +1384,7 @@ static int path_init(int dfd, const char *name, unsigned int flags, struct namei
 			if (!S_ISDIR(data->i_mode))
 				goto fput_fail;
 
-			retval = krg_faf_do_path_lookup(file, name, flags, nd);
+			retval = hcc_faf_do_path_lookup(file, name, flags, nd);
 
 			fput_light(file, fput_needed);
 			return retval;

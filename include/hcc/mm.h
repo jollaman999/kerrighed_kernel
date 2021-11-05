@@ -39,8 +39,8 @@ void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma);
 extern struct kmem_cache *mm_cachep;
 extern struct vm_operations_struct generic_file_vm_ops;
 
-int special_mapping_vm_ops_krgsyms_register(void);
-int special_mapping_vm_ops_krgsyms_unregister(void);
+int special_mapping_vm_ops_hccsyms_register(void);
+int special_mapping_vm_ops_hccsyms_unregister(void);
 
 static inline void dump_vma(struct task_struct *tsk)
 {
@@ -76,7 +76,7 @@ void mm_struct_unpin(struct mm_struct *mm);
 extern void (*kh_mm_get) (struct mm_struct *mm);
 extern void (*kh_mm_release) (struct mm_struct *mm, int notify);
 
-int krg_do_execve(struct task_struct *tsk, struct mm_struct *mm);
+int hcc_do_execve(struct task_struct *tsk, struct mm_struct *mm);
 extern struct mm_struct *(*kh_copy_mm)(struct task_struct *tsk,
 				       struct mm_struct *oldmm,
 				       unsigned long clone_flags);
@@ -88,26 +88,26 @@ extern void (*kh_zap_pte)(struct mm_struct *mm, unsigned long addr,
 
 int try_to_flush_page(struct page *page);
 
-void krg_notify_mem(int mem_usage);
+void hcc_notify_mem(int mem_usage);
 
-void krg_check_vma_link(struct vm_area_struct *vma);
+void hcc_check_vma_link(struct vm_area_struct *vma);
 
-void krg_do_mmap_region(struct vm_area_struct *vma, unsigned long flags,
+void hcc_do_mmap_region(struct vm_area_struct *vma, unsigned long flags,
 			unsigned long long vm_flags);
 
-void krg_do_munmap(struct mm_struct *mm, unsigned long start, size_t len);
+void hcc_do_munmap(struct mm_struct *mm, unsigned long start, size_t len);
 
-void krg_do_mremap(struct mm_struct *mm, unsigned long addr,
+void hcc_do_mremap(struct mm_struct *mm, unsigned long addr,
 		   unsigned long old_len, unsigned long new_len,
 		   unsigned long flags, unsigned long new_addr,
 		   unsigned long _new_addr, unsigned long lock_limit);
 
-void krg_do_brk(struct mm_struct *mm, unsigned long brk,
+void hcc_do_brk(struct mm_struct *mm, unsigned long brk,
 		unsigned long lock_limit, unsigned long data_limit);
 
-int krg_expand_stack(struct vm_area_struct *vma, unsigned long address);
+int hcc_expand_stack(struct vm_area_struct *vma, unsigned long address);
 
-void krg_do_mprotect(struct mm_struct *mm, unsigned long start, size_t len,
+void hcc_do_mprotect(struct mm_struct *mm, unsigned long start, size_t len,
 		     unsigned long prot, int personality);
 
 #define TestClearPageLRU(page)  test_and_clear_bit(PG_lru, &(page)->flags)

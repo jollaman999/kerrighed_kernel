@@ -7,18 +7,18 @@
 #include <linux/spinlock.h>
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
-#include <linux/krg_hashtable.h>
+#include <linux/hcc_hashtable.h>
 #include <linux/uaccess.h>
 #include <hcc/sys/types.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <hcc/hotplug.h>
 #include <hcc/namespace.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
-#include <hcc/krg_syscalls.h>
-#include <hcc/krg_services.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
+#include <hcc/hcc_syscalls.h>
+#include <hcc/hcc_services.h>
 
 #include "hotplug_internal.h"
 
@@ -31,13 +31,13 @@ int __nodes_add(struct hotplug_context *ctx)
 static void handle_node_add(struct rpc_desc *rpc_desc, void *data, size_t size)
 {
 	struct hotplug_context *ctx;
-	struct krg_namespace *ns = find_get_krg_ns();
+	struct hcc_namespace *ns = find_get_hcc_ns();
 	char *page;
 	int ret;
 
 	BUG_ON(!ns);
 	ctx = hotplug_ctx_alloc(ns);
-	put_krg_ns(ns);
+	put_hcc_ns(ns);
 	if (!ctx) {
 		printk("hcc: [ADD] Failed to add nodes!\n");
 		return;
@@ -50,13 +50,13 @@ static void handle_node_add(struct rpc_desc *rpc_desc, void *data, size_t size)
 
 	page = (char *)__get_free_page(GFP_KERNEL);
 	if (page) {
-		ret = krgnodelist_scnprintf(page, PAGE_SIZE, krgnode_online_map);
+		ret = hccnodelist_scnprintf(page, PAGE_SIZE, hccnode_online_map);
 		BUG_ON(ret >= PAGE_SIZE);
 		printk("HCC is running on %d nodes: %s\n",
-		       num_online_krgnodes(), page);
+		       num_online_hccnodes(), page);
 		free_page((unsigned long)page);
 	} else {
-		printk("HCC is running on %d nodes\n", num_online_krgnodes());
+		printk("HCC is running on %d nodes\n", num_online_hccnodes());
 	}
 }
 
@@ -70,7 +70,7 @@ static int do_nodes_add(struct hotplug_context *ctx)
 	if (!page)
 		return -ENOMEM;
 
-	ret = krgnodelist_scnprintf(page, PAGE_SIZE, ctx->node_set.v);
+	ret = hccnodelist_scnprintf(page, PAGE_SIZE, ctx->node_set.v);
 	BUG_ON(ret >= PAGE_SIZE);
 	printk("hcc: [ADD] Adding nodes %s ...\n", page);
 
@@ -89,7 +89,7 @@ static int do_nodes_add(struct hotplug_context *ctx)
 	}
 
 	/* Send request to all members of the current cluster */
-	for_each_online_krgnode(node)
+	for_each_online_hccnode(node)
 		rpc_async(NODE_ADD, node, &ctx->node_set, sizeof(ctx->node_set));
 
 	printk("hcc: [ADD] Adding nodes succeeded.\n");
@@ -106,12 +106,12 @@ static int nodes_add(void __user *arg)
 	if (copy_from_user(&__node_set, arg, sizeof(struct __hotplug_node_set)))
 		return -EFAULT;
 
-	ctx = hotplug_ctx_alloc(current->nsproxy->krg_ns);
+	ctx = hotplug_ctx_alloc(current->nsproxy->hcc_ns);
 	if (!ctx)
 		return -ENOMEM;
 
 	ctx->node_set.subclusterid = __node_set.subclusterid;
-	err = krgnodemask_copy_from_user(&ctx->node_set.v, &__node_set.v);
+	err = hccnodemask_copy_from_user(&ctx->node_set.v, &__node_set.v);
 	if (err)
 		goto out;
 
@@ -119,15 +119,15 @@ static int nodes_add(void __user *arg)
 	if (ctx->node_set.subclusterid != hcc_subsession_id)
 		goto out;
 
-	if (!krgnode_online(hcc_node_id))
+	if (!hccnode_online(hcc_node_id))
 		goto out;
 
 	err = -ENONET;
-	if (!krgnodes_subset(ctx->node_set.v, krgnode_present_map))
+	if (!hccnodes_subset(ctx->node_set.v, hccnode_present_map))
 		goto out;
 
 	err = -EPERM;
-	if (krgnodes_intersects(ctx->node_set.v, krgnode_online_map))
+	if (hccnodes_intersects(ctx->node_set.v, hccnode_online_map))
 		goto out;
 
 	err = do_nodes_add(ctx);

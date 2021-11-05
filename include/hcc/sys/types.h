@@ -5,8 +5,8 @@
  *  @author Innogrid HCC
  */
 
-#ifndef __KERRIGHED_TYPES__
-#define __KERRIGHED_TYPES__
+#ifndef __HCC_TYPES__
+#define __HCC_TYPES__
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -20,11 +20,11 @@
 #define NR_BITS_IN_MAX_NODE_ID     7
 #endif
 
-#define KERRIGHED_MAX_NODES      (1<<NR_BITS_IN_MAX_NODE_ID)        /* Real limit 32766 */
-#define KERRIGHED_HARD_MAX_NODES 256
+#define HCC_MAX_NODES      (1<<NR_BITS_IN_MAX_NODE_ID)        /* Real limit 32766 */
+#define HCC_HARD_MAX_NODES 256
 
-#define KERRIGHED_MAX_CLUSTERS   256
-#define KERRIGHED_NODE_ID_NONE    -1        /* Invalid node id */
+#define HCC_MAX_CLUSTERS   256
+#define HCC_NODE_ID_NONE    -1        /* Invalid node id */
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -63,4 +63,4 @@ typedef enum hcc_status hcc_status_t;
  *                                                                          *
  *--------------------------------------------------------------------------*/
 
-#endif /* __KERRIGHED_TYPES__ */
+#endif /* __HCC_TYPES__ */

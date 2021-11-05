@@ -13,7 +13,7 @@
 #define LOW_MEM 2
 #define OUT_OF_MEM 3
 
-extern int node_mem_usage[KERRIGHED_MAX_NODES];
+extern int node_mem_usage[HCC_MAX_NODES];
 
 void mm_injection_init (void);
 void mm_injection_finalize (void);

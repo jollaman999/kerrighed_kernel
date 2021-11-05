@@ -11,17 +11,17 @@
 
 #include "proc_pid.h"
 
-static int krg_proc_readfd(struct file *filp, void *dirent, filldir_t filldir)
+static int hcc_proc_readfd(struct file *filp, void *dirent, filldir_t filldir)
 {
 	return 0;
 }
 
-struct file_operations krg_proc_fd_operations = {
+struct file_operations hcc_proc_fd_operations = {
 	.read = generic_read_dir,
-	.readdir = krg_proc_readfd,
+	.readdir = hcc_proc_readfd,
 };
 
-static struct dentry *krg_proc_lookupfd(struct inode *dir,
+static struct dentry *hcc_proc_lookupfd(struct inode *dir,
 					struct dentry *dentry,
 					struct nameidata *nd)
 {
@@ -31,7 +31,7 @@ static struct dentry *krg_proc_lookupfd(struct inode *dir,
 /*
  * proc directories can do almost nothing..
  */
-struct inode_operations krg_proc_fd_inode_operations = {
-	.lookup = krg_proc_lookupfd,
+struct inode_operations hcc_proc_fd_inode_operations = {
+	.lookup = hcc_proc_lookupfd,
 	.setattr = proc_setattr,
 };

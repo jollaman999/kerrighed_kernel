@@ -49,7 +49,7 @@ static DECLARE_DELAYED_WORK(update_dynamic_node_info_work,
 
 void
 __attribute__((weak))
-krg_arch_fill_dynamic_node_info(krg_dynamic_node_info_t *info)
+hcc_arch_fill_dynamic_node_info(hcc_dynamic_node_info_t *info)
 {
 }
 
@@ -58,7 +58,7 @@ krg_arch_fill_dynamic_node_info(krg_dynamic_node_info_t *info)
  */
 static void update_dynamic_node_info_worker(struct work_struct *work)
 {
-	krg_dynamic_node_info_t *dynamic_node_info;
+	hcc_dynamic_node_info_t *dynamic_node_info;
 	cputime_t idletime = cputime_add(init_task.utime, init_task.stime);
 	struct sysinfo sysinfo;
 	struct timespec boottime;
@@ -159,11 +159,11 @@ static void update_dynamic_node_info_worker(struct work_struct *work)
 	dynamic_node_info->surplus_huge_pages = 0;
 #endif
 
-	krg_arch_fill_dynamic_node_info(dynamic_node_info);
+	hcc_arch_fill_dynamic_node_info(dynamic_node_info);
 
 	_gdm_put_object(dynamic_node_info_gdm_set, hcc_node_id);
 
-	queue_delayed_work(krg_wq, &update_dynamic_node_info_work, HZ);
+	queue_delayed_work(hcc_wq, &update_dynamic_node_info_work, HZ);
 }
 
 int dynamic_node_info_init(void)
@@ -177,12 +177,12 @@ int dynamic_node_info_init(void)
 		create_new_gdm_set(gdm_def_ns, DYNAMIC_NODE_INFO_GDM_ID,
 				    DYNAMIC_NODE_INFO_LINKER,
 				    GDM_CUSTOM_DEF_OWNER,
-				    sizeof(krg_dynamic_node_info_t), 0);
+				    sizeof(hcc_dynamic_node_info_t), 0);
 	if (IS_ERR(dynamic_node_info_gdm_set))
 		OOM;
 
 	/* Start periodic updates */
-	queue_delayed_work(krg_wq, &update_dynamic_node_info_work, 0);
+	queue_delayed_work(hcc_wq, &update_dynamic_node_info_work, 0);
 
 	return 0;
 }

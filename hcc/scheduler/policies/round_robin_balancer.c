@@ -22,8 +22,8 @@
 #include <linux/module.h>
 #include <linux/spinlock.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
-#include <hcc/krginit.h>
+#include <hcc/hccnodemask.h>
+#include <hcc/hccinit.h>
 #include <hcc/scheduler/policy.h>
 #include <hcc/scheduler/scheduler.h>
 
@@ -60,8 +60,8 @@ round_robin_balancer_new_task_node(struct scheduler_policy *policy,
 {
 	struct round_robin_balancer *rrb = to_round_robin_balancer(policy);
 	struct scheduler *s = scheduler_policy_get_scheduler(policy);
-	krgnodemask_t nodes;
-	hcc_node_t node = KERRIGHED_NODE_ID_NONE;
+	hccnodemask_t nodes;
+	hcc_node_t node = HCC_NODE_ID_NONE;
 
 	if (!s)
 		goto out;
@@ -69,9 +69,9 @@ round_robin_balancer_new_task_node(struct scheduler_policy *policy,
 
 	rrb_lock(rrb);
 	node = rrb->last_target;
-	if (node == KERRIGHED_NODE_ID_NONE)
+	if (node == HCC_NODE_ID_NONE)
 		node = hcc_node_id;
-	node = next_krgnode_in_ring(node, nodes);
+	node = next_hccnode_in_ring(node, nodes);
 	rrb->last_target = node;
 	rrb_unlock(rrb);
 
@@ -125,7 +125,7 @@ static struct scheduler_policy *round_robin_balancer_new(const char *name)
 
 	if (!rrb)
 		goto err_rrb;
-	rrb->last_target = KERRIGHED_NODE_ID_NONE;
+	rrb->last_target = HCC_NODE_ID_NONE;
 	err = scheduler_policy_init(&rrb->policy, name, &round_robin_balancer,
 				    NULL);
 	if (err)

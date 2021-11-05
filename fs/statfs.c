@@ -110,7 +110,7 @@ int fd_statfs(int fd, struct kstatfs *st)
 			struct statfs tmp;
 
 			*is_faf_fstatfs = 1;
-			error = krg_faf_fstatfs(file, &tmp);
+			error = hcc_faf_fstatfs(file, &tmp);
 			if (!error && copy_to_user(buf, &tmp, sizeof(tmp)))
 				error = -EFAULT;
 		} else

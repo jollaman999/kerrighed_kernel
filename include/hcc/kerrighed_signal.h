@@ -1,5 +1,5 @@
-#ifndef __HCC_KERRIGHED_SIGNAL_H__
-#define __HCC_KERRIGHED_SIGNAL_H__
+#ifndef __HCC_HCC_SIGNAL_H__
+#define __HCC_HCC_SIGNAL_H__
 
 /* HCC signal */
 
@@ -14,10 +14,10 @@ struct task_struct;
 typedef void hcc_handler_t(int sig, struct siginfo *info,
 				 struct pt_regs *regs);
 
-extern hcc_handler_t *krg_handler[_NSIG];
+extern hcc_handler_t *hcc_handler[_NSIG];
 
 int send_hcc_signal(int sig, struct siginfo *info, struct task_struct *t);
 
 #endif /* CONFIG_HCC_EPM */
 
-#endif /* __HCC_KERRIGHED_SIGNAL_H__ */
+#endif /* __HCC_HCC_SIGNAL_H__ */

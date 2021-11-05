@@ -1,5 +1,5 @@
-#ifndef __KERRIGHED_TASK_H__
-#define __KERRIGHED_TASK_H__
+#ifndef __HCC_TASK_H__
+#define __HCC_TASK_H__
 
 #ifdef CONFIG_HCC_PROC
 
@@ -63,36 +63,36 @@ struct task_gdm_object {
 	struct rcu_head rcu;
 };
 
-void krg_task_get(struct task_gdm_object *obj);
-void krg_task_put(struct task_gdm_object *obj);
-int krg_task_alive(struct task_gdm_object *obj);
-struct task_gdm_object *krg_task_readlock(pid_t pid);
-struct task_gdm_object *__krg_task_readlock(struct task_struct *task);
-struct task_gdm_object *krg_task_create_writelock(pid_t pid);
-struct task_gdm_object *krg_task_writelock(pid_t pid);
-struct task_gdm_object *__krg_task_writelock(struct task_struct *task);
-struct task_gdm_object *krg_task_writelock_nested(pid_t pid);
-struct task_gdm_object *__krg_task_writelock_nested(struct task_struct *task);
-void krg_task_unlock(pid_t pid);
-void __krg_task_unlock(struct task_struct *task);
-int krg_task_alloc(struct task_struct *task, struct pid *pid);
-void krg_task_fill(struct task_struct *task, unsigned long clone_flags);
-void krg_task_commit(struct task_struct *task);
-void krg_task_abort(struct task_struct *task);
+void hcc_task_get(struct task_gdm_object *obj);
+void hcc_task_put(struct task_gdm_object *obj);
+int hcc_task_alive(struct task_gdm_object *obj);
+struct task_gdm_object *hcc_task_readlock(pid_t pid);
+struct task_gdm_object *__hcc_task_readlock(struct task_struct *task);
+struct task_gdm_object *hcc_task_create_writelock(pid_t pid);
+struct task_gdm_object *hcc_task_writelock(pid_t pid);
+struct task_gdm_object *__hcc_task_writelock(struct task_struct *task);
+struct task_gdm_object *hcc_task_writelock_nested(pid_t pid);
+struct task_gdm_object *__hcc_task_writelock_nested(struct task_struct *task);
+void hcc_task_unlock(pid_t pid);
+void __hcc_task_unlock(struct task_struct *task);
+int hcc_task_alloc(struct task_struct *task, struct pid *pid);
+void hcc_task_fill(struct task_struct *task, unsigned long clone_flags);
+void hcc_task_commit(struct task_struct *task);
+void hcc_task_abort(struct task_struct *task);
 #ifdef CONFIG_HCC_EPM
-void __krg_task_free(struct task_struct *task);
+void __hcc_task_free(struct task_struct *task);
 #endif
-void krg_task_free(struct task_struct *task);
+void hcc_task_free(struct task_struct *task);
 
 /* exit */
 #ifdef CONFIG_HCC_EPM
-int krg_delay_release_task(struct task_struct *task);
+int hcc_delay_release_task(struct task_struct *task);
 #endif
-void krg_release_task(struct task_struct *task);
+void hcc_release_task(struct task_struct *task);
 
-void __krg_task_unlink(struct task_gdm_object *obj, int need_update);
-void krg_task_unlink(struct task_gdm_object *obj, int need_update);
+void __hcc_task_unlink(struct task_gdm_object *obj, int need_update);
+void hcc_task_unlink(struct task_gdm_object *obj, int need_update);
 
 #endif /* CONFIG_HCC_PROC */
 
-#endif /* __KERRIGHED_TASK_H__ */
+#endif /* __HCC_TASK_H__ */

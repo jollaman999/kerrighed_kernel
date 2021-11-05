@@ -14,17 +14,17 @@
 #include <linux/module.h>
 #include <hcc/sys/types.h>
 
-#include <net/krgrpc/rpc.h>
-#include <net/krgrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
 #include <gdm/gdm.h>
 #include <hcc/hotplug.h>
 #include <hcc/dynamic_node_info_linker.h>
 #include "injection.h"
 #include "mm_struct.h"
 
-hcc_node_t last_chosen_node = KERRIGHED_NODE_ID_NONE;
+hcc_node_t last_chosen_node = HCC_NODE_ID_NONE;
 
-int node_mem_usage[KERRIGHED_MAX_NODES];
+int node_mem_usage[HCC_MAX_NODES];
 EXPORT_SYMBOL(node_mem_usage);
 static atomic_t mem_usage_notified = ATOMIC_INIT(FREE_MEM);
 
@@ -40,8 +40,8 @@ hcc_node_t select_injection_node_ff(void)
        hcc_node_t start_node, node;
        int shrink_caches = 0;
 
-       if (last_chosen_node == KERRIGHED_NODE_ID_NONE)
-               start_node = krgnode_next_online_in_ring (hcc_node_id);
+       if (last_chosen_node == HCC_NODE_ID_NONE)
+               start_node = hccnode_next_online_in_ring (hcc_node_id);
        else
                start_node = last_chosen_node;
 
@@ -54,9 +54,9 @@ retry:
 	       return node;
        }
 
-       node = krgnode_next_online_in_ring (node);
+       node = hccnode_next_online_in_ring (node);
        if (node == hcc_node_id)
-	       node = krgnode_next_online_in_ring (node);
+	       node = hccnode_next_online_in_ring (node);
        if (node != start_node)
                goto retry;
 
@@ -65,7 +65,7 @@ retry:
                goto retry;
        }
 
-       return KERRIGHED_NODE_ID_NONE;
+       return HCC_NODE_ID_NONE;
 }
 
 
@@ -74,14 +74,14 @@ hcc_node_t select_injection_node_rr(void)
        hcc_node_t start_node, node;
        int shrink_caches = 0;
 
-       if (last_chosen_node == KERRIGHED_NODE_ID_NONE)
+       if (last_chosen_node == HCC_NODE_ID_NONE)
                start_node = hcc_node_id;
        else
                start_node = last_chosen_node;
 
-       node = krgnode_next_online_in_ring (start_node);
+       node = hccnode_next_online_in_ring (start_node);
        if (node == hcc_node_id)
-	       node = krgnode_next_online_in_ring (node);
+	       node = hccnode_next_online_in_ring (node);
 retry:
        if ( (node_mem_usage[node] == FREE_MEM) ||
 	    (shrink_caches && (node_mem_usage[node] == LOW_MEM))) {
@@ -89,9 +89,9 @@ retry:
 	       return node;
        }
 
-       node = krgnode_next_online_in_ring (node);
+       node = hccnode_next_online_in_ring (node);
        if (node == hcc_node_id)
-	       node = krgnode_next_online_in_ring (node);
+	       node = hccnode_next_online_in_ring (node);
        if (node != start_node)
                goto retry;
 
@@ -100,7 +100,7 @@ retry:
                goto retry;
        }
 
-       return KERRIGHED_NODE_ID_NONE;
+       return HCC_NODE_ID_NONE;
 }
 
 
@@ -144,10 +144,10 @@ void handle_notify_low_mem (struct rpc_desc* desc,
 
 static void do_notify_mem(unsigned long unused)
 {
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 
-	krgnodes_copy(nodes, krgnode_online_map);
-	krgnode_clear(hcc_node_id, nodes);
+	hccnodes_copy(nodes, hccnode_online_map);
+	hccnode_clear(hcc_node_id, nodes);
 
 	rpc_async_m(RPC_MM_NOTIFY_LOW_MEM, &nodes, &mem_usage_notified,
 		    sizeof(mem_usage_notified));
@@ -155,7 +155,7 @@ static void do_notify_mem(unsigned long unused)
 
 
 
-void krg_notify_mem(int mem_usage)
+void hcc_notify_mem(int mem_usage)
 {
 	long free_pages, cache_pages;
 	int old_val;
@@ -238,14 +238,14 @@ static int flush_page(struct page *page,
 	if (PageMigratable(page))
 		dest_node = select_injection_node_rr();
 	else
-		dest_node = KERRIGHED_NODE_ID_NONE;
+		dest_node = HCC_NODE_ID_NONE;
 
 	SetPageSwapCache(page);
 	r = _gdm_flush_object(set, objid, dest_node);
 	ClearPageSwapCache(page);
 
 	if (r) {
-		if ((r == -ENOSPC) && (dest_node == KERRIGHED_NODE_ID_NONE))
+		if ((r == -ENOSPC) && (dest_node == HCC_NODE_ID_NONE))
 			return SWAP_FLUSH_FAIL;
 		else
 			return SWAP_FAIL;
@@ -299,7 +299,7 @@ int try_to_flush_page(struct page *page)
         struct anon_vma_chain *avc;
 	int ret = SWAP_AGAIN;
 
-	krg_notify_mem(OUT_OF_MEM);
+	hcc_notify_mem(OUT_OF_MEM);
 
 	anon_vma = page_lock_anon_vma(page);
         if (!anon_vma)
@@ -365,7 +365,7 @@ void mm_injection_init (void)
 
 	rpc_register_void(RPC_MM_NOTIFY_LOW_MEM, handle_notify_low_mem, 0);
 
-	for (i = 0; i < KERRIGHED_MAX_NODES; i++)
+	for (i = 0; i < HCC_MAX_NODES; i++)
 		node_mem_usage[i] = FREE_MEM;
 }
 

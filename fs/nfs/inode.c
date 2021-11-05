@@ -42,7 +42,7 @@
 #include <linux/crc32.h>
 
 #ifdef CONFIG_HCC_MM
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #endif
 
 #include <asm/system.h>
@@ -1719,7 +1719,7 @@ static int __init init_nfs_fs(void)
 	int err;
 
 #ifdef CONFIG_HCC_MM
-	err = krgsyms_register(HCCSYMS_VM_OPS_NFS_FILE, &nfs_file_vm_ops);
+	err = hccsyms_register(HCCSYMS_VM_OPS_NFS_FILE, &nfs_file_vm_ops);
 	if (err)
 		goto out10;
 #endif
@@ -1798,7 +1798,7 @@ out8:
 out9:
 #endif
 #ifdef CONFIG_HCC_MM
-	krgsyms_unregister(HCCSYMS_VM_OPS_NFS_FILE);
+	hccsyms_unregister(HCCSYMS_VM_OPS_NFS_FILE);
 out10:
 #endif
 	return err;
@@ -1824,7 +1824,7 @@ static void __exit exit_nfs_fs(void)
 	nfs_fs_proc_exit();
 	nfsiod_stop();
 #ifdef CONFIG_HCC_MM
-	krgsyms_unregister(HCCSYMS_VM_OPS_NFS_FILE);
+	hccsyms_unregister(HCCSYMS_VM_OPS_NFS_FILE);
 #endif
 }
 

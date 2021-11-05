@@ -26,7 +26,7 @@
 #include <hcc/task.h>
 #include <hcc/pid.h>
 
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/libproc.h>
 #include <gdm/gdm.h>
 
@@ -35,7 +35,7 @@ static struct kmem_cache *task_gdm_obj_cachep;
 /* gdm set of pid location and task struct */
 static struct gdm_set *task_gdm_set;
 
-void krg_task_get(struct task_gdm_object *obj)
+void hcc_task_get(struct task_gdm_object *obj)
 {
 	if (obj)
 		kref_get(&obj->kref);
@@ -51,7 +51,7 @@ static void task_free(struct kref *kref)
 	kmem_cache_free(task_gdm_obj_cachep, obj);
 }
 
-void krg_task_put(struct task_gdm_object *obj)
+void hcc_task_put(struct task_gdm_object *obj)
 {
 	if (obj)
 		kref_put(&obj->kref, task_free);
@@ -69,10 +69,10 @@ static int task_alloc_object(struct gdm_obj *obj_entry,
 	if (!p)
 		return -ENOMEM;
 
-	p->node = KERRIGHED_NODE_ID_NONE;
+	p->node = HCC_NODE_ID_NONE;
 	p->task = NULL;
 	p->pid = objid;
-	p->parent_node = KERRIGHED_NODE_ID_NONE;
+	p->parent_node = HCC_NODE_ID_NONE;
 	/*
 	 * If the group leader is another thread, this
 	 * will be fixed later. Before that this is
@@ -173,7 +173,7 @@ static void task_update_object(struct task_gdm_object *obj)
 		obj->self_exec_id = tsk->self_exec_id;
 
 		BUG_ON(obj->node != hcc_node_id &&
-		       obj->node != KERRIGHED_NODE_ID_NONE);
+		       obj->node != HCC_NODE_ID_NONE);
 
 		rcu_read_lock();
 		cred = __task_cred(tsk);
@@ -219,7 +219,7 @@ static void delayed_task_put(struct rcu_head *rhp)
 	struct task_gdm_object *obj =
 		container_of(rhp, struct task_gdm_object, rcu);
 
-	krg_task_put(obj);
+	hcc_task_put(obj);
 }
 
 /**
@@ -230,11 +230,11 @@ static int task_remove_object(void *object,
 {
 	struct task_gdm_object *obj = object;
 
-	krg_task_unlink(obj, 0);
+	hcc_task_unlink(obj, 0);
 
 #ifdef CONFIG_HCC_EPM
 	rcu_read_lock();
-	krg_pid_unlink_task(rcu_dereference(obj->pid_obj));
+	hcc_pid_unlink_task(rcu_dereference(obj->pid_obj));
 	rcu_read_unlock();
 	BUG_ON(obj->pid_obj);
 #endif
@@ -256,16 +256,16 @@ static struct iolinker_struct task_io_linker = {
 	.default_owner = global_pid_default_owner,
 };
 
-int krg_task_alloc(struct task_struct *task, struct pid *pid)
+int hcc_task_alloc(struct task_struct *task, struct pid *pid)
 {
 	struct task_gdm_object *obj;
 	int nr = pid_knr(pid);
 
 	task->task_obj = NULL;
-	if (!task->nsproxy->krg_ns)
+	if (!task->nsproxy->hcc_ns)
 		return 0;
 #ifdef CONFIG_HCC_EPM
-	if (krg_current)
+	if (hcc_current)
 		return 0;
 #endif
 	/* Exclude kernel threads and local pids from using task gdm objects. */
@@ -278,7 +278,7 @@ int krg_task_alloc(struct task_struct *task, struct pid *pid)
 	if (!(nr & GLOBAL_PID_MASK) || !current->mm)
 		return 0;
 
-	obj = krg_task_create_writelock(nr);
+	obj = hcc_task_create_writelock(nr);
 	if (!obj)
 		return -ENOMEM;
 
@@ -289,7 +289,7 @@ int krg_task_alloc(struct task_struct *task, struct pid *pid)
 	return 0;
 }
 
-void krg_task_fill(struct task_struct *task, unsigned long clone_flags)
+void hcc_task_fill(struct task_struct *task, unsigned long clone_flags)
 {
 	struct task_gdm_object *obj = task->task_obj;
 
@@ -297,7 +297,7 @@ void krg_task_fill(struct task_struct *task, unsigned long clone_flags)
 	       != (task_pid_knr(task) & GLOBAL_PID_MASK));
 
 #ifdef CONFIG_HCC_EPM
-	if (krg_current)
+	if (hcc_current)
 		return;
 #endif
 	if (!obj)
@@ -330,18 +330,18 @@ void krg_task_fill(struct task_struct *task, unsigned long clone_flags)
 	obj->group_leader = task_tgid_knr(task);
 }
 
-void krg_task_commit(struct task_struct *task)
+void hcc_task_commit(struct task_struct *task)
 {
 	if (task->task_obj)
-		__krg_task_unlock(task);
+		__hcc_task_unlock(task);
 }
 
-void krg_task_abort(struct task_struct *task)
+void hcc_task_abort(struct task_struct *task)
 {
 	struct task_gdm_object *obj = task->task_obj;
 
 #ifdef CONFIG_HCC_EPM
-	if (krg_current)
+	if (hcc_current)
 		return;
 #endif
 
@@ -354,22 +354,22 @@ void krg_task_abort(struct task_struct *task)
 	_gdm_remove_frozen_object(task_gdm_set, obj->pid);
 }
 
-void __krg_task_free(struct task_struct *task)
+void __hcc_task_free(struct task_struct *task)
 {
 	_gdm_remove_object(task_gdm_set, task_pid_knr(task));
 }
 
-void krg_task_free(struct task_struct *task)
+void hcc_task_free(struct task_struct *task)
 {
 	/* If the pointer is NULL and the object exists, this is a BUG! */
 	if (!task->task_obj)
 		return;
 
-	__krg_task_free(task);
+	__hcc_task_free(task);
 }
 
 /* Expects tasklist write locked */
-void __krg_task_unlink(struct task_gdm_object *obj, int need_update)
+void __hcc_task_unlink(struct task_gdm_object *obj, int need_update)
 {
 	BUG_ON(!obj);
 
@@ -381,14 +381,14 @@ void __krg_task_unlink(struct task_gdm_object *obj, int need_update)
 	}
 }
 
-void krg_task_unlink(struct task_gdm_object *obj, int need_update)
+void hcc_task_unlink(struct task_gdm_object *obj, int need_update)
 {
 	tasklist_write_lock_irq();
-	__krg_task_unlink(obj, need_update);
+	__hcc_task_unlink(obj, need_update);
 	write_unlock_irq(&tasklist_lock);
 }
 
-int krg_task_alive(struct task_gdm_object *obj)
+int hcc_task_alive(struct task_gdm_object *obj)
 {
 	return obj && obj->alive;
 }
@@ -396,7 +396,7 @@ int krg_task_alive(struct task_gdm_object *obj)
 /**
  * @author Innogrid HCC
  */
-struct task_gdm_object *krg_task_readlock(pid_t pid)
+struct task_gdm_object *hcc_task_readlock(pid_t pid)
 {
 	struct task_gdm_object *obj;
 
@@ -420,9 +420,9 @@ struct task_gdm_object *krg_task_readlock(pid_t pid)
 	return obj;
 }
 
-struct task_gdm_object *__krg_task_readlock(struct task_struct *task)
+struct task_gdm_object *__hcc_task_readlock(struct task_struct *task)
 {
-	return krg_task_readlock(task_pid_knr(task));
+	return hcc_task_readlock(task_pid_knr(task));
 }
 
 /**
@@ -455,22 +455,22 @@ static struct task_gdm_object *task_writelock(pid_t pid, int nested)
 	return obj;
 }
 
-struct task_gdm_object *krg_task_writelock(pid_t pid)
+struct task_gdm_object *hcc_task_writelock(pid_t pid)
 {
 	return task_writelock(pid, 0);
 }
 
-struct task_gdm_object *__krg_task_writelock(struct task_struct *task)
+struct task_gdm_object *__hcc_task_writelock(struct task_struct *task)
 {
 	return task_writelock(task_pid_knr(task), 0);
 }
 
-struct task_gdm_object *krg_task_writelock_nested(pid_t pid)
+struct task_gdm_object *hcc_task_writelock_nested(pid_t pid)
 {
 	return task_writelock(pid, 1);
 }
 
-struct task_gdm_object *__krg_task_writelock_nested(struct task_struct *task)
+struct task_gdm_object *__hcc_task_writelock_nested(struct task_struct *task)
 {
 	return task_writelock(task_pid_knr(task), 1);
 }
@@ -478,7 +478,7 @@ struct task_gdm_object *__krg_task_writelock_nested(struct task_struct *task)
 /**
  * @author Innogrid HCC
  */
-struct task_gdm_object *krg_task_create_writelock(pid_t pid)
+struct task_gdm_object *hcc_task_create_writelock(pid_t pid)
 {
 	struct task_gdm_object *obj;
 
@@ -503,7 +503,7 @@ struct task_gdm_object *krg_task_create_writelock(pid_t pid)
 /**
  * @author Innogrid HCC
  */
-void krg_task_unlock(pid_t pid)
+void hcc_task_unlock(pid_t pid)
 {
 	/* Filter well known cases of no task gdm object. */
 	if (!(pid & GLOBAL_PID_MASK))
@@ -528,9 +528,9 @@ void krg_task_unlock(pid_t pid)
 	_gdm_put_object(task_gdm_set, pid);
 }
 
-void __krg_task_unlock(struct task_struct *task)
+void __hcc_task_unlock(struct task_struct *task)
 {
-	krg_task_unlock(task_pid_knr(task));
+	hcc_task_unlock(task_pid_knr(task));
 }
 
 #ifdef CONFIG_HCC_EPM
@@ -538,36 +538,36 @@ void __krg_task_unlock(struct task_struct *task)
  * @author Innogrid HCC
  * Set (or update) the location of pid
  */
-int krg_set_pid_location(struct task_struct *task)
+int hcc_set_pid_location(struct task_struct *task)
 {
 	struct task_gdm_object *p;
 
-	p = __krg_task_writelock(task);
+	p = __hcc_task_writelock(task);
 	if (likely(p))
 		p->node = hcc_node_id;
-	__krg_task_unlock(task);
+	__hcc_task_unlock(task);
 
 	return 0;
 }
 
-int krg_unset_pid_location(struct task_struct *task)
+int hcc_unset_pid_location(struct task_struct *task)
 {
 	struct task_gdm_object *p;
 
 	BUG_ON(!(task_pid_knr(task) & GLOBAL_PID_MASK));
 
-	p = __krg_task_writelock(task);
+	p = __hcc_task_writelock(task);
 	BUG_ON(p == NULL);
-	p->node = KERRIGHED_NODE_ID_NONE;
-	__krg_task_unlock(task);
+	p->node = HCC_NODE_ID_NONE;
+	__hcc_task_unlock(task);
 
 	return 0;
 }
 #endif /* CONFIG_HCC_EPM */
 
-hcc_node_t krg_lock_pid_location(pid_t pid)
+hcc_node_t hcc_lock_pid_location(pid_t pid)
 {
-	hcc_node_t node = KERRIGHED_NODE_ID_NONE;
+	hcc_node_t node = HCC_NODE_ID_NONE;
 	struct task_gdm_object *obj;
 #ifdef CONFIG_HCC_EPM
 	struct timespec back_off_time = {
@@ -580,21 +580,21 @@ hcc_node_t krg_lock_pid_location(pid_t pid)
 		goto out;
 
 	for (;;) {
-		obj = krg_task_readlock(pid);
+		obj = hcc_task_readlock(pid);
 		if (likely(obj)) {
 			node = obj->node;
 		} else {
-			krg_task_unlock(pid);
+			hcc_task_unlock(pid);
 			break;
 		}
 #ifdef CONFIG_HCC_EPM
-		if (likely(node != KERRIGHED_NODE_ID_NONE))
+		if (likely(node != HCC_NODE_ID_NONE))
 			break;
 		/*
 		 * Task is migrating.
 		 * Back off and hope that it will stop migrating.
 		 */
-		krg_task_unlock(pid);
+		hcc_task_unlock(pid);
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule_timeout(timespec_to_jiffies(&back_off_time) + 1);
 #else
@@ -606,9 +606,9 @@ out:
 	return node;
 }
 
-void krg_unlock_pid_location(pid_t pid)
+void hcc_unlock_pid_location(pid_t pid)
 {
-	krg_task_unlock(pid);
+	hcc_task_unlock(pid);
 }
 
 /**

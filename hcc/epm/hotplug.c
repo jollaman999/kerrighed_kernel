@@ -5,8 +5,8 @@
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <hcc/capabilities.h>
-#include <hcc/krgnodemask.h>
-#include <hcc/krginit.h>
+#include <hcc/hccnodemask.h>
+#include <hcc/hccinit.h>
 #include <hcc/pid.h>
 #include <hcc/hotplug.h>
 #include <hcc/migration.h>
@@ -19,7 +19,7 @@ static int epm_add(struct hotplug_context *ctx)
 }
 
 /* migrate all processes that we can migrate */
-static int epm_remove(const krgnodemask_t *vector)
+static int epm_remove(const hccnodemask_t *vector)
 {
 	struct task_struct *tsk;
 	hcc_node_t dest_node = hcc_node_id;
@@ -27,15 +27,15 @@ static int epm_remove(const krgnodemask_t *vector)
 	printk("epm_remove...\n");
 
 	/* Here we assume that all nodes of the cluster are not removed */
-	dest_node = krgnode_next_online_in_ring(dest_node);
-	BUG_ON(__krgnode_isset(dest_node, vector));
+	dest_node = hccnode_next_online_in_ring(dest_node);
+	BUG_ON(__hccnode_isset(dest_node, vector));
 
 	read_lock(&tasklist_lock);
 	for_each_process(tsk) {
-		if (!tsk->nsproxy->krg_ns)
+		if (!tsk->nsproxy->hcc_ns)
 			continue;
 
-		if (cap_raised(tsk->krg_caps.effective, CAP_CAN_MIGRATE)) {
+		if (cap_raised(tsk->hcc_caps.effective, CAP_CAN_MIGRATE)) {
 			/* have to migrate this process */
 			printk("try to migrate %d %s to %d\n",
 			       task_pid_knr(tsk), tsk->comm, dest_node);
@@ -47,13 +47,13 @@ static int epm_remove(const krgnodemask_t *vector)
 			 * Here we assume that all nodes of the cluster are not
 			 * removed.
 			 */
-			dest_node = krgnode_next_online_in_ring(dest_node);
-			BUG_ON(__krgnode_isset(dest_node, vector));
+			dest_node = hccnode_next_online_in_ring(dest_node);
+			BUG_ON(__hccnode_isset(dest_node, vector));
 
 			continue;
 		}
 
-		if (cap_raised(tsk->krg_caps.effective, CAP_USE_REMOTE_MEMORY)) {
+		if (cap_raised(tsk->hcc_caps.effective, CAP_USE_REMOTE_MEMORY)) {
 			/* have to kill this process */
 			printk("epm_remove: have to kill %d (%s)\n",
 			       task_pid_knr(tsk), tsk->comm);

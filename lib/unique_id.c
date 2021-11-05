@@ -10,7 +10,7 @@
 #include <linux/hardirq.h>
 #include <linux/module.h>
 #include <linux/unique_id.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 
 #define INITVAL 1
 

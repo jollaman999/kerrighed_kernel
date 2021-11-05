@@ -6,8 +6,8 @@
 void proc_task_start(void);
 void proc_task_exit(void);
 
-void proc_krg_exit_start(void);
-void proc_krg_exit_exit(void);
+void proc_hcc_exit_start(void);
+void proc_hcc_exit_exit(void);
 
 void proc_remote_syscalls_start(void);
 void register_remote_syscalls_hooks(void);

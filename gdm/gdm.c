@@ -42,7 +42,7 @@ int gdm_hotplug_init(void);
 void gdm_hotplug_cleanup(void);
 
 
-/** Initialize the gdm field of the krg_task field of the given task.
+/** Initialize the gdm field of the hcc_task field of the given task.
  *  @author  Innogrid HCC
  *
  *  @param tsk   Task to fill the gdm struct.
@@ -110,7 +110,7 @@ int init_gdm (void)
 	  process_remove(0);
 	*/
 
-	krgsyms_register (HCCSYMS_GDM_TREE_OPS, &gdm_tree_set_ops);
+	hccsyms_register (HCCSYMS_GDM_TREE_OPS, &gdm_tree_set_ops);
 
 	printk ("GDM initialisation done\n");
 
@@ -126,7 +126,7 @@ void cleanup_gdm (void)
 {
 	printk ("GDM termination : start\n");
 
-	krgsyms_unregister (HCCSYMS_GDM_TREE_OPS);
+	hccsyms_unregister (HCCSYMS_GDM_TREE_OPS);
 
 	gdm_hotplug_cleanup();
 

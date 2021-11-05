@@ -14,7 +14,7 @@
 #include <linux/string.h>
 #include <linux/list.h>
 #include <linux/seq_file.h>
-#include <linux/krg_hashtable.h>
+#include <linux/hcc_hashtable.h>
 
 #include <hcc/procfs.h>
 #include <gdm/gdm.h>

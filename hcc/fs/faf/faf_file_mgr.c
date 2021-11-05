@@ -7,7 +7,7 @@
 #include <linux/file.h>
 #include <linux/wait.h>
 #include <gdm/gdm.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <hcc/file.h>
 #include <hcc/physical_fs.h>
 #include "../mobility.h"
@@ -31,7 +31,7 @@ extern const struct file_operations hung_up_tty_fops;
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-struct file *create_faf_file_from_krg_desc (struct task_struct *task,
+struct file *create_faf_file_from_hcc_desc (struct task_struct *task,
                                             void *_desc)
 {
 	faf_client_data_t *desc = _desc, *data;
@@ -62,7 +62,7 @@ exit:
 	return file;
 }
 
-void fill_faf_file_krg_desc(faf_client_data_t *data, struct file *file)
+void fill_faf_file_hcc_desc(faf_client_data_t *data, struct file *file)
 {
 	unsigned int flags = file->f_flags & (~O_FAF_SRV);
 
@@ -95,7 +95,7 @@ void fill_faf_file_krg_desc(faf_client_data_t *data, struct file *file)
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-int get_faf_file_krg_desc (struct file *file,
+int get_faf_file_hcc_desc (struct file *file,
                            void **desc,
                            int *desc_size)
 {
@@ -115,7 +115,7 @@ int get_faf_file_krg_desc (struct file *file,
 
 	BUG_ON (!(file->f_flags & O_FAF_SRV));
 
-	fill_faf_file_krg_desc(data, file);
+	fill_faf_file_hcc_desc(data, file);
 
 done:
 	*desc = data;
@@ -153,11 +153,11 @@ int faf_file_export (struct epm_action *action,
 
 	BUG_ON(action->type == EPM_CHECKPOINT);
 
-	r = get_faf_file_krg_desc(file, &desc, &desc_size);
+	r = get_faf_file_hcc_desc(file, &desc, &desc_size);
 	if (r)
 		goto error;
 
-	r = ghost_write_file_krg_desc(ghost, desc, desc_size);
+	r = ghost_write_file_hcc_desc(ghost, desc, desc_size);
 	kfree(desc);
 
 error:
@@ -185,11 +185,11 @@ int faf_file_import (struct epm_action *action,
 
 	BUG_ON(action->type == EPM_CHECKPOINT);
 
-	r = ghost_read_file_krg_desc(ghost, &desc, &desc_size);
+	r = ghost_read_file_hcc_desc(ghost, &desc, &desc_size);
 	if (r)
 		goto exit;
 
-	file = create_faf_file_from_krg_desc (task, desc);
+	file = create_faf_file_from_hcc_desc (task, desc);
 
 	if (IS_ERR(file)) {
 		r = PTR_ERR(file);
@@ -216,7 +216,7 @@ int __send_faf_file_desc(struct rpc_desc *desc, struct file *file)
 	BUG_ON(!file->f_objid);
 	BUG_ON(!(file->f_flags & (O_FAF_SRV|O_FAF_CLT)));
 
-	r = get_faf_file_krg_desc(file, &fdesc, &fdesc_size);
+	r = get_faf_file_hcc_desc(file, &fdesc, &fdesc_size);
 	if (r)
 		goto out;
 
@@ -294,7 +294,7 @@ struct file *rcv_faf_file_desc(struct rpc_desc *desc)
 	file = begin_import_dvfs_file(fobjid, &dvfs_file);
 
 	if (!file) {
-		file = create_faf_file_from_krg_desc(current, fdesc);
+		file = create_faf_file_from_hcc_desc(current, fdesc);
 		first_import = 1;
 	}
 

@@ -25,10 +25,10 @@ struct gdm_set *static_cpu_info_gdm_set;
 
 hcc_node_t cpu_info_default_owner(struct gdm_set *set,
 					objid_t objid,
-					const krgnodemask_t *nodes,
+					const hccnodemask_t *nodes,
 					int nr_nodes)
 {
-	return krg_cpu_node(objid);
+	return hcc_cpu_node(objid);
 }
 
 /****************************************************************************/
@@ -43,7 +43,7 @@ static struct iolinker_struct static_cpu_info_io_linker = {
 
 int static_cpu_info_init(void)
 {
-	krg_static_cpu_info_t *static_cpu_info;
+	hcc_static_cpu_info_t *static_cpu_info;
 	int cpu_id, i;
 
 	register_io_linker(STATIC_CPU_INFO_LINKER, &static_cpu_info_io_linker);
@@ -55,14 +55,14 @@ int static_cpu_info_init(void)
 				    STATIC_CPU_INFO_GDM_ID,
 				    STATIC_CPU_INFO_LINKER,
 				    GDM_CUSTOM_DEF_OWNER,
-				    sizeof(krg_static_cpu_info_t),
+				    sizeof(hcc_static_cpu_info_t),
 				    0);
 	if (IS_ERR(static_cpu_info_gdm_set))
 		OOM;
 
 	for_each_online_cpu (i) {
-		cpu_id = krg_cpu_id(i);
-		cpu_data(i).krg_cpu_id = cpu_id;
+		cpu_id = hcc_cpu_id(i);
+		cpu_data(i).hcc_cpu_id = cpu_id;
 
 		static_cpu_info =
 			_gdm_grab_object(static_cpu_info_gdm_set, cpu_id);

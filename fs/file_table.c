@@ -59,7 +59,7 @@ static inline void file_free(struct file *f)
 {
 #ifdef CONFIG_HCC_DVFS
 	if (f->f_objid)
-		krg_put_file(f);
+		hcc_put_file(f);
 #endif
 	percpu_counter_dec(&nr_files);
 	file_check_state(f);

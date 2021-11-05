@@ -26,13 +26,13 @@ enum {
 extern int hcc_cluster_flags;
 extern int hcc_node_flags;
 
-#define IS_KERRIGHED_CLUSTER(m) (hcc_cluster_flags & m)
-#define IS_KERRIGHED_NODE(m) (hcc_node_flags & m)
+#define IS_HCC_CLUSTER(m) (hcc_cluster_flags & m)
+#define IS_HCC_NODE(m) (hcc_node_flags & m)
 
-#define SET_KERRIGHED_CLUSTER_FLAGS(m) hcc_cluster_flags |= m
-#define SET_KERRIGHED_NODE_FLAGS(m) hcc_node_flags |= m
+#define SET_HCC_CLUSTER_FLAGS(m) hcc_cluster_flags |= m
+#define SET_HCC_NODE_FLAGS(m) hcc_node_flags |= m
 
-#define CLEAR_KERRIGHED_CLUSTER_FLAGS(m) hcc_cluster_flags &= ~m
-#define CLEAR_KERRIGHED_NODE_FLAGS(m) hcc_node_flags &= ~m
+#define CLEAR_HCC_CLUSTER_FLAGS(m) hcc_cluster_flags &= ~m
+#define CLEAR_HCC_NODE_FLAGS(m) hcc_node_flags &= ~m
 
 #endif

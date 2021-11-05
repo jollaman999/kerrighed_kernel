@@ -48,11 +48,11 @@ static DECLARE_DELAYED_WORK(update_dynamic_cpu_info_work,
  */
 static void update_dynamic_cpu_info_worker(struct work_struct *data)
 {
-	krg_dynamic_cpu_info_t *dynamic_cpu_info;
+	hcc_dynamic_cpu_info_t *dynamic_cpu_info;
 	int i, j, cpu_id;
 
 	for_each_online_cpu(i) {
-		cpu_id = krg_cpu_id(i);
+		cpu_id = hcc_cpu_id(i);
 		dynamic_cpu_info =
 			_gdm_grab_object(dynamic_cpu_info_gdm_set, cpu_id);
 
@@ -77,7 +77,7 @@ static void update_dynamic_cpu_info_worker(struct work_struct *data)
 		_gdm_put_object(dynamic_cpu_info_gdm_set, cpu_id);
 	}
 
-	queue_delayed_work(krg_wq, &update_dynamic_cpu_info_work, HZ);
+	queue_delayed_work(hcc_wq, &update_dynamic_cpu_info_work, HZ);
 }
 
 int dynamic_cpu_info_init(void)
@@ -92,11 +92,11 @@ int dynamic_cpu_info_init(void)
 				    DYNAMIC_CPU_INFO_GDM_ID,
 				    DYNAMIC_CPU_INFO_LINKER,
 				    GDM_CUSTOM_DEF_OWNER,
-				    sizeof(krg_dynamic_cpu_info_t),
+				    sizeof(hcc_dynamic_cpu_info_t),
 				    0);
 	if (IS_ERR(dynamic_cpu_info_gdm_set))
 		OOM;
 
-	queue_delayed_work(krg_wq, &update_dynamic_cpu_info_work, 0);
+	queue_delayed_work(hcc_wq, &update_dynamic_cpu_info_work, 0);
 	return 0;
 }

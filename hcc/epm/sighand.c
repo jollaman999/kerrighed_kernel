@@ -18,7 +18,7 @@
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>
 #include <hcc/action.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 
 struct sighand_struct_gdm_object {
@@ -58,7 +58,7 @@ static void sighand_struct_attach_object(struct sighand_struct *sig,
 					 struct sighand_struct_gdm_object *obj,
 					 objid_t objid)
 {
-	sig->krg_objid = objid;
+	sig->hcc_objid = objid;
 	sig->gdm_obj = obj;
 	obj->sighand = sig;
 }
@@ -170,14 +170,14 @@ static int sighand_struct_export_object(struct rpc_desc *desc,
 	return retval;
 }
 
-void krg_sighand_pin(struct sighand_struct *sig)
+void hcc_sighand_pin(struct sighand_struct *sig)
 {
 	struct sighand_struct_gdm_object *obj = sig->gdm_obj;
 	BUG_ON(!obj);
 	down_read(&obj->remove_sem);
 }
 
-void krg_sighand_unpin(struct sighand_struct *sig)
+void hcc_sighand_unpin(struct sighand_struct *sig)
 {
 	struct sighand_struct_gdm_object *obj = sig->gdm_obj;
 	BUG_ON(!obj);
@@ -216,7 +216,7 @@ static struct iolinker_struct sighand_struct_io_linker = {
  * Get and lock a sighand structure for a given process
  * @author Innogrid HCC
  */
-struct sighand_struct *krg_sighand_readlock(objid_t id)
+struct sighand_struct *hcc_sighand_readlock(objid_t id)
 {
 	struct sighand_struct_gdm_object *obj;
 
@@ -234,7 +234,7 @@ struct sighand_struct *krg_sighand_readlock(objid_t id)
  * Grab and lock a sighand structure for a given process
  * @author Innogrid HCC
  */
-struct sighand_struct *krg_sighand_writelock(objid_t id)
+struct sighand_struct *hcc_sighand_writelock(objid_t id)
 {
 	struct sighand_struct_gdm_object *obj;
 
@@ -252,14 +252,14 @@ struct sighand_struct *krg_sighand_writelock(objid_t id)
  * unlock a sighand structure for a given process
  * @author Innogrid HCC
  */
-void krg_sighand_unlock(objid_t id)
+void hcc_sighand_unlock(objid_t id)
 {
 	_gdm_put_object(sighand_struct_gdm_set, id);
 }
 
 static
 struct sighand_struct_gdm_object *
-____krg_sighand_alloc(struct sighand_struct *sig)
+____hcc_sighand_alloc(struct sighand_struct *sig)
 {
 	struct sighand_struct_gdm_object *obj;
 	unique_id_t id;
@@ -280,7 +280,7 @@ ____krg_sighand_alloc(struct sighand_struct *sig)
  * Alloc a dedicated sighand_struct to task_struct task.
  * @author Innogrid HCC
  */
-static void __krg_sighand_alloc(struct task_struct *task,
+static void __hcc_sighand_alloc(struct task_struct *task,
 				struct sighand_struct *sig)
 {
 	struct sighand_struct_gdm_object *obj;
@@ -295,42 +295,42 @@ static void __krg_sighand_alloc(struct task_struct *task,
 	 * is being allocated, but we only need to know whether it is NULL or
 	 * not, which will be the same after copy_mm.
 	 */
-	if (!task->nsproxy->krg_ns
+	if (!task->nsproxy->hcc_ns
 	    || !(task_pid_knr(task) & GLOBAL_PID_MASK)
 	    || (task->flags & PF_KTHREAD)) {
-		BUG_ON(krg_current);
-		sig->krg_objid = 0;
+		BUG_ON(hcc_current);
+		sig->hcc_objid = 0;
 		sig->gdm_obj = NULL;
 		return;
 	}
 
-	obj = ____krg_sighand_alloc(sig);
+	obj = ____hcc_sighand_alloc(sig);
 	BUG_ON(!obj);
-	krg_sighand_unlock(sig->krg_objid);
+	hcc_sighand_unlock(sig->hcc_objid);
 }
 
-void krg_sighand_alloc(struct task_struct *task, unsigned long clone_flags)
+void hcc_sighand_alloc(struct task_struct *task, unsigned long clone_flags)
 {
 	struct sighand_struct *sig = task->sighand;
 
-	if (krg_current && !in_krg_do_fork())
+	if (hcc_current && !in_hcc_do_fork())
 		/*
 		 * This is a process migration or restart: sighand_struct is
 		 * already setup.
 		 */
 		return;
 
-	if (!krg_current && (clone_flags & CLONE_SIGHAND))
+	if (!hcc_current && (clone_flags & CLONE_SIGHAND))
 		/* New thread: already done in copy_sighand() */
 		return;
 
-	__krg_sighand_alloc(task, sig);
+	__hcc_sighand_alloc(task, sig);
 }
 
-void krg_sighand_alloc_unshared(struct task_struct *task,
+void hcc_sighand_alloc_unshared(struct task_struct *task,
 				struct sighand_struct *sig)
 {
-	__krg_sighand_alloc(task, sig);
+	__hcc_sighand_alloc(task, sig);
 }
 
 struct sighand_struct *cr_sighand_alloc(void)
@@ -342,7 +342,7 @@ struct sighand_struct *cr_sighand_alloc(void)
 	if (!sig)
 		return NULL;
 
-	obj = ____krg_sighand_alloc(sig);
+	obj = ____hcc_sighand_alloc(sig);
 	BUG_ON(!obj);
 
 	return sig;
@@ -354,7 +354,7 @@ void cr_sighand_free(objid_t id)
 }
 
 /* Assumes that the associated gdm object is write locked. */
-void krg_sighand_share(struct task_struct *task)
+void hcc_sighand_share(struct task_struct *task)
 {
 	struct sighand_struct_gdm_object *obj = task->sighand->gdm_obj;
 	int count;
@@ -362,19 +362,19 @@ void krg_sighand_share(struct task_struct *task)
 	count = atomic_inc_return(&obj->count);
 }
 
-objid_t krg_sighand_exit(struct sighand_struct *sig)
+objid_t hcc_sighand_exit(struct sighand_struct *sig)
 {
 	struct sighand_struct_gdm_object *obj = sig->gdm_obj;
-	objid_t id = sig->krg_objid;
+	objid_t id = sig->hcc_objid;
 	int count;
 
 	if (!obj)
 		return 0;
 
-	krg_sighand_writelock(id);
+	hcc_sighand_writelock(id);
 	count = atomic_dec_return(&obj->count);
 	if (count == 0) {
-		krg_sighand_unlock(id);
+		hcc_sighand_unlock(id);
 		BUG_ON(obj->keep_on_remove);
 		/* Free the gdm object but keep the sighand_struct so that
 		 * __exit_sighand releases it properly. */
@@ -387,14 +387,14 @@ objid_t krg_sighand_exit(struct sighand_struct *sig)
 	return id;
 }
 
-void krg_sighand_cleanup(struct sighand_struct *sig)
+void hcc_sighand_cleanup(struct sighand_struct *sig)
 {
 	objid_t locked_id;
 
-	locked_id = krg_sighand_exit(sig);
+	locked_id = hcc_sighand_exit(sig);
 	__cleanup_sighand(sig);
 	if (locked_id)
-		krg_sighand_unlock(locked_id);
+		hcc_sighand_unlock(locked_id);
 }
 
 /* EPM actions */
@@ -440,8 +440,8 @@ int export_sighand_struct(struct epm_action *action,
 		return r;
 	}
 
-	r = ghost_write(ghost, &tsk->sighand->krg_objid,
-			sizeof(tsk->sighand->krg_objid));
+	r = ghost_write(ghost, &tsk->sighand->hcc_objid,
+			sizeof(tsk->sighand->hcc_objid));
 	if (r)
 		goto err_write;
 
@@ -473,13 +473,13 @@ static int cr_link_to_sighand_struct(struct epm_action *action,
 		r = -E_CR_BADDATA;
 		goto err;
 	}
-	krg_sighand_writelock(sig->krg_objid);
+	hcc_sighand_writelock(sig->hcc_objid);
 
 	atomic_inc(&sig->count);
 	tsk->sighand = sig;
 
-	krg_sighand_share(tsk);
-	krg_sighand_unlock(sig->krg_objid);
+	hcc_sighand_share(tsk);
+	hcc_sighand_unlock(sig->hcc_objid);
 err:
 	return r;
 }
@@ -487,7 +487,7 @@ err:
 int import_sighand_struct(struct epm_action *action,
 			  ghost_t *ghost, struct task_struct *tsk)
 {
-	unsigned long krg_objid;
+	unsigned long hcc_objid;
 	int r;
 
 	if (action->type == EPM_CHECKPOINT
@@ -496,39 +496,39 @@ int import_sighand_struct(struct epm_action *action,
 		return r;
 	}
 
-	r = ghost_read(ghost, &krg_objid, sizeof(krg_objid));
+	r = ghost_read(ghost, &hcc_objid, sizeof(hcc_objid));
 	if (r)
 		goto err_read;
 
 	switch (action->type) {
 	case EPM_MIGRATE:
-		tsk->sighand = krg_sighand_writelock(krg_objid);
+		tsk->sighand = hcc_sighand_writelock(hcc_objid);
 		BUG_ON(!tsk->sighand);
-		krg_sighand_unlock(krg_objid);
+		hcc_sighand_unlock(hcc_objid);
 		break;
 	case EPM_REMOTE_CLONE:
 		/*
 		 * The structure will be partly copied when creating the
 		 * active process.
 		 */
-		tsk->sighand = krg_sighand_readlock(krg_objid);
+		tsk->sighand = hcc_sighand_readlock(hcc_objid);
 		BUG_ON(!tsk->sighand);
-		krg_sighand_unlock(krg_objid);
+		hcc_sighand_unlock(hcc_objid);
 		break;
 	case EPM_CHECKPOINT:
 		tsk->sighand = cr_sighand_alloc();
-		krg_objid = tsk->sighand->krg_objid;
+		hcc_objid = tsk->sighand->hcc_objid;
 
 		r = ghost_read(ghost,
 			       &tsk->sighand->action,
 			       sizeof(tsk->sighand->action));
 		if (r) {
-			cr_sighand_free(krg_objid);
+			cr_sighand_free(hcc_objid);
 			goto err_read;
 		}
 		atomic_set(&tsk->sighand->count, 1);
 
-		krg_sighand_unlock(krg_objid);
+		hcc_sighand_unlock(hcc_objid);
 		break;
 	default:
 		PANIC("Case not supported: %d\n", action->type);
@@ -586,9 +586,9 @@ static int cr_import_complete_sighand_struct(struct task_struct *fake,
 {
 	unsigned long sighand_id;
 	struct sighand_struct *sig = _sig;
-	sighand_id = krg_sighand_exit(sig);
+	sighand_id = hcc_sighand_exit(sig);
 	if (sighand_id)
-		krg_sighand_unlock(sighand_id);
+		hcc_sighand_unlock(sighand_id);
 
 	BUG_ON(atomic_read(&sig->count) <= 1);
 	__cleanup_sighand(sig);
@@ -600,9 +600,9 @@ static int cr_delete_sighand_struct(struct task_struct *fake, void *_sig)
 {
 	unsigned long sighand_id;
 	struct sighand_struct *sig = _sig;
-	sighand_id = krg_sighand_exit(sig);
+	sighand_id = hcc_sighand_exit(sig);
 	if (sighand_id)
-		krg_sighand_unlock(sighand_id);
+		hcc_sighand_unlock(sighand_id);
 
 	BUG_ON(atomic_read(&sig->count) != 1);
 	__cleanup_sighand(sig);

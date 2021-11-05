@@ -39,17 +39,17 @@
 #include <linux/jiffies.h>
 #include <linux/errno.h>
 #include <linux/err.h>
-#include <hcc/krginit.h>
+#include <hcc/hccinit.h>
 #include <hcc/sys/types.h>
-#include <hcc/krgnodemask.h>
+#include <hcc/hccnodemask.h>
 #include <hcc/hotplug.h>
 #include <hcc/workqueue.h>
 #ifdef CONFIG_HCC_EPM
 #include <hcc/ghost.h>
 #endif
 #include <hcc/scheduler/global_config.h>
-#include <net/krgrpc/rpc.h>
-#include <net/krgrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
 #include <gdm/gdm.h>
 
 #include <asm/fcntl.h>
@@ -99,9 +99,9 @@ void global_config_thaw(void)
 	global_lock_unlock(0);
 }
 
-static inline int in_krg_scheduler_subsys(struct config_item *item)
+static inline int in_hcc_scheduler_subsys(struct config_item *item)
 {
-	return item && item != &krg_scheduler_subsys.su_group.cg_item;
+	return item && item != &hcc_scheduler_subsys.su_group.cg_item;
 }
 
 /* Two following functions adapted from configfs/symlink.c */
@@ -113,7 +113,7 @@ static int item_path_length(struct config_item *item)
 	do {
 		length += strlen(config_item_name(p)) + 1;
 		p = p->ci_parent;
-	} while (in_krg_scheduler_subsys(p));
+	} while (in_hcc_scheduler_subsys(p));
 	return length;
 }
 
@@ -122,7 +122,7 @@ static void fill_item_path(struct config_item *item, char *buffer, int length)
 	struct config_item *p;
 
 	--length;
-	for (p = item; in_krg_scheduler_subsys(p); p = p->ci_parent) {
+	for (p = item; in_hcc_scheduler_subsys(p); p = p->ci_parent) {
 		int cur = strlen(config_item_name(p));
 
 		/* back up enough to print this bus id with '/' */
@@ -185,7 +185,7 @@ static struct dentry *get_child_dentry(const char *child_name)
 	const char *real_child_name = child_name;
 	int err;
 
-	d_dir = dget(krg_scheduler_subsys.su_group.cg_item.ci_dentry);
+	d_dir = dget(hcc_scheduler_subsys.su_group.cg_item.ci_dentry);
 
 	last_child_comp = strrchr(child_name, '/');
 	if (last_child_comp) {
@@ -248,7 +248,7 @@ static void chroot_to_scheduler_subsystem(struct path *prev_root)
 	read_unlock(&current->fs->lock);
 
 	new_root.mnt = scheduler_fs_mount;
-	new_root.dentry = krg_scheduler_subsys.su_group.cg_item.ci_dentry;
+	new_root.dentry = hcc_scheduler_subsys.su_group.cg_item.ci_dentry;
 	set_fs_root(current->fs, &new_root);
 }
 
@@ -284,7 +284,7 @@ struct config_op_message {
 	enum config_op op;
 };
 
-static struct rpc_desc *__global_config_op_begin(krgnodemask_t *nodes,
+static struct rpc_desc *__global_config_op_begin(hccnodemask_t *nodes,
 						 enum config_op op)
 {
 	struct config_op_message msg = {
@@ -318,12 +318,12 @@ static struct rpc_desc *__global_config_op_begin(krgnodemask_t *nodes,
  *		       the operation.
  */
 static struct rpc_desc *global_config_op_begin(enum config_op op,
-					       krgnodemask_t *nodes)
+					       hccnodemask_t *nodes)
 {
-	krgnodemask_t _nodes = krgnode_online_map;
+	hccnodemask_t _nodes = hccnode_online_map;
 	struct rpc_desc *desc;
 
-	krgnode_clear(hcc_node_id, _nodes);
+	hccnode_clear(hcc_node_id, _nodes);
 	desc = __global_config_op_begin(&_nodes, op);
 	if (!IS_ERR(desc))
 		*nodes = _nodes;
@@ -342,13 +342,13 @@ static struct rpc_desc *global_config_op_begin(enum config_op op,
  * @return	       0 if the operation succeeded on all contacted nodes, or
  *                     error
  */
-static int global_config_op_end(struct rpc_desc *desc, krgnodemask_t *nodes)
+static int global_config_op_end(struct rpc_desc *desc, hccnodemask_t *nodes)
 {
 	int res = 0;
 	hcc_node_t node;
 	int err;
 
-	for_each_krgnode_mask(node, *nodes) {
+	for_each_hccnode_mask(node, *nodes) {
 		err = rpc_unpack_type_from(desc, node, res);
 		if (!err && res) {
 			rpc_cancel(desc);
@@ -443,7 +443,7 @@ static void put_string(char *string)
 
 static
 int
-do_global_config_write(struct rpc_desc *desc, krgnodemask_t *nodes,
+do_global_config_write(struct rpc_desc *desc, hccnodemask_t *nodes,
 		       struct config_item *item,
 		       struct configfs_attribute *attr,
 		       const char *page, size_t count)
@@ -480,7 +480,7 @@ static int global_config_write(struct config_item *item,
 			       const char *page, size_t count)
 {
 	struct rpc_desc *desc;
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 
 	desc = global_config_op_begin(CO_WRITE, &nodes);
 	if (IS_ERR(desc))
@@ -488,7 +488,7 @@ static int global_config_write(struct config_item *item,
 	return do_global_config_write(desc, &nodes, item, attr, page, count);
 }
 
-static int __global_config_write(krgnodemask_t *nodes,
+static int __global_config_write(hccnodemask_t *nodes,
 				 struct config_item *item,
 				 struct configfs_attribute *attr,
 				 const char *page, size_t count)
@@ -564,7 +564,7 @@ err_path:
 	goto out;
 }
 
-static int do_global_config_dir_op(struct rpc_desc *desc, krgnodemask_t *nodes,
+static int do_global_config_dir_op(struct rpc_desc *desc, hccnodemask_t *nodes,
 				   enum config_op op,
 				   const char *name, const char *old_name)
 {
@@ -592,7 +592,7 @@ err_cancel:
 	goto out;
 }
 
-static int __global_config_dir_op(krgnodemask_t *nodes, enum config_op op,
+static int __global_config_dir_op(hccnodemask_t *nodes, enum config_op op,
 				  const char *name, const char *old_name)
 {
 	struct rpc_desc *desc;
@@ -625,7 +625,7 @@ static int global_config_dir_op(enum config_op op,
 				const char *name, const char *old_name)
 {
 	struct rpc_desc *desc;
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 	int err;
 
 	desc = global_config_op_begin(op, &nodes);
@@ -1089,7 +1089,7 @@ static struct timespec drop_delay = {
 
 static void delay_drop(struct global_config_item *item)
 {
-	queue_delayed_work(krg_wq, &item->drop_work,
+	queue_delayed_work(hcc_wq, &item->drop_work,
 			   timespec_to_jiffies(&drop_delay));
 }
 
@@ -1416,7 +1416,7 @@ static struct config_item *get_item(const char *path)
 	char *__path;
 	char *parent_root, *next_root;
 
-	child = &krg_scheduler_subsys.su_group.cg_item;
+	child = &hcc_scheduler_subsys.su_group.cg_item;
 	/* Get rid of special case "/" */
 	BUG_ON(!path[0]);
 	if (!path[1])
@@ -1428,13 +1428,13 @@ static struct config_item *get_item(const char *path)
 
 	/*
 	 * The algorithm to walk the tree is not safe for a general case
-	 * configfs tree, but it is safe with krg_scheduler subtree since all
+	 * configfs tree, but it is safe with hcc_scheduler subtree since all
 	 * directories are config_groups.
 	 */
 
 	parent_root = __path;
 
-	mutex_lock(&krg_scheduler_subsys.su_mutex);
+	mutex_lock(&hcc_scheduler_subsys.su_mutex);
 	do {
 		parent = to_config_group(child);
 		next_root = strchr(parent_root + 1, '/');
@@ -1447,7 +1447,7 @@ static struct config_item *get_item(const char *path)
 	} while (parent_root);
 	if (child)
 		config_item_get(child);
-	mutex_unlock(&krg_scheduler_subsys.su_mutex);
+	mutex_unlock(&hcc_scheduler_subsys.su_mutex);
 
 	kfree(__path);
 	if (!child)
@@ -1528,7 +1528,7 @@ out:
 
 static int replicate_config(hcc_node_t node)
 {
-	krgnodemask_t nodes = krgnodemask_of_node(node);
+	hccnodemask_t nodes = hccnodemask_of_node(node);
 	struct global_config_item *item;
 	struct global_config_attr *attr;
 	enum config_op op;
@@ -1569,12 +1569,12 @@ cleanup:
 
 int global_config_add(struct hotplug_context *ctx)
 {
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 	hcc_node_t node, master;
 	int err, err2 = 0;
 
-	krgnodes_or(nodes, ctx->node_set.v, krgnode_online_map);
-	master = first_krgnode(nodes);
+	hccnodes_or(nodes, ctx->node_set.v, hccnode_online_map);
+	master = first_hccnode(nodes);
 
 	if (master == hcc_node_id) {
 		err = global_config_freeze();
@@ -1591,9 +1591,9 @@ int global_config_add(struct hotplug_context *ctx)
 		goto out_check;
 
 	/* There is no config to replicate at cluster start. */
-	if (first_krgnode(krgnode_online_map) == hcc_node_id) {
-		BUG_ON(krgnode_isset(hcc_node_id, ctx->node_set.v));
-		for_each_krgnode_mask(node, ctx->node_set.v) {
+	if (first_hccnode(hccnode_online_map) == hcc_node_id) {
+		BUG_ON(hccnode_isset(hcc_node_id, ctx->node_set.v));
+		for_each_hccnode_mask(node, ctx->node_set.v) {
 			err = replicate_config(node);
 			if (err)
 				break;
@@ -1605,7 +1605,7 @@ int global_config_add(struct hotplug_context *ctx)
 out_check:
 	err = err ? : err2;
 	if (err) {
-		if (krgnode_isset(hcc_node_id, ctx->node_set.v))
+		if (hccnode_isset(hcc_node_id, ctx->node_set.v))
 			rpc_disable(GLOBAL_CONFIG_OP);
 		up_write(&attrs_rwsem);
 		if (master == hcc_node_id)
@@ -1617,9 +1617,9 @@ out:
 
 int global_config_post_add(struct hotplug_context *ctx)
 {
-	BUG_ON(!krgnodes_subset(ctx->node_set.v, krgnode_online_map));
+	BUG_ON(!hccnodes_subset(ctx->node_set.v, hccnode_online_map));
 	up_write(&attrs_rwsem);
-	if (first_krgnode(krgnode_online_map) == hcc_node_id)
+	if (first_hccnode(hccnode_online_map) == hcc_node_id)
 		global_config_thaw();
 
 	return 0;

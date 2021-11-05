@@ -9,7 +9,7 @@
 #define __GDM_NS__
 
 #include <linux/unique_id.h>
-#include <linux/krg_hashtable.h>
+#include <linux/hcc_hashtable.h>
 #include <gdm/gdm_types.h>
 
 

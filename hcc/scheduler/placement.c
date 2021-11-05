@@ -17,7 +17,7 @@ static hcc_node_t scheduler_new_task_node(struct scheduler *scheduler,
 						struct task_struct *parent)
 {
 	struct scheduler_policy *p;
-	hcc_node_t node = KERRIGHED_NODE_ID_NONE;
+	hcc_node_t node = HCC_NODE_ID_NONE;
 
 	p = scheduler_get_scheduler_policy(scheduler);
 	if (!p)
@@ -39,11 +39,11 @@ out:
  */
 hcc_node_t new_task_node(struct task_struct *parent)
 {
-	hcc_node_t node = KERRIGHED_NODE_ID_NONE;
+	hcc_node_t node = HCC_NODE_ID_NONE;
 	struct scheduler *s;
 #define QUERY_SCHEDULER(s)				   \
 		node = scheduler_new_task_node(s, parent); \
-		if (node != KERRIGHED_NODE_ID_NONE) {	   \
+		if (node != HCC_NODE_ID_NONE) {	   \
 			scheduler_put(s);		   \
 			goto out;			   \
 		}

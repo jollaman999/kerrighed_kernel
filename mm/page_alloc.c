@@ -2346,7 +2346,7 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 	lockdep_trace_alloc(gfp_mask);
 
 #ifdef CONFIG_HCC_MM
-	krg_notify_mem(0);
+	hcc_notify_mem(0);
 #endif
 	might_sleep_if(gfp_mask & __GFP_WAIT);
 
@@ -2425,7 +2425,7 @@ void __pagevec_free(struct pagevec *pvec)
 void __free_pages(struct page *page, unsigned int order)
 {
 #ifdef CONFIG_HCC_MM
-	krg_notify_mem(0);
+	hcc_notify_mem(0);
 #endif
 	if (put_page_testzero(page)) {
 		trace_mm_page_free_direct(page, order);

@@ -273,7 +273,7 @@ int vfs_fsync_range(struct file *file, struct dentry *dentry, loff_t start,
 	if (file) {
 #ifdef CONFIG_HCC_FAF
 		if (file->f_flags & O_FAF_CLT) {
-			ret = krg_faf_fsync(file);
+			ret = hcc_faf_fsync(file);
 			goto out;
 		}
 #endif

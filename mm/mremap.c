@@ -625,7 +625,7 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
 
 #ifdef CONFIG_HCC_MM
 	if (!(ret & ~PAGE_MASK) && current->mm->anon_vma_gdm_set)
-		krg_do_mremap(current->mm, addr, old_len, new_len, flags,
+		hcc_do_mremap(current->mm, addr, old_len, new_len, flags,
 			      new_addr, _new_addr,
 			      current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur);
 #endif

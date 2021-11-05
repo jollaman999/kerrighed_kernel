@@ -141,7 +141,7 @@ void ipc_init_ids(struct ipc_ids *ids)
 
 	idr_init(&ids->ipcs_idr);
 #ifdef CONFIG_HCC_IPC
-	ids->krgops = NULL;
+	ids->hccops = NULL;
 #endif
 }
 
@@ -197,8 +197,8 @@ static struct kern_ipc_perm *ipc_findkey(struct ipc_ids *ids, key_t key)
 	int total;
 
 #ifdef CONFIG_HCC_IPC
-	if (is_krg_ipc(ids)) {
-		ipc = ids->krgops->ipc_findkey(ids, key);
+	if (is_hcc_ipc(ids)) {
+		ipc = ids->hccops->ipc_findkey(ids, key);
 		if (IS_ERR(ipc))
 			ipc = NULL;
 		return ipc;
@@ -237,8 +237,8 @@ int ipc_get_maxid(struct ipc_ids *ids)
 	int total, id;
 
 #ifdef CONFIG_HCC_IPC
-	if (is_krg_ipc(ids))
-		return krg_ipc_get_maxid(ids);
+	if (is_hcc_ipc(ids))
+		return hcc_ipc_get_maxid(ids);
 #endif
 
 	if (ids->in_use == 0)
@@ -277,14 +277,14 @@ bool ipc_used(struct ipc_namespace *ns)
 	return used;
 }
 
-static int krg_idr_get_new(struct ipc_ids *ids, struct kern_ipc_perm *new, int *id)
+static int hcc_idr_get_new(struct ipc_ids *ids, struct kern_ipc_perm *new, int *id)
 {
 	int err;
 
-	if (is_krg_ipc(ids)) {
+	if (is_hcc_ipc(ids)) {
 		int ipcid, lid;
 
-		ipcid = krg_ipc_get_new_id(ids);
+		ipcid = hcc_ipc_get_new_id(ids);
 		if (ipcid == -1) {
 			err = -ENOMEM;
 			goto error;
@@ -318,7 +318,7 @@ static int ipc_reserveid(struct ipc_ids *ids, struct kern_ipc_perm *new,
 
 	lid = ipcid_to_idx(requested_id);
 
-	err = krg_ipc_get_this_id(ids, lid);
+	err = hcc_ipc_get_this_id(ids, lid);
 	if (err)
 		goto out;
 
@@ -330,7 +330,7 @@ static int ipc_reserveid(struct ipc_ids *ids, struct kern_ipc_perm *new,
 
 	err = idr_get_new_above(&ids->ipcs_idr, new, lid, &id);
 	if (err)
-		goto out_free_krg_id;
+		goto out_free_hcc_id;
 
 	if (lid != id) {
 		err = -EINVAL;
@@ -357,8 +357,8 @@ static int ipc_reserveid(struct ipc_ids *ids, struct kern_ipc_perm *new,
 
 out_free_idr_id:
 	idr_remove(&ids->ipcs_idr, id);
-out_free_krg_id:
-	krg_ipc_rmid(ids, lid);
+out_free_hcc_id:
+	hcc_ipc_rmid(ids, lid);
 out:
 	spin_unlock(&new->lock);
 	rcu_read_unlock();
@@ -413,7 +413,7 @@ int ipc_addid(struct ipc_ids* ids, struct kern_ipc_perm* new, int size)
 	new->gid = new->cgid = egid;
 
 #ifdef CONFIG_HCC_IPC
-	err = krg_idr_get_new(ids, new, &id);
+	err = hcc_idr_get_new(ids, new, &id);
 #else
 	err = idr_get_new(&ids->ipcs_idr, new, &id);
 #endif
@@ -883,8 +883,8 @@ out:
 #ifdef CONFIG_HCC_IPC
 struct kern_ipc_perm *ipc_lock(struct ipc_ids *ids, int id)
 {
-	if (is_krg_ipc(ids))
-		return ids->krgops->ipc_lock(ids, id);
+	if (is_hcc_ipc(ids))
+		return ids->hccops->ipc_lock(ids, id);
 
 	return local_ipc_lock(ids, id);
 }
@@ -915,8 +915,8 @@ void local_ipc_unlock(struct kern_ipc_perm *perm)
 
 void ipc_unlock(struct kern_ipc_perm *perm)
 {
-	if (perm->krgops)
-		perm->krgops->ipc_unlock(perm);
+	if (perm->hccops)
+		perm->hccops->ipc_unlock(perm);
 	else
 		local_ipc_unlock(perm);
 }
@@ -1248,9 +1248,9 @@ void sem_rcu_free(struct rcu_head *head)
 	ipc_rcu_free(head);
 }
 
-int is_krg_ipc(struct ipc_ids *ids)
+int is_hcc_ipc(struct ipc_ids *ids)
 {
-	if (ids->krgops)
+	if (ids->hccops)
 		return 1;
 
 	return 0;

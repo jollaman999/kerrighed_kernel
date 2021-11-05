@@ -60,7 +60,7 @@
 102:
 	.section .fixup,"ax"
 103:	addl %ecx,%edx			/* ecx is zerorest also */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	jmp copy_user_check_ruaccess
 #else
 	jmp copy_user_handle_tail
@@ -136,7 +136,7 @@ ENDPROC(bad_from_user)
  */
 ENTRY(copy_user_generic_unrolled)
 	CFI_STARTPROC
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	pushq_cfi %rdx	/* save count */
 	CFI_REL_OFFSET rdx,0
 #endif
@@ -187,7 +187,7 @@ ENTRY(copy_user_generic_unrolled)
 	decl %ecx
 	jnz 21b
 23:	xor %eax,%eax
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	leaq 8(%rsp),%rsp
 	CFI_ADJUST_CFA_OFFSET -8
 #endif
@@ -200,7 +200,7 @@ ENTRY(copy_user_generic_unrolled)
 40:	lea (%rdx,%rcx,8),%rdx
 	jmp 60f
 50:	movl %ecx,%edx
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 60:	jmp copy_user_check_ruaccess
 #else
 60:	jmp copy_user_handle_tail /* ecx is zerorest also */
@@ -255,7 +255,7 @@ ENTRY(copy_user_generic_string)
 	CFI_STARTPROC
 	andl %edx,%edx
 	jz 4f
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	pushq_cfi %rdx	/* save count */
 	CFI_REL_OFFSET rdx,0
 #endif
@@ -270,7 +270,7 @@ ENTRY(copy_user_generic_string)
 2:	movl %edx,%ecx
 3:	rep
 	movsb
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	leaq 8(%rsp),%rsp
 	CFI_ADJUST_CFA_OFFSET -8
 #endif
@@ -280,7 +280,7 @@ ENTRY(copy_user_generic_string)
 	.section .fixup,"ax"
 11:	lea (%rdx,%rcx,8),%rcx
 12:	movl %ecx,%edx		/* ecx is zerorest also */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	jmp copy_user_check_ruaccess
 #else
 	jmp copy_user_handle_tail
@@ -329,7 +329,7 @@ ENTRY(copy_user_enhanced_fast_string)
 	CFI_ENDPROC
 ENDPROC(copy_user_enhanced_fast_string)
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 ENTRY(copy_user_check_ruaccess)
 	CFI_STARTPROC
 	cmpl %edx,(%rsp)
@@ -340,7 +340,7 @@ ENTRY(copy_user_check_ruaccess)
 	jz copy_user_handle_tail
 	cmpq $-1,TI_addr_limit(%rax)
 	je copy_user_handle_tail
-	jmp krg_copy_user_generic
+	jmp hcc_copy_user_generic
 	CFI_ENDPROC
 ENDPROC(copy_user_check_ruaccess)
 

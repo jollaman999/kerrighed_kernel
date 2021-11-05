@@ -6,12 +6,12 @@
 
 #include <linux/timer.h>
 #include <linux/workqueue.h>
-#include <hcc/krgnodemask.h>
-#include <hcc/krginit.h>
+#include <hcc/hccnodemask.h>
+#include <hcc/hccinit.h>
 
 #include <hcc/workqueue.h>
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 
 #include "rpc_internal.h"
 
@@ -32,14 +32,14 @@ static void rpc_pingpong_handler (struct rpc_desc *rpc_desc,
 static void rpc_worker(struct work_struct *data)
 {
 	static unsigned long l = 0;
-	krgnodemask_t n;
+	hccnodemask_t n;
 	int r;
 
 	r = 0;
 	l++;
 	
-	krgnodes_clear(n);
-	krgnode_set(0, n);
+	hccnodes_clear(n);
+	hccnode_set(0, n);
 
 	r = rpc_async(RPC_PINGPONG, 0, &l, sizeof(l));
 	if(r<0)
@@ -50,7 +50,7 @@ static void rpc_worker(struct work_struct *data)
 static void rpc_timer_cb(unsigned long _arg)
 {
 	return;
-	queue_work(krg_wq, &rpc_work);
+	queue_work(hcc_wq, &rpc_work);
 	mod_timer(&rpc_timer, jiffies + 2*HZ);
 }
 

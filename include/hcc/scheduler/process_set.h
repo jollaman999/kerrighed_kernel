@@ -184,7 +184,7 @@ static inline void process_set_prepare_do_each_process(struct process_set *pset)
 			for_each_process(__p) {				   \
 				struct nsproxy *__nsp;			   \
 				__nsp = rcu_dereference(__p->nsproxy);	   \
-				if (__nsp && __nsp->krg_ns) {		   \
+				if (__nsp && __nsp->hcc_ns) {		   \
 					__pid = __p->pids[PIDTYPE_PID].pid;\
 					goto __common_begin;		   \
 				}					   \

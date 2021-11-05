@@ -29,7 +29,7 @@
 #include <linux/personality.h>
 #include <linux/init.h>
 #ifdef CONFIG_HCC_EPM
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -295,10 +295,10 @@ static int __init init_som_binfmt(void)
 #ifdef CONFIG_HCC_EPM
 	int retval;
 
-	krgsyms_register(HCCSYMS_BINFMTS_SOM, &som_format);
+	hccsyms_register(HCCSYMS_BINFMTS_SOM, &som_format);
 	retval = register_binfmt(&som_format);
 	if (retval)
-		krgsyms_unregister(HCCSYMS_BINFMTS_SOM);
+		hccsyms_unregister(HCCSYMS_BINFMTS_SOM);
 	return retval;
 #else
 	return register_binfmt(&som_format);
@@ -309,7 +309,7 @@ static void __exit exit_som_binfmt(void)
 {
 	/* Remove the SOM loader. */
 #ifdef CONFIG_HCC_EPM
-	krgsyms_unregister(HCCSYMS_BINFMTS_SOM);
+	hccsyms_unregister(HCCSYMS_BINFMTS_SOM);
 #endif
 	unregister_binfmt(&som_format);
 }

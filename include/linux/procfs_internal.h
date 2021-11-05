@@ -70,9 +70,9 @@ int epm_source_show(struct task_struct *task, char *buffer);
 int epm_target_show(struct task_struct *task, char *buffer);
 #endif
 
-extern struct dentry *krg_proc_pid_lookup(struct inode *dir,
+extern struct dentry *hcc_proc_pid_lookup(struct inode *dir,
 					  struct dentry *dentry, pid_t pid);
-extern int krg_proc_pid_readdir(struct file *filp,
+extern int hcc_proc_pid_readdir(struct file *filp,
 				void *dirent, filldir_t filldir,
 				loff_t offset);
 #endif /* CONFIG_HCC_PROC */

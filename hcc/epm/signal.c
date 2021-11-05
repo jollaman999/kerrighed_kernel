@@ -30,7 +30,7 @@
 #include <hcc/action.h>
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 
 struct signal_struct_gdm_object {
@@ -102,7 +102,7 @@ static void signal_struct_attach_object(struct signal_struct *sig,
 					struct signal_struct_gdm_object *obj,
 					objid_t objid)
 {
-	sig->krg_objid = objid;
+	sig->hcc_objid = objid;
 	sig->gdm_obj = obj;
 	obj->signal = sig;
 }
@@ -272,7 +272,7 @@ static int signal_struct_export_object(struct rpc_desc *desc,
 	int retval;
 
 	rcu_read_lock();
-	tsk = find_task_by_kpid(obj->signal->krg_objid);
+	tsk = find_task_by_kpid(obj->signal->hcc_objid);
 	/*
 	 * We may find no task in the middle of a migration. In that case, gdm
 	 * locking is enough since neither userspace nor the kernel will access
@@ -298,14 +298,14 @@ static int signal_struct_export_object(struct rpc_desc *desc,
 	return retval;
 }
 
-void krg_signal_pin(struct signal_struct *sig)
+void hcc_signal_pin(struct signal_struct *sig)
 {
 	struct signal_struct_gdm_object *obj = sig->gdm_obj;
 	BUG_ON(!obj);
 	down_read(&obj->remove_sem);
 }
 
-void krg_signal_unpin(struct signal_struct *sig)
+void hcc_signal_unpin(struct signal_struct *sig)
 {
 	struct signal_struct_gdm_object *obj = sig->gdm_obj;
 	BUG_ON(!obj);
@@ -354,7 +354,7 @@ static struct iolinker_struct signal_struct_io_linker = {
 
 static
 struct signal_struct_gdm_object *
-____krg_signal_alloc(struct signal_struct *sig, objid_t id)
+____hcc_signal_alloc(struct signal_struct *sig, objid_t id)
 {
 	struct signal_struct_gdm_object *obj;
 
@@ -377,7 +377,7 @@ static struct signal_struct *cr_signal_alloc(objid_t id)
 	if (!sig)
 		return NULL;
 
-	obj = ____krg_signal_alloc(sig, id);
+	obj = ____hcc_signal_alloc(sig, id);
 	BUG_ON(!obj);
 
 	return sig;
@@ -385,10 +385,10 @@ static struct signal_struct *cr_signal_alloc(objid_t id)
 
 static void cr_signal_free(struct signal_struct *sig)
 {
-	_gdm_remove_frozen_object(signal_struct_gdm_set, sig->krg_objid);
+	_gdm_remove_frozen_object(signal_struct_gdm_set, sig->hcc_objid);
 }
 
-static void __krg_signal_alloc(struct task_struct *task, struct pid *pid)
+static void __hcc_signal_alloc(struct task_struct *task, struct pid *pid)
 {
 	struct signal_struct_gdm_object *obj;
 	struct signal_struct *sig = task->signal;
@@ -405,46 +405,46 @@ static void __krg_signal_alloc(struct task_struct *task, struct pid *pid)
 	 * not, which will be the same after copy_mm.
 	 */
 	if (!(tgid & GLOBAL_PID_MASK) || !task->mm) {
-		BUG_ON(krg_current);
-		sig->krg_objid = 0;
+		BUG_ON(hcc_current);
+		sig->hcc_objid = 0;
 		sig->gdm_obj = NULL;
 		return;
 	}
 
-	obj = ____krg_signal_alloc(sig, tgid);
+	obj = ____hcc_signal_alloc(sig, tgid);
 	BUG_ON(!obj);
-	krg_signal_unlock(sig);
+	hcc_signal_unlock(sig);
 }
 
 /*
  * Alloc a dedicated signal_struct to task_struct task.
  * @author Innogrid HCC
  */
-void krg_signal_alloc(struct task_struct *task, struct pid *pid,
+void hcc_signal_alloc(struct task_struct *task, struct pid *pid,
 		      unsigned long clone_flags)
 {
-	if (!task->nsproxy->krg_ns)
+	if (!task->nsproxy->hcc_ns)
 		return;
 
-	if (krg_current && !in_krg_do_fork())
+	if (hcc_current && !in_hcc_do_fork())
 		/*
 		 * This is a process migration or restart: signal_struct is
 		 * already setup.
 		 */
 		return;
 
-	if (!krg_current && (clone_flags & CLONE_THREAD))
+	if (!hcc_current && (clone_flags & CLONE_THREAD))
 		/* New thread: already done in copy_signal() */
 		return;
 
-	__krg_signal_alloc(task, pid);
+	__hcc_signal_alloc(task, pid);
 }
 
 /*
  * Get and lock a signal structure for a given process
  * @author Innogrid HCC
  */
-static struct signal_struct_gdm_object *__krg_signal_readlock(objid_t id)
+static struct signal_struct_gdm_object *__hcc_signal_readlock(objid_t id)
 {
 	struct signal_struct_gdm_object *obj;
 
@@ -458,23 +458,23 @@ static struct signal_struct_gdm_object *__krg_signal_readlock(objid_t id)
 	return obj;
 }
 
-struct signal_struct *krg_signal_readlock(struct signal_struct *sig)
+struct signal_struct *hcc_signal_readlock(struct signal_struct *sig)
 {
 	struct signal_struct_gdm_object *obj;
-	objid_t id = sig->krg_objid;
+	objid_t id = sig->hcc_objid;
 
 	/* Filter well known cases of no signal_struct gdm object. */
 	if (!sig->gdm_obj)
 		return NULL;
 
-	obj = __krg_signal_readlock(id);
+	obj = __hcc_signal_readlock(id);
 	if (!obj)
 		return NULL;
 
 	return obj->signal;
 }
 
-static struct signal_struct_gdm_object *__krg_signal_writelock(objid_t id)
+static struct signal_struct_gdm_object *__hcc_signal_writelock(objid_t id)
 {
 	struct signal_struct_gdm_object *obj;
 
@@ -491,16 +491,16 @@ static struct signal_struct_gdm_object *__krg_signal_writelock(objid_t id)
  * Grab and lock a signal structure for a given process
  * @author Innogrid HCC
  */
-struct signal_struct *krg_signal_writelock(struct signal_struct *sig)
+struct signal_struct *hcc_signal_writelock(struct signal_struct *sig)
 {
 	struct signal_struct_gdm_object *obj;
-	objid_t id = sig->krg_objid;
+	objid_t id = sig->hcc_objid;
 
 	/* Filter well known cases of no signal_struct gdm object. */
 	if (!sig->gdm_obj)
 		return NULL;
 
-	obj = __krg_signal_writelock(id);
+	obj = __hcc_signal_writelock(id);
 	if (!obj)
 		return NULL;
 
@@ -511,14 +511,14 @@ struct signal_struct *krg_signal_writelock(struct signal_struct *sig)
  * unlock a signal structure for a given process
  * @author Innogrid HCC
  */
-void krg_signal_unlock(struct signal_struct *sig)
+void hcc_signal_unlock(struct signal_struct *sig)
 {
 	if (sig)
-		_gdm_put_object(signal_struct_gdm_set, sig->krg_objid);
+		_gdm_put_object(signal_struct_gdm_set, sig->hcc_objid);
 }
 
 /* Assumes that the associated gdm object is write locked. */
-void krg_signal_share(struct signal_struct *sig)
+void hcc_signal_share(struct signal_struct *sig)
 {
 	struct signal_struct_gdm_object *obj = sig->gdm_obj;
 	int count;
@@ -526,20 +526,20 @@ void krg_signal_share(struct signal_struct *sig)
 	count = atomic_inc_return(&obj->count);
 }
 
-struct signal_struct *krg_signal_exit(struct signal_struct *sig)
+struct signal_struct *hcc_signal_exit(struct signal_struct *sig)
 {
-	objid_t id = sig->krg_objid;
+	objid_t id = sig->hcc_objid;
 	struct signal_struct_gdm_object *obj;
 	int count;
 
 	if (!sig->gdm_obj)
 		return NULL;
 
-	obj = __krg_signal_writelock(id);
+	obj = __hcc_signal_writelock(id);
 	BUG_ON(obj != sig->gdm_obj);
 	count = atomic_dec_return(&obj->count);
 	if (count == 0) {
-		krg_signal_unlock(sig);
+		hcc_signal_unlock(sig);
 		BUG_ON(obj->keep_on_remove);
 		/* Free the gdm object but keep the signal_struct so that
 		 * __exit_signal releases it properly. */
@@ -562,7 +562,7 @@ static int export_sigqueue(ghost_t *ghost,
 {
 	int err = -EBUSY;
 
-	if (sig->user->user_ns != task->nsproxy->krg_ns->root_user_ns)
+	if (sig->user->user_ns != task->nsproxy->hcc_ns->root_user_ns)
 		goto out;
 
 	err = ghost_write(ghost, &sig->info, sizeof(sig->info));
@@ -589,7 +589,7 @@ static int import_sigqueue(ghost_t *ghost,
 	err = ghost_read(ghost, &uid, sizeof(uid));
 	if (err)
 		goto out;
-	user = alloc_uid(task->nsproxy->krg_ns->root_user_ns, uid);
+	user = alloc_uid(task->nsproxy->hcc_ns->root_user_ns, uid);
 	if (!user) {
 		err = -ENOMEM;
 		goto out;
@@ -765,7 +765,7 @@ static int cr_export_later_signal_struct(struct epm_action *action,
 	BUG_ON(action->type != EPM_CHECKPOINT);
 	BUG_ON(action->checkpoint.shared != CR_SAVE_LATER);
 
-	key = (long)(task->signal->krg_objid);
+	key = (long)(task->signal->hcc_objid);
 
 	r = ghost_write(ghost, &key, sizeof(long));
 	if (r)
@@ -784,7 +784,7 @@ err:
 int export_signal_struct(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk)
 {
-	objid_t krg_objid = tsk->signal->krg_objid;
+	objid_t hcc_objid = tsk->signal->hcc_objid;
 	int r;
 
 	if (action->type == EPM_CHECKPOINT
@@ -793,7 +793,7 @@ int export_signal_struct(struct epm_action *action,
 		return r;
 	}
 
-	r = ghost_write(ghost, &krg_objid, sizeof(krg_objid));
+	r = ghost_write(ghost, &hcc_objid, sizeof(hcc_objid));
 	if (r)
 		goto err_write;
 
@@ -806,7 +806,7 @@ int export_signal_struct(struct epm_action *action,
 		break;
 	case EPM_CHECKPOINT: {
 		struct signal_struct *sig =
-			krg_signal_readlock(tsk->signal);
+			hcc_signal_readlock(tsk->signal);
 		r = ghost_write(ghost, sig, sizeof(*sig));
 		if (!r)
 			r = export_sigpending(ghost,
@@ -818,7 +818,7 @@ int export_signal_struct(struct epm_action *action,
 #endif
 		if (!r)
 			r = export_posix_timers(ghost, tsk);
-		krg_signal_unlock(sig);
+		hcc_signal_unlock(sig);
 		break;
 	} default:
 		break;
@@ -855,11 +855,11 @@ static int cr_link_to_signal_struct(struct epm_action *action,
 
 	tsk->signal = sig;
 
-	krg_signal_writelock(sig);
+	hcc_signal_writelock(sig);
 	atomic_inc(&tsk->signal->count);
 	atomic_inc(&tsk->signal->live);
-	krg_signal_share(sig);
-	krg_signal_unlock(sig);
+	hcc_signal_share(sig);
+	hcc_signal_unlock(sig);
 err:
 	return r;
 }
@@ -867,7 +867,7 @@ err:
 int import_signal_struct(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk)
 {
-	objid_t krg_objid;
+	objid_t hcc_objid;
 	struct signal_struct_gdm_object *obj;
 	struct signal_struct *sig;
 	int r;
@@ -878,14 +878,14 @@ int import_signal_struct(struct epm_action *action,
 		return r;
 	}
 
-	r = ghost_read(ghost, &krg_objid, sizeof(krg_objid));
+	r = ghost_read(ghost, &hcc_objid, sizeof(hcc_objid));
 	if (r)
 		goto err_read;
 
 	switch (action->type) {
 	case EPM_MIGRATE:
 		/* TODO: this will need more locking with distributed threads */
-		obj = __krg_signal_writelock(krg_objid);
+		obj = __hcc_signal_writelock(hcc_objid);
 		BUG_ON(!obj);
 		sig = obj->signal;
 		BUG_ON(!sig);
@@ -911,7 +911,7 @@ int import_signal_struct(struct epm_action *action,
 		r = import_posix_timers(ghost, tsk);
 
 out_mig_unlock:
-		krg_signal_unlock(sig);
+		hcc_signal_unlock(sig);
 		break;
 
 	case EPM_REMOTE_CLONE:
@@ -919,18 +919,18 @@ out_mig_unlock:
 		 * The structure will be partly copied when creating the
 		 * active process.
 		 */
-		obj = __krg_signal_readlock(krg_objid);
+		obj = __hcc_signal_readlock(hcc_objid);
 		BUG_ON(!obj);
 		sig = obj->signal;
 		BUG_ON(!sig);
-		krg_signal_unlock(sig);
+		hcc_signal_unlock(sig);
 		tsk->signal = sig;
 		break;
 
 	case EPM_CHECKPOINT: {
 		struct signal_struct tmp_sig;
 
-		sig = cr_signal_alloc(krg_objid);
+		sig = cr_signal_alloc(hcc_objid);
 
 		r = ghost_read(ghost, &tmp_sig, sizeof(tmp_sig));
 		if (r)
@@ -1013,7 +1013,7 @@ out_mig_unlock:
 		if (r)
 			goto err_free_signal;
 
-		krg_signal_unlock(sig);
+		hcc_signal_unlock(sig);
 		break;
 
 err_free_signal:
@@ -1081,12 +1081,12 @@ static int cr_import_complete_signal_struct(struct task_struct *fake,
 	struct signal_struct *sig = _sig;
 	struct signal_struct *locked_sig;
 
-	locked_sig = krg_signal_exit(sig);
+	locked_sig = hcc_signal_exit(sig);
 
 	atomic_dec(&sig->count);
 	atomic_dec(&sig->live);
 
-	krg_signal_unlock(locked_sig);
+	hcc_signal_unlock(locked_sig);
 
 	return 0;
 }
@@ -1109,12 +1109,12 @@ static int cr_delete_signal_struct(struct task_struct *fake, void *_sig)
 	INIT_LIST_HEAD(&fake->cpu_timers[1]);
 	INIT_LIST_HEAD(&fake->cpu_timers[2]);
 
-	locked_sig = krg_signal_exit(sig);
+	locked_sig = hcc_signal_exit(sig);
 
 	atomic_dec(&sig->count);
 	atomic_dec(&sig->live);
 
-	krg_signal_unlock(locked_sig);
+	hcc_signal_unlock(locked_sig);
 
 	posix_cpu_timers_exit_group(fake);
 

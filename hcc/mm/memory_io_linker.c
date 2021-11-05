@@ -17,7 +17,7 @@
 #include <linux/mm_inline.h>
 #include <asm/tlbflush.h>
 
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 #include <hcc/page_table_tree.h>
 

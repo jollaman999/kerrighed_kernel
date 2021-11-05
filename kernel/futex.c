@@ -63,7 +63,7 @@
 #include <linux/hugetlb.h>
 
 #ifdef CONFIG_HCC_EPM
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #endif
 
 #include <asm/futex.h>
@@ -2940,14 +2940,14 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
 }
 
 #ifdef CONFIG_HCC_EPM
-int futex_krgsyms_register(void)
+int futex_hccsyms_register(void)
 {
-	return krgsyms_register(HCCSYMS_FUTEX_WAIT_RESTART, futex_wait_restart);
+	return hccsyms_register(HCCSYMS_FUTEX_WAIT_RESTART, futex_wait_restart);
 }
 
-int futex_krgsyms_unregister(void)
+int futex_hccsyms_unregister(void)
 {
-	return krgsyms_unregister(HCCSYMS_FUTEX_WAIT_RESTART);
+	return hccsyms_unregister(HCCSYMS_FUTEX_WAIT_RESTART);
 }
 #endif
 

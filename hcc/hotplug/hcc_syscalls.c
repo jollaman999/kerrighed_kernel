@@ -1,5 +1,5 @@
 /** Interface to create / remove HCC syscalls.
- *  @file krg_syscalls.c
+ *  @file hcc_syscalls.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
  *  Copyright (C) 2019-2021 Innogrid HCC.
@@ -10,11 +10,11 @@
 #include <linux/nsproxy.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
-#include <linux/krg_hashtable.h>
+#include <linux/hcc_hashtable.h>
 
 #include <hcc/debug.h>
 
-#include <hcc/krg_syscalls.h>
+#include <hcc/hcc_syscalls.h>
 #include <hcc/procfs.h>
 
 #define PROC_HASH_TABLE_SIZE 256
@@ -45,7 +45,7 @@ static int proc_services_ioctl(struct inode *inode, struct file *filp,
 							cmd);
 
 	if (service_entry != NULL) {
-		if (service_entry->restricted && !current->nsproxy->krg_ns)
+		if (service_entry->restricted && !current->nsproxy->hcc_ns)
 			return -EPERM;
 		service_entry->count++;
 		return service_entry->fct((void *)arg);
@@ -150,7 +150,7 @@ EXPORT_SYMBOL(unregister_proc_service);
 /** Initialisation of the /proc/hcc/services file.
  *  @author Innogrid HCC
  */
-int krg_syscalls_init(void)
+int hcc_syscalls_init(void)
 {
 	int err = 0;
 
@@ -172,7 +172,7 @@ int krg_syscalls_init(void)
 /** Destroy of the /proc/hcc/services file.
  *  @author Innogrid HCC
  */
-int krg_syscalls_finalize(void)
+int hcc_syscalls_finalize(void)
 {
 	remove_proc_entry("services", proc_hcc);
 

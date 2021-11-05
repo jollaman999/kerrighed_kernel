@@ -11,7 +11,7 @@
 #include <trace/events/timer.h>
 
 #ifdef CONFIG_HCC_EPM
-#include <hcc/krgsyms.h>
+#include <hcc/hccsyms.h>
 #endif
 
 /*
@@ -1698,15 +1698,15 @@ struct k_clock clock_posix_cpu = {
 };
 
 #ifdef CONFIG_HCC_EPM
-int posix_cpu_timers_krgsyms_register(void)
+int posix_cpu_timers_hccsyms_register(void)
 {
-	return krgsyms_register(HCCSYMS_POSIX_CPU_NSLEEP_RESTART,
+	return hccsyms_register(HCCSYMS_POSIX_CPU_NSLEEP_RESTART,
 				posix_cpu_nsleep_restart);
 }
 
-int posix_cpu_timers_krgsyms_unregister(void)
+int posix_cpu_timers_hccsyms_unregister(void)
 {
-	return krgsyms_unregister(HCCSYMS_POSIX_CPU_NSLEEP_RESTART);
+	return hccsyms_unregister(HCCSYMS_POSIX_CPU_NSLEEP_RESTART);
 }
 #endif /* CONFIG_HCC_EPM */
 

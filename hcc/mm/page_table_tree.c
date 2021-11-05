@@ -13,7 +13,7 @@
 #include <linux/swap.h>
 #include <linux/swapops.h>
 
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpc.h>
 #include <gdm/gdm.h>
 #include <hcc/page_table_tree.h>
 
@@ -732,7 +732,7 @@ static void gdm_pt_export (struct rpc_desc* desc, struct gdm_set *set)
 {
 	struct mm_struct *mm = set->obj_set;
 
-	krgnode_set (desc->client, mm->copyset);
+	hccnode_set (desc->client, mm->copyset);
 
 	rpc_pack_type(desc, mm->mm_id);
 }

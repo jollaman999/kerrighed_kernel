@@ -127,7 +127,7 @@ page_already_added:
 	return 0;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct fb_deferred_io_vm_ops = {

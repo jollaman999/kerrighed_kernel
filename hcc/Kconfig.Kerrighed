@@ -1,61 +1,61 @@
 menu "Cluster support"
 
-config KERRIGHED
-	bool "Add the Kerrighed support"
+config HCC
+	bool "Add the HCC support"
 	depends on PREEMPT_NONE && !KEYS && !COMPAT
 	default y
-	select KRG_TOOLS if !KERRIGHED_DEVEL
-	select KRG_COMMUNICATION_FRAMEWORK if !KERRIGHED_DEVEL
-	select KRG_HOTPLUG if !KERRIGHED_DEVEL
-	select KRG_KDDM if !KERRIGHED_DEVEL
-	select KRG_CAP if !KERRIGHED_DEVEL
-	select KRG_PROCFS if !KERRIGHED_DEVEL
-	select KRG_MM if !KERRIGHED_DEVEL
-	select KRG_DVFS if !KERRIGHED_DEVEL
-	select KRG_FAF if !KERRIGHED_DEVEL
-	select KRG_IPC if !KERRIGHED_DEVEL
-	select KRG_PROC if !KERRIGHED_DEVEL
-	select KRG_EPM if !KERRIGHED_DEVEL
-	select KRG_SCHED if !KERRIGHED_DEVEL
+	select HCC_TOOLS if !HCC_DEVEL
+	select HCC_COMMUNICATION_FRAMEWORK if !HCC_DEVEL
+	select HCC_HOTPLUG if !HCC_DEVEL
+	select HCC_KDDM if !HCC_DEVEL
+	select HCC_CAP if !HCC_DEVEL
+	select HCC_PROCFS if !HCC_DEVEL
+	select HCC_MM if !HCC_DEVEL
+	select HCC_DVFS if !HCC_DEVEL
+	select HCC_FAF if !HCC_DEVEL
+	select HCC_IPC if !HCC_DEVEL
+	select HCC_PROC if !HCC_DEVEL
+	select HCC_EPM if !HCC_DEVEL
+	select HCC_SCHED if !HCC_DEVEL
 	help
-	  Say Y if you want to use the Kerrighed features.	
+	  Say Y if you want to use the HCC features.	
 
-comment "Kerrighed requires kernel preemption to be fully disabled (PREEMPT_NONE)"
+comment "HCC requires kernel preemption to be fully disabled (PREEMPT_NONE)"
 	depends on !PREEMPT_NONE
 
-comment "Kerrighed does not support access key retention (KEYS)"
+comment "HCC does not support access key retention (KEYS)"
 	depends on KEYS
 
-comment "Kerrighed does not support 32 bits emulation (COMPAT)"
+comment "HCC does not support 32 bits emulation (COMPAT)"
 	depends on COMPAT
 
-config KERRIGHED_DEVEL
-	bool "Allow to build a subset of Kerrighed (!! Kerrighed development only !!)"
-	depends on KERRIGHED
+config HCC_DEVEL
+	bool "Allow to build a subset of HCC (!! HCC development only !!)"
+	depends on HCC
 	default n
 	help
-	  The only reason to enable this, is that you intend to port Kerrighed
+	  The only reason to enable this, is that you intend to port HCC
 		on a new architecture.
 
 		Just say N, and forget about it.
 
-config KRG_TOOLS
+config HCC_TOOLS
 	bool "Tools"
-	depends on KERRIGHED
+	depends on HCC
 	help
-	  Common library in Kerrighed (without communication)
+	  Common library in HCC (without communication)
 
-config KRG_COMMUNICATION_FRAMEWORK
+config HCC_COMMUNICATION_FRAMEWORK
        bool "Communication layer"
-       depends on KERRIGHED
+       depends on HCC
        select TIPC
-       select KRGRPC
+       select HCCRPC
        help
          All-purpose communication layer
 
-config KRG_AUTONODEID
+config HCC_AUTONODEID
 	bool "Allow node id to bet set automatically"
-	depends on KRG_COMMUNICATION_FRAMEWORK
+	depends on HCC_COMMUNICATION_FRAMEWORK
 	default y
 	help
 	  Compile support to let the kernel automatically set the node id.
@@ -72,10 +72,10 @@ config KRG_AUTONODEID
 
 choice
 	prompt "Default value of boot parameter autonodeid"
-	default KRG_AUTONODEID_ON
-	depends on KRG_AUTONODEID
+	default HCC_AUTONODEID_ON
+	depends on HCC_AUTONODEID
 
-config KRG_AUTONODEID_ON
+config HCC_AUTONODEID_ON
 	bool "IP address (autonodeid=1)"
 	help
 	  During the boot the kernel must be able to get an IP address
@@ -89,7 +89,7 @@ config KRG_AUTONODEID_ON
 
 	  If unsure, say Y.
 
-config KRG_AUTONODEID_OFF
+config HCC_AUTONODEID_OFF
 	bool "off (autonodeid=0)"
 	help
 	  The kernel will not attempt to automatically set the node id. A valid
@@ -101,122 +101,122 @@ config KRG_AUTONODEID_OFF
 
 endchoice
 
-config KRG_HOTPLUG
+config HCC_HOTPLUG
 	bool "KerHotplug"
-	depends on KERRIGHED
+	depends on HCC
 	help
 	  Support for nodes management
 
-config KRG_HOTPLUG_DEL
+config HCC_HOTPLUG_DEL
 	bool "KerHotplug: removal support"
-	depends on KRG_HOTPLUG
+	depends on HCC_HOTPLUG
 	help
 	  Support node removal
 
-config KRG_HOTPLUG_XCH
+config HCC_HOTPLUG_XCH
 	bool "KerHotplug: replacement support"
-	depends on KRG_HOTPLUG
+	depends on HCC_HOTPLUG
 	help
 	  Support node replacement
 
-config KRG_DISABLE_HEARTBEAT
+config HCC_DISABLE_HEARTBEAT
        bool "Disable failure detector"
-       depends on KRG_HOTPLUG
+       depends on HCC_HOTPLUG
        help
          If you don't want automatic reconfiguration on a node failure
          just select this option.
 
-config KRG_KDDM
+config HCC_KDDM
 	bool "Kernel Distributed Data Management (KDDM)"
-	depends on KRG_COMMUNICATION_FRAMEWORK
+	depends on HCC_COMMUNICATION_FRAMEWORK
 	help
 	  Cluster wide data management. This is the general purpose
-	  mechanism used in Kerrighed to implement distributed
+	  mechanism used in HCC to implement distributed
 	  services.
 
 	  If unsure, say Y.
 
-config KRG_KDDM_DEBUG
-	def_bool KRG_KDDM && KRG_DEBUG
+config HCC_KDDM_DEBUG
+	def_bool HCC_KDDM && HCC_DEBUG
 
-config KRG_CAP
+config HCC_CAP
 	bool "KerCapabilities"
-	depends on KERRIGHED
+	depends on HCC
 	help
-	  Kerrighed capabilities mechanism.
+	  HCC capabilities mechanism.
 
 	  If unsure, say Y.
 
-config KRG_PROCFS
+config HCC_PROCFS
 	bool "ProcFS"
-	depends on KRG_KDDM && KERRIGHED
+	depends on HCC_KDDM && HCC
 	help
 	  Global /proc mechanism.
 
 	  If unsure, say Y.
 
-#config KRG_SYNC
+#config HCC_SYNC
 #	bool "KerSync"
-#	depends on KERRIGHED && KRG_KDDM
+#	depends on HCC && HCC_KDDM
 #	help
 #	  Synchronization library
 
-config KRG_MM
+config HCC_MM
 	bool "KerMM"
-	depends on KERRIGHED && KRG_KDDM && !TRACK_DIRTY_PAGES && !COMPACTION && !KSM  && !TRANSPARENT_HUGEPAGE
+	depends on HCC && HCC_KDDM && !TRACK_DIRTY_PAGES && !COMPACTION && !KSM  && !TRANSPARENT_HUGEPAGE
 	help
-	  Kerrighed's global memory management
+	  HCC's global memory management
 
-config KRG_DVFS
+config HCC_DVFS
 	bool "Distributed VFS"
-#	depends on KRG_MM && KERRIGHED
-	depends on KERRIGHED
+#	depends on HCC_MM && HCC
+	depends on HCC
 	help
-	  Kerrighed's distributed VFS. This is the Kerrighed basic
+	  HCC's distributed VFS. This is the HCC basic
 	  bloc for distributed file management.
 
 	  If unsure, say Y.
 
-config KRG_FAF
+config HCC_FAF
 	bool "File access forwarding"
-	depends on KERRIGHED && KRG_DVFS
+	depends on HCC && HCC_DVFS
 	select EPOLL
 	help
 	  Enable migration of open files and streams for those which
-	  cannot be more efficiently managed by other Kerrighed mechanisms.
+	  cannot be more efficiently managed by other HCC mechanisms.
 
 	  If unsure, say Y.
 
-config KRG_IPC
+config HCC_IPC
 	bool "KerIPC"
-	depends on KERRIGHED && KRG_KDDM && KRG_MM && IPC_NS
+	depends on HCC && HCC_KDDM && HCC_MM && IPC_NS
 	help
-	  Kerrighed's global IPC management
+	  HCC's global IPC management
 
-config KRG_PROC
+config HCC_PROC
 	bool "KerProc"
-	depends on KERRIGHED && KRG_KDDM
+	depends on HCC && HCC_KDDM
 	help
 	  Low-level global process management: global PIDs, syscalls affecting
 	  remote tasks (including signals), global proc PID entries.
 
 	  If unsure, say Y.
 
-config KRG_EPM
+config HCC_EPM
 	bool "KerEPM"
-	depends on KERRIGHED && KRG_PROC && KRG_CAP && KRG_MM && (KRG_DVFS || KRG_FAF)
+	depends on HCC && HCC_PROC && HCC_CAP && HCC_MM && (HCC_DVFS || HCC_FAF)
 	help
 	  Enhanced Process Management:
 	    process migration, checkpoint/restart, remote clone.
 
 	  If unsure, say Y.
 
-config KRG_IPC_EPM
-       def_bool KRG_IPC && KRG_EPM
+config HCC_IPC_EPM
+       def_bool HCC_IPC && HCC_EPM
 
-menuconfig KRG_SCHED
-	bool "Kerrighed support for global scheduling"
-	depends on KERRIGHED
+menuconfig HCC_SCHED
+	bool "HCC support for global scheduling"
+	depends on HCC
 	select CONFIGFS_FS
 	default y
 	help
@@ -231,31 +231,31 @@ menuconfig KRG_SCHED
 
 	  If unsure, say Y.
 
-if KRG_SCHED
+if HCC_SCHED
 
-config KRG_SCHED_COMPAT
-	bool "Compile components needed to emulate Kerrighed 2.3 hard-coded scheduler"
-	depends on KRG_SCHED && KRG_EPM
+config HCC_SCHED_COMPAT
+	bool "Compile components needed to emulate HCC 2.3 hard-coded scheduler"
+	depends on HCC_SCHED && HCC_EPM
 	default y
 	help
 	  This option selects the components needed to obtain the same
-	  scheduling policy as in Kerrighed 2.3 hard-coded scheduler.
-	  See the sample script krg_legacy_scheduler located in Kerrighed's
+	  scheduling policy as in HCC 2.3 hard-coded scheduler.
+	  See the sample script hcc_legacy_scheduler located in HCC's
 	  tools to setup this compatible scheduler.
 
 	  If unsure, say Y.
 
-config KRG_SCHED_COMPAT_FORCE
-	def_tristate m if KRG_SCHED_COMPAT
-	select KRG_SCHED_MIGRATION_PROBE
-	select KRG_SCHED_MOSIX_PROBE
-	select KRG_SCHED_THRESHOLD_FILTER
-	select KRG_SCHED_FREQ_LIMIT_FILTER
-	select KRG_SCHED_REMOTE_CACHE_FILTER
-	select KRG_SCHED_MOSIX_LOAD_BALANCER
-	select KRG_SCHED_ROUND_ROBIN_BALANCER
+config HCC_SCHED_COMPAT_FORCE
+	def_tristate m if HCC_SCHED_COMPAT
+	select HCC_SCHED_MIGRATION_PROBE
+	select HCC_SCHED_MOSIX_PROBE
+	select HCC_SCHED_THRESHOLD_FILTER
+	select HCC_SCHED_FREQ_LIMIT_FILTER
+	select HCC_SCHED_REMOTE_CACHE_FILTER
+	select HCC_SCHED_MOSIX_LOAD_BALANCER
+	select HCC_SCHED_ROUND_ROBIN_BALANCER
 
-config KRG_SCHED_CPU_PROBE
+config HCC_SCHED_CPU_PROBE
 	tristate "Sample CPU probe"
 	depends on m
 	default n
@@ -264,7 +264,7 @@ config KRG_SCHED_CPU_PROBE
 
 	  If unsure, say N.
 
-config KRG_SCHED_MEM_PROBE
+config HCC_SCHED_MEM_PROBE
 	tristate "Sample memory probe"
 	depends on m
 	default n
@@ -274,9 +274,9 @@ config KRG_SCHED_MEM_PROBE
 
 	  If unsure, say N.
 
-config KRG_SCHED_MIGRATION_PROBE
+config HCC_SCHED_MIGRATION_PROBE
 	tristate "Migration probe"
-	depends on KRG_EPM && m
+	depends on HCC_EPM && m
 	default n
 	help
 	  Probe counting the number of ongoing task migrations out of a node
@@ -284,7 +284,7 @@ config KRG_SCHED_MIGRATION_PROBE
 
 	  If unsure, say N.
 
-config KRG_SCHED_MOSIX_PROBE
+config HCC_SCHED_MOSIX_PROBE
 	tristate "MOSIX-like CPU probe"
 	depends on m
 	default n
@@ -294,7 +294,7 @@ config KRG_SCHED_MOSIX_PROBE
 
 	  If unsure, say N.
 
-config KRG_SCHED_THRESHOLD_FILTER
+config HCC_SCHED_THRESHOLD_FILTER
 	tristate "Threshold filter"
 	depends on m
 	default n
@@ -304,7 +304,7 @@ config KRG_SCHED_THRESHOLD_FILTER
 
 	  If unsure, say N.
 
-config KRG_SCHED_FREQ_LIMIT_FILTER
+config HCC_SCHED_FREQ_LIMIT_FILTER
 	tristate "Frequency limit filter"
 	depends on m
 	default n
@@ -315,7 +315,7 @@ config KRG_SCHED_FREQ_LIMIT_FILTER
 
 	  If unsure, say N.
 
-config KRG_SCHED_REMOTE_CACHE_FILTER
+config HCC_SCHED_REMOTE_CACHE_FILTER
 	tristate "Remote cache filter"
 	depends on m
 	default n
@@ -325,7 +325,7 @@ config KRG_SCHED_REMOTE_CACHE_FILTER
 
 	  If unsure, say N.
 
-config KRG_SCHED_ECHO_POLICY
+config HCC_SCHED_ECHO_POLICY
 	tristate "Sample echo policy"
 	depends on m
 	default n
@@ -335,9 +335,9 @@ config KRG_SCHED_ECHO_POLICY
 
 	  If unsure, say N.
 
-config KRG_SCHED_MOSIX_LOAD_BALANCER
+config HCC_SCHED_MOSIX_LOAD_BALANCER
 	tristate "MOSIX-like load balancing policy"
-	depends on KRG_EPM && m
+	depends on HCC_EPM && m
 	default n
 	help
 	  Migration-based load balancing policy using simplified algorithms
@@ -345,7 +345,7 @@ config KRG_SCHED_MOSIX_LOAD_BALANCER
 
 	  If unsure, say N.
 
-config KRG_SCHED_ROUND_ROBIN_BALANCER
+config HCC_SCHED_ROUND_ROBIN_BALANCER
 	tristate "Round robin balancing policy"
 	depends on m
 	default n
@@ -361,7 +361,7 @@ config CLUSTER_WIDE_PROC_INFRA
 
 config CLUSTER_WIDE_PROC
 	bool "See Cluster wide stats in /proc"
-	depends on KERRIGHED
+	depends on HCC
 	default y
 	select CLUSTER_WIDE_PROC_INFRA
 	help
@@ -372,52 +372,52 @@ config CLUSTER_WIDE_PROC
 
 config CLUSTER_WIDE_PROC_CPUINFO
 	bool
-	depends on KERRIGHED
-	default CLUSTER_WIDE_PROC || KRG_PROC
+	depends on HCC
+	default CLUSTER_WIDE_PROC || HCC_PROC
 	select CLUSTER_WIDE_PROC_INFRA
 
 config CLUSTER_WIDE_PROC_MEMINFO
 	bool
-	depends on KERRIGHED
-	default CLUSTER_WIDE_PROC || KRG_MM
+	depends on HCC
+	default CLUSTER_WIDE_PROC || HCC_MM
 	select CLUSTER_WIDE_PROC_INFRA
 
 config CLUSTER_WIDE_PROC_LOADAVG
 	bool
-	depends on KERRIGHED
-	default CLUSTER_WIDE_PROC || KRG_PROC
+	depends on HCC
+	default CLUSTER_WIDE_PROC || HCC_PROC
 	select CLUSTER_WIDE_PROC_INFRA
 
 config CLUSTER_WIDE_PROC_STAT
 	bool
-	depends on KERRIGHED
-	default CLUSTER_WIDE_PROC || KRG_PROC
+	depends on HCC
+	default CLUSTER_WIDE_PROC || HCC_PROC
 	select CLUSTER_WIDE_PROC_INFRA
 
 config CLUSTER_WIDE_PROC_UPTIME
 	bool
-	depends on KERRIGHED
-	default CLUSTER_WIDE_PROC || KRG_PROC
+	depends on HCC
+	default CLUSTER_WIDE_PROC || HCC_PROC
 	select CLUSTER_WIDE_PROC_INFRA
 
-config KRG_SYSCALL_EXIT_HOOK
+config HCC_SYSCALL_EXIT_HOOK
         bool "Syscall exit hook"
-	depends on KERRIGHED
+	depends on HCC
 	default n
 
 config DEBUG_SEG_FAULT
 	bool "Debug seg faults"
-	depends on KERRIGHED
+	depends on HCC
 	default n
 
-config KRG_DEBUG
+config HCC_DEBUG
 	bool "Debug subsystem"
-	depends on KERRIGHED
+	depends on HCC
 	default n
 	select DEBUG_FS
 	help
-	  Activate Kerrighed's debug subsystem. With this
-          subsystem, most Kerrighed debugs can be activated
+	  Activate HCC's debug subsystem. With this
+          subsystem, most HCC debugs can be activated
           dynamically at runtime, after having mounted debugfs. To
           activate debugs for the other subsystems, you will also
           have to activate them in their respective source

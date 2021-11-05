@@ -13,24 +13,24 @@
 #include <linux/spinlock.h>
 #include <linux/lockdep.h>
 #include <linux/string.h>
-#include <hcc/krgnodemask.h>
-#include <linux/krg_hashtable.h>
+#include <hcc/hccnodemask.h>
+#include <linux/hcc_hashtable.h>
 
-#include <net/krgrpc/rpcid.h>
-#include <net/krgrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
 
 #include "rpc_internal.h"
 
 struct rpc_service** rpc_services;
 unsigned long rpc_desc_id;
-hashtable_t* desc_srv[KERRIGHED_MAX_NODES];
+hashtable_t* desc_srv[HCC_MAX_NODES];
 hashtable_t* desc_clt;
-spinlock_t rpc_desc_done_lock[KERRIGHED_MAX_NODES];
-unsigned long rpc_desc_done_id[KERRIGHED_MAX_NODES];
+spinlock_t rpc_desc_done_lock[HCC_MAX_NODES];
+unsigned long rpc_desc_done_id[HCC_MAX_NODES];
 
-unsigned long rpc_link_send_seq_id[KERRIGHED_MAX_NODES];
-unsigned long rpc_link_send_ack_id[KERRIGHED_MAX_NODES];
-unsigned long rpc_link_recv_seq_id[KERRIGHED_MAX_NODES];
+unsigned long rpc_link_send_seq_id[HCC_MAX_NODES];
+unsigned long rpc_link_send_ack_id[HCC_MAX_NODES];
+unsigned long rpc_link_recv_seq_id[HCC_MAX_NODES];
 
 DEFINE_PER_CPU(struct list_head, rpc_desc_trash);
 
@@ -171,7 +171,7 @@ void test(void){
  *
  * Enable a registered RPC
  * We must take the waiting_desc_lock.
- * After each rpc handle, the krgrpc go through the waiting_desc
+ * After each rpc handle, the hccrpc go through the waiting_desc
  * list, in order to find another desc to process. We must avoid
  * to enable an RPC when such iteration is happened
  *
@@ -291,7 +291,7 @@ int init_rpc(void)
 		
 	rpc_desc_id = 1;
 
-	for(i=0;i<KERRIGHED_MAX_NODES;i++){
+	for(i=0;i<HCC_MAX_NODES;i++){
 		desc_srv[i] = hashtable_new(32);
 		if(!desc_srv[i])
 			return -ENOMEM;
@@ -308,7 +308,7 @@ int init_rpc(void)
 
 	lockdep_set_class(&desc_clt->lock, &rpc_desc_clt_lock_key);
 
-	for (i = 0; i < KERRIGHED_MAX_NODES; i++) {
+	for (i = 0; i < HCC_MAX_NODES; i++) {
 		rpc_link_send_seq_id[i] = 1;
 		rpc_link_send_ack_id[i] = 0;
 		rpc_link_recv_seq_id[i] = 1;

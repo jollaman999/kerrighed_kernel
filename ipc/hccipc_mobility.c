@@ -18,8 +18,8 @@
 #include <linux/shm.h>
 #include <linux/syscalls.h>
 #include <linux/unique_id.h>
-#include <net/krgrpc/rpc.h>
-#include <net/krgrpc/rpcid.h>
+#include <net/hccrpc/rpc.h>
+#include <net/hccrpc/rpcid.h>
 #include <gdm/gdm.h>
 #include <hcc/namespace.h>
 #include <hcc/ghost.h>
@@ -33,10 +33,10 @@
 #include <hcc/regular_file_mgr.h>
 #include <hcc/pid.h>
 #include "ipc_handler.h"
-#include "krgipc_mobility.h"
-#include "krgshm.h"
-#include "krgmsg.h"
-#include "krgsem.h"
+#include "hccipc_mobility.h"
+#include "hccshm.h"
+#include "hccmsg.h"
+#include "hccsem.h"
 #include "msg_handler.h"
 #include "sem_handler.h"
 #include "semundolst_io_linker.h"
@@ -53,14 +53,14 @@ extern struct gdm_set *sem_undo_list_gdm_set;
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-int get_shm_file_krg_desc (struct file *file,
+int get_shm_file_hcc_desc (struct file *file,
 			   void **desc,
 			   int *desc_size)
 {
-	struct regular_file_krg_desc *data;
+	struct regular_file_hcc_desc *data;
 	int size, r = -ENOENT;
 
-	size = sizeof(struct regular_file_krg_desc);
+	size = sizeof(struct regular_file_hcc_desc);
 
 	data = kmalloc (size, GFP_KERNEL);
 	if (!data) {
@@ -79,7 +79,7 @@ exit:
 	return r;
 }
 
-struct file *reopen_shm_file_entry_from_krg_desc(struct task_struct *task,
+struct file *reopen_shm_file_entry_from_hcc_desc(struct task_struct *task,
 						 void *_desc)
 {
 	int shmid;
@@ -87,14 +87,14 @@ struct file *reopen_shm_file_entry_from_krg_desc(struct task_struct *task,
 	struct shmid_kernel *shp;
 	struct shm_file_data *sfd;
 	struct file *file = NULL;
-	struct regular_file_krg_desc *desc = _desc;
+	struct regular_file_hcc_desc *desc = _desc;
 	struct ipc_namespace *ns;
 	struct path path;
 
 	BUG_ON (!task);
 	BUG_ON (!desc);
 
-	ns = find_get_krg_ipcns();
+	ns = find_get_hcc_ipcns();
 	BUG_ON(!ns);
 
 	shmid = desc->shm.shmid;
@@ -135,7 +135,7 @@ struct file *reopen_shm_file_entry_from_krg_desc(struct task_struct *task,
 	sfd->ns = get_ipc_ns(ns);
 	sfd->file = shp->shm_file;
 	sfd->file->private_data = sfd;
-	sfd->vm_ops = &krg_shmem_vm_ops;
+	sfd->vm_ops = &hcc_shmem_vm_ops;
 out:
 	put_ipc_ns(ns);
 
@@ -154,7 +154,7 @@ out_put_dentry:
 	shp->shm_nattch--;
 	if (shp->shm_nattch == 0 &&
 	    shp->shm_perm.mode & SHM_DEST)
-		krg_ipc_shm_destroy(ns, shp);
+		hcc_ipc_shm_destroy(ns, shp);
 	else
 		shm_unlock(shp);
 	up_write(&shm_ids(ns).rw_mutex);
@@ -165,7 +165,7 @@ out_put_dentry:
 int export_ipc_namespace(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
-	if (task->nsproxy->ipc_ns != task->nsproxy->krg_ns->root_nsproxy.ipc_ns)
+	if (task->nsproxy->ipc_ns != task->nsproxy->hcc_ns->root_nsproxy.ipc_ns)
 		return -EPERM;
 
 	return 0;
@@ -174,7 +174,7 @@ int export_ipc_namespace(struct epm_action *action,
 int import_ipc_namespace(struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
-	task->nsproxy->ipc_ns = find_get_krg_ipcns();
+	task->nsproxy->ipc_ns = find_get_hcc_ipcns();
 	BUG_ON(!task->nsproxy->ipc_ns);
 
 	return 0;
@@ -675,7 +675,7 @@ static int export_full_local_sysv_msgq(ghost_t *ghost, int msgid)
 	struct msg_queue *msq;
 	struct ipc_namespace *ns;
 
-	ns = find_get_krg_ipcns();
+	ns = find_get_hcc_ipcns();
 	if (!ns)
 		return -ENOSYS;
 
@@ -795,11 +795,11 @@ int __sys_msgq_checkpoint(int msqid, int fd)
 	struct file *file;
 	struct rpc_desc *desc;
 
-	ns = find_get_krg_ipcns();
+	ns = find_get_hcc_ipcns();
 
 	index = ipcid_to_idx(msqid);
 
-	master_set = krgipc_ops_master_set(msg_ids(ns).krgops);
+	master_set = hccipc_ops_master_set(msg_ids(ns).hccops);
 
 	master_node = _gdm_get_object_no_ft(master_set, index);
 	if (!master_node) {
@@ -960,7 +960,7 @@ int import_full_sysv_msgq(ghost_t *ghost)
 	if (r)
 		goto out;
 
-	ns = find_get_krg_ipcns();
+	ns = find_get_hcc_ipcns();
 	if (!ns)
 		return -ENOSYS;
 
@@ -1003,7 +1003,7 @@ out:
 	return r;
 
 out_freeque:
-	krg_ipc_msg_freeque(ns, &msq->q_perm);
+	hcc_ipc_msg_freeque(ns, &msq->q_perm);
 	goto out_put_ns;
 }
 
@@ -1017,7 +1017,7 @@ int export_full_sysv_sem(ghost_t *ghost, int semid)
 	struct ipc_namespace *ns;
 	struct sem_array *sma;
 
-	ns = find_get_krg_ipcns();
+	ns = find_get_hcc_ipcns();
 	if (!ns)
 		return -ENOSYS;
 
@@ -1066,7 +1066,7 @@ int import_full_sysv_sem(ghost_t *ghost)
 	if (r)
 		goto out;
 
-	ns = find_get_krg_ipcns();
+	ns = find_get_hcc_ipcns();
 	if (!ns)
 		return -ENOSYS;
 
@@ -1108,7 +1108,7 @@ out:
 	return r;
 
 out_freeary:
-	krg_ipc_sem_freeary(ns, &sma->sem_perm);
+	hcc_ipc_sem_freeary(ns, &sma->sem_perm);
 	goto out_put_ns;
 }
 
@@ -1187,7 +1187,7 @@ int export_full_sysv_shm(ghost_t *ghost, int shmid)
 	struct ipc_namespace *ns;
 	struct shmid_kernel *shp;
 
-	ns = find_get_krg_ipcns();
+	ns = find_get_hcc_ipcns();
 	if (!ns)
 		return -ENOSYS;
 
@@ -1321,7 +1321,7 @@ int import_full_sysv_shm(ghost_t *ghost)
 	if (r)
 		goto out;
 
-	ns = find_get_krg_ipcns();
+	ns = find_get_hcc_ipcns();
 	if (!ns)
 		return -ENOSYS;
 
@@ -1365,7 +1365,7 @@ out:
 	return r;
 out_freeshm:
 	BUG_ON(shp->shm_nattch);
-	krg_ipc_shm_destroy(ns, shp);
+	hcc_ipc_shm_destroy(ns, shp);
 	goto out;
 }
 

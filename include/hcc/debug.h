@@ -37,9 +37,9 @@ static inline void print_mem_info(void)
 #define PANIC(format, args...) do {} while(0)
 #else
 #ifndef __arch_um__
-#define PANIC(format, args...) do {printk ("<0>-- PANIC -- (%s) : " , __PRETTY_FUNCTION__); printk (format, ## args) ; __krg_panic__=1; print_mem_info(); if(in_interrupt()){BUG();}else{while(1){schedule();}}} while (0)
+#define PANIC(format, args...) do {printk ("<0>-- PANIC -- (%s) : " , __PRETTY_FUNCTION__); printk (format, ## args) ; __hcc_panic__=1; print_mem_info(); if(in_interrupt()){BUG();}else{while(1){schedule();}}} while (0)
 #else				/* __arch_um__ */
-#define PANIC(format, args...) do {printk ("<0>-- PANIC -- (%s) : ", __PRETTY_FUNCTION__); printk (format, ## args) ; __krg_panic__=1; BUG(); } while(0)
+#define PANIC(format, args...) do {printk ("<0>-- PANIC -- (%s) : ", __PRETTY_FUNCTION__); printk (format, ## args) ; __hcc_panic__=1; BUG(); } while(0)
 #endif
 #endif
 
@@ -57,6 +57,6 @@ static inline void print_mem_info(void)
 
 #define OOM { printk("OOM in %s: %d\nprocess stop\n", __PRETTY_FUNCTION__, __LINE__); if(in_interrupt()){BUG();}else{while(1) schedule();}; }
 
-extern int __krg_panic__;
+extern int __hcc_panic__;
 
 #endif				// __HCC_DEBUG__
