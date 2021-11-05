@@ -13,7 +13,7 @@ config HCC
 	select HCC_MM if !HCC_DEVEL
 	select HCC_DVFS if !HCC_DEVEL
 	select HCC_FAF if !HCC_DEVEL
-	select HCC_IPC if !HCC_DEVEL
+	select HCC_GIPC if !HCC_DEVEL
 	select HCC_PROC if !HCC_DEVEL
 	select HCC_EPM if !HCC_DEVEL
 	select HCC_SCHED if !HCC_DEVEL
@@ -187,7 +187,7 @@ config HCC_FAF
 
 	  If unsure, say Y.
 
-config HCC_IPC
+config HCC_GIPC
 	bool "KerIPC"
 	depends on HCC && HCC_GDM && HCC_MM && IPC_NS
 	help
@@ -211,8 +211,8 @@ config HCC_EPM
 
 	  If unsure, say Y.
 
-config HCC_IPC_EPM
-       def_bool HCC_IPC && HCC_EPM
+config HCC_GIPC_EPM
+       def_bool HCC_GIPC && HCC_EPM
 
 menuconfig HCC_SCHED
 	bool "HCC support for global scheduling"

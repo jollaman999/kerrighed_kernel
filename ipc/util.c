@@ -40,7 +40,7 @@
 
 #include "util.h"
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 #include <gdm/gdm.h>
 #include "ipcmap_io_linker.h"
 #include "ipc_handler.h"
@@ -140,7 +140,7 @@ void ipc_init_ids(struct ipc_ids *ids)
 	}
 
 	idr_init(&ids->ipcs_idr);
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	ids->hccops = NULL;
 #endif
 }
@@ -196,7 +196,7 @@ static struct kern_ipc_perm *ipc_findkey(struct ipc_ids *ids, key_t key)
 	int next_id;
 	int total;
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	if (is_hcc_ipc(ids)) {
 		ipc = ids->hccops->ipc_findkey(ids, key);
 		if (IS_ERR(ipc))
@@ -236,7 +236,7 @@ int ipc_get_maxid(struct ipc_ids *ids)
 	int max_id = -1;
 	int total, id;
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	if (is_hcc_ipc(ids))
 		return hcc_ipc_get_maxid(ids);
 #endif
@@ -259,7 +259,7 @@ int ipc_get_maxid(struct ipc_ids *ids)
 	return max_id;
 }
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 bool ipc_used(struct ipc_namespace *ns)
 {
 	bool used = false;
@@ -381,7 +381,7 @@ out:
  *	Called with ipc_ids.rw_mutex held as a writer.
  */
  
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 int ipc_addid(struct ipc_ids* ids, struct kern_ipc_perm* new, int size,
 	      int requested_id)
 #else
@@ -398,7 +398,7 @@ int ipc_addid(struct ipc_ids* ids, struct kern_ipc_perm* new, int size)
 	if (ids->in_use >= size)
 		return -ENOSPC;
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	if (requested_id != -1)
 		return ipc_reserveid(ids, new, requested_id);
 #endif
@@ -412,7 +412,7 @@ int ipc_addid(struct ipc_ids* ids, struct kern_ipc_perm* new, int size)
 	new->cuid = new->uid = euid;
 	new->gid = new->cgid = egid;
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	err = hcc_idr_get_new(ids, new, &id);
 #else
 	err = idr_get_new(&ids->ipcs_idr, new, &id);
@@ -433,7 +433,7 @@ int ipc_addid(struct ipc_ids* ids, struct kern_ipc_perm* new, int size)
 	return id;
 }
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 int local_ipc_reserveid(struct ipc_ids* ids, struct kern_ipc_perm* new,
                         int size)
 {
@@ -828,7 +828,7 @@ struct kern_ipc_perm *ipc_obtain_object(struct ipc_ids *ids, int id)
  *
  * The ipc object is locked on successful exit.
  */
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 struct kern_ipc_perm *local_ipc_lock(struct ipc_ids *ids, int id)
 #else
 struct kern_ipc_perm *ipc_lock(struct ipc_ids *ids, int id)
@@ -880,7 +880,7 @@ out:
 	return out;
 }
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 struct kern_ipc_perm *ipc_lock(struct ipc_ids *ids, int id)
 {
 	if (is_hcc_ipc(ids))
@@ -906,7 +906,7 @@ struct kern_ipc_perm *ipc_lock_check(struct ipc_ids *ids, int id)
 	return out;
 }
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 void local_ipc_unlock(struct kern_ipc_perm *perm)
 {
 	spin_unlock(&perm->lock);
@@ -935,7 +935,7 @@ void ipc_unlock(struct kern_ipc_perm *perm)
 int ipcget(struct ipc_namespace *ns, struct ipc_ids *ids,
 			struct ipc_ops *ops, struct ipc_params *params)
 {
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	params->requested_id = -1;
 #endif
 	if (params->key == IPC_PRIVATE)
@@ -1063,7 +1063,7 @@ static struct kern_ipc_perm *sysvipc_find_ipc(struct ipc_ids *ids, loff_t pos,
 					      loff_t *new_pos)
 {
 	struct kern_ipc_perm *ipc;
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	int total;
 
 	total = ipc_get_maxid(ids);
@@ -1222,7 +1222,7 @@ static const struct file_operations sysvipc_proc_fops = {
 };
 #endif /* CONFIG_PROC_FS */
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 void unlink_queue(struct sem_array *sma, struct sem_queue *q)
 {
 	list_del(&q->list);

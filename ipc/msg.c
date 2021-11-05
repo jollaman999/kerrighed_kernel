@@ -42,7 +42,7 @@
 #include <asm/current.h>
 #include <asm/uaccess.h>
 #include "util.h"
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 #include "hccmsg.h"
 #ifdef CONFIG_HCC_EPM
 #include <hcc/action.h>
@@ -74,13 +74,13 @@ struct msg_sender {
 #define SEARCH_NOTEQUAL		3
 #define SEARCH_LESSEQUAL	4
 
-#ifndef CONFIG_HCC_IPC
+#ifndef CONFIG_HCC_GIPC
 #define msg_ids(ns)	((ns)->ids[IPC_MSG_IDS])
 #define msg_unlock(msq)		ipc_unlock(&(msq)->q_perm)
 #endif
 
 static void freeque(struct ipc_namespace *, struct kern_ipc_perm *);
-#ifndef CONFIG_HCC_IPC
+#ifndef CONFIG_HCC_GIPC
 static int newque(struct ipc_namespace *, struct ipc_params *);
 #endif
 #ifdef CONFIG_PROC_FS
@@ -150,7 +150,7 @@ void __init msg_init(void)
 				IPC_MSG_IDS, sysvipc_msg_proc_show);
 }
 
-#ifndef CONFIG_HCC_IPC
+#ifndef CONFIG_HCC_GIPC
 /*
  * msg_lock_(check_) routines are called in the paths where the rw_mutex
  * is not held.
@@ -182,7 +182,7 @@ static inline void msg_rmid(struct ipc_namespace *ns, struct msg_queue *s)
 	ipc_rmid(&msg_ids(ns), &s->q_perm);
 }
 
-#ifndef CONFIG_HCC_IPC
+#ifndef CONFIG_HCC_GIPC
 static void msg_rcu_free(struct rcu_head *head)
 {
 	struct ipc_rcu *p = container_of(head, struct ipc_rcu, rcu);
@@ -200,7 +200,7 @@ static void msg_rcu_free(struct rcu_head *head)
  *
  * Called with msg_ids.rw_mutex held (writer)
  */
-#ifndef CONFIG_HCC_IPC
+#ifndef CONFIG_HCC_GIPC
 static
 #endif
 int newque(struct ipc_namespace *ns, struct ipc_params *params)
@@ -236,7 +236,7 @@ int newque(struct ipc_namespace *ns, struct ipc_params *params)
 	/*
 	 * ipc_addid() locks msq
 	 */
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	id = ipc_addid(&msg_ids(ns), &msq->q_perm, ns->msg_ctlmni,
 		       params->requested_id);
 #else
@@ -247,7 +247,7 @@ int newque(struct ipc_namespace *ns, struct ipc_params *params)
 		return id;
 	}
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	if (is_hcc_ipc(&msg_ids(ns))) {
 		retval = hcc_ipc_msg_newque(ns, msq) ;
 		if (retval) {
@@ -320,7 +320,7 @@ static void expunge_all(struct msg_queue *msq, int res)
  * msg_ids.rw_mutex (writer) and the spinlock for this message queue are held
  * before freeque() is called. msg_ids.rw_mutex remains locked on exit.
  */
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 static void freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 {
 	if (is_hcc_ipc(&msg_ids(ns)))
@@ -340,7 +340,7 @@ static void freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 	expunge_all(msq, -EIDRM);
 	ss_wakeup(&msq->q_senders, 1);
 	msg_rmid(ns, msq);
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	local_msg_unlock(msq);
 #else
 	msg_unlock(msq);
@@ -586,13 +586,13 @@ SYSCALL_DEFINE3(msgctl, int, msqid, int, cmd, struct msqid_ds __user *, buf)
 		if (!buf)
 			return -EFAULT;
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 		down_read(&msg_ids(ns).rw_mutex);
 #endif
 		if (cmd == MSG_STAT) {
 			msq = msg_lock(ns, msqid);
 			if (IS_ERR(msq))
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 			{
 				up_read(&msg_ids(ns).rw_mutex);
 				return PTR_ERR(msq);
@@ -604,7 +604,7 @@ SYSCALL_DEFINE3(msgctl, int, msqid, int, cmd, struct msqid_ds __user *, buf)
 		} else {
 			msq = msg_lock_check(ns, msqid);
 			if (IS_ERR(msq))
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 			{
 				up_read(&msg_ids(ns).rw_mutex);
 				return PTR_ERR(msq);
@@ -634,7 +634,7 @@ SYSCALL_DEFINE3(msgctl, int, msqid, int, cmd, struct msqid_ds __user *, buf)
 		tbuf.msg_lspid  = msq->q_lspid;
 		tbuf.msg_lrpid  = msq->q_lrpid;
 		msg_unlock(msq);
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 		up_read(&msg_ids(ns).rw_mutex);
 #endif
 		if (copy_msqid_to_user(buf, &tbuf, version))
@@ -651,7 +651,7 @@ SYSCALL_DEFINE3(msgctl, int, msqid, int, cmd, struct msqid_ds __user *, buf)
 
 out_unlock:
 	msg_unlock(msq);
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	up_read(&msg_ids(ns).rw_mutex);
 #endif
 	return err;
@@ -714,7 +714,7 @@ static inline int pipelined_send(struct msg_queue *msq, struct msg_msg *msg)
 	return 0;
 }
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 long do_msgsnd(int msqid, long mtype, void __user *mtext,
 	       size_t msgsz, int msgflg)
 {
@@ -749,7 +749,7 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 	struct msg_queue *msq;
 	struct msg_msg *msg;
 	int err;
-#ifndef CONFIG_HCC_IPC
+#ifndef CONFIG_HCC_GIPC
 	struct ipc_namespace *ns;
 
 	ns = current->nsproxy->ipc_ns;
@@ -767,7 +767,7 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 	msg->m_type = mtype;
 	msg->m_ts = msgsz;
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	down_read(&msg_ids(ns).rw_mutex);
 #endif
 	msq = msg_lock_check(ns, msqid);
@@ -798,7 +798,7 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 			goto out_unlock_free;
 		}
 		ss_add(msq, &s);
-#ifndef CONFIG_HCC_IPC
+#ifndef CONFIG_HCC_GIPC
 		if (!ipc_rcu_getref(msq)) {
 			err = -EIDRM;
 			goto out_unlock_free;
@@ -806,12 +806,12 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 #endif
 
 		msg_unlock(msq);
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 		up_read(&msg_ids(ns).rw_mutex);
 #endif
 		schedule();
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 		down_read(&msg_ids(ns).rw_mutex);
 		msq = msg_lock_check(ns, msqid);
 		if (IS_ERR(msq)) {
@@ -828,7 +828,7 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 #endif
 		ss_del(&s);
 
-#if defined(CONFIG_HCC_IPC) && defined(CONFIG_HCC_EPM)
+#if defined(CONFIG_HCC_GIPC) && defined(CONFIG_HCC_EPM)
 		if (hcc_action_any_pending(current)) {
 #ifdef CONFIG_HCC_DEBUG
 			printk("%s:%d - action hcc! --> need replay!!\n",
@@ -844,7 +844,7 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 		}
 	}
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	msq->q_lspid = tgid;
 #else
 	msq->q_lspid = task_tgid_vnr(current);
@@ -869,7 +869,7 @@ out_free:
 	if (msg != NULL)
 		free_msg(msg);
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	up_read(&msg_ids(ns).rw_mutex);
 #endif
 
@@ -905,7 +905,7 @@ static inline int convert_mode(long *msgtyp, int msgflg)
 	return SEARCH_EQUAL;
 }
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 long do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	       size_t msgsz, long msgtyp, int msgflg)
 {
@@ -933,23 +933,23 @@ long do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	struct msg_queue *msq;
 	struct msg_msg *msg;
 	int mode;
-#ifndef CONFIG_HCC_IPC
+#ifndef CONFIG_HCC_GIPC
 	struct ipc_namespace *ns;
 #endif
 
 	if (msqid < 0 || (long) msgsz < 0)
 		return -EINVAL;
 	mode = convert_mode(&msgtyp, msgflg);
-#ifndef CONFIG_HCC_IPC
+#ifndef CONFIG_HCC_GIPC
 	ns = current->nsproxy->ipc_ns;
 #endif
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	down_read(&msg_ids(ns).rw_mutex);
 #endif
 	msq = msg_lock_check(ns, msqid);
 	if (IS_ERR(msq))
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	{
 		up_read(&msg_ids(ns).rw_mutex);
 		return PTR_ERR(msq);
@@ -1000,7 +1000,7 @@ long do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 			list_del(&msg->m_list);
 			msq->q_qnum--;
 			msq->q_rtime = get_seconds();
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 			msq->q_lrpid = tgid;
 #else
 			msq->q_lrpid = task_tgid_vnr(current);
@@ -1010,7 +1010,7 @@ long do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 			atomic_dec(&ns->msg_hdrs);
 			ss_wakeup(&msq->q_senders, 0);
 			msg_unlock(msq);
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 			up_read(&msg_ids(ns).rw_mutex);
 #endif
 			break;
@@ -1031,14 +1031,14 @@ long do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 		msr_d.r_msg = ERR_PTR(-EAGAIN);
 		current->state = TASK_INTERRUPTIBLE;
 		msg_unlock(msq);
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 		up_read(&msg_ids(ns).rw_mutex);
 #endif
 
 		schedule();
 
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 		down_read(&msg_ids(ns).rw_mutex);
 		msq = msg_lock_check(ns, msqid);
 		if (IS_ERR(msq)) {
@@ -1094,7 +1094,7 @@ long do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 
 		list_del(&msr_d.r_list);
 
-#if defined(CONFIG_HCC_IPC) && defined(CONFIG_HCC_EPM)
+#if defined(CONFIG_HCC_GIPC) && defined(CONFIG_HCC_EPM)
 		if (hcc_action_any_pending(current)) {
 #ifdef CONFIG_HCC_DEBUG
 			printk("%s:%d - action hcc! --> need replay!!\n",
@@ -1108,7 +1108,7 @@ long do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 			msg = ERR_PTR(-ERESTARTNOHAND);
 out_unlock:
 			msg_unlock(msq);
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 			up_read(&msg_ids(ns).rw_mutex);
 #endif
 			break;

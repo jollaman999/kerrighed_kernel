@@ -25,7 +25,7 @@ struct dvfs_file_struct {
 
 extern struct gdm_set *dvfs_file_struct_ctnr;
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 extern struct file_operations hcc_shm_file_operations;
 extern const struct file_operations shm_file_operations_huge;
 extern const struct file_operations shm_file_operations;

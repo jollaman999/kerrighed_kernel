@@ -8,7 +8,7 @@
 #include <linux/security.h>
 #include <linux/uaccess.h>
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 #include <hcc/faf.h>
 #endif
 

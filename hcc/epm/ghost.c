@@ -240,9 +240,9 @@ static int export_cpu_timers(struct epm_action *action,
 
 /* export_cred() is located in hcc/proc/remote_cred.c */
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 /* export_sysv_sem() is located in hcc/ipc/mobility.c */
-#endif /* !CONFIG_HCC_IPC */
+#endif /* !CONFIG_HCC_GIPC */
 
 /* export_thread_struct() is located in <arch>/hcc/ghost.c */
 
@@ -471,7 +471,7 @@ static int export_task(struct epm_action *action,
 	    || (r = export_mempolicy(action, ghost, task)))
 		GOTO_ERROR;
 
-#ifndef CONFIG_HCC_IPC
+#ifndef CONFIG_HCC_GIPC
 	if (task->sysvsem.undo_list) {
 		r = -EBUSY;
 		GOTO_ERROR;
@@ -578,7 +578,7 @@ static int export_task(struct epm_action *action,
 	if (r)
 		GOTO_ERROR;
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	r = export_sysv_sem(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
@@ -810,7 +810,7 @@ static void unimport_task(struct epm_action *action,
 	unimport_io_context(ghost_task);
 	unimport_exec_ids(ghost_task);
 	unimport_delays(ghost_task);
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	unimport_sysv_sem(ghost_task);
 #endif
 	unimport_sighand_struct(ghost_task);
@@ -1418,7 +1418,7 @@ static struct task_struct *import_task(struct epm_action *action,
 	INIT_LIST_HEAD(&task->cpu_timers[1]);
 	INIT_LIST_HEAD(&task->cpu_timers[2]);
 	mutex_init(&task->cred_guard_mutex);
-#ifndef CONFIG_HCC_IPC
+#ifndef CONFIG_HCC_GIPC
 	BUG_ON(task->sysvsem.undo_list);
 #endif
 	BUG_ON(task->notifier);
@@ -1579,7 +1579,7 @@ static struct task_struct *import_task(struct epm_action *action,
 	if (retval)
 		goto err_sighand_struct;
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	retval = import_sysv_sem(action, ghost, task);
 	if (retval)
 		goto err_sysv_sem;
@@ -1604,7 +1604,7 @@ err_io_context:
 err_exec_ids:
 	unimport_delays(task);
 err_delays:
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	unimport_sysv_sem(task);
 err_sysv_sem:
 #endif

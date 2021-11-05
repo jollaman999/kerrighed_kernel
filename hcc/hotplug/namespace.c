@@ -131,7 +131,7 @@ struct hcc_namespace *find_get_hcc_ns(void)
 bool can_create_hcc_ns(unsigned long flags)
 {
 	return current->create_hcc_ns
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 		&& (flags & CLONE_NEWIPC)
 #endif
 #ifdef CONFIG_HCC_PROC

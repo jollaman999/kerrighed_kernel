@@ -72,7 +72,7 @@ static DEFINE_SPINLOCK(cluster_start_lock);
 static DEFINE_MUTEX(cluster_start_mutex);
 static DECLARE_COMPLETION(cluster_started);
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 #define CLUSTER_INIT_OPT_CLONE_FLAGS_IPC CLONE_NEWIPC
 #else
 #define CLUSTER_INIT_OPT_CLONE_FLAGS_IPC 0
@@ -138,7 +138,7 @@ static ssize_t isolate_ipc_show(struct kobject *obj,
 	return sprintf(page, "%d\n", isolate);
 }
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 static struct kobj_attribute isolate_ipc_attr =
 	__ATTR(isolate_ipc, 0444, isolate_ipc_show, NULL);
 #else
@@ -160,7 +160,7 @@ static ssize_t isolate_ipc_store(struct kobject *obj,
 
 static struct kobj_attribute isolate_ipc_attr =
 	__ATTR(isolate_ipc, 0644, isolate_ipc_show, isolate_ipc_store);
-#endif /* !CONFIG_HCC_IPC */
+#endif /* !CONFIG_HCC_GIPC */
 
 static ssize_t isolate_mnt_show(struct kobject *obj,
 				struct kobj_attribute *attr,
@@ -371,7 +371,7 @@ static bool hcc_container_may_conflict(struct hcc_namespace *ns)
 	if (conflict)
 		return conflict;
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	/*
 	 * Check that userspace did not leak IPCs in the HCC
 	 * container
@@ -389,7 +389,7 @@ static int hcc_container_cleanup(struct hcc_namespace *ns)
 #ifdef CONFIG_HCC_EPM
 	pidmap_map_cleanup(ns);
 #endif
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	cleanup_ipc_objects ();
 #endif
 

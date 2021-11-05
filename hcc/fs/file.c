@@ -71,7 +71,7 @@ void check_file_struct_sharing (int index, struct file *file,
 	if (file->f_flags & (O_FAF_CLT | O_FAF_SRV | O_HCC_SHARED))
 		goto done;
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	BUG_ON(file->f_op == &hcc_shm_file_operations);
 
 	/* Do not share the file struct for HCC SHM files */

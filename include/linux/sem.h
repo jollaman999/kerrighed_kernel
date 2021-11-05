@@ -2,7 +2,7 @@
 #define _LINUX_SEM_H
 
 #include <linux/ipc.h>
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 #include <linux/unique_id.h>
 #include <hcc/hccinit.h>
 #include <hcc/types.h>
@@ -109,7 +109,7 @@ struct sem_array {
 	struct sem		*sem_base;	/* ptr to first semaphore in array */
 	struct list_head	sem_pending;	/* pending operations to be processed */
 	struct list_head	list_id;	/* undo requests on this array */
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	struct list_head	remote_sem_pending;
 #endif
 #ifdef __GENKSYMS__
@@ -130,7 +130,7 @@ struct sem_undo_list {
 #endif
 
 struct sysv_sem {
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	unique_id_t undo_list_id;
 	/* pointer to undo_list is useless in HCC code */
 #endif

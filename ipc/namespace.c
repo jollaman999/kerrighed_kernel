@@ -16,7 +16,7 @@
 
 #include "util.h"
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 static int hcc_init_ipc_ns(struct ipc_namespace *ns)
 {
 	int err = 0;
@@ -75,7 +75,7 @@ static struct ipc_namespace *create_ipc_ns(void)
 	msg_init_ns(ns);
 	shm_init_ns(ns);
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	err = hcc_init_ipc_ns(ns);
 	if (err) {
 		kfree(ns);
@@ -147,7 +147,7 @@ static void free_ipc_ns(struct ipc_namespace *ns)
 	sem_exit_ns(ns);
 	msg_exit_ns(ns);
 	shm_exit_ns(ns);
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	hcc_sem_exit_ns(ns);
 	hcc_msg_exit_ns(ns);
 	hcc_shm_exit_ns(ns);

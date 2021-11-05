@@ -7,7 +7,7 @@
 #include <linux/mutex.h>
 #include <linux/sched.h>
 #include <linux/file.h>
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 #include <linux/ipc.h>
 #include <linux/shm.h>
 #include <linux/msg.h>
@@ -98,7 +98,7 @@ static struct file *import_regular_file_from_hcc_desc(
 
 	if (desc->type == PIPE)
 		file = reopen_pipe_file_entry_from_hcc_desc(task, desc);
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	else if (desc->type == SHM)
 		file = reopen_shm_file_entry_from_hcc_desc(task, desc);
 #endif
@@ -162,7 +162,7 @@ int get_regular_file_hcc_desc(struct file *file, void **desc,
 	int size = 0, name_len;
 	int r = -ENOENT;
 
-#ifdef CONFIG_HCC_IPC
+#ifdef CONFIG_HCC_GIPC
 	if (is_shm(file)) {
 		r = get_shm_file_hcc_desc(file, desc, desc_size);
 		goto exit;
