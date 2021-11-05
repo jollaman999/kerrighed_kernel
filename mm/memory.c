@@ -66,7 +66,7 @@
 
 #include <trace/events/kmem.h>
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #include <hcc/page_table_tree.h>
 #endif
 
@@ -453,7 +453,7 @@ static void print_bad_pte(struct vm_area_struct *vma, unsigned long addr,
 		page, (void *)page->flags, page_count(page),
 		page_mapcount(page), page->mapping, page->index);
 	}
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	printk(KERN_ALERT
 		"addr:%p vm_flags:%08llx anon_vma:%p mapping:%p index:%lx\n",
 		(void *)addr, vma->vm_flags, vma->anon_vma, mapping, index);
@@ -580,7 +580,7 @@ out:
  * already present in the new task to be cleared in the whole range
  * covered by this vma.
  */
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 static inline unsigned long
 copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,
@@ -592,7 +592,7 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		unsigned long addr, int *rss)
 #endif
 {
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	unsigned long long vm_flags = vma->vm_flags;
 #else
 	unsigned long vm_flags = vma->vm_flags;
@@ -602,7 +602,7 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 
 	/* pte contains position in swap or file, so copy. */
 	if (unlikely(!pte_present(pte))) {
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		if (pte_obj_entry(src_pte)) {
 			pte_clear(dst_mm, addr, dst_pte);
 			return 0;
@@ -657,7 +657,7 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 
 	page = vm_normal_page(vma, addr, pte);
 	if (page) {
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		if (anon_only && !PageAnon(page)) {
 			pte_clear(dst_mm, addr, dst_pte);
 			return 0;
@@ -673,7 +673,7 @@ out_set_pte:
 	return 0;
 }
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 int copy_pte_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pmd_t *dst_pmd, pmd_t *src_pmd, struct vm_area_struct *vma,
 		unsigned long addr, unsigned long end, int anon_only)
@@ -717,7 +717,7 @@ again:
 			progress++;
 			continue;
 		}
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		entry.val = copy_one_pte(dst_mm, src_mm, dst_pte, src_pte,
 						vma, addr, rss, anon_only);
 #else
@@ -746,7 +746,7 @@ again:
 	return 0;
 }
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 static inline int copy_pmd_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pud_t *dst_pud, pud_t *src_pud, struct vm_area_struct *vma,
 		unsigned long addr, unsigned long end, int anon_only)
@@ -778,7 +778,7 @@ static inline int copy_pmd_range(struct mm_struct *dst_mm, struct mm_struct *src
 		}
 		if (pmd_none_or_clear_bad(src_pmd))
 			continue;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		if (copy_pte_range(dst_mm, src_mm, dst_pmd, src_pmd,
 				   vma, addr, next, anon_only))
 #else
@@ -790,7 +790,7 @@ static inline int copy_pmd_range(struct mm_struct *dst_mm, struct mm_struct *src
 	return 0;
 }
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 static inline int copy_pud_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pgd_t *dst_pgd, pgd_t *src_pgd, struct vm_area_struct *vma,
 		unsigned long addr, unsigned long end, int anon_only)
@@ -811,7 +811,7 @@ static inline int copy_pud_range(struct mm_struct *dst_mm, struct mm_struct *src
 		next = pud_addr_end(addr, end);
 		if (pud_none_or_clear_bad(src_pud))
 			continue;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		if (copy_pmd_range(dst_mm, src_mm, dst_pud, src_pud,
 				   vma, addr, next, anon_only))
 #else
@@ -823,7 +823,7 @@ static inline int copy_pud_range(struct mm_struct *dst_mm, struct mm_struct *src
 	return 0;
 }
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 int copy_page_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		struct vm_area_struct *vma, int anon_only)
 #else
@@ -877,7 +877,7 @@ int copy_page_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		next = pgd_addr_end(addr, end);
 		if (pgd_none_or_clear_bad(src_pgd))
 			continue;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		if (unlikely(copy_pud_range(dst_mm, src_mm, dst_pgd, src_pgd,
 					    vma, addr, next, anon_only))) {
 #else
@@ -916,7 +916,7 @@ static unsigned long zap_pte_range(struct mmu_gather *tlb,
 			continue;
 		}
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		if (vma->vm_mm->anon_vma_gdm_set &&
 		    !(details && (details->check_mapping ||
 				  details->nonlinear_vma ))) {
@@ -1475,7 +1475,7 @@ int __get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
 		     struct page **pages, struct vm_area_struct **vmas)
 {
 	int i;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	unsigned long long vm_flags;
 #else
 	unsigned long vm_flags;
@@ -2307,7 +2307,7 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	int reuse = 0, ret = 0;
 	int page_mkwrite = 0;
 	struct page *dirty_page = NULL;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	int need_vma_link_check = (vma->anon_vma == NULL);
 #endif
 
@@ -2325,7 +2325,7 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 			goto reuse;
 		goto gotten;
 	}
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	else {
 		if (vma->vm_flags & VM_GDM) {
 			page_cache_get(old_page);
@@ -2446,7 +2446,7 @@ gotten:
 	if (unlikely(anon_vma_prepare(vma)))
 		goto oom;
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	if (need_vma_link_check && mm->anon_vma_gdm_set)
 		hcc_check_vma_link(vma);
 	if (vma->vm_ops && vma->vm_ops->wppage) {
@@ -2468,7 +2468,7 @@ gotten:
 		return ret;
 	}
 continue_wppage:
-#endif /* CONFIG_HCC_MM */
+#endif /* CONFIG_HCC_GMM */
 
 	if (is_zero_pfn(pte_pfn(orig_pte))) {
 		new_page = alloc_zeroed_user_highpage_movable(vma, address);
@@ -2844,7 +2844,7 @@ EXPORT_SYMBOL(unmap_mapping_range);
  * but allow concurrent faults), and pte mapped but not yet locked.
  * We return with mmap_sem still held, but pte unmapped and unlocked.
  */
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 		 unsigned long address, pte_t *page_table, pmd_t *pmd,
 		 unsigned int flags, pte_t orig_pte)
@@ -2862,14 +2862,14 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	struct mem_cgroup *ptr = NULL;
 	int exclusive = 0;
 	int ret = 0;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	struct gdm_obj *obj_entry = NULL;
 #endif
 
 	if (!pte_unmap_same(mm, pmd, page_table, orig_pte))
 		goto out;
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	if (pte_obj_entry(&orig_pte)) {
 		obj_entry = get_obj_entry_from_pte(mm, address, &orig_pte,
 						   NULL);
@@ -2991,7 +2991,7 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 		exclusive = 1;
 	}
 	flush_icache_page(vma, page);
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	if (obj_entry) {
 		BUG_ON (!swap_pte_obj_entry(&orig_pte));
 		wait_lock_gdm_page(page);
@@ -3155,7 +3155,7 @@ static int __do_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 	vmf.flags = flags;
 	vmf.page = NULL;
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	vmf.pte = orig_pte;
 
 	if (flags & FAULT_FLAG_WRITE
@@ -3180,7 +3180,7 @@ static int __do_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 		return VM_FAULT_HWPOISON;
 	}
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	/*
 	 * If we are in a GDM linked VMA, all the mapping job has been done
 	 * by the HCC MM layer.
@@ -3410,7 +3410,7 @@ int handle_pte_fault(struct mm_struct *mm,
 
 	entry = *pte;
 	if (!pte_present(entry)) {
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		if (pte_none(entry) || pte_obj_entry(pte)) {
 #else
 		if (pte_none(entry)) {

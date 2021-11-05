@@ -10,7 +10,7 @@ config HCC
 	select HCC_GDM if !HCC_DEVEL
 	select HCC_CAP if !HCC_DEVEL
 	select HCC_PROCFS if !HCC_DEVEL
-	select HCC_MM if !HCC_DEVEL
+	select HCC_GMM if !HCC_DEVEL
 	select HCC_DVFS if !HCC_DEVEL
 	select HCC_FAF if !HCC_DEVEL
 	select HCC_GIPC if !HCC_DEVEL
@@ -161,15 +161,15 @@ config HCC_PROCFS
 #	help
 #	  Synchronization library
 
-config HCC_MM
-	bool "KerMM"
+config HCC_GMM
+	bool "GMM"
 	depends on HCC && HCC_GDM && !TRACK_DIRTY_PAGES && !COMPACTION && !KSM  && !TRANSPARENT_HUGEPAGE
 	help
 	  HCC's global memory management
 
 config HCC_DVFS
 	bool "Distributed VFS"
-#	depends on HCC_MM && HCC
+#	depends on HCC_GMM && HCC
 	depends on HCC
 	help
 	  HCC's distributed VFS. This is the HCC basic
@@ -189,7 +189,7 @@ config HCC_FAF
 
 config HCC_GIPC
 	bool "KerIPC"
-	depends on HCC && HCC_GDM && HCC_MM && IPC_NS
+	depends on HCC && HCC_GDM && HCC_GMM && IPC_NS
 	help
 	  HCC's global IPC management
 
@@ -204,7 +204,7 @@ config HCC_PROC
 
 config HCC_EPM
 	bool "KerEPM"
-	depends on HCC && HCC_PROC && HCC_CAP && HCC_MM && (HCC_DVFS || HCC_FAF)
+	depends on HCC && HCC_PROC && HCC_CAP && HCC_GMM && (HCC_DVFS || HCC_FAF)
 	help
 	  Enhanced Process Management:
 	    process migration, checkpoint/restart, remote clone.
@@ -379,7 +379,7 @@ config CLUSTER_WIDE_PROC_CPUINFO
 config CLUSTER_WIDE_PROC_MEMINFO
 	bool
 	depends on HCC
-	default CLUSTER_WIDE_PROC || HCC_MM
+	default CLUSTER_WIDE_PROC || HCC_GMM
 	select CLUSTER_WIDE_PROC_INFRA
 
 config CLUSTER_WIDE_PROC_LOADAVG

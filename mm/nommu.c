@@ -151,7 +151,7 @@ int __get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
 		     struct page **pages, struct vm_area_struct **vmas)
 {
 	struct vm_area_struct *vma;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	unsigned long long vm_flags;
 #else
 	unsigned long vm_flags;
@@ -1064,7 +1064,7 @@ static unsigned long determine_vm_flags(struct file *file,
 					unsigned long flags,
 					unsigned long capabilities)
 {
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	unsigned long long vm_flags;
 #else
 	unsigned long vm_flags;

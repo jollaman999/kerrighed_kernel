@@ -61,7 +61,7 @@
 #include <trace/events/kmem.h>
 
 #include <asm/tlbflush.h>
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #include <hcc/page_table_tree.h>
 #include <gdm/object.h>
 #include <gdm/gdm_types.h>
@@ -638,7 +638,7 @@ int page_mapped_in_vma(struct page *page, struct vm_area_struct *vma)
  */
 int page_referenced_one(struct page *page, struct vm_area_struct *vma,
 			unsigned long address, unsigned int *mapcount,
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 			unsigned long long *vm_flags)
 #else
 			unsigned long *vm_flags)
@@ -722,7 +722,7 @@ out:
 
 static int page_referenced_anon(struct page *page,
 				struct mem_cgroup *mem_cont,
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 				unsigned long long *vm_flags)
 #else
 				unsigned long *vm_flags)
@@ -775,7 +775,7 @@ static int page_referenced_anon(struct page *page,
  */
 static int page_referenced_file(struct page *page,
 				struct mem_cgroup *mem_cont,
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 				unsigned long long *vm_flags)
 #else
 				unsigned long *vm_flags)
@@ -845,7 +845,7 @@ static int page_referenced_file(struct page *page,
 int page_referenced(struct page *page,
 		    int is_locked,
 		    struct mem_cgroup *mem_cont,
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		    unsigned long long *vm_flags)
 #else
 		    unsigned long *vm_flags)
@@ -1096,7 +1096,7 @@ void page_add_new_anon_rmap(struct page *page,
 		__inc_zone_page_state(page, NR_ANON_TRANSPARENT_HUGEPAGES);
 	__page_set_anon_rmap(page, vma, address, 1);
 	if (page_evictable(page, vma))
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	{
 		if (PageMigratable(page))
 			lru_cache_add_lru(page, LRU_ACTIVE_MIGR);
@@ -1201,7 +1201,7 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 	pte_t pteval;
 	spinlock_t *ptl;
 	int ret = SWAP_AGAIN;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	struct gdm_obj *obj_entry = NULL;
 #endif
 
@@ -1209,7 +1209,7 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 	if (!pte)
 		goto out;
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	if (PageToInvalidate(page)) {
 		if ((vma->vm_flags & (VM_LOCKED|VM_RESERVED))) {
 			ret = SWAP_FAIL;
@@ -1236,7 +1236,7 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 		flush_tlb_page(vma, address);
 		goto out_unmap;
 	}
-#endif // CONFIG_HCC_MM
+#endif // CONFIG_HCC_GMM
 
 	/*
 	 * If the page is mlock()d, we cannot swap it out.
@@ -1256,7 +1256,7 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 			ret = SWAP_FAIL;
 			goto out_unmap;
 		}
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		/* Avoid unmap of a page in an address space being inserted in
 		 * a GDM or in use in the GDM layer */
 		obj_entry = page->obj_entry;
@@ -1325,7 +1325,7 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 		}
 		set_pte_at(mm, address, pte, swp_entry_to_pte(entry));
 		BUG_ON(pte_file(*pte));
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		wait_lock_gdm_page(page);
 		if (obj_entry && mm->anon_vma_gdm_id) {
 			obj_entry->object = (void*) mk_swap_pte_page(pte);
@@ -1343,7 +1343,7 @@ int try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
 	} else
 		dec_mm_counter(mm, file_rss);
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	if (obj_entry)
 		CLEAR_OBJECT_LOCKED(obj_entry);
 #endif

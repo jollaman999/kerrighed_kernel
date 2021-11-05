@@ -164,12 +164,12 @@ static inline int pgd_large(pgd_t pgd) { return 0; }
 /* PUD - Level3 access */
 
 /* PMD  - Level 2 access */
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #define pte_to_pgoff(pte) ((pte_val((pte)) & PHYSICAL_PAGE_MASK) >> PAGE_SHIFT)
 #define pgoff_to_pte(off) ((pte_t) { .pte = ((off) << PAGE_SHIFT) |	\
 					    _PAGE_FILE })
 #define PTE_FILE_MAX_BITS __PHYSICAL_MASK_SHIFT
-#else /*CONFIG_HCC_MM */
+#else /*CONFIG_HCC_GMM */
 #define pte_to_pgoff(pte) ((pte_val((pte)) & PHYSICAL_PAGE_MASK) >> PAGE_SHIFT)
 #define pgoff_to_pte(off) ((pte_t) { .pte =				\
 				((~off & (PHYSICAL_PAGE_MASK>>PAGE_SHIFT)) \
@@ -190,7 +190,7 @@ static inline int pte_file_max_bits(void)
 	 */
 	return min(__PHYSICAL_MASK_SHIFT, boot_cpu_data.x86_phys_bits - 1);
 }
-#endif /* CONFIG_HCC_MM */
+#endif /* CONFIG_HCC_GMM */
 
 /* PTE - Level 1 access. */
 
@@ -204,15 +204,15 @@ static inline int pte_file_max_bits(void)
 
 /* Encode and de-code a swap entry */
 #define SWP_TYPE_BITS 5
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #define SWP_OFFSET_SHIFT	9
 #else
 #define SWP_OFFSET_SHIFT (_PAGE_BIT_PROTNONE + 1)
-#endif /* !CONFIG_HCC_MM */
+#endif /* !CONFIG_HCC_GMM */
 
 #define MAX_SWAPFILES_CHECK() BUILD_BUG_ON(MAX_SWAPFILES_SHIFT > SWP_TYPE_BITS)
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #define __swp_type(x)			(((x).val >> (_PAGE_BIT_FILE + 1)) \
 					 & ((1U << SWP_TYPE_BITS) - 1))
 #else
@@ -220,7 +220,7 @@ static inline int pte_file_max_bits(void)
 					 & ((1U << SWP_TYPE_BITS) - 1))
 #endif
 #define __swp_offset(x)			((x).val >> SWP_OFFSET_SHIFT)
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #define __swp_entry(type, offset)	((swp_entry_t) { \
 					 ((type) << (_PAGE_BIT_FILE + 1)) \
 					 | ((offset) << SWP_OFFSET_SHIFT) })

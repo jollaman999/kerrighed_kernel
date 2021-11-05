@@ -1,5 +1,5 @@
-#ifndef __KHCC_MM__
-#define __KHCC_MM__
+#ifndef __KHCC_GMM__
+#define __KHCC_GMM__
 
 #include <linux/err.h>
 #include <linux/fs.h>
@@ -112,5 +112,5 @@ void hcc_do_mprotect(struct mm_struct *mm, unsigned long start, size_t len,
 
 #define TestClearPageLRU(page)  test_and_clear_bit(PG_lru, &(page)->flags)
 
-#endif // __KHCC_MM__
+#endif // __KHCC_GMM__
 

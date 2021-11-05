@@ -80,7 +80,7 @@ deffct(rpc);
 deffct(stream);
 #endif
 deffct(gdm);
-deffct(kermm);
+deffct(gmm);
 #ifdef CONFIG_HCC_DVFS
 deffct(dvfs);
 #endif
@@ -378,9 +378,9 @@ int init_hcc_upper_layers(void)
 		goto err_palantir;
 #endif
 
-#ifdef CONFIG_HCC_MM
-	if (init_kermm())
-		goto err_kermm;
+#ifdef CONFIG_HCC_GMM
+	if (init_gmm())
+		goto err_gmm;
 #endif
 
 #ifdef CONFIG_HCC_DVFS
@@ -450,9 +450,9 @@ int init_hcc_upper_layers(void)
 	cleanup_hcc_cap();
       err_hcc_cap:
 #endif
-#ifdef CONFIG_HCC_MM
-	cleanup_kermm();
-      err_kermm:
+#ifdef CONFIG_HCC_GMM
+	cleanup_gmm();
+      err_gmm:
 #endif
 #ifdef CONFIG_HCC_GDM
 	cleanup_gdm();

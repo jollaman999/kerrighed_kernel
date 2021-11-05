@@ -14,7 +14,7 @@
 #define INIT_MM_EPM
 #endif
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #define INIT_MM_MM	.mm_tasks	= ATOMIC_INIT(1),
 #else
 #define INIT_MM_MM

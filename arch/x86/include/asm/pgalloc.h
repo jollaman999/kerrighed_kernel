@@ -4,7 +4,7 @@
 #include <linux/threads.h>
 #include <linux/mm.h>		/* for struct page */
 #include <linux/pagemap.h>
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #include <linux/interrupt.h>
 #endif
 
@@ -83,7 +83,7 @@ static inline void pmd_populate(struct mm_struct *mm, pmd_t *pmd,
 #if PAGETABLE_LEVELS > 2
 static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long addr)
 {
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	if (in_atomic())
 		return (pmd_t *)get_zeroed_page(GFP_ATOMIC);
 	else
@@ -124,7 +124,7 @@ static inline void pgd_populate(struct mm_struct *mm, pgd_t *pgd, pud_t *pud)
 
 static inline pud_t *pud_alloc_one(struct mm_struct *mm, unsigned long addr)
 {
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	if (in_atomic())
 		return (pud_t *)get_zeroed_page(GFP_ATOMIC);
 	else

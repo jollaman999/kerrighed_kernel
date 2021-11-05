@@ -202,7 +202,7 @@ struct kmem_cache *fs_cachep;
 struct kmem_cache *vm_area_cachep;
 
 /* SLAB cache for mm_struct structures (tsk->mm) */
-#ifndef CONFIG_HCC_MM
+#ifndef CONFIG_HCC_GMM
 static
 #endif
 struct kmem_cache *mm_cachep;
@@ -351,7 +351,7 @@ out:
 }
 
 #ifdef CONFIG_MMU
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 int __dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm, int anon_only)
 #else
 static int dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm)
@@ -392,7 +392,7 @@ static int dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm)
 	for (mpnt = oldmm->mmap; mpnt; mpnt = mpnt->vm_next) {
 		struct file *file;
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		if ((mpnt->vm_flags & VM_DONTCOPY)
 		    || (anon_only && !anon_vma(mpnt))) {
 #else
@@ -467,7 +467,7 @@ static int dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm)
 		rb_parent = &tmp->vm_rb;
 
 		mm->map_count++;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		retval = copy_page_range(mm, oldmm, mpnt, anon_only);
 #else
 		retval = copy_page_range(mm, oldmm, mpnt);
@@ -497,7 +497,7 @@ fail_nomem:
 	goto out;
 }
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 static inline int dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm)
 {
        return __dup_mmap(mm, oldmm, 0);
@@ -525,7 +525,7 @@ static inline void mm_free_pgd(struct mm_struct * mm)
 
 __cacheline_aligned_in_smp DEFINE_SPINLOCK(mmlist_lock);
 
-#ifndef CONFIG_HCC_MM
+#ifndef CONFIG_HCC_GMM
 #define allocate_mm()	(kmem_cache_alloc(mm_cachep, GFP_KERNEL))
 #define free_mm(mm)	(kmem_cache_free(mm_cachep, (mm)))
 #endif
@@ -552,12 +552,12 @@ static void mm_init_aio(struct mm_struct *mm)
 #endif
 }
 
-#ifndef CONFIG_HCC_MM
+#ifndef CONFIG_HCC_GMM
 static
 #endif
 struct mm_struct * mm_init(struct mm_struct * mm, struct task_struct *p)
 {
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	atomic_set(&mm->mm_tasks, 1);
 #endif
 #ifdef CONFIG_HCC_EPM
@@ -575,7 +575,7 @@ struct mm_struct * mm_init(struct mm_struct * mm, struct task_struct *p)
 #ifndef __PAGETABLE_PMD_FOLDED
 	atomic_long_set(&mm->nr_pmds, 0);
 #endif
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	mm->mm_id = 0;
 #endif
 	set_mm_counter(mm, file_rss, 0);
@@ -919,7 +919,7 @@ static int copy_mm(unsigned long clone_flags, struct task_struct * tsk)
 		atomic_inc(&oldmm->mm_ltasks);
 #endif
 		atomic_inc(&oldmm->mm_users);
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #ifdef CONFIG_HCC_EPM
 		/* Forking the ghost do not create a real new task. No need
 		 * to inc the mm_task counter */
@@ -932,7 +932,7 @@ static int copy_mm(unsigned long clone_flags, struct task_struct * tsk)
 	}
 
 	retval = -ENOMEM;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	if (kh_copy_mm)
 		mm = kh_copy_mm(tsk, oldmm, clone_flags);
 	else
@@ -1816,7 +1816,7 @@ bad_fork_cleanup_io:
 bad_fork_cleanup_namespaces:
 	exit_task_namespaces(p);
 bad_fork_cleanup_mm:
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	if (p->mm && p->mm->mm_id && (clone_flags & CLONE_VM))
 #ifdef CONFIG_HCC_EPM
 		if (!hcc_current)

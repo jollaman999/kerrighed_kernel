@@ -206,7 +206,7 @@ static inline void page_dup_rmap(struct page *page)
 /*
  * Called from mm/vmscan.c to handle paging out
  */
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 int page_referenced(struct page *, int is_locked,
 			struct mem_cgroup *cnt, unsigned long long *vm_flags);
 int page_referenced_one(struct page *, struct vm_area_struct *,
@@ -233,7 +233,7 @@ enum ttu_flags {
 int try_to_unmap(struct page *, enum ttu_flags flags);
 int try_to_unmap_one(struct page *, struct vm_area_struct *,
 			unsigned long address, enum ttu_flags flags);
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 struct anon_vma *page_lock_anon_vma(struct page *page);
 void page_unlock_anon_vma(struct anon_vma *anon_vma);
 #endif
@@ -289,7 +289,7 @@ int rmap_walk(struct page *page, struct rmap_walk_control *rwc);
 
 static inline int page_referenced(struct page *page, int is_locked,
 				  struct mem_cgroup *cnt,
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 				  unsigned long long *vm_flags)
 #else
 				  unsigned long *vm_flags)
@@ -316,7 +316,7 @@ static inline int page_mkclean(struct page *page)
 #define SWAP_AGAIN	1
 #define SWAP_FAIL	2
 #define SWAP_MLOCK	3
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #define SWAP_FLUSH_FAIL	4
 #endif
 

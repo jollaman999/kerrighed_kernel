@@ -27,7 +27,7 @@ static unsigned long page_table_shareable(struct vm_area_struct *svma,
 	unsigned long s_end = sbase + PUD_SIZE;
 
 	/* Allow segments to share if only one is marked locked */
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	unsigned long long vm_flags = vma->vm_flags & ~VM_LOCKED;
 	unsigned long long svm_flags = svma->vm_flags & ~VM_LOCKED;
 #else

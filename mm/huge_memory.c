@@ -1421,7 +1421,7 @@ out:
 	return ret;
 }
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 int hugepage_madvise(unsigned long long *vm_flags, int advice)
 #else
 int hugepage_madvise(unsigned long *vm_flags, int advice)

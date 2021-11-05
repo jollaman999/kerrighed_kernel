@@ -27,7 +27,7 @@ typedef struct kernel_hcc_cap_struct {
 #else
 #define __HCC_GCAP_SUPPORTED_PROCFS 0
 #endif
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #define __HCC_GCAP_SUPPORTED_MM CAP_TO_MASK(GCAP_USE_REMOTE_MEMORY)
 #else
 #define __HCC_GCAP_SUPPORTED_MM 0

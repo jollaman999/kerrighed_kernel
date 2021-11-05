@@ -76,7 +76,7 @@
 #include <asm/mmu_context.h>
 #include "cred-internals.h"
 
-#ifndef CONFIG_HCC_MM
+#ifndef CONFIG_HCC_GMM
 static
 #endif
 void exit_mm(struct task_struct * tsk);
@@ -771,7 +771,7 @@ assign_new_owner:
  * Turn us into a lazy TLB process if we
  * aren't already..
  */
-#ifndef CONFIG_HCC_MM
+#ifndef CONFIG_HCC_GMM
 static
 #endif
 void exit_mm(struct task_struct * tsk)
@@ -1091,7 +1091,7 @@ NORET_TYPE void do_exit(long code)
 {
 	struct task_struct *tsk = current;
 	int group_dead;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	struct mm_struct *mm = NULL;
 #endif
 	profile_task_exit(tsk);
@@ -1182,12 +1182,12 @@ NORET_TYPE void do_exit(long code)
 
 	tsk->exit_code = code;
 	taskstats_exit(tsk, group_dead);
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	if (tsk->mm && tsk->mm->mm_id)
 		mm = tsk->mm;
 #endif
 	exit_mm(tsk);
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	if (mm)
 		HCCFCT(kh_mm_release)(mm, notify);
 #endif

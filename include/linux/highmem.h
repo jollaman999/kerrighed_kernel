@@ -200,7 +200,7 @@ static inline void copy_highpage(struct page *to, struct page *from)
 	kunmap_atomic(vfrom, KM_USER0);
 }
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 static inline void copy_buff_to_highpage(struct page * page, char *buffer)
 {
 	char *to;

@@ -305,7 +305,7 @@ int __init sysenter_setup(void)
 	return 0;
 }
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 void import_vdso_context(struct vm_area_struct *vma)
 {
 	if (vdso_enabled != VDSO_ENABLED) {

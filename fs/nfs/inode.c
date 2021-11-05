@@ -41,7 +41,7 @@
 #include <linux/freezer.h>
 #include <linux/crc32.h>
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #include <hcc/hccsyms.h>
 #endif
 
@@ -1718,7 +1718,7 @@ static int __init init_nfs_fs(void)
 {
 	int err;
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	err = hccsyms_register(HCCSYMS_VM_OPS_NFS_FILE, &nfs_file_vm_ops);
 	if (err)
 		goto out10;
@@ -1797,7 +1797,7 @@ out8:
 	nfs_idmap_quit();
 out9:
 #endif
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	hccsyms_unregister(HCCSYMS_VM_OPS_NFS_FILE);
 out10:
 #endif
@@ -1823,7 +1823,7 @@ static void __exit exit_nfs_fs(void)
 	unregister_nfs_fs();
 	nfs_fs_proc_exit();
 	nfsiod_stop();
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	hccsyms_unregister(HCCSYMS_VM_OPS_NFS_FILE);
 #endif
 }

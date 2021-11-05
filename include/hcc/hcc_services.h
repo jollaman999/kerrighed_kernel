@@ -113,7 +113,7 @@
 
 #define KSYS_CHANGE_MAP_LOCAL_VALUE  _IOW(HCC_PROC_MAGIC, \
 			                  KERMM_PROC_BASE + 0, \
-					   struct kermm_new_local_data)
+					   struct gmm_new_local_data)
 
 /*
  * Enhanced Process Management related hcc syscalls
@@ -198,8 +198,8 @@ struct __hotplug_node_set {
 /*
  * Ctnr
  */
-typedef struct kermm_new_local_data {
+typedef struct gmm_new_local_data {
 	unsigned long data_place;
-} kermm_new_local_data_t;
+} gmm_new_local_data_t;
 
 #endif

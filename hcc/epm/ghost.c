@@ -515,7 +515,7 @@ static int export_task(struct epm_action *action,
 	r = export_sched_info(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	r = export_mm_struct(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
@@ -829,7 +829,7 @@ static void unimport_task(struct epm_action *action,
 	unimport_audit_context(ghost_task);
 	unimport_cred(ghost_task);
 	unimport_binfmt(ghost_task);
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	unimport_mm_struct(ghost_task);
 #endif
 	unimport_sched_info(ghost_task);
@@ -1515,7 +1515,7 @@ static struct task_struct *import_task(struct epm_action *action,
 	if (retval)
 		goto err_sched_info;
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	retval = import_mm_struct(action, ghost, task);
 	if (retval)
 		goto err_mm_struct;
@@ -1640,7 +1640,7 @@ err_cred:
 err_vfork_done:
 	unimport_binfmt(task);
 err_binfmt:
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	unimport_mm_struct(task);
 err_mm_struct:
 #endif
@@ -1690,7 +1690,7 @@ static void free_ghost_task(struct task_struct *task)
 
 void free_ghost_process(struct task_struct *ghost)
 {
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	free_ghost_mm(ghost);
 #endif
 

@@ -4,7 +4,7 @@
 
 #ifndef __ASSEMBLY__
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 /* No inverted PFNs for hcc */
 
 static inline u64 protnone_mask(u64 val)

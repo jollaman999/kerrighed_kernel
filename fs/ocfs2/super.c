@@ -46,7 +46,7 @@
 #define MLOG_MASK_PREFIX ML_SUPER
 #include <cluster/masklog.h>
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #include <hcc/hccsyms.h>
 #endif
 
@@ -76,7 +76,7 @@
 
 #include "buffer_head_io.h"
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 struct vm_operations_struct;
 
 extern struct vm_operations_struct ocfs2_file_vm_ops;
@@ -1558,7 +1558,7 @@ static int __init ocfs2_init(void)
 	if (status)
 		goto leave;
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	status = hccsyms_register(HCCSYMS_VM_OPS_OCFS2_FILE, &ocfs2_file_vm_ops);
 	if (status)
 		goto leave;
@@ -1572,7 +1572,7 @@ leave:
 		ocfs2_quota_shutdown();
 		ocfs2_free_mem_caches();
 		exit_ocfs2_uptodate_cache();
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		hccsyms_unregister(HCCSYMS_VM_OPS_OCFS2_FILE);
 #endif
 	}
@@ -1587,7 +1587,7 @@ leave:
 
 static void __exit ocfs2_exit(void)
 {
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	hccsyms_unregister(HCCSYMS_VM_OPS_OCFS2_FILE);
 #endif
 

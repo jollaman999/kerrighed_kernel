@@ -2245,7 +2245,7 @@ static int ksm_scan_thread(void *nothing)
 }
 
 int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		unsigned long end, int advice, unsigned long long *vm_flags)
 #else
 		unsigned long end, int advice, unsigned long *vm_flags)
@@ -2400,7 +2400,7 @@ struct page *ksm_might_need_to_copy(struct page *page,
 }
 
 int page_referenced_ksm(struct page *page, struct mem_cgroup *memcg,
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 			unsigned long long *vm_flags)
 #else
 			unsigned long *vm_flags)

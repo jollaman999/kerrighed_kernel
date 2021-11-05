@@ -789,7 +789,7 @@ static const char * const vmstat_text[] = {
 	"nr_writeback_temp",
 	"nr_isolated_anon",
 	"nr_isolated_file",
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	"nr_isolated_migr",
 #endif
 	"nr_shmem",

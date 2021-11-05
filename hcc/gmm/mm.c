@@ -1,11 +1,11 @@
-/** KerMM module initialization.
+/** GMM module initialization.
  *  @file mm.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
  *  Copyright (C) 2019-2021, Innogrid HCC.
  *
  *  Implementation of functions used to initialize and finalize the
- *  kermm module.
+ *  gmm module.
  */
 
 #include <linux/mm.h>
@@ -33,11 +33,11 @@
  *  @author Innogrid HCC
  *
  *  Start object server, object manager and gdm set manager threads.
- *  Register kermm services in the /proc/hcc/services.
+ *  Register gmm services in the /proc/hcc/services.
  */
-int init_kermm(void)
+int init_gmm(void)
 {
-	printk("KerMM initialisation : start\n");
+	printk("GMM initialisation : start\n");
 
 	hccsyms_register (HCCSYMS_VM_OPS_NULL, &null_vm_ops);
 	hccsyms_register (HCCSYMS_VM_OPS_FILE_GENERIC, (void *)&generic_file_vm_ops);
@@ -62,7 +62,7 @@ int init_kermm(void)
 	mm_server_init();
 	mm_injection_init();
 
-	printk ("KerMM initialisation done\n");
+	printk ("GMM initialisation done\n");
 
 	return 0;
 }
@@ -74,9 +74,9 @@ int init_kermm(void)
  *
  *  Kill object manager, object server and gdm set manager threads.
  */
-void cleanup_kermm (void)
+void cleanup_gmm (void)
 {
-	printk ("KerMM termination : start\n");
+	printk ("GMM termination : start\n");
 
 	mm_injection_finalize();
 	mm_server_finalize();
@@ -91,5 +91,5 @@ void cleanup_kermm (void)
 	hccsyms_unregister (HCCSYMS_ARCH_GET_UNMAP_AREA_TOPDOWN);
 	hccsyms_unregister (HCCSYMS_ARCH_GET_UNMAP_EXEC_AREA);
 
-	printk ("KerMM termination done\n");
+	printk ("GMM termination done\n");
 }

@@ -649,7 +649,7 @@ int setup_arg_pages(struct linux_binprm *bprm,
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma = bprm->vma;
 	struct vm_area_struct *prev = NULL;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	unsigned long long vm_flags;
 #else
 	unsigned long vm_flags;
@@ -659,7 +659,7 @@ int setup_arg_pages(struct linux_binprm *bprm,
 	unsigned long stack_expand;
 	unsigned long rlim_stack;
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	if (mm->anon_vma_gdm_set)
 		hcc_check_vma_link(vma);
 #endif
@@ -814,7 +814,7 @@ static int exec_mmap(struct mm_struct *mm)
 {
 	struct task_struct *tsk;
 	struct mm_struct * old_mm, *active_mm;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	unique_id_t mm_id = 0;
 #endif
 
@@ -830,7 +830,7 @@ static int exec_mmap(struct mm_struct *mm)
 		 * through with the exec.  We must hold mmap_sem around
 		 * checking core_state and changing tsk->mm.
 		 */
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		mm_id = old_mm->mm_id;
 #endif
 		down_read(&old_mm->mmap_sem);
@@ -855,7 +855,7 @@ static int exec_mmap(struct mm_struct *mm)
 		BUG_ON(active_mm != old_mm);
 		mm_update_next_owner(old_mm);
 		mmput(old_mm);
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 		if (mm_id)
 			kh_mm_release(old_mm, 1);
 #endif
@@ -1617,7 +1617,7 @@ int do_execve(const char * filename,
 	if (retval < 0)
 		goto out;
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	retval = hcc_do_execve(current, current->mm);
 	if (retval)
 		goto out;

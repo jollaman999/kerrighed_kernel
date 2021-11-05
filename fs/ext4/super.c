@@ -45,7 +45,7 @@
 #include <linux/kthread.h>
 #include <linux/freezer.h>
 
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 #include <hcc/hccsyms.h>
 #endif
 
@@ -4872,7 +4872,7 @@ static int __init init_ext4_fs(void)
 	err = init_ext4_system_zone();
 	if (err)
 		return err;
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	err = hccsyms_register(HCCSYMS_VM_OPS_FILE_EXT4, (void *)&ext4_file_vm_ops);
 	if(err)
 			goto out5;
@@ -4910,7 +4910,7 @@ out3:
 	remove_proc_entry("fs/ext4", NULL);
 	kset_unregister(ext4_kset);
 out4:
-#ifdef CONFIG_HCC_MM
+#ifdef CONFIG_HCC_GMM
 	hccsyms_unregister(HCCSYMS_VM_OPS_FILE_EXT4);
 out5:
 #endif

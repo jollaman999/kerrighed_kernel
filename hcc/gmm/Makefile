@@ -1,4 +1,4 @@
-obj-$(CONFIG_HCC_MM) := hccmm.o
+obj-$(CONFIG_HCC_GMM) := hccmm.o
 
 hccmm-y := memory_int_linker.o mm.o vma_struct.o page_table_tree.o \
 		   memory_io_linker.o mm_struct.o mm_struct_io_linker.o \
