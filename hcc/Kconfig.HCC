@@ -7,7 +7,7 @@ config HCC
 	select HCC_TOOLS if !HCC_DEVEL
 	select HCC_COMMUNICATION_FRAMEWORK if !HCC_DEVEL
 	select HCC_HOTPLUG if !HCC_DEVEL
-	select HCC_KDDM if !HCC_DEVEL
+	select HCC_GDM if !HCC_DEVEL
 	select HCC_CAP if !HCC_DEVEL
 	select HCC_PROCFS if !HCC_DEVEL
 	select HCC_MM if !HCC_DEVEL
@@ -66,7 +66,7 @@ config HCC_AUTONODEID
 
 	  Enabling this option will use 8 bits instead of 7 bits for node ids,
 	  which doubles the size of various node id masks, especially used in
-	  KDDM metadata.
+	  GDM metadata.
 
 	  If unsure, say Y.
 
@@ -126,8 +126,8 @@ config HCC_DISABLE_HEARTBEAT
          If you don't want automatic reconfiguration on a node failure
          just select this option.
 
-config HCC_KDDM
-	bool "Kernel Distributed Data Management (KDDM)"
+config HCC_GDM
+	bool "Kernel Distributed Data Management (GDM)"
 	depends on HCC_COMMUNICATION_FRAMEWORK
 	help
 	  Cluster wide data management. This is the general purpose
@@ -136,8 +136,8 @@ config HCC_KDDM
 
 	  If unsure, say Y.
 
-config HCC_KDDM_DEBUG
-	def_bool HCC_KDDM && HCC_DEBUG
+config HCC_GDM_DEBUG
+	def_bool HCC_GDM && HCC_DEBUG
 
 config HCC_CAP
 	bool "KerCapabilities"
@@ -149,7 +149,7 @@ config HCC_CAP
 
 config HCC_PROCFS
 	bool "ProcFS"
-	depends on HCC_KDDM && HCC
+	depends on HCC_GDM && HCC
 	help
 	  Global /proc mechanism.
 
@@ -157,13 +157,13 @@ config HCC_PROCFS
 
 #config HCC_SYNC
 #	bool "KerSync"
-#	depends on HCC && HCC_KDDM
+#	depends on HCC && HCC_GDM
 #	help
 #	  Synchronization library
 
 config HCC_MM
 	bool "KerMM"
-	depends on HCC && HCC_KDDM && !TRACK_DIRTY_PAGES && !COMPACTION && !KSM  && !TRANSPARENT_HUGEPAGE
+	depends on HCC && HCC_GDM && !TRACK_DIRTY_PAGES && !COMPACTION && !KSM  && !TRANSPARENT_HUGEPAGE
 	help
 	  HCC's global memory management
 
@@ -189,13 +189,13 @@ config HCC_FAF
 
 config HCC_IPC
 	bool "KerIPC"
-	depends on HCC && HCC_KDDM && HCC_MM && IPC_NS
+	depends on HCC && HCC_GDM && HCC_MM && IPC_NS
 	help
 	  HCC's global IPC management
 
 config HCC_PROC
 	bool "KerProc"
-	depends on HCC && HCC_KDDM
+	depends on HCC && HCC_GDM
 	help
 	  Low-level global process management: global PIDs, syscalls affecting
 	  remote tasks (including signals), global proc PID entries.
