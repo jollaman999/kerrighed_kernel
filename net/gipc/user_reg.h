@@ -1,5 +1,5 @@
 /*
- * net/gipc/user_reg.h: Include file for GIPC user registry code
+ * net/tipc/user_reg.h: Include file for TIPC user registry code
  *
  * Copyright (c) 2000-2006, Ericsson AB
  * Copyright (c) 2005, Wind River Systems
@@ -34,15 +34,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GIPC_USER_REG_H
-#define _GIPC_USER_REG_H
+#ifndef _TIPC_USER_REG_H
+#define _TIPC_USER_REG_H
 
 #include "port.h"
 
-int gipc_reg_start(void);
-void gipc_reg_stop(void);
+int tipc_reg_start(void);
+void tipc_reg_stop(void);
 
-int gipc_reg_add_port(struct user_port *up_ptr);
-int gipc_reg_remove_port(struct user_port *up_ptr);
+int tipc_reg_add_port(struct user_port *up_ptr);
+int tipc_reg_remove_port(struct user_port *up_ptr);
 
 #endif

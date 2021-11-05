@@ -1,5 +1,5 @@
 /*
- * net/gipc/dbg.h: Include file for GIPC print buffer routines
+ * net/tipc/dbg.h: Include file for TIPC print buffer routines
  *
  * Copyright (c) 1997-2006, Ericsson AB
  * Copyright (c) 2005-2007, Wind River Systems
@@ -34,11 +34,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GIPC_DBG_H
-#define _GIPC_DBG_H
+#ifndef _TIPC_DBG_H
+#define _TIPC_DBG_H
 
 /**
- * struct print_buf - GIPC print buffer structure
+ * struct print_buf - TIPC print buffer structure
  * @buf: pointer to character array containing print buffer contents
  * @size: size of character array
  * @crs: pointer to first unused space in character array (i.e. final NUL)
@@ -52,19 +52,19 @@ struct print_buf {
 	int echo;
 };
 
-#define GIPC_PB_MIN_SIZE 64	/* minimum size for a print buffer's array */
-#define GIPC_PB_MAX_STR 512	/* max printable string (with trailing NUL) */
+#define TIPC_PB_MIN_SIZE 64	/* minimum size for a print buffer's array */
+#define TIPC_PB_MAX_STR 512	/* max printable string (with trailing NUL) */
 
-void gipc_printbuf_init(struct print_buf *pb, char *buf, u32 size);
-void gipc_printbuf_reset(struct print_buf *pb);
-int  gipc_printbuf_empty(struct print_buf *pb);
-int  gipc_printbuf_validate(struct print_buf *pb);
-void gipc_printbuf_move(struct print_buf *pb_to, struct print_buf *pb_from);
+void tipc_printbuf_init(struct print_buf *pb, char *buf, u32 size);
+void tipc_printbuf_reset(struct print_buf *pb);
+int  tipc_printbuf_empty(struct print_buf *pb);
+int  tipc_printbuf_validate(struct print_buf *pb);
+void tipc_printbuf_move(struct print_buf *pb_to, struct print_buf *pb_from);
 
-int gipc_log_resize(int log_size);
+int tipc_log_resize(int log_size);
 
-struct sk_buff *gipc_log_resize_cmd(const void *req_tlv_area,
+struct sk_buff *tipc_log_resize_cmd(const void *req_tlv_area,
 				    int req_tlv_space);
-struct sk_buff *gipc_log_dump(void);
+struct sk_buff *tipc_log_dump(void);
 
 #endif

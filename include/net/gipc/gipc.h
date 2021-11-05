@@ -1,5 +1,5 @@
 /*
- * include/net/gipc/gipc.h: Main include file for GIPC users
+ * include/net/tipc/tipc.h: Main include file for TIPC users
  * 
  * Copyright (c) 2003-2006, Ericsson AB
  * Copyright (c) 2005, Wind River Systems
@@ -34,12 +34,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NET_GIPC_H_
-#define _NET_GIPC_H_
+#ifndef _NET_TIPC_H_
+#define _NET_TIPC_H_
 
 #ifdef __KERNEL__
 
-#include <linux/gipc.h>
+#include <linux/tipc.h>
 #include <linux/skbuff.h>
 
 /* 
@@ -47,215 +47,215 @@
  */
 
 #ifdef CONFIG_HCC_GRPC
-extern int gipc_net_id;
-int gipc_core_start_net(unsigned long addr);
+extern int tipc_net_id;
+int tipc_core_start_net(unsigned long addr);
 #endif
 
 /*
- * GIPC operating mode routines
+ * TIPC operating mode routines
  */
 
-u32 gipc_get_addr(void);
+u32 tipc_get_addr(void);
 
-#define GIPC_NOT_RUNNING  0
-#define GIPC_NODE_MODE    1
-#define GIPC_NET_MODE     2
+#define TIPC_NOT_RUNNING  0
+#define TIPC_NODE_MODE    1
+#define TIPC_NET_MODE     2
 
-typedef void (*gipc_mode_event)(void *usr_handle, int mode, u32 addr);
+typedef void (*tipc_mode_event)(void *usr_handle, int mode, u32 addr);
 
-int gipc_attach(unsigned int *userref, gipc_mode_event, void *usr_handle);
+int tipc_attach(unsigned int *userref, tipc_mode_event, void *usr_handle);
 
-void gipc_detach(unsigned int userref);
+void tipc_detach(unsigned int userref);
 
-int gipc_get_mode(void);
+int tipc_get_mode(void);
 
 /*
- * GIPC port manipulation routines
+ * TIPC port manipulation routines
  */
 
-typedef void (*gipc_msg_err_event) (void *usr_handle,
+typedef void (*tipc_msg_err_event) (void *usr_handle,
 				    u32 portref,
 				    struct sk_buff **buf,
 				    unsigned char const *data,
 				    unsigned int size,
 				    int reason, 
-				    struct gipc_portid const *attmpt_destid);
+				    struct tipc_portid const *attmpt_destid);
 
-typedef void (*gipc_named_msg_err_event) (void *usr_handle,
+typedef void (*tipc_named_msg_err_event) (void *usr_handle,
 					  u32 portref,
 					  struct sk_buff **buf,
 					  unsigned char const *data,
 					  unsigned int size,
 					  int reason, 
-					  struct gipc_name_seq const *attmpt_dest);
+					  struct tipc_name_seq const *attmpt_dest);
 
-typedef void (*gipc_conn_shutdown_event) (void *usr_handle,
+typedef void (*tipc_conn_shutdown_event) (void *usr_handle,
 					  u32 portref,
 					  struct sk_buff **buf,
 					  unsigned char const *data,
 					  unsigned int size,
 					  int reason);
 
-typedef void (*gipc_msg_event) (void *usr_handle,
+typedef void (*tipc_msg_event) (void *usr_handle,
 				u32 portref,
 				struct sk_buff **buf,
 				unsigned char const *data,
 				unsigned int size,
 				unsigned int importance, 
-				struct gipc_portid const *origin);
+				struct tipc_portid const *origin);
 
-typedef void (*gipc_named_msg_event) (void *usr_handle,
+typedef void (*tipc_named_msg_event) (void *usr_handle,
 				      u32 portref,
 				      struct sk_buff **buf,
 				      unsigned char const *data,
 				      unsigned int size,
 				      unsigned int importance, 
-				      struct gipc_portid const *orig,
-				      struct gipc_name_seq const *dest);
+				      struct tipc_portid const *orig,
+				      struct tipc_name_seq const *dest);
 
-typedef void (*gipc_conn_msg_event) (void *usr_handle,
+typedef void (*tipc_conn_msg_event) (void *usr_handle,
 				     u32 portref,
 				     struct sk_buff **buf,
 				     unsigned char const *data,
 				     unsigned int size);
 
-typedef void (*gipc_continue_event) (void *usr_handle, 
+typedef void (*tipc_continue_event) (void *usr_handle, 
 				     u32 portref);
 
-int gipc_createport(unsigned int gipc_user, 
+int tipc_createport(unsigned int tipc_user, 
 		    void *usr_handle, 
 		    unsigned int importance, 
-		    gipc_msg_err_event error_cb, 
-		    gipc_named_msg_err_event named_error_cb, 
-		    gipc_conn_shutdown_event conn_error_cb, 
-		    gipc_msg_event message_cb, 
-		    gipc_named_msg_event named_message_cb, 
-		    gipc_conn_msg_event conn_message_cb, 
-		    gipc_continue_event continue_event_cb,/* May be zero */
+		    tipc_msg_err_event error_cb, 
+		    tipc_named_msg_err_event named_error_cb, 
+		    tipc_conn_shutdown_event conn_error_cb, 
+		    tipc_msg_event message_cb, 
+		    tipc_named_msg_event named_message_cb, 
+		    tipc_conn_msg_event conn_message_cb, 
+		    tipc_continue_event continue_event_cb,/* May be zero */
 		    u32 *portref);
 
-int gipc_deleteport(u32 portref);
+int tipc_deleteport(u32 portref);
 
-int gipc_ownidentity(u32 portref, struct gipc_portid *port);
+int tipc_ownidentity(u32 portref, struct tipc_portid *port);
 
-int gipc_portimportance(u32 portref, unsigned int *importance);
-int gipc_set_portimportance(u32 portref, unsigned int importance);
+int tipc_portimportance(u32 portref, unsigned int *importance);
+int tipc_set_portimportance(u32 portref, unsigned int importance);
 
-int gipc_portunreliable(u32 portref, unsigned int *isunreliable);
-int gipc_set_portunreliable(u32 portref, unsigned int isunreliable);
+int tipc_portunreliable(u32 portref, unsigned int *isunreliable);
+int tipc_set_portunreliable(u32 portref, unsigned int isunreliable);
 
-int gipc_portunreturnable(u32 portref, unsigned int *isunreturnable);
-int gipc_set_portunreturnable(u32 portref, unsigned int isunreturnable);
+int tipc_portunreturnable(u32 portref, unsigned int *isunreturnable);
+int tipc_set_portunreturnable(u32 portref, unsigned int isunreturnable);
 
-int gipc_publish(u32 portref, unsigned int scope, 
-		 struct gipc_name_seq const *name_seq);
-int gipc_withdraw(u32 portref, unsigned int scope,
-		  struct gipc_name_seq const *name_seq); /* 0: all */
+int tipc_publish(u32 portref, unsigned int scope, 
+		 struct tipc_name_seq const *name_seq);
+int tipc_withdraw(u32 portref, unsigned int scope,
+		  struct tipc_name_seq const *name_seq); /* 0: all */
 
-int gipc_connect2port(u32 portref, struct gipc_portid const *port);
+int tipc_connect2port(u32 portref, struct tipc_portid const *port);
 
-int gipc_disconnect(u32 portref);
+int tipc_disconnect(u32 portref);
 
-int gipc_shutdown(u32 ref); /* Sends SHUTDOWN msg */
+int tipc_shutdown(u32 ref); /* Sends SHUTDOWN msg */
 
-int gipc_isconnected(u32 portref, int *isconnected);
+int tipc_isconnected(u32 portref, int *isconnected);
 
-int gipc_peer(u32 portref, struct gipc_portid *peer);
+int tipc_peer(u32 portref, struct tipc_portid *peer);
 
-int gipc_ref_valid(u32 portref); 
+int tipc_ref_valid(u32 portref); 
 
 /*
- * GIPC messaging routines
+ * TIPC messaging routines
  */
 
-#define GIPC_PORT_IMPORTANCE 100	/* send using current port setting */
+#define TIPC_PORT_IMPORTANCE 100	/* send using current port setting */
 
 
-int gipc_send(u32 portref,
+int tipc_send(u32 portref,
 	      unsigned int num_sect,
 	      struct iovec const *msg_sect);
 
-int gipc_send_buf(u32 portref,
+int tipc_send_buf(u32 portref,
 		  struct sk_buff *buf,
 		  unsigned int dsz);
 
-int gipc_send2name(u32 portref, 
-		   struct gipc_name const *name, 
+int tipc_send2name(u32 portref, 
+		   struct tipc_name const *name, 
 		   u32 domain,	/* 0:own zone */
 		   unsigned int num_sect,
 		   struct iovec const *msg_sect);
 
-int gipc_send_buf2name(u32 portref,
-		       struct gipc_name const *name,
+int tipc_send_buf2name(u32 portref,
+		       struct tipc_name const *name,
 		       u32 domain,
 		       struct sk_buff *buf,
 		       unsigned int dsz);
 
-int gipc_forward2name(u32 portref, 
-		      struct gipc_name const *name, 
+int tipc_forward2name(u32 portref, 
+		      struct tipc_name const *name, 
 		      u32 domain,   /*0: own zone */
 		      unsigned int section_count,
 		      struct iovec const *msg_sect,
-		      struct gipc_portid const *origin,
+		      struct tipc_portid const *origin,
 		      unsigned int importance);
 
-int gipc_forward_buf2name(u32 portref,
-			  struct gipc_name const *name,
+int tipc_forward_buf2name(u32 portref,
+			  struct tipc_name const *name,
 			  u32 domain,
 			  struct sk_buff *buf,
 			  unsigned int dsz,
-			  struct gipc_portid const *orig,
+			  struct tipc_portid const *orig,
 			  unsigned int importance);
 
-int gipc_send2port(u32 portref,
-		   struct gipc_portid const *dest,
+int tipc_send2port(u32 portref,
+		   struct tipc_portid const *dest,
 		   unsigned int num_sect,
 		   struct iovec const *msg_sect);
 
-int gipc_send_buf2port(u32 portref,
-		       struct gipc_portid const *dest,
+int tipc_send_buf2port(u32 portref,
+		       struct tipc_portid const *dest,
 		       struct sk_buff *buf,
 		       unsigned int dsz);
 
-int gipc_forward2port(u32 portref,
-		      struct gipc_portid const *dest,
+int tipc_forward2port(u32 portref,
+		      struct tipc_portid const *dest,
 		      unsigned int num_sect,
 		      struct iovec const *msg_sect,
-		      struct gipc_portid const *origin,
+		      struct tipc_portid const *origin,
 		      unsigned int importance);
 
-int gipc_forward_buf2port(u32 portref,
-			  struct gipc_portid const *dest,
+int tipc_forward_buf2port(u32 portref,
+			  struct tipc_portid const *dest,
 			  struct sk_buff *buf,
 			  unsigned int dsz,
-			  struct gipc_portid const *orig,
+			  struct tipc_portid const *orig,
 			  unsigned int importance);
 
-int gipc_multicast(u32 portref, 
-		   struct gipc_name_seq const *seq, 
+int tipc_multicast(u32 portref, 
+		   struct tipc_name_seq const *seq, 
 		   u32 domain,	/* 0:own zone */
 		   unsigned int section_count,
 		   struct iovec const *msg);
 
 #if 0
-int gipc_multicast_buf(u32 portref, 
-		       struct gipc_name_seq const *seq, 
+int tipc_multicast_buf(u32 portref, 
+		       struct tipc_name_seq const *seq, 
 		       u32 domain,	/* 0:own zone */
 		       void *buf,
 		       unsigned int size);
 #endif
 
 /*
- * GIPC subscription routines
+ * TIPC subscription routines
  */
 
-int gipc_ispublished(struct gipc_name const *name);
+int tipc_ispublished(struct tipc_name const *name);
 
 /*
  * Get number of available nodes within specified domain (excluding own node)
  */
 
-unsigned int gipc_available_nodes(const u32 domain);
+unsigned int tipc_available_nodes(const u32 domain);
 
 #endif
 

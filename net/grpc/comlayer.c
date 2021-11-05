@@ -6,8 +6,8 @@
 
 #include <linux/kernel.h>
 #include <linux/sched.h>
-#include <linux/gipc.h>
-#include <linux/gipc_config.h>
+#include <linux/tipc.h>
+#include <linux/tipc_config.h>
 #include <linux/irqflags.h>
 #include <linux/workqueue.h>
 #include <linux/spinlock.h>
@@ -16,9 +16,9 @@
 #include <linux/netdevice.h>
 #include <linux/list.h>
 #include <linux/slab.h>
-#include <net/gipc/gipc.h>
-#include <net/gipc/gipc_port.h>
-#include <net/gipc/gipc_bearer.h>
+#include <net/tipc/tipc.h>
+#include <net/tipc/tipc_port.h>
+#include <net/tipc/tipc_bearer.h>
 #include <hcc/hccnodemask.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccinit.h>
@@ -29,7 +29,7 @@
 
 #include "rpc_internal.h"
 
-#define GIPC_HCC_SERVER_TYPE (1+GIPC_RESERVED_TYPES)
+#define TIPC_HCC_SERVER_TYPE (1+TIPC_RESERVED_TYPES)
 
 #define ACK_CLEANUP_WINDOW_SIZE 100
 #define MAX_CONSECUTIVE_RECV 1000
@@ -42,19 +42,19 @@
 struct tx_engine {
 	struct list_head delayed_tx_queue;
 	struct delayed_work delayed_tx_work; /* messages cannot be transmetted immediately */
-	struct list_head not_retx_queue; /* messages accepted by GIPC */
+	struct list_head not_retx_queue; /* messages accepted by TIPC */
 	struct delayed_work cleanup_not_retx_work;
-	struct list_head retx_queue; /* messages refused by GIPC */
+	struct list_head retx_queue; /* messages refused by TIPC */
 	struct rpc_tx_elem *retx_iter;
 	struct delayed_work retx_work;
 	struct delayed_work unreachable_work;
 	struct delayed_work reachable_work;
 };
 
-static DEFINE_PER_CPU(struct tx_engine, gipc_tx_engine);
-static DEFINE_SPINLOCK(gipc_tx_queue_lock);
-static void gipc_send_ack_worker(struct work_struct *work);
-static DECLARE_DELAYED_WORK(gipc_ack_work, gipc_send_ack_worker);
+static DEFINE_PER_CPU(struct tx_engine, tipc_tx_engine);
+static DEFINE_SPINLOCK(tipc_tx_queue_lock);
+static void tipc_send_ack_worker(struct work_struct *work);
+static DECLARE_DELAYED_WORK(tipc_ack_work, tipc_send_ack_worker);
 
 struct rx_engine {
 	hcc_node_t from;
@@ -62,7 +62,7 @@ struct rx_engine {
 	struct delayed_work run_rx_queue_work;
 };
 
-struct rx_engine gipc_rx_engine[HCC_MAX_NODES];
+struct rx_engine tipc_rx_engine[HCC_MAX_NODES];
 
 struct workqueue_struct *hcccom_wq;
 
@@ -126,10 +126,10 @@ s64 rpc_consumed_bytes(void)
  * Local definition
  */
 
-u32 gipc_user_ref = 0;
-u32 gipc_port_ref;
-DEFINE_PER_CPU(u32, gipc_send_ref);
-struct gipc_name_seq gipc_seq;
+u32 tipc_user_ref = 0;
+u32 tipc_port_ref;
+DEFINE_PER_CPU(u32, tipc_send_ref);
+struct tipc_name_seq tipc_seq;
 
 hccnodemask_t nodes_requiring_ack;
 unsigned long last_cleanup_ack[HCC_MAX_NODES];
@@ -148,8 +148,8 @@ void __rpc_get_raw_data(void *data){
 static
 inline int __send_iovec(hcc_node_t node, int nr_iov, struct iovec *iov)
 {
-	struct gipc_name name = {
-		.type = GIPC_HCC_SERVER_TYPE,
+	struct tipc_name name = {
+		.type = TIPC_HCC_SERVER_TYPE,
 		.instance = node
 	};
 	struct __rpc_header *h = iov[0].iov_base;
@@ -158,7 +158,7 @@ inline int __send_iovec(hcc_node_t node, int nr_iov, struct iovec *iov)
 
 	h->link_ack_id = rpc_link_recv_seq_id[node] - 1;
 	lockdep_off();
-	err = gipc_send2name(per_cpu(gipc_send_ref, smp_processor_id()),
+	err = tipc_send2name(per_cpu(tipc_send_ref, smp_processor_id()),
 			     &name, 0,
 			     nr_iov, iov);
 	lockdep_on();
@@ -233,7 +233,7 @@ out:
 }
 
 static
-void gipc_send_ack_worker(struct work_struct *work)
+void tipc_send_ack_worker(struct work_struct *work)
 {
 	struct iovec iov[1];
 	struct __rpc_header h;
@@ -257,7 +257,7 @@ void gipc_send_ack_worker(struct work_struct *work)
 	}
 }
 
-static void gipc_delayed_tx_worker(struct work_struct *work)
+static void tipc_delayed_tx_worker(struct work_struct *work)
 {
 	struct tx_engine *engine = container_of(work, struct tx_engine, delayed_tx_work.work);
 	LIST_HEAD(queue);
@@ -268,9 +268,9 @@ static void gipc_delayed_tx_worker(struct work_struct *work)
 	lockdep_off();
 
 	// get the waiting list
-	spin_lock_bh(&gipc_tx_queue_lock);
+	spin_lock_bh(&tipc_tx_queue_lock);
 	list_splice_init(&engine->delayed_tx_queue, &queue);
-	spin_unlock_bh(&gipc_tx_queue_lock);
+	spin_unlock_bh(&tipc_tx_queue_lock);
 
 	if(list_empty(&queue))
 		goto exit_empty;
@@ -316,15 +316,15 @@ static void gipc_delayed_tx_worker(struct work_struct *work)
  exit:
 	if (!list_empty(&queue)) {
 		// merge the two lists
-		spin_lock_bh(&gipc_tx_queue_lock);
+		spin_lock_bh(&tipc_tx_queue_lock);
 		list_splice(&queue, &engine->delayed_tx_queue);
 		list_splice(&not_retx_queue, engine->not_retx_queue.prev);
-		spin_unlock_bh(&gipc_tx_queue_lock);
+		spin_unlock_bh(&tipc_tx_queue_lock);
 	} else {
 		if (likely(!list_empty(&not_retx_queue))) {
-			spin_lock_bh(&gipc_tx_queue_lock);
+			spin_lock_bh(&tipc_tx_queue_lock);
 			list_splice(&not_retx_queue, engine->not_retx_queue.prev);
-			spin_unlock_bh(&gipc_tx_queue_lock);
+			spin_unlock_bh(&tipc_tx_queue_lock);
 		}
 	}
 
@@ -332,7 +332,7 @@ exit_empty:
 	lockdep_on();
 }
 
-static void gipc_retx_worker(struct work_struct *work)
+static void tipc_retx_worker(struct work_struct *work)
 {
 	struct tx_engine *engine = container_of(work, struct tx_engine, retx_work.work);
 	LIST_HEAD(queue);
@@ -343,11 +343,11 @@ static void gipc_retx_worker(struct work_struct *work)
 	lockdep_off();
 
 	// get the waiting list
-	spin_lock_bh(&gipc_tx_queue_lock);
+	spin_lock_bh(&tipc_tx_queue_lock);
 	list_splice_init(&engine->retx_queue, &queue);
 	iter = engine->retx_iter;
 	engine->retx_iter = NULL;
-	spin_unlock_bh(&gipc_tx_queue_lock);
+	spin_unlock_bh(&tipc_tx_queue_lock);
 
 	if(list_empty(&queue))
 		goto exit_empty;
@@ -406,28 +406,28 @@ static void gipc_retx_worker(struct work_struct *work)
 
  exit:
  	if (!list_empty(&not_retx_queue)){
-		spin_lock_bh(&gipc_tx_queue_lock);
+		spin_lock_bh(&tipc_tx_queue_lock);
 		list_splice(&not_retx_queue, &engine->not_retx_queue);
-		spin_unlock_bh(&gipc_tx_queue_lock);
+		spin_unlock_bh(&tipc_tx_queue_lock);
 	}
 
 	if (!list_empty(&queue)) {
 		// merge the two lists
-		spin_lock_bh(&gipc_tx_queue_lock);
+		spin_lock_bh(&tipc_tx_queue_lock);
 		list_splice(&queue, &engine->retx_queue);
 		/* A concurrent run of the worker might already have set a
 		 * restart point later in the queue. Do not overwrite it unless
 		 * we set an earlier restart point. */
 		if (iter)
 			engine->retx_iter = iter;
-		spin_unlock_bh(&gipc_tx_queue_lock);
+		spin_unlock_bh(&tipc_tx_queue_lock);
 	}
 
 exit_empty:
 	lockdep_on();
 }
 
-static void gipc_cleanup_not_retx_worker(struct work_struct *work)
+static void tipc_cleanup_not_retx_worker(struct work_struct *work)
 {
 	struct tx_engine *engine = container_of(work, struct tx_engine, cleanup_not_retx_work.work);
 	struct rpc_tx_elem *iter;
@@ -435,9 +435,9 @@ static void gipc_cleanup_not_retx_worker(struct work_struct *work)
 	LIST_HEAD(queue);
 	int node;
 
-	spin_lock_bh(&gipc_tx_queue_lock);
+	spin_lock_bh(&tipc_tx_queue_lock);
 	list_splice_init(&engine->not_retx_queue, &queue);
-	spin_unlock_bh(&gipc_tx_queue_lock);
+	spin_unlock_bh(&tipc_tx_queue_lock);
 
 	list_for_each_entry_safe(iter, safe, &queue, tx_queue){
 		int need_to_free, link_seq_index;
@@ -466,24 +466,24 @@ static void gipc_cleanup_not_retx_worker(struct work_struct *work)
 
 	if (!list_empty(&queue)) {
 		// merge the two lists
-		spin_lock_bh(&gipc_tx_queue_lock);
+		spin_lock_bh(&tipc_tx_queue_lock);
 		list_splice(&queue, &engine->not_retx_queue);
-		spin_unlock_bh(&gipc_tx_queue_lock);
+		spin_unlock_bh(&tipc_tx_queue_lock);
 	}
 
 }
 
 static
-void gipc_unreachable_node_worker(struct work_struct *work){
+void tipc_unreachable_node_worker(struct work_struct *work){
 }
 
 static
-void gipc_reachable_node_worker(struct work_struct *work){
+void tipc_reachable_node_worker(struct work_struct *work){
 	struct tx_engine *engine = container_of(work, struct tx_engine, reachable_work.work);
 
-	spin_lock_bh(&gipc_tx_queue_lock);
+	spin_lock_bh(&tipc_tx_queue_lock);
 	list_splice_init(&engine->not_retx_queue, &engine->retx_queue);
-	spin_unlock_bh(&gipc_tx_queue_lock);
+	spin_unlock_bh(&tipc_tx_queue_lock);
 
 	queue_delayed_work_on(smp_processor_id(), hcccom_wq,
 			      &engine->retx_work, 0);
@@ -604,13 +604,13 @@ int __rpc_send_ll(struct rpc_desc* desc,
 	__hccnodes_copy(&elem->nodes, nodes);	
 
 	preempt_disable();
-	engine = &per_cpu(gipc_tx_engine, smp_processor_id());
+	engine = &per_cpu(tipc_tx_engine, smp_processor_id());
 	if (irqs_disabled()) {
 		/* Add the packet in the tx_queue */
 		lockdep_off();
-		spin_lock(&gipc_tx_queue_lock);
+		spin_lock(&tipc_tx_queue_lock);
 		list_add_tail(&elem->tx_queue, &engine->delayed_tx_queue);
-		spin_unlock(&gipc_tx_queue_lock);
+		spin_unlock(&tipc_tx_queue_lock);
 		lockdep_on();
 
 		/* Schedule the work ASAP */
@@ -625,10 +625,10 @@ int __rpc_send_ll(struct rpc_desc* desc,
 			err = __rpc_tx_elem_send(elem, link_seq_index, node);
 
 			if(err<0){
-				spin_lock_bh(&gipc_tx_queue_lock);
+				spin_lock_bh(&tipc_tx_queue_lock);
 				list_add_tail(&elem->tx_queue,
 						&engine->retx_queue);
-				spin_unlock_bh(&gipc_tx_queue_lock);
+				spin_unlock_bh(&tipc_tx_queue_lock);
 				break;
 			}
 
@@ -637,9 +637,9 @@ int __rpc_send_ll(struct rpc_desc* desc,
 
 		if(err>=0){
 			/* Add the packet in the not_retx_queue */
-			spin_lock_bh(&gipc_tx_queue_lock);
+			spin_lock_bh(&tipc_tx_queue_lock);
 			list_add_tail(&elem->tx_queue, &engine->not_retx_queue);
-			spin_unlock_bh(&gipc_tx_queue_lock);
+			spin_unlock_bh(&tipc_tx_queue_lock);
 		}
 	}
 	preempt_enable();
@@ -772,7 +772,7 @@ int handle_valid_desc(struct rpc_desc *desc,
 		} else {
 			
 			if (desc_recv->iter_provided->seq_id == descelem->seq_id) {
-				//printk("%d gipc_handler_ordered: found a waiting buffer (%lu)\n",
+				//printk("%d tipc_handler_ordered: found a waiting buffer (%lu)\n",
 				//       current->pid, descelem->seq_id);
 			} else {
 				insert_in_seqid_order(descelem, desc_recv);
@@ -876,11 +876,11 @@ err_desc_send:
 }
 
 /*
- * gipc_handler_ordered
+ * tipc_handler_ordered
  * Packets are in the right order, so we have to find the corresponding
  * descriptor (if any).
  */
-static int gipc_handler_ordered(struct sk_buff *buf,
+static int tipc_handler_ordered(struct sk_buff *buf,
 				unsigned const char* data,
 				unsigned int size)
 {
@@ -936,7 +936,7 @@ static int gipc_handler_ordered(struct sk_buff *buf,
 			if (!desc) {
 				/*
 				 * Drop the packet, but not silently.
-				 * gipc_handler() may decide to drop more pending
+				 * tipc_handler() may decide to drop more pending
 				 * packets to decrease memory pressure, or keep
 				 * the packet and retry handling it later.
 				 */
@@ -973,7 +973,7 @@ static int gipc_handler_ordered(struct sk_buff *buf,
 		break;
 
 	case RPC_RQ_FWD:
-		printk("gipc_handler_ordered: todo\n");
+		printk("tipc_handler_ordered: todo\n");
 		BUG();
 		break;
 
@@ -1039,7 +1039,7 @@ static inline int handle_one_packet(hcc_node_t node,
 {
 	int err;
 
-	err = gipc_handler_ordered(buf, data, size);
+	err = tipc_handler_ordered(buf, data, size);
 	if (!err) {
 		if (node == hcc_node_id)
 			rpc_link_send_ack_id[node] = rpc_link_recv_seq_id[node];
@@ -1091,17 +1091,17 @@ static void schedule_run_rx_queue(struct rx_engine *engine)
 }
 
 /*
- * gipc_handler
- * receives packets from GIPC and orders them
+ * tipc_handler
+ * receives packets from TIPC and orders them
  */
-static void gipc_handler(void *usr_handle,
+static void tipc_handler(void *usr_handle,
 			 u32 port_ref,
 			 struct sk_buff **buf,
 			 unsigned char const *data,
 			 unsigned int size,
 			 unsigned int importance,
-			 struct gipc_portid const *orig,
-			 struct gipc_name_seq const *dest)
+			 struct tipc_portid const *orig,
+			 struct tipc_name_seq const *dest)
 {
 	struct sk_buff_head *queue;
 	struct sk_buff *__buf;
@@ -1111,7 +1111,7 @@ static void gipc_handler(void *usr_handle,
 	h = (struct __rpc_header*)data;
 	BUG_ON(size != __buf->len);
 
-	queue = &gipc_rx_engine[h->from].rx_queue;
+	queue = &tipc_rx_engine[h->from].rx_queue;
 	spin_lock(&queue->lock);
 
 	// Update the ack value sent by the other node
@@ -1122,7 +1122,7 @@ static void gipc_handler(void *usr_handle,
 			int cpuid;
 			last_cleanup_ack[h->from] = h->link_ack_id;
 			for_each_online_cpu(cpuid){
-				struct tx_engine *engine = &per_cpu(gipc_tx_engine,
+				struct tx_engine *engine = &per_cpu(tipc_tx_engine,
 									cpuid);
 				queue_delayed_work_on(cpuid, hcccom_wq,
 							&engine->cleanup_not_retx_work,0);
@@ -1138,14 +1138,14 @@ static void gipc_handler(void *usr_handle,
 	// Check if we are not receiving an already received packet
 	if (h->link_seq_id < rpc_link_recv_seq_id[h->from]) {
 		hccnode_set(h->from, nodes_requiring_ack);
-		queue_delayed_work(hcccom_wq, &gipc_ack_work, 0);
+		queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
 		goto exit;
 	}
 
 	// Check if we are receiving lot of packets but sending none
 	if (consecutive_recv[h->from] >= max_consecutive_recv[h->from]){
 		hccnode_set(h->from, nodes_requiring_ack);
-		queue_delayed_work(hcccom_wq, &gipc_ack_work, 0);
+		queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
 	}
 	consecutive_recv[h->from]++;
 
@@ -1176,9 +1176,9 @@ static void gipc_handler(void *usr_handle,
 	if (handle_one_packet(h->from, __buf, data, size)) {
 		skb_get(__buf);
 		__skb_queue_head(queue, __buf);
-		schedule_run_rx_queue(&gipc_rx_engine[h->from]);
+		schedule_run_rx_queue(&tipc_rx_engine[h->from]);
 	} else {
-		run_rx_queue(&gipc_rx_engine[h->from]);
+		run_rx_queue(&tipc_rx_engine[h->from]);
 	}
 
  exit:
@@ -1186,33 +1186,33 @@ static void gipc_handler(void *usr_handle,
 }
 
 static
-u32 port_dispatcher(struct gipc_port *p_ptr, struct sk_buff *buf)
+u32 port_dispatcher(struct tipc_port *p_ptr, struct sk_buff *buf)
 {
-	struct gipc_msg *msg = (struct gipc_msg *)buf->data;
+	struct tipc_msg *msg = (struct tipc_msg *)buf->data;
 	long cpuid = (long)p_ptr->usr_handle;
-	struct tx_engine *engine = &per_cpu(gipc_tx_engine, cpuid);
+	struct tx_engine *engine = &per_cpu(tipc_tx_engine, cpuid);
 
 	/*
-	 * We might have sent something while GIPC is still setting up the
+	 * We might have sent something while TIPC is still setting up the
 	 * connection to the peer. Retransmit after a small delay, unless the peer
 	 * disconnects, in which case port_wakeup() will retransmit when
 	 * possible.
 	 */
-	if (msg_errcode(msg) == GIPC_ERR_NO_NAME
+	if (msg_errcode(msg) == TIPC_ERR_NO_NAME
 	    && hccnode_present(msg_nameinst(msg))) {
-		queue_delayed_work(hcccom_wq, &gipc_ack_work, REJECT_BACKOFF);
+		queue_delayed_work(hcccom_wq, &tipc_ack_work, REJECT_BACKOFF);
 		queue_delayed_work_on(cpuid, hcccom_wq,
 				      &engine->reachable_work, REJECT_BACKOFF);
 	}
 
 	kfree_skb(buf);
-	return GIPC_OK;
+	return TIPC_OK;
 }
 
 static
-void port_wakeup(struct gipc_port *p_ptr){
+void port_wakeup(struct tipc_port *p_ptr){
 	long cpuid = (long)p_ptr->usr_handle;
-	struct tx_engine *engine = &per_cpu(gipc_tx_engine, cpuid);
+	struct tx_engine *engine = &per_cpu(tipc_tx_engine, cpuid);
 
 	/*
 	 * Schedule the work ASAP
@@ -1220,7 +1220,7 @@ void port_wakeup(struct gipc_port *p_ptr){
 	 * retx by 1 jiffy.
 	 */
 
-	queue_delayed_work(hcccom_wq, &gipc_ack_work, 0);
+	queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
 
 	queue_delayed_work_on(cpuid, hcccom_wq, &engine->retx_work, 1);
 	queue_delayed_work_on(cpuid, hcccom_wq, &engine->delayed_tx_work, 1);
@@ -1235,8 +1235,8 @@ int comlayer_enable_dev(const char *name)
 
 	snprintf(buf, sizeof(buf), "eth:%s", name);
 
-    gipc_net_id = hcc_session_id;
-	res = gipc_enable_bearer(buf, gipc_addr(gipc_net_id, 1, 0), GIPC_MEDIA_LINK_PRI);
+    tipc_net_id = hcc_session_id;
+	res = tipc_enable_bearer(buf, tipc_addr(tipc_net_id, 1, 0), TIPC_MEDIA_LINK_PRI);
 	if (res)
 		printk("failed\n");
 	else
@@ -1261,7 +1261,7 @@ int comlayer_disable_dev(const char *name)
 
 	printk("Try to disable bearer on %s:", name);
 
-	res = gipc_disable_bearer(name);
+	res = tipc_disable_bearer(name);
 	if (res)
 		printk("failed\n");
 	else
@@ -1283,9 +1283,9 @@ void comlayer_disable(void)
 void hcc_node_reachable(hcc_node_t nodeid){
 	int cpuid;
 
-	queue_delayed_work(hcccom_wq, &gipc_ack_work, 0);
+	queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
 	for_each_online_cpu(cpuid){
-		struct tx_engine *engine = &per_cpu(gipc_tx_engine, cpuid);
+		struct tx_engine *engine = &per_cpu(tipc_tx_engine, cpuid);
 
 		queue_delayed_work_on(cpuid, hcccom_wq,
 				      &engine->reachable_work, 0);
@@ -1299,7 +1299,7 @@ void rpc_enable_lowmem_mode(hcc_node_t nodeid){
 	max_consecutive_recv[nodeid] = MAX_CONSECUTIVE_RECV__LOWMEM_MODE;
 
 	hccnode_set(nodeid, nodes_requiring_ack);
-	queue_delayed_work(hcccom_wq, &gipc_ack_work, 0);
+	queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
 }
 
 void rpc_disable_lowmem_mode(hcc_node_t nodeid){
@@ -1312,7 +1312,7 @@ void rpc_enable_local_lowmem_mode(void){
 	ack_cleanup_window_size = ACK_CLEANUP_WINDOW_SIZE__LOWMEM_MODE;
 
 	for_each_online_cpu(cpuid){
-		struct tx_engine *engine = &per_cpu(gipc_tx_engine, cpuid);
+		struct tx_engine *engine = &per_cpu(tipc_tx_engine, cpuid);
 		queue_delayed_work_on(cpuid, hcccom_wq,
 			&engine->cleanup_not_retx_work, 0);
 	}
@@ -1330,19 +1330,19 @@ int comlayer_init(void)
 	hccnodes_clear(nodes_requiring_ack);	
 
 	for_each_possible_cpu(i) {
-		struct tx_engine *engine = &per_cpu(gipc_tx_engine, i);
+		struct tx_engine *engine = &per_cpu(tipc_tx_engine, i);
 		INIT_LIST_HEAD(&engine->delayed_tx_queue);
 		INIT_DELAYED_WORK(&engine->delayed_tx_work,
-					gipc_delayed_tx_worker);
+					tipc_delayed_tx_worker);
 		INIT_LIST_HEAD(&engine->not_retx_queue);
 		INIT_DELAYED_WORK(&engine->cleanup_not_retx_work,
-					gipc_cleanup_not_retx_worker);
+					tipc_cleanup_not_retx_worker);
 		INIT_LIST_HEAD(&engine->retx_queue);
 		engine->retx_iter = NULL;
-		INIT_DELAYED_WORK(&engine->retx_work, gipc_retx_worker);
+		INIT_DELAYED_WORK(&engine->retx_work, tipc_retx_worker);
 
-		INIT_DELAYED_WORK(&engine->reachable_work, gipc_reachable_node_worker);
-		INIT_DELAYED_WORK(&engine->unreachable_work, gipc_unreachable_node_worker);
+		INIT_DELAYED_WORK(&engine->reachable_work, tipc_reachable_node_worker);
+		INIT_DELAYED_WORK(&engine->unreachable_work, tipc_unreachable_node_worker);
 	}
 
 	hcccom_wq = create_workqueue("hcccom");
@@ -1350,48 +1350,48 @@ int comlayer_init(void)
 	ack_cleanup_window_size = ACK_CLEANUP_WINDOW_SIZE;
 
 	for (i = 0; i < HCC_MAX_NODES; i++) {
-		gipc_rx_engine[i].from = i;
-		skb_queue_head_init(&gipc_rx_engine[i].rx_queue);
-		INIT_DELAYED_WORK(&gipc_rx_engine[i].run_rx_queue_work,
+		tipc_rx_engine[i].from = i;
+		skb_queue_head_init(&tipc_rx_engine[i].rx_queue);
+		INIT_DELAYED_WORK(&tipc_rx_engine[i].run_rx_queue_work,
 				  run_rx_queue_worker);
 		last_cleanup_ack[i] = 0;
 		consecutive_recv[i] = 0;
 		max_consecutive_recv[i] = MAX_CONSECUTIVE_RECV;
 	}
 
-	gipc_net_id = hcc_session_id;
+	tipc_net_id = hcc_session_id;
 
 	lockdep_off();
 
-	gipc_core_start_net(gipc_addr(gipc_net_id, 1, hcc_node_id+1));
+	tipc_core_start_net(tipc_addr(tipc_net_id, 1, hcc_node_id+1));
 
-	res = gipc_attach(&gipc_user_ref, NULL, NULL);
+	res = tipc_attach(&tipc_user_ref, NULL, NULL);
 	if (res)
 		goto exit_error;
 
-	res = gipc_createport(gipc_user_ref, NULL, GIPC_LOW_IMPORTANCE,
+	res = tipc_createport(tipc_user_ref, NULL, TIPC_LOW_IMPORTANCE,
 			      NULL, NULL, NULL,
-			      NULL, gipc_handler, NULL,
-			      NULL, &gipc_port_ref);
+			      NULL, tipc_handler, NULL,
+			      NULL, &tipc_port_ref);
 	if (res)
 		return res;
 
-        gipc_seq.type = GIPC_HCC_SERVER_TYPE;
-        gipc_seq.lower = gipc_seq.upper = hcc_node_id;
-        res = gipc_publish(gipc_port_ref, GIPC_CLUSTER_SCOPE, &gipc_seq);
+        tipc_seq.type = TIPC_HCC_SERVER_TYPE;
+        tipc_seq.lower = tipc_seq.upper = hcc_node_id;
+        res = tipc_publish(tipc_port_ref, TIPC_CLUSTER_SCOPE, &tipc_seq);
 
 	for_each_possible_cpu(i){
-		u32* send_ref = &per_cpu(gipc_send_ref, i);
-		struct gipc_port* p;
+		u32* send_ref = &per_cpu(tipc_send_ref, i);
+		struct tipc_port* p;
 
-		/* since GIPC do strange assumption regarding this field
+		/* since TIPC do strange assumption regarding this field
 		   we need to initialise it. But this field is dedicated
-		   to the plugins of GIPC. ie: only our code use this field. So
+		   to the plugins of TIPC. ie: only our code use this field. So
 		   we can set it to any value we want.
 		*/
-		p = gipc_createport_raw((void*)i,
+		p = tipc_createport_raw((void*)i,
 					port_dispatcher, port_wakeup,
-					GIPC_LOW_IMPORTANCE,
+					TIPC_LOW_IMPORTANCE,
 					(void*)0x1111);
 		if(p){
 			*send_ref = p->ref;
@@ -1407,6 +1407,6 @@ int comlayer_init(void)
 	return 0;
 	
  exit_error:
-	printk("Error while trying to init GIPC (%d)\n", res);
+	printk("Error while trying to init TIPC (%d)\n", res);
         return res;
 }

@@ -1,5 +1,5 @@
 /*
- * net/gipc/netlink.c: GIPC configuration handling
+ * net/tipc/netlink.c: TIPC configuration handling
  *
  * Copyright (c) 2005-2006, Ericsson AB
  * Copyright (c) 2005-2007, Wind River Systems
@@ -43,18 +43,18 @@ static int handle_cmd(struct sk_buff *skb, struct genl_info *info)
 	struct sk_buff *rep_buf;
 	struct nlmsghdr *rep_nlh;
 	struct nlmsghdr *req_nlh = info->nlhdr;
-	struct gipc_genlmsghdr *req_userhdr = info->userhdr;
-	int hdr_space = NLMSG_SPACE(GENL_HDRLEN + GIPC_GENL_HDRLEN);
+	struct tipc_genlmsghdr *req_userhdr = info->userhdr;
+	int hdr_space = NLMSG_SPACE(GENL_HDRLEN + TIPC_GENL_HDRLEN);
 	u16 cmd;
 
 	if ((req_userhdr->cmd & 0xC000) && (!capable(CAP_NET_ADMIN)))
-		cmd = GIPC_CMD_NOT_NET_ADMIN;
+		cmd = TIPC_CMD_NOT_NET_ADMIN;
 	else
 		cmd = req_userhdr->cmd;
 
-	rep_buf = gipc_cfg_do_cmd(req_userhdr->dest, cmd,
-			NLMSG_DATA(req_nlh) + GENL_HDRLEN + GIPC_GENL_HDRLEN,
-			NLMSG_PAYLOAD(req_nlh, GENL_HDRLEN + GIPC_GENL_HDRLEN),
+	rep_buf = tipc_cfg_do_cmd(req_userhdr->dest, cmd,
+			NLMSG_DATA(req_nlh) + GENL_HDRLEN + TIPC_GENL_HDRLEN,
+			NLMSG_PAYLOAD(req_nlh, GENL_HDRLEN + TIPC_GENL_HDRLEN),
 			hdr_space);
 
 	if (rep_buf) {
@@ -68,41 +68,41 @@ static int handle_cmd(struct sk_buff *skb, struct genl_info *info)
 	return 0;
 }
 
-static struct genl_family gipc_genl_family = {
+static struct genl_family tipc_genl_family = {
 	.id		= GENL_ID_GENERATE,
-	.name		= GIPC_GENL_NAME,
-	.version	= GIPC_GENL_VERSION,
-	.hdrsize	= GIPC_GENL_HDRLEN,
+	.name		= TIPC_GENL_NAME,
+	.version	= TIPC_GENL_VERSION,
+	.hdrsize	= TIPC_GENL_HDRLEN,
 	.maxattr	= 0,
 };
 
-static struct genl_ops gipc_genl_ops = {
-	.cmd		= GIPC_GENL_CMD,
+static struct genl_ops tipc_genl_ops = {
+	.cmd		= TIPC_GENL_CMD,
 	.doit		= handle_cmd,
 };
 
-static int gipc_genl_family_registered;
+static int tipc_genl_family_registered;
 
-int gipc_netlink_start(void)
+int tipc_netlink_start(void)
 {
 	int res;
 
-	res = genl_register_family_with_ops(&gipc_genl_family,
-		&gipc_genl_ops, 1);
+	res = genl_register_family_with_ops(&tipc_genl_family,
+		&tipc_genl_ops, 1);
 	if (res) {
 		err("Failed to register netlink interface\n");
 		return res;
 	}
 
-	gipc_genl_family_registered = 1;
+	tipc_genl_family_registered = 1;
 	return 0;
 }
 
-void gipc_netlink_stop(void)
+void tipc_netlink_stop(void)
 {
-	if (!gipc_genl_family_registered)
+	if (!tipc_genl_family_registered)
 		return;
 
-	genl_unregister_family(&gipc_genl_family);
-	gipc_genl_family_registered = 0;
+	genl_unregister_family(&tipc_genl_family);
+	tipc_genl_family_registered = 0;
 }

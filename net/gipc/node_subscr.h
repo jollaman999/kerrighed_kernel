@@ -1,5 +1,5 @@
 /*
- * net/gipc/node_subscr.h: Include file for GIPC "node down" subscription handling
+ * net/tipc/node_subscr.h: Include file for TIPC "node down" subscription handling
  *
  * Copyright (c) 1995-2006, Ericsson AB
  * Copyright (c) 2005, Wind River Systems
@@ -34,30 +34,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GIPC_NODE_SUBSCR_H
-#define _GIPC_NODE_SUBSCR_H
+#ifndef _TIPC_NODE_SUBSCR_H
+#define _TIPC_NODE_SUBSCR_H
 
 #include "addr.h"
 
 typedef void (*net_ev_handler) (void *usr_handle);
 
 /**
- * struct gipc_node_subscr - "node down" subscription entry
+ * struct tipc_node_subscr - "node down" subscription entry
  * @node: ptr to node structure of interest (or NULL, if none)
  * @handle_node_down: routine to invoke when node fails
  * @usr_handle: argument to pass to routine when node fails
  * @nodesub_list: adjacent entries in list of subscriptions for the node
  */
 
-struct gipc_node_subscr {
-	struct gipc_node *node;
+struct tipc_node_subscr {
+	struct tipc_node *node;
 	net_ev_handler handle_node_down;
 	void *usr_handle;
 	struct list_head nodesub_list;
 };
 
-void gipc_nodesub_subscribe(struct gipc_node_subscr *node_sub, u32 addr,
+void tipc_nodesub_subscribe(struct tipc_node_subscr *node_sub, u32 addr,
 			    void *usr_handle, net_ev_handler handle_down);
-void gipc_nodesub_unsubscribe(struct gipc_node_subscr *node_sub);
+void tipc_nodesub_unsubscribe(struct tipc_node_subscr *node_sub);
 
 #endif

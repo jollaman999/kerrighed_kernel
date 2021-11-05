@@ -1,5 +1,5 @@
 /*
- * net/gipc/addr.h: Include file for GIPC address utility routines
+ * net/tipc/addr.h: Include file for TIPC address utility routines
  *
  * Copyright (c) 2000-2006, Ericsson AB
  * Copyright (c) 2004-2005, Wind River Systems
@@ -34,27 +34,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GIPC_ADDR_H
-#define _GIPC_ADDR_H
+#ifndef _TIPC_ADDR_H
+#define _TIPC_ADDR_H
 
 static inline u32 own_node(void)
 {
-	return gipc_node(gipc_own_addr);
+	return tipc_node(tipc_own_addr);
 }
 
 static inline u32 own_cluster(void)
 {
-	return gipc_cluster(gipc_own_addr);
+	return tipc_cluster(tipc_own_addr);
 }
 
 static inline u32 own_zone(void)
 {
-	return gipc_zone(gipc_own_addr);
+	return tipc_zone(tipc_own_addr);
 }
 
 static inline int in_own_cluster(u32 addr)
 {
-	return !((addr ^ gipc_own_addr) >> 12);
+	return !((addr ^ tipc_own_addr) >> 12);
 }
 
 static inline int is_slave(u32 addr)
@@ -64,7 +64,7 @@ static inline int is_slave(u32 addr)
 
 static inline int may_route(u32 addr)
 {
-	return(addr ^ gipc_own_addr) >> 11;
+	return(addr ^ tipc_own_addr) >> 11;
 }
 
 static inline int in_scope(u32 domain, u32 addr)
@@ -85,12 +85,12 @@ static inline int in_scope(u32 domain, u32 addr)
 static inline int addr_scope(u32 domain)
 {
 	if (likely(!domain))
-		return GIPC_ZONE_SCOPE;
-	if (gipc_node(domain))
-		return GIPC_NODE_SCOPE;
-	if (gipc_cluster(domain))
-		return GIPC_CLUSTER_SCOPE;
-	return GIPC_ZONE_SCOPE;
+		return TIPC_ZONE_SCOPE;
+	if (tipc_node(domain))
+		return TIPC_NODE_SCOPE;
+	if (tipc_cluster(domain))
+		return TIPC_CLUSTER_SCOPE;
+	return TIPC_ZONE_SCOPE;
 }
 
 /**
@@ -102,22 +102,22 @@ static inline int addr_scope(u32 domain)
 
 static inline int addr_domain(int sc)
 {
-	if (likely(sc == GIPC_NODE_SCOPE))
-		return gipc_own_addr;
-	if (sc == GIPC_CLUSTER_SCOPE)
-		return gipc_addr(gipc_zone(gipc_own_addr),
-				 gipc_cluster(gipc_own_addr), 0);
-	return gipc_addr(gipc_zone(gipc_own_addr), 0, 0);
+	if (likely(sc == TIPC_NODE_SCOPE))
+		return tipc_own_addr;
+	if (sc == TIPC_CLUSTER_SCOPE)
+		return tipc_addr(tipc_zone(tipc_own_addr),
+				 tipc_cluster(tipc_own_addr), 0);
+	return tipc_addr(tipc_zone(tipc_own_addr), 0, 0);
 }
 
 static inline char *addr_string_fill(char *string, u32 addr)
 {
 	snprintf(string, 16, "<%u.%u.%u>",
-		 gipc_zone(addr), gipc_cluster(addr), gipc_node(addr));
+		 tipc_zone(addr), tipc_cluster(addr), tipc_node(addr));
 	return string;
 }
 
-int gipc_addr_domain_valid(u32);
-int gipc_addr_node_valid(u32 addr);
+int tipc_addr_domain_valid(u32);
+int tipc_addr_node_valid(u32 addr);
 
 #endif

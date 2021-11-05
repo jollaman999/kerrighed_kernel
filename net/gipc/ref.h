@@ -1,5 +1,5 @@
 /*
- * net/gipc/ref.h: Include file for GIPC object registry code
+ * net/tipc/ref.h: Include file for TIPC object registry code
  *
  * Copyright (c) 1991-2006, Ericsson AB
  * Copyright (c) 2005-2006, Wind River Systems
@@ -34,17 +34,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GIPC_REF_H
-#define _GIPC_REF_H
+#ifndef _TIPC_REF_H
+#define _TIPC_REF_H
 
-int gipc_ref_table_init(u32 requested_size, u32 start);
-void gipc_ref_table_stop(void);
+int tipc_ref_table_init(u32 requested_size, u32 start);
+void tipc_ref_table_stop(void);
 
-u32 gipc_ref_acquire(void *object, spinlock_t **lock);
-void gipc_ref_discard(u32 ref);
+u32 tipc_ref_acquire(void *object, spinlock_t **lock);
+void tipc_ref_discard(u32 ref);
 
-void *gipc_ref_lock(u32 ref);
-void gipc_ref_unlock(u32 ref);
-void *gipc_ref_deref(u32 ref);
+void *tipc_ref_lock(u32 ref);
+void tipc_ref_unlock(u32 ref);
+void *tipc_ref_deref(u32 ref);
 
 #endif

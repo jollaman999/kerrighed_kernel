@@ -1,5 +1,5 @@
 /*
- * net/gipc/user_reg.c: GIPC user registry code
+ * net/tipc/user_reg.c: TIPC user registry code
  *
  * Copyright (c) 2000-2006, Ericsson AB
  * Copyright (c) 2004-2005, Wind River Systems
@@ -38,42 +38,42 @@
 #include "user_reg.h"
 
 /*
- * GIPC user registry keeps track of users of the gipc_port interface.
+ * TIPC user registry keeps track of users of the tipc_port interface.
  *
- * The registry utilizes an array of "GIPC user" entries;
+ * The registry utilizes an array of "TIPC user" entries;
  * a user's ID is the index of their associated array entry.
  * Array entry 0 is not used, so userid 0 is not valid;
- * GIPC sometimes uses this value to denote an anonymous user.
+ * TIPC sometimes uses this value to denote an anonymous user.
  * The list of free entries is initially chained from last entry to entry 1.
  */
 
 /**
- * struct gipc_user - registered GIPC user info
+ * struct tipc_user - registered TIPC user info
  * @next: index of next free registry entry (or -1 for an allocated entry)
- * @callback: ptr to routine to call when GIPC mode changes (NULL if none)
+ * @callback: ptr to routine to call when TIPC mode changes (NULL if none)
  * @usr_handle: user-defined value passed to callback routine
  * @ports: list of user ports owned by the user
  */
 
-struct gipc_user {
+struct tipc_user {
 	int next;
-	gipc_mode_event callback;
+	tipc_mode_event callback;
 	void *usr_handle;
 	struct list_head ports;
 };
 
 #define MAX_USERID 64
-#define USER_LIST_SIZE ((MAX_USERID + 1) * sizeof(struct gipc_user))
+#define USER_LIST_SIZE ((MAX_USERID + 1) * sizeof(struct tipc_user))
 
-static struct gipc_user *users = NULL;
+static struct tipc_user *users = NULL;
 static u32 next_free_user = MAX_USERID + 1;
 static DEFINE_SPINLOCK(reg_lock);
 
 /**
- * reg_init - create GIPC user registry (but don't activate it)
+ * reg_init - create TIPC user registry (but don't activate it)
  *
  * If registry has been pre-initialized it is left "as is".
- * NOTE: This routine may be called when GIPC is inactive.
+ * NOTE: This routine may be called when TIPC is inactive.
  */
 
 static int reg_init(void)
@@ -95,12 +95,12 @@ static int reg_init(void)
 }
 
 /**
- * reg_callback - inform GIPC user about current operating mode
+ * reg_callback - inform TIPC user about current operating mode
  */
 
-static void reg_callback(struct gipc_user *user_ptr)
+static void reg_callback(struct tipc_user *user_ptr)
 {
-	gipc_mode_event cb;
+	tipc_mode_event cb;
 	void *arg;
 
 	spin_lock_bh(&reg_lock);
@@ -109,14 +109,14 @@ static void reg_callback(struct gipc_user *user_ptr)
 	spin_unlock_bh(&reg_lock);
 
 	if (cb)
-		cb(arg, gipc_mode, gipc_own_addr);
+		cb(arg, tipc_mode, tipc_own_addr);
 }
 
 /**
- * gipc_reg_start - activate GIPC user registry
+ * tipc_reg_start - activate TIPC user registry
  */
 
-int gipc_reg_start(void)
+int tipc_reg_start(void)
 {
 	u32 u;
 	int res;
@@ -126,17 +126,17 @@ int gipc_reg_start(void)
 
 	for (u = 1; u <= MAX_USERID; u++) {
 		if (users[u].callback)
-			gipc_k_signal((Handler)reg_callback,
+			tipc_k_signal((Handler)reg_callback,
 				      (unsigned long)&users[u]);
 	}
 	return 0;
 }
 
 /**
- * gipc_reg_stop - shut down & delete GIPC user registry
+ * tipc_reg_stop - shut down & delete TIPC user registry
  */
 
-void gipc_reg_stop(void)
+void tipc_reg_stop(void)
 {
 	int id;
 
@@ -152,16 +152,16 @@ void gipc_reg_stop(void)
 }
 
 /**
- * gipc_attach - register a GIPC user
+ * tipc_attach - register a TIPC user
  *
- * NOTE: This routine may be called when GIPC is inactive.
+ * NOTE: This routine may be called when TIPC is inactive.
  */
 
-int gipc_attach(u32 *userid, gipc_mode_event cb, void *usr_handle)
+int tipc_attach(u32 *userid, tipc_mode_event cb, void *usr_handle)
 {
-	struct gipc_user *user_ptr;
+	struct tipc_user *user_ptr;
 
-	if ((gipc_mode == GIPC_NOT_RUNNING) && !cb)
+	if ((tipc_mode == TIPC_NOT_RUNNING) && !cb)
 		return -ENOPROTOOPT;
 	if (!users)
 		reg_init();
@@ -180,20 +180,20 @@ int gipc_attach(u32 *userid, gipc_mode_event cb, void *usr_handle)
 	user_ptr->callback = cb;
 	user_ptr->usr_handle = usr_handle;
 	INIT_LIST_HEAD(&user_ptr->ports);
-	atomic_inc(&gipc_user_count);
+	atomic_inc(&tipc_user_count);
 
-	if (cb && (gipc_mode != GIPC_NOT_RUNNING))
-		gipc_k_signal((Handler)reg_callback, (unsigned long)user_ptr);
+	if (cb && (tipc_mode != TIPC_NOT_RUNNING))
+		tipc_k_signal((Handler)reg_callback, (unsigned long)user_ptr);
 	return 0;
 }
 
 /**
- * gipc_detach - deregister a GIPC user
+ * tipc_detach - deregister a TIPC user
  */
 
-void gipc_detach(u32 userid)
+void tipc_detach(u32 userid)
 {
-	struct gipc_user *user_ptr;
+	struct tipc_user *user_ptr;
 	struct list_head ports_temp;
 	struct user_port *up_ptr, *temp_up_ptr;
 
@@ -214,26 +214,26 @@ void gipc_detach(u32 userid)
 	next_free_user = userid;
 	spin_unlock_bh(&reg_lock);
 
-	atomic_dec(&gipc_user_count);
+	atomic_dec(&tipc_user_count);
 
 	list_for_each_entry_safe(up_ptr, temp_up_ptr, &ports_temp, uport_list) {
-		gipc_deleteport(up_ptr->ref);
+		tipc_deleteport(up_ptr->ref);
 	}
 }
 
 /**
- * gipc_reg_add_port - register a user's driver port
+ * tipc_reg_add_port - register a user's driver port
  */
 
-int gipc_reg_add_port(struct user_port *up_ptr)
+int tipc_reg_add_port(struct user_port *up_ptr)
 {
-	struct gipc_user *user_ptr;
+	struct tipc_user *user_ptr;
 
 	if (up_ptr->user_ref == 0)
 		return 0;
 	if (up_ptr->user_ref > MAX_USERID)
 		return -EINVAL;
-	if ((gipc_mode == GIPC_NOT_RUNNING) || !users )
+	if ((tipc_mode == TIPC_NOT_RUNNING) || !users )
 		return -ENOPROTOOPT;
 
 	spin_lock_bh(&reg_lock);
@@ -244,10 +244,10 @@ int gipc_reg_add_port(struct user_port *up_ptr)
 }
 
 /**
- * gipc_reg_remove_port - deregister a user's driver port
+ * tipc_reg_remove_port - deregister a user's driver port
  */
 
-int gipc_reg_remove_port(struct user_port *up_ptr)
+int tipc_reg_remove_port(struct user_port *up_ptr)
 {
 	if (up_ptr->user_ref == 0)
 		return 0;

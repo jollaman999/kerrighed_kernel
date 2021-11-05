@@ -1,5 +1,5 @@
 /*
- * net/gipc/name_distr.c: GIPC name distribution code
+ * net/tipc/name_distr.c: TIPC name distribution code
  *
  * Copyright (c) 2000-2006, Ericsson AB
  * Copyright (c) 2005, Wind River Systems
@@ -72,7 +72,7 @@ struct distr_item {
 
 /**
  * List of externally visible publications by this node --
- * that is, all publications having scope > GIPC_NODE_SCOPE.
+ * that is, all publications having scope > TIPC_NODE_SCOPE.
  */
 
 static LIST_HEAD(publ_root);
@@ -99,7 +99,7 @@ static void publ_to_item(struct distr_item *i, struct publication *p)
 static struct sk_buff *named_prepare_buf(u32 type, u32 size, u32 dest)
 {
 	struct sk_buff *buf = buf_acquire(LONG_H_SIZE + size);
-	struct gipc_msg *msg;
+	struct tipc_msg *msg;
 
 	if (buf != NULL) {
 		msg = buf_msg(buf);
@@ -110,10 +110,10 @@ static struct sk_buff *named_prepare_buf(u32 type, u32 size, u32 dest)
 }
 
 /**
- * gipc_named_publish - tell other nodes about a new publication by this node
+ * tipc_named_publish - tell other nodes about a new publication by this node
  */
 
-void gipc_named_publish(struct publication *publ)
+void tipc_named_publish(struct publication *publ)
 {
 	struct sk_buff *buf;
 	struct distr_item *item;
@@ -129,15 +129,15 @@ void gipc_named_publish(struct publication *publ)
 
 	item = (struct distr_item *)msg_data(buf_msg(buf));
 	publ_to_item(item, publ);
-	dbg("gipc_named_withdraw: broadcasting publish msg\n");
-	gipc_cltr_broadcast(buf);
+	dbg("tipc_named_withdraw: broadcasting publish msg\n");
+	tipc_cltr_broadcast(buf);
 }
 
 /**
- * gipc_named_withdraw - tell other nodes about a withdrawn publication by this node
+ * tipc_named_withdraw - tell other nodes about a withdrawn publication by this node
  */
 
-void gipc_named_withdraw(struct publication *publ)
+void tipc_named_withdraw(struct publication *publ)
 {
 	struct sk_buff *buf;
 	struct distr_item *item;
@@ -153,15 +153,15 @@ void gipc_named_withdraw(struct publication *publ)
 
 	item = (struct distr_item *)msg_data(buf_msg(buf));
 	publ_to_item(item, publ);
-	dbg("gipc_named_withdraw: broadcasting withdraw msg\n");
-	gipc_cltr_broadcast(buf);
+	dbg("tipc_named_withdraw: broadcasting withdraw msg\n");
+	tipc_cltr_broadcast(buf);
 }
 
 /**
- * gipc_named_node_up - tell specified node about all publications by this node
+ * tipc_named_node_up - tell specified node about all publications by this node
  */
 
-void gipc_named_node_up(unsigned long node)
+void tipc_named_node_up(unsigned long node)
 {
 	struct publication *publ;
 	struct distr_item *item = NULL;
@@ -170,8 +170,8 @@ void gipc_named_node_up(unsigned long node)
 	u32 rest;
 	u32 max_item_buf;
 
-	read_lock_bh(&gipc_nametbl_lock);
-	max_item_buf = GIPC_MAX_USER_MSG_SIZE / ITEM_SIZE;
+	read_lock_bh(&tipc_nametbl_lock);
+	max_item_buf = TIPC_MAX_USER_MSG_SIZE / ITEM_SIZE;
 	max_item_buf *= ITEM_SIZE;
 	rest = publ_cnt * ITEM_SIZE;
 
@@ -191,15 +191,15 @@ void gipc_named_node_up(unsigned long node)
 		left -= ITEM_SIZE;
 		if (!left) {
 			msg_set_link_selector(buf_msg(buf), node);
-			dbg("gipc_named_node_up: sending publish msg to "
-			    "<%u.%u.%u>\n", gipc_zone(node),
-			    gipc_cluster(node), gipc_node(node));
-			gipc_link_send(buf, node, node);
+			dbg("tipc_named_node_up: sending publish msg to "
+			    "<%u.%u.%u>\n", tipc_zone(node),
+			    tipc_cluster(node), tipc_node(node));
+			tipc_link_send(buf, node, node);
 			buf = NULL;
 		}
 	}
 exit:
-	read_unlock_bh(&gipc_nametbl_lock);
+	read_unlock_bh(&tipc_nametbl_lock);
 }
 
 /**
@@ -217,13 +217,13 @@ static void node_is_down(struct publication *publ)
 {
 	struct publication *p;
 
-	write_lock_bh(&gipc_nametbl_lock);
+	write_lock_bh(&tipc_nametbl_lock);
 	dbg("node_is_down: withdrawing %u, %u, %u\n",
 	    publ->type, publ->lower, publ->upper);
 	publ->key += 1222345;
-	p = gipc_nametbl_remove_publ(publ->type, publ->lower,
+	p = tipc_nametbl_remove_publ(publ->type, publ->lower,
 				     publ->node, publ->ref, publ->key);
-	write_unlock_bh(&gipc_nametbl_lock);
+	write_unlock_bh(&tipc_nametbl_lock);
 
 	if (p != publ) {
 		err("Unable to remove publication from failed node\n"
@@ -237,47 +237,47 @@ static void node_is_down(struct publication *publ)
 }
 
 /**
- * gipc_named_recv - process name table update message sent by another node
+ * tipc_named_recv - process name table update message sent by another node
  */
 
-void gipc_named_recv(struct sk_buff *buf)
+void tipc_named_recv(struct sk_buff *buf)
 {
 	struct publication *publ;
-	struct gipc_msg *msg = buf_msg(buf);
+	struct tipc_msg *msg = buf_msg(buf);
 	struct distr_item *item = (struct distr_item *)msg_data(msg);
 	u32 count = msg_data_sz(msg) / ITEM_SIZE;
 
-	write_lock_bh(&gipc_nametbl_lock);
+	write_lock_bh(&tipc_nametbl_lock);
 	while (count--) {
 		if (msg_type(msg) == PUBLICATION) {
-			dbg("gipc_named_recv: got publication for %u, %u, %u\n",
+			dbg("tipc_named_recv: got publication for %u, %u, %u\n",
 			    ntohl(item->type), ntohl(item->lower),
 			    ntohl(item->upper));
-			publ = gipc_nametbl_insert_publ(ntohl(item->type),
+			publ = tipc_nametbl_insert_publ(ntohl(item->type),
 							ntohl(item->lower),
 							ntohl(item->upper),
-							GIPC_CLUSTER_SCOPE,
+							TIPC_CLUSTER_SCOPE,
 							msg_orignode(msg),
 							ntohl(item->ref),
 							ntohl(item->key));
 			if (publ) {
-				gipc_nodesub_subscribe(&publ->subscr,
+				tipc_nodesub_subscribe(&publ->subscr,
 						       msg_orignode(msg),
 						       publ,
 						       (net_ev_handler)node_is_down);
 			}
 		} else if (msg_type(msg) == WITHDRAWAL) {
-			dbg("gipc_named_recv: got withdrawl for %u, %u, %u\n",
+			dbg("tipc_named_recv: got withdrawl for %u, %u, %u\n",
 			    ntohl(item->type), ntohl(item->lower),
 			    ntohl(item->upper));
-			publ = gipc_nametbl_remove_publ(ntohl(item->type),
+			publ = tipc_nametbl_remove_publ(ntohl(item->type),
 							ntohl(item->lower),
 							msg_orignode(msg),
 							ntohl(item->ref),
 							ntohl(item->key));
 
 			if (publ) {
-				gipc_nodesub_unsubscribe(&publ->subscr);
+				tipc_nodesub_unsubscribe(&publ->subscr);
 				kfree(publ);
 			} else {
 				err("Unable to remove publication by node 0x%x\n"
@@ -291,28 +291,28 @@ void gipc_named_recv(struct sk_buff *buf)
 		}
 		item++;
 	}
-	write_unlock_bh(&gipc_nametbl_lock);
+	write_unlock_bh(&tipc_nametbl_lock);
 	buf_discard(buf);
 }
 
 /**
- * gipc_named_reinit - re-initialize local publication list
+ * tipc_named_reinit - re-initialize local publication list
  *
- * This routine is called whenever GIPC networking is (re)enabled.
+ * This routine is called whenever TIPC networking is (re)enabled.
  * All existing publications by this node that have "cluster" or "zone" scope
  * are updated to reflect the node's current network address.
  * (If the node's address is unchanged, the update loop terminates immediately.)
  */
 
-void gipc_named_reinit(void)
+void tipc_named_reinit(void)
 {
 	struct publication *publ;
 
-	write_lock_bh(&gipc_nametbl_lock);
+	write_lock_bh(&tipc_nametbl_lock);
 	list_for_each_entry(publ, &publ_root, local_list) {
-		if (publ->node == gipc_own_addr)
+		if (publ->node == tipc_own_addr)
 			break;
-		publ->node = gipc_own_addr;
+		publ->node = tipc_own_addr;
 	}
-	write_unlock_bh(&gipc_nametbl_lock);
+	write_unlock_bh(&tipc_nametbl_lock);
 }

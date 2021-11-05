@@ -1,5 +1,5 @@
 /*
- * net/gipc/node_subscr.c: GIPC "node down" subscription handling
+ * net/tipc/node_subscr.c: TIPC "node down" subscription handling
  *
  * Copyright (c) 1995-2006, Ericsson AB
  * Copyright (c) 2005, Wind River Systems
@@ -41,18 +41,18 @@
 #include "addr.h"
 
 /**
- * gipc_nodesub_subscribe - create "node down" subscription for specified node
+ * tipc_nodesub_subscribe - create "node down" subscription for specified node
  */
 
-void gipc_nodesub_subscribe(struct gipc_node_subscr *node_sub, u32 addr,
+void tipc_nodesub_subscribe(struct tipc_node_subscr *node_sub, u32 addr,
 		       void *usr_handle, net_ev_handler handle_down)
 {
-	if (addr == gipc_own_addr) {
+	if (addr == tipc_own_addr) {
 		node_sub->node = NULL;
 		return;
 	}
 
-	node_sub->node = gipc_node_find(addr);
+	node_sub->node = tipc_node_find(addr);
 	if (!node_sub->node) {
 		warn("Node subscription rejected, unknown node 0x%x\n", addr);
 		return;
@@ -60,21 +60,21 @@ void gipc_nodesub_subscribe(struct gipc_node_subscr *node_sub, u32 addr,
 	node_sub->handle_node_down = handle_down;
 	node_sub->usr_handle = usr_handle;
 
-	gipc_node_lock(node_sub->node);
+	tipc_node_lock(node_sub->node);
 	list_add_tail(&node_sub->nodesub_list, &node_sub->node->nsub);
-	gipc_node_unlock(node_sub->node);
+	tipc_node_unlock(node_sub->node);
 }
 
 /**
- * gipc_nodesub_unsubscribe - cancel "node down" subscription (if any)
+ * tipc_nodesub_unsubscribe - cancel "node down" subscription (if any)
  */
 
-void gipc_nodesub_unsubscribe(struct gipc_node_subscr *node_sub)
+void tipc_nodesub_unsubscribe(struct tipc_node_subscr *node_sub)
 {
 	if (!node_sub->node)
 		return;
 
-	gipc_node_lock(node_sub->node);
+	tipc_node_lock(node_sub->node);
 	list_del_init(&node_sub->nodesub_list);
-	gipc_node_unlock(node_sub->node);
+	tipc_node_unlock(node_sub->node);
 }

@@ -1,5 +1,5 @@
 /*
- * net/gipc/link.c: GIPC link code
+ * net/tipc/link.c: TIPC link code
  *
  * Copyright (c) 1996-2007, Ericsson AB
  * Copyright (c) 2004-2007, Wind River Systems
@@ -94,9 +94,9 @@
 
 struct link_name {
 	u32 addr_local;
-	char if_local[GIPC_MAX_IF_NAME];
+	char if_local[TIPC_MAX_IF_NAME];
 	u32 addr_peer;
-	char if_peer[GIPC_MAX_IF_NAME];
+	char if_peer[TIPC_MAX_IF_NAME];
 };
 
 #if 0
@@ -111,7 +111,7 @@ struct link_event {
 	u32 addr;
 	int up;
 	void (*fcn)(u32, char *, int);
-	char name[GIPC_MAX_LINK_NAME];
+	char name[TIPC_MAX_LINK_NAME];
 };
 
 #endif
@@ -134,11 +134,11 @@ static void link_print(struct link *l_ptr, struct print_buf *buf,
  * Debugging code used by link routines only
  *
  * When debugging link problems on a system that has multiple links,
- * the standard GIPC debugging routines may not be useful since they
+ * the standard TIPC debugging routines may not be useful since they
  * allow the output from multiple links to be intermixed.  For this reason
  * routines of the form "dbg_link_XXX()" have been created that will capture
  * debug info into a link's personal print buffer, which can then be dumped
- * into the GIPC system log (GIPC_LOG) upon request.
+ * into the TIPC system log (TIPC_LOG) upon request.
  *
  * To enable per-link debugging, use LINK_LOG_BUF_SIZE to specify the size
  * of the print buffer used by each link.  If LINK_LOG_BUF_SIZE is set to 0,
@@ -147,7 +147,7 @@ static void link_print(struct link *l_ptr, struct print_buf *buf,
  * when there is only a single link in the system being debugged.
  *
  * Notes:
- * - When enabled, LINK_LOG_BUF_SIZE should be set to at least GIPC_PB_MIN_SIZE
+ * - When enabled, LINK_LOG_BUF_SIZE should be set to at least TIPC_PB_MIN_SIZE
  * - "l_ptr" must be valid when using dbg_link_XXX() macros
  */
 
@@ -156,12 +156,12 @@ static void link_print(struct link *l_ptr, struct print_buf *buf,
 #define dbg_link(fmt, arg...) \
 	do { \
 		if (LINK_LOG_BUF_SIZE) \
-			gipc_printf(&l_ptr->print_buf, fmt, ## arg); \
+			tipc_printf(&l_ptr->print_buf, fmt, ## arg); \
 	} while (0)
 #define dbg_link_msg(msg, txt) \
 	do { \
 		if (LINK_LOG_BUF_SIZE) \
-			gipc_msg_dbg(&l_ptr->print_buf, msg, txt); \
+			tipc_msg_dbg(&l_ptr->print_buf, msg, txt); \
 	} while (0)
 #define dbg_link_state(txt) \
 	do { \
@@ -170,20 +170,20 @@ static void link_print(struct link *l_ptr, struct print_buf *buf,
 	} while (0)
 #define dbg_link_dump() do { \
 	if (LINK_LOG_BUF_SIZE) { \
-		gipc_printf(LOG, "\n\nDumping link <%s>:\n", l_ptr->name); \
-		gipc_printbuf_move(LOG, &l_ptr->print_buf); \
+		tipc_printf(LOG, "\n\nDumping link <%s>:\n", l_ptr->name); \
+		tipc_printbuf_move(LOG, &l_ptr->print_buf); \
 	} \
 } while (0)
 
 static void dbg_print_link(struct link *l_ptr, const char *str)
 {
-	if (DBG_OUTPUT != GIPC_NULL)
+	if (DBG_OUTPUT != TIPC_NULL)
 		link_print(l_ptr, DBG_OUTPUT, str);
 }
 
 static void dbg_print_buf_chain(struct sk_buff *root_buf)
 {
-	if (DBG_OUTPUT != GIPC_NULL) {
+	if (DBG_OUTPUT != TIPC_NULL) {
 		struct sk_buff *buf = root_buf;
 
 		while (buf) {
@@ -270,14 +270,14 @@ static u32 link_last_sent(struct link *l_ptr)
  *  Simple non-static link routines (i.e. referenced outside this file)
  */
 
-int gipc_link_is_up(struct link *l_ptr)
+int tipc_link_is_up(struct link *l_ptr)
 {
 	if (!l_ptr)
 		return 0;
 	return (link_working_working(l_ptr) || link_working_unknown(l_ptr));
 }
 
-int gipc_link_is_active(struct link *l_ptr)
+int tipc_link_is_active(struct link *l_ptr)
 {
 	return ((l_ptr->owner->active_links[0] == l_ptr) ||
 		(l_ptr->owner->active_links[1] == l_ptr));
@@ -293,7 +293,7 @@ int gipc_link_is_active(struct link *l_ptr)
 
 static int link_name_validate(const char *name, struct link_name *name_parts)
 {
-	char name_copy[GIPC_MAX_LINK_NAME];
+	char name_copy[TIPC_MAX_LINK_NAME];
 	char *addr_local;
 	char *if_local;
 	char *addr_peer;
@@ -306,10 +306,10 @@ static int link_name_validate(const char *name, struct link_name *name_parts)
 
 	/* copy link name & ensure length is OK */
 
-	name_copy[GIPC_MAX_LINK_NAME - 1] = 0;
+	name_copy[TIPC_MAX_LINK_NAME - 1] = 0;
 	/* need above in case non-Posix strncpy() doesn't pad with nulls */
-	strncpy(name_copy, name, GIPC_MAX_LINK_NAME);
-	if (name_copy[GIPC_MAX_LINK_NAME - 1] != 0)
+	strncpy(name_copy, name, TIPC_MAX_LINK_NAME);
+	if (name_copy[TIPC_MAX_LINK_NAME - 1] != 0)
 		return 0;
 
 	/* ensure all component parts of link name are present */
@@ -335,18 +335,18 @@ static int link_name_validate(const char *name, struct link_name *name_parts)
 		    &z_peer, &c_peer, &n_peer, &dummy) != 3) ||
 	    (z_local > 255) || (c_local > 4095) || (n_local > 4095) ||
 	    (z_peer  > 255) || (c_peer  > 4095) || (n_peer  > 4095) ||
-	    (if_local_len <= 1) || (if_local_len > GIPC_MAX_IF_NAME) ||
-	    (if_peer_len  <= 1) || (if_peer_len  > GIPC_MAX_IF_NAME) ||
-	    (strspn(if_local, gipc_alphabet) != (if_local_len - 1)) ||
-	    (strspn(if_peer, gipc_alphabet) != (if_peer_len - 1)))
+	    (if_local_len <= 1) || (if_local_len > TIPC_MAX_IF_NAME) ||
+	    (if_peer_len  <= 1) || (if_peer_len  > TIPC_MAX_IF_NAME) ||
+	    (strspn(if_local, tipc_alphabet) != (if_local_len - 1)) ||
+	    (strspn(if_peer, tipc_alphabet) != (if_peer_len - 1)))
 		return 0;
 
 	/* return link name components, if necessary */
 
 	if (name_parts) {
-		name_parts->addr_local = gipc_addr(z_local, c_local, n_local);
+		name_parts->addr_local = tipc_addr(z_local, c_local, n_local);
 		strcpy(name_parts->if_local, if_local);
-		name_parts->addr_peer = gipc_addr(z_peer, c_peer, n_peer);
+		name_parts->addr_peer = tipc_addr(z_peer, c_peer, n_peer);
 		strcpy(name_parts->if_peer, if_peer);
 	}
 	return 1;
@@ -356,15 +356,15 @@ static int link_name_validate(const char *name, struct link_name *name_parts)
  * link_timeout - handle expiration of link timer
  * @l_ptr: pointer to link
  *
- * This routine must not grab "gipc_net_lock" to avoid a potential deadlock conflict
- * with gipc_link_delete().  (There is no risk that the node will be deleted by
- * another thread because gipc_link_delete() always cancels the link timer before
- * gipc_node_delete() is called.)
+ * This routine must not grab "tipc_net_lock" to avoid a potential deadlock conflict
+ * with tipc_link_delete().  (There is no risk that the node will be deleted by
+ * another thread because tipc_link_delete() always cancels the link timer before
+ * tipc_node_delete() is called.)
  */
 
 static void link_timeout(struct link *l_ptr)
 {
-	gipc_node_lock(l_ptr->owner);
+	tipc_node_lock(l_ptr->owner);
 
 	/* update counters used in statistical profiling of send traffic */
 
@@ -375,7 +375,7 @@ static void link_timeout(struct link *l_ptr)
 		l_ptr->stats.max_queue_sz = l_ptr->out_queue_size;
 
 	if (l_ptr->first_out) {
-		struct gipc_msg *msg = buf_msg(l_ptr->first_out);
+		struct tipc_msg *msg = buf_msg(l_ptr->first_out);
 		u32 length = msg_size(msg);
 
 		if ((msg_user(msg) == MSG_FRAGMENTER)
@@ -409,9 +409,9 @@ static void link_timeout(struct link *l_ptr)
 	link_state_event(l_ptr, TIMEOUT_EVT);
 
 	if (l_ptr->next_out)
-		gipc_link_push_queue(l_ptr);
+		tipc_link_push_queue(l_ptr);
 
-	gipc_node_unlock(l_ptr->owner);
+	tipc_node_unlock(l_ptr->owner);
 }
 
 static void link_set_timer(struct link *l_ptr, u32 time)
@@ -420,7 +420,7 @@ static void link_set_timer(struct link *l_ptr, u32 time)
 }
 
 /**
- * gipc_link_create - create a new link
+ * tipc_link_create - create a new link
  * @b_ptr: pointer to associated bearer
  * @peer: network address of node at other end of link
  * @media_addr: media address to use when sending messages over link
@@ -428,11 +428,11 @@ static void link_set_timer(struct link *l_ptr, u32 time)
  * Returns pointer to link.
  */
 
-struct link *gipc_link_create(struct bearer *b_ptr, const u32 peer,
-			      const struct gipc_media_addr *media_addr)
+struct link *tipc_link_create(struct bearer *b_ptr, const u32 peer,
+			      const struct tipc_media_addr *media_addr)
 {
 	struct link *l_ptr;
-	struct gipc_msg *msg;
+	struct tipc_msg *msg;
 	char *if_name;
 
 	l_ptr = kzalloc(sizeof(*l_ptr), GFP_ATOMIC);
@@ -449,16 +449,16 @@ struct link *gipc_link_create(struct bearer *b_ptr, const u32 peer,
 			warn("Link creation failed, no memory for print buffer\n");
 			return NULL;
 		}
-		gipc_printbuf_init(&l_ptr->print_buf, pb, LINK_LOG_BUF_SIZE);
+		tipc_printbuf_init(&l_ptr->print_buf, pb, LINK_LOG_BUF_SIZE);
 	}
 
 	l_ptr->addr = peer;
 	if_name = strchr(b_ptr->publ.name, ':') + 1;
 	sprintf(l_ptr->name, "%u.%u.%u:%s-%u.%u.%u:",
-		gipc_zone(gipc_own_addr), gipc_cluster(gipc_own_addr),
-		gipc_node(gipc_own_addr),
+		tipc_zone(tipc_own_addr), tipc_cluster(tipc_own_addr),
+		tipc_node(tipc_own_addr),
 		if_name,
-		gipc_zone(peer), gipc_cluster(peer), gipc_node(peer));
+		tipc_zone(peer), tipc_cluster(peer), tipc_node(peer));
 		/* note: peer i/f is appended to link name by reset/activate */
 	memcpy(&l_ptr->media_addr, media_addr, sizeof(*media_addr));
 	l_ptr->checkpoint = 1;
@@ -466,16 +466,16 @@ struct link *gipc_link_create(struct bearer *b_ptr, const u32 peer,
 	link_set_supervision_props(l_ptr, b_ptr->media->tolerance);
 	l_ptr->state = RESET_UNKNOWN;
 
-	l_ptr->pmsg = (struct gipc_msg *)&l_ptr->proto_msg;
+	l_ptr->pmsg = (struct tipc_msg *)&l_ptr->proto_msg;
 	msg = l_ptr->pmsg;
 	msg_init(msg, LINK_PROTOCOL, RESET_MSG, INT_H_SIZE, l_ptr->addr);
 	msg_set_size(msg, sizeof(l_ptr->proto_msg));
-	msg_set_session(msg, (gipc_random & 0xffff));
+	msg_set_session(msg, (tipc_random & 0xffff));
 	msg_set_bearer_id(msg, b_ptr->identity);
 	strcpy((char *)msg_data(msg), if_name);
 
 	l_ptr->priority = b_ptr->priority;
-	gipc_link_set_queue_limits(l_ptr, b_ptr->media->window);
+	tipc_link_set_queue_limits(l_ptr, b_ptr->media->window);
 
 	link_init_max_pkt(l_ptr);
 
@@ -484,7 +484,7 @@ struct link *gipc_link_create(struct bearer *b_ptr, const u32 peer,
 
 	link_reset_statistics(l_ptr);
 
-	l_ptr->owner = gipc_node_attach_link(l_ptr);
+	l_ptr->owner = tipc_node_attach_link(l_ptr);
 	if (!l_ptr->owner) {
 		if (LINK_LOG_BUF_SIZE)
 			kfree(l_ptr->print_buf.buf);
@@ -494,49 +494,49 @@ struct link *gipc_link_create(struct bearer *b_ptr, const u32 peer,
 
 	k_init_timer(&l_ptr->timer, (Handler)link_timeout, (unsigned long)l_ptr);
 	list_add_tail(&l_ptr->link_list, &b_ptr->links);
-	gipc_k_signal((Handler)gipc_link_start, (unsigned long)l_ptr);
+	tipc_k_signal((Handler)tipc_link_start, (unsigned long)l_ptr);
 
-	dbg("gipc_link_create(): tolerance = %u,cont intv = %u, abort_limit = %u\n",
+	dbg("tipc_link_create(): tolerance = %u,cont intv = %u, abort_limit = %u\n",
 	    l_ptr->tolerance, l_ptr->continuity_interval, l_ptr->abort_limit);
 
 	return l_ptr;
 }
 
 /**
- * gipc_link_delete - delete a link
+ * tipc_link_delete - delete a link
  * @l_ptr: pointer to link
  *
- * Note: 'gipc_net_lock' is write_locked, bearer is locked.
+ * Note: 'tipc_net_lock' is write_locked, bearer is locked.
  * This routine must not grab the node lock until after link timer cancellation
  * to avoid a potential deadlock situation.
  */
 
-void gipc_link_delete(struct link *l_ptr)
+void tipc_link_delete(struct link *l_ptr)
 {
 	if (!l_ptr) {
 		err("Attempt to delete non-existent link\n");
 		return;
 	}
 
-	dbg("gipc_link_delete()\n");
+	dbg("tipc_link_delete()\n");
 
 	k_cancel_timer(&l_ptr->timer);
 
-	gipc_node_lock(l_ptr->owner);
-	gipc_link_reset(l_ptr);
-	gipc_node_detach_link(l_ptr->owner, l_ptr);
-	gipc_link_stop(l_ptr);
+	tipc_node_lock(l_ptr->owner);
+	tipc_link_reset(l_ptr);
+	tipc_node_detach_link(l_ptr->owner, l_ptr);
+	tipc_link_stop(l_ptr);
 	list_del_init(&l_ptr->link_list);
 	if (LINK_LOG_BUF_SIZE)
 		kfree(l_ptr->print_buf.buf);
-	gipc_node_unlock(l_ptr->owner);
+	tipc_node_unlock(l_ptr->owner);
 	k_term_timer(&l_ptr->timer);
 	kfree(l_ptr);
 }
 
-void gipc_link_start(struct link *l_ptr)
+void tipc_link_start(struct link *l_ptr)
 {
-	dbg("gipc_link_start %x\n", l_ptr);
+	dbg("tipc_link_start %x\n", l_ptr);
 	link_state_event(l_ptr, STARTING_EVT);
 }
 
@@ -554,8 +554,8 @@ static int link_schedule_port(struct link *l_ptr, u32 origport, u32 sz)
 {
 	struct port *p_ptr;
 
-	spin_lock_bh(&gipc_port_list_lock);
-	p_ptr = gipc_port_lock(origport);
+	spin_lock_bh(&tipc_port_list_lock);
+	p_ptr = tipc_port_lock(origport);
 	if (p_ptr) {
 		if (!p_ptr->wakeup)
 			goto exit;
@@ -567,13 +567,13 @@ static int link_schedule_port(struct link *l_ptr, u32 origport, u32 sz)
 		list_add_tail(&p_ptr->wait_list, &l_ptr->waiting_ports);
 		l_ptr->stats.link_congs++;
 exit:
-		gipc_port_unlock(p_ptr);
+		tipc_port_unlock(p_ptr);
 	}
-	spin_unlock_bh(&gipc_port_list_lock);
+	spin_unlock_bh(&tipc_port_list_lock);
 	return -ELINKCONG;
 }
 
-void gipc_link_wakeup_ports(struct link *l_ptr, int all)
+void tipc_link_wakeup_ports(struct link *l_ptr, int all)
 {
 	struct port *p_ptr;
 	struct port *temp_p_ptr;
@@ -583,7 +583,7 @@ void gipc_link_wakeup_ports(struct link *l_ptr, int all)
 		win = 100000;
 	if (win <= 0)
 		return;
-	if (!spin_trylock_bh(&gipc_port_list_lock))
+	if (!spin_trylock_bh(&tipc_port_list_lock))
 		return;
 	if (link_congested(l_ptr))
 		goto exit;
@@ -601,7 +601,7 @@ void gipc_link_wakeup_ports(struct link *l_ptr, int all)
 	}
 
 exit:
-	spin_unlock_bh(&gipc_port_list_lock);
+	spin_unlock_bh(&tipc_port_list_lock);
 }
 
 /**
@@ -624,11 +624,11 @@ static void link_release_outqueue(struct link *l_ptr)
 }
 
 /**
- * gipc_link_reset_fragments - purge link's inbound message fragments queue
+ * tipc_link_reset_fragments - purge link's inbound message fragments queue
  * @l_ptr: pointer to link
  */
 
-void gipc_link_reset_fragments(struct link *l_ptr)
+void tipc_link_reset_fragments(struct link *l_ptr)
 {
 	struct sk_buff *buf = l_ptr->defragm_buf;
 	struct sk_buff *next;
@@ -642,11 +642,11 @@ void gipc_link_reset_fragments(struct link *l_ptr)
 }
 
 /**
- * gipc_link_stop - purge all inbound and outbound messages associated with link
+ * tipc_link_stop - purge all inbound and outbound messages associated with link
  * @l_ptr: pointer to link
  */
 
-void gipc_link_stop(struct link *l_ptr)
+void tipc_link_stop(struct link *l_ptr)
 {
 	struct sk_buff *buf;
 	struct sk_buff *next;
@@ -665,7 +665,7 @@ void gipc_link_stop(struct link *l_ptr)
 		buf = next;
 	}
 
-	gipc_link_reset_fragments(l_ptr);
+	tipc_link_reset_fragments(l_ptr);
 
 	buf_discard(l_ptr->proto_msg_queue);
 	l_ptr->proto_msg_queue = NULL;
@@ -694,8 +694,8 @@ static void link_send_event(void (*fcn)(u32 a, char *n, int up),
 	ev->addr = l_ptr->addr;
 	ev->up = up;
 	ev->fcn = fcn;
-	memcpy(ev->name, l_ptr->name, GIPC_MAX_LINK_NAME);
-	gipc_k_signal((Handler)link_recv_event, (unsigned long)ev);
+	memcpy(ev->name, l_ptr->name, TIPC_MAX_LINK_NAME);
+	tipc_k_signal((Handler)link_recv_event, (unsigned long)ev);
 }
 
 #else
@@ -704,12 +704,12 @@ static void link_send_event(void (*fcn)(u32 a, char *n, int up),
 
 #endif
 
-void gipc_link_reset(struct link *l_ptr)
+void tipc_link_reset(struct link *l_ptr)
 {
 	struct sk_buff *buf;
 	u32 prev_state = l_ptr->state;
 	u32 checkpoint = l_ptr->next_in_no;
-	int was_active_link = gipc_link_is_active(l_ptr);
+	int was_active_link = tipc_link_is_active(l_ptr);
 
 	msg_set_session(l_ptr->pmsg, ((msg_session(l_ptr->pmsg) + 1) & 0xffff));
 
@@ -725,13 +725,13 @@ void gipc_link_reset(struct link *l_ptr)
 	if ((prev_state == RESET_UNKNOWN) || (prev_state == RESET_RESET))
 		return;
 
-	gipc_node_link_down(l_ptr->owner, l_ptr);
-	gipc_bearer_remove_dest(l_ptr->b_ptr, l_ptr->addr);
+	tipc_node_link_down(l_ptr->owner, l_ptr);
+	tipc_bearer_remove_dest(l_ptr->b_ptr, l_ptr->addr);
 #if 0
-	gipc_printf(GIPC_CONS, "\nReset link <%s>\n", l_ptr->name);
+	tipc_printf(TIPC_CONS, "\nReset link <%s>\n", l_ptr->name);
 	dbg_link_dump();
 #endif
-	if (was_active_link && gipc_node_has_active_links(l_ptr->owner) &&
+	if (was_active_link && tipc_node_has_active_links(l_ptr->owner) &&
 	    l_ptr->owner->permit_changeover) {
 		l_ptr->reset_checkpoint = checkpoint;
 		l_ptr->exp_msg_count = START_CHANGEOVER;
@@ -749,7 +749,7 @@ void gipc_link_reset(struct link *l_ptr)
 		buf = next;
 	}
 	if (!list_empty(&l_ptr->waiting_ports))
-		gipc_link_wakeup_ports(l_ptr, 1);
+		tipc_link_wakeup_ports(l_ptr, 1);
 
 	l_ptr->retransm_queue_head = 0;
 	l_ptr->retransm_queue_size = 0;
@@ -766,20 +766,20 @@ void gipc_link_reset(struct link *l_ptr)
 	l_ptr->stale_count = 0;
 	link_reset_statistics(l_ptr);
 
-	link_send_event(gipc_cfg_link_event, l_ptr, 0);
+	link_send_event(tipc_cfg_link_event, l_ptr, 0);
 	if (!in_own_cluster(l_ptr->addr))
-		link_send_event(gipc_disc_link_event, l_ptr, 0);
+		link_send_event(tipc_disc_link_event, l_ptr, 0);
 }
 
 
 static void link_activate(struct link *l_ptr)
 {
 	l_ptr->next_in_no = l_ptr->stats.recv_info = 1;
-	gipc_node_link_up(l_ptr->owner, l_ptr);
-	gipc_bearer_add_dest(l_ptr->b_ptr, l_ptr->addr);
-	link_send_event(gipc_cfg_link_event, l_ptr, 1);
+	tipc_node_link_up(l_ptr->owner, l_ptr);
+	tipc_bearer_add_dest(l_ptr->b_ptr, l_ptr->addr);
+	link_send_event(tipc_cfg_link_event, l_ptr, 1);
 	if (!in_own_cluster(l_ptr->addr))
-		link_send_event(gipc_disc_link_event, l_ptr, 1);
+		link_send_event(tipc_disc_link_event, l_ptr, 1);
 }
 
 /**
@@ -818,12 +818,12 @@ static void link_state_event(struct link *l_ptr, unsigned event)
 			dbg_link("TIM ");
 			if (l_ptr->next_in_no != l_ptr->checkpoint) {
 				l_ptr->checkpoint = l_ptr->next_in_no;
-				if (gipc_bclink_acks_missing(l_ptr->owner)) {
-					gipc_link_send_proto_msg(l_ptr, STATE_MSG,
+				if (tipc_bclink_acks_missing(l_ptr->owner)) {
+					tipc_link_send_proto_msg(l_ptr, STATE_MSG,
 								 0, 0, 0, 0, 0);
 					l_ptr->fsm_msg_cnt++;
 				} else if (l_ptr->max_pkt < l_ptr->max_pkt_target) {
-					gipc_link_send_proto_msg(l_ptr, STATE_MSG,
+					tipc_link_send_proto_msg(l_ptr, STATE_MSG,
 								 1, 0, 0, 0, 0);
 					l_ptr->fsm_msg_cnt++;
 				}
@@ -833,7 +833,7 @@ static void link_state_event(struct link *l_ptr, unsigned event)
 			dbg_link(" -> WU\n");
 			l_ptr->state = WORKING_UNKNOWN;
 			l_ptr->fsm_msg_cnt = 0;
-			gipc_link_send_proto_msg(l_ptr, STATE_MSG, 1, 0, 0, 0, 0);
+			tipc_link_send_proto_msg(l_ptr, STATE_MSG, 1, 0, 0, 0, 0);
 			l_ptr->fsm_msg_cnt++;
 			link_set_timer(l_ptr, cont_intv / 4);
 			break;
@@ -841,10 +841,10 @@ static void link_state_event(struct link *l_ptr, unsigned event)
 			dbg_link("RES -> RR\n");
 			info("Resetting link <%s>, requested by peer\n",
 			     l_ptr->name);
-			gipc_link_reset(l_ptr);
+			tipc_link_reset(l_ptr);
 			l_ptr->state = RESET_RESET;
 			l_ptr->fsm_msg_cnt = 0;
-			gipc_link_send_proto_msg(l_ptr, ACTIVATE_MSG, 0, 0, 0, 0, 0);
+			tipc_link_send_proto_msg(l_ptr, ACTIVATE_MSG, 0, 0, 0, 0, 0);
 			l_ptr->fsm_msg_cnt++;
 			link_set_timer(l_ptr, cont_intv);
 			break;
@@ -867,10 +867,10 @@ static void link_state_event(struct link *l_ptr, unsigned event)
 			dbg_link("RES -> RR\n");
 			info("Resetting link <%s>, requested by peer "
 			     "while probing\n", l_ptr->name);
-			gipc_link_reset(l_ptr);
+			tipc_link_reset(l_ptr);
 			l_ptr->state = RESET_RESET;
 			l_ptr->fsm_msg_cnt = 0;
-			gipc_link_send_proto_msg(l_ptr, ACTIVATE_MSG, 0, 0, 0, 0, 0);
+			tipc_link_send_proto_msg(l_ptr, ACTIVATE_MSG, 0, 0, 0, 0, 0);
 			l_ptr->fsm_msg_cnt++;
 			link_set_timer(l_ptr, cont_intv);
 			break;
@@ -881,8 +881,8 @@ static void link_state_event(struct link *l_ptr, unsigned event)
 				l_ptr->state = WORKING_WORKING;
 				l_ptr->fsm_msg_cnt = 0;
 				l_ptr->checkpoint = l_ptr->next_in_no;
-				if (gipc_bclink_acks_missing(l_ptr->owner)) {
-					gipc_link_send_proto_msg(l_ptr, STATE_MSG,
+				if (tipc_bclink_acks_missing(l_ptr->owner)) {
+					tipc_link_send_proto_msg(l_ptr, STATE_MSG,
 								 0, 0, 0, 0, 0);
 					l_ptr->fsm_msg_cnt++;
 				}
@@ -891,7 +891,7 @@ static void link_state_event(struct link *l_ptr, unsigned event)
 				dbg_link("Probing %u/%u,timer = %u ms)\n",
 					 l_ptr->fsm_msg_cnt, l_ptr->abort_limit,
 					 cont_intv / 4);
-				gipc_link_send_proto_msg(l_ptr, STATE_MSG,
+				tipc_link_send_proto_msg(l_ptr, STATE_MSG,
 							 1, 0, 0, 0, 0);
 				l_ptr->fsm_msg_cnt++;
 				link_set_timer(l_ptr, cont_intv / 4);
@@ -900,10 +900,10 @@ static void link_state_event(struct link *l_ptr, unsigned event)
 					 l_ptr->fsm_msg_cnt);
 				warn("Resetting link <%s>, peer not responding\n",
 				     l_ptr->name);
-				gipc_link_reset(l_ptr);
+				tipc_link_reset(l_ptr);
 				l_ptr->state = RESET_UNKNOWN;
 				l_ptr->fsm_msg_cnt = 0;
-				gipc_link_send_proto_msg(l_ptr, RESET_MSG,
+				tipc_link_send_proto_msg(l_ptr, RESET_MSG,
 							 0, 0, 0, 0, 0);
 				l_ptr->fsm_msg_cnt++;
 				link_set_timer(l_ptr, cont_intv);
@@ -929,7 +929,7 @@ static void link_state_event(struct link *l_ptr, unsigned event)
 			l_ptr->state = WORKING_WORKING;
 			l_ptr->fsm_msg_cnt = 0;
 			link_activate(l_ptr);
-			gipc_link_send_proto_msg(l_ptr, STATE_MSG, 1, 0, 0, 0, 0);
+			tipc_link_send_proto_msg(l_ptr, STATE_MSG, 1, 0, 0, 0, 0);
 			l_ptr->fsm_msg_cnt++;
 			link_set_timer(l_ptr, cont_intv);
 			break;
@@ -938,7 +938,7 @@ static void link_state_event(struct link *l_ptr, unsigned event)
 			dbg_link(" -> RR\n");
 			l_ptr->state = RESET_RESET;
 			l_ptr->fsm_msg_cnt = 0;
-			gipc_link_send_proto_msg(l_ptr, ACTIVATE_MSG, 1, 0, 0, 0, 0);
+			tipc_link_send_proto_msg(l_ptr, ACTIVATE_MSG, 1, 0, 0, 0, 0);
 			l_ptr->fsm_msg_cnt++;
 			link_set_timer(l_ptr, cont_intv);
 			break;
@@ -948,7 +948,7 @@ static void link_state_event(struct link *l_ptr, unsigned event)
 			/* fall through */
 		case TIMEOUT_EVT:
 			dbg_link("TIM \n");
-			gipc_link_send_proto_msg(l_ptr, RESET_MSG, 0, 0, 0, 0, 0);
+			tipc_link_send_proto_msg(l_ptr, RESET_MSG, 0, 0, 0, 0, 0);
 			l_ptr->fsm_msg_cnt++;
 			link_set_timer(l_ptr, cont_intv);
 			break;
@@ -972,7 +972,7 @@ static void link_state_event(struct link *l_ptr, unsigned event)
 			l_ptr->state = WORKING_WORKING;
 			l_ptr->fsm_msg_cnt = 0;
 			link_activate(l_ptr);
-			gipc_link_send_proto_msg(l_ptr, STATE_MSG, 1, 0, 0, 0, 0);
+			tipc_link_send_proto_msg(l_ptr, STATE_MSG, 1, 0, 0, 0, 0);
 			l_ptr->fsm_msg_cnt++;
 			link_set_timer(l_ptr, cont_intv);
 			break;
@@ -981,7 +981,7 @@ static void link_state_event(struct link *l_ptr, unsigned event)
 			break;
 		case TIMEOUT_EVT:
 			dbg_link("TIM\n");
-			gipc_link_send_proto_msg(l_ptr, ACTIVATE_MSG, 0, 0, 0, 0, 0);
+			tipc_link_send_proto_msg(l_ptr, ACTIVATE_MSG, 0, 0, 0, 0, 0);
 			l_ptr->fsm_msg_cnt++;
 			link_set_timer(l_ptr, cont_intv);
 			dbg_link("fsm_msg_cnt %u\n", l_ptr->fsm_msg_cnt);
@@ -1004,8 +1004,8 @@ static int link_bundle_buf(struct link *l_ptr,
 			   struct sk_buff *bundler,
 			   struct sk_buff *buf)
 {
-	struct gipc_msg *bundler_msg = buf_msg(bundler);
-	struct gipc_msg *msg = buf_msg(buf);
+	struct tipc_msg *bundler_msg = buf_msg(bundler);
+	struct tipc_msg *msg = buf_msg(buf);
 	u32 size = msg_size(msg);
 	u32 bundle_size = msg_size(bundler_msg);
 	u32 to_pos = align(bundle_size);
@@ -1034,7 +1034,7 @@ static int link_bundle_buf(struct link *l_ptr,
 
 static void link_add_to_outqueue(struct link *l_ptr,
 				 struct sk_buff *buf,
-				 struct gipc_msg *msg)
+				 struct tipc_msg *msg)
 {
 	u32 ack = mod(l_ptr->next_in_no - 1);
 	u32 seqno = mod(l_ptr->next_out_no++);
@@ -1051,14 +1051,14 @@ static void link_add_to_outqueue(struct link *l_ptr,
 }
 
 /*
- * gipc_link_send_buf() is the 'full path' for messages, called from
- * inside GIPC when the 'fast path' in gipc_send_buf
+ * tipc_link_send_buf() is the 'full path' for messages, called from
+ * inside TIPC when the 'fast path' in tipc_send_buf
  * has failed, and from link_send()
  */
 
-int gipc_link_send_buf(struct link *l_ptr, struct sk_buff *buf)
+int tipc_link_send_buf(struct link *l_ptr, struct sk_buff *buf)
 {
-	struct gipc_msg *msg = buf_msg(buf);
+	struct tipc_msg *msg = buf_msg(buf);
 	u32 size = msg_size(msg);
 	u32 dsz = msg_data_sz(msg);
 	u32 queue_size = l_ptr->out_queue_size;
@@ -1066,20 +1066,20 @@ int gipc_link_send_buf(struct link *l_ptr, struct sk_buff *buf)
 	u32 queue_limit = l_ptr->queue_limit[imp];
 	u32 max_packet = link_max_pkt(l_ptr);
 
-	msg_set_prevnode(msg, gipc_own_addr);	/* If routed message */
+	msg_set_prevnode(msg, tipc_own_addr);	/* If routed message */
 
 	/* Match msg importance against queue limits: */
 
 	if (unlikely(queue_size >= queue_limit)) {
-		if (imp <= GIPC_CRITICAL_IMPORTANCE) {
+		if (imp <= TIPC_CRITICAL_IMPORTANCE) {
 			return link_schedule_port(l_ptr, msg_origport(msg),
 						  size);
 		}
-		msg_dbg(msg, "GIPC: Congestion, throwing away\n");
+		msg_dbg(msg, "TIPC: Congestion, throwing away\n");
 		buf_discard(buf);
 		if (imp > CONN_MANAGER) {
 			warn("Resetting link <%s>, send queue full", l_ptr->name);
-			gipc_link_reset(l_ptr);
+			tipc_link_reset(l_ptr);
 		}
 		return dsz;
 	}
@@ -1087,21 +1087,21 @@ int gipc_link_send_buf(struct link *l_ptr, struct sk_buff *buf)
 	/* Fragmentation needed ? */
 
 	if (size > max_packet)
-		return gipc_link_send_long_buf(l_ptr, buf);
+		return tipc_link_send_long_buf(l_ptr, buf);
 
 	/* Packet can be queued or sent: */
 
 	if (queue_size > l_ptr->stats.max_queue_sz)
 		l_ptr->stats.max_queue_sz = queue_size;
 
-	if (likely(!gipc_bearer_congested(l_ptr->b_ptr, l_ptr) &&
+	if (likely(!tipc_bearer_congested(l_ptr->b_ptr, l_ptr) &&
 		   !link_congested(l_ptr))) {
 		link_add_to_outqueue(l_ptr, buf, msg);
 
-		if (likely(gipc_bearer_send(l_ptr->b_ptr, buf, &l_ptr->media_addr))) {
+		if (likely(tipc_bearer_send(l_ptr->b_ptr, buf, &l_ptr->media_addr))) {
 			l_ptr->unacked_window = 0;
 		} else {
-			gipc_bearer_schedule(l_ptr->b_ptr, l_ptr);
+			tipc_bearer_schedule(l_ptr->b_ptr, l_ptr);
 			l_ptr->stats.bearer_congs++;
 			l_ptr->next_out = buf;
 		}
@@ -1116,7 +1116,7 @@ int gipc_link_send_buf(struct link *l_ptr, struct sk_buff *buf)
 
 		if (l_ptr->next_out &&
 		    link_bundle_buf(l_ptr, l_ptr->last_out, buf)) {
-			gipc_bearer_resolve_congestion(l_ptr->b_ptr, l_ptr);
+			tipc_bearer_resolve_congestion(l_ptr->b_ptr, l_ptr);
 			return dsz;
 		}
 
@@ -1124,7 +1124,7 @@ int gipc_link_send_buf(struct link *l_ptr, struct sk_buff *buf)
 
 		if (size <= max_packet * 2 / 3) {
 			struct sk_buff *bundler = buf_acquire(max_packet);
-			struct gipc_msg bundler_hdr;
+			struct tipc_msg bundler_hdr;
 
 			if (bundler) {
 				msg_init(&bundler_hdr, MSG_BUNDLER, OPEN_MSG,
@@ -1142,42 +1142,42 @@ int gipc_link_send_buf(struct link *l_ptr, struct sk_buff *buf)
 	if (!l_ptr->next_out)
 		l_ptr->next_out = buf;
 	link_add_to_outqueue(l_ptr, buf, msg);
-	gipc_bearer_resolve_congestion(l_ptr->b_ptr, l_ptr);
+	tipc_bearer_resolve_congestion(l_ptr->b_ptr, l_ptr);
 	return dsz;
 }
 
 /*
- * gipc_link_send(): same as gipc_link_send_buf(), but the link to use has
+ * tipc_link_send(): same as tipc_link_send_buf(), but the link to use has
  * not been selected yet, and the the owner node is not locked
- * Called by GIPC internal users, e.g. the name distributor
+ * Called by TIPC internal users, e.g. the name distributor
  */
 
-int gipc_link_send(struct sk_buff *buf, u32 dest, u32 selector)
+int tipc_link_send(struct sk_buff *buf, u32 dest, u32 selector)
 {
 	struct link *l_ptr;
-	struct gipc_node *n_ptr;
+	struct tipc_node *n_ptr;
 	int res = -ELINKCONG;
 
-	read_lock_bh(&gipc_net_lock);
-	n_ptr = gipc_node_select(dest, selector);
+	read_lock_bh(&tipc_net_lock);
+	n_ptr = tipc_node_select(dest, selector);
 	if (n_ptr) {
-		gipc_node_lock(n_ptr);
+		tipc_node_lock(n_ptr);
 		l_ptr = n_ptr->active_links[selector & 1];
 		if (l_ptr) {
-			dbg("gipc_link_send: found link %x for dest %x\n", l_ptr, dest);
-			res = gipc_link_send_buf(l_ptr, buf);
+			dbg("tipc_link_send: found link %x for dest %x\n", l_ptr, dest);
+			res = tipc_link_send_buf(l_ptr, buf);
 		} else {
 			dbg("Attempt to send msg to unreachable node:\n");
 			msg_dbg(buf_msg(buf),">>>");
 			buf_discard(buf);
 		}
-		gipc_node_unlock(n_ptr);
+		tipc_node_unlock(n_ptr);
 	} else {
 		dbg("Attempt to send msg to unknown node:\n");
 		msg_dbg(buf_msg(buf),">>>");
 		buf_discard(buf);
 	}
-	read_unlock_bh(&gipc_net_lock);
+	read_unlock_bh(&tipc_net_lock);
 	return res;
 }
 
@@ -1191,21 +1191,21 @@ int gipc_link_send(struct sk_buff *buf, u32 dest, u32 selector)
 static int link_send_buf_fast(struct link *l_ptr, struct sk_buff *buf,
 			      u32 *used_max_pkt)
 {
-	struct gipc_msg *msg = buf_msg(buf);
+	struct tipc_msg *msg = buf_msg(buf);
 	int res = msg_data_sz(msg);
 
 	if (likely(!link_congested(l_ptr))) {
 		if (likely(msg_size(msg) <= link_max_pkt(l_ptr))) {
 			if (likely(list_empty(&l_ptr->b_ptr->cong_links))) {
 				link_add_to_outqueue(l_ptr, buf, msg);
-				if (likely(gipc_bearer_send(l_ptr->b_ptr, buf,
+				if (likely(tipc_bearer_send(l_ptr->b_ptr, buf,
 							    &l_ptr->media_addr))) {
 					l_ptr->unacked_window = 0;
 					msg_dbg(msg,"SENT_FAST:");
 					return res;
 				}
 				dbg("failed sent fast...\n");
-				gipc_bearer_schedule(l_ptr->b_ptr, l_ptr);
+				tipc_bearer_schedule(l_ptr->b_ptr, l_ptr);
 				l_ptr->stats.bearer_congs++;
 				l_ptr->next_out = buf;
 				return res;
@@ -1214,63 +1214,63 @@ static int link_send_buf_fast(struct link *l_ptr, struct sk_buff *buf,
 		else
 			*used_max_pkt = link_max_pkt(l_ptr);
 	}
-	return gipc_link_send_buf(l_ptr, buf);  /* All other cases */
+	return tipc_link_send_buf(l_ptr, buf);  /* All other cases */
 }
 
 /*
- * gipc_send_buf_fast: Entry for data messages where the
+ * tipc_send_buf_fast: Entry for data messages where the
  * destination node is known and the header is complete,
  * inclusive total message length.
  * Returns user data length.
  */
-int gipc_send_buf_fast(struct sk_buff *buf, u32 destnode)
+int tipc_send_buf_fast(struct sk_buff *buf, u32 destnode)
 {
 	struct link *l_ptr;
-	struct gipc_node *n_ptr;
+	struct tipc_node *n_ptr;
 	int res;
 	u32 selector = msg_origport(buf_msg(buf)) & 1;
 	u32 dummy;
 
-	if (destnode == gipc_own_addr)
-		return gipc_port_recv_msg(buf);
+	if (destnode == tipc_own_addr)
+		return tipc_port_recv_msg(buf);
 
-	read_lock_bh(&gipc_net_lock);
-	n_ptr = gipc_node_select(destnode, selector);
+	read_lock_bh(&tipc_net_lock);
+	n_ptr = tipc_node_select(destnode, selector);
 	if (likely(n_ptr)) {
-		gipc_node_lock(n_ptr);
+		tipc_node_lock(n_ptr);
 		l_ptr = n_ptr->active_links[selector];
 		dbg("send_fast: buf %x selected %x, destnode = %x\n",
 		    buf, l_ptr, destnode);
 		if (likely(l_ptr)) {
 			res = link_send_buf_fast(l_ptr, buf, &dummy);
-			gipc_node_unlock(n_ptr);
-			read_unlock_bh(&gipc_net_lock);
+			tipc_node_unlock(n_ptr);
+			read_unlock_bh(&tipc_net_lock);
 			return res;
 		}
-		gipc_node_unlock(n_ptr);
+		tipc_node_unlock(n_ptr);
 	}
-	read_unlock_bh(&gipc_net_lock);
+	read_unlock_bh(&tipc_net_lock);
 	res = msg_data_sz(buf_msg(buf));
-	gipc_reject_msg(buf, GIPC_ERR_NO_NODE);
+	tipc_reject_msg(buf, TIPC_ERR_NO_NODE);
 	return res;
 }
 
 
 /*
- * gipc_link_send_sections_fast: Entry for messages where the
+ * tipc_link_send_sections_fast: Entry for messages where the
  * destination processor is known and the header is complete,
  * except for total message length.
  * Returns user data length or errno.
  */
-int gipc_link_send_sections_fast(struct port *sender,
+int tipc_link_send_sections_fast(struct port *sender,
 				 struct iovec const *msg_sect,
 				 const u32 num_sect,
 				 u32 destaddr)
 {
-	struct gipc_msg *hdr = &sender->publ.phdr;
+	struct tipc_msg *hdr = &sender->publ.phdr;
 	struct link *l_ptr;
 	struct sk_buff *buf;
-	struct gipc_node *node;
+	struct tipc_node *node;
 	int res;
 	u32 selector = msg_origport(hdr) & 1;
 
@@ -1283,10 +1283,10 @@ again:
 	res = msg_build(hdr, msg_sect, num_sect, sender->publ.max_pkt,
 			!sender->user_port, &buf);
 
-	read_lock_bh(&gipc_net_lock);
-	node = gipc_node_select(destaddr, selector);
+	read_lock_bh(&tipc_net_lock);
+	node = tipc_node_select(destaddr, selector);
 	if (likely(node)) {
-		gipc_node_lock(node);
+		tipc_node_lock(node);
 		l_ptr = node->active_links[selector];
 		if (likely(l_ptr)) {
 			if (likely(buf)) {
@@ -1295,8 +1295,8 @@ again:
 				if (unlikely(res < 0))
 					buf_discard(buf);
 exit:
-				gipc_node_unlock(node);
-				read_unlock_bh(&gipc_net_lock);
+				tipc_node_unlock(node);
+				read_unlock_bh(&tipc_net_lock);
 				return res;
 			}
 
@@ -1320,8 +1320,8 @@ exit:
 			 */
 
 			sender->publ.max_pkt = link_max_pkt(l_ptr);
-			gipc_node_unlock(node);
-			read_unlock_bh(&gipc_net_lock);
+			tipc_node_unlock(node);
+			read_unlock_bh(&tipc_net_lock);
 
 
 			if ((msg_hdr_sz(hdr) + res) <= sender->publ.max_pkt)
@@ -1330,17 +1330,17 @@ exit:
 			return link_send_sections_long(sender, msg_sect,
 						       num_sect, destaddr);
 		}
-		gipc_node_unlock(node);
+		tipc_node_unlock(node);
 	}
-	read_unlock_bh(&gipc_net_lock);
+	read_unlock_bh(&tipc_net_lock);
 
 	/* Couldn't find a link to the destination node */
 
 	if (buf)
-		return gipc_reject_msg(buf, GIPC_ERR_NO_NODE);
+		return tipc_reject_msg(buf, TIPC_ERR_NO_NODE);
 	if (res >= 0)
-		return gipc_port_reject_sections(sender, hdr, msg_sect, num_sect,
-						 GIPC_ERR_NO_NODE);
+		return tipc_port_reject_sections(sender, hdr, msg_sect, num_sect,
+						 TIPC_ERR_NO_NODE);
 	return res;
 }
 
@@ -1364,11 +1364,11 @@ static int link_send_sections_long(struct port *sender,
 				   u32 destaddr)
 {
 	struct link *l_ptr;
-	struct gipc_node *node;
-	struct gipc_msg *hdr = &sender->publ.phdr;
+	struct tipc_node *node;
+	struct tipc_msg *hdr = &sender->publ.phdr;
 	u32 dsz = msg_data_sz(hdr);
 	u32 max_pkt,fragm_sz,rest;
-	struct gipc_msg fragm_hdr;
+	struct tipc_msg fragm_hdr;
 	struct sk_buff *buf,*buf_chain,*prev;
 	u32 fragm_crs,fragm_rest,hsz,sect_rest;
 	const unchar *sect_crs;
@@ -1474,17 +1474,17 @@ error:
 	 * Now we have a buffer chain. Select a link and check
 	 * that packet size is still OK
 	 */
-	node = gipc_node_select(destaddr, sender->publ.ref & 1);
+	node = tipc_node_select(destaddr, sender->publ.ref & 1);
 	if (likely(node)) {
-		gipc_node_lock(node);
+		tipc_node_lock(node);
 		l_ptr = node->active_links[sender->publ.ref & 1];
 		if (!l_ptr) {
-			gipc_node_unlock(node);
+			tipc_node_unlock(node);
 			goto reject;
 		}
 		if (link_max_pkt(l_ptr) < max_pkt) {
 			sender->publ.max_pkt = link_max_pkt(l_ptr);
-			gipc_node_unlock(node);
+			tipc_node_unlock(node);
 			for (; buf_chain; buf_chain = buf) {
 				buf = buf_chain->next;
 				buf_discard(buf_chain);
@@ -1497,8 +1497,8 @@ reject:
 			buf = buf_chain->next;
 			buf_discard(buf_chain);
 		}
-		return gipc_port_reject_sections(sender, hdr, msg_sect, num_sect,
-						 GIPC_ERR_NO_NODE);
+		return tipc_port_reject_sections(sender, hdr, msg_sect, num_sect,
+						 TIPC_ERR_NO_NODE);
 	}
 
 	/* Append whole chain to send queue: */
@@ -1510,7 +1510,7 @@ reject:
 	l_ptr->stats.sent_fragmented++;
 	while (buf) {
 		struct sk_buff *next = buf->next;
-		struct gipc_msg *msg = buf_msg(buf);
+		struct tipc_msg *msg = buf_msg(buf);
 
 		l_ptr->stats.sent_fragments++;
 		msg_set_long_msgno(msg, l_ptr->long_msg_seq_no);
@@ -1521,15 +1521,15 @@ reject:
 
 	/* Send it, if possible: */
 
-	gipc_link_push_queue(l_ptr);
-	gipc_node_unlock(node);
+	tipc_link_push_queue(l_ptr);
+	tipc_node_unlock(node);
 	return dsz;
 }
 
 /*
- * gipc_link_push_packet: Push one unsent packet to the media
+ * tipc_link_push_packet: Push one unsent packet to the media
  */
-u32 gipc_link_push_packet(struct link *l_ptr)
+u32 tipc_link_push_packet(struct link *l_ptr)
 {
 	struct sk_buff *buf = l_ptr->first_out;
 	u32 r_q_size = l_ptr->retransm_queue_size;
@@ -1556,7 +1556,7 @@ u32 gipc_link_push_packet(struct link *l_ptr)
 	if (r_q_size && buf && !skb_cloned(buf)) {
 		msg_set_ack(buf_msg(buf), mod(l_ptr->next_in_no - 1));
 		msg_set_bcast_ack(buf_msg(buf), l_ptr->owner->bclink.last_in);
-		if (gipc_bearer_send(l_ptr->b_ptr, buf, &l_ptr->media_addr)) {
+		if (tipc_bearer_send(l_ptr->b_ptr, buf, &l_ptr->media_addr)) {
 			msg_dbg(buf_msg(buf), ">DEF-RETR>");
 			l_ptr->retransm_queue_head = mod(++r_q_head);
 			l_ptr->retransm_queue_size = --r_q_size;
@@ -1575,7 +1575,7 @@ u32 gipc_link_push_packet(struct link *l_ptr)
 	if (buf) {
 		msg_set_ack(buf_msg(buf), mod(l_ptr->next_in_no - 1));
 		msg_set_bcast_ack(buf_msg(buf),l_ptr->owner->bclink.last_in);
-		if (gipc_bearer_send(l_ptr->b_ptr, buf, &l_ptr->media_addr)) {
+		if (tipc_bearer_send(l_ptr->b_ptr, buf, &l_ptr->media_addr)) {
 			msg_dbg(buf_msg(buf), ">DEF-PROT>");
 			l_ptr->unacked_window = 0;
 			buf_discard(buf);
@@ -1592,14 +1592,14 @@ u32 gipc_link_push_packet(struct link *l_ptr)
 
 	buf = l_ptr->next_out;
 	if (buf) {
-		struct gipc_msg *msg = buf_msg(buf);
+		struct tipc_msg *msg = buf_msg(buf);
 		u32 next = msg_seqno(msg);
 		u32 first = msg_seqno(buf_msg(l_ptr->first_out));
 
 		if (mod(next - first) < l_ptr->queue_limit[0]) {
 			msg_set_ack(msg, mod(l_ptr->next_in_no - 1));
 			msg_set_bcast_ack(msg, l_ptr->owner->bclink.last_in);
-			if (gipc_bearer_send(l_ptr->b_ptr, buf, &l_ptr->media_addr)) {
+			if (tipc_bearer_send(l_ptr->b_ptr, buf, &l_ptr->media_addr)) {
 				if (msg_user(msg) == MSG_BUNDLER)
 					msg_set_type(msg, CLOSED_MSG);
 				msg_dbg(msg, ">PUSH-DATA>");
@@ -1619,100 +1619,100 @@ u32 gipc_link_push_packet(struct link *l_ptr)
  * push_queue(): push out the unsent messages of a link where
  *               congestion has abated. Node is locked
  */
-void gipc_link_push_queue(struct link *l_ptr)
+void tipc_link_push_queue(struct link *l_ptr)
 {
 	u32 res;
 
-	if (gipc_bearer_congested(l_ptr->b_ptr, l_ptr))
+	if (tipc_bearer_congested(l_ptr->b_ptr, l_ptr))
 		return;
 
 	do {
-		res = gipc_link_push_packet(l_ptr);
+		res = tipc_link_push_packet(l_ptr);
 	} while (!res);
 
 	if (res == PUSH_FAILED)
-		gipc_bearer_schedule(l_ptr->b_ptr, l_ptr);
+		tipc_bearer_schedule(l_ptr->b_ptr, l_ptr);
 }
 
 static void link_reset_all(unsigned long addr)
 {
-	struct gipc_node *n_ptr;
+	struct tipc_node *n_ptr;
 	char addr_string[16];
 	u32 i;
 
-	read_lock_bh(&gipc_net_lock);
-	n_ptr = gipc_node_find((u32)addr);
+	read_lock_bh(&tipc_net_lock);
+	n_ptr = tipc_node_find((u32)addr);
 	if (!n_ptr) {
-		read_unlock_bh(&gipc_net_lock);
+		read_unlock_bh(&tipc_net_lock);
 		return;	/* node no longer exists */
 	}
 
-	gipc_node_lock(n_ptr);
+	tipc_node_lock(n_ptr);
 
 	warn("Resetting all links to %s\n",
 	     addr_string_fill(addr_string, n_ptr->addr));
 
 	for (i = 0; i < MAX_BEARERS; i++) {
 		if (n_ptr->links[i]) {
-			link_print(n_ptr->links[i], GIPC_OUTPUT,
+			link_print(n_ptr->links[i], TIPC_OUTPUT,
 				   "Resetting link\n");
-			gipc_link_reset(n_ptr->links[i]);
+			tipc_link_reset(n_ptr->links[i]);
 		}
 	}
 
-	gipc_node_unlock(n_ptr);
-	read_unlock_bh(&gipc_net_lock);
+	tipc_node_unlock(n_ptr);
+	read_unlock_bh(&tipc_net_lock);
 }
 
 static void link_retransmit_failure(struct link *l_ptr, struct sk_buff *buf)
 {
-	struct gipc_msg *msg = buf_msg(buf);
+	struct tipc_msg *msg = buf_msg(buf);
 
 	warn("Retransmission failure on link <%s>\n", l_ptr->name);
-	gipc_msg_dbg(GIPC_OUTPUT, msg, ">RETR-FAIL>");
+	tipc_msg_dbg(TIPC_OUTPUT, msg, ">RETR-FAIL>");
 
 	if (l_ptr->addr) {
 
 		/* Handle failure on standard link */
 
-		link_print(l_ptr, GIPC_OUTPUT, "Resetting link\n");
-		gipc_link_reset(l_ptr);
+		link_print(l_ptr, TIPC_OUTPUT, "Resetting link\n");
+		tipc_link_reset(l_ptr);
 
 	} else {
 
 		/* Handle failure on broadcast link */
 
-		struct gipc_node *n_ptr;
+		struct tipc_node *n_ptr;
 		char addr_string[16];
 
-		gipc_printf(GIPC_OUTPUT, "Msg seq number: %u,  ", msg_seqno(msg));
-		gipc_printf(GIPC_OUTPUT, "Outstanding acks: %lu\n",
-				     (unsigned long) GIPC_SKB_CB(buf)->handle);
+		tipc_printf(TIPC_OUTPUT, "Msg seq number: %u,  ", msg_seqno(msg));
+		tipc_printf(TIPC_OUTPUT, "Outstanding acks: %lu\n",
+				     (unsigned long) TIPC_SKB_CB(buf)->handle);
 
 		n_ptr = l_ptr->owner->next;
-		gipc_node_lock(n_ptr);
+		tipc_node_lock(n_ptr);
 
 		addr_string_fill(addr_string, n_ptr->addr);
-		gipc_printf(GIPC_OUTPUT, "Multicast link info for %s\n", addr_string);
-		gipc_printf(GIPC_OUTPUT, "Supported: %d,  ", n_ptr->bclink.supported);
-		gipc_printf(GIPC_OUTPUT, "Acked: %u\n", n_ptr->bclink.acked);
-		gipc_printf(GIPC_OUTPUT, "Last in: %u,  ", n_ptr->bclink.last_in);
-		gipc_printf(GIPC_OUTPUT, "Gap after: %u,  ", n_ptr->bclink.gap_after);
-		gipc_printf(GIPC_OUTPUT, "Gap to: %u\n", n_ptr->bclink.gap_to);
-		gipc_printf(GIPC_OUTPUT, "Nack sync: %u\n\n", n_ptr->bclink.nack_sync);
+		tipc_printf(TIPC_OUTPUT, "Multicast link info for %s\n", addr_string);
+		tipc_printf(TIPC_OUTPUT, "Supported: %d,  ", n_ptr->bclink.supported);
+		tipc_printf(TIPC_OUTPUT, "Acked: %u\n", n_ptr->bclink.acked);
+		tipc_printf(TIPC_OUTPUT, "Last in: %u,  ", n_ptr->bclink.last_in);
+		tipc_printf(TIPC_OUTPUT, "Gap after: %u,  ", n_ptr->bclink.gap_after);
+		tipc_printf(TIPC_OUTPUT, "Gap to: %u\n", n_ptr->bclink.gap_to);
+		tipc_printf(TIPC_OUTPUT, "Nack sync: %u\n\n", n_ptr->bclink.nack_sync);
 
-		gipc_k_signal((Handler)link_reset_all, (unsigned long)n_ptr->addr);
+		tipc_k_signal((Handler)link_reset_all, (unsigned long)n_ptr->addr);
 
-		gipc_node_unlock(n_ptr);
+		tipc_node_unlock(n_ptr);
 
 		l_ptr->stale_count = 0;
 	}
 }
 
-void gipc_link_retransmit(struct link *l_ptr, struct sk_buff *buf,
+void tipc_link_retransmit(struct link *l_ptr, struct sk_buff *buf,
 			  u32 retransmits)
 {
-	struct gipc_msg *msg;
+	struct tipc_msg *msg;
 
 	if (!buf)
 		return;
@@ -1721,7 +1721,7 @@ void gipc_link_retransmit(struct link *l_ptr, struct sk_buff *buf,
 
 	dbg("Retransmitting %u in link %x\n", retransmits, l_ptr);
 
-	if (gipc_bearer_congested(l_ptr->b_ptr, l_ptr)) {
+	if (tipc_bearer_congested(l_ptr->b_ptr, l_ptr)) {
 		if (!skb_cloned(buf)) {
 			msg_dbg(msg, ">NO_RETR->BCONG>");
 			dbg_print_link(l_ptr, "   ");
@@ -1749,13 +1749,13 @@ void gipc_link_retransmit(struct link *l_ptr, struct sk_buff *buf,
 		msg = buf_msg(buf);
 		msg_set_ack(msg, mod(l_ptr->next_in_no - 1));
 		msg_set_bcast_ack(msg, l_ptr->owner->bclink.last_in);
-		if (gipc_bearer_send(l_ptr->b_ptr, buf, &l_ptr->media_addr)) {
+		if (tipc_bearer_send(l_ptr->b_ptr, buf, &l_ptr->media_addr)) {
 			msg_dbg(buf_msg(buf), ">RETR>");
 			buf = buf->next;
 			retransmits--;
 			l_ptr->stats.retransmitted++;
 		} else {
-			gipc_bearer_schedule(l_ptr->b_ptr, l_ptr);
+			tipc_bearer_schedule(l_ptr->b_ptr, l_ptr);
 			l_ptr->stats.bearer_congs++;
 			l_ptr->retransm_queue_head = msg_seqno(buf_msg(buf));
 			l_ptr->retransm_queue_size = retransmits;
@@ -1791,13 +1791,13 @@ static struct sk_buff *link_insert_deferred_queue(struct link *l_ptr,
 /**
  * link_recv_buf_validate - validate basic format of received message
  *
- * This routine ensures a GIPC message has an acceptable header, and at least
+ * This routine ensures a TIPC message has an acceptable header, and at least
  * as much data as the header indicates it should.  The routine also ensures
  * that the entire message header is stored in the main fragment of the message
  * buffer, to simplify future access to message header fields.
  *
  * Note: Having extra info present in the message header or data areas is OK.
- * GIPC will ignore the excess, under the assumption that it is optional info
+ * TIPC will ignore the excess, under the assumption that it is optional info
  * introduced by a later release of the protocol.
  */
 
@@ -1808,8 +1808,8 @@ static int link_recv_buf_validate(struct sk_buff *buf)
 		MAX_H_SIZE, MAX_H_SIZE, MAX_H_SIZE, MAX_H_SIZE
 		};
 
-	struct gipc_msg *msg;
-	u32 gipc_hdr[2];
+	struct tipc_msg *msg;
+	u32 tipc_hdr[2];
 	u32 size;
 	u32 hdr_size;
 	u32 min_hdr_size;
@@ -1817,11 +1817,11 @@ static int link_recv_buf_validate(struct sk_buff *buf)
 	if (unlikely(buf->len < MIN_H_SIZE))
 		return 0;
 
-	msg = skb_header_pointer(buf, 0, sizeof(gipc_hdr), gipc_hdr);
+	msg = skb_header_pointer(buf, 0, sizeof(tipc_hdr), tipc_hdr);
 	if (msg == NULL)
 		return 0;
 
-	if (unlikely(msg_version(msg) != GIPC_VERSION))
+	if (unlikely(msg_version(msg) != TIPC_VERSION))
 		return 0;
 
 	size = msg_size(msg);
@@ -1832,22 +1832,22 @@ static int link_recv_buf_validate(struct sk_buff *buf)
 	if (unlikely((hdr_size < min_hdr_size) ||
 		     (size < hdr_size) ||
 		     (buf->len < size) ||
-		     (size - hdr_size > GIPC_MAX_USER_MSG_SIZE)))
+		     (size - hdr_size > TIPC_MAX_USER_MSG_SIZE)))
 		return 0;
 
 	return pskb_may_pull(buf, hdr_size);
 }
 
-void gipc_recv_msg(struct sk_buff *head, struct gipc_bearer *tb_ptr)
+void tipc_recv_msg(struct sk_buff *head, struct tipc_bearer *tb_ptr)
 {
-	read_lock_bh(&gipc_net_lock);
+	read_lock_bh(&tipc_net_lock);
 	while (head) {
 		struct bearer *b_ptr = (struct bearer *)tb_ptr;
-		struct gipc_node *n_ptr;
+		struct tipc_node *n_ptr;
 		struct link *l_ptr;
 		struct sk_buff *crs;
 		struct sk_buff *buf = head;
-		struct gipc_msg *msg;
+		struct tipc_msg *msg;
 		u32 seq_no;
 		u32 ackd;
 		u32 released = 0;
@@ -1872,26 +1872,26 @@ void gipc_recv_msg(struct sk_buff *head, struct gipc_bearer *tb_ptr)
 
 		if (unlikely(msg_non_seq(msg))) {
 			if (msg_user(msg) ==  LINK_CONFIG)
-				gipc_disc_recv_msg(buf, b_ptr);
+				tipc_disc_recv_msg(buf, b_ptr);
 			else
-				gipc_bclink_recv_pkt(buf);
+				tipc_bclink_recv_pkt(buf);
 			continue;
 		}
 
 		if (unlikely(!msg_short(msg) &&
-			     (msg_destnode(msg) != gipc_own_addr)))
+			     (msg_destnode(msg) != tipc_own_addr)))
 			goto cont;
 
 		/* Locate unicast link endpoint that should handle message */
 
-		n_ptr = gipc_node_find(msg_prevnode(msg));
+		n_ptr = tipc_node_find(msg_prevnode(msg));
 		if (unlikely(!n_ptr))
 			goto cont;
-		gipc_node_lock(n_ptr);
+		tipc_node_lock(n_ptr);
 
 		l_ptr = n_ptr->links[b_ptr->identity];
 		if (unlikely(!l_ptr)) {
-			gipc_node_unlock(n_ptr);
+			tipc_node_unlock(n_ptr);
 			goto cont;
 		}
 
@@ -1903,8 +1903,8 @@ void gipc_recv_msg(struct sk_buff *head, struct gipc_bearer *tb_ptr)
 		/* Release acked messages */
 
 		if (less(n_ptr->bclink.acked, msg_bcast_ack(msg))) {
-			if (gipc_node_is_up(n_ptr) && n_ptr->bclink.supported)
-				gipc_bclink_acknowledge(n_ptr, msg_bcast_ack(msg));
+			if (tipc_node_is_up(n_ptr) && n_ptr->bclink.supported)
+				tipc_bclink_acknowledge(n_ptr, msg_bcast_ack(msg));
 		}
 
 		crs = l_ptr->first_out;
@@ -1924,12 +1924,12 @@ void gipc_recv_msg(struct sk_buff *head, struct gipc_bearer *tb_ptr)
 		/* Try sending any messages link endpoint has pending */
 
 		if (unlikely(l_ptr->next_out))
-			gipc_link_push_queue(l_ptr);
+			tipc_link_push_queue(l_ptr);
 		if (unlikely(!list_empty(&l_ptr->waiting_ports)))
-			gipc_link_wakeup_ports(l_ptr, 0);
-		if (unlikely(++l_ptr->unacked_window >= GIPC_MIN_LINK_WIN)) {
+			tipc_link_wakeup_ports(l_ptr, 0);
+		if (unlikely(++l_ptr->unacked_window >= TIPC_MIN_LINK_WIN)) {
 			l_ptr->stats.sent_acks++;
-			gipc_link_send_proto_msg(l_ptr, STATE_MSG, 0, 0, 0, 0, 0);
+			tipc_link_send_proto_msg(l_ptr, STATE_MSG, 0, 0, 0, 0, 0);
 		}
 
 		/* Now (finally!) process the incoming message */
@@ -1941,11 +1941,11 @@ protocol_check:
 				if (unlikely(l_ptr->oldest_deferred_in))
 					head = link_insert_deferred_queue(l_ptr,
 									  head);
-				if (likely(msg_is_dest(msg, gipc_own_addr))) {
+				if (likely(msg_is_dest(msg, tipc_own_addr))) {
 deliver:
 					if (likely(msg_isdata(msg))) {
-						gipc_node_unlock(n_ptr);
-						gipc_port_recv_msg(buf);
+						tipc_node_unlock(n_ptr);
+						tipc_port_recv_msg(buf);
 						continue;
 					}
 					switch (msg_user(msg)) {
@@ -1953,24 +1953,24 @@ deliver:
 						l_ptr->stats.recv_bundles++;
 						l_ptr->stats.recv_bundled +=
 							msg_msgcnt(msg);
-						gipc_node_unlock(n_ptr);
-						gipc_link_recv_bundle(buf);
+						tipc_node_unlock(n_ptr);
+						tipc_link_recv_bundle(buf);
 						continue;
 					case ROUTE_DISTRIBUTOR:
-						gipc_node_unlock(n_ptr);
-						gipc_cltr_recv_routing_table(buf);
+						tipc_node_unlock(n_ptr);
+						tipc_cltr_recv_routing_table(buf);
 						continue;
 					case NAME_DISTRIBUTOR:
-						gipc_node_unlock(n_ptr);
-						gipc_named_recv(buf);
+						tipc_node_unlock(n_ptr);
+						tipc_named_recv(buf);
 						continue;
 					case CONN_MANAGER:
-						gipc_node_unlock(n_ptr);
-						gipc_port_recv_proto_msg(buf);
+						tipc_node_unlock(n_ptr);
+						tipc_port_recv_proto_msg(buf);
 						continue;
 					case MSG_FRAGMENTER:
 						l_ptr->stats.recv_fragments++;
-						if (gipc_link_recv_fragment(&l_ptr->defragm_buf,
+						if (tipc_link_recv_fragment(&l_ptr->defragm_buf,
 									    &buf, &msg)) {
 							l_ptr->stats.recv_fragmented++;
 							goto deliver;
@@ -1988,20 +1988,20 @@ deliver:
 						break;
 					}
 				}
-				gipc_node_unlock(n_ptr);
-				gipc_net_route_msg(buf);
+				tipc_node_unlock(n_ptr);
+				tipc_net_route_msg(buf);
 				continue;
 			}
 			link_handle_out_of_seq_msg(l_ptr, buf);
 			head = link_insert_deferred_queue(l_ptr, head);
-			gipc_node_unlock(n_ptr);
+			tipc_node_unlock(n_ptr);
 			continue;
 		}
 
 		if (msg_user(msg) == LINK_PROTOCOL) {
 			link_recv_proto_msg(l_ptr, buf);
 			head = link_insert_deferred_queue(l_ptr, head);
-			gipc_node_unlock(n_ptr);
+			tipc_node_unlock(n_ptr);
 			continue;
 		}
 		msg_dbg(msg,"NSEQ<REC<");
@@ -2012,14 +2012,14 @@ deliver:
 			msg_dbg(msg,"RECV-REINS:");
 			buf->next = head;
 			head = buf;
-			gipc_node_unlock(n_ptr);
+			tipc_node_unlock(n_ptr);
 			continue;
 		}
-		gipc_node_unlock(n_ptr);
+		tipc_node_unlock(n_ptr);
 cont:
 		buf_discard(buf);
 	}
-	read_unlock_bh(&gipc_net_lock);
+	read_unlock_bh(&tipc_net_lock);
 }
 
 /*
@@ -2028,7 +2028,7 @@ cont:
  * Returns the increase of the queue length,i.e. 0 or 1
  */
 
-u32 gipc_link_defer_pkt(struct sk_buff **head,
+u32 tipc_link_defer_pkt(struct sk_buff **head,
 			struct sk_buff **tail,
 			struct sk_buff *buf)
 {
@@ -2053,7 +2053,7 @@ u32 gipc_link_defer_pkt(struct sk_buff **head,
 
 	/* Scan through queue and sort it in */
 	do {
-		struct gipc_msg *msg = buf_msg(crs);
+		struct tipc_msg *msg = buf_msg(crs);
 
 		if (less(seq_no, msg_seqno(msg))) {
 			buf->next = crs;
@@ -2109,12 +2109,12 @@ static void link_handle_out_of_seq_msg(struct link *l_ptr,
 		return;
 	}
 
-	if (gipc_link_defer_pkt(&l_ptr->oldest_deferred_in,
+	if (tipc_link_defer_pkt(&l_ptr->oldest_deferred_in,
 				&l_ptr->newest_deferred_in, buf)) {
 		l_ptr->deferred_inqueue_sz++;
 		l_ptr->stats.deferred_recv++;
 		if ((l_ptr->deferred_inqueue_sz % 16) == 1)
-			gipc_link_send_proto_msg(l_ptr, STATE_MSG, 0, 0, 0, 0, 0);
+			tipc_link_send_proto_msg(l_ptr, STATE_MSG, 0, 0, 0, 0, 0);
 	} else
 		l_ptr->stats.duplicates++;
 }
@@ -2122,11 +2122,11 @@ static void link_handle_out_of_seq_msg(struct link *l_ptr,
 /*
  * Send protocol message to the other endpoint.
  */
-void gipc_link_send_proto_msg(struct link *l_ptr, u32 msg_typ, int probe_msg,
+void tipc_link_send_proto_msg(struct link *l_ptr, u32 msg_typ, int probe_msg,
 			      u32 gap, u32 tolerance, u32 priority, u32 ack_mtu)
 {
 	struct sk_buff *buf = NULL;
-	struct gipc_msg *msg = l_ptr->pmsg;
+	struct tipc_msg *msg = l_ptr->pmsg;
 	u32 msg_size = sizeof(l_ptr->proto_msg);
 
 	if (link_blocked(l_ptr))
@@ -2134,12 +2134,12 @@ void gipc_link_send_proto_msg(struct link *l_ptr, u32 msg_typ, int probe_msg,
 	msg_set_type(msg, msg_typ);
 	msg_set_net_plane(msg, l_ptr->b_ptr->net_plane);
 	msg_set_bcast_ack(msg, mod(l_ptr->owner->bclink.last_in));
-	msg_set_last_bcast(msg, gipc_bclink_get_last_sent());
+	msg_set_last_bcast(msg, tipc_bclink_get_last_sent());
 
 	if (msg_typ == STATE_MSG) {
 		u32 next_sent = mod(l_ptr->next_out_no);
 
-		if (!gipc_link_is_up(l_ptr))
+		if (!tipc_link_is_up(l_ptr))
 			return;
 		if (l_ptr->next_out)
 			next_sent = msg_seqno(buf_msg(l_ptr->next_out));
@@ -2183,7 +2183,7 @@ void gipc_link_send_proto_msg(struct link *l_ptr, u32 msg_typ, int probe_msg,
 		msg_set_max_pkt(msg, l_ptr->max_pkt_target);
 	}
 
-	if (gipc_node_has_redundant_links(l_ptr->owner)) {
+	if (tipc_node_has_redundant_links(l_ptr->owner)) {
 		msg_set_redundant_link(msg);
 	} else {
 		msg_clear_redundant_link(msg);
@@ -2196,7 +2196,7 @@ void gipc_link_send_proto_msg(struct link *l_ptr, u32 msg_typ, int probe_msg,
 
 	/* Congestion? */
 
-	if (gipc_bearer_congested(l_ptr->b_ptr, l_ptr)) {
+	if (tipc_bearer_congested(l_ptr->b_ptr, l_ptr)) {
 		if (!l_ptr->proto_msg_queue) {
 			l_ptr->proto_msg_queue =
 				buf_acquire(sizeof(l_ptr->proto_msg));
@@ -2220,14 +2220,14 @@ void gipc_link_send_proto_msg(struct link *l_ptr, u32 msg_typ, int probe_msg,
 	skb_copy_to_linear_data(buf, msg, sizeof(l_ptr->proto_msg));
 	msg_set_size(buf_msg(buf), msg_size);
 
-	if (gipc_bearer_send(l_ptr->b_ptr, buf, &l_ptr->media_addr)) {
+	if (tipc_bearer_send(l_ptr->b_ptr, buf, &l_ptr->media_addr)) {
 		l_ptr->unacked_window = 0;
 		buf_discard(buf);
 		return;
 	}
 
 	/* New congestion */
-	gipc_bearer_schedule(l_ptr->b_ptr, l_ptr);
+	tipc_bearer_schedule(l_ptr->b_ptr, l_ptr);
 	l_ptr->proto_msg_queue = buf;
 	l_ptr->stats.bearer_congs++;
 }
@@ -2244,7 +2244,7 @@ static void link_recv_proto_msg(struct link *l_ptr, struct sk_buff *buf)
 	u32 max_pkt_info;
 	u32 max_pkt_ack;
 	u32 msg_tol;
-	struct gipc_msg *msg = buf_msg(buf);
+	struct tipc_msg *msg = buf_msg(buf);
 
 	dbg("AT(%u):", jiffies_to_msecs(jiffies));
 	msg_dbg(msg, "<<");
@@ -2256,7 +2256,7 @@ static void link_recv_proto_msg(struct link *l_ptr, struct sk_buff *buf)
 	l_ptr->checkpoint--;
 
 	if (l_ptr->b_ptr->net_plane != msg_net_plane(msg))
-		if (gipc_own_addr > msg_prevnode(msg))
+		if (tipc_own_addr > msg_prevnode(msg))
 			l_ptr->b_ptr->net_plane = msg_net_plane(msg);
 
 	l_ptr->owner->permit_changeover = msg_redundant_link(msg);
@@ -2302,7 +2302,7 @@ static void link_recv_proto_msg(struct link *l_ptr, struct sk_buff *buf)
 		l_ptr->peer_bearer_id = msg_bearer_id(msg);
 
 		/* Synchronize broadcast sequence numbers */
-		if (!gipc_node_has_redundant_links(l_ptr->owner)) {
+		if (!tipc_node_has_redundant_links(l_ptr->owner)) {
 			l_ptr->owner->bclink.last_in = mod(msg_last_bcast(msg));
 		}
 		break;
@@ -2316,7 +2316,7 @@ static void link_recv_proto_msg(struct link *l_ptr, struct sk_buff *buf)
 			warn("Resetting link <%s>, priority change %u->%u\n",
 			     l_ptr->name, l_ptr->priority, msg_linkprio(msg));
 			l_ptr->priority = msg_linkprio(msg);
-			gipc_link_reset(l_ptr); /* Enforce change to take effect */
+			tipc_link_reset(l_ptr); /* Enforce change to take effect */
 			break;
 		}
 		link_state_event(l_ptr, TRAFFIC_MSG_EVT);
@@ -2347,16 +2347,16 @@ static void link_recv_proto_msg(struct link *l_ptr, struct sk_buff *buf)
 
 		/* Protocol message before retransmits, reduce loss risk */
 
-		gipc_bclink_check_gap(l_ptr->owner, msg_last_bcast(msg));
+		tipc_bclink_check_gap(l_ptr->owner, msg_last_bcast(msg));
 
 		if (rec_gap || (msg_probe(msg))) {
-			gipc_link_send_proto_msg(l_ptr, STATE_MSG,
+			tipc_link_send_proto_msg(l_ptr, STATE_MSG,
 						 0, rec_gap, 0, 0, max_pkt_ack);
 		}
 		if (msg_seq_gap(msg)) {
 			msg_dbg(msg, "With Gap:");
 			l_ptr->stats.recv_nacks++;
-			gipc_link_retransmit(l_ptr, l_ptr->first_out,
+			tipc_link_retransmit(l_ptr, l_ptr->first_out,
 					     msg_seq_gap(msg));
 		}
 		break;
@@ -2369,12 +2369,12 @@ exit:
 
 
 /*
- * gipc_link_tunnel(): Send one message via a link belonging to
+ * tipc_link_tunnel(): Send one message via a link belonging to
  * another bearer. Owner node is locked.
  */
-void gipc_link_tunnel(struct link *l_ptr,
-		      struct gipc_msg *tunnel_hdr,
-		      struct gipc_msg  *msg,
+void tipc_link_tunnel(struct link *l_ptr,
+		      struct tipc_msg *tunnel_hdr,
+		      struct tipc_msg  *msg,
 		      u32 selector)
 {
 	struct link *tunnel;
@@ -2382,7 +2382,7 @@ void gipc_link_tunnel(struct link *l_ptr,
 	u32 length = msg_size(msg);
 
 	tunnel = l_ptr->owner->active_links[selector & 1];
-	if (!gipc_link_is_up(tunnel)) {
+	if (!tipc_link_is_up(tunnel)) {
 		warn("Link changeover error, "
 		     "tunnel link no longer available\n");
 		return;
@@ -2398,7 +2398,7 @@ void gipc_link_tunnel(struct link *l_ptr,
 	skb_copy_to_linear_data_offset(buf, INT_H_SIZE, msg, length);
 	dbg("%c->%c:", l_ptr->b_ptr->net_plane, tunnel->b_ptr->net_plane);
 	msg_dbg(buf_msg(buf), ">SEND>");
-	gipc_link_send_buf(tunnel, buf);
+	tipc_link_send_buf(tunnel, buf);
 }
 
 
@@ -2408,12 +2408,12 @@ void gipc_link_tunnel(struct link *l_ptr,
  *               Owner node is locked.
  */
 
-void gipc_link_changeover(struct link *l_ptr)
+void tipc_link_changeover(struct link *l_ptr)
 {
 	u32 msgcount = l_ptr->out_queue_size;
 	struct sk_buff *crs = l_ptr->first_out;
 	struct link *tunnel = l_ptr->owner->active_links[0];
-	struct gipc_msg tunnel_hdr;
+	struct tipc_msg tunnel_hdr;
 	int split_bundles;
 
 	if (!tunnel)
@@ -2441,7 +2441,7 @@ void gipc_link_changeover(struct link *l_ptr)
 			dbg("%c->%c:", l_ptr->b_ptr->net_plane,
 			    tunnel->b_ptr->net_plane);
 			msg_dbg(&tunnel_hdr, "EMPTY>SEND>");
-			gipc_link_send_buf(tunnel, buf);
+			tipc_link_send_buf(tunnel, buf);
 		} else {
 			warn("Link changeover error, "
 			     "unable to send changeover msg\n");
@@ -2453,32 +2453,32 @@ void gipc_link_changeover(struct link *l_ptr)
 			 l_ptr->owner->active_links[1]);
 
 	while (crs) {
-		struct gipc_msg *msg = buf_msg(crs);
+		struct tipc_msg *msg = buf_msg(crs);
 
 		if ((msg_user(msg) == MSG_BUNDLER) && split_bundles) {
-			struct gipc_msg *m = msg_get_wrapped(msg);
+			struct tipc_msg *m = msg_get_wrapped(msg);
 			unchar* pos = (unchar*)m;
 
 			msgcount = msg_msgcnt(msg);
 			while (msgcount--) {
 				msg_set_seqno(m,msg_seqno(msg));
-				gipc_link_tunnel(l_ptr, &tunnel_hdr, m,
+				tipc_link_tunnel(l_ptr, &tunnel_hdr, m,
 						 msg_link_selector(m));
 				pos += align(msg_size(m));
-				m = (struct gipc_msg *)pos;
+				m = (struct tipc_msg *)pos;
 			}
 		} else {
-			gipc_link_tunnel(l_ptr, &tunnel_hdr, msg,
+			tipc_link_tunnel(l_ptr, &tunnel_hdr, msg,
 					 msg_link_selector(msg));
 		}
 		crs = crs->next;
 	}
 }
 
-void gipc_link_send_duplicate(struct link *l_ptr, struct link *tunnel)
+void tipc_link_send_duplicate(struct link *l_ptr, struct link *tunnel)
 {
 	struct sk_buff *iter;
-	struct gipc_msg tunnel_hdr;
+	struct tipc_msg tunnel_hdr;
 
 	msg_init(&tunnel_hdr, CHANGEOVER_PROTOCOL,
 		 DUPLICATE_MSG, INT_H_SIZE, l_ptr->addr);
@@ -2487,7 +2487,7 @@ void gipc_link_send_duplicate(struct link *l_ptr, struct link *tunnel)
 	iter = l_ptr->first_out;
 	while (iter) {
 		struct sk_buff *outbuf;
-		struct gipc_msg *msg = buf_msg(iter);
+		struct tipc_msg *msg = buf_msg(iter);
 		u32 length = msg_size(msg);
 
 		if (msg_user(msg) == MSG_BUNDLER)
@@ -2507,8 +2507,8 @@ void gipc_link_send_duplicate(struct link *l_ptr, struct link *tunnel)
 		dbg("%c->%c:", l_ptr->b_ptr->net_plane,
 		    tunnel->b_ptr->net_plane);
 		msg_dbg(buf_msg(outbuf), ">SEND>");
-		gipc_link_send_buf(tunnel, outbuf);
-		if (!gipc_link_is_up(l_ptr))
+		tipc_link_send_buf(tunnel, outbuf);
+		if (!tipc_link_is_up(l_ptr))
 			return;
 		iter = iter->next;
 	}
@@ -2517,7 +2517,7 @@ void gipc_link_send_duplicate(struct link *l_ptr, struct link *tunnel)
 
 
 /**
- * buf_extract - extracts embedded GIPC message from another message
+ * buf_extract - extracts embedded TIPC message from another message
  * @skb: encapsulating message buffer
  * @from_pos: offset to extract from
  *
@@ -2527,7 +2527,7 @@ void gipc_link_send_duplicate(struct link *l_ptr, struct link *tunnel)
 
 static struct sk_buff *buf_extract(struct sk_buff *skb, u32 from_pos)
 {
-	struct gipc_msg *msg = (struct gipc_msg *)(skb->data + from_pos);
+	struct tipc_msg *msg = (struct tipc_msg *)(skb->data + from_pos);
 	u32 size = msg_size(msg);
 	struct sk_buff *eb;
 
@@ -2547,8 +2547,8 @@ static int link_recv_changeover_msg(struct link **l_ptr,
 {
 	struct sk_buff *tunnel_buf = *buf;
 	struct link *dest_link;
-	struct gipc_msg *msg;
-	struct gipc_msg *tunnel_msg = buf_msg(tunnel_buf);
+	struct tipc_msg *msg;
+	struct tipc_msg *tunnel_msg = buf_msg(tunnel_buf);
 	u32 msg_typ = msg_type(tunnel_msg);
 	u32 msg_count = msg_msgcnt(tunnel_msg);
 
@@ -2584,11 +2584,11 @@ static int link_recv_changeover_msg(struct link **l_ptr,
 
 	/* First original message ?: */
 
-	if (gipc_link_is_up(dest_link)) {
+	if (tipc_link_is_up(dest_link)) {
 		msg_dbg(tunnel_msg, "UP/FIRST/<REC<");
 		info("Resetting link <%s>, changeover initiated by peer\n",
 		     dest_link->name);
-		gipc_link_reset(dest_link);
+		tipc_link_reset(dest_link);
 		dest_link->exp_msg_count = msg_count;
 		dbg("Expecting %u tunnelled messages\n", msg_count);
 		if (!msg_count)
@@ -2633,7 +2633,7 @@ exit:
 /*
  *  Bundler functionality:
  */
-void gipc_link_recv_bundle(struct sk_buff *buf)
+void tipc_link_recv_bundle(struct sk_buff *buf)
 {
 	u32 msgcount = msg_msgcnt(buf_msg(buf));
 	u32 pos = INT_H_SIZE;
@@ -2648,7 +2648,7 @@ void gipc_link_recv_bundle(struct sk_buff *buf)
 		}
 		pos += align(msg_size(buf_msg(obuf)));
 		msg_dbg(buf_msg(obuf), "     /");
-		gipc_net_route_msg(obuf);
+		tipc_net_route_msg(obuf);
 	}
 	buf_discard(buf);
 }
@@ -2659,14 +2659,14 @@ void gipc_link_recv_bundle(struct sk_buff *buf)
 
 
 /*
- * gipc_link_send_long_buf: Entry for buffers needing fragmentation.
+ * tipc_link_send_long_buf: Entry for buffers needing fragmentation.
  * The buffer is complete, inclusive total message length.
  * Returns user data length.
  */
-int gipc_link_send_long_buf(struct link *l_ptr, struct sk_buff *buf)
+int tipc_link_send_long_buf(struct link *l_ptr, struct sk_buff *buf)
 {
-	struct gipc_msg *inmsg = buf_msg(buf);
-	struct gipc_msg fragm_hdr;
+	struct tipc_msg *inmsg = buf_msg(buf);
+	struct tipc_msg fragm_hdr;
 	u32 insize = msg_size(inmsg);
 	u32 dsz = msg_data_sz(inmsg);
 	unchar *crs = buf->data;
@@ -2682,7 +2682,7 @@ int gipc_link_send_long_buf(struct link *l_ptr, struct sk_buff *buf)
 		destaddr = msg_destnode(inmsg);
 
 	if (msg_routed(inmsg))
-		msg_set_prevnode(inmsg, gipc_own_addr);
+		msg_set_prevnode(inmsg, tipc_own_addr);
 
 	/* Prepare reusable fragment header: */
 
@@ -2715,8 +2715,8 @@ int gipc_link_send_long_buf(struct link *l_ptr, struct sk_buff *buf)
 		/*  Send queued messages first, if any: */
 
 		l_ptr->stats.sent_fragments++;
-		gipc_link_send_buf(l_ptr, fragm);
-		if (!gipc_link_is_up(l_ptr))
+		tipc_link_send_buf(l_ptr, fragm);
+		if (!tipc_link_is_up(l_ptr))
 			return dsz;
 		msg_set_fragm_no(&fragm_hdr, ++fragm_no);
 		rest -= fragm_sz;
@@ -2771,15 +2771,15 @@ static void incr_timer_cnt(struct sk_buff *buf)
 }
 
 /*
- * gipc_link_recv_fragment(): Called with node lock on. Returns
+ * tipc_link_recv_fragment(): Called with node lock on. Returns
  * the reassembled buffer if message is complete.
  */
-int gipc_link_recv_fragment(struct sk_buff **pending, struct sk_buff **fb,
-			    struct gipc_msg **m)
+int tipc_link_recv_fragment(struct sk_buff **pending, struct sk_buff **fb,
+			    struct tipc_msg **m)
 {
 	struct sk_buff *prev = NULL;
 	struct sk_buff *fbuf = *fb;
-	struct gipc_msg *fragm = buf_msg(fbuf);
+	struct tipc_msg *fragm = buf_msg(fbuf);
 	struct sk_buff *pbuf = *pending;
 	u32 long_msg_seq_no = msg_long_msgno(fragm);
 
@@ -2795,13 +2795,13 @@ int gipc_link_recv_fragment(struct sk_buff **pending, struct sk_buff **fb,
 	}
 
 	if (!pbuf && (msg_type(fragm) == FIRST_FRAGMENT)) {
-		struct gipc_msg *imsg = (struct gipc_msg *)msg_data(fragm);
+		struct tipc_msg *imsg = (struct tipc_msg *)msg_data(fragm);
 		u32 msg_sz = msg_size(imsg);
 		u32 fragm_sz = msg_data_sz(fragm);
 		u32 exp_fragm_cnt = msg_sz/fragm_sz + !!(msg_sz % fragm_sz);
-		u32 max =  GIPC_MAX_USER_MSG_SIZE + LONG_H_SIZE;
-		if (msg_type(imsg) == GIPC_MCAST_MSG)
-			max = GIPC_MAX_USER_MSG_SIZE + MCAST_H_SIZE;
+		u32 max =  TIPC_MAX_USER_MSG_SIZE + LONG_H_SIZE;
+		if (msg_type(imsg) == TIPC_MCAST_MSG)
+			max = TIPC_MAX_USER_MSG_SIZE + MCAST_H_SIZE;
 		if (msg_size(imsg) > max) {
 			msg_dbg(fragm,"<REC<Oversized: ");
 			buf_discard(fbuf);
@@ -2904,18 +2904,18 @@ static void link_set_supervision_props(struct link *l_ptr, u32 tolerance)
 }
 
 
-void gipc_link_set_queue_limits(struct link *l_ptr, u32 window)
+void tipc_link_set_queue_limits(struct link *l_ptr, u32 window)
 {
 	/* Data messages from this node, inclusive FIRST_FRAGM */
-	l_ptr->queue_limit[GIPC_LOW_IMPORTANCE] = window;
-	l_ptr->queue_limit[GIPC_MEDIUM_IMPORTANCE] = (window / 3) * 4;
-	l_ptr->queue_limit[GIPC_HIGH_IMPORTANCE] = (window / 3) * 5;
-	l_ptr->queue_limit[GIPC_CRITICAL_IMPORTANCE] = (window / 3) * 6;
+	l_ptr->queue_limit[TIPC_LOW_IMPORTANCE] = window;
+	l_ptr->queue_limit[TIPC_MEDIUM_IMPORTANCE] = (window / 3) * 4;
+	l_ptr->queue_limit[TIPC_HIGH_IMPORTANCE] = (window / 3) * 5;
+	l_ptr->queue_limit[TIPC_CRITICAL_IMPORTANCE] = (window / 3) * 6;
 	/* Transiting data messages,inclusive FIRST_FRAGM */
-	l_ptr->queue_limit[GIPC_LOW_IMPORTANCE + 4] = 300;
-	l_ptr->queue_limit[GIPC_MEDIUM_IMPORTANCE + 4] = 600;
-	l_ptr->queue_limit[GIPC_HIGH_IMPORTANCE + 4] = 900;
-	l_ptr->queue_limit[GIPC_CRITICAL_IMPORTANCE + 4] = 1200;
+	l_ptr->queue_limit[TIPC_LOW_IMPORTANCE + 4] = 300;
+	l_ptr->queue_limit[TIPC_MEDIUM_IMPORTANCE + 4] = 600;
+	l_ptr->queue_limit[TIPC_HIGH_IMPORTANCE + 4] = 900;
+	l_ptr->queue_limit[TIPC_CRITICAL_IMPORTANCE + 4] = 1200;
 	l_ptr->queue_limit[CONN_MANAGER] = 1200;
 	l_ptr->queue_limit[ROUTE_DISTRIBUTOR] = 1200;
 	l_ptr->queue_limit[CHANGEOVER_PROTOCOL] = 2500;
@@ -2929,13 +2929,13 @@ void gipc_link_set_queue_limits(struct link *l_ptr, u32 window)
  * @name - ptr to link name string
  * @node - ptr to area to be filled with ptr to associated node
  *
- * Caller must hold 'gipc_net_lock' to ensure node and bearer are not deleted;
+ * Caller must hold 'tipc_net_lock' to ensure node and bearer are not deleted;
  * this also prevents link deletion.
  *
  * Returns pointer to link (or 0 if invalid link name).
  */
 
-static struct link *link_find_link(const char *name, struct gipc_node **node)
+static struct link *link_find_link(const char *name, struct tipc_node **node)
 {
 	struct link_name link_name_parts;
 	struct bearer *b_ptr;
@@ -2944,11 +2944,11 @@ static struct link *link_find_link(const char *name, struct gipc_node **node)
 	if (!link_name_validate(name, &link_name_parts))
 		return NULL;
 
-	b_ptr = gipc_bearer_find_interface(link_name_parts.if_local);
+	b_ptr = tipc_bearer_find_interface(link_name_parts.if_local);
 	if (!b_ptr)
 		return NULL;
 
-	*node = gipc_node_find(link_name_parts.addr_peer);
+	*node = tipc_node_find(link_name_parts.addr_peer);
 	if (!*node)
 		return NULL;
 
@@ -2959,72 +2959,72 @@ static struct link *link_find_link(const char *name, struct gipc_node **node)
 	return l_ptr;
 }
 
-struct sk_buff *gipc_link_cmd_config(const void *req_tlv_area, int req_tlv_space,
+struct sk_buff *tipc_link_cmd_config(const void *req_tlv_area, int req_tlv_space,
 				     u16 cmd)
 {
-	struct gipc_link_config *args;
+	struct tipc_link_config *args;
 	u32 new_value;
 	struct link *l_ptr;
-	struct gipc_node *node;
+	struct tipc_node *node;
 	int res;
 
-	if (!TLV_CHECK(req_tlv_area, req_tlv_space, GIPC_TLV_LINK_CONFIG))
-		return gipc_cfg_reply_error_string(GIPC_CFG_TLV_ERROR);
+	if (!TLV_CHECK(req_tlv_area, req_tlv_space, TIPC_TLV_LINK_CONFIG))
+		return tipc_cfg_reply_error_string(TIPC_CFG_TLV_ERROR);
 
-	args = (struct gipc_link_config *)TLV_DATA(req_tlv_area);
+	args = (struct tipc_link_config *)TLV_DATA(req_tlv_area);
 	new_value = ntohl(args->value);
 
-	if (!strcmp(args->name, gipc_bclink_name)) {
-		if ((cmd == GIPC_CMD_SET_LINK_WINDOW) &&
-		    (gipc_bclink_set_queue_limits(new_value) == 0))
-			return gipc_cfg_reply_none();
-		return gipc_cfg_reply_error_string(GIPC_CFG_NOT_SUPPORTED
+	if (!strcmp(args->name, tipc_bclink_name)) {
+		if ((cmd == TIPC_CMD_SET_LINK_WINDOW) &&
+		    (tipc_bclink_set_queue_limits(new_value) == 0))
+			return tipc_cfg_reply_none();
+		return tipc_cfg_reply_error_string(TIPC_CFG_NOT_SUPPORTED
 						   " (cannot change setting on broadcast link)");
 	}
 
-	read_lock_bh(&gipc_net_lock);
+	read_lock_bh(&tipc_net_lock);
 	l_ptr = link_find_link(args->name, &node);
 	if (!l_ptr) {
-		read_unlock_bh(&gipc_net_lock);
-		return gipc_cfg_reply_error_string("link not found");
+		read_unlock_bh(&tipc_net_lock);
+		return tipc_cfg_reply_error_string("link not found");
 	}
 
-	gipc_node_lock(node);
+	tipc_node_lock(node);
 	res = -EINVAL;
 	switch (cmd) {
-	case GIPC_CMD_SET_LINK_TOL:
-		if ((new_value >= GIPC_MIN_LINK_TOL) &&
-		    (new_value <= GIPC_MAX_LINK_TOL)) {
+	case TIPC_CMD_SET_LINK_TOL:
+		if ((new_value >= TIPC_MIN_LINK_TOL) &&
+		    (new_value <= TIPC_MAX_LINK_TOL)) {
 			link_set_supervision_props(l_ptr, new_value);
-			gipc_link_send_proto_msg(l_ptr, STATE_MSG,
+			tipc_link_send_proto_msg(l_ptr, STATE_MSG,
 						 0, 0, new_value, 0, 0);
 			res = 0;
 		}
 		break;
-	case GIPC_CMD_SET_LINK_PRI:
-		if ((new_value >= GIPC_MIN_LINK_PRI) &&
-		    (new_value <= GIPC_MAX_LINK_PRI)) {
+	case TIPC_CMD_SET_LINK_PRI:
+		if ((new_value >= TIPC_MIN_LINK_PRI) &&
+		    (new_value <= TIPC_MAX_LINK_PRI)) {
 			l_ptr->priority = new_value;
-			gipc_link_send_proto_msg(l_ptr, STATE_MSG,
+			tipc_link_send_proto_msg(l_ptr, STATE_MSG,
 						 0, 0, 0, new_value, 0);
 			res = 0;
 		}
 		break;
-	case GIPC_CMD_SET_LINK_WINDOW:
-		if ((new_value >= GIPC_MIN_LINK_WIN) &&
-		    (new_value <= GIPC_MAX_LINK_WIN)) {
-			gipc_link_set_queue_limits(l_ptr, new_value);
+	case TIPC_CMD_SET_LINK_WINDOW:
+		if ((new_value >= TIPC_MIN_LINK_WIN) &&
+		    (new_value <= TIPC_MAX_LINK_WIN)) {
+			tipc_link_set_queue_limits(l_ptr, new_value);
 			res = 0;
 		}
 		break;
 	}
-	gipc_node_unlock(node);
+	tipc_node_unlock(node);
 
-	read_unlock_bh(&gipc_net_lock);
+	read_unlock_bh(&tipc_net_lock);
 	if (res)
-		return gipc_cfg_reply_error_string("cannot change link setting");
+		return tipc_cfg_reply_error_string("cannot change link setting");
 
-	return gipc_cfg_reply_none();
+	return tipc_cfg_reply_none();
 }
 
 /**
@@ -3039,34 +3039,34 @@ static void link_reset_statistics(struct link *l_ptr)
 	l_ptr->stats.recv_info = l_ptr->next_in_no;
 }
 
-struct sk_buff *gipc_link_cmd_reset_stats(const void *req_tlv_area, int req_tlv_space)
+struct sk_buff *tipc_link_cmd_reset_stats(const void *req_tlv_area, int req_tlv_space)
 {
 	char *link_name;
 	struct link *l_ptr;
-	struct gipc_node *node;
+	struct tipc_node *node;
 
-	if (!TLV_CHECK(req_tlv_area, req_tlv_space, GIPC_TLV_LINK_NAME))
-		return gipc_cfg_reply_error_string(GIPC_CFG_TLV_ERROR);
+	if (!TLV_CHECK(req_tlv_area, req_tlv_space, TIPC_TLV_LINK_NAME))
+		return tipc_cfg_reply_error_string(TIPC_CFG_TLV_ERROR);
 
 	link_name = (char *)TLV_DATA(req_tlv_area);
-	if (!strcmp(link_name, gipc_bclink_name)) {
-		if (gipc_bclink_reset_stats())
-			return gipc_cfg_reply_error_string("link not found");
-		return gipc_cfg_reply_none();
+	if (!strcmp(link_name, tipc_bclink_name)) {
+		if (tipc_bclink_reset_stats())
+			return tipc_cfg_reply_error_string("link not found");
+		return tipc_cfg_reply_none();
 	}
 
-	read_lock_bh(&gipc_net_lock);
+	read_lock_bh(&tipc_net_lock);
 	l_ptr = link_find_link(link_name, &node);
 	if (!l_ptr) {
-		read_unlock_bh(&gipc_net_lock);
-		return gipc_cfg_reply_error_string("link not found");
+		read_unlock_bh(&tipc_net_lock);
+		return tipc_cfg_reply_error_string("link not found");
 	}
 
-	gipc_node_lock(node);
+	tipc_node_lock(node);
 	link_reset_statistics(l_ptr);
-	gipc_node_unlock(node);
-	read_unlock_bh(&gipc_net_lock);
-	return gipc_cfg_reply_none();
+	tipc_node_unlock(node);
+	read_unlock_bh(&tipc_net_lock);
+	return tipc_cfg_reply_none();
 }
 
 /**
@@ -3079,7 +3079,7 @@ static u32 percent(u32 count, u32 total)
 }
 
 /**
- * gipc_link_stats - print link statistics
+ * tipc_link_stats - print link statistics
  * @name: link name
  * @buf: print buffer area
  * @buf_size: size of print buffer area
@@ -3087,45 +3087,45 @@ static u32 percent(u32 count, u32 total)
  * Returns length of print buffer data string (or 0 if error)
  */
 
-static int gipc_link_stats(const char *name, char *buf, const u32 buf_size)
+static int tipc_link_stats(const char *name, char *buf, const u32 buf_size)
 {
 	struct print_buf pb;
 	struct link *l_ptr;
-	struct gipc_node *node;
+	struct tipc_node *node;
 	char *status;
 	u32 profile_total = 0;
 
-	if (!strcmp(name, gipc_bclink_name))
-		return gipc_bclink_stats(buf, buf_size);
+	if (!strcmp(name, tipc_bclink_name))
+		return tipc_bclink_stats(buf, buf_size);
 
-	gipc_printbuf_init(&pb, buf, buf_size);
+	tipc_printbuf_init(&pb, buf, buf_size);
 
-	read_lock_bh(&gipc_net_lock);
+	read_lock_bh(&tipc_net_lock);
 	l_ptr = link_find_link(name, &node);
 	if (!l_ptr) {
-		read_unlock_bh(&gipc_net_lock);
+		read_unlock_bh(&tipc_net_lock);
 		return 0;
 	}
-	gipc_node_lock(node);
+	tipc_node_lock(node);
 
-	if (gipc_link_is_active(l_ptr))
+	if (tipc_link_is_active(l_ptr))
 		status = "ACTIVE";
-	else if (gipc_link_is_up(l_ptr))
+	else if (tipc_link_is_up(l_ptr))
 		status = "STANDBY";
 	else
 		status = "DEFUNCT";
-	gipc_printf(&pb, "Link <%s>\n"
+	tipc_printf(&pb, "Link <%s>\n"
 			 "  %s  MTU:%u  Priority:%u  Tolerance:%u ms"
 			 "  Window:%u packets\n",
 		    l_ptr->name, status, link_max_pkt(l_ptr),
 		    l_ptr->priority, l_ptr->tolerance, l_ptr->queue_limit[0]);
-	gipc_printf(&pb, "  RX packets:%u fragments:%u/%u bundles:%u/%u\n",
+	tipc_printf(&pb, "  RX packets:%u fragments:%u/%u bundles:%u/%u\n",
 		    l_ptr->next_in_no - l_ptr->stats.recv_info,
 		    l_ptr->stats.recv_fragments,
 		    l_ptr->stats.recv_fragmented,
 		    l_ptr->stats.recv_bundles,
 		    l_ptr->stats.recv_bundled);
-	gipc_printf(&pb, "  TX packets:%u fragments:%u/%u bundles:%u/%u\n",
+	tipc_printf(&pb, "  TX packets:%u fragments:%u/%u bundles:%u/%u\n",
 		    l_ptr->next_out_no - l_ptr->stats.sent_info,
 		    l_ptr->stats.sent_fragments,
 		    l_ptr->stats.sent_fragmented,
@@ -3134,7 +3134,7 @@ static int gipc_link_stats(const char *name, char *buf, const u32 buf_size)
 	profile_total = l_ptr->stats.msg_length_counts;
 	if (!profile_total)
 		profile_total = 1;
-	gipc_printf(&pb, "  TX profile sample:%u packets  average:%u octets\n"
+	tipc_printf(&pb, "  TX profile sample:%u packets  average:%u octets\n"
 			 "  0-64:%u%% -256:%u%% -1024:%u%% -4096:%u%% "
 			 "-16354:%u%% -32768:%u%% -66000:%u%%\n",
 		    l_ptr->stats.msg_length_counts,
@@ -3146,19 +3146,19 @@ static int gipc_link_stats(const char *name, char *buf, const u32 buf_size)
 		    percent(l_ptr->stats.msg_length_profile[4], profile_total),
 		    percent(l_ptr->stats.msg_length_profile[5], profile_total),
 		    percent(l_ptr->stats.msg_length_profile[6], profile_total));
-	gipc_printf(&pb, "  RX states:%u probes:%u naks:%u defs:%u dups:%u\n",
+	tipc_printf(&pb, "  RX states:%u probes:%u naks:%u defs:%u dups:%u\n",
 		    l_ptr->stats.recv_states,
 		    l_ptr->stats.recv_probes,
 		    l_ptr->stats.recv_nacks,
 		    l_ptr->stats.deferred_recv,
 		    l_ptr->stats.duplicates);
-	gipc_printf(&pb, "  TX states:%u probes:%u naks:%u acks:%u dups:%u\n",
+	tipc_printf(&pb, "  TX states:%u probes:%u naks:%u acks:%u dups:%u\n",
 		    l_ptr->stats.sent_states,
 		    l_ptr->stats.sent_probes,
 		    l_ptr->stats.sent_nacks,
 		    l_ptr->stats.sent_acks,
 		    l_ptr->stats.retransmitted);
-	gipc_printf(&pb, "  Congestion bearer:%u link:%u  Send queue max:%u avg:%u\n",
+	tipc_printf(&pb, "  Congestion bearer:%u link:%u  Send queue max:%u avg:%u\n",
 		    l_ptr->stats.bearer_congs,
 		    l_ptr->stats.link_congs,
 		    l_ptr->stats.max_queue_sz,
@@ -3166,37 +3166,37 @@ static int gipc_link_stats(const char *name, char *buf, const u32 buf_size)
 		    ? (l_ptr->stats.accu_queue_sz / l_ptr->stats.queue_sz_counts)
 		    : 0);
 
-	gipc_node_unlock(node);
-	read_unlock_bh(&gipc_net_lock);
-	return gipc_printbuf_validate(&pb);
+	tipc_node_unlock(node);
+	read_unlock_bh(&tipc_net_lock);
+	return tipc_printbuf_validate(&pb);
 }
 
 #define MAX_LINK_STATS_INFO 2000
 
-struct sk_buff *gipc_link_cmd_show_stats(const void *req_tlv_area, int req_tlv_space)
+struct sk_buff *tipc_link_cmd_show_stats(const void *req_tlv_area, int req_tlv_space)
 {
 	struct sk_buff *buf;
 	struct tlv_desc *rep_tlv;
 	int str_len;
 
-	if (!TLV_CHECK(req_tlv_area, req_tlv_space, GIPC_TLV_LINK_NAME))
-		return gipc_cfg_reply_error_string(GIPC_CFG_TLV_ERROR);
+	if (!TLV_CHECK(req_tlv_area, req_tlv_space, TIPC_TLV_LINK_NAME))
+		return tipc_cfg_reply_error_string(TIPC_CFG_TLV_ERROR);
 
-	buf = gipc_cfg_reply_alloc(TLV_SPACE(MAX_LINK_STATS_INFO));
+	buf = tipc_cfg_reply_alloc(TLV_SPACE(MAX_LINK_STATS_INFO));
 	if (!buf)
 		return NULL;
 
 	rep_tlv = (struct tlv_desc *)buf->data;
 
-	str_len = gipc_link_stats((char *)TLV_DATA(req_tlv_area),
+	str_len = tipc_link_stats((char *)TLV_DATA(req_tlv_area),
 				  (char *)TLV_DATA(rep_tlv), MAX_LINK_STATS_INFO);
 	if (!str_len) {
 		buf_discard(buf);
-		return gipc_cfg_reply_error_string("link not found");
+		return tipc_cfg_reply_error_string("link not found");
 	}
 
 	skb_put(buf, TLV_SPACE(str_len));
-	TLV_SET(rep_tlv, GIPC_TLV_ULTRA_STRING, NULL, str_len);
+	TLV_SET(rep_tlv, TIPC_TLV_ULTRA_STRING, NULL, str_len);
 
 	return buf;
 }
@@ -3207,65 +3207,65 @@ int link_control(const char *name, u32 op, u32 val)
 	int res = -EINVAL;
 	struct link *l_ptr;
 	u32 bearer_id;
-	struct gipc_node * node;
+	struct tipc_node * node;
 	u32 a;
 
 	a = link_name2addr(name, &bearer_id);
-	read_lock_bh(&gipc_net_lock);
-	node = gipc_node_find(a);
+	read_lock_bh(&tipc_net_lock);
+	node = tipc_node_find(a);
 	if (node) {
-		gipc_node_lock(node);
+		tipc_node_lock(node);
 		l_ptr = node->links[bearer_id];
 		if (l_ptr) {
-			if (op == GIPC_REMOVE_LINK) {
+			if (op == TIPC_REMOVE_LINK) {
 				struct bearer *b_ptr = l_ptr->b_ptr;
 				spin_lock_bh(&b_ptr->publ.lock);
-				gipc_link_delete(l_ptr);
+				tipc_link_delete(l_ptr);
 				spin_unlock_bh(&b_ptr->publ.lock);
 			}
-			if (op == GIPC_CMD_BLOCK_LINK) {
-				gipc_link_reset(l_ptr);
+			if (op == TIPC_CMD_BLOCK_LINK) {
+				tipc_link_reset(l_ptr);
 				l_ptr->blocked = 1;
 			}
-			if (op == GIPC_CMD_UNBLOCK_LINK) {
+			if (op == TIPC_CMD_UNBLOCK_LINK) {
 				l_ptr->blocked = 0;
 			}
 			res = 0;
 		}
-		gipc_node_unlock(node);
+		tipc_node_unlock(node);
 	}
-	read_unlock_bh(&gipc_net_lock);
+	read_unlock_bh(&tipc_net_lock);
 	return res;
 }
 #endif
 
 /**
- * gipc_link_get_max_pkt - get maximum packet size to use when sending to destination
+ * tipc_link_get_max_pkt - get maximum packet size to use when sending to destination
  * @dest: network address of destination node
  * @selector: used to select from set of active links
  *
  * If no active link can be found, uses default maximum packet size.
  */
 
-u32 gipc_link_get_max_pkt(u32 dest, u32 selector)
+u32 tipc_link_get_max_pkt(u32 dest, u32 selector)
 {
-	struct gipc_node *n_ptr;
+	struct tipc_node *n_ptr;
 	struct link *l_ptr;
 	u32 res = MAX_PKT_DEFAULT;
 
-	if (dest == gipc_own_addr)
+	if (dest == tipc_own_addr)
 		return MAX_MSG_SIZE;
 
-	read_lock_bh(&gipc_net_lock);
-	n_ptr = gipc_node_select(dest, selector);
+	read_lock_bh(&tipc_net_lock);
+	n_ptr = tipc_node_select(dest, selector);
 	if (n_ptr) {
-		gipc_node_lock(n_ptr);
+		tipc_node_lock(n_ptr);
 		l_ptr = n_ptr->active_links[selector & 1];
 		if (l_ptr)
 			res = link_max_pkt(l_ptr);
-		gipc_node_unlock(n_ptr);
+		tipc_node_unlock(n_ptr);
 	}
-	read_unlock_bh(&gipc_net_lock);
+	read_unlock_bh(&tipc_net_lock);
 	return res;
 }
 
@@ -3307,52 +3307,52 @@ static void link_dump_send_queue(struct link *l_ptr)
 static void link_print(struct link *l_ptr, struct print_buf *buf,
 		       const char *str)
 {
-	gipc_printf(buf, str);
+	tipc_printf(buf, str);
 	if (link_reset_reset(l_ptr) || link_reset_unknown(l_ptr))
 		return;
-	gipc_printf(buf, "Link %x<%s>:",
+	tipc_printf(buf, "Link %x<%s>:",
 		    l_ptr->addr, l_ptr->b_ptr->publ.name);
-	gipc_printf(buf, ": NXO(%u):", mod(l_ptr->next_out_no));
-	gipc_printf(buf, "NXI(%u):", mod(l_ptr->next_in_no));
-	gipc_printf(buf, "SQUE");
+	tipc_printf(buf, ": NXO(%u):", mod(l_ptr->next_out_no));
+	tipc_printf(buf, "NXI(%u):", mod(l_ptr->next_in_no));
+	tipc_printf(buf, "SQUE");
 	if (l_ptr->first_out) {
-		gipc_printf(buf, "[%u..", msg_seqno(buf_msg(l_ptr->first_out)));
+		tipc_printf(buf, "[%u..", msg_seqno(buf_msg(l_ptr->first_out)));
 		if (l_ptr->next_out)
-			gipc_printf(buf, "%u..",
+			tipc_printf(buf, "%u..",
 				    msg_seqno(buf_msg(l_ptr->next_out)));
-		gipc_printf(buf, "%u]",
+		tipc_printf(buf, "%u]",
 			    msg_seqno(buf_msg
 				      (l_ptr->last_out)), l_ptr->out_queue_size);
 		if ((mod(msg_seqno(buf_msg(l_ptr->last_out)) -
 			 msg_seqno(buf_msg(l_ptr->first_out)))
 		     != (l_ptr->out_queue_size - 1))
 		    || (l_ptr->last_out->next != NULL)) {
-			gipc_printf(buf, "\nSend queue inconsistency\n");
-			gipc_printf(buf, "first_out= %x ", l_ptr->first_out);
-			gipc_printf(buf, "next_out= %x ", l_ptr->next_out);
-			gipc_printf(buf, "last_out= %x ", l_ptr->last_out);
+			tipc_printf(buf, "\nSend queue inconsistency\n");
+			tipc_printf(buf, "first_out= %x ", l_ptr->first_out);
+			tipc_printf(buf, "next_out= %x ", l_ptr->next_out);
+			tipc_printf(buf, "last_out= %x ", l_ptr->last_out);
 			link_dump_send_queue(l_ptr);
 		}
 	} else
-		gipc_printf(buf, "[]");
-	gipc_printf(buf, "SQSIZ(%u)", l_ptr->out_queue_size);
+		tipc_printf(buf, "[]");
+	tipc_printf(buf, "SQSIZ(%u)", l_ptr->out_queue_size);
 	if (l_ptr->oldest_deferred_in) {
 		u32 o = msg_seqno(buf_msg(l_ptr->oldest_deferred_in));
 		u32 n = msg_seqno(buf_msg(l_ptr->newest_deferred_in));
-		gipc_printf(buf, ":RQUE[%u..%u]", o, n);
+		tipc_printf(buf, ":RQUE[%u..%u]", o, n);
 		if (l_ptr->deferred_inqueue_sz != mod((n + 1) - o)) {
-			gipc_printf(buf, ":RQSIZ(%u)",
+			tipc_printf(buf, ":RQSIZ(%u)",
 				    l_ptr->deferred_inqueue_sz);
 		}
 	}
 	if (link_working_unknown(l_ptr))
-		gipc_printf(buf, ":WU");
+		tipc_printf(buf, ":WU");
 	if (link_reset_reset(l_ptr))
-		gipc_printf(buf, ":RR");
+		tipc_printf(buf, ":RR");
 	if (link_reset_unknown(l_ptr))
-		gipc_printf(buf, ":RU");
+		tipc_printf(buf, ":RU");
 	if (link_working_working(l_ptr))
-		gipc_printf(buf, ":WW");
-	gipc_printf(buf, "\n");
+		tipc_printf(buf, ":WW");
+	tipc_printf(buf, "\n");
 }
 

@@ -1,5 +1,5 @@
 /*
- * net/gipc/ref.c: GIPC object registry code
+ * net/tipc/ref.c: TIPC object registry code
  *
  * Copyright (c) 1991-2006, Ericsson AB
  * Copyright (c) 2004-2007, Wind River Systems
@@ -38,7 +38,7 @@
 #include "ref.h"
 
 /**
- * struct reference - GIPC object reference entry
+ * struct reference - TIPC object reference entry
  * @object: pointer to object associated with reference entry
  * @lock: spinlock controlling access to object
  * @ref: reference value for object (combines instance & array index info)
@@ -51,7 +51,7 @@ struct reference {
 };
 
 /**
- * struct gipc_ref_table - table of GIPC object reference entries
+ * struct tipc_ref_table - table of TIPC object reference entries
  * @entries: pointer to array of reference entries
  * @capacity: array index of first unusable entry
  * @init_point: array index of first uninitialized entry
@@ -89,15 +89,15 @@ struct ref_table {
  * have a reference value of 0 (although this is unlikely).
  */
 
-static struct ref_table gipc_ref_table = { NULL };
+static struct ref_table tipc_ref_table = { NULL };
 
 static DEFINE_RWLOCK(ref_table_lock);
 
 /**
- * gipc_ref_table_init - create reference table for objects
+ * tipc_ref_table_init - create reference table for objects
  */
 
-int gipc_ref_table_init(u32 requested_size, u32 start)
+int tipc_ref_table_init(u32 requested_size, u32 start)
 {
 	struct reference *table;
 	u32 actual_size;
@@ -115,32 +115,32 @@ int gipc_ref_table_init(u32 requested_size, u32 start)
 	if (table == NULL)
 		return -ENOMEM;
 
-	gipc_ref_table.entries = table;
-	gipc_ref_table.capacity = requested_size;
-	gipc_ref_table.init_point = 1;
-	gipc_ref_table.first_free = 0;
-	gipc_ref_table.last_free = 0;
-	gipc_ref_table.index_mask = actual_size - 1;
-	gipc_ref_table.start_mask = start & ~gipc_ref_table.index_mask;
+	tipc_ref_table.entries = table;
+	tipc_ref_table.capacity = requested_size;
+	tipc_ref_table.init_point = 1;
+	tipc_ref_table.first_free = 0;
+	tipc_ref_table.last_free = 0;
+	tipc_ref_table.index_mask = actual_size - 1;
+	tipc_ref_table.start_mask = start & ~tipc_ref_table.index_mask;
 
 	return 0;
 }
 
 /**
- * gipc_ref_table_stop - destroy reference table for objects
+ * tipc_ref_table_stop - destroy reference table for objects
  */
 
-void gipc_ref_table_stop(void)
+void tipc_ref_table_stop(void)
 {
-	if (!gipc_ref_table.entries)
+	if (!tipc_ref_table.entries)
 		return;
 
-	vfree(gipc_ref_table.entries);
-	gipc_ref_table.entries = NULL;
+	vfree(tipc_ref_table.entries);
+	tipc_ref_table.entries = NULL;
 }
 
 /**
- * gipc_ref_acquire - create reference to an object
+ * tipc_ref_acquire - create reference to an object
  *
  * Register an object pointer in reference table and lock the object.
  * Returns a unique reference value that is used from then on to retrieve the
@@ -151,7 +151,7 @@ void gipc_ref_table_stop(void)
  * the object will be accessed before initialization is complete.
  */
 
-u32 gipc_ref_acquire(void *object, spinlock_t **lock)
+u32 tipc_ref_acquire(void *object, spinlock_t **lock)
 {
 	struct reference *entry;
 	u32 index;
@@ -163,7 +163,7 @@ u32 gipc_ref_acquire(void *object, spinlock_t **lock)
 		err("Attempt to acquire reference to non-existent object\n");
 		return 0;
 	}
-	if (!gipc_ref_table.entries) {
+	if (!tipc_ref_table.entries) {
 		err("Reference table not found during acquisition attempt\n");
 		return 0;
 	}
@@ -171,25 +171,25 @@ u32 gipc_ref_acquire(void *object, spinlock_t **lock)
 	/* take a free entry, if available; otherwise initialize a new entry */
 
 	write_lock_bh(&ref_table_lock);
-	if (gipc_ref_table.first_free) {
-		index = gipc_ref_table.first_free;
-		entry = &(gipc_ref_table.entries[index]);
-		index_mask = gipc_ref_table.index_mask;
+	if (tipc_ref_table.first_free) {
+		index = tipc_ref_table.first_free;
+		entry = &(tipc_ref_table.entries[index]);
+		index_mask = tipc_ref_table.index_mask;
 		/* take lock in case a previous user of entry still holds it */
 		spin_lock_bh(&entry->lock);
 		next_plus_upper = entry->ref;
-		gipc_ref_table.first_free = next_plus_upper & index_mask;
+		tipc_ref_table.first_free = next_plus_upper & index_mask;
 		ref = (next_plus_upper & ~index_mask) + index;
 		entry->ref = ref;
 		entry->object = object;
 		*lock = &entry->lock;
 	}
-	else if (gipc_ref_table.init_point < gipc_ref_table.capacity) {
-		index = gipc_ref_table.init_point++;
-		entry = &(gipc_ref_table.entries[index]);
+	else if (tipc_ref_table.init_point < tipc_ref_table.capacity) {
+		index = tipc_ref_table.init_point++;
+		entry = &(tipc_ref_table.entries[index]);
 		spin_lock_init(&entry->lock);
 		spin_lock_bh(&entry->lock);
-		ref = gipc_ref_table.start_mask + index;
+		ref = tipc_ref_table.start_mask + index;
 		entry->ref = ref;
 		entry->object = object;
 		*lock = &entry->lock;
@@ -203,26 +203,26 @@ u32 gipc_ref_acquire(void *object, spinlock_t **lock)
 }
 
 /**
- * gipc_ref_discard - invalidate references to an object
+ * tipc_ref_discard - invalidate references to an object
  *
  * Disallow future references to an object and free up the entry for re-use.
  * Note: The entry's spin_lock may still be busy after discard
  */
 
-void gipc_ref_discard(u32 ref)
+void tipc_ref_discard(u32 ref)
 {
 	struct reference *entry;
 	u32 index;
 	u32 index_mask;
 
-	if (!gipc_ref_table.entries) {
+	if (!tipc_ref_table.entries) {
 		err("Reference table not found during discard attempt\n");
 		return;
 	}
 
-	index_mask = gipc_ref_table.index_mask;
+	index_mask = tipc_ref_table.index_mask;
 	index = ref & index_mask;
-	entry = &(gipc_ref_table.entries[index]);
+	entry = &(tipc_ref_table.entries[index]);
 
 	write_lock_bh(&ref_table_lock);
 
@@ -245,27 +245,27 @@ void gipc_ref_discard(u32 ref)
 
 	/* append entry to free entry list */
 
-	if (gipc_ref_table.first_free == 0)
-		gipc_ref_table.first_free = index;
+	if (tipc_ref_table.first_free == 0)
+		tipc_ref_table.first_free = index;
 	else
-		gipc_ref_table.entries[gipc_ref_table.last_free].ref |= index;
-	gipc_ref_table.last_free = index;
+		tipc_ref_table.entries[tipc_ref_table.last_free].ref |= index;
+	tipc_ref_table.last_free = index;
 
 exit:
 	write_unlock_bh(&ref_table_lock);
 }
 
 /**
- * gipc_ref_lock - lock referenced object and return pointer to it
+ * tipc_ref_lock - lock referenced object and return pointer to it
  */
 
-void *gipc_ref_lock(u32 ref)
+void *tipc_ref_lock(u32 ref)
 {
-	if (likely(gipc_ref_table.entries)) {
+	if (likely(tipc_ref_table.entries)) {
 		struct reference *entry;
 
-		entry = &gipc_ref_table.entries[ref &
-						gipc_ref_table.index_mask];
+		entry = &tipc_ref_table.entries[ref &
+						tipc_ref_table.index_mask];
 		if (likely(entry->ref != 0)) {
 			spin_lock_bh(&entry->lock);
 			if (likely((entry->ref == ref) && (entry->object)))
@@ -277,16 +277,16 @@ void *gipc_ref_lock(u32 ref)
 }
 
 /**
- * gipc_ref_unlock - unlock referenced object
+ * tipc_ref_unlock - unlock referenced object
  */
 
-void gipc_ref_unlock(u32 ref)
+void tipc_ref_unlock(u32 ref)
 {
-	if (likely(gipc_ref_table.entries)) {
+	if (likely(tipc_ref_table.entries)) {
 		struct reference *entry;
 
-		entry = &gipc_ref_table.entries[ref &
-						gipc_ref_table.index_mask];
+		entry = &tipc_ref_table.entries[ref &
+						tipc_ref_table.index_mask];
 		if (likely((entry->ref == ref) && (entry->object)))
 			spin_unlock_bh(&entry->lock);
 		else
@@ -295,16 +295,16 @@ void gipc_ref_unlock(u32 ref)
 }
 
 /**
- * gipc_ref_deref - return pointer referenced object (without locking it)
+ * tipc_ref_deref - return pointer referenced object (without locking it)
  */
 
-void *gipc_ref_deref(u32 ref)
+void *tipc_ref_deref(u32 ref)
 {
-	if (likely(gipc_ref_table.entries)) {
+	if (likely(tipc_ref_table.entries)) {
 		struct reference *entry;
 
-		entry = &gipc_ref_table.entries[ref &
-						gipc_ref_table.index_mask];
+		entry = &tipc_ref_table.entries[ref &
+						tipc_ref_table.index_mask];
 		if (likely(entry->ref == ref))
 			return entry->object;
 	}

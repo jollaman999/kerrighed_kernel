@@ -1,5 +1,5 @@
 /*
- * net/gipc/link.h: Include file for GIPC link code
+ * net/tipc/link.h: Include file for TIPC link code
  *
  * Copyright (c) 1995-2006, Ericsson AB
  * Copyright (c) 2004-2005, Wind River Systems
@@ -34,8 +34,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GIPC_LINK_H
-#define _GIPC_LINK_H
+#ifndef _TIPC_LINK_H
+#define _TIPC_LINK_H
 
 #include "dbg.h"
 #include "msg.h"
@@ -62,7 +62,7 @@
 #define MAX_PKT_DEFAULT 1500
 
 /**
- * struct link - GIPC link data structure
+ * struct link - TIPC link data structure
  * @addr: network address of link's peer node
  * @name: link name character string
  * @media_addr: media address to use when sending messages over link
@@ -113,10 +113,10 @@
 
 struct link {
 	u32 addr;
-	char name[GIPC_MAX_LINK_NAME];
-	struct gipc_media_addr media_addr;
+	char name[TIPC_MAX_LINK_NAME];
+	struct tipc_media_addr media_addr;
 	struct timer_list timer;
-	struct gipc_node *owner;
+	struct tipc_node *owner;
 	struct list_head link_list;
 
 	/* Management and link supervision data */
@@ -133,9 +133,9 @@ struct link {
 	u32 fsm_msg_cnt;
 	struct {
 		unchar hdr[INT_H_SIZE];
-		unchar body[GIPC_MAX_IF_NAME];
+		unchar body[TIPC_MAX_IF_NAME];
 	} proto_msg;
-	struct gipc_msg *pmsg;
+	struct tipc_msg *pmsg;
 	u32 priority;
 	u32 queue_limit[15];	/* queue_limit[0]==window limit */
 
@@ -221,43 +221,43 @@ struct link {
 
 struct port;
 
-struct link *gipc_link_create(struct bearer *b_ptr, const u32 peer,
-			      const struct gipc_media_addr *media_addr);
-void gipc_link_delete(struct link *l_ptr);
-void gipc_link_changeover(struct link *l_ptr);
-void gipc_link_send_duplicate(struct link *l_ptr, struct link *dest);
-void gipc_link_reset_fragments(struct link *l_ptr);
-int gipc_link_is_up(struct link *l_ptr);
-int gipc_link_is_active(struct link *l_ptr);
-void gipc_link_start(struct link *l_ptr);
-u32 gipc_link_push_packet(struct link *l_ptr);
-void gipc_link_stop(struct link *l_ptr);
-struct sk_buff *gipc_link_cmd_config(const void *req_tlv_area, int req_tlv_space, u16 cmd);
-struct sk_buff *gipc_link_cmd_show_stats(const void *req_tlv_area, int req_tlv_space);
-struct sk_buff *gipc_link_cmd_reset_stats(const void *req_tlv_area, int req_tlv_space);
-void gipc_link_reset(struct link *l_ptr);
-int gipc_link_send(struct sk_buff *buf, u32 dest, u32 selector);
-int gipc_link_send_buf(struct link *l_ptr, struct sk_buff *buf);
-u32 gipc_link_get_max_pkt(u32 dest,u32 selector);
-int gipc_link_send_sections_fast(struct port* sender,
+struct link *tipc_link_create(struct bearer *b_ptr, const u32 peer,
+			      const struct tipc_media_addr *media_addr);
+void tipc_link_delete(struct link *l_ptr);
+void tipc_link_changeover(struct link *l_ptr);
+void tipc_link_send_duplicate(struct link *l_ptr, struct link *dest);
+void tipc_link_reset_fragments(struct link *l_ptr);
+int tipc_link_is_up(struct link *l_ptr);
+int tipc_link_is_active(struct link *l_ptr);
+void tipc_link_start(struct link *l_ptr);
+u32 tipc_link_push_packet(struct link *l_ptr);
+void tipc_link_stop(struct link *l_ptr);
+struct sk_buff *tipc_link_cmd_config(const void *req_tlv_area, int req_tlv_space, u16 cmd);
+struct sk_buff *tipc_link_cmd_show_stats(const void *req_tlv_area, int req_tlv_space);
+struct sk_buff *tipc_link_cmd_reset_stats(const void *req_tlv_area, int req_tlv_space);
+void tipc_link_reset(struct link *l_ptr);
+int tipc_link_send(struct sk_buff *buf, u32 dest, u32 selector);
+int tipc_link_send_buf(struct link *l_ptr, struct sk_buff *buf);
+u32 tipc_link_get_max_pkt(u32 dest,u32 selector);
+int tipc_link_send_sections_fast(struct port* sender,
 				 struct iovec const *msg_sect,
 				 const u32 num_sect,
 				 u32 destnode);
-int gipc_link_send_long_buf(struct link *l_ptr, struct sk_buff *buf);
-void gipc_link_tunnel(struct link *l_ptr, struct gipc_msg *tnl_hdr,
-		      struct gipc_msg *msg, u32 selector);
-void gipc_link_recv_bundle(struct sk_buff *buf);
-int  gipc_link_recv_fragment(struct sk_buff **pending,
+int tipc_link_send_long_buf(struct link *l_ptr, struct sk_buff *buf);
+void tipc_link_tunnel(struct link *l_ptr, struct tipc_msg *tnl_hdr,
+		      struct tipc_msg *msg, u32 selector);
+void tipc_link_recv_bundle(struct sk_buff *buf);
+int  tipc_link_recv_fragment(struct sk_buff **pending,
 			     struct sk_buff **fb,
-			     struct gipc_msg **msg);
-void gipc_link_send_proto_msg(struct link *l_ptr, u32 msg_typ, int prob, u32 gap,
+			     struct tipc_msg **msg);
+void tipc_link_send_proto_msg(struct link *l_ptr, u32 msg_typ, int prob, u32 gap,
 			      u32 tolerance, u32 priority, u32 acked_mtu);
-void gipc_link_push_queue(struct link *l_ptr);
-u32 gipc_link_defer_pkt(struct sk_buff **head, struct sk_buff **tail,
+void tipc_link_push_queue(struct link *l_ptr);
+u32 tipc_link_defer_pkt(struct sk_buff **head, struct sk_buff **tail,
 		   struct sk_buff *buf);
-void gipc_link_wakeup_ports(struct link *l_ptr, int all);
-void gipc_link_set_queue_limits(struct link *l_ptr, u32 window);
-void gipc_link_retransmit(struct link *l_ptr, struct sk_buff *start, u32 retransmits);
+void tipc_link_wakeup_ports(struct link *l_ptr, int all);
+void tipc_link_set_queue_limits(struct link *l_ptr, u32 window);
+void tipc_link_retransmit(struct link *l_ptr, struct sk_buff *start, u32 retransmits);
 
 /*
  * Link sequence number manipulation routines (uses modulo 2**16 arithmetic)

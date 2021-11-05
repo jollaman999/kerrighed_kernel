@@ -1,5 +1,5 @@
 /*
- * include/linux/gipc_config.h: Include file for GIPC configuration interface
+ * include/linux/tipc_config.h: Include file for TIPC configuration interface
  * 
  * Copyright (c) 2003-2006, Ericsson AB
  * Copyright (c) 2005-2007, Wind River Systems
@@ -34,8 +34,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_GIPC_CONFIG_H_
-#define _LINUX_GIPC_CONFIG_H_
+#ifndef _LINUX_TIPC_CONFIG_H_
+#define _LINUX_TIPC_CONFIG_H_
 
 #include <linux/types.h>
 #include <linux/string.h>
@@ -45,7 +45,7 @@
  * Configuration
  *
  * All configuration management messaging involves sending a request message
- * to the GIPC configuration service on a node, which sends a reply message
+ * to the TIPC configuration service on a node, which sends a reply message
  * back.  (In the future multi-message replies may be supported.)
  *
  * Both request and reply messages consist of a transport header and payload.
@@ -66,20 +66,20 @@
  * Accepted by own node, or by remote node only if remote management enabled.                       
  */
  
-#define  GIPC_CMD_NOOP   	    0x0000    /* tx none, rx none */
-#define  GIPC_CMD_GET_NODES         0x0001    /* tx net_addr, rx node_info(s) */
-#define  GIPC_CMD_GET_MEDIA_NAMES   0x0002    /* tx none, rx media_name(s) */
-#define  GIPC_CMD_GET_BEARER_NAMES  0x0003    /* tx none, rx bearer_name(s) */
-#define  GIPC_CMD_GET_LINKS         0x0004    /* tx net_addr, rx link_info(s) */
-#define  GIPC_CMD_SHOW_NAME_TABLE   0x0005    /* tx name_tbl_query, rx ultra_string */
-#define  GIPC_CMD_SHOW_PORTS        0x0006    /* tx none, rx ultra_string */
-#define  GIPC_CMD_SHOW_LINK_STATS   0x000B    /* tx link_name, rx ultra_string */
+#define  TIPC_CMD_NOOP   	    0x0000    /* tx none, rx none */
+#define  TIPC_CMD_GET_NODES         0x0001    /* tx net_addr, rx node_info(s) */
+#define  TIPC_CMD_GET_MEDIA_NAMES   0x0002    /* tx none, rx media_name(s) */
+#define  TIPC_CMD_GET_BEARER_NAMES  0x0003    /* tx none, rx bearer_name(s) */
+#define  TIPC_CMD_GET_LINKS         0x0004    /* tx net_addr, rx link_info(s) */
+#define  TIPC_CMD_SHOW_NAME_TABLE   0x0005    /* tx name_tbl_query, rx ultra_string */
+#define  TIPC_CMD_SHOW_PORTS        0x0006    /* tx none, rx ultra_string */
+#define  TIPC_CMD_SHOW_LINK_STATS   0x000B    /* tx link_name, rx ultra_string */
 
 #if 0
-#define  GIPC_CMD_SHOW_PORT_STATS   0x0008    /* tx port_ref, rx ultra_string */
-#define  GIPC_CMD_RESET_PORT_STATS  0x0009    /* tx port_ref, rx none */
-#define  GIPC_CMD_GET_ROUTES        0x000A    /* tx ?, rx ? */
-#define  GIPC_CMD_GET_LINK_PEER     0x000D    /* tx link_name, rx ? */
+#define  TIPC_CMD_SHOW_PORT_STATS   0x0008    /* tx port_ref, rx ultra_string */
+#define  TIPC_CMD_RESET_PORT_STATS  0x0009    /* tx port_ref, rx none */
+#define  TIPC_CMD_GET_ROUTES        0x000A    /* tx ?, rx ? */
+#define  TIPC_CMD_GET_LINK_PEER     0x000D    /* tx link_name, rx ? */
 #endif
 
 /* 
@@ -89,30 +89,30 @@
  * and this node is zone manager.                       
  */
 
-#define  GIPC_CMD_GET_REMOTE_MNG    0x4003    /* tx none, rx unsigned */
-#define  GIPC_CMD_GET_MAX_PORTS     0x4004    /* tx none, rx unsigned */
-#define  GIPC_CMD_GET_MAX_PUBL      0x4005    /* tx none, rx unsigned */
-#define  GIPC_CMD_GET_MAX_SUBSCR    0x4006    /* tx none, rx unsigned */
-#define  GIPC_CMD_GET_MAX_ZONES     0x4007    /* tx none, rx unsigned */
-#define  GIPC_CMD_GET_MAX_CLUSTERS  0x4008    /* tx none, rx unsigned */
-#define  GIPC_CMD_GET_MAX_NODES     0x4009    /* tx none, rx unsigned */
-#define  GIPC_CMD_GET_MAX_SLAVES    0x400A    /* tx none, rx unsigned */
-#define  GIPC_CMD_GET_NETID         0x400B    /* tx none, rx unsigned */
+#define  TIPC_CMD_GET_REMOTE_MNG    0x4003    /* tx none, rx unsigned */
+#define  TIPC_CMD_GET_MAX_PORTS     0x4004    /* tx none, rx unsigned */
+#define  TIPC_CMD_GET_MAX_PUBL      0x4005    /* tx none, rx unsigned */
+#define  TIPC_CMD_GET_MAX_SUBSCR    0x4006    /* tx none, rx unsigned */
+#define  TIPC_CMD_GET_MAX_ZONES     0x4007    /* tx none, rx unsigned */
+#define  TIPC_CMD_GET_MAX_CLUSTERS  0x4008    /* tx none, rx unsigned */
+#define  TIPC_CMD_GET_MAX_NODES     0x4009    /* tx none, rx unsigned */
+#define  TIPC_CMD_GET_MAX_SLAVES    0x400A    /* tx none, rx unsigned */
+#define  TIPC_CMD_GET_NETID         0x400B    /* tx none, rx unsigned */
 
-#define  GIPC_CMD_ENABLE_BEARER     0x4101    /* tx bearer_config, rx none */
-#define  GIPC_CMD_DISABLE_BEARER    0x4102    /* tx bearer_name, rx none */
-#define  GIPC_CMD_SET_LINK_TOL      0x4107    /* tx link_config, rx none */
-#define  GIPC_CMD_SET_LINK_PRI      0x4108    /* tx link_config, rx none */
-#define  GIPC_CMD_SET_LINK_WINDOW   0x4109    /* tx link_config, rx none */
-#define  GIPC_CMD_SET_LOG_SIZE      0x410A    /* tx unsigned, rx none */
-#define  GIPC_CMD_DUMP_LOG          0x410B    /* tx none, rx ultra_string */
-#define  GIPC_CMD_RESET_LINK_STATS  0x410C    /* tx link_name, rx none */
+#define  TIPC_CMD_ENABLE_BEARER     0x4101    /* tx bearer_config, rx none */
+#define  TIPC_CMD_DISABLE_BEARER    0x4102    /* tx bearer_name, rx none */
+#define  TIPC_CMD_SET_LINK_TOL      0x4107    /* tx link_config, rx none */
+#define  TIPC_CMD_SET_LINK_PRI      0x4108    /* tx link_config, rx none */
+#define  TIPC_CMD_SET_LINK_WINDOW   0x4109    /* tx link_config, rx none */
+#define  TIPC_CMD_SET_LOG_SIZE      0x410A    /* tx unsigned, rx none */
+#define  TIPC_CMD_DUMP_LOG          0x410B    /* tx none, rx ultra_string */
+#define  TIPC_CMD_RESET_LINK_STATS  0x410C    /* tx link_name, rx none */
 
 #if 0
-#define  GIPC_CMD_CREATE_LINK       0x4103    /* tx link_create, rx none */
-#define  GIPC_CMD_REMOVE_LINK       0x4104    /* tx link_name, rx none */
-#define  GIPC_CMD_BLOCK_LINK        0x4105    /* tx link_name, rx none */
-#define  GIPC_CMD_UNBLOCK_LINK      0x4106    /* tx link_name, rx none */
+#define  TIPC_CMD_CREATE_LINK       0x4103    /* tx link_create, rx none */
+#define  TIPC_CMD_REMOVE_LINK       0x4104    /* tx link_name, rx none */
+#define  TIPC_CMD_BLOCK_LINK        0x4105    /* tx link_name, rx none */
+#define  TIPC_CMD_UNBLOCK_LINK      0x4106    /* tx link_name, rx none */
 #endif
 
 /* 
@@ -121,111 +121,111 @@
  * Accepted by own node only; cannot be used on a remote node.                       
  */
 
-#define  GIPC_CMD_SET_NODE_ADDR     0x8001    /* tx net_addr, rx none */
+#define  TIPC_CMD_SET_NODE_ADDR     0x8001    /* tx net_addr, rx none */
 #if 0
-#define  GIPC_CMD_SET_ZONE_MASTER   0x8002    /* tx none, rx none */
+#define  TIPC_CMD_SET_ZONE_MASTER   0x8002    /* tx none, rx none */
 #endif
-#define  GIPC_CMD_SET_REMOTE_MNG    0x8003    /* tx unsigned, rx none */
-#define  GIPC_CMD_SET_MAX_PORTS     0x8004    /* tx unsigned, rx none */
-#define  GIPC_CMD_SET_MAX_PUBL      0x8005    /* tx unsigned, rx none */
-#define  GIPC_CMD_SET_MAX_SUBSCR    0x8006    /* tx unsigned, rx none */
-#define  GIPC_CMD_SET_MAX_ZONES     0x8007    /* tx unsigned, rx none */
-#define  GIPC_CMD_SET_MAX_CLUSTERS  0x8008    /* tx unsigned, rx none */
-#define  GIPC_CMD_SET_MAX_NODES     0x8009    /* tx unsigned, rx none */
-#define  GIPC_CMD_SET_MAX_SLAVES    0x800A    /* tx unsigned, rx none */
-#define  GIPC_CMD_SET_NETID         0x800B    /* tx unsigned, rx none */
+#define  TIPC_CMD_SET_REMOTE_MNG    0x8003    /* tx unsigned, rx none */
+#define  TIPC_CMD_SET_MAX_PORTS     0x8004    /* tx unsigned, rx none */
+#define  TIPC_CMD_SET_MAX_PUBL      0x8005    /* tx unsigned, rx none */
+#define  TIPC_CMD_SET_MAX_SUBSCR    0x8006    /* tx unsigned, rx none */
+#define  TIPC_CMD_SET_MAX_ZONES     0x8007    /* tx unsigned, rx none */
+#define  TIPC_CMD_SET_MAX_CLUSTERS  0x8008    /* tx unsigned, rx none */
+#define  TIPC_CMD_SET_MAX_NODES     0x8009    /* tx unsigned, rx none */
+#define  TIPC_CMD_SET_MAX_SLAVES    0x800A    /* tx unsigned, rx none */
+#define  TIPC_CMD_SET_NETID         0x800B    /* tx unsigned, rx none */
 
 /*
  * Reserved commands:
  * May not be issued by any process.
- * Used internally by GIPC.
+ * Used internally by TIPC.
  */
 
-#define  GIPC_CMD_NOT_NET_ADMIN     0xC001    /* tx none, rx none */
+#define  TIPC_CMD_NOT_NET_ADMIN     0xC001    /* tx none, rx none */
 
 /*
- * TLV types defined for GIPC
+ * TLV types defined for TIPC
  */
 
-#define GIPC_TLV_NONE		0	/* no TLV present */
-#define GIPC_TLV_VOID		1	/* empty TLV (0 data bytes)*/
-#define GIPC_TLV_UNSIGNED	2	/* 32-bit integer */
-#define GIPC_TLV_STRING		3	/* char[128] (max) */
-#define GIPC_TLV_LARGE_STRING	4	/* char[2048] (max) */
-#define GIPC_TLV_ULTRA_STRING	5	/* char[32768] (max) */
+#define TIPC_TLV_NONE		0	/* no TLV present */
+#define TIPC_TLV_VOID		1	/* empty TLV (0 data bytes)*/
+#define TIPC_TLV_UNSIGNED	2	/* 32-bit integer */
+#define TIPC_TLV_STRING		3	/* char[128] (max) */
+#define TIPC_TLV_LARGE_STRING	4	/* char[2048] (max) */
+#define TIPC_TLV_ULTRA_STRING	5	/* char[32768] (max) */
 
-#define GIPC_TLV_ERROR_STRING	16	/* char[128] containing "error code" */
-#define GIPC_TLV_NET_ADDR   	17	/* 32-bit integer denoting <Z.C.N> */
-#define GIPC_TLV_MEDIA_NAME	18	/* char[GIPC_MAX_MEDIA_NAME] */
-#define GIPC_TLV_BEARER_NAME	19	/* char[GIPC_MAX_BEARER_NAME] */
-#define GIPC_TLV_LINK_NAME	20	/* char[GIPC_MAX_LINK_NAME] */
-#define GIPC_TLV_NODE_INFO	21	/* struct gipc_node_info */
-#define GIPC_TLV_LINK_INFO	22	/* struct gipc_link_info */
-#define GIPC_TLV_BEARER_CONFIG  23	/* struct gipc_bearer_config */
-#define GIPC_TLV_LINK_CONFIG    24	/* struct gipc_link_config */
-#define GIPC_TLV_NAME_TBL_QUERY	25	/* struct gipc_name_table_query */
-#define GIPC_TLV_PORT_REF   	26	/* 32-bit port reference */
+#define TIPC_TLV_ERROR_STRING	16	/* char[128] containing "error code" */
+#define TIPC_TLV_NET_ADDR   	17	/* 32-bit integer denoting <Z.C.N> */
+#define TIPC_TLV_MEDIA_NAME	18	/* char[TIPC_MAX_MEDIA_NAME] */
+#define TIPC_TLV_BEARER_NAME	19	/* char[TIPC_MAX_BEARER_NAME] */
+#define TIPC_TLV_LINK_NAME	20	/* char[TIPC_MAX_LINK_NAME] */
+#define TIPC_TLV_NODE_INFO	21	/* struct tipc_node_info */
+#define TIPC_TLV_LINK_INFO	22	/* struct tipc_link_info */
+#define TIPC_TLV_BEARER_CONFIG  23	/* struct tipc_bearer_config */
+#define TIPC_TLV_LINK_CONFIG    24	/* struct tipc_link_config */
+#define TIPC_TLV_NAME_TBL_QUERY	25	/* struct tipc_name_table_query */
+#define TIPC_TLV_PORT_REF   	26	/* 32-bit port reference */
 
 /*
- * Maximum sizes of GIPC bearer-related names (including terminating NUL)
+ * Maximum sizes of TIPC bearer-related names (including terminating NUL)
  */ 
 
-#define GIPC_MAX_MEDIA_NAME	16	/* format = media */
-#define GIPC_MAX_IF_NAME	16	/* format = interface */
-#define GIPC_MAX_BEARER_NAME	32	/* format = media:interface */
-#define GIPC_MAX_LINK_NAME	60	/* format = Z.C.N:interface-Z.C.N:interface */
+#define TIPC_MAX_MEDIA_NAME	16	/* format = media */
+#define TIPC_MAX_IF_NAME	16	/* format = interface */
+#define TIPC_MAX_BEARER_NAME	32	/* format = media:interface */
+#define TIPC_MAX_LINK_NAME	60	/* format = Z.C.N:interface-Z.C.N:interface */
 
 /*
  * Link priority limits (min, default, max, media default)
  */
 
-#define GIPC_MIN_LINK_PRI	0
-#define GIPC_DEF_LINK_PRI	10
-#define GIPC_MAX_LINK_PRI	31
-#define GIPC_MEDIA_LINK_PRI	(GIPC_MAX_LINK_PRI + 1)
+#define TIPC_MIN_LINK_PRI	0
+#define TIPC_DEF_LINK_PRI	10
+#define TIPC_MAX_LINK_PRI	31
+#define TIPC_MEDIA_LINK_PRI	(TIPC_MAX_LINK_PRI + 1)
 
 /*
  * Link tolerance limits (min, default, max), in ms
  */
 
-#define GIPC_MIN_LINK_TOL 50
-#define GIPC_DEF_LINK_TOL 1500
-#define GIPC_MAX_LINK_TOL 30000
+#define TIPC_MIN_LINK_TOL 50
+#define TIPC_DEF_LINK_TOL 1500
+#define TIPC_MAX_LINK_TOL 30000
 
 /*
  * Link window limits (min, default, max), in packets
  */
 
-#define GIPC_MIN_LINK_WIN 16
-#define GIPC_DEF_LINK_WIN 50
-#define GIPC_MAX_LINK_WIN 150
+#define TIPC_MIN_LINK_WIN 16
+#define TIPC_DEF_LINK_WIN 50
+#define TIPC_MAX_LINK_WIN 150
 
 
-struct gipc_node_info {
+struct tipc_node_info {
 	__be32 addr;			/* network address of node */
 	__be32 up;			/* 0=down, 1= up */
 };
 
-struct gipc_link_info {
+struct tipc_link_info {
 	__be32 dest;			/* network address of peer node */
 	__be32 up;			/* 0=down, 1=up */
-	char str[GIPC_MAX_LINK_NAME];	/* link name */
+	char str[TIPC_MAX_LINK_NAME];	/* link name */
 };
 
-struct gipc_bearer_config {
+struct tipc_bearer_config {
 	__be32 priority;		/* Range [1,31]. Override per link  */
 	__be32 detect_scope;
-	char name[GIPC_MAX_BEARER_NAME];
+	char name[TIPC_MAX_BEARER_NAME];
 };
 
-struct gipc_link_config {
+struct tipc_link_config {
 	__be32 value;
-	char name[GIPC_MAX_LINK_NAME];
+	char name[TIPC_MAX_LINK_NAME];
 };
 
-#define GIPC_NTQ_ALLTYPES 0x80000000
+#define TIPC_NTQ_ALLTYPES 0x80000000
 
-struct gipc_name_table_query {
+struct tipc_name_table_query {
 	__be32 depth;	/* 1:type, 2:+name info, 3:+port info, 4+:+debug info */
 	__be32 type;	/* {t,l,u} info ignored if high bit of "depth" is set */
 	__be32 lowbound; /* (i.e. displays all entries of name table) */
@@ -239,22 +239,22 @@ struct gipc_name_table_query {
  * (lying by the range 0x80 to 0xFF) which represents a pre-defined reason.
  */
 
-#define GIPC_CFG_TLV_ERROR      "\x80"  /* request contains incorrect TLV(s) */
-#define GIPC_CFG_NOT_NET_ADMIN  "\x81"	/* must be network administrator */
-#define GIPC_CFG_NOT_ZONE_MSTR	"\x82"	/* must be zone master */
-#define GIPC_CFG_NO_REMOTE	"\x83"	/* remote management not enabled */
-#define GIPC_CFG_NOT_SUPPORTED  "\x84"	/* request is not supported by GIPC */
-#define GIPC_CFG_INVALID_VALUE  "\x85"  /* request has invalid argument value */
+#define TIPC_CFG_TLV_ERROR      "\x80"  /* request contains incorrect TLV(s) */
+#define TIPC_CFG_NOT_NET_ADMIN  "\x81"	/* must be network administrator */
+#define TIPC_CFG_NOT_ZONE_MSTR	"\x82"	/* must be zone master */
+#define TIPC_CFG_NO_REMOTE	"\x83"	/* remote management not enabled */
+#define TIPC_CFG_NOT_SUPPORTED  "\x84"	/* request is not supported by TIPC */
+#define TIPC_CFG_INVALID_VALUE  "\x85"  /* request has invalid argument value */
 
 #if 0
 /* prototypes TLV structures for proposed commands */
-struct gipc_link_create {
+struct tipc_link_create {
 	__u32   domain;
-	struct gipc_media_addr peer_addr;
-	char bearer_name[GIPC_MAX_BEARER_NAME];
+	struct tipc_media_addr peer_addr;
+	char bearer_name[TIPC_MAX_BEARER_NAME];
 };
 
-struct gipc_route_info {
+struct tipc_route_info {
 	__u32 dest;
 	__u32 router;
 };
@@ -360,30 +360,30 @@ static inline void TLV_LIST_STEP(struct tlv_list_desc *list)
  * Configuration messages exchanged via NETLINK_GENERIC use the following
  * family id, name, version and command.
  */
-#define GIPC_GENL_NAME		"GIPC"
-#define GIPC_GENL_VERSION	0x1
-#define GIPC_GENL_CMD		0x1
+#define TIPC_GENL_NAME		"TIPC"
+#define TIPC_GENL_VERSION	0x1
+#define TIPC_GENL_CMD		0x1
 
 /*
- * GIPC specific header used in NETLINK_GENERIC requests.
+ * TIPC specific header used in NETLINK_GENERIC requests.
  */
-struct gipc_genlmsghdr {
+struct tipc_genlmsghdr {
 	__u32 dest;		/* Destination address */
 	__u16 cmd;		/* Command */
 	__u16 reserved;		/* Unused */
 };
 
-#define GIPC_GENL_HDRLEN	NLMSG_ALIGN(sizeof(struct gipc_genlmsghdr))
+#define TIPC_GENL_HDRLEN	NLMSG_ALIGN(sizeof(struct tipc_genlmsghdr))
 
 /*
- * Configuration messages exchanged via GIPC sockets use the GIPC configuration 
+ * Configuration messages exchanged via TIPC sockets use the TIPC configuration 
  * message header, which is defined below.  This structure is analogous 
  * to the Netlink message header, but fields are stored in network byte order 
  * and no padding is permitted between the header and the message data 
  * that follows.
  */
 
-struct gipc_cfg_msg_hdr
+struct tipc_cfg_msg_hdr
 {
 	__be32 tcm_len;		/* Message length (including header) */
 	__be16 tcm_type;	/* Command type */
@@ -395,18 +395,18 @@ struct gipc_cfg_msg_hdr
 #define TCM_F_MORE	0x2	/* Flag: Message to be continued */
 
 #define TCM_ALIGN(datalen)  (((datalen)+3) & ~3)
-#define TCM_LENGTH(datalen) (sizeof(struct gipc_cfg_msg_hdr) + datalen)
+#define TCM_LENGTH(datalen) (sizeof(struct tipc_cfg_msg_hdr) + datalen)
 #define TCM_SPACE(datalen)  (TCM_ALIGN(TCM_LENGTH(datalen)))
 #define TCM_DATA(tcm_hdr)   ((void *)((char *)(tcm_hdr) + TCM_LENGTH(0)))
 
 static inline int TCM_SET(void *msg, __u16 cmd, __u16 flags,
 			  void *data, __u16 data_len)
 {
-	struct gipc_cfg_msg_hdr *tcm_hdr;
+	struct tipc_cfg_msg_hdr *tcm_hdr;
 	int msg_len;
 
 	msg_len = TCM_LENGTH(data_len);
-	tcm_hdr = (struct gipc_cfg_msg_hdr *)msg;
+	tcm_hdr = (struct tipc_cfg_msg_hdr *)msg;
 	tcm_hdr->tcm_len   = htonl(msg_len);
 	tcm_hdr->tcm_type  = htons(cmd);
 	tcm_hdr->tcm_flags = htons(flags);

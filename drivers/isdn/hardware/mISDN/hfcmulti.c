@@ -5271,7 +5271,7 @@ static const struct hm_map hfcm_map[] = {
 
 #undef H
 #define H(x)	((unsigned long)&hfcm_map[x])
-static struct pci_device_id hfmulgipci_ids[] __devinitdata = {
+static struct pci_device_id hfmultipci_ids[] __devinitdata = {
 
 	/* Cards with HFC-4S Chip */
 	{ PCI_VENDOR_ID_CCD, PCI_DEVICE_ID_CCD_HFC4S, PCI_VENDOR_ID_CCD,
@@ -5359,7 +5359,7 @@ static struct pci_device_id hfmulgipci_ids[] __devinitdata = {
 };
 #undef H
 
-MODULE_DEVICE_TABLE(pci, hfmulgipci_ids);
+MODULE_DEVICE_TABLE(pci, hfmultipci_ids);
 
 static int
 hfcmulti_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
@@ -5388,11 +5388,11 @@ hfcmulti_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	return 0;
 }
 
-static struct pci_driver hfcmulgipci_driver = {
+static struct pci_driver hfcmultipci_driver = {
 	.name		= "hfc_multi",
 	.probe		= hfcmulti_probe,
 	.remove		= __devexit_p(hfc_remove_pci),
-	.id_table	= hfmulgipci_ids,
+	.id_table	= hfmultipci_ids,
 };
 
 static void __exit
@@ -5403,7 +5403,7 @@ HFCmulti_cleanup(void)
 	/* get rid of all devices of this driver */
 	list_for_each_entry_safe(card, next, &HFClist, list)
 		release_card(card);
-	pci_unregister_driver(&hfcmulgipci_driver);
+	pci_unregister_driver(&hfcmultipci_driver);
 }
 
 static int __init
@@ -5490,7 +5490,7 @@ HFCmulti_init(void)
 	}
 
 	/* Register the PCI cards */
-	err = pci_register_driver(&hfcmulgipci_driver);
+	err = pci_register_driver(&hfcmultipci_driver);
 	if (err < 0) {
 		printk(KERN_ERR "error registering pci driver: %x\n", err);
 		return err;

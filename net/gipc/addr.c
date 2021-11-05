@@ -1,5 +1,5 @@
 /*
- * net/gipc/addr.c: GIPC address utility routines
+ * net/tipc/addr.c: TIPC address utility routines
  *
  * Copyright (c) 2000-2006, Ericsson AB
  * Copyright (c) 2004-2005, Wind River Systems
@@ -41,13 +41,13 @@
 #include "cluster.h"
 #include "net.h"
 
-u32 gipc_get_addr(void)
+u32 tipc_get_addr(void)
 {
-	return gipc_own_addr;
+	return tipc_own_addr;
 }
 
 /**
- * gipc_addr_domain_valid - validates a network domain address
+ * tipc_addr_domain_valid - validates a network domain address
  *
  * Accepts <Z.C.N>, <Z.C.0>, <Z.0.0>, and <0.0.0>,
  * where Z, C, and N are non-zero and do not exceed the configured limits.
@@ -55,20 +55,20 @@ u32 gipc_get_addr(void)
  * Returns 1 if domain address is valid, otherwise 0
  */
 
-int gipc_addr_domain_valid(u32 addr)
+int tipc_addr_domain_valid(u32 addr)
 {
-	u32 n = gipc_node(addr);
-	u32 c = gipc_cluster(addr);
-	u32 z = gipc_zone(addr);
-	u32 max_nodes = gipc_max_nodes;
+	u32 n = tipc_node(addr);
+	u32 c = tipc_cluster(addr);
+	u32 z = tipc_zone(addr);
+	u32 max_nodes = tipc_max_nodes;
 
 	if (is_slave(addr))
-		max_nodes = LOWEST_SLAVE + gipc_max_slaves;
+		max_nodes = LOWEST_SLAVE + tipc_max_slaves;
 	if (n > max_nodes)
 		return 0;
-	if (c > gipc_max_clusters)
+	if (c > tipc_max_clusters)
 		return 0;
-	if (z > gipc_max_zones)
+	if (z > tipc_max_zones)
 		return 0;
 
 	if (n && (!z || !c))
@@ -79,7 +79,7 @@ int gipc_addr_domain_valid(u32 addr)
 }
 
 /**
- * gipc_addr_node_valid - validates a proposed network address for this node
+ * tipc_addr_node_valid - validates a proposed network address for this node
  *
  * Accepts <Z.C.N>, where Z, C, and N are non-zero and do not exceed
  * the configured limits.
@@ -87,8 +87,8 @@ int gipc_addr_domain_valid(u32 addr)
  * Returns 1 if address can be used, otherwise 0
  */
 
-int gipc_addr_node_valid(u32 addr)
+int tipc_addr_node_valid(u32 addr)
 {
-	return (gipc_addr_domain_valid(addr) && gipc_node(addr));
+	return (tipc_addr_domain_valid(addr) && tipc_node(addr));
 }
 

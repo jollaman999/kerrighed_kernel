@@ -1,5 +1,5 @@
 /*
- * net/gipc/eth_media.c: Ethernet bearer support for GIPC
+ * net/tipc/eth_media.c: Ethernet bearer support for TIPC
  *
  * Copyright (c) 2001-2007, Ericsson AB
  * Copyright (c) 2005-2007, Wind River Systems
@@ -34,28 +34,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <net/gipc/gipc.h>
-#include <net/gipc/gipc_bearer.h>
-#include <net/gipc/gipc_msg.h>
+#include <net/tipc/tipc.h>
+#include <net/tipc/tipc_bearer.h>
+#include <net/tipc/tipc_msg.h>
 #include <linux/netdevice.h>
 #include <net/net_namespace.h>
 
 #define MAX_ETH_BEARERS		2
-#define ETH_LINK_PRIORITY	GIPC_DEF_LINK_PRI
-#define ETH_LINK_TOLERANCE	GIPC_DEF_LINK_TOL
-#define ETH_LINK_WINDOW		GIPC_DEF_LINK_WIN
+#define ETH_LINK_PRIORITY	TIPC_DEF_LINK_PRI
+#define ETH_LINK_TOLERANCE	TIPC_DEF_LINK_TOL
+#define ETH_LINK_WINDOW		TIPC_DEF_LINK_WIN
 
 /**
  * struct eth_bearer - Ethernet bearer data structure
  * @bearer: ptr to associated "generic" bearer structure
  * @dev: ptr to associated Ethernet network device
- * @gipc_packet_type: used in binding GIPC to Ethernet driver
+ * @tipc_packet_type: used in binding TIPC to Ethernet driver
  */
 
 struct eth_bearer {
-	struct gipc_bearer *bearer;
+	struct tipc_bearer *bearer;
 	struct net_device *dev;
-	struct packet_type gipc_packet_type;
+	struct packet_type tipc_packet_type;
 };
 
 static struct eth_bearer eth_bearers[MAX_ETH_BEARERS];
@@ -63,11 +63,11 @@ static int eth_started = 0;
 static struct notifier_block notifier;
 
 /**
- * send_msg - send a GIPC message out over an Ethernet interface
+ * send_msg - send a TIPC message out over an Ethernet interface
  */
 
-static int send_msg(struct sk_buff *buf, struct gipc_bearer *tb_ptr,
-		    struct gipc_media_addr *dest)
+static int send_msg(struct sk_buff *buf, struct tipc_bearer *tb_ptr,
+		    struct tipc_media_addr *dest)
 {
 	struct sk_buff *clone;
 	struct net_device *dev;
@@ -77,7 +77,7 @@ static int send_msg(struct sk_buff *buf, struct gipc_bearer *tb_ptr,
 		skb_reset_network_header(clone);
 		dev = ((struct eth_bearer *)(tb_ptr->usr_handle))->dev;
 		clone->dev = dev;
-		dev_hard_header(clone, dev, ETH_P_GIPC,
+		dev_hard_header(clone, dev, ETH_P_TIPC,
 				 &dest->dev_addr.eth_addr,
 				 dev->dev_addr, clone->len);
 		dev_queue_xmit(clone);
@@ -86,7 +86,7 @@ static int send_msg(struct sk_buff *buf, struct gipc_bearer *tb_ptr,
 }
 
 /**
- * recv_msg - handle incoming GIPC message from an Ethernet interface
+ * recv_msg - handle incoming TIPC message from an Ethernet interface
  *
  * Accept only packets explicitly sent to this node, or broadcast packets;
  * ignores packets sent using Ethernet multicast, and traffic sent to other
@@ -108,11 +108,11 @@ static int recv_msg(struct sk_buff *buf, struct net_device *dev,
 
 	if (likely(eb_ptr->bearer)) {
 		if (likely(buf->pkt_type <= PACKET_BROADCAST)) {
-			size = msg_size((struct gipc_msg *)buf->data);
+			size = msg_size((struct tipc_msg *)buf->data);
 			skb_trim(buf, size);
 			if (likely(buf->len == size)) {
 				buf->next = NULL;
-				gipc_recv_msg(buf, eb_ptr->bearer);
+				tipc_recv_msg(buf, eb_ptr->bearer);
 				return 0;
 			}
 		}
@@ -122,10 +122,10 @@ static int recv_msg(struct sk_buff *buf, struct net_device *dev,
 }
 
 /**
- * enable_bearer - attach GIPC bearer to an Ethernet interface
+ * enable_bearer - attach TIPC bearer to an Ethernet interface
  */
 
-static int enable_bearer(struct gipc_bearer *tb_ptr)
+static int enable_bearer(struct tipc_bearer *tb_ptr)
 {
 	struct net_device *dev = NULL;
 	struct net_device *pdev = NULL;
@@ -151,35 +151,35 @@ static int enable_bearer(struct gipc_bearer *tb_ptr)
 		return -EDQUOT;
 	if (!eb_ptr->dev) {
 		eb_ptr->dev = dev;
-		eb_ptr->gipc_packet_type.type = htons(ETH_P_GIPC);
-		eb_ptr->gipc_packet_type.dev = dev;
-		eb_ptr->gipc_packet_type.func = recv_msg;
-		eb_ptr->gipc_packet_type.af_packet_priv = eb_ptr;
-		INIT_LIST_HEAD(&(eb_ptr->gipc_packet_type.list));
+		eb_ptr->tipc_packet_type.type = htons(ETH_P_TIPC);
+		eb_ptr->tipc_packet_type.dev = dev;
+		eb_ptr->tipc_packet_type.func = recv_msg;
+		eb_ptr->tipc_packet_type.af_packet_priv = eb_ptr;
+		INIT_LIST_HEAD(&(eb_ptr->tipc_packet_type.list));
 		dev_hold(dev);
-		dev_add_pack(&eb_ptr->gipc_packet_type);
+		dev_add_pack(&eb_ptr->tipc_packet_type);
 	}
 
-	/* Associate GIPC bearer with Ethernet bearer */
+	/* Associate TIPC bearer with Ethernet bearer */
 
 	eb_ptr->bearer = tb_ptr;
 	tb_ptr->usr_handle = (void *)eb_ptr;
 	tb_ptr->mtu = dev->mtu;
 	tb_ptr->blocked = 0;
-	tb_ptr->addr.type = htonl(GIPC_MEDIA_TYPE_ETH);
+	tb_ptr->addr.type = htonl(TIPC_MEDIA_TYPE_ETH);
 	memcpy(&tb_ptr->addr.dev_addr, dev->dev_addr, ETH_ALEN);
 	return 0;
 }
 
 /**
- * disable_bearer - detach GIPC bearer from an Ethernet interface
+ * disable_bearer - detach TIPC bearer from an Ethernet interface
  *
  * We really should do dev_remove_pack() here, but this function can not be
  * called at tasklet level. => Use eth_bearer->bearer as a flag to throw away
  * incoming buffers, & postpone dev_remove_pack() to eth_media_stop() on exit.
  */
 
-static void disable_bearer(struct gipc_bearer *tb_ptr)
+static void disable_bearer(struct tipc_bearer *tb_ptr)
 {
 	((struct eth_bearer *)tb_ptr->usr_handle)->bearer = NULL;
 }
@@ -213,24 +213,24 @@ static int recv_notification(struct notifier_block *nb, unsigned long evt,
 	switch (evt) {
 	case NETDEV_CHANGE:
 		if (netif_carrier_ok(dev))
-			gipc_continue(eb_ptr->bearer);
+			tipc_continue(eb_ptr->bearer);
 		else
-			gipc_block_bearer(eb_ptr->bearer->name);
+			tipc_block_bearer(eb_ptr->bearer->name);
 		break;
 	case NETDEV_UP:
-		gipc_continue(eb_ptr->bearer);
+		tipc_continue(eb_ptr->bearer);
 		break;
 	case NETDEV_DOWN:
-		gipc_block_bearer(eb_ptr->bearer->name);
+		tipc_block_bearer(eb_ptr->bearer->name);
 		break;
 	case NETDEV_CHANGEMTU:
 	case NETDEV_CHANGEADDR:
-		gipc_block_bearer(eb_ptr->bearer->name);
-		gipc_continue(eb_ptr->bearer);
+		tipc_block_bearer(eb_ptr->bearer->name);
+		tipc_continue(eb_ptr->bearer);
 		break;
 	case NETDEV_UNREGISTER:
 	case NETDEV_CHANGENAME:
-		gipc_disable_bearer(eb_ptr->bearer->name);
+		tipc_disable_bearer(eb_ptr->bearer->name);
 		break;
 	}
 	return NOTIFY_OK;
@@ -240,7 +240,7 @@ static int recv_notification(struct notifier_block *nb, unsigned long evt,
  * eth_addr2str - convert Ethernet address to string
  */
 
-static char *eth_addr2str(struct gipc_media_addr *a, char *str_buf, int str_size)
+static char *eth_addr2str(struct tipc_media_addr *a, char *str_buf, int str_size)
 {
 	unchar *addr = (unchar *)&a->dev_addr;
 
@@ -252,26 +252,26 @@ static char *eth_addr2str(struct gipc_media_addr *a, char *str_buf, int str_size
 }
 
 /**
- * gipc_eth_media_start - activate Ethernet bearer support
+ * tipc_eth_media_start - activate Ethernet bearer support
  *
- * Register Ethernet media type with GIPC bearer code.  Also register
+ * Register Ethernet media type with TIPC bearer code.  Also register
  * with OS for notifications about device state changes.
  */
 
-int gipc_eth_media_start(void)
+int tipc_eth_media_start(void)
 {
-	struct gipc_media_addr bcast_addr;
+	struct tipc_media_addr bcast_addr;
 	int res;
 
 	if (eth_started)
 		return -EINVAL;
 
-	bcast_addr.type = htonl(GIPC_MEDIA_TYPE_ETH);
+	bcast_addr.type = htonl(TIPC_MEDIA_TYPE_ETH);
 	memset(&bcast_addr.dev_addr, 0xff, ETH_ALEN);
 
 	memset(eth_bearers, 0, sizeof(eth_bearers));
 
-	res = gipc_register_media(GIPC_MEDIA_TYPE_ETH, "eth",
+	res = tipc_register_media(TIPC_MEDIA_TYPE_ETH, "eth",
 				  enable_bearer, disable_bearer, send_msg,
 				  eth_addr2str, &bcast_addr, ETH_LINK_PRIORITY,
 				  ETH_LINK_TOLERANCE, ETH_LINK_WINDOW);
@@ -287,10 +287,10 @@ int gipc_eth_media_start(void)
 }
 
 /**
- * gipc_eth_media_stop - deactivate Ethernet bearer support
+ * tipc_eth_media_stop - deactivate Ethernet bearer support
  */
 
-void gipc_eth_media_stop(void)
+void tipc_eth_media_stop(void)
 {
 	int i;
 
@@ -304,7 +304,7 @@ void gipc_eth_media_stop(void)
 			eth_bearers[i].bearer = NULL;
 		}
 		if (eth_bearers[i].dev) {
-			dev_remove_pack(&eth_bearers[i].gipc_packet_type);
+			dev_remove_pack(&eth_bearers[i].tipc_packet_type);
 			dev_put(eth_bearers[i].dev);
 		}
 	}

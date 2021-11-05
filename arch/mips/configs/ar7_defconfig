@@ -460,7 +460,7 @@ CONFIG_IP_NF_RAW=m
 # CONFIG_IP_NF_ARPTABLES is not set
 # CONFIG_IP_DCCP is not set
 # CONFIG_IP_SCTP is not set
-# CONFIG_GIPC is not set
+# CONFIG_TIPC is not set
 CONFIG_ATM=m
 # CONFIG_ATM_CLIP is not set
 # CONFIG_ATM_LANE is not set
