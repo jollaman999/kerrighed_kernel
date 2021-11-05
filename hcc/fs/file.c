@@ -1,7 +1,7 @@
 /** DVFS Level 3 - File struct sharing management.
  *  @file file.c
  *
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/file.h>
@@ -60,7 +60,7 @@ int create_gdm_file_object(struct file *file)
 
 #ifdef CONFIG_HCC_EPM
 /** Check if we need to share a file struct cluster wide and do whatever needed
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file    Struct of the file to check the sharing.
  */
@@ -144,7 +144,7 @@ void put_dvfs_file(int index, struct file *file)
 /*****************************************************************************/
 
 /** Get fresh position value for the given file struct.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file    Struct of the file to get the position value.
  */
@@ -163,7 +163,7 @@ loff_t krg_file_pos_read(struct file *file)
 }
 
 /** Write the new file position in the file container.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file    Struct of the file to write position value.
  */
@@ -179,7 +179,7 @@ void krg_file_pos_write(struct file *file, loff_t pos)
 }
 
 /** Decrease usage count on a dvfs file struct.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file    Struct of the file to decrease usage counter.
  */

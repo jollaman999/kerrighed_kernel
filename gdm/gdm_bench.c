@@ -1,7 +1,7 @@
 /** GDM benchmark module.
  *  @file gdm_bench.c
  *
- *  Copyright (C) 2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <net/krgrpc/rpc.h>

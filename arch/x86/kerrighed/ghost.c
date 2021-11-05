@@ -1,8 +1,7 @@
 /*
  *  arch/x86/hcc/ghost.c
  *
- *  Copyright (C) 2006-2007 Arkadiusz Danilecki
- *                          Pascal Gallard - Kerlabs, Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/sched.h>

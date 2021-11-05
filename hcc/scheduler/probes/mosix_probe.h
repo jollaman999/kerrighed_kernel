@@ -7,7 +7,7 @@
  *
  *  Original work by Amnon Shiloh and Amnon Barak.
  *
- *  @author Louis Rilling, ported to configfs by Marko Novak and Louis Rilling
+ *  @author Innogrid HCC
  */
 
 #ifndef __HCC_MOSIX_PROBE_H__

@@ -2,7 +2,7 @@
  *  @file dynamic_cpu_info_linker.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/swap.h>
 #include <linux/kernel_stat.h>
@@ -44,7 +44,7 @@ static DECLARE_DELAYED_WORK(update_dynamic_cpu_info_work,
 			    update_dynamic_cpu_info_worker);
 
 /** Update dynamic CPU informations for all local CPU.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 static void update_dynamic_cpu_info_worker(struct work_struct *data)
 {

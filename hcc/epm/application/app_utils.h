@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2008 INRIA
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 #ifndef __APP_UTILS_H__
 #define __APP_UTILS_H__

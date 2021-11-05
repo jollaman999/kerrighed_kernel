@@ -2,7 +2,7 @@
  *  hcc/epm/application_cr_api.c
  *
  *  Copyright (C) 1999-2006 INRIA, Universite de Rennes 1, EDF
- *  Copyright (C) 2007-2008 Matthieu Fertré - INRIA
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <hcc/pid.h>
@@ -20,7 +20,7 @@
 
 /**
  *  System call function to freeze an application.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 int sys_app_freeze(struct checkpoint_info *infos)
 {
@@ -29,7 +29,7 @@ int sys_app_freeze(struct checkpoint_info *infos)
 
 /**
  *  System call function to unfreeze an application.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 int sys_app_unfreeze(struct checkpoint_info *infos)
 {
@@ -38,7 +38,7 @@ int sys_app_unfreeze(struct checkpoint_info *infos)
 
 /**
  *  System call function to checkpoint an application.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 int sys_app_chkpt(struct checkpoint_info *infos)
 {
@@ -47,7 +47,7 @@ int sys_app_chkpt(struct checkpoint_info *infos)
 
 /**
  *  System call function to restart an application
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 int sys_app_restart(struct restart_request *req)
 {
@@ -61,7 +61,7 @@ int sys_app_restart(struct restart_request *req)
 
 /**
  *  System call function to set a user data per application
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 int sys_app_set_userdata(__u64 data)
 {
@@ -70,7 +70,7 @@ int sys_app_set_userdata(__u64 data)
 
 /**
  *  System call function to get a user data per application
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 int sys_app_get_userdata(struct app_userdata_request *data_req)
 {
@@ -80,7 +80,7 @@ int sys_app_get_userdata(struct app_userdata_request *data_req)
 
 /**
  *  System call function to disable use of checkpoint for current application
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 int sys_app_cr_disable(void)
 {
@@ -90,7 +90,7 @@ int sys_app_cr_disable(void)
 /**
  *  System call function to enable again use of checkpoint for
  *  current application
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 int sys_app_cr_enable(void)
 {

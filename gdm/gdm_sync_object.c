@@ -3,7 +3,7 @@
  *
  *  Implementation of GDM sync object function.
  *
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/module.h>
 
@@ -13,7 +13,7 @@
 
 
 /** Synchronize an object with its attached physical device.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set        GDM set hosting the object.
  *  @param obj_entry  Object entry of the object to sync.

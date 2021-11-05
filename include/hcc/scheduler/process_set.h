@@ -73,7 +73,7 @@ extern spinlock_t process_set_link_lock;
  * Note: at the beginning the process set doesn't contain any processes nor
  * process groups.
  * Note: to free a process set use process_set_put()
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @return		pointer to newly created process set or NULL if
  *			creation failed.

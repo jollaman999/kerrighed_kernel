@@ -2,14 +2,14 @@
  *  @file network_ghost.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2007-2008, Louis Rilling - Kerlabs.
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 #include <net/krgrpc/rpc.h>
 #include <hcc/ghost.h>
 #include <hcc/network_ghost.h>
 
 /** Read data from a network ghost.
- *  @author Renaud Lottiaux, Geoffroy Vallée
+ *  @author Innogrid HCC
  *
  *  @param  ghost   Ghost to read data from.
  *  @param  buff    Buffer to store data.
@@ -32,7 +32,7 @@ int network_ghost_read(struct ghost *ghost, void *buff, size_t length)
 }
 
 /** Write data to a network ghost.
- *  @author Renaud Lottiaux, Geoffroy Vallée
+ *  @author Innogrid HCC
  *
  *  @param  ghost   Ghost to write data to.
  *  @param  buff    Buffer to write in the ghost.
@@ -52,7 +52,7 @@ int network_ghost_write(struct ghost *ghost, const void *buff, size_t length)
 }
 
 /** Close a network ghost.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  ghost   Ghost to close.
  *
@@ -75,7 +75,7 @@ struct ghost_operations ghost_network_ops = {
 };
 
 /** Create a network ghost.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  access Ghost access (READ/WRITE)
  *  @param  desc   RPC descriptor to send/receive on.

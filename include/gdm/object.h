@@ -1,7 +1,7 @@
 /** Definition and management of gdm objects.
  *  @file object.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __GDM_OBJECT__
@@ -133,7 +133,7 @@ static inline void gdm_obj_path_unlock (struct gdm_set *set,
 
 
 /** Alloc a new GDM obj entry structure.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set     Kddm set to create an object for.
  *  @param objid   Id of the object to create.
@@ -142,14 +142,14 @@ struct gdm_obj *alloc_gdm_obj_entry(struct gdm_set *set,
 				      objid_t objid);
 
 /** Duplicate a GDM obj entry structure.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param src_obj   The object entry to duplicate
  */
 struct gdm_obj *dup_gdm_obj_entry(struct gdm_obj *src_obj);
 
 /** Free GDM obj entry structure.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set        The set the object belongs to.
  *  @param obj_entry  The structure to free
@@ -173,7 +173,7 @@ static inline int obj_entry_count(struct gdm_obj *obj_entry)
 }
 
 /** Lookup for an object entry in a gdm set.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param gdm_set    Kddm set to lookup the object in.
  *  @param objid       Id of the object to lookup for.
@@ -230,7 +230,7 @@ struct gdm_obj *default_get_gdm_obj_entry (struct gdm_set *set,
 
 
 /** Lookup for an object entry in a gdm set and create it if necessary
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param gdm_set    Kddm set to lookup the object in.
  *  @param objid       Id of the object to lookup for.
@@ -287,7 +287,7 @@ void for_each_gdm_object(int ns_id, gdm_set_id_t set_id,
 			  void *data);
 
 /** Insert a new object frame in a gdm set.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set          Kddm set to insert object in.
  *  @param objid        Id of the object to insert.
@@ -309,7 +309,7 @@ static inline struct gdm_obj *gdm_break_cow_object (struct gdm_set * set,
 
 
 /** Change a gdm object state.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param gdm_set   Kddm set hosting the object.
  *  @param obj_entry  Structure of the object.
@@ -323,7 +323,7 @@ void gdm_change_obj_state(struct gdm_set * gdm_set,
 
 
 /** Invalidate a object frame from a gdm set.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry  Entry of the object to invalidate.
  *  @param set        Kddm set hosting the object.
@@ -337,7 +337,7 @@ void gdm_invalidate_local_object_and_unlock (struct gdm_obj *obj_entry,
 
 
 /** Indicate if an object is frozen, ie if it should not be modified.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry  Entry of the object to test.
  */
@@ -349,7 +349,7 @@ int object_frozen_or_pinned (struct gdm_obj * obj_entry,
 
 
 /** Freeze the given object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry  Entry of the object to freeze.
  */
@@ -358,7 +358,7 @@ void set_object_frozen (struct gdm_obj * obj_entry, struct gdm_set *set);
 
 
 /** Object clear Frozen.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry  Entry of the object to warm.
  */
@@ -389,7 +389,7 @@ static inline hcc_node_t get_prob_owner (struct gdm_obj *obj_entry)
 
 /** Unlock, and make a process sleep until the corresponding
  *  object is received.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  set        The gdm set the object belong to.
  *  @param  obj_entry  The object to wait for.
@@ -415,7 +415,7 @@ int check_sleep_on_local_exclusive (struct gdm_set *set,
 
 
 /** Wake up the process waiting for the object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  The object to wake up waiting process.
  */

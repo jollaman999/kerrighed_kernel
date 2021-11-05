@@ -3,7 +3,7 @@
  *
  *  GDM SEM undo proc list Linker.
  *
- *  Copyright (C) 2007-2008 Matthieu Fertré - INRIA
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 #include <linux/sem.h>
 #include <linux/lockdep.h>
@@ -46,7 +46,7 @@ static inline struct semundo_list_object * __undolist_alloc(void)
 }
 
 /** Handle a gdm set sem_undo_list alloc
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Kddm object descriptor.
  *  @param  set       Kddm set descriptor
@@ -68,7 +68,7 @@ int undolist_alloc_object (struct gdm_obj * obj_entry,
 
 
 /** Handle a gdm set sem_undo_list first touch
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Kddm object descriptor.
  *  @param  set       Kddm set descriptor
@@ -86,7 +86,7 @@ int undolist_first_touch (struct gdm_obj * obj_entry,
 }
 
 /** Handle a gdm sem_undo_list remove.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to remove.
  *  @param  set       Kddm set descriptor.
@@ -107,7 +107,7 @@ int undolist_remove_object (void *object,
 }
 
 /** Invalidate a gdm sem_undo_list
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to invalidate.
  *  @param  set       Kddm set descriptor
@@ -127,7 +127,7 @@ int undolist_invalidate_object (struct gdm_obj * obj_entry,
 }
 
 /** Export a sem_undo_list
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  buffer    Buffer to export object data in.
  *  @param  object    The object to export data from.
@@ -167,7 +167,7 @@ error:
 }
 
 /** Import a sem_undo_list
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  object    The object to import data in.
  *  @param  buffer    Data to import in the object.

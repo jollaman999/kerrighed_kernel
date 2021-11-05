@@ -1,9 +1,7 @@
 /*
  *  hcc/scheduler/probes/migration_probe.c
  *
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
- *
- *  Based on former analyzer.c by Renaud Lottiaux
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  *  Copyright (C) 1999-2006 INRIA, Universite de Rennes 1, EDF
  */
 
@@ -14,7 +12,7 @@
 #include <asm/atomic.h>
 
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Louis Rilling <Louis.Rilling@kerlabs.com>");
+MODULE_AUTHOR("Innogrid HCC");
 MODULE_DESCRIPTION("Probe tracking migrations");
 
 static ktime_t last_migration_raised;

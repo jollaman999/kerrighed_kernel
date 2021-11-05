@@ -1,7 +1,7 @@
 /** Basic coherence protocol actions.
  *  @file protocol_action.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __PROTOCOL_ACTION__
@@ -20,40 +20,40 @@ typedef int (*queue_event_handler_t) (hcc_node_t sender, void* msg);
 
 
 /** Send object invalidation requests.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void request_copies_invalidation (struct gdm_set *set,
 				  struct gdm_obj *obj_entry, objid_t objid,
                                   hcc_node_t sender);
 
 /** Send object remove requests.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int request_copies_remove (struct gdm_set * set, struct gdm_obj *obj_entry,
 			   objid_t objid, hcc_node_t sender);
 
 /** Send object remove request to the object manager.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void request_objects_remove_to_mgr (struct gdm_set * set,
 				    struct gdm_obj * obj_entry,
 				    objid_t objid);
 
 /** Send an object write request for the given object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void request_object_on_write (struct gdm_set * set,
 			      struct gdm_obj *obj_entry,
 			      objid_t objid, int flags);
 
 /** Send an object read request for the given object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void request_object_on_read (struct gdm_set * set, struct gdm_obj *obj_entry,
 			     objid_t objid, int flags);
 
 /** Send an object write copy to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void send_copy_on_write (struct gdm_set *set, struct gdm_obj *obj_entry,
 			 objid_t objid, hcc_node_t dest_node, int flags);
@@ -66,20 +66,20 @@ struct gdm_obj *send_copy_on_write_and_inv (struct gdm_set *set,
 
 
 /** Send an object read copy to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int send_copy_on_read (struct gdm_set *set, struct gdm_obj *obj_entry,
 		       objid_t objid, hcc_node_t dest_node, int flags);
 
 /** Send a "no object" anwser to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void send_no_object (struct gdm_set * set, struct gdm_obj *obj_entry,
 		     objid_t objid, hcc_node_t dest_node,
 		     int send_ownership);
 
 /** Send object write access to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void transfer_write_access_and_unlock (struct gdm_set *set,
                                        struct gdm_obj *obj_entry,
@@ -90,13 +90,13 @@ void transfer_write_access_and_unlock (struct gdm_set *set,
 void merge_ack_set(krgnodemask_t *obj_set, krgnodemask_t *recv_set);
 
 /** Send an object invalidation ack to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void send_invalidation_ack (struct gdm_set *set, objid_t objid,
 			    hcc_node_t dest_node);
 
 /** Send an object remove ack to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void send_remove_ack (struct gdm_set *set, objid_t objid,
 		      hcc_node_t dest_node, int flags);
@@ -104,7 +104,7 @@ void send_remove_ack2 (struct gdm_set *set, objid_t objid,
 		       hcc_node_t dest_node);
 
 /** Send a global objects remove ack from the manager node to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void send_remove_object_done (struct gdm_set *set, objid_t objid,
 			      hcc_node_t dest_node,
@@ -112,7 +112,7 @@ void send_remove_object_done (struct gdm_set *set, objid_t objid,
 
 
 /** Do an object first touch.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int object_first_touch (struct gdm_set *set, struct gdm_obj *obj_entry,
 			objid_t objid, gdm_obj_state_t objectState,
@@ -123,7 +123,7 @@ int object_first_touch_no_wakeup (struct gdm_set *set,
 
 
 /** Send back an object first touch request to the faulting node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void send_back_object_first_touch (struct gdm_set *set,
 				   struct gdm_obj * obj_entry,

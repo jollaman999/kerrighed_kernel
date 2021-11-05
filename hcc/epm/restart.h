@@ -3,7 +3,7 @@
  *  @file restart.h
  *
  *  Definition of process restart interface.
- *  @author Geoffroy Vallée, Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 #ifndef __RESTART_H__

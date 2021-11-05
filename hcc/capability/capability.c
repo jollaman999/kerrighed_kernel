@@ -2,10 +2,8 @@
  *  hcc/capability/capability.c
  *
  *  Copyright (C) 1999-2006 INRIA, Universite de Rennes 1, EDF
- *  Copyright (C) 2006-2007 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
-
-/** writen by David Margery (c) Inria 2004 */
 
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
@@ -81,8 +79,6 @@ void krg_cap_finish_exec(struct linux_binprm *bprm)
 	kernel_krg_cap_t *caps = &current->krg_caps;
 	kernel_cap_t new_krg_permitted, new_krg_effective;
 
-	/* added by David Margery (c) Inria 2004 */
-	/* Updated by Pascal Gallard (c) Inria 2005 */
 	task_lock(current);
 	new_krg_permitted = cap_intersect(caps->inheritable_permitted,
 					  bprm->krg_cap_permitted);

@@ -1,7 +1,7 @@
 /** Interface of IPC management.
  *  @file ipc_handler.h
  *
- *  @author Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 

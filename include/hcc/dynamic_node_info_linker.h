@@ -1,7 +1,7 @@
 /** Dynamic node informations management.
  *  @file dynamic_node_info_linker.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef DYNAMIC_NODE_INFO_LINKER_H
@@ -94,7 +94,7 @@ extern struct gdm_set *dynamic_node_info_gdm_set;
 int dynamic_node_info_init(void);
 
 /** Helper function to get dynamic node informations.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param node_id   Id of the node we want informations on.
  *

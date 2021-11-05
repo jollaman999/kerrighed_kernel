@@ -1,8 +1,7 @@
 /*
  *  hcc/scheduler/policies/echo_policy.c
  *
- *  Copyright (C) 2007 Marko Novak - Xlab
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/kernel.h>
@@ -11,8 +10,7 @@
 #include <hcc/scheduler/port.h>
 
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Marko Novak <marko.novak@xlab.si>, "
-	      "Louis Rilling <Louis.Rilling@kerlabs.com>");
+MODULE_AUTHOR("Innogrid HCC");
 MODULE_DESCRIPTION("Policy that displays collected values");
 
 struct echo_policy {

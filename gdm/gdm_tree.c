@@ -1,7 +1,7 @@
 /** GDM tree management.
  *  @file gdm_tree.c
  *
- *  Copyright (C) 2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/mm.h>

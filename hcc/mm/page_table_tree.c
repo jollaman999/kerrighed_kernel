@@ -1,7 +1,7 @@
 /** GDM page table tree management.
  *  @file page_table_tree.c
  *
- *  Copyright (C) 2008, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/mm.h>

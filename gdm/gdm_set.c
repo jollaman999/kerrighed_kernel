@@ -3,7 +3,7 @@
  *
  *  Implementation of GDM set manipulation functions.
  *
- *  Copyright (C) 2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/spinlock.h>
@@ -36,7 +36,7 @@ static struct lock_class_key obj_lock_key[NR_OBJ_ENTRY_LOCKS];
 
 
 /** Alloc a new GDM set id.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ns     Name space to create the set id in.
  *
@@ -50,7 +50,7 @@ static inline gdm_set_id_t alloc_new_gdm_set_id (struct gdm_ns *ns)
 
 
 /** Alloc a new GDM set structure.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ns     Name space to create the set in.
  *
@@ -89,7 +89,7 @@ err:
 
 
 /** Make full gdm set initialization
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int init_gdm_set (struct gdm_set *set,
 		   gdm_set_id_t set_id,
@@ -188,7 +188,7 @@ EXPORT_SYMBOL(put_gdm_set);
 
 
 /** Find a GDM set structure from its id.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ns            Name space to search the set in.
  *  @param set_id        Identifier of the requested gdm set.
@@ -232,7 +232,7 @@ found:
 
 
 /** Find a GDM set structure from its id.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ns_id         Name space id to search the set in.
  *  @param set_id        Identifier of the requested gdm set.
@@ -261,7 +261,7 @@ struct gdm_set *generic_local_get_gdm_set(int ns_id,
 
 
 /** Try to find the given set on a remote node and create a local instance
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param gdm_set   Struct of the gdm set to lookup.
  *
@@ -431,7 +431,7 @@ EXPORT_SYMBOL(find_get_gdm_set);
 
 
 /** High level function to create a new gdm set.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ns             Name space to create a new set in.
  *  @param set_id         Id of the gdm set to create. 0 -> auto attribution.
@@ -551,7 +551,7 @@ void unfreeze_gdm(void)
 /*****************************************************************************/
 
 /** gdm set lookup handler.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param sender    Identifier of the remote requesting machine.
  *  @param msg       Identifier of the gdm set to lookup for.
@@ -607,7 +607,7 @@ done:
 
 
 /** gdm set destroy handler.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param sender    Identifier of the remote requesting machine.
  *  @param msg       Identifier of the gdm set to destroy.

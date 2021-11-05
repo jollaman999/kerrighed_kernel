@@ -2,7 +2,7 @@
  *  @file protocol_action.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  *
  *  The file implements the basic operations used by the GDM coherence
  *  protocol.
@@ -36,7 +36,7 @@ struct kmem_cache *gdm_da_cachep;
 
 
 /** Wrapper to send a message to the object server handler.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  dest        Destination node.
  *  @param  type        Type of the message to send.
@@ -69,7 +69,7 @@ static inline void send_msg_to_object_server(hcc_node_t dest,
 
 
 /** Wrapper to send a message to the object receiver handler.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  dest          Destination node.
  *  @param  set           Set hosting the object.
@@ -138,7 +138,7 @@ err_cancel:
 
 
 /** Request to synchronize the given object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  set        Struct of the concerned set.
  *  @param  obj_entry  Structure of the concerned object.
@@ -180,7 +180,7 @@ int request_sync_object_and_unlock(struct gdm_set * set,
 
 
 /** Send object invalidation requests.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  DO NOT invalidate the local copy and the sender copy.
  *
@@ -217,7 +217,7 @@ void request_copies_invalidation(struct gdm_set * set,
 
 
 /** Send object remove requests.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  DO NOT invalidate the local copy and the sender copy.
  *
@@ -269,7 +269,7 @@ exit:
 
 
 /** Send an object write request for the given object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry   Object entry of the object.
  *  @param set         Set the object belong to.
@@ -290,7 +290,7 @@ void request_object_on_write(struct gdm_set * set,
 
 
 /** Send an object read request for the given object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry   Object entry of the object.
  *  @param set         Set the object belong to.
@@ -310,7 +310,7 @@ void request_object_on_read(struct gdm_set * set,
 
 
 /** Send an object remove request for the given object the the object manager.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry   Object entry of the object.
  *  @param set         Set the object belong to.
@@ -328,7 +328,7 @@ void request_objects_remove_to_mgr(struct gdm_set * set,
 
 
 /** Send an object write copy to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param dest_node  Node to send the write copy to.
  *  @param set        Set the object belong to.
@@ -378,7 +378,7 @@ struct gdm_obj *send_copy_on_write_and_inv(struct gdm_set *set,
 }
 
 /** Send an object read copy to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param dest_node  Node to send the read copy to.
  *  @param set        Set the object belong to.
@@ -406,7 +406,7 @@ int send_copy_on_read(struct gdm_set * set,
 
 
 /** Send an "no object" answer.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param dest_node  Node to send the message to.
  *  @param set        Set the object belong to.
@@ -435,7 +435,7 @@ void send_no_object(struct gdm_set * set,
 
 
 /** Send object write access to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param dest_node  Node to give object write access to.
  *  @param set        Set the object belong to.
@@ -509,7 +509,7 @@ void merge_ack_set(krgnodemask_t *obj_set,
 
 
 /** Send an object invalidation ack to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param dest_node  Node to send the invalidation ack to.
  *  @param set        Set the object belongs to.
@@ -529,7 +529,7 @@ void send_invalidation_ack(struct gdm_set * set,
 
 
 /** Send an object remove ack to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param dest_node  Node to send the remove ack to.
  *  @param set        Set the object belongs to.
@@ -549,7 +549,7 @@ void send_remove_ack(struct gdm_set * set,
 
 
 /** Send an object remove ack2 to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param dest_node  Node to send the remove ack to.
  *  @param set        Set the object belongs to.
@@ -575,7 +575,7 @@ void send_remove_ack2(struct gdm_set * set,
 
 
 /** Send a global objects remove ack from the manager node to the given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param dest_node  Node to send the removes ack to.
  *  @param set        Set the object belongs to.
@@ -611,7 +611,7 @@ void send_remove_object_done(struct gdm_set * set,
 
 
 /** Do an object first touch.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set       Set the object belong to.
  *  @param objid     Id of the object to first touch.
@@ -650,7 +650,7 @@ int object_first_touch_no_wakeup(struct gdm_set * set,
 
 
 /** Do an object first touch.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set       Set the object belong to.
  *  @param objid     Id of the object to first touch.
@@ -680,7 +680,7 @@ int object_first_touch(struct gdm_set * set,
 
 
 /** Send back an object first touch request to the faulting node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param dest_node  Node to send the request to.
  *  @param set        Set the object belong to.
@@ -717,7 +717,7 @@ void send_back_object_first_touch(struct gdm_set * set,
 
 
 /** Change the probable owner on a given node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set        Set the object belong to.
  *  @param objid      Id of the object to change the owner

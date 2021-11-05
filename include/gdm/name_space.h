@@ -2,7 +2,7 @@
  *  @file name_space.h
  *
  *  Definition of GDM name space interface.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __GDM_NS__

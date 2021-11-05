@@ -2,7 +2,7 @@
  *  @file mobility.h
  *
  *  Definition of DVFS mobility function interface.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __MOBILITY_H__

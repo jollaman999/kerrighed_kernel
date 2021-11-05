@@ -1,7 +1,7 @@
 /** Access to Physical File System management.
  *  @file physical_fs.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __PHYSICAL_FS__

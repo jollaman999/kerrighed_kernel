@@ -1,8 +1,7 @@
 /*
  *  hcc/scheduler/process_set.c
  *
- *  Copyright (C) 2007 Marko Novak - Xlab
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/kernel.h>
@@ -592,7 +591,7 @@ static struct config_item_type pset_type = {
  * This function allocates memory for new process set and initializes it.
  * Note: at the beginning the process set doesn't contain any processes nor
  * process groups.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @return              pointer to newly created process set or NULL if
  *                      creation failed.

@@ -2,7 +2,7 @@
  *  hcc/proc/task.c
  *
  *  Copyright (C) 1999-2006 INRIA, Universite de Rennes 1, EDF
- *  Copyright (C) 2006-2007 Pascal Gallard - Kerlabs, Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 /** On each node the system manage a table to know the
@@ -58,7 +58,7 @@ void krg_task_put(struct task_gdm_object *obj)
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int task_alloc_object(struct gdm_obj *obj_entry,
 			     struct gdm_set *set, objid_t objid)
@@ -93,7 +93,7 @@ static int task_alloc_object(struct gdm_obj *obj_entry,
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int task_first_touch(struct gdm_obj *obj_entry,
 			    struct gdm_set *set, objid_t objid, int flags)
@@ -102,7 +102,7 @@ static int task_first_touch(struct gdm_obj *obj_entry,
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int task_import_object(struct rpc_desc *desc,
 			      struct gdm_set *set,
@@ -191,7 +191,7 @@ static void task_update_object(struct task_gdm_object *obj)
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int task_export_object(struct rpc_desc *desc,
 			      struct gdm_set *set,
@@ -223,7 +223,7 @@ static void delayed_task_put(struct rcu_head *rhp)
 }
 
 /**
- *  @author Louis Rilling
+ *  @author Innogrid HCC
  */
 static int task_remove_object(void *object,
 			      struct gdm_set *set, objid_t objid)
@@ -394,7 +394,7 @@ int krg_task_alive(struct task_gdm_object *obj)
 }
 
 /**
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 struct task_gdm_object *krg_task_readlock(pid_t pid)
 {
@@ -426,7 +426,7 @@ struct task_gdm_object *__krg_task_readlock(struct task_struct *task)
 }
 
 /**
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static struct task_gdm_object *task_writelock(pid_t pid, int nested)
 {
@@ -476,7 +476,7 @@ struct task_gdm_object *__krg_task_writelock_nested(struct task_struct *task)
 }
 
 /**
- * @author Louis Rilling
+ * @author Innogrid HCC
  */
 struct task_gdm_object *krg_task_create_writelock(pid_t pid)
 {
@@ -501,7 +501,7 @@ struct task_gdm_object *krg_task_create_writelock(pid_t pid)
 }
 
 /**
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 void krg_task_unlock(pid_t pid)
 {
@@ -535,7 +535,7 @@ void __krg_task_unlock(struct task_struct *task)
 
 #ifdef CONFIG_HCC_EPM
 /**
- * @author Pascal Gallard
+ * @author Innogrid HCC
  * Set (or update) the location of pid
  */
 int krg_set_pid_location(struct task_struct *task)
@@ -612,9 +612,7 @@ void krg_unlock_pid_location(pid_t pid)
 }
 
 /**
- * @author David Margery
- * @author Pascal Gallard (update to gdm architecture)
- * @author Louis Rilling (split files)
+ * @author Innogrid HCC
  */
 void proc_task_start(void)
 {
@@ -637,9 +635,7 @@ void proc_task_start(void)
 }
 
 /**
- * @author David Margery
- * @author Pascal Gallard (update to gdm architecture)
- * @author Louis Rilling (split files)
+ * @author Innogrid HCC
  */
 void proc_task_exit(void)
 {

@@ -1,7 +1,7 @@
 /*
  *  hcc/scheduler/policies/round_robin_balancer.c
  *
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 /**
@@ -16,7 +16,7 @@
  *
  * All instance are strictly independent.
  *
- * @author Louis Rilling
+ * @author Innogrid HCC
  */
 
 #include <linux/module.h>
@@ -28,7 +28,7 @@
 #include <hcc/scheduler/scheduler.h>
 
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Louis Rilling <Louis.Rilling@kerlabs.com>");
+MODULE_AUTHOR("Innogrid HCC");
 MODULE_DESCRIPTION("Load balancing policy based on round robin placement");
 
 struct round_robin_balancer {

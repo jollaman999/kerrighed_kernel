@@ -1,7 +1,7 @@
 /** GDM IPC allocation bitmap Linker.
  *  @file ipcmap_io_linker.c
  *
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #define MODULE_NAME "IPC map linker  "
@@ -35,7 +35,7 @@ int ipcmap_remove_object (void *object,
 }
 
 /** First touch a gdm ipcmap object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entr  Descriptor of the object to invalidate.
  *  @param  set       GDM descriptor
@@ -59,7 +59,7 @@ int ipcmap_first_touch_object (struct gdm_obj * obj_entry,
 }
 
 /** Invalidate a GDM ipcmap object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to invalidate.
  *  @param  set        GDM descriptor

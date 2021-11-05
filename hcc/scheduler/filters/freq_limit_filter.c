@@ -1,7 +1,7 @@
 /*
  *  hcc/scheduler/filters/freq_limit_filter.c
  *
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/module.h>
@@ -12,7 +12,7 @@
 #include <hcc/scheduler/port.h>
 
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Louis Rilling <Louis.Rilling@kerlabs.com>");
+MODULE_AUTHOR("Innogrid HCC");
 MODULE_DESCRIPTION("Filter to limit the frequency of events");
 
 struct config_group;

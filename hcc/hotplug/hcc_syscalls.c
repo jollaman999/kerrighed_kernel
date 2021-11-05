@@ -2,7 +2,7 @@
  *  @file krg_syscalls.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2009, Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 #include <linux/proc_fs.h>
 #include <linux/fs.h>
@@ -33,7 +33,7 @@ static struct file_operations proc_services_files_ops = {
 };
 
 /** IO Control for the file /proc/hcc/services.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 static int proc_services_ioctl(struct inode *inode, struct file *filp,
 			       unsigned int cmd, unsigned long arg)
@@ -96,7 +96,7 @@ static ssize_t proc_services_read(struct file *f, char *buff,
 };
 
 /** Add a service to the /proc/hcc/services
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param cmd   Identifier of the service.
  *  @param fun   Service function.
@@ -134,7 +134,7 @@ int register_proc_service(unsigned int cmd, proc_service_function_t fun)
 EXPORT_SYMBOL(register_proc_service);
 
 /** Remove a service from the /proc/hcc/services
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param cmd   Identifier of the service.
  */
@@ -148,7 +148,7 @@ int unregister_proc_service(unsigned int cmd)
 EXPORT_SYMBOL(unregister_proc_service);
 
 /** Initialisation of the /proc/hcc/services file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int krg_syscalls_init(void)
 {
@@ -170,7 +170,7 @@ int krg_syscalls_init(void)
 }
 
 /** Destroy of the /proc/hcc/services file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int krg_syscalls_finalize(void)
 {

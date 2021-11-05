@@ -2,7 +2,7 @@
  *  hcc/epm/app_restart.c
  *
  *  Copyright (C) 1999-2006 INRIA, Universite de Rennes 1, EDF
- *  Copyright (C) 2007-2008 Matthieu Fertré - INRIA
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/sched.h>
@@ -1344,7 +1344,7 @@ err_no_pids:
 
 /**
  *  Main application restarting interface.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 int app_restart(struct restart_request *req,
 		const task_identity_t *requester)

@@ -1,7 +1,7 @@
 /** HCC FAF Server.
  *  @file faf_server.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __FAF_SERVER__

@@ -1,5 +1,5 @@
 /** Application
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 #ifndef __APPLICATION_H__

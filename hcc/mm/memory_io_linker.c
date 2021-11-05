@@ -2,7 +2,7 @@
  *  @file memory_io_linker.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/mm.h>
@@ -31,7 +31,7 @@
 /*****************************************************************************/
 
 /** Allocate an object
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int memory_alloc_object (struct gdm_obj * obj_entry,
 			 struct gdm_set * set,
@@ -48,7 +48,7 @@ int memory_alloc_object (struct gdm_obj * obj_entry,
 }
 
 /** Import an object
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  object    The object to import data in.
  *  @param  buffer    Data to import in the object.
@@ -71,7 +71,7 @@ int memory_import_object (struct rpc_desc *desc,
 }
 
 /** Export an object
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  buffer    Buffer to export object data in.
  *  @param  object    The object to export data from.
@@ -94,7 +94,7 @@ int memory_export_object (struct rpc_desc *desc,
 }
 
 /** Handle a gdm set memory page first touch
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Kddm Set page descriptor.
  *  @param  set        Kddm Set descriptor
@@ -125,7 +125,7 @@ int memory_first_touch (struct gdm_obj * obj_entry,
 }
 
 /** Insert a new gdm set page in the file cache.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the page to insert.
  *  @param  set        Kddm Set descriptor
@@ -143,7 +143,7 @@ int memory_insert_page (struct gdm_obj * obj_entry,
 }
 
 /** Invalidate a gdm set memory page.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  set      Kddm Set descriptor
  *  @param  objid    Id of the page to invalidate
@@ -210,7 +210,7 @@ void memory_change_state (struct gdm_obj * obj_entry,
 }
 
 /** Handle a gdm set memory page remove.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  set      Kddm Set descriptor
  *  @param  padeid   Id of the page to remove

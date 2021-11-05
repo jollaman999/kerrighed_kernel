@@ -1,7 +1,7 @@
 /** DVFS level 3 - File Struct Linker.
  *  @file file_struct_io_linker.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __DVFS_FILE_STRUCT_LINKER__

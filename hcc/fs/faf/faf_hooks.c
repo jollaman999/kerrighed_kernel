@@ -2,7 +2,7 @@
  *  @file file_hooks.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/fs.h>
 #include <linux/fs_struct.h>
@@ -128,7 +128,7 @@ out:
 }
 
 /** HCC kernel hook for FAF lseek function.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file    File to seek in.
  *  @param offset  Offset to seek at.
@@ -159,7 +159,7 @@ off_t krg_faf_lseek (struct file * file,
 }
 
 /** HCC kernel hook for FAF llseek function.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file          File to seek in.
  *  @param offset_high   High part of the offset to seek at.
@@ -196,7 +196,7 @@ long krg_faf_llseek (struct file *file,
 }
 
 /** HCC kernel hook for FAF read function.
- *  @author Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param file          File to read from.
  *  @param buf           Buffer to store data in.
@@ -284,7 +284,7 @@ cancel:
 }
 
 /** HCC kernel hook for FAF write function.
- *  @author Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param file          File to write to.
  *  @param buf           Buffer of data to write.
@@ -506,7 +506,7 @@ cancel:
 }
 
 /** HCC kernel hook for FAF ioctl function.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file          File to do an ioctl to.
  *  @param cmd           IOCTL command.
@@ -563,7 +563,7 @@ out_err:
 }
 
 /** HCC kernel hook for FAF fcntl function.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file          File to do an fcntl to.
  *  @param cmd           FCNTL command.
@@ -645,7 +645,7 @@ cancel:
 
 #if BITS_PER_LONG == 32
 /** HCC kernel hook for FAF fcntl64 function.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file          File to do an fcntl to.
  *  @param cmd           FCNTL command.
@@ -714,7 +714,7 @@ cancel:
 #endif
 
 /** HCC kernel hook for FAF fstat function.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file          File to do an fcntl to.
  *  @param statbuf       Kernel buffer to store file stats.
@@ -745,7 +745,7 @@ long krg_faf_fstat (struct file *file,
 }
 
 /** HCC kernel hook for FAF fstat function.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param file          File to do an fcntl to.
  *  @param statbuf       Kernel buffer to store file stats.
@@ -787,7 +787,7 @@ err_rpc:
 }
 
 /** HCC kernel hook for FAF fsync function.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file          File to do a fsync to.
  */
@@ -805,7 +805,7 @@ long krg_faf_fsync (struct file *file)
 }
 
 /** HCC kernel hook for FAF flock function.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file          File to do a flock to.
  */
@@ -919,7 +919,7 @@ char *krg_faf_phys_d_path(const struct file *file, char *buff, int size,
 }
 
 /** HCC FAF d_path function.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file     The file to get the path.
  *  @param buff     Buffer to store the path in.
@@ -1545,7 +1545,7 @@ void krg_faf_poll_dequeue(struct file *file)
 }
 
 /** HCC kernel hook for FAF poll function.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file          File to do a poll to.
  */

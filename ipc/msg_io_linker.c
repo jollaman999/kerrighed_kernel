@@ -3,7 +3,7 @@
  *
  *  GDM IPC msg_queue id Linker.
  *
- *  Copyright (C) 2007-2008 Matthieu Fertré - INRIA
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 #include <linux/shm.h>
 #include <linux/lockdep.h>
@@ -22,7 +22,7 @@ struct kmem_cache *msq_object_cachep;
 
 /** Create a local instance of a remotly existing IPC message queue.
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 static struct msg_queue *create_local_msq(struct ipc_namespace *ns,
 					  struct msg_queue *received_msq)
@@ -66,7 +66,7 @@ out:
 
 /** Remove a local instance of a removed IPC message queue.
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 static void delete_local_msq(struct ipc_namespace *ns, struct msg_queue *local_msq)
 {
@@ -83,7 +83,7 @@ static void delete_local_msq(struct ipc_namespace *ns, struct msg_queue *local_m
 
 /** Update a local instance of a remotly existing IPC message queue.
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 static void update_local_msq (struct msg_queue *local_msq,
 			      struct msg_queue *received_msq)
@@ -129,7 +129,7 @@ int msq_alloc_object (struct gdm_obj * obj_entry,
 
 
 /** Handle a gdm set msq_queue id first touch
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Kddm object descriptor.
  *  @param  set       Kddm set descriptor
@@ -150,7 +150,7 @@ int msq_first_touch (struct gdm_obj * obj_entry,
 
 
 /** Insert a new msg_queue id in local structures.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to insert.
  *  @param  set       Kddm set descriptor
@@ -199,7 +199,7 @@ int msq_insert_object (struct gdm_obj * obj_entry,
 
 
 /** Invalidate a gdm object msqid.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to invalidate.
  *  @param  set       Kddm set descriptor
@@ -215,7 +215,7 @@ int msq_invalidate_object (struct gdm_obj * obj_entry,
 
 
 /** Handle a msg queue remove.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to remove.
  *  @param  set       Kddm set descriptor.
@@ -250,7 +250,7 @@ int msq_remove_object(void *object, struct gdm_set *set, objid_t objid)
 
 
 /** Export an object
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  buffer    Buffer to export object data in.
  *  @param  object    The object to export data from.
@@ -275,7 +275,7 @@ int msq_export_object (struct rpc_desc *desc,
 
 
 /** Import an object
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  object    The object to import data in.
  *  @param  buffer    Data to import in the object.

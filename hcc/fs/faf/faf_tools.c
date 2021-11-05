@@ -1,7 +1,7 @@
 /** HCC FAF Tools.
  *  @file faf_tools.c
  *
- *  Copyright (C) 2006-2007, Pascal Gallard, Kerlabs.
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 #include <linux/socket.h>
 #include <linux/slab.h>

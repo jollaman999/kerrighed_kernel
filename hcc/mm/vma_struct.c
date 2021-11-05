@@ -1,7 +1,7 @@
 /** Distributed management of the VMA structure.
  *  @file vma_struct.c
  *
- *  Copyright (C) 2008-2009, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/mm.h>

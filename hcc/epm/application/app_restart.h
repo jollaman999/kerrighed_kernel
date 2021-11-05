@@ -1,5 +1,5 @@
 /** Application restart
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 #ifndef __APPLICATION_RESTART_H__

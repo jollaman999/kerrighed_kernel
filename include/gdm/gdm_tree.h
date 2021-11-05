@@ -1,7 +1,7 @@
 /** Kddm tree implementation.
  *  @file gdm_tree.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __GDM_TREE__

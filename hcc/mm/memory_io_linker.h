@@ -2,7 +2,7 @@
  *  @file memory_linker.h
  *
  *  Link gdm sets and linux memory system.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __MEMORY_LINKER__

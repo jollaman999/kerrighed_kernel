@@ -15,7 +15,7 @@ struct task_struct;
  * kernel modules and inserts them dynamcally into kernel. By doing this, it
  * extends set of scheduling algorithms for distributing load across the
  * cluster.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 struct scheduler_policy {
 	struct config_group group; /** representation of scheduling policy in
@@ -105,7 +105,7 @@ struct scheduler_policy_type {
 /**
  * This function initializes a new scheduling policy. Must be called by
  * scheduler_policy constructors.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param policy	pointer to the scheduler_policy to init
  * @param name		name of the scheduling policy. This name must be the one
@@ -126,7 +126,7 @@ int scheduler_policy_init(struct scheduler_policy *policy,
 /**
  * This function frees all the memory taken by a scheduling policy. Must be
  * called by the scheduler_policy destructor.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param policy	pointer to scheduler_policy whose memory we want to free
  */
@@ -185,7 +185,7 @@ void scheduler_policy_update_node_set(struct scheduler_policy *policy,
  * The new task may not be created on the selected node at all, since another
  * scheduling policy attached to the same task may decide differently and win.
  *
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param policy	policy that is consulted
  * @param parent	parent of the task to be created
@@ -206,7 +206,7 @@ hcc_node_t scheduler_policy_new_task_node(struct scheduler_policy *policy,
  * This function is used for registering newly added scheduling policy types.
  * Once a type is registered, new scheduling policies of this type can be
  * created when user does mkdir with the type name.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param type		pointer to the scheduling policy type to register.
  *
@@ -219,7 +219,7 @@ int scheduler_policy_type_register(struct scheduler_policy_type *type);
 /**
  * This function is used for removing scheduling policy registrations.
  * Must *only* be called at module unloading.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param type		pointer to the scheduling policy type to unregister.
  */

@@ -11,7 +11,7 @@
 #include <asm/cputime.h>
 
 /** management of process than can or have migrated
- *  @author Geoffroy Vallee, David Margery, Pascal Gallard and Louis Rilling
+ *  @author Innogrid HCC
  */
 
 /* task gdm object */

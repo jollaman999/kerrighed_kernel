@@ -1,7 +1,7 @@
 /** Global management of regular files interface.
  *  @file regular_file_mgr.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 #ifndef __REGULAR_FILE_MGR__
 #define __REGULAR_FILE_MGR__

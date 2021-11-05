@@ -2,14 +2,14 @@
  *  hcc/epm/checkpoint.c
  *
  *  Copyright (C) 1999-2008 INRIA, Universite de Rennes 1, EDF
- *  Copyright (C) 2008-2009 Matthieu Fertré - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 /**
  *  Process checkpointing.
  *  @file checkpoint.c
  *
- *  @author Geoffroy Vallée, Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 #include <linux/sched.h>
@@ -71,7 +71,7 @@ exit:
 
 /**
  *  This function save the process information in a ghost
- *  @author Geoffroy Vallée, Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param task_to_checkpoint	Pointer on the task to checkpoint
  *
@@ -104,7 +104,7 @@ exit:
 
 /**
  *  This function saves the process information in a file
- *  @author Geoffroy Vallée, Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param task_to_checkpoint	Pointer to the task to checkpoint
  *
@@ -134,7 +134,7 @@ int checkpoint_task_on_disk(struct epm_action *action,
 
 /**
  *  This function saves the process information
- *  @author Geoffroy Vallée, Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param task_to_checkpoint	Pointer to the task to checkpoint
  *

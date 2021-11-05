@@ -2,7 +2,7 @@
  *  @file msg_handler.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2007-2008 Matthieu Fertré - INRIA
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #ifndef NO_MSG
@@ -115,7 +115,7 @@ static struct kern_ipc_perm *kcb_ipc_msg_findkey(struct ipc_ids *ids, key_t key)
 
 /** Notify the creation of a new IPC msg queue to HCC.
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 int krg_ipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 {

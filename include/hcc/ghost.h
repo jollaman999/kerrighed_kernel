@@ -2,7 +2,7 @@
  *  @file ghost_api.h
  *
  *  Definition of ghost management interface.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 #ifndef __GHOST_API__
 #define __GHOST_API__
@@ -21,7 +21,7 @@
 #define MAX_GHOST_STRING 256
 
 /** Create a new ghost struct.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  type  Type of ghost to create (network, file, etc)
  *
@@ -31,14 +31,14 @@
 ghost_t *create_ghost(ghost_type_t type, int access);
 
 /** Free ghost data structures.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  ghost  The ghost to free.
  */
 void free_ghost(ghost_t *ghost);
 
 /** Generique function to write to a ghost.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  ghost   The ghost to write to.
  *  @param  buff    Address of data to write in the ghost.
@@ -66,7 +66,7 @@ int __must_check ghost_write(ghost_t *ghost, const void *buff, size_t length)
 #define ghost_write_type(ghost, v) ghost_write(ghost, &v, sizeof(v))
 
 /** Generic function to write a character string to a ghost.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  ghost   The ghost to write to.
  *  @param  str     The characters string to write in the ghost.
@@ -94,7 +94,7 @@ err_write:
 }
 
 /** Generic function to read from a ghost.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  ghost   The ghost to read from.
  *  @param  buff    Address of buffer to write data in.
@@ -119,7 +119,7 @@ int __must_check ghost_read(ghost_t *ghost, void *buff, size_t length)
 
 /** Generic function to read a character string from a ghost.
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  ghost   The ghost to write to.
  *  @param  str     The characters string to read from the ghost.
@@ -152,7 +152,7 @@ err_read:
 int __must_check ghost_printf(ghost_t *ghost, char *format, ...);
 
 /** Generic function to close a ghost.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  ghost   The ghost to close.
  *

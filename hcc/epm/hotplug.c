@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2006-2007, Pascal Gallard, Kerlabs.
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/sched.h>

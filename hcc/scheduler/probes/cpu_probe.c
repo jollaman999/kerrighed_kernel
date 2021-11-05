@@ -1,8 +1,7 @@
 /*
  *  hcc/scheduler/probes/cpu_probe.c
  *
- *  Copyright (C) 2007 Marko Novak - Xlab
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/kernel.h>
@@ -25,8 +24,7 @@ static clock_t *cpu_used_prev;
 static clock_t *cpu_total_prev;
 
 MODULE_LICENSE("LGPL");
-MODULE_AUTHOR("Marko Novak <marko.novak@xlab.si>, "
-	      "Louis Rilling <Louis.Rilling@kerlabs.com>");
+MODULE_AUTHOR("Innogrid HCC");
 MODULE_DESCRIPTION("CPU load probe module.");
 
 

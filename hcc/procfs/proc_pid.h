@@ -1,7 +1,7 @@
 /** Global /proc/<pid> information management.
  *  @file proc_pid.h
  *
- *  @author David Margery
+ *  @author Innogrid HCC
  */
 
 #ifndef __PROC_PID_H__

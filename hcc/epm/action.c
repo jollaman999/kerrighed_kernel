@@ -1,7 +1,7 @@
 /*
  *  hcc/epm/action.c
  *
- *  Copyright (C) 2006-2007 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 /*
  * Management of incompatibilities between HCC actions and

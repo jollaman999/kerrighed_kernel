@@ -2,7 +2,7 @@
  *  @file memory_int_linker.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/mm.h>
@@ -40,7 +40,7 @@ extern struct vm_operations_struct shm_vm_ops;
 
 
 /** Link a VMA to the anon memory gdm set
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  vma          vm_area to link with a gdm set.
  *
@@ -165,7 +165,7 @@ void map_gdm_page(struct vm_area_struct *vma,
 }
 
 /** Handle a nopage fault on an anonymous VMA.
- * @author Renaud Lottiaux
+ * @author Innogrid HCC
  *
  *  @param  vma           vm_area of the faulting address area
  *  @param  address       address of the page fault
@@ -311,7 +311,7 @@ exit_error:
 
 
 /** Handle a wppage fault on a memory gdm set.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  vma       vm_area of the faulting address area
  *  @param  virtaddr  Virtual address of the page fault

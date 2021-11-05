@@ -1,7 +1,7 @@
 /** Memory injection.
  *  @file injection.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __MEMORY_INJECTION__

@@ -3,7 +3,7 @@
  *
  *  All the code for sharing IPC semaphore accross the cluster
  *
- *  Copyright (C) 2007-2008 Matthieu Fertré - INRIA
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 #include <linux/ipc.h>
 #include <linux/ipc_namespace.h>
@@ -139,7 +139,7 @@ static struct kern_ipc_perm *kcb_ipc_sem_findkey(struct ipc_ids *ids, key_t key)
 
 /** Notify the creation of a new IPC sem_array to HCC.
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 int krg_ipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma,
 					   int nsems)

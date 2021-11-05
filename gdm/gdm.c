@@ -6,7 +6,7 @@
  *  testing purpose.
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/sched.h>
@@ -24,7 +24,7 @@
 #include "gdm_bench.h"
 
 #ifndef CONFIG_HCC_MONOLITHIC
-MODULE_AUTHOR ("Renaud Lottiaux");
+MODULE_AUTHOR ("Innogrid HCC");
 MODULE_DESCRIPTION ("HCC Distributed Data Manager");
 MODULE_LICENSE ("GPL");
 #endif
@@ -43,7 +43,7 @@ void gdm_hotplug_cleanup(void);
 
 
 /** Initialize the gdm field of the krg_task field of the given task.
- *  @author  Renaud Lottiaux
+ *  @author  Innogrid HCC
  *
  *  @param tsk   Task to fill the gdm struct.
  */
@@ -76,7 +76,7 @@ int kcb_copy_gdm_info(unsigned long clone_flags, struct task_struct * tsk)
 
 
 /** Initialisation of the GDM sub-system module.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int init_gdm (void)
 {
@@ -120,7 +120,7 @@ int init_gdm (void)
 
 
 /** Cleanup of the GDM sub-system.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void cleanup_gdm (void)
 {

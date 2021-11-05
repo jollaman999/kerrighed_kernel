@@ -2,7 +2,7 @@
  *  @file mm.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2009, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  *
  *  Implementation of functions used to initialize and finalize the
  *  kermm module.
@@ -30,7 +30,7 @@
 
 
 /** Initialisation of the DSM module.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  Start object server, object manager and gdm set manager threads.
  *  Register kermm services in the /proc/hcc/services.
@@ -70,7 +70,7 @@ int init_kermm(void)
 
 
 /** Cleanup of the DSM module.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  Kill object manager, object server and gdm set manager threads.
  */

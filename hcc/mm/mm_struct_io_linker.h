@@ -1,7 +1,7 @@
 /** MM Struct Linker.
  *  @file mm_struct_io_linker.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __MM_STRUCT_LINKER__

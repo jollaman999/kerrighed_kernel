@@ -3,7 +3,7 @@
  *
  *  Implementation of GDM remove object function.
  *
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/module.h>
 
@@ -28,7 +28,7 @@ sleep_again:
 
 
 /** Remove an object cluster wide.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set        GDM set hosting the object.
  *  @param obj_entry  Object entry of the object to remove.

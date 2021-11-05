@@ -3,7 +3,7 @@
  *
  *  GDM SEM array Linker.
  *
- *  Copyright (C) 2007-2008 Matthieu Fertré - INRIA
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/sem.h>
@@ -24,7 +24,7 @@ struct kmem_cache *semarray_object_cachep;
 
 /** Create a local instance of an remotly existing Semaphore.
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 struct sem_array *create_local_sem(struct ipc_namespace *ns,
 				   struct sem_array *received_sma)
@@ -120,7 +120,7 @@ static inline void update_sem_queues(struct sem_array *sma,
 
 /** Update a local instance of a remotly existing IPC semaphore.
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 static void update_local_sem(struct sem_array *local_sma,
 			     struct sem_array *received_sma)
@@ -167,7 +167,7 @@ int semarray_alloc_object (struct gdm_obj * obj_entry,
 
 
 /** Handle a gdm set sem_array first touch
- *  @author Matthieu Fertré, Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Kddm object descriptor.
  *  @param  set       Kddm set descriptor
@@ -188,7 +188,7 @@ int semarray_first_touch (struct gdm_obj * obj_entry,
 
 
 /** Insert a new sem_array in local structures.
- *  @author Matthieu Fertré, Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to insert.
  *  @param  set       Kddm set descriptor
@@ -235,7 +235,7 @@ int semarray_insert_object (struct gdm_obj * obj_entry,
 
 
 /** Invalidate a gdm object semarray.
- *  @author Matthieu Fertré, Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to invalidate.
  *  @param  set       Kddm set descriptor
@@ -270,7 +270,7 @@ int semarray_invalidate_object (struct gdm_obj * obj_entry,
 }
 
 /** Handle a gdm semaphore remove.
- *  @author Matthieu Fertré, Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to remove.
  *  @param  set       Kddm set descriptor.
@@ -394,7 +394,7 @@ static inline void __export_semqueues(struct rpc_desc *desc,
 }
 
 /** Export an object
- *  @author Matthieu Fertré, Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  buffer    Buffer to export object data in.
  *  @param  object    The object to export data from.
@@ -580,7 +580,7 @@ static inline void __unimport_semqueues(struct sem_array *sma)
 }
 
 /** Import an object
- *  @author Matthieu Fertré, Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  object    The object to import data in.
  *  @param  buffer    Data to import in the object.

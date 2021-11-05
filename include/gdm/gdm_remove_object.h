@@ -5,7 +5,7 @@
  *  @file gdm_remove_object.h
  *
  *  Definition of GDM interface.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __GDM_REMOVE_OBJECT__

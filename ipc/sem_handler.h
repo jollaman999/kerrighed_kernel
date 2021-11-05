@@ -1,7 +1,7 @@
 /** Interface of IPC semaphore (sem) management.
  *  @file sem_handler.h
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 #ifndef SEM_HANDLER_H
 #define SEM_HANDLER_H

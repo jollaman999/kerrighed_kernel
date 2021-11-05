@@ -1,7 +1,7 @@
 /*
  *  hcc/epm/children.c
  *
- *  Copyright (C) 2006-2007 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/types.h>
@@ -1643,7 +1643,7 @@ void krg_children_cleanup(struct task_struct *task)
 }
 
 /**
- * @author Louis Rilling
+ * @author Innogrid HCC
  */
 void epm_children_start(void)
 {
@@ -1673,7 +1673,7 @@ void epm_children_start(void)
 }
 
 /**
- * @author Louis Rilling
+ * @author Innogrid HCC
  */
 void epm_children_exit(void)
 {

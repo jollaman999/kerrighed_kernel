@@ -1,7 +1,7 @@
 /** Distributed management of the MM structure.
  *  @file mm_struct.h
  *
- *  @author Renaud Lottiaux.
+ *  @author Innogrid HCC.
  */
 
 

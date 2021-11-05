@@ -2,7 +2,7 @@
  *  @file file_ghost.h
  *
  *  Definition of file ghost structures and functions.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 #ifndef __FILE_GHOST__
 #define __FILE_GHOST__
@@ -38,7 +38,7 @@ char *get_chkpt_filebase(long app_id,
 			 ...);
 
 /** Create a new file ghost.
- *  @author Matthieu Fertré, Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  access   Ghost access (READ/WRITE)
  *  @param  file     File to read/write data to/from.
@@ -54,7 +54,7 @@ ghost_t *create_file_ghost(int access,
 void unlink_file_ghost(ghost_t *ghost);
 
 /** Create a new file ghost.
- *  @author Matthieu Fertré, Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  access   Ghost access (READ/WRITE)
  *  @param  fd       File descriptor to read/write data to/from.

@@ -1,7 +1,7 @@
 /** Interface of system V shared memory (shm) management.
  *  @file shm_handler.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 

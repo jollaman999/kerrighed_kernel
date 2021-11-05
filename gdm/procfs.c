@@ -2,7 +2,7 @@
  *  @file procfs.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/mmzone.h>
@@ -117,7 +117,7 @@ static struct file_operations proc_gdminfo_operations = {
 
 
 /** Read function for /proc/hcc/gdm/meminfo entry.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param buffer           Buffer to write data to.
  *  @param buffer_location  Alternative buffer to return...
@@ -173,7 +173,7 @@ int read_meminfo (char *buffer,
 
 
 /** Read function for /proc/hcc/gdm/setstat entry.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param buffer           Buffer to write data to.
  *  @param buffer_location  Alternative buffer to return...
@@ -221,7 +221,7 @@ int read_setstat (char *buffer,
 
 
 /** Read function for /proc/hcc/gdm/bench entry.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param buffer           Buffer to write data to.
  *  @param buffer_location  Alternative buffer to return...
@@ -260,7 +260,7 @@ int read_bench (char *buffer,
 
 
 /** Create the /proc/hcc/gdm directory and sub-directories.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void create_gdm_proc_dir (void)
 {
@@ -318,7 +318,7 @@ void create_gdm_proc_dir (void)
 
 
 /** Delete the /proc/hcc/gdm directory and sub-directories.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void remove_gdm_proc_dir (void)
 {
@@ -337,7 +337,7 @@ void remove_gdm_proc_dir (void)
 
 
 /** Read function for /proc/hcc/gdm/<set_id>/setstat entry.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param buffer           Buffer to write data to.
  *  @param buffer_location  Alternative buffer to return...
@@ -391,7 +391,7 @@ int read_set_id_setstat (char *buffer,
 
 
 /** Read function for /proc/hcc/gdm/<set_id>/setinfo entry.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param buffer           Buffer to write data to.
  *  @param buffer_location  Alternative buffer to return...
@@ -615,7 +615,7 @@ void remove_gdm_proc (struct proc_dir_entry *proc_entry)
 
 
 /** Init Kddm proc stuffs.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int procfs_gdm_init (void)
 {
@@ -627,7 +627,7 @@ int procfs_gdm_init (void)
 
 
 /** Finalize Kddm proc stuffs.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int procfs_gdm_finalize (void)
 {

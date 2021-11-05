@@ -1,8 +1,7 @@
 /*
  *  hcc/scheduler/probe.c
  *
- *  Copyright (C) 2007 Marko Novak - Xlab
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/module.h>
@@ -33,7 +32,7 @@
  * deactivated by issuing "rmdir /config/krg_scheduler/probes/<probe_name>"
  * command from user space.
  *
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 struct scheduler_probe {
 	struct config_group group; /** representation of probe in ConfigFS. */
@@ -123,7 +122,7 @@ EXPORT_SYMBOL(scheduler_probe_unlock);
 
 /**
  * General function for reading probes' ConfigFS attributes.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 static ssize_t scheduler_probe_attribute_show(struct config_item *item,
 					      struct configfs_attribute *attr,
@@ -194,7 +193,7 @@ struct global_config_item_operations probe_global_item_ops = {
 
 /**
  * Function for reading "probe_period" attribute.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 static ssize_t scheduler_probe_attr_period_show(struct scheduler_probe *probe,
 						char *page)
@@ -207,7 +206,7 @@ static ssize_t scheduler_probe_attr_period_show(struct scheduler_probe *probe,
 
 /**
  * Function for storing "probe_period" attribute.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 static ssize_t scheduler_probe_attr_period_store(struct scheduler_probe *probe,
 						 const char *page, size_t count)
@@ -227,7 +226,7 @@ static ssize_t scheduler_probe_attr_period_store(struct scheduler_probe *probe,
 
 /**
  * "probe_period" attribute.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 static SCHEDULER_PROBE_ATTRIBUTE(scheduler_probe_attr_period,
 				 "probe_period",
@@ -337,7 +336,7 @@ EXPORT_SYMBOL(scheduler_probe_source_notify_update);
 
 /**
  * General function for reading probe sources' ConfigFS attributes.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 static
 ssize_t scheduler_probe_source_attribute_show(struct config_item *item,
@@ -366,7 +365,7 @@ ssize_t scheduler_probe_source_attribute_show(struct config_item *item,
 
 /**
  * General function for storing probe sources' ConfigFS attributes.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 static
 ssize_t scheduler_probe_source_attribute_store(struct config_item *item,
@@ -434,7 +433,7 @@ static int probe_source_attribute_array_length(
 
 /**
  * This function allocates memory and initializes a probe source.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param type		Type describing the probe source, defined with
  *			SCHEDULER_PROBE_SOURCE_TYPE
@@ -513,7 +512,7 @@ void scheduler_probe_source_free(struct scheduler_probe_source *source)
 
 /**
  * Checks that item is an source subdir of a probe.
- * @author Louis Rilling, Marko Novak
+ * @author Innogrid HCC
  *
  * @param item		pointer to the config_item to check
  */
@@ -543,7 +542,7 @@ int probe_attribute_array_length(struct scheduler_probe_attribute **attrs)
 
 /**
  * This function allocates memory for new probe and initializes it.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param name          name of the probe. This name must be unique for each
  *			probe.
@@ -631,7 +630,7 @@ out_kmalloc:
 
 /**
  * This function frees all the memory taken by a probe.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param probe         pointer to probe whose memory we want to free.
  */
@@ -674,7 +673,7 @@ static struct scheduler_probe *probe_find(const char *name)
 /**
  * This function is used for registering probe. This function has to
  * be called at the end of "init_module" function for each probe's module.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param probe         pointer to the probe we wish to register.
  *
@@ -702,7 +701,7 @@ int scheduler_probe_register(struct scheduler_probe *probe)
 /**
  * This function is used for removing probe registration. This function has to
  * be called from "cleanup_module" function for each probe's module.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param probe         pointer to the probe we wish to unregister.
  */
@@ -894,7 +893,7 @@ static struct config_group probes_group = {
 /**
  * Initializes list of probes and all ConfigFS infrastructure.
  * Registers "probes" subdirectory.
- * author Marko Novak, Louis Rilling
+ * author Innogrid HCC
  */
 struct config_group *scheduler_probe_start(void)
 {
@@ -906,7 +905,7 @@ struct config_group *scheduler_probe_start(void)
 /**
  * Unregisters "probes" subdirectory and all the ConfigFS infrastructure
  * related to probes.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 void scheduler_probe_exit(void)
 {

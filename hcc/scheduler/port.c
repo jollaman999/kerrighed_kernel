@@ -1,8 +1,7 @@
 /*
  *  hcc/scheduler/port.c
  *
- *  Copyright (C) 2007 Marko Novak - Xlab
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/module.h>
@@ -94,7 +93,7 @@ static struct scheduler_port_type *port_type_find(const char *name);
  * General function for reading scheduler_port's ConfigFS attributes. Falls back
  * to the scheduler_pipe attributes methods the scheduler_pipe attributes, or to
  * the port attribute show() operation for custom attributes.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 static ssize_t scheduler_port_attribute_show(struct config_item *item,
 					     struct configfs_attribute *attr,

@@ -1,5 +1,5 @@
 /** Application management of object(s) shared by several processes
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 #ifndef __APPLICATION_SHARED_H__

@@ -1,7 +1,7 @@
 /** HCC FAF tools.
  *  @file faf_tools.h
  *  
- *  @author Pascal Gallard
+ *  @author Innogrid HCC
  */
 
 #ifndef __FAF_TOOLS__

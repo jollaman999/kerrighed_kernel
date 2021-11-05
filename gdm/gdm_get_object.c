@@ -4,7 +4,7 @@
  *  Implementation of GDM get object function.
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/module.h>
 
@@ -14,7 +14,7 @@
 
 
 /** Place a copy of a given object in local physical memory.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set        GDM set hosting the object.
  *  @param obj_entry  Object entry of the object to get.

@@ -1,7 +1,7 @@
 /** Global management of faf files interface.
  *  @file faf_file_mgr.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 #ifndef __FAF_FILE_MGR__
 #define __FAF_FILE_MGR__

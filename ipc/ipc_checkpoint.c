@@ -1,7 +1,7 @@
 /** IPC snapshot API
  *  @file ipc_checkpoint.c
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 #define MODULE_NAME "IPC checkpoint"

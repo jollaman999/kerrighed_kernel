@@ -1,6 +1,6 @@
 /**
  * Define HCC Capabilities
- * @author David Margery (c) Inria 2004
+ * @author Innogrid HCC
  */
 
 #ifndef _KERRIGHED_CAPABILITIES_H

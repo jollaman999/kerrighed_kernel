@@ -2,7 +2,7 @@
  *  @file shm_memory_linker.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/mm.h>
@@ -52,7 +52,7 @@ extern void map_gdm_page (struct vm_area_struct *vma, unsigned long address,
 
 
 /** Insert a new shm memory page in the corresponding mapping.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  objEntry  Descriptor of the page to insert.
  *  @param  gdm      GDM descriptor
@@ -107,7 +107,7 @@ error:
 
 
 /** Invalidate a GDM memory page.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  gdm     GDM descriptor
  *  @param  objid    Id of the page to invalidate
@@ -168,7 +168,7 @@ int shm_memory_invalidate_page (struct gdm_obj * objEntry,
 
 
 /** Handle a gdm set memory page remove.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  set      Kddm Set descriptor
  *  @param  padeid   Id of the page to remove
@@ -213,7 +213,7 @@ struct iolinker_struct shm_memory_linker = {
 
 
 /** Handle a nopage fault on an anonymous VMA.
- * @author Renaud Lottiaux, Matthieu Fertré
+ * @author Innogrid HCC
  *
  *  @param  vma           vm_area of the faulting address area
  *  @param  vmf
@@ -259,7 +259,7 @@ int shmem_memory_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 }
 
 /** Handle a wppage fault on a memory GDM set.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  vma       vm_area of the faulting address area
  *  @param  virtaddr  Virtual address of the page fault

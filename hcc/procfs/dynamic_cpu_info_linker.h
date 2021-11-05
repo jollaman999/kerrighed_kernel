@@ -1,7 +1,7 @@
 /** Dynamic per CPU informations management.
  *  @file dynamic_cpu_info_linker.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef DYNAMIC_CPU_INFO_LINKER_H
@@ -45,7 +45,7 @@ extern struct gdm_set *dynamic_cpu_info_gdm_set;
 int dynamic_cpu_info_init(void);
 
 /** Helper function to get dynamic CPU info
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param node_id   Id of the node hosting the CPU we want informations on.
  *  @param cpu_id    Id of the CPU we want informations on.

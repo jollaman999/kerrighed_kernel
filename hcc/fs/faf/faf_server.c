@@ -2,7 +2,7 @@
  *  @file faf_server.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/fs.h>
 #include <linux/fs_struct.h>
@@ -173,7 +173,7 @@ restore_context(const struct prev_root *prev_root, const struct cred *old_cred)
 }
 
 /** Handler for reading in a FAF open file.
- *  @author Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param from    Node sending the request
  *  @param msgIn   Request message
@@ -260,7 +260,7 @@ cancel:
 }
 
 /** Handler for writing in a FAF open file.
- *  @author Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param from    Node sending the request
  *  @param msgIn   Request message
@@ -438,7 +438,7 @@ cancel:
 }
 
 /** Handler for doing an IOCTL in a FAF open file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param from    Node sending the request
  *  @param msgIn   Request message
@@ -490,7 +490,7 @@ out_err:
 }
 
 /** Handler for doing an FCNTL in a FAF open file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param from    Node sending the request
  *  @param msgIn   Request message
@@ -548,7 +548,7 @@ cancel:
 
 #if BITS_PER_LONG == 32
 /** Handler for doing an FCNTL64 in a FAF open file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param from    Node sending the request
  *  @param msgIn   Request message
@@ -598,7 +598,7 @@ cancel:
 #endif
 
 /** Handler for doing an FSTAT in a FAF open file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param from    Node sending the request
  *  @param msgIn   Request message
@@ -617,7 +617,7 @@ void handle_faf_fstat (struct rpc_desc* desc,
 }
 
 /** Handler for doing an FSTATFS in a FAF open file.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param from    Node sending the request
  *  @param msgIn   Request message
@@ -644,7 +644,7 @@ err_rpc:
 }
 
 /** Handler for seeking in a FAF open file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param from    Node sending the request
  *  @param msgIn   Request message
@@ -661,7 +661,7 @@ void handle_faf_lseek (struct rpc_desc* desc,
 }
 
 /** Handler for seeking in a FAF open file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param from    Node sending the request
  *  @param msgIn   Request message
@@ -681,7 +681,7 @@ void handle_faf_llseek (struct rpc_desc* desc,
 }
 
 /** Handler for syncing in a FAF open file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param from    Node sending the request
  *  @param msgIn   Request message
@@ -698,7 +698,7 @@ int handle_faf_fsync (struct rpc_desc* desc,
 }
 
 /** Handler for locking in a FAF open file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param from    Node sending the request
  *  @param msgIn   Request message
@@ -737,7 +737,7 @@ cancel:
 
 /*
  * Handlers for polling a FAF open file.
- * @author Louis Rilling
+ * @author Innogrid HCC
  */
 static void faf_poll_notify_node(hcc_node_t node, unsigned long dvfs_id)
 {
@@ -1097,7 +1097,7 @@ static void faf_poll_init(void)
 
 
 /** Handler for d_path in a FAF open file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param from    Node sending the request
  *  @param msgIn   Request message

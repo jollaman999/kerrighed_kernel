@@ -2,7 +2,7 @@
  *  @file proc_pid_fd.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2007, Louis Rilling - Kerlabs.
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/kernel.h>

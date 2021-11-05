@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2006-2007, Pascal Gallard, Kerlabs.
- *  Copyright (C) 2008, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/module.h>
@@ -18,7 +18,7 @@ static struct hash_list HASH_LISTHEAD_NEW = { 0, NULL, NULL };
 
 
 /** Add a new element in a hash table linked list.
- *  @author Viet Hoa Dinh
+ *  @author Innogrid HCC
  * 
  *  The function must be called with the lock taken.
  *
@@ -54,7 +54,7 @@ static inline int hash_list_add(hashtable_t * table,
 
 
 /** Remove an element from a hash table linked list.
- *  @author Viet Hoa Dinh
+ *  @author Innogrid HCC
  *
  *  The function must be called with the lock taken.
  *
@@ -92,7 +92,7 @@ static inline void *hash_list_remove(hashtable_t * table,
 
 
 /** Free a hash table linked list.
- *  @author Viet Hoa Dinh
+ *  @author Innogrid HCC
  *
  *  The function must be called with the lock taken.
  *
@@ -114,7 +114,7 @@ static inline void hash_list_free(struct hash_list * list)
 
 
 /** Find an element in a hash table linked list.
- *  @author Viet Hoa Dinh
+ *  @author Innogrid HCC
  *
  *  The function must be called with the lock taken.
  *
@@ -139,7 +139,7 @@ static inline void * hash_list_find(struct hash_list * head,
 
 
 /** Find an element in a hash table linked list or the next elem in hash order.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param head   The linked list to find the element in.
  *  @param hash   The element key.

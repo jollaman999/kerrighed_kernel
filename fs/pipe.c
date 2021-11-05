@@ -1436,7 +1436,7 @@ struct shared_object_operations cr_shared_pipe_inode_ops = {
 };
 
 /** Return a hcc descriptor corresponding to the given file.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param file       The file to get a HCC descriptor for.
  *  @param desc       The returned descriptor.

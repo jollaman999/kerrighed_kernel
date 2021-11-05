@@ -2,7 +2,7 @@
  *  @file semundolst_io_linker.h
  *
  *  Link GDM and Linux SEM_UNDO proc list mechanisms.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 #ifndef __SEMUNDOLST_IO_LINKER__

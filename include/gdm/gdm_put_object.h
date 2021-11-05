@@ -2,7 +2,7 @@
  *  @file gdm_put_object.h
  *
  *  Definition of GDM interface.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __GDM_PUT_OBJECT__

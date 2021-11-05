@@ -1,7 +1,7 @@
 /** MM Struct Linker.
  *  @file mm_struct_io_linker.c
  *
- *  Copyright (C) 2008-2009, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/rmap.h>
 #include <net/krgrpc/rpc.h>
@@ -72,7 +72,7 @@ int mm_remove_object (void *object,
 
 
 /** Export an MM struct
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  buffer    Buffer to export object data in.
  *  @param  obj_entry  Object entry of the object to export.
@@ -113,7 +113,7 @@ int mm_export_object (struct rpc_desc *desc,
 
 
 /** Import an MM struct
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Object entry of the object to import.
  *  @param  _buffer   Data to import in the object.

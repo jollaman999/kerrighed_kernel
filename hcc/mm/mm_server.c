@@ -1,7 +1,7 @@
 /** HCC MM servers.
  *  @file mm_server.c
  *
- *  Copyright (C) 2008-2010, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/kernel.h>
 #include <linux/mm.h>
@@ -12,7 +12,7 @@
 #include "memory_int_linker.h"
 
 /** Handler for remote mmap.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int handle_do_mmap_region (struct rpc_desc* desc,
 			   void *msgIn, size_t size)
@@ -44,7 +44,7 @@ int handle_do_mmap_region (struct rpc_desc* desc,
 }
 
 /** Handler for remote mremap.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int handle_do_mremap (struct rpc_desc* desc,
 		      void *msgIn, size_t size)
@@ -70,7 +70,7 @@ int handle_do_mremap (struct rpc_desc* desc,
 }
 
 /** Handler for remote munmap.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int handle_do_munmap (struct rpc_desc* desc,
 		      void *msgIn, size_t size)
@@ -95,7 +95,7 @@ int handle_do_munmap (struct rpc_desc* desc,
 }
 
 /** Handler for remote brk.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int handle_do_brk (struct rpc_desc* desc,
 		   void *msgIn, size_t size)
@@ -120,7 +120,7 @@ int handle_do_brk (struct rpc_desc* desc,
 }
 
 /** Handler for remote expand_stack.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int handle_expand_stack (struct rpc_desc* desc,
 			 void *msgIn, size_t size)
@@ -149,7 +149,7 @@ int handle_expand_stack (struct rpc_desc* desc,
 }
 
 /** Handler for remote mprotect.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int handle_do_mprotect (struct rpc_desc* desc,
 			void *msgIn, size_t size)

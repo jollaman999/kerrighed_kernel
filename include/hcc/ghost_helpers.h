@@ -23,7 +23,7 @@ void unimport_gdm_info_struct (struct task_struct *tsk);
 
 /**
  *  This function exports the virtual memory of a process
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where VM data should be stored.
  *  @param task    Task to export file data from.
@@ -37,7 +37,7 @@ int export_mm_struct (struct epm_action *action,
 
 /**
  *  This function imports the virtual memory of a process
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where VM data are stored.
  *  @param task    Task to load VM data in.
@@ -65,7 +65,7 @@ void cr_free_mm_exclusions(struct app_struct *app);
 /* FS */
 
 /** Export an files structure into a ghost.
- *  @author  Renaud Lottiaux
+ *  @author  Innogrid HCC
  *
  *  @param ghost  Ghost where files data should be stored.
  *  @param tsk    Task to export files data from.
@@ -77,7 +77,7 @@ int export_files_struct (struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk);
 
 /** Export the fs_struct of a process
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where file data should be stored.
  *  @param tsk    Task to export file data from.
@@ -99,7 +99,7 @@ int export_mnt_namespace (struct epm_action *action,
 			  ghost_t *ghost, struct task_struct *tsk);
 
 /** Import a files structure from a ghost.
- *  @author  Renaud Lottiaux
+ *  @author  Innogrid HCC
  *
  *  @param ghost  Ghost where files data are stored.
  *  @param tsk    Task to load files data in.
@@ -111,7 +111,7 @@ int import_files_struct (struct epm_action *action,
 			 ghost_t *ghost, struct task_struct *tsk);
 
 /** Import the fs_struct of a process
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where file data are stored.
  *  @param tsk    Task to import file data in.

@@ -2,7 +2,7 @@
  *  @file object_server.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/kernel.h>
@@ -17,7 +17,7 @@
 
 
 /** Forward a message to the supposed correct prob Owner.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 static inline void forward_object_server_msg (struct gdm_obj * obj_entry,
 					      struct gdm_set *set,
@@ -50,7 +50,7 @@ static inline void forward_object_server_msg (struct gdm_obj * obj_entry,
 
 
 /** Handle an invalidation ack receive.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param msg  Message received from the requesting node.
  */
@@ -188,7 +188,7 @@ void handle_invalidation_ack (struct rpc_desc* desc,
 
 
 /** Handle a remove ack receive.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param msg  Message received from the requesting node.
  */
@@ -242,7 +242,7 @@ void handle_remove_ack (struct rpc_desc* desc,
 
 
 /** Handle a remove ack .
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param msg  Message received from the requesting node.
  */
@@ -286,7 +286,7 @@ exit_no_unlock:
 
 
 /** Handle a global remove ack receive.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param msg  Message received from the requesting node.
  */
@@ -325,7 +325,7 @@ void handle_remove_done (struct rpc_desc* desc,
 
 
 /** Handle an object invalidation request.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param msg  Message received from the requesting node.
  */
@@ -401,7 +401,7 @@ void handle_object_invalidation (struct rpc_desc* desc,
 
 
 /** Handle an object remove request.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param msg  Message received from the requesting node.
  */
@@ -492,7 +492,7 @@ void handle_object_remove_req (struct rpc_desc* desc,
 
 
 /** Handle an object ownership modification request.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param sender  Node sending the ownership.
  *  @param msg     Message received from the requesting node.
@@ -547,7 +547,7 @@ void handle_send_ownership_req (struct rpc_desc* desc,
 
 
 /** Handle an object ownership modification request.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param sender  Node sending the ownership.
  *  @param msg     Message received from the requesting node.
@@ -582,7 +582,7 @@ void handle_change_ownership_ack (struct rpc_desc* desc,
 
 
 /** Handle an object receive.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param sender  Node sending the object.
  *  @param msg     Message received from the requesting node.
@@ -712,7 +712,7 @@ void handle_object_receive (struct rpc_desc* desc,
 
 
 /** Handle no object request.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param sender  Node sending the request.
  *  @param msg     Message received from the requesting node.
@@ -779,7 +779,7 @@ void handle_no_object (struct rpc_desc* desc,
 
 
 /** Handle a write access receive.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param sender  Node sending the write access.
  *  @param msg     Message received.
@@ -827,7 +827,7 @@ void handle_receive_write_access (struct rpc_desc* desc,
 
 
 /** Handle an object copy request.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param sender    Node sending the request.
  *  @param msg       Message received from the requesting node.
@@ -1075,7 +1075,7 @@ void handle_object_copy_req (struct rpc_desc* desc,
 }
 
 /** Handle an object remove request on the manager node.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param sender    Node sending the request.
  *  @param msg       Message received from the requesting node.
@@ -1156,7 +1156,7 @@ void handle_object_remove_to_mgr_req (struct rpc_desc* desc,
 
 
 /** Handle an object request response which is : make a local first touch.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param msg  Message received from the requesting node.
  */
@@ -1194,7 +1194,7 @@ void handle_send_back_first_touch_req (struct rpc_desc* desc,
 
 
 /** Handle the change of an object default owner.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param msg  Message received from the requesting node.
  */

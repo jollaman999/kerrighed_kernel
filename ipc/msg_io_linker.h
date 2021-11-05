@@ -2,7 +2,7 @@
  *  @file msgid_io_linker.h
  *
  *  Link GDM and Linux IPC msg id mechanisms.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 #ifndef __MSGID_IO_LINKER__

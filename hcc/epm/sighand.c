@@ -2,7 +2,7 @@
  *  hcc/epm/sighand.c
  *
  *  Copyright (C) 1999-2006 INRIA, Universite de Rennes 1, EDF
- *  Copyright (C) 2006-2007 Pascal Gallard - Kerlabs, Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/types.h>
@@ -64,7 +64,7 @@ static void sighand_struct_attach_object(struct sighand_struct *sig,
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int sighand_struct_alloc_object(struct gdm_obj *obj_entry,
 				       struct gdm_set *set, objid_t objid)
@@ -90,7 +90,7 @@ static int sighand_struct_alloc_object(struct gdm_obj *obj_entry,
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int sighand_struct_first_touch(struct gdm_obj *obj_entry,
 				      struct gdm_set *set, objid_t objid,
@@ -109,7 +109,7 @@ static int sighand_struct_first_touch(struct gdm_obj *obj_entry,
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int sighand_struct_import_object(struct rpc_desc *desc,
 					struct gdm_set *set,
@@ -148,7 +148,7 @@ static int sighand_struct_import_object(struct rpc_desc *desc,
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int sighand_struct_export_object(struct rpc_desc *desc,
 					struct gdm_set *set,
@@ -214,7 +214,7 @@ static struct iolinker_struct sighand_struct_io_linker = {
 
 /*
  * Get and lock a sighand structure for a given process
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 struct sighand_struct *krg_sighand_readlock(objid_t id)
 {
@@ -232,7 +232,7 @@ struct sighand_struct *krg_sighand_readlock(objid_t id)
 
 /*
  * Grab and lock a sighand structure for a given process
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 struct sighand_struct *krg_sighand_writelock(objid_t id)
 {
@@ -250,7 +250,7 @@ struct sighand_struct *krg_sighand_writelock(objid_t id)
 
 /*
  * unlock a sighand structure for a given process
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 void krg_sighand_unlock(objid_t id)
 {
@@ -278,7 +278,7 @@ ____krg_sighand_alloc(struct sighand_struct *sig)
 
 /*
  * Alloc a dedicated sighand_struct to task_struct task.
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static void __krg_sighand_alloc(struct task_struct *task,
 				struct sighand_struct *sig)

@@ -2,7 +2,7 @@
  *  hcc/epm/signal.c
  *
  *  Copyright (C) 1999-2006 INRIA, Universite de Rennes 1, EDF
- *  Copyright (C) 2006-2007 Pascal Gallard - Kerlabs, Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/types.h>
@@ -108,7 +108,7 @@ static void signal_struct_attach_object(struct signal_struct *sig,
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int signal_struct_alloc_object(struct gdm_obj *obj_entry,
 				      struct gdm_set *set, objid_t objid)
@@ -134,7 +134,7 @@ static int signal_struct_alloc_object(struct gdm_obj *obj_entry,
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int signal_struct_first_touch(struct gdm_obj *obj_entry,
 				     struct gdm_set *set, objid_t objid,
@@ -155,7 +155,7 @@ static int signal_struct_first_touch(struct gdm_obj *obj_entry,
 /*
  * Lock on the dest signal_struct must be held. No other access
  * to dest is allowed in the import time.
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int signal_struct_import_object(struct rpc_desc *desc,
 				       struct gdm_set *set,
@@ -258,7 +258,7 @@ static int signal_struct_import_object(struct rpc_desc *desc,
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int signal_struct_export_object(struct rpc_desc *desc,
 				       struct gdm_set *set,
@@ -418,7 +418,7 @@ static void __krg_signal_alloc(struct task_struct *task, struct pid *pid)
 
 /*
  * Alloc a dedicated signal_struct to task_struct task.
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 void krg_signal_alloc(struct task_struct *task, struct pid *pid,
 		      unsigned long clone_flags)
@@ -442,7 +442,7 @@ void krg_signal_alloc(struct task_struct *task, struct pid *pid,
 
 /*
  * Get and lock a signal structure for a given process
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static struct signal_struct_gdm_object *__krg_signal_readlock(objid_t id)
 {
@@ -489,7 +489,7 @@ static struct signal_struct_gdm_object *__krg_signal_writelock(objid_t id)
 
 /*
  * Grab and lock a signal structure for a given process
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 struct signal_struct *krg_signal_writelock(struct signal_struct *sig)
 {
@@ -509,7 +509,7 @@ struct signal_struct *krg_signal_writelock(struct signal_struct *sig)
 
 /*
  * unlock a signal structure for a given process
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 void krg_signal_unlock(struct signal_struct *sig)
 {

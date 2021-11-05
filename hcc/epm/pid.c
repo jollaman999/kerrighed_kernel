@@ -1,7 +1,7 @@
 /*
  *  hcc/epm/pid.c
  *
- *  Copyright (C) 2006-2007 Pascal Gallard - Kerlabs, Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/types.h>
@@ -51,7 +51,7 @@ static DEFINE_SPINLOCK(put_pid_wq_lock);
 static struct work_struct put_pid_work;
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int pid_alloc_object(struct gdm_obj *obj_entry,
 			    struct gdm_set *set, objid_t objid)
@@ -73,7 +73,7 @@ static int pid_alloc_object(struct gdm_obj *obj_entry,
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int pid_first_touch(struct gdm_obj *obj_entry,
 			   struct gdm_set *set, objid_t objid, int flags)
@@ -95,7 +95,7 @@ static int pid_first_touch(struct gdm_obj *obj_entry,
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int pid_import_object(struct rpc_desc *desc,
 			     struct gdm_set *set,
@@ -109,7 +109,7 @@ static int pid_import_object(struct rpc_desc *desc,
 }
 
 /*
- * @author Pascal Gallard
+ * @author Innogrid HCC
  */
 static int pid_export_object(struct rpc_desc *desc,
 			     struct gdm_set *set,

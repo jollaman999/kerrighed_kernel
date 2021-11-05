@@ -2,7 +2,7 @@
  *  @file vm_mobility.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2009, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  *
  *  Implementation of functions used to migrate, duplicate and checkpoint
  *  process virtual memory.
@@ -191,7 +191,7 @@ void cr_free_mm_exclusions(struct app_struct *app)
 }
 
 /** Export one physical page of a process.
- *  @author Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param app      Application hosting task(s) related to the vma.
  *  @param ghost    Ghost where data should be stored.
@@ -279,7 +279,7 @@ exit:
 }
 
 /** Export the physical pages hosted by a VMA.
- *  @author Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param app      Application hosting task(s) related to the vma.
  *  @param ghost    Ghost where data should be stored.
@@ -320,7 +320,7 @@ out:
 }
 
 /** This function exports the physical memory pages of a process
- *  @author Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param app         Application hosting task(s) related to the mm_struct.
  *  @param ghost       Ghost where pages should be stored.
@@ -362,7 +362,7 @@ out:
 }
 
 /** Export one VMA into the ghost.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost    Ghost where data should be stored.
  *  @param tsk      The task to export the VMA from.
@@ -427,7 +427,7 @@ out:
 
 
 /** This function export the list of VMA to the ghost
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where file data should be stored.
  *  @param tsk    Task to export vma data from.
@@ -481,7 +481,7 @@ out:
 
 
 /** This function exports the context structure of a process
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where data should be stored.
  *  @param mm     MM hosting context to export.
@@ -617,7 +617,7 @@ static inline int do_export_mm_struct(struct epm_action *action,
 
 
 /** This function exports the virtual memory of a process
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where VM data should be stored.
  *  @param tsk    Task to export memory data from.
@@ -796,7 +796,7 @@ err_read:
 }
 
 /** This function imports the physical memory pages of a process
- *  @author Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param ghost       Ghost where pages should be read from.
  *  @param mm          mm_struct to import memory pages in.
@@ -922,7 +922,7 @@ err:
 
 
 /** Import one VMA from the ghost.
- *  @author  Geoffroy Vallee, Renaud Lottiaux
+ *  @author  Innogrid HCC
  *
  *  @param ghost    Ghost where data are be stored.
  *  @param tsk      The task to import the VMA to.
@@ -1016,7 +1016,7 @@ static void file_table_fput(void *_file, void *data)
 
 
 /** This function imports the list of VMA from the ghost
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where file data should be stored.
  *  @param tsk    Task to import vma data to.
@@ -1077,7 +1077,7 @@ exit:
 
 
 /** This function imports the context structure of a process
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where data are stored.
  *  @param mm     MM context to import data in.
@@ -1250,7 +1250,7 @@ exit_free_mm:
 
 
 /** This function imports the mm_struct of a process
- *  @author  Geoffroy Vallee, Renaud Lottiaux
+ *  @author  Innogrid HCC
  *
  *  @param ghost  Ghost where file data should be loaded from.
  *  @param tsk    Task to import file data in.

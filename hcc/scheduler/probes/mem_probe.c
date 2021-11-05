@@ -1,8 +1,7 @@
 /*
  *  hcc/scheduler/probes/mem_probe.c
  *
- *  Copyright (C) 2007 Marko Novak - Xlab
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/kernel.h>
@@ -18,8 +17,7 @@ static mem_probe_data_t probe_data;
 static mem_probe_data_t probe_data_prev;
 
 MODULE_LICENSE("LGPL");
-MODULE_AUTHOR("Marko Novak <marko.novak@xlab.si>, "
-	      "Louis Rilling <Louis.Rilling@kerlabs.com>");
+MODULE_AUTHOR("Innogrid HCC");
 MODULE_DESCRIPTION("Memory probe module.");
 
 static struct scheduler_probe *mem_probe;

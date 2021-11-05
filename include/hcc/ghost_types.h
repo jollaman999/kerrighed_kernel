@@ -2,7 +2,7 @@
  *  @file ghost_types.h
  *
  *  Definition of ghost management type.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 #ifndef __GHOST_TYPES__
 #define __GHOST_TYPES__

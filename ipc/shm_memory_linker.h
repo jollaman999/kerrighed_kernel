@@ -2,7 +2,7 @@
  *  @file shm_memory_linker.h
  *
  *  Link GDM and Linux SHM memory system.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __SHM_MEMORY_LINKER__

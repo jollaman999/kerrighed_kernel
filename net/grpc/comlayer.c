@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2007-2008 Pascal Gallard, Kerlabs <Pascal.Gallard@kerlabs.com>
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  *
  */
 

@@ -1,8 +1,7 @@
 /*
  *  hcc/scheduler/policy.c
  *
- *  Copyright (C) 2007 Marko Novak - Xlab
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/module.h>
@@ -50,7 +49,7 @@ to_scheduler_policy_type(struct config_item_type *type)
 
 /**
  * General function for reading scheduling policies' ConfigFS attributes.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 static ssize_t scheduler_policy_attribute_show(struct config_item *item,
 					       struct configfs_attribute *attr,
@@ -72,7 +71,7 @@ static ssize_t scheduler_policy_attribute_show(struct config_item *item,
 
 /**
  * General function for storing scheduling policies' ConfigFS attributes.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 static ssize_t scheduler_policy_attribute_store(struct config_item *item,
 						struct configfs_attribute *attr,
@@ -129,7 +128,7 @@ struct global_config_item_operations policy_global_item_ops = {
 
 /**
  * This function initializes a new scheduling policy.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param policy	pointer to the scheduler_policy to init
  * @param name		name of the scheduling policy. This name must be the one
@@ -240,7 +239,7 @@ static int scheduler_policy_attribute_array_length(
  * This function is used for registering newly added scheduling policy types.
  * Once a type is registered, new scheduling policies of this type can be
  * created when user does mkdir with the type name.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param type		pointer to the scheduling policy type to register.
  *
@@ -294,7 +293,7 @@ int scheduler_policy_type_register(struct scheduler_policy_type *type)
 /**
  * This function is used for removing scheduling policy registrations.
  * Must *only* be called at module unloading.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param type		pointer to the scheduling policy type to unregister.
  */

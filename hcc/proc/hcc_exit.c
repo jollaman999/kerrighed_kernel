@@ -1,7 +1,7 @@
 /*
  *  hcc/proc/krg_exit.c
  *
- *  Copyright (C) 2006-2007 Pascal Gallard - Kerlabs, Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/types.h>
@@ -722,7 +722,7 @@ void notify_remote_child_reaper(pid_t zombie_pid,
 #endif /* CONFIG_HCC_EPM */
 
 /**
- * @author Pascal Gallard, Louis Rilling
+ * @author Innogrid HCC
  */
 void proc_krg_exit_start(void)
 {
@@ -735,7 +735,7 @@ void proc_krg_exit_start(void)
 }
 
 /**
- * @author Pascal Gallard, Louis Rilling
+ * @author Innogrid HCC
  */
 void proc_krg_exit_exit(void)
 {

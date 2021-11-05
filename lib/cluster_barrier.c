@@ -3,7 +3,7 @@
  *
  *  Implementation of a cluster wide barrier.
  *
- *  Copyright (C) 2009, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/cluster_barrier.h>

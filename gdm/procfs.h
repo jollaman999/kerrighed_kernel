@@ -42,7 +42,7 @@ int procfs_gdm_finalize (void);
 
 
 /** Create a /proc/hcc/gdm/<set_id> directory and sub-directories.
- *  @author Gael Utard, Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set_id   Id of the gdm set to create a proc entry for.
  *
@@ -53,7 +53,7 @@ struct proc_dir_entry *create_gdm_proc (gdm_set_id_t set_id);
 
 
 /** Remove a /proc/hcc/gdm/<set_id> directory and sub-directories.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param proc_entry    Struct of the proc entry to destroy.
  */

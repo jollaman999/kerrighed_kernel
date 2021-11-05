@@ -1,7 +1,7 @@
 /** GDM SHM id Linker.
  *  @file shmid_io_linker.c
  *
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/sched.h>
 #include <linux/shm.h>
@@ -25,7 +25,7 @@ struct kmem_cache *shmid_object_cachep;
 
 /** Create a local instance of an remotly existing SHM segment.
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 struct shmid_kernel *create_local_shp (struct ipc_namespace *ns,
 				       struct shmid_kernel *received_shp,
@@ -118,7 +118,7 @@ int shmid_alloc_object (struct gdm_obj * obj_entry,
 
 
 /** Handle a gdm set shmid first touch
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Kddm object descriptor.
  *  @param  set       Kddm set descriptor
@@ -139,7 +139,7 @@ int shmid_first_touch (struct gdm_obj * obj_entry,
 
 
 /** Insert a new shmid in local structures.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to insert.
  *  @param  set       Kddm set descriptor
@@ -183,7 +183,7 @@ done:
 
 
 /** Invalidate a gdm object shmid.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to invalidate.
  *  @param  set       Kddm set descriptor
@@ -199,7 +199,7 @@ int shmid_invalidate_object (struct gdm_obj * obj_entry,
 
 
 /** Handle a gdm memory page remove.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to remove.
  *  @param  set       Kddm set descriptor.
@@ -234,7 +234,7 @@ int shmid_remove_object (void *object,
 
 
 /** Export an object
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  buffer    Buffer to export object data in.
  *  @param  object    The object to export data from.
@@ -257,7 +257,7 @@ int shmid_export_object (struct rpc_desc *desc,
 
 
 /** Import an object
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  object    The object to import data in.
  *  @param  buffer    Data to import in the object.

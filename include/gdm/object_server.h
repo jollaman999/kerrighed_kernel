@@ -2,7 +2,7 @@
  *  @file object_server.h
  *
  *  Definition of the object server interface.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __OBJECT_SERVER__
@@ -99,14 +99,14 @@ typedef struct {
 
 
 /** Object Server Initialisation.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  Launch the Object Server handler thread.
  */
 void object_server_init (void);
 
 /** Object Server Finalization.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  Kill the Object Server handler thread.
  */

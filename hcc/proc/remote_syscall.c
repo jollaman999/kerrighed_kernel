@@ -1,7 +1,7 @@
 /*
  *  hcc/proc/remote_syscall.c
  *
- *  Copyright (C) 2009 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 #include <net/krgrpc/rpc.h>
 #include <linux/cred.h>

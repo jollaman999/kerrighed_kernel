@@ -1,7 +1,7 @@
 /*
  *  lib/remote_sleep.c
  *
- *  Copyright (C) 2010 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 #include <linux/sched.h>
 #include <linux/signal.h>
@@ -37,7 +37,7 @@ int unpack_remote_sleep_res_prepare(struct rpc_desc *desc)
 
 /**
  *  Unpack the result value of a remote, sleepable, interruptible operation
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param desc		The RPC descriptor to get the result from.
  *  @param res		Pointer to store the result.

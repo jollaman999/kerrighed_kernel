@@ -2,7 +2,7 @@
  *  @file gdm_set.h
  *
  *  Definition of GDM set interface.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __GDM_SET__

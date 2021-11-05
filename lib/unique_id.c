@@ -4,7 +4,7 @@
  *  Implementation of unique id generator. This mechanism generates
  *  locally, an indentifier which is unique in the cluster.
  *
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/hardirq.h>
@@ -19,7 +19,7 @@ unique_id_root_t mm_unique_id_root = {
 };
 
 /** Initialize a unique id root.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param root   The root to initialize
  *  @return       0 if everything ok.
@@ -38,7 +38,7 @@ EXPORT_SYMBOL(init_unique_id_root);
 
 
 /** Initialize a unique id root with a given init value.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param root   The root to initialize
  *  @param base   Init of value for the key generator.
@@ -56,7 +56,7 @@ EXPORT_SYMBOL(init_and_set_unique_id_root);
 
 
 /** Generate a unique id from a given root.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param root   The root of the unique id to generate.
  *  @return       A unique id !

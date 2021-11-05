@@ -1,7 +1,7 @@
 /**  /proc/<pid>/fd information management.
  *  @file proc_pid_fd.h
  *
- *  @author David Margery
+ *  @author Innogrid HCC
  */
 
 #ifndef __PROC_PID_FD_H__

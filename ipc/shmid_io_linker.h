@@ -2,7 +2,7 @@
  *  @file shmid_io_linker.h
  *
  *  Link GDM and Linux SHM id mechanisms.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __SHMID_IO_LINKER__

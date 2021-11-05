@@ -1,8 +1,7 @@
 /*
  *  hcc/scheduler/string_list.c
  *
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
- *  Copyright (C) 2007 Marko Novak - Xlab
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/kernel.h>

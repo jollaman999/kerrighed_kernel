@@ -2,7 +2,7 @@
  *  @file regular_file_mgr.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/mutex.h>
 #include <linux/sched.h>
@@ -78,7 +78,7 @@ struct file *create_file_entry_from_krg_desc (struct task_struct *task,
 }
 
 /** Create a regular file struct from a HCC file descriptor.
- *  @author Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param task    Task to create the file for.
  *  @param desc    HCC file descriptor.
@@ -145,7 +145,7 @@ int check_flush_file (struct epm_action *action,
 }
 
 /** Return a hcc descriptor corresponding to the given file.
- *  @author Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param file       The file to get a HCC descriptor for.
  *  @param desc       The returned descriptor.
@@ -461,7 +461,7 @@ err_bad_data:
 /*****************************************************************************/
 
 /** Export a regular file descriptor into the given ghost.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost      the ghost to write data to.
  *  @param file       The file to export.
@@ -509,7 +509,7 @@ exit:
 }
 
 /** Import a regular file descriptor from the given ghost.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost          The ghost to read data from.
  *  @param task           The task data are imported for.

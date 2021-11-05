@@ -3,7 +3,7 @@
  *  @file checkpoint.h
  *
  *  Definition of process checkpointing interface.
- *  @author Geoffroy Vallée, Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __CHECKPOINT_H__

@@ -4,7 +4,7 @@
  *
  *  Implementation of migration functions.
  *
- *  @author Geoffroy Vallée
+ *  @author Innogrid HCC
  */
 
 #ifndef __HCC_MIGRATION_H__

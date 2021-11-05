@@ -1,6 +1,6 @@
 /**
  *  Application checkpoint
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 #ifndef __APPLICATION_CHECKPOINT_H__

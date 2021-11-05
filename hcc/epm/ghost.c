@@ -2,9 +2,9 @@
  *  hcc/epm/ghost.c
  *
  *  Copyright (C) 1999-2006 INRIA, Universite de Rennes 1, EDF
- *  Copyright (C) 2006-2007 Pascal Gallard - Kerlabs, Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  *
- *  @author Geoffroy Vallée
+ *  @author Innogrid HCC
  */
 
 #include <linux/types.h>
@@ -437,7 +437,7 @@ static int export_krg_structs(struct epm_action *action,
 
 /**
  *  Export a process task struct.
- *  @author  Renaud Lottiaux, Geoffroy Vallée
+ *  @author  Innogrid HCC
  *
  *  @param action	Descriptor of the type of export.
  *  @param ghost	Ghost where file data should be stored.
@@ -1350,7 +1350,7 @@ out:
 
 /**
  *  Import a process task struct.
- *  @author  Renaud Lottiaux, Geoffroy Vallée
+ *  @author  Innogrid HCC
  *
  *  @param action	Descriptor of the type of import.
  *  @param ghost	Ghost where file data should be stored.
@@ -1727,7 +1727,7 @@ static int register_pids(struct task_struct *task, struct epm_action *action)
 
 /**
  * This function creates the new process from the ghost process
- * @author Geoffroy Vallée, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param tskRecv               Pointer on the ghost process
  * @param regs			Pointer on the registers of the ghost process

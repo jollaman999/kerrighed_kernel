@@ -1,8 +1,7 @@
 /*
  *  hcc/scheduler/scheduler.c
  *
- *  Copyright (C) 2007 Marko Novak - Xlab
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/configfs.h>
@@ -819,7 +818,7 @@ unlock:
 
 /**
  * Initializes the "schedulers" subsystem directory.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  */
 struct config_group *scheduler_start(void)
 {

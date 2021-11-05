@@ -2,7 +2,7 @@
  *  @file gdm_sync_object.h
  *
  *  Definition of GDM interface.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __GDM_SYNC_OBJECT__

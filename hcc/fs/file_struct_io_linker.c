@@ -1,7 +1,7 @@
 /** DVFS level 3 - File Struct Linker.
  *  @file file_struct_io_linker.c
  *
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <net/krgrpc/rpc.h>
@@ -42,7 +42,7 @@ int file_first_touch (struct gdm_obj * obj_entry,
 }
 
 /** Handle a container object remove.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Descriptor of the object to remove.
  *  @param  ctnr      Container descriptor.
@@ -65,7 +65,7 @@ int file_remove_object (void *object,
 }
 
 /** Export an file object
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  buffer    Buffer to export object data in.
  *  @param  obj_entry  Object entry of the object to export.
@@ -85,7 +85,7 @@ int file_export_object (struct rpc_desc *desc,
 }
 
 /** Import an file object
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  obj_entry  Object entry of the object to import.
  *  @param  _buffer   Data to import in the object.

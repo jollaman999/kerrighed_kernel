@@ -2,7 +2,7 @@
  *  @file ipcmap_io_linker.h
  *
  *  Manage a distributed allocation bitmap for IPC ids.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __IPCMAP_IO_LINKER__

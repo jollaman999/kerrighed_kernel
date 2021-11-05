@@ -1,7 +1,7 @@
 /** DVFS Level 3 - File struct sharing management.
  *  @file file.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __DVFS_FILE__

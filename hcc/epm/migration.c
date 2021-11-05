@@ -2,7 +2,7 @@
  *  hcc/epm/migration.c
  *
  *  Copyright (C) 1999-2006 INRIA, Universite de Rennes 1, EDF
- *  Copyright (C) 2006-2007 Pascal Gallard - Kerlabs, Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 /**
@@ -11,7 +11,7 @@
  *
  *  Implementation of migration functions.
  *
- *  @author Geoffroy Vallée
+ *  @author Innogrid HCC
  */
 
 #include <linux/module.h>
@@ -256,7 +256,7 @@ static void krg_task_migrate(int sig, struct siginfo *info,
 
 /**
  *  Process migration handler.
- *  @author Renaud Lottiaux, Geoffroy Vallée
+ *  @author Innogrid HCC
  */
 static void handle_migrate(struct rpc_desc *desc, void *msg, size_t size)
 {
@@ -446,7 +446,7 @@ EXPORT_SYMBOL(migrate_linux_threads);
 
 /**
  *  System call to migrate a process
- *  @author Geoffroy Vallée, Pascal Gallard
+ *  @author Innogrid HCC
  *
  *  @param tgid		tgid of the process to migrate.
  *  @param dest_node	Id of the node to migrate the process to.
@@ -460,7 +460,7 @@ int sys_migrate_process(pid_t tgid, hcc_node_t dest_node)
 
 /**
  *  System call to migrate a thread.
- *  @author Geoffroy Vallée
+ *  @author Innogrid HCC
  *
  *  @param pid		pid of the thread to migrate.
  *  @param dest_node	Id of the node to migrate the process to.

@@ -1,6 +1,6 @@
 /**
  *  Application frontier
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 #ifndef __APPLICATION_FRONTIER_H__

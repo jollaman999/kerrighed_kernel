@@ -2,7 +2,7 @@
  *  @file io_linker.h
  *
  *  Create link between GDM and io linkers.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __IO_LINKER__
@@ -130,7 +130,7 @@ struct iolinker_struct {
 
 
 /** Initialize IO linkers.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void io_linker_init (void);
 void io_linker_finalize (void);
@@ -138,7 +138,7 @@ void io_linker_finalize (void);
 
 
 /** Register a new gdm IO linker.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param io_linker_id
  *  @param linker
@@ -148,7 +148,7 @@ int register_io_linker (int linker_id, struct iolinker_struct *io_linker);
 
 
 /** Instantiate a gdm set.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set           GDM set to instantiate
  *  @param link          Node linked to the gdm set
@@ -164,7 +164,7 @@ int gdm_io_instantiate (struct gdm_set * set, hcc_node_t link,
 
 
 /** Uninstantiate a GDM set.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set          Kddm set to uninstantiate
  */
@@ -173,7 +173,7 @@ void gdm_io_uninstantiate (struct gdm_set * set, int destroy);
 
 
 /** Do an object first touch.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set          Kddm Set the object belong to.
  *  @param objid        Id of the object to first touch.
@@ -187,7 +187,7 @@ int gdm_io_first_touch_object (struct gdm_obj * obj_entry,
 
 
 /** Put a GDM object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set          Kddm Set the object belong to.
  *  @param objid        Id of the object to put.
@@ -199,7 +199,7 @@ int gdm_io_put_object (struct gdm_obj * obj_entry, struct gdm_set * set,
 
 
 /** Insert an object in a gdm set.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set          Kddm Set the object belong to.
  *  @param objid        Id of the object to insert.
@@ -211,7 +211,7 @@ int gdm_io_insert_object (struct gdm_obj * obj_entry, struct gdm_set * set,
 
 
 /** Request an IO linker to invalidate an object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set          Kddm Set the object belong to.
  *  @param objid        Id of the object to invalidate.
@@ -223,7 +223,7 @@ int gdm_io_invalidate_object (struct gdm_obj * obj_entry, struct gdm_set * set,
 
 
 /** Request an IO linker to remove an object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set          Kddm Set the object belong to.
  *  @param objid        Id of the object to remove.
@@ -237,7 +237,7 @@ int gdm_io_remove_object (void *object, struct gdm_set * set, objid_t objid);
 
 
 /** Request an IO linker to sync an object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set          Kddm Set the object belong to.
  *  @param objid        Id of the object to sync.
@@ -249,7 +249,7 @@ int gdm_io_sync_object (struct gdm_obj * obj_entry, struct gdm_set * set,
 
 
 /** Inform an IO linker that an object state has changed.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry    Object entry the object belong to.
  *  @param set          Kddm Set the object belong to.
@@ -264,7 +264,7 @@ int gdm_io_change_state (struct gdm_obj * obj_entry,
 
 
 /** Request an IO linker to import data into an object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set          Kddm Set the object belong to.
  *  @param obj_entry    Object entry to import data into.
@@ -275,7 +275,7 @@ int gdm_io_import_object (struct rpc_desc *desc, struct gdm_set *set,
 			   int flags);
 
 /** Request an IO linker to export data from an object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set          Kddm Set the object belong to.
  *  @param obj_entry    Object entry to export data from.
@@ -287,7 +287,7 @@ int gdm_io_export_object (struct rpc_desc *desc, struct gdm_set *set,
 hcc_node_t gdm_io_default_owner (struct gdm_set * set, objid_t objid);
 
 /** Request an IO linker to allocate an object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry   Object entry to export data from.
  *  @param set         Kddm Set the object belong to.

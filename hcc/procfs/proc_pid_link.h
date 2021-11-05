@@ -1,7 +1,7 @@
 /**  /proc/<pid>/<link> information management.
  *  @file proc_pid_link.h
  *
- *  @author David Margery
+ *  @author Innogrid HCC
  */
 
 #ifndef __PROC_PID_LINK_H__

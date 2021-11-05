@@ -2,7 +2,7 @@
  *  @file semarray_io_linker.h
  *
  *  Link GDM and Linux SEM Array mechanisms.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 #ifndef __SEMARRAY_IO_LINKER__

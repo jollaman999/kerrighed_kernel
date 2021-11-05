@@ -2,7 +2,7 @@
  *  @file static_cpu_info_linker.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <hcc/cpu_id.h>
 #include <asm/hcc/cpuinfo.h>

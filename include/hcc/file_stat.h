@@ -1,7 +1,7 @@
 /*
  * Get information about file
  *
- * Copyright (C) 2009, Matthieu Fertré, Kerlabs.
+ * Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #ifndef __HCC_FILE_STAT__

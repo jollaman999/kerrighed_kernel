@@ -1,7 +1,7 @@
 /** Interface of IPC msg management.
  *  @file msg_handler.h
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 

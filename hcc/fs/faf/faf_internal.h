@@ -1,7 +1,7 @@
 /** HCC Open File Access Forwarding System.
  *  @file faf_internal.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __FAF__

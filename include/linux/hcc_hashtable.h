@@ -2,7 +2,7 @@
  *  @file krg_hashtable.h
  *
  *  Definition of hashtable management functions.
- *  @author Viet Hoa Dinh, Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __HASHTABLE_H__
@@ -66,7 +66,7 @@ typedef struct hashtable_t {
 
 
 /** Create a new hash table
- *  @author Viet Hoa Dinh
+ *  @author Innogrid HCC
  * 
  *  @param hashtable_size  Size of the hashtable to create.
  *
@@ -87,7 +87,7 @@ static inline hashtable_t * hashtable_new(unsigned long hashtable_size)
 
 
 /** Free a hash table
- *  @author Viet Hoa Dinh
+ *  @author Innogrid HCC
  * 
  *  @param table  The table to free
  */
@@ -96,7 +96,7 @@ void hashtable_free(hashtable_t * table);
 
 
 /** Add an element to a hash table
- *  @author Viet Hoa Dinh
+ *  @author Innogrid HCC
  * 
  *  @param table  The table to add the element in.
  *  @param hash   The element key.
@@ -124,7 +124,7 @@ static inline int hashtable_add(hashtable_t * table, unsigned long hash,
 /** Add an element to a hash table
  *  It fails with EEXIST if there is already an element with the same hash.
  *
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param table  The table to add the element in.
  *  @param hash   The element key.
@@ -150,7 +150,7 @@ static inline int hashtable_add_unique(hashtable_t *table, unsigned long hash,
 }
 
 /** Remove an element from a hash table
- *  @author Viet Hoa Dinh
+ *  @author Innogrid HCC
  * 
  *  @param table  The table to remove the element from.
  *  @param hash   The element key.
@@ -176,7 +176,7 @@ static inline void * hashtable_remove(hashtable_t * table, unsigned long hash)
 
 
 /** Find an element in a hash table
- *  @author Viet Hoa Dinh
+ *  @author Innogrid HCC
  * 
  *  @param table  The table to search the element in.
  *  @param hash   The element key.
@@ -202,7 +202,7 @@ static inline void * hashtable_find(hashtable_t * table, unsigned long hash)
 
 
 /** Find the element just following the given hash in hash order.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param table  The table to search the element in.
  *  @param hash   The element key.
@@ -230,7 +230,7 @@ static inline void * hashtable_find_next(hashtable_t * table,
 
 
 /** Apply a function on each hash table key.
- *  @author Viet Hoa Dinh, Pascal Gallard
+ *  @author Innogrid HCC
  * 
  *  @param table  The table to work with.
  *  @param func   The function to apply.
@@ -243,7 +243,7 @@ void __hashtable_foreach_key(hashtable_t * table,
 
 
 /** Apply a function on each hash table element.
- *  @author Viet Hoa Dinh, Pascal Gallard
+ *  @author Innogrid HCC
  * 
  *  @param table  The table to work with.
  *  @param func   The function to apply.
@@ -254,7 +254,7 @@ void __hashtable_foreach_data(hashtable_t * table,
 			      void * data);
 
 /** Apply a function on each hash table pair (key,element).
- *  @author Louis Rilling
+ *  @author Innogrid HCC
  *
  *  @param table  The table to work with.
  *  @param func   The function to apply.
@@ -265,7 +265,7 @@ void __hashtable_foreach_key_data(hashtable_t * table,
 				  void * data);
 
 /** Find an element of the hashtable that staifies a criteria
- *  @author David Margery
+ *  @author Innogrid HCC
  * 
  *  @param table  The table to work with.
  *  @param func   The function to apply.

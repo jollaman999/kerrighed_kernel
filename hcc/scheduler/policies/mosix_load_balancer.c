@@ -1,14 +1,14 @@
 /*
  *  hcc/scheduler/policies/mosix_load_balancer.c
  *
- *  Copyright (C) 2006-2008 Louis Rilling - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC
  */
 
 /**
  * Simplified MOSIX load balancing scheduling policy relying on a caching
  * module to access remote values.
  *
- *  @author Louis Rilling
+ *  @author Innogrid HCC
  */
 
 #include <linux/module.h>
@@ -28,7 +28,7 @@
 #include <hcc/scheduler/process_set.h>
 
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Louis Rilling <Louis.Rilling@kerlabs.com>");
+MODULE_AUTHOR("Innogrid HCC");
 MODULE_DESCRIPTION("Simplified MOSIX load balancing policy");
 
 enum port_id {
@@ -132,7 +132,7 @@ out:
 /*
  * Give the load of a remote node with a fictive extra CPU-bound process
  *
- *  @author Louis Rilling
+ *  @author Innogrid HCC
  */
 static int get_stable_remote_load(struct mosix_load_balancer *lb,
 				  hcc_node_t node, unsigned long *load)

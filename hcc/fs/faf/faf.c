@@ -2,7 +2,7 @@
  *  @file faf.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/file.h>
 #include <linux/fdtable.h>
@@ -27,7 +27,7 @@ extern struct kmem_cache *faf_client_data_cachep;
 /*****************************************************************************/
 
 /** Add a file in the FAF daemon.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file       The file to add in the FAF daemon
  *
@@ -69,7 +69,7 @@ out:
 }
 
 /** Close a file in the FAF deamon.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file    The file to close.
  */
@@ -110,7 +110,7 @@ int close_faf_file(struct file * file)
 }
 
 /** Check if we need to close a FAF server file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file         The file to check.
  *
@@ -159,7 +159,7 @@ void free_faf_file_private_data(struct file *file)
 }
 
 /** Check if we are closing the last FAF client file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file         The file attached to the DVFS struct.
  *  @param dvfs_file    The DVFS file struct being put.

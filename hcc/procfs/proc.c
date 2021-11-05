@@ -2,7 +2,7 @@
  *  @file proc.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <asm/processor.h>
 #include <linux/kernel_stat.h>
@@ -308,7 +308,7 @@ krg_arch_report_meminfo(struct seq_file *m, const krg_dynamic_node_info_t *info)
 }
 
 /** Read function for /proc/hcc/meminfo entry.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 static int show_meminfo(struct seq_file *p, void *v)
 {
@@ -514,7 +514,7 @@ static struct file_operations proc_krg_meminfo_operations = {
 /****************************************************************************/
 
 /** Read function for /proc/hcc/stat entry.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  */
 static int krg_show_stat(struct seq_file *p, void *v)
@@ -698,7 +698,7 @@ static struct file_operations proc_krg_stat_operations = {
 #define LOAD_FRAC(x) LOAD_INT(((x) & (FIXED_1-1)) * 100)
 
 /** Read function for /proc/hcc/loadavg entry.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  */
 static int show_loadavg(struct seq_file *p, void *v)
@@ -790,7 +790,7 @@ static struct file_operations proc_krg_nodeid_operations = {
 /****************************************************************************/
 
 /** Read function for /proc/nodes/nrnodes entry.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param buffer           Buffer to write data to.
  *  @param buffer_location  Alternative buffer to return...
@@ -858,7 +858,7 @@ static struct file_operations proc_krg_session_operations = {
 /****************************************************************************/
 
 /** Read function for /proc/hcc/uptime entry.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 static int show_uptime(struct seq_file *p, void *v)
 {
@@ -918,7 +918,7 @@ static struct file_operations proc_krg_uptime_operations = {
 /****************************************************************************/
 
 /** Read function for /proc/hcc/nodeid entry.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param buffer           Buffer to write data to.
  *  @param buffer_location  Alternative buffer to return...
@@ -935,7 +935,7 @@ int krg_netdev_read_proc(char *buffer,
 }
 
 /** Create a /proc/nodes/node<x> directory and sub-files.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param nodeid   Id of the node to create a proc entry for.
  *
@@ -1015,7 +1015,7 @@ int create_proc_node_info(hcc_node_t nodeid)
 }
 
 /** Remove a /proc/nodes/node<x> directory and sub-files.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param nodeid   Id of the node to remove a proc entry for.
  *
@@ -1043,7 +1043,7 @@ int remove_proc_node_info(hcc_node_t nodeid)
 }
 
 /** Init HCC proc stuffs.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int krg_procfs_init(void)
 {
@@ -1113,7 +1113,7 @@ int krg_procfs_init(void)
 }
 
 /** Finalize HCC proc stuffs.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int krg_procfs_finalize(void)
 {

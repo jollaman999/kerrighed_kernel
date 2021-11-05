@@ -1,7 +1,7 @@
 /** Definition of /proc/hcc.
  *  @file procfs.c
  *
- *  Copyright (C) 2006-2008, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/module.h>
 #include <linux/proc_fs.h>
@@ -17,7 +17,7 @@ struct proc_dir_entry *proc_hcc = NULL;
 EXPORT_SYMBOL(proc_hcc);
 
 /** Generic read function for 'unsigned long long' entry.
- *  @author Pascal Gallard
+ *  @author Innogrid HCC
  *
  *  @param buffer           Buffer to write data to.
  *  @param buffer_location  Alternative buffer to return...
@@ -123,7 +123,7 @@ int read_version(char *buffer, char **start, off_t offset,
 }
 
 /** Initialisation of the /proc/hcc directory.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int hcc_proc_init()
 {
@@ -140,7 +140,7 @@ int hcc_proc_init()
 }
 
 /** Destroy of the /proc/hcc directory.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 void hcc_proc_finalize()
 {

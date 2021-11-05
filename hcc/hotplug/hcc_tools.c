@@ -1,7 +1,7 @@
 /** Initilize the tool module.
  *  @file krg_tools.c
  *
- *  Copyright (C) 2006-2009, Pascal Gallard, Kerlabs.
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 #include <linux/module.h>
 #include <linux/kernel.h>

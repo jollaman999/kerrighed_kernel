@@ -1,6 +1,6 @@
 /**
  *  Definition of process mobility function interface.
- *  @author Geoffroy Vallée
+ *  @author Innogrid HCC
  */
 
 #ifndef __EPM_GHOST_H__
@@ -14,7 +14,7 @@ struct epm_action;
 
 /**
  *  Export a process into a ghost.
- *  @author  Geoffroy Vallée
+ *  @author  Innogrid HCC
  *
  *  @param action	Type of export.
  *  @param ghost	Ghost to export the task to.
@@ -34,7 +34,7 @@ void post_export_process(struct epm_action *action,
 
 /**
  *  Import a process from a ghost.
- *  @author  Geoffroy Vallée
+ *  @author  Innogrid HCC
  *
  *  @param action	Type of import.
  *  @param ghost	Ghost to import the task from.

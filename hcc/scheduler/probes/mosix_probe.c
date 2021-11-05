@@ -1,11 +1,8 @@
 /*
  *  hcc/scheduler/probes/mosix_probe.c
  *
- *  Copyright (C) 2007-2008 Louis Rilling - Kerlabs
- *
- *  Based on HCC/modules/scheduler_old/mosix_probe.c:
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  *  Copyright (C) 1999-2006 INRIA, Universite de Rennes 1, EDF
- *  Copyright (C) 2006-2007 Louis Rilling - Kerlabs
  */
 
 /**
@@ -17,7 +14,7 @@
  *
  *  Original work by Amnon Shiloh and Amnon Barak.
  *
- *  @author Louis Rilling, Renaud Lottiaux, Marko Novak
+ *  @author Innogrid HCC
  */
 
 #include <linux/sched.h>
@@ -35,7 +32,7 @@
 #include "mosix_probe.h"
 
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Louis Rilling <Louis.Rilling@kerlabs.com>");
+MODULE_AUTHOR("Innogrid HCC");
 MODULE_DESCRIPTION("CPU load probe based on MOSIX algorithms");
 
 /* Compute processor load every second */

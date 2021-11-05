@@ -2,7 +2,7 @@
  *  @file network_ghost.h
  *
  *  Definition of network ghost structures and functions.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __NETWORK_GHOST_H__
@@ -25,7 +25,7 @@ struct rpc_desc;
  *--------------------------------------------------------------------------*/
 
 /** Create a network file ghost.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param  access Ghost access (READ/WRITE)
  *  @param  desc   RPC descriptor to send/receive data on.

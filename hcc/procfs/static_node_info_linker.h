@@ -1,7 +1,7 @@
 /** Static node informations management.
  *  @file static_node_info_linker.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef STATIC_NODE_INFO_LINKER_H
@@ -41,7 +41,7 @@ extern struct gdm_set *static_node_info_gdm_set;
 int static_node_info_init(void);
 
 /** Helper function to get static node informations.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param node_id   Id of the node we want informations on.
  *

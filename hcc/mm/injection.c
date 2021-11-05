@@ -1,7 +1,7 @@
 /** Memory injection code.
  *  @file injection.c
  *
- *  Copyright (C) 2008, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/rmap.h>
 #include <linux/swap.h>

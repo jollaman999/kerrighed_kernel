@@ -1,8 +1,8 @@
 /*
  *  HCC/modules/ipc/mobility.c
  *
- *  Copyright (C) 2007 Louis Rilling - Kerlabs
- *  Copyright (C) 2007-2008 Matthieu Fertré - INRIA
+ *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 #include <linux/sched.h>
@@ -44,7 +44,7 @@
 extern struct gdm_set *sem_undo_list_gdm_set;
 
 /** Return a hcc descriptor corresponding to the given file.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param file       The file to get a HCC descriptor for.
  *  @param desc       The returned descriptor.

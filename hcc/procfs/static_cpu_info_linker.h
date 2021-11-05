@@ -1,7 +1,7 @@
 /** Static CPU information management.
  *  @file static_cpu_info_linker.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef STATIC_CPU_INFO_LINKER_H
@@ -41,7 +41,7 @@ extern struct gdm_set *static_cpu_info_gdm_set;
 int static_cpu_info_init(void);
 
 /** Helper function to get static CPU informations.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param node_id   Id of the node hosting the CPU we want informations on.
  *  @param cpu_id    Id of the CPU we want informations on.

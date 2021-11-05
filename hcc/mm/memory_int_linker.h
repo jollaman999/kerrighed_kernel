@@ -2,7 +2,7 @@
  *  @file memory_int_linker.h
  *
  *  Link gdm sets and linux memory system.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __MEMORY_INT_LINKER__
@@ -35,7 +35,7 @@ extern struct vm_operations_struct null_vm_ops;
 
 
 /** Link a VMA to an anon gdm set.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param vma     vma structure to link to the anon GDM set.
  *

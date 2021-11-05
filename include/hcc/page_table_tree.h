@@ -1,7 +1,7 @@
 /** GDM object tree based on page tables.
  *  @file page_table_tree.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __PAGE_TABLE_TREE__

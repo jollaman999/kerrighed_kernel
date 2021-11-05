@@ -1,7 +1,7 @@
 /** Implementation of GDM mobility mechanisms.
  *  @file mobility.c
  *
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  *
  *  Implementation of functions used to migrate, duplicate and checkpoint
  *  process GDM related structures.
@@ -30,7 +30,7 @@ extern struct kmem_cache *gdm_info_cachep;
 
 
 /** Export a GDM info structure
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost    Ghost where data should be stored.
  *  @param tsk      The task to ghost the GDM info struct for.

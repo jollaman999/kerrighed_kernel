@@ -2,7 +2,7 @@
  *  @file gtypes.h
  *
  *  Definition of the main types and structures.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __KERRIGHED_TYPES__

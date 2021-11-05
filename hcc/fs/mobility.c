@@ -2,7 +2,7 @@
  *  @file dfs_mobility.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  *
  *  Implementation of functions used to migrate, duplicate and checkpoint
  *  DFS data, process memory and file structures.
@@ -118,7 +118,7 @@ static struct dvfs_mobility_operations *get_dvfs_mobility_ops(struct file *file)
 
 /** Generic function to export an open file into a ghost.
  *  Not used by Checkpoint.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost    Ghost where data should be stored.
  *  @param tsk      Task we are exporting.
@@ -338,7 +338,7 @@ done:
 }
 
 /** Export the file associated to a VMA.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost    Ghost where data should be stored.
  *  @param vma      The VMA hosting the file to export.
@@ -409,7 +409,7 @@ exit:
 
 /** Export the open files array of a process
  *  Not used by Checkpoint
- *  @author  Geoffroy Vallee, Renaud Lottiaux
+ *  @author  Innogrid HCC
  *
  *  @param ghost  Ghost where file data should be stored.
  *  @param tsk    Task to export file data from.
@@ -615,7 +615,7 @@ err:
 }
 
 /** Export the files_struct of a process
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where file data should be stored.
  *  @param tsk    Task to export file data from.
@@ -742,7 +742,7 @@ err:
 }
 
 /** Export the fs_struct of a process
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where file data should be stored.
  *  @param tsk    Task to export file data from.
@@ -844,7 +844,7 @@ int export_mnt_namespace(struct epm_action *action,
 
 /** Generic function to import an open file from a ghost.
  *  Not used by Restart.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost   Ghost where data should be read from.
  *  @param task    the task to import the file for.
@@ -931,7 +931,7 @@ err_read:
 
 /** Imports the open files of the process
  *  Not used by Restart.
- *  @author  Geoffroy Vallee, Renaud Lottiaux
+ *  @author  Innogrid HCC
  *
  *  @param ghost  Ghost where open files data are stored.
  *  @param tsk    Task to load open files data in.
@@ -1037,7 +1037,7 @@ err:
 }
 
 /** Imports the files informations of the process
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where files data are stored.
  *  @param tsk    Task to load files data in.
@@ -1275,7 +1275,7 @@ err:
 }
 
 /** Import the file associated to a VMA.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost    Ghost where data are be stored.
  *  @param tsk      The task to import VMA for.
@@ -1373,7 +1373,7 @@ err:
 }
 
 /** Import the fs_struct of a process
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param ghost  Ghost where file data are stored.
  *  @param tsk    Task to import file data in.

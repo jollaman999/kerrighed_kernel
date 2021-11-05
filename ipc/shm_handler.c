@@ -2,7 +2,7 @@
  *  @file shm_handler.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #ifndef NO_SHM
@@ -98,7 +98,7 @@ static struct kern_ipc_perm *kcb_ipc_shm_findkey(struct ipc_ids *ids, key_t key)
 
 /** Notify the creation of a new shm segment to HCC.
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 int krg_ipc_shm_newseg (struct ipc_namespace *ns, struct shmid_kernel *shp)
 {

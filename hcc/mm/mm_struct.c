@@ -1,7 +1,7 @@
 /** Distributed management of the MM structure.
  *  @file mm_struct.c
  *
- *  Copyright (C) 2008-2009, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/mm.h>

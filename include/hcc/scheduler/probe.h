@@ -424,7 +424,7 @@ struct scheduler_probe_source {
 
 /**
  * This function allocates memory for new probe and initializes it.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param type		Type of the probe, defined with SCHEDULER_PROBE_TYPE
  * @param name		Name of the probe. This name must be unique for each
@@ -444,7 +444,7 @@ scheduler_probe_create(struct scheduler_probe_type *type,
 		       struct config_group *def_groups[]);
 /**
  * This function frees all the memory taken by a probe.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param probe		pointer to probe whose memory we want to free.
  */
@@ -452,7 +452,7 @@ void scheduler_probe_free(struct scheduler_probe *probe);
 
 /**
  * This function allocates memory and initializes a probe source.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param type		Type describing the probe source, defined with
  *			SCHEDULER_PROBE_SOURCE_TYPE
@@ -494,7 +494,7 @@ scheduler_probe_source_notify_update(struct scheduler_probe_source *source);
 /**
  * This function is used for registering probe. This function has to
  * be called at the end of "init_module" function for each probe's module.
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param probe		pointer to the probe we wish to register.
  *
@@ -506,7 +506,7 @@ int scheduler_probe_register(struct scheduler_probe *probe);
 /**
  * This function is used for removing probe registration. This function must
  * *only* be called at module unloading (from "cleanup_module" function).
- * @author Marko Novak, Louis Rilling
+ * @author Innogrid HCC
  *
  * @param probe		pointer to the probe we wish to unregister.
  */

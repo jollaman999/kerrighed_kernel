@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2007 Pascal Gallard, Kerlabs <Pascal.Gallard@kerlabs.com>
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  *
  */
 
@@ -201,7 +201,7 @@ void rpc_disable(enum rpcid rpcid){
 
 
 /** Initialisation of the rpc module.
- *  @author Pascal Gallard
+ *  @author Innogrid HCC
  */
 
 void rpc_undef_handler (struct rpc_desc *desc){
@@ -336,7 +336,7 @@ int init_rpc(void)
 }
 
 /** Cleanup of the Nazgul module.
- *  @author Pascal Gallard
+ *  @author Innogrid HCC
  */
 void cleanup_rpc(void)
 {

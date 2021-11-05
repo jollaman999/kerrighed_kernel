@@ -26,7 +26,7 @@ extern struct global_config_item_operations scheduler_global_item_ops;
 
 /**
  * Checks that item is a probe source subdir of a probe.
- * @author Louis Rilling, Marko Novak
+ * @author Innogrid HCC
  *
  * @param item		pointer to the config_item to check
  */

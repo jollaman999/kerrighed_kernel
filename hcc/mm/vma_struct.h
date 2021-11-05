@@ -1,7 +1,7 @@
 /** Distributed management of the VMA structure.
  *  @file vma_struct.h
  *
- *  @author Renaud Lottiaux.
+ *  @author Innogrid HCC.
  */
 
 

@@ -1,7 +1,7 @@
 /** HCC MM Server.
  *  @file mm_server.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __MM_SERVER__

@@ -2,7 +2,7 @@
  *  @file object.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/proc_fs.h>
@@ -50,7 +50,7 @@ struct kmem_cache *gdm_obj_cachep;
 
 
 /** Init an object state.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry  Entry of the object to set the state.
  *  @param state      State to set the object with.
@@ -76,7 +76,7 @@ static inline void set_object_state(struct gdm_set * set,
 
 
 /** Modify an object dsm state.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry   Entry of the object to modify the dsm state.
  *  @param new_state   New state to set the object with.
@@ -117,7 +117,7 @@ static void change_object_state (struct gdm_set *set,
 
 
 /** Change an object state.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set        gdm set the object is hosted by.
  *  @param obj_entry  Entry of the object to change the state.
@@ -142,7 +142,7 @@ void gdm_change_obj_state(struct gdm_set * set,
 
 
 /** Alloc and init a gdm object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param set     Set to allocate the object in.
  *  @param objid   Id of the object to allocate.
@@ -504,7 +504,7 @@ int check_sleep_on_local_exclusive (struct gdm_set * set,
 
 
 /** Indicate if an object is frozen, ie if it should not be modified.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry  Entry of the object to test.
  */
@@ -517,7 +517,7 @@ int object_frozen(struct gdm_obj * obj_entry,
 
 
 /** Indicate if an object is frozen, ie if it should not be modified.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry  Entry of the object to test.
  */
@@ -531,7 +531,7 @@ int object_frozen_or_pinned(struct gdm_obj * obj_entry,
 
 
 /** Freeze the given object.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry  Entry of the object to freeze.
  */
@@ -544,7 +544,7 @@ void set_object_frozen(struct gdm_obj * obj_entry,
 
 
 /** Object clear Frozen.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param obj_entry  Entry of the object to warm.
  */

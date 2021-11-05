@@ -2,14 +2,14 @@
  *  hcc/epm/restart.c
  *
  *  Copyright (C) 1999-2008 INRIA, Universite de Rennes 1, EDF
- *  Copyright (C) 2008-2009 Matthieu Fertré - Kerlabs
+ *  Copyright (C) 2019-2021 Innogrid HCC.
  */
 
 /**
  *  Process restart.
  *  @file restart.c
  *
- *  @author Geoffroy Vallée, Matthieu Fertré
+ *  @author Innogrid HCC
  */
 
 #include <linux/sched.h>
@@ -26,7 +26,7 @@
 
 /**
  *  Load the process information saved in a checkpoint-file
- *  @author	Geoffroy Vallée, Renaud Lottiaux, Matthieu Fertré
+ *  @author	Innogrid HCC
  *
  *  @param action	Restart descriptor
  *  @param pid		Pid of the task to restart
@@ -61,7 +61,7 @@ exit:
 
 /**
  *  Load the process information saved in a checkpoint-file
- *  @author       Matthieu Fertré
+ *  @author       Innogrid HCC
  *
  *  @param action	Restart descriptor
  *  @param pid		Pid of the task to restart
@@ -103,7 +103,7 @@ struct task_struct *restart_task_from_disk(struct epm_action *action,
 
 /**
  *  Load the process information saved
- *  @author      Matthieu Fertré
+ *  @author      Innogrid HCC
  *
  *  @param action	Restart descriptor
  *  @param pid		Pid of the task to restart
@@ -130,7 +130,7 @@ struct task_struct *restart_task(struct epm_action *action,
 
 /**
  *  Main kernel entry function to restart a checkpointed task.
- *  @author Geoffroy Vallée, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param app          Application
  *  @param pid		Pid of the task to restart

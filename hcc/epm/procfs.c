@@ -7,7 +7,7 @@
 /**
  *  /proc manager
  *
- *  @author Geoffroy Vallée.
+ *  @author Innogrid HCC.
  */
 
 #include <linux/proc_fs.h>
@@ -23,7 +23,7 @@ static struct proc_dir_entry *proc_epm = NULL;
 
 /**
  *  /proc function call to migrate a task
- *  @author Geoffroy Vallée
+ *  @author Innogrid HCC
  *
  *  @param arg	Migration arguments from user space.
  */
@@ -40,7 +40,7 @@ static int proc_migrate_process(void __user *arg)
 
 /**
  *  /proc function call to migrate a thread
- *  @author Geoffroy Vallée
+ *  @author Innogrid HCC
  *
  *  @param arg	Migration arguments from user space.
  */
@@ -57,7 +57,7 @@ static int proc_migrate_thread(void __user *arg)
 
 /**
  *  /proc function call to freeze an application.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 static int proc_app_freeze(void __user *arg)
 {
@@ -71,7 +71,7 @@ static int proc_app_freeze(void __user *arg)
 
 /**
  *  /proc function call to unfreeze an application.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  */
 static int proc_app_unfreeze(void __user *arg)
 {
@@ -101,7 +101,7 @@ static int copy_user_array(void **array, const void __user *from, int len)
 
 /**
  *  /proc function call to checkpoint an application.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param pid	Pid of one of the application processes
  */
@@ -123,7 +123,7 @@ static int proc_app_chkpt(void __user *arg)
 
 /**
  *  /proc function call to restart a checkpointed application.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param pid		Pid of one of the application processes
  *  @param version	Version of checkpoint

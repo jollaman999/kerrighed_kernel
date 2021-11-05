@@ -23,7 +23,7 @@
  *--------------------------------------------------------------------------*/
 
 /** Read data from a file ghost.
- *  @author Renaud Lottiaux, Geoffroy Vallée
+ *  @author Innogrid HCC
  *
  *  @param  ghost   Ghost to read data from.
  *  @param  buff    Buffer to store data.
@@ -59,7 +59,7 @@ int file_ghost_read(ghost_t *ghost, void *buff, size_t length)
 }
 
 /** Write data to a file ghost.
- *  @author Renaud Lottiaux, Geoffroy Vallée
+ *  @author Innogrid HCC
  *
  *  @param  ghost   Ghost to write data to.
  *  @param  buff    Buffer to write in the ghost.
@@ -97,7 +97,7 @@ int file_ghost_write(struct ghost *ghost, const void *buff, size_t length)
 }
 
 /** Close a ghost file
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  ghost    Ghost file to close
  */
@@ -345,7 +345,7 @@ err_file:
 }
 
 /** Create a new file ghost.
- *  @author Renaud Lottiaux, Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  access   Ghost access (READ/WRITE)
  *  @param  file     File to read/write data to/from.
@@ -431,7 +431,7 @@ void unlink_file_ghost(ghost_t *ghost)
 }
 
 /** Create a new file ghost.
- *  @author Matthieu Fertré
+ *  @author Innogrid HCC
  *
  *  @param  access   Ghost access (READ/WRITE)
  *  @param  file     File descriptor to read/write data to/from.

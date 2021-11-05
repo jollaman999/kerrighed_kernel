@@ -1,7 +1,7 @@
 /** Cluster wide barrier
  *  @file cluster_barrier.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 #include <linux/wait.h>
 #include <linux/spinlock_types.h>
