@@ -18,14 +18,14 @@
 #include <linux/kobject.h>
 #include <linux/ipc.h>
 #include <linux/device.h>
-#ifndef CONFIG_HCC_HOTPLUG_DEL
+#ifndef CONFIG_HCC_GHOTPLUG_DEL
 #include <linux/reboot.h>
 #endif
 #include <asm/uaccess.h>
 #include <asm/ioctl.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccinit.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/hccnodemask.h>
 
 #include <hcc/hccflags.h>
@@ -63,9 +63,9 @@ enum {
 
 static char clusters_status[HCC_MAX_CLUSTERS];
 
-static struct hotplug_context *cluster_start_ctx;
+static struct ghotplug_context *cluster_start_ctx;
 static struct cluster_start_msg {
-	struct hotplug_node_set node_set;
+	struct ghotplug_node_set node_set;
 	unsigned long seq_id;
 } cluster_start_msg;
 static DEFINE_SPINLOCK(cluster_start_lock);
@@ -588,7 +588,7 @@ error:
 static void handle_cluster_start(struct rpc_desc *desc, void *data, size_t size)
 {
 	struct cluster_start_msg *msg = data;
-	struct hotplug_context *ctx = NULL;
+	struct ghotplug_context *ctx = NULL;
 	int master = rpc_desc_get_client(desc) == hcc_node_id;
 	char *page;
 	int ret = 0;
@@ -631,7 +631,7 @@ static void handle_cluster_start(struct rpc_desc *desc, void *data, size_t size)
 		if (!ns)
 			goto cancel;
 
-		ctx = hotplug_ctx_alloc(ns);
+		ctx = ghotplug_ctx_alloc(ns);
 		put_hcc_ns(ns);
 		if (!ctx)
 			goto cancel;
@@ -756,7 +756,7 @@ cancel:
 
 static DECLARE_WORK(cluster_start_work, cluster_start_worker);
 
-int do_cluster_start(struct hotplug_context *ctx)
+int do_cluster_start(struct ghotplug_context *ctx)
 {
 	int r = -EALREADY;
 
@@ -790,13 +790,13 @@ static void do_cluster_wait_for_start(void)
 
 static int boot_node_ready(struct hcc_namespace *ns)
 {
-	struct hotplug_context *ctx;
+	struct ghotplug_context *ctx;
 	int r;
 
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
-	ctx = hotplug_ctx_alloc(ns);
+	ctx = ghotplug_ctx_alloc(ns);
 	if (!ctx)
 		return -ENOMEM;
 	ctx->node_set.subclusterid = 0;
@@ -850,7 +850,7 @@ static int cluster_restart(void *arg)
 	return 0;
 }
 
-#ifndef CONFIG_HCC_HOTPLUG_DEL
+#ifndef CONFIG_HCC_GHOTPLUG_DEL
 static void handle_node_poweroff(struct rpc_desc *desc)
 {
 	emergency_sync();
@@ -885,7 +885,7 @@ static int cluster_stop(void *arg)
 static int cluster_status(void __user *arg)
 {
 	int r = -EFAULT;
-	struct hotplug_clusters __user *uclusters = arg;
+	struct ghotplug_clusters __user *uclusters = arg;
 	int bcl;
 
 	if (!access_ok(VERIFY_WRITE, uclusters, sizeof(*uclusters)))
@@ -903,7 +903,7 @@ out:
 static int cluster_nodes(void __user *arg)
 {
 	int r = -EFAULT;
-	struct hotplug_nodes __user *nodes_arg = arg;
+	struct ghotplug_nodes __user *nodes_arg = arg;
 	char __user *unodes;
 	char state;
 	int bcl;
@@ -947,7 +947,7 @@ int hccnodemask_copy_from_user(hccnodemask_t *dstp, __hccnodemask_t *srcp)
 	return 0;
 }
 
-int hotplug_cluster_init(void)
+int ghotplug_cluster_init(void)
 {
 	int bcl;
 
@@ -959,7 +959,7 @@ int hotplug_cluster_init(void)
 	}
 
 	rpc_register_void(CLUSTER_START, handle_cluster_start, 0);
-#ifndef CONFIG_HCC_HOTPLUG_DEL
+#ifndef CONFIG_HCC_GHOTPLUG_DEL
 	rpc_register(NODE_POWEROFF, handle_node_poweroff, 0);
 #endif
 
@@ -972,6 +972,6 @@ int hotplug_cluster_init(void)
 	return 0;
 }
 
-void hotplug_cluster_cleanup(void)
+void ghotplug_cluster_cleanup(void)
 {
 }

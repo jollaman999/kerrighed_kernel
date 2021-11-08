@@ -42,7 +42,7 @@
 #include <hcc/hccinit.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/workqueue.h>
 #ifdef CONFIG_HCC_GPM
 #include <hcc/ghost.h>
@@ -1567,7 +1567,7 @@ cleanup:
 	goto out;
 }
 
-int global_config_add(struct hotplug_context *ctx)
+int global_config_add(struct ghotplug_context *ctx)
 {
 	hccnodemask_t nodes;
 	hcc_node_t node, master;
@@ -1615,7 +1615,7 @@ out:
 	return err;
 }
 
-int global_config_post_add(struct hotplug_context *ctx)
+int global_config_post_add(struct ghotplug_context *ctx)
 {
 	BUG_ON(!hccnodes_subset(ctx->node_set.v, hccnode_online_map));
 	up_write(&attrs_rwsem);

@@ -6,7 +6,7 @@
 #include <linux/notifier.h>
 #include <linux/slab.h>
 
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/hccnodemask.h>
 
 static RAW_NOTIFIER_HEAD(hotplug_chain_add);
@@ -14,7 +14,7 @@ static RAW_NOTIFIER_HEAD(hotplug_chain_remove);
 
 static DEFINE_MUTEX(hotplug_mutex);
 
-int register_hotplug_notifier(int (*notifier_call)(struct notifier_block *, hotplug_event_t, void *),
+int register_ghotplug_notifier(int (*notifier_call)(struct notifier_block *, ghotplug_event_t, void *),
 			      int priority)
 {
 	int err;
@@ -48,20 +48,20 @@ int register_hotplug_notifier(int (*notifier_call)(struct notifier_block *, hotp
 	return err;
 }
 
-int hotplug_add_notify(struct hotplug_context *ctx, hotplug_event_t event)
+int ghotplug_add_notify(struct ghotplug_context *ctx, ghotplug_event_t event)
 {
 	return raw_notifier_call_chain(&hotplug_chain_add, event, ctx);
 }
 
-int hotplug_remove_notify(struct hotplug_node_set *nodes_set,
-			  hotplug_event_t event)
+int ghotplug_remove_notify(struct ghotplug_node_set *nodes_set,
+			  ghotplug_event_t event)
 {
 	return raw_notifier_call_chain(&hotplug_chain_remove, event,
 				       nodes_set);
 }
 
-int hotplug_failure_notify(struct hotplug_node_set *nodes_set,
-			   hotplug_event_t event)
+int ghotplug_failure_notify(struct ghotplug_node_set *nodes_set,
+			   ghotplug_event_t event)
 {
 	return 0;
 }

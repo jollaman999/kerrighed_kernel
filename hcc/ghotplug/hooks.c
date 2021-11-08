@@ -53,12 +53,12 @@ void hooks_stop(void)
 	up(&hooks_lock);
 }
 
-int hotplug_hooks_init(void)
+int ghotplug_hooks_init(void)
 {
 	hooks_index = 0;
 	return 0;
 }
 
-void hotplug_hooks_cleanup(void)
+void ghotplug_hooks_cleanup(void)
 {
 }

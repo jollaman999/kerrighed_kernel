@@ -18,7 +18,7 @@
 #include <hcc/workqueue.h>
 #include <net/grpc/rpcid.h>
 #include <net/grpc/rpc.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <gdm/gdm.h>
 #include <gdm/object_server.h>
 #include <hcc/ghost.h>

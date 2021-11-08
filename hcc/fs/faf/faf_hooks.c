@@ -25,7 +25,7 @@
 #include <asm/uaccess.h>
 
 #include <gdm/gdm.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <net/grpc/rpc.h>
 #include <net/grpc/rpcid.h>
 #include <hcc/file.h>

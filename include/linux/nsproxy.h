@@ -35,7 +35,7 @@ struct nsproxy {
 	struct mnt_namespace *mnt_ns;
 	struct pid_namespace *pid_ns;
 	struct net 	     *net_ns;
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	struct hcc_namespace *hcc_ns;
 #endif
 };

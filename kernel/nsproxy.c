@@ -25,7 +25,7 @@
 #include <linux/file.h>
 #include <linux/syscalls.h>
 
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 #include <hcc/namespace.h>
 #endif
 
@@ -91,7 +91,7 @@ static struct nsproxy *create_new_namespaces(unsigned long flags,
 		goto out_net;
 	}
 
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	err = copy_hcc_ns(tsk, new_nsp);
 	if (err)
 		goto out_hcc;
@@ -99,7 +99,7 @@ static struct nsproxy *create_new_namespaces(unsigned long flags,
 
 	return new_nsp;
 
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 out_hcc:
 	if (new_nsp->net_ns)
 		put_net(new_nsp->net_ns);
@@ -172,7 +172,7 @@ out:
 
 void free_nsproxy(struct nsproxy *ns)
 {
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	if (ns->hcc_ns)
 		put_hcc_ns(ns->hcc_ns);
 #endif

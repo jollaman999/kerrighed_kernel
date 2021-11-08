@@ -7,7 +7,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/configfs.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/scheduler/process_set.h>
 
 #include "internal.h"
@@ -25,16 +25,16 @@ struct configfs_subsystem hcc_scheduler_subsys = {
 	}
 };
 
-static int add(struct hotplug_context *ctx)
+static int add(struct ghotplug_context *ctx)
 {
 	return global_config_add(ctx);
 }
 
-static int hotplug_notifier(struct notifier_block *nb,
-			    hotplug_event_t event,
+static int ghotplug_notifier(struct notifier_block *nb,
+			    ghotplug_event_t event,
 			    void *data)
 {
-	struct hotplug_context *ctx;
+	struct ghotplug_context *ctx;
 	int err;
 
 	switch(event){
@@ -52,7 +52,7 @@ static int hotplug_notifier(struct notifier_block *nb,
 	return NOTIFY_OK;
 }
 
-static int post_add(struct hotplug_context *ctx)
+static int post_add(struct ghotplug_context *ctx)
 {
 	int err;
 
@@ -62,11 +62,11 @@ static int post_add(struct hotplug_context *ctx)
 	return global_config_post_add(ctx);
 }
 
-static int post_hotplug_notifier(struct notifier_block *nb,
-				 hotplug_event_t event,
+static int post_ghotplug_notifier(struct notifier_block *nb,
+				 ghotplug_event_t event,
 				 void *data)
 {
-	struct hotplug_context *ctx;
+	struct ghotplug_context *ctx;
 	int err;
 
 	switch(event){
@@ -144,20 +144,20 @@ int init_scheduler(void)
 		goto err_register;
 	}
 
-	ret = register_hotplug_notifier(hotplug_notifier,
+	ret = register_ghotplug_notifier(hotplug_notifier,
 					HOTPLUG_PRIO_SCHED);
 	if (ret)
-		goto err_hotplug;
+		goto err_ghotplug;
 
-	ret = register_hotplug_notifier(post_hotplug_notifier,
+	ret = register_ghotplug_notifier(post_ghotplug_notifier,
 					HOTPLUG_PRIO_SCHED_POST);
 	if (ret)
-		goto err_hotplug;
+		goto err_ghotplug;
 
 	printk(KERN_INFO "scheduler initialization succeeded!\n");
 	return 0;
 
-err_hotplug:
+err_ghotplug:
 
 	configfs_unregister_subsystem(&hcc_scheduler_subsys);
 err_register:

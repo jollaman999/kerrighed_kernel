@@ -24,7 +24,7 @@
 #include <linux/rcupdate.h>
 #include <linux/jiffies.h>
 #include <hcc/pid.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/scheduler/info.h>
 #include <hcc/scheduler/hooks.h>
 #include <hcc/scheduler/probe.h>

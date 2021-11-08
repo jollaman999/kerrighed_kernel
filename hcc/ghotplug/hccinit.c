@@ -19,8 +19,8 @@
 #ifdef CONFIG_HCC_PROC
 #include <hcc/pid.h>
 #endif
-#ifdef CONFIG_HCC_HOTPLUG
-#include <hcc/hotplug.h>
+#ifdef CONFIG_HCC_GHOTPLUG
+#include <hcc/ghotplug.h>
 #endif
 
 void init_node_discovering(void);
@@ -70,7 +70,7 @@ struct kobject* hcchotplugsys;
 #define deffct(p) extern int init_##p(void); extern void cleanup_##p(void)
 
 deffct(tools);
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 deffct(hotplug);
 #endif
 #ifdef CONFIG_HCC_GRPC
@@ -303,7 +303,7 @@ static void __init init_ids(void)
  out:
 	if (ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID)) {
 		check_node_id(hcc_node_id);
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 		universe[hcc_node_id].state = 1;
 		set_hccnode_present(hcc_node_id);
 #endif
@@ -337,18 +337,18 @@ int init_hcc_communication_system(void)
 		goto err_rpc;
 #endif
 
-#ifdef CONFIG_HCC_HOTPLUG
-	if (init_hotplug())
-		goto err_hotplug;
+#ifdef CONFIG_HCC_GHOTPLUG
+	if (init_ghotplug())
+		goto err_ghotplug;
 #endif
 
 	printk("Init HCC low-level framework (nodeid %d) : done\n", hcc_node_id);
 
 	return 0;
 
-#ifdef CONFIG_HCC_HOTPLUG
-err_hotplug:
-	cleanup_hotplug();
+#ifdef CONFIG_HCC_GHOTPLUG
+err_ghotplug:
+	cleanup_ghotplug();
 #endif
 #ifdef CONFIG_HCC_GRPC
 err_rpc:

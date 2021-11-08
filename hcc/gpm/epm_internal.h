@@ -46,10 +46,10 @@ static inline void free_thread_info(struct thread_info *ti)
 }
 #endif
 
-struct hotplug_context;
+struct ghotplug_context;
 
-int gpm_hotplug_init(void);
-void gpm_hotplug_cleanup(void);
+int gpm_ghotplug_init(void);
+void gpm_ghotplug_cleanup(void);
 
 int gpm_signal_start(void);
 void gpm_signal_exit(void);
@@ -62,7 +62,7 @@ void gpm_children_exit(void);
 
 void gpm_pidmap_start(void);
 void gpm_pidmap_exit(void);
-int pidmap_map_add(struct hotplug_context *ctx);
+int pidmap_map_add(struct ghotplug_context *ctx);
 
 void gpm_pid_start(void);
 void gpm_pid_exit(void);

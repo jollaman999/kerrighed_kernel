@@ -1,5 +1,5 @@
 #include <linux/notifier.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/hccnodemask.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccinit.h>
@@ -30,13 +30,13 @@ static void membership_online_remove(hccnodemask_t *vector)
 
 static
 int membership_online_notification(struct notifier_block *nb,
-				   hotplug_event_t event,
+				   ghotplug_event_t event,
 				   void *data)
 {
 	
 	switch(event){
 	case HOTPLUG_NOTIFY_ADD:{
-		struct hotplug_context *ctx = data;
+		struct ghotplug_context *ctx = data;
 		membership_online_add(&ctx->node_set.v);
 		break;
 	}
@@ -49,7 +49,7 @@ int membership_online_notification(struct notifier_block *nb,
 	}
 		
 	case HOTPLUG_NOTIFY_REMOVE_ADVERT:{
-		struct hotplug_node_set *node_set = data;
+		struct ghotplug_node_set *node_set = data;
 		membership_online_remove(&node_set->v);
 		break;
 	}
@@ -64,7 +64,7 @@ int membership_online_notification(struct notifier_block *nb,
 
 static
 int membership_present_notification(struct notifier_block *nb,
-				    hotplug_event_t event, void *data)
+				    ghotplug_event_t event, void *data)
 {
 	switch(event){
 	default:
@@ -74,15 +74,15 @@ int membership_present_notification(struct notifier_block *nb,
 	return NOTIFY_OK;
 }
 
-int hotplug_membership_init(void)
+int ghotplug_membership_init(void)
 {
-	register_hotplug_notifier(membership_present_notification,
+	register_ghotplug_notifier(membership_present_notification,
 				  HOTPLUG_PRIO_MEMBERSHIP_PRESENT);
-	register_hotplug_notifier(membership_online_notification,
+	register_ghotplug_notifier(membership_online_notification,
 				  HOTPLUG_PRIO_MEMBERSHIP_ONLINE);
 	return 0;
 }
 
-void hotplug_membership_cleanup(void)
+void ghotplug_membership_cleanup(void)
 {
 }

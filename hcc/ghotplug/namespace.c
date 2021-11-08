@@ -149,7 +149,7 @@ int hcc_set_cluster_creator(void __user *arg)
 	return 0;
 }
 
-int hotplug_namespace_init(void)
+int ghotplug_namespace_init(void)
 {
 	return __register_proc_service(KSYS_HOTPLUG_SET_CREATOR,
 				       hcc_set_cluster_creator, false);

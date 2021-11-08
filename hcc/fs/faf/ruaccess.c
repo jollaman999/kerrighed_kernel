@@ -16,7 +16,7 @@
 #include <linux/slab.h>
 #include <linux/errno.h>
 #include <hcc/faf.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <net/grpc/rpc.h>
 
 

@@ -17,7 +17,7 @@
 #endif
 
 #include <gdm/gdm.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #ifdef CONFIG_HCC_GPM
 #include <hcc/action.h>
 #endif

@@ -1456,7 +1456,7 @@ struct task_struct {
 	unsigned did_exec:1;
 	unsigned in_execve:1;	/* Tell the LSMs that the process is doing an
 				 * execve */
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	unsigned create_hcc_ns:1;
 #endif
 #ifdef CONFIG_HCC_GPM

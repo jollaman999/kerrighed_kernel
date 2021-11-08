@@ -3,7 +3,7 @@
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
 #include <hcc/hccinit.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 
 hccnodemask_t hccnode_possible_map;
 hccnodemask_t hccnode_present_map;
@@ -20,7 +20,7 @@ void hcc_node_arrival(hcc_node_t nodeid)
 	printk("hcc_node_arrival: nodeid = %d\n", nodeid);
 	set_hccnode_present(nodeid);
 	hcc_node_reachable(nodeid);
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	universe[nodeid].state = 1;
 #endif
 }
@@ -28,7 +28,7 @@ void hcc_node_arrival(hcc_node_t nodeid)
 void hcc_node_departure(hcc_node_t nodeid)
 {
 	printk("hcc_node_departure: nodeid = %d\n", nodeid);
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	universe[nodeid].state = 0;
 #endif
 	clear_hccnode_present(nodeid);
@@ -43,7 +43,7 @@ void init_node_discovering(void)
 	hccnodes_clear(hccnode_present_map);
 	hccnodes_clear(hccnode_online_map);
 	
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	for (i = 0; i < HCC_MAX_NODES; i++) {
 		universe[i].state = 0;
 		universe[i].subid = -1;
@@ -51,7 +51,7 @@ void init_node_discovering(void)
 #endif
 
 	if (ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID)) {
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 		universe[hcc_node_id].state = 1;
 #endif
 		set_hccnode_present(hcc_node_id);

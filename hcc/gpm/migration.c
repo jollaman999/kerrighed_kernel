@@ -41,7 +41,7 @@
 #include <hcc/signal.h>
 #include <hcc/action.h>
 #include <hcc/migration.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <net/grpc/rpcid.h>
 #include <net/grpc/rpc.h>
 #include "remote_clone.h"

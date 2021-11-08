@@ -13,7 +13,7 @@
 #include <hcc/namespace.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <net/grpc/rpc.h>
 #include <net/grpc/rpcid.h>
 #include <gdm/gdm.h>
@@ -365,7 +365,7 @@ static void handle_pidmap_steal(struct rpc_desc *desc, void *_msg, size_t size)
 	put_pid_ns(pidmap_ns);
 }
 
-int pidmap_map_add(struct hotplug_context *ctx)
+int pidmap_map_add(struct ghotplug_context *ctx)
 {
 	struct pid_namespace *ns = ctx->ns->root_nsproxy.pid_ns;
 	hcc_node_t host_node;

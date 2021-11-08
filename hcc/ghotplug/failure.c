@@ -9,7 +9,7 @@
 #include <linux/workqueue.h>
 #include <linux/sched.h>
 #include <linux/irqflags.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/hccnodemask.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccinit.h>
@@ -70,8 +70,8 @@ static void handle_node_fail(struct rpc_desc *desc, void *data, size_t size)
 
 static int nodes_fail(void __user *arg)
 {
-	struct __hotplug_node_set __node_set;
-	struct hotplug_node_set node_set;
+	struct __ghotplug_node_set __node_set;
+	struct ghotplug_node_set node_set;
 	int unused;
 	int err;
 	
@@ -90,7 +90,7 @@ static int nodes_fail(void __user *arg)
 	return 0;
 }
 
-int hotplug_failure_init(void)
+int ghotplug_failure_init(void)
 {
 	INIT_WORK(&recovery_work, recovery_worker);
 
@@ -101,6 +101,6 @@ int hotplug_failure_init(void)
 	return 0;
 }
 
-void hotplug_failure_cleanup(void)
+void ghotplug_failure_cleanup(void)
 {
 }

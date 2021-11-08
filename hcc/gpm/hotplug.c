@@ -8,12 +8,12 @@
 #include <hcc/hccnodemask.h>
 #include <hcc/hccinit.h>
 #include <hcc/pid.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/migration.h>
 
 #include "gpm_internal.h"
 
-static int gpm_add(struct hotplug_context *ctx)
+static int gpm_add(struct ghotplug_context *ctx)
 {
 	return pidmap_map_add(ctx);
 }
@@ -65,11 +65,11 @@ static int gpm_remove(const hccnodemask_t *vector)
 	return 0;
 }
 
-static int gpm_notification(struct notifier_block *nb, hotplug_event_t event,
+static int gpm_notification(struct notifier_block *nb, ghotplug_event_t event,
 			    void *data)
 {
-	struct hotplug_context *ctx;
-	struct hotplug_node_set *node_set;
+	struct ghotplug_context *ctx;
+	struct ghotplug_node_set *node_set;
 	int err;
 
 	switch(event){
@@ -91,12 +91,12 @@ static int gpm_notification(struct notifier_block *nb, hotplug_event_t event,
 	return NOTIFY_OK;
 }
 
-int gpm_hotplug_init(void)
+int gpm_ghotplug_init(void)
 {
-	register_hotplug_notifier(gpm_notification, HOTPLUG_PRIO_EPM);
+	register_ghotplug_notifier(gpm_notification, HOTPLUG_PRIO_EPM);
 	return 0;
 }
 
-void gpm_hotplug_cleanup(void)
+void gpm_ghotplug_cleanup(void)
 {
 }

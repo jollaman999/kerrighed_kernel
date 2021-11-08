@@ -19,7 +19,7 @@
 #include <hcc/hcc_services.h>
 #include <gdm/gdm.h>
 #include <hcc/page_table_tree.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include "memory_int_linker.h"
 #include "memory_io_linker.h"
 #include "mm_struct.h"

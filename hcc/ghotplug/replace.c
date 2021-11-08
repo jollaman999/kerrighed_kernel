@@ -8,12 +8,12 @@
 #include <linux/sched.h>
 #include <hcc/hashtable.h>
 
-int hotplug_replace_init(void)
+int ghotplug_replace_init(void)
 {
 
 	return 0;
 }
 
-void hotplug_replace_cleanup(void)
+void ghotplug_replace_cleanup(void)
 {
 }

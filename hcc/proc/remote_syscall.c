@@ -10,7 +10,7 @@
 #include <linux/pid_namespace.h>
 #include <linux/pid.h>
 #include <hcc/pid.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <linux/errno.h>
 #include <linux/err.h>
 #include <asm/current.h>

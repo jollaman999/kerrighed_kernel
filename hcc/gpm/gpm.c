@@ -8,7 +8,7 @@
 #include <linux/sched.h>
 #include <linux/hcc_hashtable.h>
 #include <hcc/ghost.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/hccsyms.h>
 #include <hcc/debug.h>
 #include "gpm_internal.h"
@@ -112,7 +112,7 @@ int init_epm(void)
 
 	application_cr_server_init();
 
-	gpm_hotplug_init();
+	gpm_ghotplug_init();
 
 	printk("EPM initialisation: done\n");
 	return 0;
@@ -120,7 +120,7 @@ int init_epm(void)
 
 void cleanup_epm(void)
 {
-	gpm_hotplug_cleanup();
+	gpm_ghotplug_cleanup();
 	application_cr_server_finalize();
 	gpm_procfs_exit();
 	gpm_migration_exit();

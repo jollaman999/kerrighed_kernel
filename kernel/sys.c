@@ -332,7 +332,7 @@ void kernel_restart(char *cmd)
 }
 EXPORT_SYMBOL_GPL(kernel_restart);
 
-#ifndef CONFIG_HCC_HOTPLUG
+#ifndef CONFIG_HCC_GHOTPLUG
 static
 #endif
 void kernel_shutdown_prepare(enum system_states state)
@@ -342,7 +342,7 @@ void kernel_shutdown_prepare(enum system_states state)
 	system_state = state;
 	device_shutdown();
 }
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 EXPORT_SYMBOL_GPL(kernel_shutdown_prepare);
 #endif
 

@@ -18,7 +18,7 @@
 #include <hcc/hccflags.h>
 #include <hcc/procfs.h>
 
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include "proc.h"
 #include "static_node_info_linker.h"
 #include "static_cpu_info_linker.h"

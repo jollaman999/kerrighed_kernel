@@ -5,7 +5,7 @@
 #include <linux/workqueue.h>
 #include <linux/slab.h>
 
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/namespace.h>
 #include <net/grpc/rpcid.h>
 #include <net/grpc/rpc.h>
@@ -14,9 +14,9 @@
 
 struct workqueue_struct *hcc_ha_wq;
 
-struct hotplug_context *hotplug_ctx_alloc(struct hcc_namespace *ns)
+struct ghotplug_context *hotplug_ctx_alloc(struct hcc_namespace *ns)
 {
-	struct hotplug_context *ctx;
+	struct ghotplug_context *ctx;
 
 	BUG_ON(!ns);
 	ctx = kmalloc(sizeof(*ctx), GFP_KERNEL);
@@ -30,16 +30,16 @@ struct hotplug_context *hotplug_ctx_alloc(struct hcc_namespace *ns)
 	return ctx;
 }
 
-void hotplug_ctx_release(struct kref *kref)
+void ghotplug_ctx_release(struct kref *kref)
 {
-	struct hotplug_context *ctx;
+	struct ghotplug_context *ctx;
 
-	ctx = container_of(kref, struct hotplug_context, kref);
+	ctx = container_of(kref, struct ghotplug_context, kref);
 	put_hcc_ns(ctx->ns);
 	kfree(ctx);
 }
 
-int init_hotplug(void)
+int init_ghotplug(void)
 {
 	hcc_ha_wq = create_workqueue("hccHA");
 	BUG_ON(hcc_ha_wq == NULL);
@@ -47,7 +47,7 @@ int init_hotplug(void)
 	hotplug_hooks_init();
 
 	hotplug_add_init();
-#ifdef CONFIG_HCC_HOTPLUG_DEL
+#ifdef CONFIG_HCC_GHOTPLUG_DEL
 	hotplug_remove_init();
 #endif
 	hotplug_failure_init();
@@ -58,6 +58,6 @@ int init_hotplug(void)
 	return 0;
 };
 
-void cleanup_hotplug(void)
+void cleanup_ghotplug(void)
 {
 };

@@ -20,7 +20,7 @@
 #include <hcc/pid.h>
 #include <hcc/application.h>
 #include <hcc/hcc_signal.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/action.h>
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>

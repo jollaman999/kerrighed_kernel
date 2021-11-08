@@ -15,7 +15,7 @@
 #include <hcc/hccnodemask.h>
 #include <hcc/hccinit.h>
 #include <hcc/hashtable.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/hccflags.h>
 #include <asm/uaccess.h>
 #include <asm/ioctl.h>
@@ -28,7 +28,7 @@
 #include "hotplug_internal.h"
 
 inline
-void do_local_node_remove(struct hotplug_node_set *node_set)
+void do_local_node_remove(struct ghotplug_node_set *node_set)
 {
 	hcc_node_t node;
 
@@ -63,7 +63,7 @@ void do_local_node_remove(struct hotplug_node_set *node_set)
 }
 
 inline
-void do_other_node_remove(struct hotplug_node_set *node_set)
+void do_other_node_remove(struct ghotplug_node_set *node_set)
 {
 	printk("do_other_node_remove\n");
 	hotplug_remove_notify(node_set, HOTPLUG_NOTIFY_REMOVE_ADVERT);
@@ -72,7 +72,7 @@ void do_other_node_remove(struct hotplug_node_set *node_set)
 
 static void handle_node_remove(struct rpc_desc *desc, void *data, size_t size)
 {
-	struct hotplug_node_set *node_set;
+	struct ghotplug_node_set *node_set;
 
 	printk("handle_node_remove\n");
 	node_set = data;
@@ -102,7 +102,7 @@ static int handle_node_remove_confirm(struct rpc_desc *desc, void *data, size_t 
 	return 0;
 }
 
-inline void __fwd_remove_cb(struct hotplug_node_set *node_set)
+inline void __fwd_remove_cb(struct ghotplug_node_set *node_set)
 {
 	printk("__fwd_remove_cb: begin (%d / %d)\n", node_set->subclusterid, hcc_subsession_id);
 	if (node_set->subclusterid == hcc_subsession_id) {
@@ -138,11 +138,11 @@ static void handle_node_fwd_remove(struct rpc_desc *desc, void *data, size_t siz
 
 static int nodes_remove(void __user *arg)
 {
-	struct __hotplug_node_set __node_set;
-	struct hotplug_node_set node_set;
+	struct __ghotplug_node_set __node_set;
+	struct ghotplug_node_set node_set;
 	int err;
 
-	if (copy_from_user(&__node_set, arg, sizeof(struct __hotplug_node_set)))
+	if (copy_from_user(&__node_set, arg, sizeof(struct __ghotplug_node_set)))
 		return -EFAULT;
 
 	node_set.subclusterid = __node_set.subclusterid;
@@ -184,8 +184,8 @@ static void handle_node_poweroff(struct rpc_desc *desc)
 
 static int nodes_poweroff(void __user *arg)
 {
-	struct __hotplug_node_set __node_set;
-	struct hotplug_node_set node_set;
+	struct __ghotplug_node_set __node_set;
+	struct ghotplug_node_set node_set;
 	int unused;
 	int err;
 	
@@ -205,7 +205,7 @@ static int nodes_poweroff(void __user *arg)
 }
 
 
-int hotplug_remove_init(void)
+int ghotplug_remove_init(void)
 {
 	rpc_register(NODE_POWEROFF, handle_node_poweroff, 0);
 	rpc_register_void(NODE_REMOVE, handle_node_remove, 0);
@@ -219,6 +219,6 @@ int hotplug_remove_init(void)
 	return 0;
 }
 
-void hotplug_remove_cleanup(void)
+void ghotplug_remove_cleanup(void)
 {
 }

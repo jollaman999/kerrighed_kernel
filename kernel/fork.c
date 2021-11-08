@@ -75,7 +75,7 @@
 #ifdef CONFIG_HCC_GDM
 #include <gdm/gdm_info.h>
 #endif
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 #include <hcc/namespace.h>
 #endif
 #ifdef CONFIG_HCC_PROC
@@ -1301,7 +1301,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 					struct pid *pid,
 					int trace)
 {
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	int saved_create_hcc_ns;
 #endif
 	int retval;
@@ -1345,7 +1345,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 					current->nsproxy->pid_ns))
 		return ERR_PTR(-EINVAL);
 
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	saved_create_hcc_ns = current->create_hcc_ns;
 	current->create_hcc_ns = can_create_hcc_ns(clone_flags);
 #endif
@@ -1359,7 +1359,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	if (!p)
 		goto fork_out;
 
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	p->create_hcc_ns = 0;
 #endif
 	tracehook_init_task(p);
@@ -1784,7 +1784,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	if (clone_flags & CLONE_THREAD)
 		threadgroup_change_end(current);
 	perf_event_fork(p);
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	current->create_hcc_ns = saved_create_hcc_ns;
 #endif
 	return p;
@@ -1890,7 +1890,7 @@ bad_fork_cleanup_count:
 bad_fork_free:
 	free_task(p);
 fork_out:
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	current->create_hcc_ns = saved_create_hcc_ns;
 #endif
 #ifndef CONFIG_HCC_GPM
@@ -2186,12 +2186,12 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 	struct files_struct *fd, *new_fd = NULL;
 	struct nsproxy *new_nsproxy = NULL;
 	int do_sysvsem = 0;
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	int saved_create_hcc_ns;
 #endif
 	int err;
 
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	saved_create_hcc_ns = current->create_hcc_ns;
 	current->create_hcc_ns = 0;
 #endif
@@ -2282,7 +2282,7 @@ bad_unshare_cleanup_fs:
 		free_fs_struct(new_fs);
 
 bad_unshare_out:
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	current->create_hcc_ns = saved_create_hcc_ns;
 #endif
 	return err;

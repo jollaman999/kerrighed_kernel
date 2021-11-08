@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 #include <hcc/sys/types.h>
 #include <hcc/hotplug.h>
 #endif
@@ -349,7 +349,7 @@ static void node_established_contact(struct tipc_node *n_ptr)
 
 	dbg("node_established_contact:-> %x\n", n_ptr->addr);
 
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	hcc_node_arrival(tipc_node(n_ptr->addr)-1);
 #endif
 
@@ -401,7 +401,7 @@ static void node_lost_contact(struct tipc_node *n_ptr)
 	char addr_string[16];
 	u32 i;
 
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	hcc_node_departure(tipc_node(n_ptr->addr)-1);
 #endif
 

@@ -11,7 +11,7 @@
 #include <hcc/hccinit.h>
 #include <hcc/sys/types.h>
 #include <hcc/pid.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/action.h>
 #include <hcc/ghost.h>
 #ifdef CONFIG_HCC_SCHED

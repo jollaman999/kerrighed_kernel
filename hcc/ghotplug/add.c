@@ -11,7 +11,7 @@
 #include <linux/uaccess.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccinit.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/namespace.h>
 #include <hcc/hccnodemask.h>
 
@@ -22,7 +22,7 @@
 
 #include "hotplug_internal.h"
 
-int __nodes_add(struct hotplug_context *ctx)
+int __nodes_add(struct ghotplug_context *ctx)
 {
 	hotplug_add_notify(ctx, HOTPLUG_NOTIFY_ADD);
 	return 0;
@@ -30,19 +30,19 @@ int __nodes_add(struct hotplug_context *ctx)
 
 static void handle_node_add(struct rpc_desc *rpc_desc, void *data, size_t size)
 {
-	struct hotplug_context *ctx;
+	struct ghotplug_context *ctx;
 	struct hcc_namespace *ns = find_get_hcc_ns();
 	char *page;
 	int ret;
 
 	BUG_ON(!ns);
-	ctx = hotplug_ctx_alloc(ns);
+	ctx = ghotplug_ctx_alloc(ns);
 	put_hcc_ns(ns);
 	if (!ctx) {
 		printk("hcc: [ADD] Failed to add nodes!\n");
 		return;
 	}
-	ctx->node_set = *(struct hotplug_node_set *)data;
+	ctx->node_set = *(struct ghotplug_node_set *)data;
 
 	__nodes_add(ctx);
 
@@ -60,7 +60,7 @@ static void handle_node_add(struct rpc_desc *rpc_desc, void *data, size_t size)
 	}
 }
 
-static int do_nodes_add(struct hotplug_context *ctx)
+static int do_nodes_add(struct ghotplug_context *ctx)
 {
 	char *page;
 	hcc_node_t node;
@@ -99,14 +99,14 @@ static int do_nodes_add(struct hotplug_context *ctx)
 
 static int nodes_add(void __user *arg)
 {
-	struct __hotplug_node_set __node_set;
-	struct hotplug_context *ctx;
+	struct __ghotplug_node_set __node_set;
+	struct ghotplug_context *ctx;
 	int err;
 
-	if (copy_from_user(&__node_set, arg, sizeof(struct __hotplug_node_set)))
+	if (copy_from_user(&__node_set, arg, sizeof(struct __ghotplug_node_set)))
 		return -EFAULT;
 
-	ctx = hotplug_ctx_alloc(current->nsproxy->hcc_ns);
+	ctx = ghotplug_ctx_alloc(current->nsproxy->hcc_ns);
 	if (!ctx)
 		return -ENOMEM;
 
@@ -138,7 +138,7 @@ out:
 	return err;
 }
 
-int hotplug_add_init(void)
+int ghotplug_add_init(void)
 {
 	rpc_register_void(NODE_ADD, handle_node_add, 0);
 
@@ -146,6 +146,6 @@ int hotplug_add_init(void)
 	return 0;
 }
 
-void hotplug_add_cleanup(void)
+void ghotplug_add_cleanup(void)
 {
 }

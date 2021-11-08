@@ -6,7 +6,7 @@ config HCC
 	default y
 	select HCC_TOOLS if !HCC_DEVEL
 	select HCC_COMMUNICATION_FRAMEWORK if !HCC_DEVEL
-	select HCC_HOTPLUG if !HCC_DEVEL
+	select HCC_GHOTPLUG if !HCC_DEVEL
 	select HCC_GDM if !HCC_DEVEL
 	select HCC_CAP if !HCC_DEVEL
 	select HCC_PROCFS if !HCC_DEVEL
@@ -101,27 +101,27 @@ config HCC_AUTONODEID_OFF
 
 endchoice
 
-config HCC_HOTPLUG
+config HCC_GHOTPLUG
 	bool "HCCHotplug"
 	depends on HCC
 	help
 	  Support for nodes management
 
-config HCC_HOTPLUG_DEL
+config HCC_GHOTPLUG_DEL
 	bool "HCCHotplug: removal support"
-	depends on HCC_HOTPLUG
+	depends on HCC_GHOTPLUG
 	help
 	  Support node removal
 
-config HCC_HOTPLUG_XCH
+config HCC_GHOTPLUG_XCH
 	bool "HCCHotplug: replacement support"
-	depends on HCC_HOTPLUG
+	depends on HCC_GHOTPLUG
 	help
 	  Support node replacement
 
 config HCC_DISABLE_HEARTBEAT
        bool "Disable failure detector"
-       depends on HCC_HOTPLUG
+       depends on HCC_GHOTPLUG
        help
          If you don't want automatic reconfiguration on a node failure
          just select this option.

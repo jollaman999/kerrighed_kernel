@@ -75,7 +75,7 @@
 #include <linux/kaiser.h>
 #include <trace/boot.h>
 
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 #include <hcc/hccsyms.h>
 #endif
 
@@ -935,7 +935,7 @@ static void __init do_basic_setup(void)
 	cgroup_wq_init();
 	cpuset_init_smp();
 	usermodehelper_init();
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	init_hccsyms();
 #endif
 	shmem_init();	

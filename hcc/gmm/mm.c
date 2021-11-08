@@ -18,7 +18,7 @@
 #include <asm/uaccess.h>
 #include <hcc/hccsyms.h>
 #include <hcc/mm.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/page_table_tree.h>
 #include <gdm/gdm.h>
 #include "mm_struct.h"

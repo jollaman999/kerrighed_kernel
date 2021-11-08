@@ -7,7 +7,7 @@
 
 #include <net/grpc/rpcid.h>
 #include <net/grpc/rpc.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 
 #include "proc.h"
 
@@ -40,10 +40,10 @@ void procfs_remove(hccnodemask_t * v){
  *
  */
 
-static int procfs_notification(struct notifier_block *nb, hotplug_event_t event,
+static int procfs_notification(struct notifier_block *nb, ghotplug_event_t event,
 			    void *data){
-	struct hotplug_context *ctx;
-	struct hotplug_node_set *node_set;
+	struct ghotplug_context *ctx;
+	struct ghotplug_node_set *node_set;
 
 	switch(event){
 	case HOTPLUG_NOTIFY_ADD:
@@ -62,10 +62,10 @@ static int procfs_notification(struct notifier_block *nb, hotplug_event_t event,
 	return NOTIFY_OK;
 };
 
-int procfs_hotplug_init(void){
-	register_hotplug_notifier(procfs_notification, HOTPLUG_PRIO_MEMBERSHIP_ONLINE);
+int procfs_ghotplug_init(void){
+	register_ghotplug_notifier(procfs_notification, HOTPLUG_PRIO_MEMBERSHIP_ONLINE);
 	return 0;
 };
 
-void procfs_hotplug_cleanup(void){
+void procfs_ghotplug_cleanup(void){
 };

@@ -54,7 +54,7 @@
 #ifdef CONFIG_HCC_GDM
 #include <gdm/gdm_info.h>
 #endif
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 #include <hcc/namespace.h>
 #endif
 #ifdef CONFIG_HCC_PROC
@@ -1139,7 +1139,7 @@ NORET_TYPE void do_exit(long code)
 
 	exit_irq_thread();
 
-#ifdef CONFIG_HCC_HOTPLUG
+#ifdef CONFIG_HCC_GHOTPLUG
 	group_dead = atomic_dec_and_test(&tsk->signal->live);
 	if (tsk->nsproxy->hcc_ns
 	    && same_thread_group(tsk, tsk->nsproxy->hcc_ns->root_task)
@@ -1165,7 +1165,7 @@ NORET_TYPE void do_exit(long code)
 
 	acct_update_integrals(tsk);
 
-#ifndef CONFIG_HCC_HOTPLUG
+#ifndef CONFIG_HCC_GHOTPLUG
 	group_dead = atomic_dec_and_test(&tsk->signal->live);
 #endif
 	if (group_dead) {

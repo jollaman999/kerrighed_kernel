@@ -15,7 +15,7 @@
 #include <linux/err.h>
 #include <hcc/hccflags.h>
 #include <hcc/hccnodemask.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/scheduler/policy.h>
 #include <hcc/scheduler/process_set.h>
 #include <hcc/scheduler/global_config.h>
@@ -788,7 +788,7 @@ static struct config_group schedulers_group = {
 	},
 };
 
-int scheduler_post_add(struct hotplug_context *ctx)
+int scheduler_post_add(struct ghotplug_context *ctx)
 {
 	const hccnodemask_t *added = &ctx->node_set.v;
 	hccnodemask_t removed = HCCNODE_MASK_NONE;
