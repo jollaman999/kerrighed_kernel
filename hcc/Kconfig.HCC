@@ -102,19 +102,19 @@ config HCC_AUTONODEID_OFF
 endchoice
 
 config HCC_HOTPLUG
-	bool "KerHotplug"
+	bool "HCCHotplug"
 	depends on HCC
 	help
 	  Support for nodes management
 
 config HCC_HOTPLUG_DEL
-	bool "KerHotplug: removal support"
+	bool "HCCHotplug: removal support"
 	depends on HCC_HOTPLUG
 	help
 	  Support node removal
 
 config HCC_HOTPLUG_XCH
-	bool "KerHotplug: replacement support"
+	bool "HCCHotplug: replacement support"
 	depends on HCC_HOTPLUG
 	help
 	  Support node replacement
@@ -140,7 +140,7 @@ config HCC_GDM_DEBUG
 	def_bool HCC_GDM && HCC_DEBUG
 
 config HCC_CAP
-	bool "KerCapabilities"
+	bool "HCCCapabilities"
 	depends on HCC
 	help
 	  HCC capabilities mechanism.
@@ -156,7 +156,7 @@ config HCC_PROCFS
 	  If unsure, say Y.
 
 #config HCC_SYNC
-#	bool "KerSync"
+#	bool "HCCSync"
 #	depends on HCC && HCC_GDM
 #	help
 #	  Synchronization library
@@ -188,13 +188,13 @@ config HCC_FAF
 	  If unsure, say Y.
 
 config HCC_GIPC
-	bool "KerIPC"
+	bool "HCCIPC"
 	depends on HCC && HCC_GDM && HCC_GMM && IPC_NS
 	help
 	  HCC's global IPC management
 
 config HCC_PROC
-	bool "KerProc"
+	bool "HCCProc"
 	depends on HCC && HCC_GDM
 	help
 	  Low-level global process management: global PIDs, syscalls affecting
@@ -203,7 +203,7 @@ config HCC_PROC
 	  If unsure, say Y.
 
 config HCC_GPM
-	bool "KerEPM"
+	bool "HCCGPM"
 	depends on HCC && HCC_PROC && HCC_CAP && HCC_GMM && (HCC_DVFS || HCC_FAF)
 	help
 	  Enhanced Process Management:
