@@ -8,7 +8,7 @@ config HCC
 	select HCC_COMMUNICATION_FRAMEWORK if !HCC_DEVEL
 	select HCC_GHOTPLUG if !HCC_DEVEL
 	select HCC_GDM if !HCC_DEVEL
-	select HCC_CAP if !HCC_DEVEL
+	select HCC_GCAP if !HCC_DEVEL
 	select HCC_PROCFS if !HCC_DEVEL
 	select HCC_GMM if !HCC_DEVEL
 	select HCC_DVFS if !HCC_DEVEL
@@ -139,7 +139,7 @@ config HCC_GDM
 config HCC_GDM_DEBUG
 	def_bool HCC_GDM && HCC_DEBUG
 
-config HCC_CAP
+config HCC_GCAP
 	bool "HCCCapabilities"
 	depends on HCC
 	help
@@ -204,7 +204,7 @@ config HCC_PROC
 
 config HCC_GPM
 	bool "HCCGPM"
-	depends on HCC && HCC_PROC && HCC_CAP && HCC_GMM && (HCC_DVFS || HCC_FAF)
+	depends on HCC && HCC_PROC && HCC_GCAP && HCC_GMM && (HCC_DVFS || HCC_FAF)
 	help
 	  HCC Process Management:
 	    process migration, checkpoint/restart, remote clone.
