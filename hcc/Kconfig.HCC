@@ -206,7 +206,7 @@ config HCC_GPM
 	bool "HCCGPM"
 	depends on HCC && HCC_PROC && HCC_CAP && HCC_GMM && (HCC_DVFS || HCC_FAF)
 	help
-	  Enhanced Process Management:
+	  HCC Process Management:
 	    process migration, checkpoint/restart, remote clone.
 
 	  If unsure, say Y.

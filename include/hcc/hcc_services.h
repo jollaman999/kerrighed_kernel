@@ -116,7 +116,7 @@
 					   struct gmm_new_local_data)
 
 /*
- * Enhanced Process Management related hcc syscalls
+ * HCC Process Management related hcc syscalls
  */
 
 #define KSYS_PROCESS_MIGRATION         _IOW(HCC_PROC_MAGIC, \
