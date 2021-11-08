@@ -211,7 +211,7 @@ config HCC_GPM
 
 	  If unsure, say Y.
 
-config HCC_GIPC_EPM
+config HCC_GIPC_GPM
        def_bool HCC_GIPC && HCC_GPM
 
 menuconfig HCC_GSCHED
