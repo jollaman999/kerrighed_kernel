@@ -36,7 +36,7 @@
 
 #ifdef CONFIG_HCC_GHOTPLUG
 #include <hcc/sys/types.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #endif
 
 #include "core.h"

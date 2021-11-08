@@ -9,7 +9,7 @@
 #include <linux/nsproxy.h>
 #include <linux/rcupdate.h>
 #include <linux/spinlock.h>
-#include <hcc/scheduler/global_config.h>
+#include <hcc/gscheduler/global_config.h>
 
 /**
  * Representation of particual element in process set. This is used both for

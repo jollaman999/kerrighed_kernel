@@ -61,7 +61,7 @@
 
 #ifdef CONFIG_HCC_GRPC
 #include <hcc/hccinit.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/hccnodemask.h>
 #endif
 

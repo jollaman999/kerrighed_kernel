@@ -7,7 +7,7 @@
 #include <hcc/hccnodemask.h>
 #include <net/grpc/rpcid.h>
 #include <net/grpc/rpc.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 
 #include "rpc_internal.h"
 

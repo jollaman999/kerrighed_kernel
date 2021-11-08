@@ -4,7 +4,7 @@
 #include <linux/configfs.h>
 #include <linux/list.h>
 #include <hcc/sys/types.h>
-#include <hcc/scheduler/global_config.h>
+#include <hcc/gscheduler/global_config.h>
 
 struct task_struct;
 

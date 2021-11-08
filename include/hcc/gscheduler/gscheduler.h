@@ -1,7 +1,7 @@
 #ifndef __HCC_GSCHEDULER_SCHEDULER_H__
 #define __HCC_GSCHEDULER_SCHEDULER_H__
 
-#include <hcc/scheduler/process_set.h>
+#include <hcc/gscheduler/process_set.h>
 
 struct scheduler_policy;
 struct scheduler;

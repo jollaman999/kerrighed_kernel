@@ -12,7 +12,7 @@
 #include <net/grpc/rpc.h>
 
 #include <hcc/types.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <hcc/hccinit.h>
 
 #define TABLE_SIZE 128

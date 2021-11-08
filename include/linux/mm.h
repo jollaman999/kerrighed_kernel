@@ -1665,7 +1665,7 @@ extern void copy_user_huge_page(struct page *dst, struct page *src,
 #endif /* CONFIG_TRANSPARENT_HUGEPAGE || CONFIG_HUGETLBFS */
 
 #ifdef CONFIG_HCC_GMM
-#include <hcc/mm.h>
+#include <hcc/gmm.h>
 #endif
 
 #endif /* __KERNEL__ */

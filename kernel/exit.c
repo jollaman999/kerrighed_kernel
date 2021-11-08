@@ -67,7 +67,7 @@
 #include <hcc/children.h>
 #endif
 #ifdef CONFIG_HCC_GSCHED
-#include <hcc/scheduler/info.h>
+#include <hcc/gscheduler/info.h>
 #endif
 
 #include <asm/uaccess.h>

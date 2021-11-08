@@ -4,8 +4,8 @@
 #include <linux/configfs.h>
 #include <linux/errno.h>
 #include <linux/module.h>
-#include <hcc/scheduler/pipe.h>
-#include <hcc/scheduler/global_config.h>
+#include <hcc/gscheduler/pipe.h>
+#include <hcc/gscheduler/global_config.h>
 
 /** default probing period is 1 second (1000 miliseconds). */
 #define SCHEDULER_PROBE_DEFAULT_PERIOD 1000

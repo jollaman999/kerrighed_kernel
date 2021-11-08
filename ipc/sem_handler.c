@@ -13,7 +13,7 @@
 #include <gdm/gdm.h>
 #include <hcc/pid.h>
 #include <net/grpc/rpc.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include "ipc_handler.h"
 #include "sem_handler.h"
 #include "semarray_io_linker.h"

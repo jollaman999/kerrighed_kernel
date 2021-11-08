@@ -100,7 +100,7 @@ static int export_sched_info(struct gpm_action *action,
 	return 0;
 }
 
-/* export_mm() is located in hcc/mm/mobility.c */
+/* export_mm() is located in hcc/gmm/mobility.c */
 
 static int export_binfmt(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
@@ -784,7 +784,7 @@ static void unimport_binfmt(struct task_struct *task)
 	/* Nothing to do... */
 }
 
-/* unimport_mm() is located in hcc/mm/mobility.c */
+/* unimport_mm() is located in hcc/gmm/mobility.c */
 
 static void unimport_sched_info(struct task_struct *task)
 {
@@ -908,7 +908,7 @@ static int import_sched_info(struct gpm_action *action,
 	return 0;
 }
 
-/* import_mm() is located in hcc/mm/mobility.c */
+/* import_mm() is located in hcc/gmm/mobility.c */
 
 static int import_binfmt(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)

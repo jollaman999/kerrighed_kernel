@@ -44,7 +44,7 @@
 #include <hcc/children.h>
 #endif
 #ifdef CONFIG_HCC_GSCHED
-#include <hcc/scheduler/hooks.h>
+#include <hcc/gscheduler/hooks.h>
 #endif
 
 #include <asm/uaccess.h>

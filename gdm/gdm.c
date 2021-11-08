@@ -14,7 +14,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include <gdm/gdm.h>
 #include <gdm/object_server.h>
 #include "procfs.h"

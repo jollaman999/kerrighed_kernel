@@ -7,8 +7,8 @@
 #include <linux/spinlock.h>
 #include <linux/types.h>
 #include <hcc/sys/types.h>
-#include <hcc/scheduler/pipe.h>
-#include <hcc/scheduler/global_config.h>
+#include <hcc/gscheduler/pipe.h>
+#include <hcc/gscheduler/global_config.h>
 
 /*
  * A scheduler_port is a scheduler_pipe having at least a scheduler_sink. The

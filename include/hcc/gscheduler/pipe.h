@@ -7,7 +7,7 @@
 #include <linux/list.h>
 #include <linux/kref.h>
 #include <linux/types.h>
-#include <hcc/scheduler/remote_pipe.h>
+#include <hcc/gscheduler/remote_pipe.h>
 
 /*
  * A scheduler_source represents a source of information.

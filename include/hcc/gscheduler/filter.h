@@ -5,7 +5,7 @@
 #include <linux/module.h>
 #include <linux/types.h>
 #include <hcc/sys/types.h>
-#include <hcc/scheduler/port.h>
+#include <hcc/gscheduler/port.h>
 
 /*
  * A filter is a scheduler_port having a source. A filter collects data/events

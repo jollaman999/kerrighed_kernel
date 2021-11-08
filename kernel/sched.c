@@ -82,7 +82,7 @@
 #include <hcc/ghost.h>
 #endif
 #ifdef CONFIG_HCC_GSCHED
-#include <hcc/scheduler/hooks.h>
+#include <hcc/gscheduler/hooks.h>
 #endif
 
 #include <asm/tlb.h>

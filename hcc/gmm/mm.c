@@ -17,7 +17,7 @@
 #include <asm/pgtable.h>
 #include <asm/uaccess.h>
 #include <hcc/hccsyms.h>
-#include <hcc/mm.h>
+#include <hcc/gmm.h>
 #include <hcc/ghotplug.h>
 #include <hcc/page_table_tree.h>
 #include <gdm/gdm.h>

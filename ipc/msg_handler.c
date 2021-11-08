@@ -15,7 +15,7 @@
 
 #include <gdm/gdm.h>
 #include <net/grpc/rpc.h>
-#include <hcc/hotplug.h>
+#include <hcc/ghotplug.h>
 #include "ipc_handler.h"
 #include "msg_handler.h"
 #include "msg_io_linker.h"
