@@ -1,5 +1,5 @@
 #
-# HCC's Enhanced Process Management (EPM) - Application
+# HCC Process Management (GPM) - Application
 #
 
 obj-$(CONFIG_HCC_GPM) := hcc_gpm_application.o
