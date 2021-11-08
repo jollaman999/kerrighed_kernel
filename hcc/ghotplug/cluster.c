@@ -47,8 +47,8 @@
 #include <hcc/signal.h>
 #include <hcc/children.h>
 #endif
-#ifdef CONFIG_HCC_SCHED
-#include <hcc/scheduler/info.h>
+#ifdef CONFIG_HCC_GSCHED
+#include <hcc/gscheduler/info.h>
 #endif
 
 #include "hotplug_internal.h"

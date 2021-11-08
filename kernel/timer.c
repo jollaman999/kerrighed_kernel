@@ -43,7 +43,7 @@
 #ifdef CONFIG_HCC_GPM
 #include <hcc/children.h>
 #endif
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 #include <hcc/scheduler/hooks.h>
 #endif
 

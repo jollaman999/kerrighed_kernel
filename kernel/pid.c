@@ -435,7 +435,7 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 	atomic_set(&pid->count, 1);
 	for (type = 0; type < PIDTYPE_MAX; ++type)
 		INIT_HLIST_HEAD(&pid->tasks[type]);
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	for (type = 0; type < PIDTYPE_MAX; ++type)
 		INIT_HLIST_HEAD(&pid->process_sets[type]);
 #endif

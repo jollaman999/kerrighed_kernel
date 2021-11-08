@@ -168,11 +168,11 @@ static int export_pids(struct gpm_action *action,
 	struct pid_link *link;
 	int retval = 0; /* Prevent gcc from warning */
 
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	retval = export_process_set_links_start(action, ghost, task);
 	if (retval)
 		goto out;
-#endif /* CONFIG_HCC_SCHED */
+#endif /* CONFIG_HCC_GSCHED */
 
 	if ((action->type == GPM_REMOTE_CLONE
 	     && (action->remote_clone.clone_flags & CLONE_THREAD))
@@ -194,19 +194,19 @@ static int export_pids(struct gpm_action *action,
 		retval = export_pid(action, ghost, link);
 		if (retval)
 			goto err;
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 		retval = export_process_set_links(action, ghost,
 						  link->pid, type);
 		if (retval)
 			goto err;
-#endif /* CONFIG_HCC_SCHED */
+#endif /* CONFIG_HCC_GSCHED */
 	}
 
 out:
 	return retval;
 
 err:
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	export_process_set_links_end(action, ghost, task);
 #endif
 	goto out;
@@ -215,7 +215,7 @@ err:
 static void post_export_pids(struct gpm_action *action,
 			     ghost_t *ghost, struct task_struct *task)
 {
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	export_process_set_links_end(action, ghost, task);
 #endif
 }
@@ -506,7 +506,7 @@ static int export_task(struct gpm_action *action,
 	if (r)
 		GOTO_ERROR;
 
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	r = export_hcc_sched_info(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
@@ -833,7 +833,7 @@ static void unimport_task(struct gpm_action *action,
 	unimport_mm_struct(ghost_task);
 #endif
 	unimport_sched_info(ghost_task);
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	unimport_hcc_sched_info(ghost_task);
 #endif
 	unimport_group_leader(ghost_task);
@@ -1042,14 +1042,14 @@ static int import_pids(struct gpm_action *action,
 			break;
 		}
 
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 		retval = import_process_set_links(action, ghost,
 						  task->pids[type].pid, type);
 		if (retval) {
 			__unimport_pids(task, type + 1);
 			break;
 		}
-#endif /* CONFIG_HCC_SCHED */
+#endif /* CONFIG_HCC_GSCHED */
 	}
 
 	task->pid = pid_nr(task_pid(task));
@@ -1505,7 +1505,7 @@ static struct task_struct *import_task(struct gpm_action *action,
 	if (retval)
 		goto err_group_leader;
 
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	retval = import_hcc_sched_info(action, ghost, task);
 	if (retval)
 		goto err_hcc_sched_info;
@@ -1646,7 +1646,7 @@ err_mm_struct:
 #endif
 	unimport_sched_info(task);
 err_sched_info:
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	unimport_hcc_sched_info(task);
 err_hcc_sched_info:
 #endif
@@ -1936,7 +1936,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	 */
 	join_local_relatives(newTsk);
 
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	post_import_hcc_sched_info(newTsk);
 #endif
 

@@ -88,7 +88,7 @@
 #include <hcc/children.h>
 #include <hcc/application.h>
 #endif
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 #include <hcc/scheduler/info.h>
 #endif
 
@@ -1650,7 +1650,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		goto bad_fork_free_pid;
 #endif
 #endif
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	retval = hcc_sched_info_copy(p);
 	if (retval)
 #ifdef CONFIG_HCC_PROC
@@ -1658,7 +1658,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #else
 		goto bad_fork_free_pid;
 #endif
-#endif /* CONFIG_HCC_SCHED */
+#endif /* CONFIG_HCC_GSCHED */
 
 	/* Need tasklist lock for parent etc handling! */
 	tasklist_write_lock_irq();
@@ -1702,7 +1702,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		spin_unlock(&current->sighand->siglock);
 		write_unlock_irq(&tasklist_lock);
 		retval = -ERESTARTNOINTR;
-#if defined(CONFIG_HCC_SCHED)
+#if defined(CONFIG_HCC_GSCHED)
 		goto bad_fork_free_hcc_sched;
 #elif defined(CONFIG_HCC_PROC)
 		goto bad_fork_free_hcc_task;
@@ -1716,7 +1716,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	if (retval) {
 		spin_unlock(&current->sighand->siglock);
 		write_unlock_irq(&tasklist_lock);
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 		goto bad_fork_free_hcc_sched;
 #else
 		goto bad_fork_free_hcc_task;
@@ -1789,7 +1789,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #endif
 	return p;
 
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 bad_fork_free_hcc_sched:
 	hcc_sched_info_free(p);
 #endif

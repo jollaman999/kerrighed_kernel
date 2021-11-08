@@ -66,7 +66,7 @@
 #include <hcc/signal.h>
 #include <hcc/children.h>
 #endif
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 #include <hcc/scheduler/info.h>
 #endif
 
@@ -233,7 +233,7 @@ void release_task(struct task_struct * p)
 		return;
 #endif /* CONFIG_HCC_GPM */
 repeat:
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	hcc_sched_info_free(p);
 #endif
 #ifdef CONFIG_HCC_PROC

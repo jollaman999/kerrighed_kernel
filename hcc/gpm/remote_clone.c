@@ -14,8 +14,8 @@
 #include <hcc/ghotplug.h>
 #include <hcc/action.h>
 #include <hcc/ghost.h>
-#ifdef CONFIG_HCC_SCHED
-#include <hcc/scheduler/placement.h>
+#ifdef CONFIG_HCC_GSCHED
+#include <hcc/gscheduler/placement.h>
 #endif
 #include <net/grpc/rpcid.h>
 #include <net/grpc/rpc.h>
@@ -42,7 +42,7 @@ int hcc_do_fork(unsigned long clone_flags,
 		int trace)
 {
 	struct task_struct *task = current;
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	hcc_node_t distant_node;
 #else
 	static hcc_node_t distant_node = -1;
@@ -74,7 +74,7 @@ int hcc_do_fork(unsigned long clone_flags,
 	if (retval)
 		goto out;
 
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	distant_node = new_task_node(task);
 #else
 	if (distant_node < 0)

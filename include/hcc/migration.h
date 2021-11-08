@@ -25,7 +25,7 @@ typedef struct migration_infos_struct migration_infos_t;
 
 #ifdef CONFIG_HCC_GPM
 
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 #include <linux/notifier.h>
 
 extern struct atomic_notifier_head kmh_migration_send_start;

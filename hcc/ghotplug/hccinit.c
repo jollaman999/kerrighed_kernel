@@ -100,8 +100,8 @@ deffct(proc);
 deffct(ghost);
 deffct(epm);
 #endif
-#ifdef CONFIG_HCC_SCHED
-deffct(scheduler);
+#ifdef CONFIG_HCC_GSCHED
+deffct(gscheduler);
 #endif
 
 /*
@@ -415,15 +415,15 @@ int init_hcc_upper_layers(void)
 
 	printk("Init HCC distributed services: done\n");
 
-#ifdef CONFIG_HCC_SCHED
-	if (init_scheduler())
+#ifdef CONFIG_HCC_GSCHED
+	if (init_gscheduler())
 		goto err_sched;
 #endif
 
 	return 0;
 
-#ifdef CONFIG_HCC_SCHED
-	cleanup_scheduler();
+#ifdef CONFIG_HCC_GSCHED
+	cleanup_gscheduler();
       err_sched:
 #endif
 #ifdef CONFIG_HCC_GPM

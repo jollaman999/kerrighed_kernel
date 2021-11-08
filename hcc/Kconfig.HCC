@@ -16,7 +16,7 @@ config HCC
 	select HCC_GIPC if !HCC_DEVEL
 	select HCC_PROC if !HCC_DEVEL
 	select HCC_GPM if !HCC_DEVEL
-	select HCC_SCHED if !HCC_DEVEL
+	select HCC_GSCHED if !HCC_DEVEL
 	help
 	  Say Y if you want to use the HCC features.	
 
@@ -214,48 +214,48 @@ config HCC_GPM
 config HCC_GIPC_EPM
        def_bool HCC_GIPC && HCC_GPM
 
-menuconfig HCC_SCHED
+menuconfig HCC_GSCHED
 	bool "HCC support for global scheduling"
 	depends on HCC
 	select CONFIGFS_FS
 	default y
 	help
-	  Compile support for global schedulers.
+	  Compile support for global gschedulers.
 
-	  This framework allows, at run-time, to build and configure schedulers
+	  This framework allows, at run-time, to build and configure gschedulers
 	  from third parties hot-pluggable components.
 
-	  If you want automagic loading of scheduler modules while configuring
-	  a scheduler, you must select "Automatic module loading" (KMOD) in
+	  If you want automagic loading of gscheduler modules while configuring
+	  a gscheduler, you must select "Automatic module loading" (KMOD) in
 	  section "Loadable module support".
 
 	  If unsure, say Y.
 
-if HCC_SCHED
+if HCC_GSCHED
 
-config HCC_SCHED_COMPAT
-	bool "Compile components needed to emulate HCC 2.3 hard-coded scheduler"
-	depends on HCC_SCHED && HCC_GPM
+config HCC_GSCHED_COMPAT
+	bool "Compile components needed to emulate HCC 2.3 hard-coded gscheduler"
+	depends on HCC_GSCHED && HCC_GPM
 	default y
 	help
 	  This option selects the components needed to obtain the same
-	  scheduling policy as in HCC 2.3 hard-coded scheduler.
-	  See the sample script hcc_legacy_scheduler located in HCC's
-	  tools to setup this compatible scheduler.
+	  scheduling policy as in HCC 2.3 hard-coded gscheduler.
+	  See the sample script hcc_legacy_gscheduler located in HCC's
+	  tools to setup this compatible gscheduler.
 
 	  If unsure, say Y.
 
-config HCC_SCHED_COMPAT_FORCE
-	def_tristate m if HCC_SCHED_COMPAT
-	select HCC_SCHED_MIGRATION_PROBE
-	select HCC_SCHED_MOSIX_PROBE
-	select HCC_SCHED_THRESHOLD_FILTER
-	select HCC_SCHED_FREQ_LIMIT_FILTER
-	select HCC_SCHED_REMOTE_CACHE_FILTER
-	select HCC_SCHED_MOSIX_LOAD_BALANCER
-	select HCC_SCHED_ROUND_ROBIN_BALANCER
+config HCC_GSCHED_COMPAT_FORCE
+	def_tristate m if HCC_GSCHED_COMPAT
+	select HCC_GSCHED_MIGRATION_PROBE
+	select HCC_GSCHED_MOSIX_PROBE
+	select HCC_GSCHED_THRESHOLD_FILTER
+	select HCC_GSCHED_FREQ_LIMIT_FILTER
+	select HCC_GSCHED_REMOTE_CACHE_FILTER
+	select HCC_GSCHED_MOSIX_LOAD_BALANCER
+	select HCC_GSCHED_ROUND_ROBIN_BALANCER
 
-config HCC_SCHED_CPU_PROBE
+config HCC_GSCHED_CPU_PROBE
 	tristate "Sample CPU probe"
 	depends on m
 	default n
@@ -264,7 +264,7 @@ config HCC_SCHED_CPU_PROBE
 
 	  If unsure, say N.
 
-config HCC_SCHED_MEM_PROBE
+config HCC_GSCHED_MEM_PROBE
 	tristate "Sample memory probe"
 	depends on m
 	default n
@@ -274,7 +274,7 @@ config HCC_SCHED_MEM_PROBE
 
 	  If unsure, say N.
 
-config HCC_SCHED_MIGRATION_PROBE
+config HCC_GSCHED_MIGRATION_PROBE
 	tristate "Migration probe"
 	depends on HCC_GPM && m
 	default n
@@ -284,7 +284,7 @@ config HCC_SCHED_MIGRATION_PROBE
 
 	  If unsure, say N.
 
-config HCC_SCHED_MOSIX_PROBE
+config HCC_GSCHED_MOSIX_PROBE
 	tristate "MOSIX-like CPU probe"
 	depends on m
 	default n
@@ -294,7 +294,7 @@ config HCC_SCHED_MOSIX_PROBE
 
 	  If unsure, say N.
 
-config HCC_SCHED_THRESHOLD_FILTER
+config HCC_GSCHED_THRESHOLD_FILTER
 	tristate "Threshold filter"
 	depends on m
 	default n
@@ -304,7 +304,7 @@ config HCC_SCHED_THRESHOLD_FILTER
 
 	  If unsure, say N.
 
-config HCC_SCHED_FREQ_LIMIT_FILTER
+config HCC_GSCHED_FREQ_LIMIT_FILTER
 	tristate "Frequency limit filter"
 	depends on m
 	default n
@@ -315,7 +315,7 @@ config HCC_SCHED_FREQ_LIMIT_FILTER
 
 	  If unsure, say N.
 
-config HCC_SCHED_REMOTE_CACHE_FILTER
+config HCC_GSCHED_REMOTE_CACHE_FILTER
 	tristate "Remote cache filter"
 	depends on m
 	default n
@@ -325,7 +325,7 @@ config HCC_SCHED_REMOTE_CACHE_FILTER
 
 	  If unsure, say N.
 
-config HCC_SCHED_ECHO_POLICY
+config HCC_GSCHED_ECHO_POLICY
 	tristate "Sample echo policy"
 	depends on m
 	default n
@@ -335,7 +335,7 @@ config HCC_SCHED_ECHO_POLICY
 
 	  If unsure, say N.
 
-config HCC_SCHED_MOSIX_LOAD_BALANCER
+config HCC_GSCHED_MOSIX_LOAD_BALANCER
 	tristate "MOSIX-like load balancing policy"
 	depends on HCC_GPM && m
 	default n
@@ -345,7 +345,7 @@ config HCC_SCHED_MOSIX_LOAD_BALANCER
 
 	  If unsure, say N.
 
-config HCC_SCHED_ROUND_ROBIN_BALANCER
+config HCC_GSCHED_ROUND_ROBIN_BALANCER
 	tristate "Round robin balancing policy"
 	depends on m
 	default n

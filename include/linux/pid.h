@@ -64,7 +64,7 @@ struct pid
 #ifdef CONFIG_HCC_GPM
 	struct pid_gdm_object *gdm_obj;
 #endif
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	struct hlist_head process_sets[PIDTYPE_MAX];
 #endif
 	struct upid numbers[1];

@@ -48,7 +48,7 @@
 #include "network_ghost.h"
 #include "gpm_internal.h"
 
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 ATOMIC_NOTIFIER_HEAD(kmh_migration_send_start);
 ATOMIC_NOTIFIER_HEAD(kmh_migration_send_end);
 ATOMIC_NOTIFIER_HEAD(kmh_migration_recv_start);
@@ -140,7 +140,7 @@ EXPORT_SYMBOL(may_migrate);
 
 void migration_aborted(struct task_struct *tsk)
 {
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	atomic_notifier_call_chain(&kmh_migration_aborted, 0, tsk);
 #endif
 	hcc_action_stop(tsk, GPM_MIGRATE);
@@ -244,7 +244,7 @@ static void hcc_task_migrate(int sig, struct siginfo *info,
 	r = do_task_migrate(tsk, regs, si_node(*info));
 
 	if (!r) {
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 		atomic_notifier_call_chain(&kmh_migration_send_end, 0, NULL);
 #endif
 		do_exit_wo_notify(0); /* Won't return */
@@ -263,7 +263,7 @@ static void handle_migrate(struct rpc_desc *desc, void *msg, size_t size)
 	struct gpm_action *action = msg;
 	struct task_struct *task;
 
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	atomic_notifier_call_chain(&kmh_migration_recv_start, 0, action);
 #endif
 	task = recv_task(desc, action);
@@ -276,7 +276,7 @@ static void handle_migrate(struct rpc_desc *desc, void *msg, size_t size)
 	task->gpm_source = action->migrate.source;
 	task->gpm_target = action->migrate.target;
 
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	action->migrate.end_date = current_kernel_time();
 	atomic_notifier_call_chain(&kmh_migration_recv_end, 0, action);
 #endif
@@ -308,7 +308,7 @@ static int do_migrate_process(struct task_struct *task,
 	if (retval)
 		return retval;
 
-#ifdef CONFIG_HCC_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	atomic_notifier_call_chain(&kmh_migration_send_start, 0, task);
 #endif
 

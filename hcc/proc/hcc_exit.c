@@ -24,8 +24,8 @@
 #include <hcc/hccnodemask.h>
 #include <asm/cputime.h>
 #endif
-#ifdef CONFIG_HCC_SCHED
-#include <hcc/scheduler/info.h>
+#ifdef CONFIG_HCC_GSCHED
+#include <hcc/gscheduler/info.h>
 #endif
 
 #ifdef CONFIG_HCC_GPM
