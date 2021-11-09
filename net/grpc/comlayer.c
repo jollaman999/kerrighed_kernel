@@ -27,7 +27,7 @@
 #include <net/grpc/grpcid.h>
 #include <net/grpc/grpc.h>
 
-#include "rpc_internal.h"
+#include "grpc_internal.h"
 
 #define TIPC_HCC_SERVER_TYPE (1+TIPC_RESERVED_TYPES)
 
@@ -45,7 +45,7 @@ struct tx_engine {
 	struct list_head not_retx_queue; /* messages accepted by TIPC */
 	struct delayed_work cleanup_not_retx_work;
 	struct list_head retx_queue; /* messages refused by TIPC */
-	struct rpc_tx_elem *retx_iter;
+	struct grpc_tx_elem *retx_iter;
 	struct delayed_work retx_work;
 	struct delayed_work unreachable_work;
 	struct delayed_work reachable_work;
@@ -80,7 +80,7 @@ static inline void consumed_bytes_sub(long load)
 	atomic64_sub(load, &consumed_bytes);
 }
 
-s64 rpc_consumed_bytes(void)
+s64 grpc_consumed_bytes(void)
 {
 	return atomic64_read(&consumed_bytes);
 }
@@ -108,7 +108,7 @@ static inline void consumed_bytes_sub(long load)
 	spin_unlock_irqrestore(&consumed_bytes_lock, flags);
 }
 
-s64 rpc_consumed_bytes(void)
+s64 grpc_consumed_bytes(void)
 {
 	unsigned long flags;
 	s64 ret;
@@ -137,11 +137,11 @@ static int ack_cleanup_window_size;
 static int consecutive_recv[HCC_MAX_NODES];
 static int max_consecutive_recv[HCC_MAX_NODES];
 
-void __rpc_put_raw_data(void *data){
+void __grpc_put_raw_data(void *data){
 	kfree_skb((struct sk_buff*)data);
 }
 
-void __rpc_get_raw_data(void *data){
+void __grpc_get_raw_data(void *data){
 	skb_get((struct sk_buff*)data);
 }
 
@@ -152,11 +152,11 @@ inline int __send_iovec(hcc_node_t node, int nr_iov, struct iovec *iov)
 		.type = TIPC_HCC_SERVER_TYPE,
 		.instance = node
 	};
-	struct __rpc_header *h = iov[0].iov_base;
+	struct __grpc_header *h = iov[0].iov_base;
 	int err;
 	
 
-	h->link_ack_id = rpc_link_recv_seq_id[node] - 1;
+	h->link_ack_id = grpc_link_recv_seq_id[node] - 1;
 	lockdep_off();
 	err = tipc_send2name(per_cpu(tipc_send_ref, smp_processor_id()),
 			     &name, 0,
@@ -180,11 +180,11 @@ inline int send_iovec(hcc_node_t node, int nr_iov, struct iovec *iov)
 	return err;
 }
 
-static struct rpc_tx_elem *__rpc_tx_elem_alloc(size_t size, int nr_dest)
+static struct grpc_tx_elem *__grpc_tx_elem_alloc(size_t size, int nr_dest)
 {
-	struct rpc_tx_elem *elem;
+	struct grpc_tx_elem *elem;
 
-	elem = kmem_cache_alloc(rpc_tx_elem_cachep, GFP_ATOMIC);
+	elem = kmem_cache_alloc(grpc_tx_elem_cachep, GFP_ATOMIC);
 	if (!elem)
 		goto oom;
 	consumed_bytes_add(size);
@@ -203,26 +203,26 @@ oom_free_data:
 	kfree(elem->data);
 oom_free_elem:
 	consumed_bytes_sub(size);
-	kmem_cache_free(rpc_tx_elem_cachep, elem);
+	kmem_cache_free(grpc_tx_elem_cachep, elem);
 oom:
 	return NULL;
 }
 
-static void __rpc_tx_elem_free(struct rpc_tx_elem *elem)
+static void __grpc_tx_elem_free(struct grpc_tx_elem *elem)
 {
 	kfree(elem->link_seq_id);
 	kfree(elem->data);
 	consumed_bytes_sub(elem->iov[1].iov_len);
-	kmem_cache_free(rpc_tx_elem_cachep, elem);
+	kmem_cache_free(grpc_tx_elem_cachep, elem);
 }
 
-static int __rpc_tx_elem_send(struct rpc_tx_elem *elem, int link_seq_index,
+static int __grpc_tx_elem_send(struct grpc_tx_elem *elem, int link_seq_index,
 			      hcc_node_t node)
 {
 	int err = 0;
 
 	elem->h.link_seq_id = elem->link_seq_id[link_seq_index];
-	if (elem->h.link_seq_id <= rpc_link_send_ack_id[node])
+	if (elem->h.link_seq_id <= grpc_link_send_ack_id[node])
 		goto out;
 
 	/* try to send */
@@ -236,7 +236,7 @@ static
 void tipc_send_ack_worker(struct work_struct *work)
 {
 	struct iovec iov[1];
-	struct __rpc_header h;
+	struct __grpc_header h;
 	hcc_node_t node;
 	int err;
 
@@ -244,7 +244,7 @@ void tipc_send_ack_worker(struct work_struct *work)
 		return;
 
 	h.from = hcc_node_id;
-	h.rpcid = RPC_ACK;
+	h.grpcid = GRPC_ACK;
 	h.flags = 0;
 
 	iov[0].iov_base = &h;
@@ -262,8 +262,8 @@ static void tipc_delayed_tx_worker(struct work_struct *work)
 	struct tx_engine *engine = container_of(work, struct tx_engine, delayed_tx_work.work);
 	LIST_HEAD(queue);
 	LIST_HEAD(not_retx_queue);
-	struct rpc_tx_elem *iter;
-	struct rpc_tx_elem *safe;
+	struct grpc_tx_elem *iter;
+	struct grpc_tx_elem *safe;
 
 	lockdep_off();
 
@@ -294,7 +294,7 @@ static void tipc_delayed_tx_worker(struct work_struct *work)
 		for_each_hccnode_mask(node, nodes){
 			int err;
 
-			err = __rpc_tx_elem_send(iter, link_seq_index, node);
+			err = __grpc_tx_elem_send(iter, link_seq_index, node);
 			if (err < 0) {
 				iter->index = node;
 				iter->link_seq_index = link_seq_index;
@@ -337,8 +337,8 @@ static void tipc_retx_worker(struct work_struct *work)
 	struct tx_engine *engine = container_of(work, struct tx_engine, retx_work.work);
 	LIST_HEAD(queue);
 	LIST_HEAD(not_retx_queue);
-	struct rpc_tx_elem *iter;
-	struct rpc_tx_elem *safe;
+	struct grpc_tx_elem *iter;
+	struct grpc_tx_elem *safe;
 
 	lockdep_off();
 
@@ -357,12 +357,12 @@ static void tipc_retx_worker(struct work_struct *work)
 	   we are not trying to use it */
 	if(!iter) {
 		iter = list_entry(&queue,
-				  struct rpc_tx_elem,
+				  struct grpc_tx_elem,
 				  tx_queue);
 	} else {
 		/* iter points to an entry which failed to fully
 		 * retransmit. Start from it. */
-		iter = list_entry(iter->tx_queue.prev, struct rpc_tx_elem, tx_queue);
+		iter = list_entry(iter->tx_queue.prev, struct grpc_tx_elem, tx_queue);
 	}
 
 	// browse the waiting list
@@ -384,7 +384,7 @@ static void tipc_retx_worker(struct work_struct *work)
 		for_each_hccnode_mask(node, nodes){
 			int err;
 
-			err = __rpc_tx_elem_send(iter, link_seq_index, node);
+			err = __grpc_tx_elem_send(iter, link_seq_index, node);
 			if (err < 0) {
 				iter->index = node;
 				iter->link_seq_index = link_seq_index;
@@ -430,8 +430,8 @@ exit_empty:
 static void tipc_cleanup_not_retx_worker(struct work_struct *work)
 {
 	struct tx_engine *engine = container_of(work, struct tx_engine, cleanup_not_retx_work.work);
-	struct rpc_tx_elem *iter;
-	struct rpc_tx_elem *safe;
+	struct grpc_tx_elem *iter;
+	struct grpc_tx_elem *safe;
 	LIST_HEAD(queue);
 	int node;
 
@@ -450,7 +450,7 @@ static void tipc_cleanup_not_retx_worker(struct work_struct *work)
 			iter->h.link_seq_id = iter->link_seq_id[link_seq_index];
 
 			if (iter->h.link_seq_id >
-			    rpc_link_send_ack_id[node])
+			    grpc_link_send_ack_id[node])
 				goto next_iter;
 
 			link_seq_index++;
@@ -460,7 +460,7 @@ static void tipc_cleanup_not_retx_worker(struct work_struct *work)
 	next_iter:
 		if(need_to_free){
 			list_del(&iter->tx_queue);
-			__rpc_tx_elem_free(iter);
+			__grpc_tx_elem_free(iter);
 		}
 	}
 
@@ -491,9 +491,9 @@ void tipc_reachable_node_worker(struct work_struct *work){
 
 #define MAX_EMERGENCY_SEND 2
 
-int __rpc_emergency_send_buf_alloc(struct grpc_desc *desc, size_t size)
+int __grpc_emergency_send_buf_alloc(struct grpc_desc *desc, size_t size)
 {
-	struct rpc_tx_elem **elem;
+	struct grpc_tx_elem **elem;
 	int nr_dest;
 	int err = 0;
 	int i;
@@ -503,7 +503,7 @@ int __rpc_emergency_send_buf_alloc(struct grpc_desc *desc, size_t size)
 		goto oom;
 	nr_dest = hccnodes_weight(desc->nodes);
 	for (i = 0; i < MAX_EMERGENCY_SEND; i++) {
-		elem[i] = __rpc_tx_elem_alloc(size, nr_dest);
+		elem[i] = __grpc_tx_elem_alloc(size, nr_dest);
 		if (!elem[i])
 			goto oom_free_elems;
 	}
@@ -514,16 +514,16 @@ out:
 
 oom_free_elems:
 	for (i--; i >= 0; i--)
-		__rpc_tx_elem_free(elem[i]);
+		__grpc_tx_elem_free(elem[i]);
 	kfree(elem);
 oom:
 	err = -ENOMEM;
 	goto out;
 }
 
-void __rpc_emergency_send_buf_free(struct grpc_desc *desc)
+void __grpc_emergency_send_buf_free(struct grpc_desc *desc)
 {
-	struct rpc_tx_elem **elem = desc->desc_send->emergency_send_buf;
+	struct grpc_tx_elem **elem = desc->desc_send->emergency_send_buf;
 	int i;
 
 	/* does not buy a lot, but still can help debug */
@@ -531,14 +531,14 @@ void __rpc_emergency_send_buf_free(struct grpc_desc *desc)
 	for (i = 0; i < MAX_EMERGENCY_SEND; i++)
 		if (elem[i])
 			/* emergency send buf was not used */
-			__rpc_tx_elem_free(elem[i]);
+			__grpc_tx_elem_free(elem[i]);
 	kfree(elem);
 }
 
-static struct rpc_tx_elem *next_emergency_send_buf(struct grpc_desc *desc)
+static struct grpc_tx_elem *next_emergency_send_buf(struct grpc_desc *desc)
 {
-	struct rpc_tx_elem **elems = desc->desc_send->emergency_send_buf;
-	struct rpc_tx_elem *buf = NULL;
+	struct grpc_tx_elem **elems = desc->desc_send->emergency_send_buf;
+	struct grpc_tx_elem *buf = NULL;
 	int i;
 
 	for (i = 0; i < MAX_EMERGENCY_SEND; i++)
@@ -550,21 +550,21 @@ static struct rpc_tx_elem *next_emergency_send_buf(struct grpc_desc *desc)
 	return buf;
 }
 
-int __rpc_send_ll(struct grpc_desc* desc,
+int __grpc_send_ll(struct grpc_desc* desc,
 			 hccnodemask_t *nodes,
 			 unsigned long seq_id,
 			 int __flags,
 			 const void* data, size_t size,
-			 int rpc_flags)
+			 int grpc_flags)
 {
-	struct rpc_tx_elem* elem;
+	struct grpc_tx_elem* elem;
 	struct tx_engine *engine;
 	hcc_node_t node;
 	int link_seq_index;
 
-	elem = __rpc_tx_elem_alloc(size, __hccnodes_weight(nodes));
+	elem = __grpc_tx_elem_alloc(size, __hccnodes_weight(nodes));
 	if (!elem) {
-		if (rpc_flags & RPC_FLAGS_EMERGENCY_BUF)
+		if (grpc_flags & GRPC_FLAGS_EMERGENCY_BUF)
 			elem = next_emergency_send_buf(desc);
 		if (!elem)
 			return -ENOMEM;
@@ -572,11 +572,11 @@ int __rpc_send_ll(struct grpc_desc* desc,
 
 	link_seq_index = 0;
 	__for_each_hccnode_mask(node, nodes) {
-		rpc_link_seq_id(elem->link_seq_id[link_seq_index], node);
+		grpc_link_seq_id(elem->link_seq_id[link_seq_index], node);
 		link_seq_index++;
 	}
-	if (rpc_flags & RPC_FLAGS_NEW_DESC_ID)
-		rpc_new_desc_id_unlock();
+	if (grpc_flags & GRPC_FLAGS_NEW_DESC_ID)
+		grpc_new_desc_id_unlock();
 
 	elem->h.from = hcc_node_id;
 	elem->h.client = desc->client;
@@ -584,10 +584,10 @@ int __rpc_send_ll(struct grpc_desc* desc,
 	elem->h.seq_id = seq_id;
 	
 	elem->h.flags = __flags;
-	if(desc->type == RPC_RQ_SRV)
-		elem->h.flags |= __RPC_HEADER_FLAGS_SRV_REPLY;
+	if(desc->type == GRPC_RQ_SRV)
+		elem->h.flags |= __GRPC_HEADER_FLAGS_SRV_REPLY;
 
-	elem->h.rpcid = desc->rpcid;
+	elem->h.grpcid = desc->grpcid;
 
 	elem->iov[0].iov_base = &elem->h;
 	elem->iov[0].iov_len = sizeof(elem->h);
@@ -622,7 +622,7 @@ int __rpc_send_ll(struct grpc_desc* desc,
 		link_seq_index = 0;
 		__for_each_hccnode_mask(node, nodes){
 
-			err = __rpc_tx_elem_send(elem, link_seq_index, node);
+			err = __grpc_tx_elem_send(elem, link_seq_index, node);
 
 			if(err<0){
 				spin_lock_bh(&tipc_tx_queue_lock);
@@ -653,11 +653,11 @@ void insert_in_seqid_order(struct grpc_desc_elem* desc_elem,
 	struct grpc_desc_elem *iter;
 	struct list_head *at;
 
-	if (unlikely(desc_elem->flags & __RPC_HEADER_FLAGS_SIGNAL)) {
+	if (unlikely(desc_elem->flags & __GRPC_HEADER_FLAGS_SIGNAL)) {
 		/* For a given seq_id, queue all received sigacks
 		 * before all signals, and try to preserve signals order
 		 */
-		int sigack = (desc_elem->flags & __RPC_HEADER_FLAGS_SIGACK);
+		int sigack = (desc_elem->flags & __GRPC_HEADER_FLAGS_SIGACK);
 
 		at = &desc_recv->list_signal_head;
 		list_for_each_entry_reverse(iter, &desc_recv->list_signal_head,
@@ -690,20 +690,20 @@ void insert_in_seqid_order(struct grpc_desc_elem* desc_elem,
  */
 static
 inline
-int do_action(struct grpc_desc *desc, struct __rpc_header *h)
+int do_action(struct grpc_desc *desc, struct __grpc_header *h)
 {
 	switch (desc->state) {
-	case RPC_STATE_NEW:
+	case GRPC_STATE_NEW:
 		spin_unlock(&desc->desc_lock);
-		return rpc_handle_new(desc);
-	case RPC_STATE_WAIT1:
-		if (desc->type == RPC_RQ_CLT
+		return grpc_handle_new(desc);
+	case GRPC_STATE_WAIT1:
+		if (desc->type == GRPC_RQ_CLT
 		    && desc->wait_from != h->from) {
 			spin_unlock(&desc->desc_lock);
 			break;
 		}
-	case RPC_STATE_WAIT:
-		desc->state = RPC_STATE_RUN;
+	case GRPC_STATE_WAIT:
+		desc->state = GRPC_STATE_RUN;
 		wake_up_process(desc->thread);
 		spin_unlock(&desc->desc_lock);
 		break;
@@ -720,13 +720,13 @@ void grpc_desc_elem_free(struct grpc_desc_elem *elem)
 	kmem_cache_free(grpc_desc_elem_cachep, elem);
 }
 
-void rpc_do_signal(struct grpc_desc *desc,
+void grpc_do_signal(struct grpc_desc *desc,
 		   struct grpc_desc_elem *signal_elem)
 {
 	if (desc->thread)
 		send_sig(*(int*)signal_elem->data, desc->thread, 0);
 
-	__rpc_signalack(desc);
+	__grpc_signalack(desc);
 
 	grpc_desc_elem_free(signal_elem);
 }
@@ -739,7 +739,7 @@ inline
 int handle_valid_desc(struct grpc_desc *desc,
 		      struct grpc_desc_recv *desc_recv,
 		      struct grpc_desc_elem* descelem,
-		      struct __rpc_header *h,
+		      struct __grpc_header *h,
 		      struct sk_buff *buf){
 	int err;
 
@@ -751,8 +751,8 @@ int handle_valid_desc(struct grpc_desc *desc,
 	if (desc_recv->iter_provided) {
 
 		// there are some waiting buffer. is-there one for us ?
-		if (unlikely(h->flags & __RPC_HEADER_FLAGS_SIGNAL)
-		    && (!(h->flags & __RPC_HEADER_FLAGS_SIGACK))) {
+		if (unlikely(h->flags & __GRPC_HEADER_FLAGS_SIGNAL)
+		    && (!(h->flags & __GRPC_HEADER_FLAGS_SIGACK))) {
 			struct grpc_desc_elem *provided;
 
 			provided = list_entry(desc_recv->list_provided_head.prev,
@@ -760,7 +760,7 @@ int handle_valid_desc(struct grpc_desc *desc,
 			
 			if (descelem->seq_id <= provided->seq_id) {
 
-				rpc_do_signal(desc, descelem);
+				grpc_do_signal(desc, descelem);
 
 				spin_unlock(&desc->desc_lock);
 				return 0;
@@ -784,12 +784,12 @@ int handle_valid_desc(struct grpc_desc *desc,
 	}
 	
 	// unexpected message
-	if (unlikely(h->flags & __RPC_HEADER_FLAGS_SIGNAL)
-	    && (!(h->flags & __RPC_HEADER_FLAGS_SIGACK))
+	if (unlikely(h->flags & __GRPC_HEADER_FLAGS_SIGNAL)
+	    && (!(h->flags & __GRPC_HEADER_FLAGS_SIGACK))
 	    && (h->seq_id <= atomic_read(&desc_recv->seq_id))
-	    && ((desc->service->flags & RPC_FLAGS_NOBLOCK) || desc->thread)) {
+	    && ((desc->service->flags & GRPC_FLAGS_NOBLOCK) || desc->thread)) {
 
-		rpc_do_signal(desc, descelem);
+		grpc_do_signal(desc, descelem);
 
 		spin_unlock(&desc->desc_lock);
 		return 0;
@@ -814,7 +814,7 @@ int handle_valid_desc(struct grpc_desc *desc,
 		 * have been unpacked by the handler, or the handler may have
 		 * played with nbunexpected.
 		 */
-		BUG_ON(desc->state != RPC_STATE_NEW || descelem->seq_id > 1);
+		BUG_ON(desc->state != GRPC_STATE_NEW || descelem->seq_id > 1);
 		atomic_dec(&desc_recv->nbunexpected);
 		list_del(&descelem->list_desc_elem);
 		spin_unlock(&desc->desc_lock);
@@ -822,7 +822,7 @@ int handle_valid_desc(struct grpc_desc *desc,
 	return err;
 }
 
-static struct grpc_desc *server_grpc_desc_setup(const struct __rpc_header *h)
+static struct grpc_desc *server_grpc_desc_setup(const struct __grpc_header *h)
 {
 	struct grpc_desc *desc;
 
@@ -838,21 +838,21 @@ static struct grpc_desc *server_grpc_desc_setup(const struct __rpc_header *h)
 	if (!desc->desc_recv[0])
 		goto err_desc_recv;
 
-	// Since a RPC_RQ_CLT can only be received from one node:
+	// Since a GRPC_RQ_CLT can only be received from one node:
 	// by choice, we decide to use 0 as the corresponding id
 	hccnode_set(0, desc->nodes);
 
 	desc->desc_id = h->desc_id;
-	desc->type = RPC_RQ_SRV;
+	desc->type = GRPC_RQ_SRV;
 	desc->client = h->client;
-	desc->rpcid = h->rpcid;
-	desc->service = rpc_services[h->rpcid];
+	desc->grpcid = h->grpcid;
+	desc->service = grpc_services[h->grpcid];
 	desc->thread = NULL;
 
-	if (__rpc_emergency_send_buf_alloc(desc, 0))
+	if (__grpc_emergency_send_buf_alloc(desc, 0))
 		goto err_emergency_send;
 
-	desc->state = RPC_STATE_NEW;
+	desc->state = GRPC_STATE_NEW;
 
 	grpc_desc_get(desc);
 
@@ -865,7 +865,7 @@ out:
 
 err_hashtable:
 	grpc_desc_put(desc);
-	__rpc_emergency_send_buf_free(desc);
+	__grpc_emergency_send_buf_free(desc);
 err_emergency_send:
 	kmem_cache_free(grpc_desc_recv_cachep, desc->desc_recv[0]);
 err_desc_recv:
@@ -885,7 +885,7 @@ static int tipc_handler_ordered(struct sk_buff *buf,
 				unsigned int size)
 {
 	unsigned char const* iter;
-	struct __rpc_header *h;
+	struct __grpc_header *h;
 	struct grpc_desc *desc;
 	struct grpc_desc_elem* descelem;
 	struct grpc_desc_recv* desc_recv;
@@ -893,14 +893,14 @@ static int tipc_handler_ordered(struct sk_buff *buf,
 	int err = 0;
 
 	iter = data;
-	h = (struct __rpc_header*)iter;
-	iter += sizeof(struct __rpc_header);
+	h = (struct __grpc_header*)iter;
+	iter += sizeof(struct __grpc_header);
 
 	/* select the right array regarding the type of request:
-	   __RPC_HEADER_FLAGS_SRV_REPLY: we are the client side -> desc_clt
+	   __GRPC_HEADER_FLAGS_SRV_REPLY: we are the client side -> desc_clt
 	   else: we are the server side -> desc_srv[]
 	*/
-	desc_ht = (h->flags & __RPC_HEADER_FLAGS_SRV_REPLY) ? desc_clt : desc_srv[h->client];
+	desc_ht = (h->flags & __GRPC_HEADER_FLAGS_SRV_REPLY) ? desc_clt : desc_srv[h->client];
 
 	hashtable_lock(desc_ht);
 	desc = __hashtable_find(desc_ht, h->desc_id);
@@ -923,7 +923,7 @@ static int tipc_handler_ordered(struct sk_buff *buf,
 		grpc_desc_done_id[h->client] = h->desc_id;
 		spin_unlock(&grpc_desc_done_lock[h->client]);
 
-		if(h->flags & __RPC_HEADER_FLAGS_SRV_REPLY){
+		if(h->flags & __GRPC_HEADER_FLAGS_SRV_REPLY){
 
 			// requesting desc is already closed (most probably an async request
 			// just discard this packet
@@ -959,20 +959,20 @@ static int tipc_handler_ordered(struct sk_buff *buf,
 	 * and us.
 	 * If desc has a valid state here, as long as we do not release
 	 * hashtable's lock desc_recv retrieved below is valid too (see
-	 * rpc_end()).
+	 * grpc_end()).
 	 */
 	switch (desc->type) {
-	case RPC_RQ_CLT:
+	case GRPC_RQ_CLT:
 		// we are in the client side (just received a msg from server)
 		desc_recv = desc->desc_recv[h->from];
 		break;
 
-	case RPC_RQ_SRV:
+	case GRPC_RQ_SRV:
 		// we are in the server side (just received a msg from client)
 		desc_recv = desc->desc_recv[0];
 		break;
 
-	case RPC_RQ_FWD:
+	case GRPC_RQ_FWD:
 		printk("tipc_handler_ordered: todo\n");
 		BUG();
 		break;
@@ -982,8 +982,8 @@ static int tipc_handler_ordered(struct sk_buff *buf,
 		BUG();
 	}
 	/* Is the transaction still accepting packets? */
-	if (!(desc->state & RPC_STATE_MASK_VALID) ||
-	    (desc_recv->flags & RPC_FLAGS_CLOSED)) {
+	if (!(desc->state & GRPC_STATE_MASK_VALID) ||
+	    (desc_recv->flags & GRPC_FLAGS_CLOSED)) {
 		hashtable_unlock(desc_ht);
 		goto out_put;
 	}
@@ -1012,8 +1012,8 @@ static int tipc_handler_ordered(struct sk_buff *buf,
 	spin_lock(&desc->desc_lock);
 
 	/* Double-check withe desc->desc_lock held */
-	if (!(desc->state & RPC_STATE_MASK_VALID) ||
-	    (desc_recv->flags & RPC_FLAGS_CLOSED)) {
+	if (!(desc->state & GRPC_STATE_MASK_VALID) ||
+	    (desc_recv->flags & GRPC_FLAGS_CLOSED)) {
 		// This side is closed. Discard the packet
 		spin_unlock(&desc->desc_lock);
 		grpc_desc_elem_free(descelem);
@@ -1042,8 +1042,8 @@ static inline int handle_one_packet(hcc_node_t node,
 	err = tipc_handler_ordered(buf, data, size);
 	if (!err) {
 		if (node == hcc_node_id)
-			rpc_link_send_ack_id[node] = rpc_link_recv_seq_id[node];
-		rpc_link_recv_seq_id[node]++;
+			grpc_link_send_ack_id[node] = grpc_link_recv_seq_id[node];
+		grpc_link_recv_seq_id[node]++;
 	}
 	return err;
 }
@@ -1055,15 +1055,15 @@ static void run_rx_queue(struct rx_engine *engine)
 	struct sk_buff_head *queue;
 	hcc_node_t node;
 	struct sk_buff *buf;
-	struct __rpc_header *h;
+	struct __grpc_header *h;
 
 	node = engine->from;
 	queue = &engine->rx_queue;
 	while ((buf = skb_peek(queue))) {
-		h = (struct __rpc_header *)buf->data;
+		h = (struct __grpc_header *)buf->data;
 
-		BUG_ON(h->link_seq_id < rpc_link_recv_seq_id[node]);
-		if (h->link_seq_id > rpc_link_recv_seq_id[node])
+		BUG_ON(h->link_seq_id < grpc_link_recv_seq_id[node]);
+		if (h->link_seq_id > grpc_link_recv_seq_id[node])
 			break;
 
 		if (handle_one_packet(node, buf, buf->data, buf->len)) {
@@ -1105,19 +1105,19 @@ static void tipc_handler(void *usr_handle,
 {
 	struct sk_buff_head *queue;
 	struct sk_buff *__buf;
-	struct __rpc_header *h;
+	struct __grpc_header *h;
 
 	__buf = *buf;
-	h = (struct __rpc_header*)data;
+	h = (struct __grpc_header*)data;
 	BUG_ON(size != __buf->len);
 
 	queue = &tipc_rx_engine[h->from].rx_queue;
 	spin_lock(&queue->lock);
 
 	// Update the ack value sent by the other node
-	if (h->link_ack_id > rpc_link_send_ack_id[h->from]){
-		rpc_link_send_ack_id[h->from] = h->link_ack_id;
-		if(rpc_link_send_ack_id[h->from] - last_cleanup_ack[h->from]
+	if (h->link_ack_id > grpc_link_send_ack_id[h->from]){
+		grpc_link_send_ack_id[h->from] = h->link_ack_id;
+		if(grpc_link_send_ack_id[h->from] - last_cleanup_ack[h->from]
 			> ack_cleanup_window_size){
 			int cpuid;
 			last_cleanup_ack[h->from] = h->link_ack_id;
@@ -1132,11 +1132,11 @@ static void tipc_handler(void *usr_handle,
 
 	}
 
-	if (h->rpcid == RPC_ACK)
+	if (h->grpcid == GRPC_ACK)
 		goto exit;
 
 	// Check if we are not receiving an already received packet
-	if (h->link_seq_id < rpc_link_recv_seq_id[h->from]) {
+	if (h->link_seq_id < grpc_link_recv_seq_id[h->from]) {
 		hccnode_set(h->from, nodes_requiring_ack);
 		queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
 		goto exit;
@@ -1150,7 +1150,7 @@ static void tipc_handler(void *usr_handle,
 	consecutive_recv[h->from]++;
 
 	// Is-it the next ordered message ?
-	if (h->link_seq_id > rpc_link_recv_seq_id[h->from]) {
+	if (h->link_seq_id > grpc_link_recv_seq_id[h->from]) {
 		struct sk_buff *at;
 		unsigned long seq_id = h->link_seq_id;
 
@@ -1159,9 +1159,9 @@ static void tipc_handler(void *usr_handle,
 		 * Optimized for in-order reception.
 		 */
 		skb_queue_reverse_walk(queue, at) {
-			struct __rpc_header *ath;
+			struct __grpc_header *ath;
 
-			ath = (struct __rpc_header *)at->data;
+			ath = (struct __grpc_header *)at->data;
 			if (ath->link_seq_id < seq_id)
 				break;
 			else if (ath->link_seq_id == seq_id)
@@ -1295,18 +1295,18 @@ void hcc_node_reachable(hcc_node_t nodeid){
 void hcc_node_unreachable(hcc_node_t nodeid){
 }
 
-void rpc_enable_lowmem_mode(hcc_node_t nodeid){
+void grpc_enable_lowmem_mode(hcc_node_t nodeid){
 	max_consecutive_recv[nodeid] = MAX_CONSECUTIVE_RECV__LOWMEM_MODE;
 
 	hccnode_set(nodeid, nodes_requiring_ack);
 	queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
 }
 
-void rpc_disable_lowmem_mode(hcc_node_t nodeid){
+void grpc_disable_lowmem_mode(hcc_node_t nodeid){
 	max_consecutive_recv[nodeid] = MAX_CONSECUTIVE_RECV;
 }
 
-void rpc_enable_local_lowmem_mode(void){
+void grpc_enable_local_lowmem_mode(void){
 	int cpuid;
 
 	ack_cleanup_window_size = ACK_CLEANUP_WINDOW_SIZE__LOWMEM_MODE;
@@ -1318,7 +1318,7 @@ void rpc_enable_local_lowmem_mode(void){
 	}
 }
 
-void rpc_disable_local_lowmem_mode(void){
+void grpc_disable_local_lowmem_mode(void){
 	ack_cleanup_window_size = ACK_CLEANUP_WINDOW_SIZE;
 }
 

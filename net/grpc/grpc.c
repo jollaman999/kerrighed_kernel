@@ -19,18 +19,18 @@
 #include <net/grpc/grpcid.h>
 #include <net/grpc/grpc.h>
 
-#include "rpc_internal.h"
+#include "grpc_internal.h"
 
-struct rpc_service** rpc_services;
+struct grpc_service** grpc_services;
 unsigned long grpc_desc_id;
 hashtable_t* desc_srv[HCC_MAX_NODES];
 hashtable_t* desc_clt;
 spinlock_t grpc_desc_done_lock[HCC_MAX_NODES];
 unsigned long grpc_desc_done_id[HCC_MAX_NODES];
 
-unsigned long rpc_link_send_seq_id[HCC_MAX_NODES];
-unsigned long rpc_link_send_ack_id[HCC_MAX_NODES];
-unsigned long rpc_link_recv_seq_id[HCC_MAX_NODES];
+unsigned long grpc_link_send_seq_id[HCC_MAX_NODES];
+unsigned long grpc_link_send_ack_id[HCC_MAX_NODES];
+unsigned long grpc_link_recv_seq_id[HCC_MAX_NODES];
 
 DEFINE_PER_CPU(struct list_head, grpc_desc_trash);
 
@@ -38,52 +38,52 @@ struct kmem_cache* grpc_desc_cachep;
 struct kmem_cache* grpc_desc_send_cachep;
 struct kmem_cache* grpc_desc_recv_cachep;
 struct kmem_cache* grpc_desc_elem_cachep;
-struct kmem_cache* rpc_tx_elem_cachep;
-struct kmem_cache* __rpc_synchro_cachep;
+struct kmem_cache* grpc_tx_elem_cachep;
+struct kmem_cache* __grpc_synchro_cachep;
 
 static struct lock_class_key grpc_desc_srv_lock_key;
 static struct lock_class_key grpc_desc_clt_lock_key;
 
-unsigned long rpc_mask[RPCID_MAX/(sizeof(unsigned long)*8)+1];
+unsigned long grpc_mask[GRPCID_MAX/(sizeof(unsigned long)*8)+1];
 
 /*
- * RPC management
+ * GRPC management
  */
 inline
-struct rpc_service* rpc_service_init(enum rpcid rpcid,
-				     enum rpc_target rpc_target,
-				     enum rpc_handler rpc_handler,
-				     struct rpc_synchro *rpc_synchro,
-				     rpc_handler_t h,
+struct grpc_service* grpc_service_init(enum grpcid grpcid,
+				     enum grpc_target grpc_target,
+				     enum grpc_handler grpc_handler,
+				     struct grpc_synchro *grpc_synchro,
+				     grpc_handler_t h,
 				     unsigned long flags){
-	struct rpc_service* service;
+	struct grpc_service* service;
 
 	service = kmalloc(sizeof(*service), GFP_KERNEL);
 	if(!service){
-		printk("OOM in rpc_service_init\n");
+		printk("OOM in grpc_service_init\n");
 		return NULL;
 	};
 	
-	service->id = rpcid;
-	service->target = rpc_target;
-	service->handler = rpc_handler;
+	service->id = grpcid;
+	service->target = grpc_target;
+	service->handler = grpc_handler;
 	service->h = h;
-	service->synchro = rpc_synchro;
+	service->synchro = grpc_synchro;
 	service->flags = flags;
 
 	return service;
 };
 
-int __rpc_register(enum rpcid rpcid,
-		   enum rpc_target rpc_target,
-		   enum rpc_handler rpc_handler,
-		   struct rpc_synchro *rpc_synchro,
+int __grpc_register(enum grpcid grpcid,
+		   enum grpc_target grpc_target,
+		   enum grpc_handler grpc_handler,
+		   struct grpc_synchro *grpc_synchro,
 		   void* _h, unsigned long flags){
-	rpc_handler_t h = (rpc_handler_t)_h;
-	rpc_services[rpcid] = rpc_service_init(rpcid, rpc_target, rpc_handler,
-					       rpc_synchro, h, flags);
+	grpc_handler_t h = (grpc_handler_t)_h;
+	grpc_services[grpcid] = grpc_service_init(grpcid, grpc_target, grpc_handler,
+					       grpc_synchro, h, flags);
 
-	rpc_disable(rpcid);
+	grpc_disable(grpcid);
 	return 0;
 };
 
@@ -169,69 +169,69 @@ void test(void){
 
 /*
  *
- * Enable a registered RPC
+ * Enable a registered GRPC
  * We must take the waiting_desc_lock.
- * After each rpc handle, the grpc go through the waiting_desc
+ * After each grpc handle, the grpc go through the waiting_desc
  * list, in order to find another desc to process. We must avoid
- * to enable an RPC when such iteration is happened
+ * to enable an GRPC when such iteration is happened
  *
  */
-void rpc_enable(enum rpcid rpcid){
+void grpc_enable(enum grpcid grpcid){
 	spin_lock_bh(&waiting_desc_lock);
-	if(rpc_services[rpcid]->id == rpcid)
-		clear_bit(rpcid, rpc_mask);
+	if(grpc_services[grpcid]->id == grpcid)
+		clear_bit(grpcid, grpc_mask);
 
 	spin_unlock_bh(&waiting_desc_lock);
 };
 
-void rpc_enable_all(void){
+void grpc_enable_all(void){
 	int i;
 
-	for(i=0;i<RPCID_MAX;i++)
-		rpc_enable(i);
+	for(i=0;i<GRPCID_MAX;i++)
+		grpc_enable(i);
 	
 	if(!list_empty(&waiting_desc))
-		rpc_wake_up_thread(NULL);
+		grpc_wake_up_thread(NULL);
 };
 
-void rpc_disable(enum rpcid rpcid){
-	if(rpc_services[rpcid]->id == rpcid)
-		set_bit(rpcid, rpc_mask);
+void grpc_disable(enum grpcid grpcid){
+	if(grpc_services[grpcid]->id == grpcid)
+		set_bit(grpcid, grpc_mask);
 };
 
 
-/** Initialisation of the rpc module.
+/** Initialisation of the grpc module.
  *  @author Innogrid HCC
  */
 
-void rpc_undef_handler (struct grpc_desc *desc){
-	printk("service %d not registered\n", desc->rpcid);
+void grpc_undef_handler (struct grpc_desc *desc){
+	printk("service %d not registered\n", desc->grpcid);
 };
 
-void rpc_enable_alldev(void)
+void grpc_enable_alldev(void)
 {
 	comlayer_enable();
 }
 
-int rpc_enable_dev(const char *name)
+int grpc_enable_dev(const char *name)
 {
 	return comlayer_enable_dev(name);
 }
 
-void rpc_disable_alldev(void)
+void grpc_disable_alldev(void)
 {
 	comlayer_disable();
 }
 
-int rpc_disable_dev(const char *name)
+int grpc_disable_dev(const char *name)
 {
 	return comlayer_disable_dev(name);
 }
 
-int init_rpc(void)
+int init_grpc(void)
 {
 	int i, res;
-	struct rpc_service *rpc_undef_service;
+	struct grpc_service *grpc_undef_service;
 
 	grpc_desc_cachep = kmem_cache_create("grpc_desc",
 					    sizeof(struct grpc_desc),
@@ -251,10 +251,10 @@ int init_rpc(void)
 	if(!grpc_desc_recv_cachep)
 		return -ENOMEM;
 
-	rpc_tx_elem_cachep = kmem_cache_create("rpc_tx_elem",
-					       sizeof(struct rpc_tx_elem),
+	grpc_tx_elem_cachep = kmem_cache_create("grpc_tx_elem",
+					       sizeof(struct grpc_tx_elem),
 					       0, 0, NULL);
-	if(!rpc_tx_elem_cachep)
+	if(!grpc_tx_elem_cachep)
 		return -ENOMEM;
 
 	grpc_desc_elem_cachep = kmem_cache_create("grpc_desc_elem",
@@ -263,27 +263,27 @@ int init_rpc(void)
 	if(!grpc_desc_elem_cachep)
 		return -ENOMEM;
 
-	__rpc_synchro_cachep = kmem_cache_create("__rpc_synchro",
-						 sizeof(struct __rpc_synchro),
+	__grpc_synchro_cachep = kmem_cache_create("__grpc_synchro",
+						 sizeof(struct __grpc_synchro),
 						 0, 0, NULL);
-	if(!__rpc_synchro_cachep)
+	if(!__grpc_synchro_cachep)
 		return -ENOMEM;
 	
-	memset(rpc_mask, 0, sizeof(rpc_mask));
+	memset(grpc_mask, 0, sizeof(grpc_mask));
 	
-	rpc_services = kmalloc(sizeof(*rpc_services)*(RPCID_MAX+1),
+	grpc_services = kmalloc(sizeof(*grpc_services)*(GRPCID_MAX+1),
 			       GFP_KERNEL);
-	if(!rpc_services)
+	if(!grpc_services)
 		return -ENOMEM;
 
-	rpc_undef_service = rpc_service_init(RPC_UNDEF,
-					     RPC_TARGET_NODE,
-					     RPC_HANDLER_KTHREAD_VOID,
+	grpc_undef_service = grpc_service_init(GRPC_UNDEF,
+					     GRPC_TARGET_NODE,
+					     GRPC_HANDLER_KTHREAD_VOID,
 					     NULL,
-					     rpc_undef_handler, 0);
+					     grpc_undef_handler, 0);
 
-	for(i=0;i<RPCID_MAX;i++)
-		rpc_services[i] = rpc_undef_service;
+	for(i=0;i<GRPCID_MAX;i++)
+		grpc_services[i] = grpc_undef_service;
 	
 	for_each_possible_cpu(i){
 		INIT_LIST_HEAD(&per_cpu(grpc_desc_trash, i));
@@ -309,9 +309,9 @@ int init_rpc(void)
 	lockdep_set_class(&desc_clt->lock, &grpc_desc_clt_lock_key);
 
 	for (i = 0; i < HCC_MAX_NODES; i++) {
-		rpc_link_send_seq_id[i] = 1;
-		rpc_link_send_ack_id[i] = 0;
-		rpc_link_recv_seq_id[i] = 1;
+		grpc_link_send_seq_id[i] = 1;
+		grpc_link_send_ack_id[i] = 0;
+		grpc_link_recv_seq_id[i] = 1;
 	}
 		
 	res = thread_pool_init();
@@ -322,15 +322,15 @@ int init_rpc(void)
 	if(res)
 		return res;
 
-	res = rpclayer_init();
+	res = grpclayer_init();
 	if(res)
 		return res;
 
-	res = rpc_monitor_init();
+	res = grpc_monitor_init();
 	if(res)
 		return res;
 	
-	printk("RPC initialisation done\n");
+	printk("GRPC initialisation done\n");
 	
 	return 0;
 }
@@ -338,6 +338,6 @@ int init_rpc(void)
 /** Cleanup of the Nazgul module.
  *  @author Innogrid HCC
  */
-void cleanup_rpc(void)
+void cleanup_grpc(void)
 {
 }

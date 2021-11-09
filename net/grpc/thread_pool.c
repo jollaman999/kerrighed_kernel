@@ -21,7 +21,7 @@
 #include <net/grpc/grpcid.h>
 #include <net/grpc/grpc.h>
 
-#include "rpc_internal.h"
+#include "grpc_internal.h"
 
 typedef unsigned long threads_vector_t;
 #define THREADS_VECTOR_WIDTH (sizeof(threads_vector_t)*8)
@@ -48,7 +48,7 @@ struct {
 	struct delayed_work dwork;
 } new_thread_data;
 
-void (*rpc_handlers[RPC_HANDLER_MAX])(struct grpc_desc* desc);
+void (*grpc_handlers[GRPC_HANDLER_MAX])(struct grpc_desc* desc);
 
 #define HCC_GRPC_INIT_FDTABLE \
 {                                                       \
@@ -77,28 +77,28 @@ struct task_struct *first_grpc = NULL;
 
 static struct completion init_complete;
 
-void rpc_handler_kthread(struct grpc_desc* desc){
-	((rpc_handler_t)desc->service->h)(desc);
+void grpc_handler_kthread(struct grpc_desc* desc){
+	((grpc_handler_t)desc->service->h)(desc);
 };
 
-void rpc_handler_kthread_void(struct grpc_desc* desc){
+void grpc_handler_kthread_void(struct grpc_desc* desc){
 	int err;
-	struct rpc_data rpc_data;
+	struct grpc_data grpc_data;
 
 	BUG_ON(!desc);
 	
-	err = grpc_unpack(desc, RPC_FLAGS_NOCOPY,
-			 &rpc_data, 0);
+	err = grpc_unpack(desc, GRPC_FLAGS_NOCOPY,
+			 &grpc_data, 0);
 	
 	if(!err){
 		BUG_ON(!desc);
 		BUG_ON(!desc->service);
 		BUG_ON(!desc->service->h);
 		
-		((rpc_handler_void_t)desc->service->h)(desc, rpc_data.data,
-						       rpc_data.size);
+		((grpc_handler_void_t)desc->service->h)(desc, grpc_data.data,
+						       grpc_data.size);
 
-		rpc_free_buffer(&rpc_data);
+		grpc_free_buffer(&grpc_data);
 		
 	}else{
 		printk("unexpected event\n");
@@ -107,26 +107,26 @@ void rpc_handler_kthread_void(struct grpc_desc* desc){
 
 };
 
-void rpc_handler_kthread_int(struct grpc_desc* desc){
+void grpc_handler_kthread_int(struct grpc_desc* desc){
 	int res;
 	int id;
 	int err;
-	struct rpc_data rpc_data;
+	struct grpc_data grpc_data;
 
-	err = grpc_unpack(desc, RPC_FLAGS_NOCOPY,
-			 &rpc_data, 0);
+	err = grpc_unpack(desc, GRPC_FLAGS_NOCOPY,
+			 &grpc_data, 0);
 	
 	if(!err){
 	
-		id = grpc_pack(desc, RPC_FLAGS_LATER,
+		id = grpc_pack(desc, GRPC_FLAGS_LATER,
 				&res, sizeof(res));
 
-		res = ((rpc_handler_int_t)desc->service->h)(desc,
-							    rpc_data.data,
-							    rpc_data.size);
+		res = ((grpc_handler_int_t)desc->service->h)(desc,
+							    grpc_data.data,
+							    grpc_data.size);
 
-		rpc_free_buffer(&rpc_data);
-		rpc_wait_pack(desc, id);
+		grpc_free_buffer(&grpc_data);
+		grpc_wait_pack(desc, id);
 
 	}else{
 		printk("unexpected event\n");
@@ -137,31 +137,31 @@ void rpc_handler_kthread_int(struct grpc_desc* desc){
 inline
 void do_grpc_handler(struct grpc_desc* desc,
 		       int thread_pool_id){
-	struct __rpc_synchro* __synchro;
+	struct __grpc_synchro* __synchro;
 	hcc_node_t client;
 	struct waiting_desc *wd;
 
-	BUG_ON(desc->type != RPC_RQ_SRV);
+	BUG_ON(desc->type != GRPC_RQ_SRV);
 
 	__synchro = desc->__synchro;
         if(__synchro)
-                __rpc_synchro_get(__synchro);
+                __grpc_synchro_get(__synchro);
 			
  continue_in_synchro:
 	client = desc->client;
 	BUG_ON(!desc->desc_recv[0]);
 
-	if(test_bit(desc->rpcid, rpc_mask)){
+	if(test_bit(desc->grpcid, grpc_mask)){
 		printk("need to move current desc in the waiting_desc queue\n");
 		BUG();
 	};
 
-	/* Deliver immediately rpc_signals sent before first client's pack() */
-	rpc_signal_deliver_pending(desc, desc->desc_recv[0]);
-	rpc_handlers[desc->service->handler](desc);
+	/* Deliver immediately grpc_signals sent before first client's pack() */
+	grpc_signal_deliver_pending(desc, desc->desc_recv[0]);
+	grpc_handlers[desc->service->handler](desc);
 	BUG_ON(signal_pending(current));
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	if(__synchro){
 		// check pending_work in the synchro
@@ -181,7 +181,7 @@ void do_grpc_handler(struct grpc_desc* desc,
 
 			desc = wd->desc;
 			desc->thread = current;
-			desc->state = RPC_STATE_RUN;
+			desc->state = GRPC_STATE_RUN;
 
 			kfree(wd);
 
@@ -191,7 +191,7 @@ void do_grpc_handler(struct grpc_desc* desc,
 			spin_unlock_bh(&__synchro->lock);
 		}
 
-		__rpc_synchro_put(__synchro);
+		__grpc_synchro_put(__synchro);
 	}
 }
 
@@ -215,9 +215,9 @@ int thread_pool_run(void* _data){
 	int j;
 
 	/*
-	 * Unlike the files_struct, we want each RPC handler to have an
+	 * Unlike the files_struct, we want each GRPC handler to have an
 	 * independent fs_struct, so that they can chroot() at will.
-	 * Each RPC handler is responsible for correctly resetting its root
+	 * Each GRPC handler is responsible for correctly resetting its root
 	 * whenever it does chroot()
 	 */
 	if (thread_pool_init_fs()) {
@@ -271,7 +271,7 @@ int thread_pool_run(void* _data){
 					 &waiting_desc,
 					 list_waiting_desc){
 
-			if(test_bit(wd->desc->rpcid, rpc_mask))
+			if(test_bit(wd->desc->grpcid, grpc_mask))
 				continue;
 			
 			list_del(&wd->list_waiting_desc);
@@ -282,7 +282,7 @@ int thread_pool_run(void* _data){
 			
 			desc = wd->desc;
 			desc->thread = current;
-			desc->state = RPC_STATE_RUN;
+			desc->state = GRPC_STATE_RUN;
 			kfree(wd);
 
 			BUG_ON(!desc->desc_recv[0]);
@@ -372,7 +372,7 @@ int queue_waiting_desc(struct grpc_desc* desc){
 
 	grpc_desc_get(desc);
 	wd->desc = desc;
-	desc->state = RPC_STATE_HANDLE;
+	desc->state = GRPC_STATE_HANDLE;
 
 	spin_lock(&waiting_desc_lock);
 	list_add_tail(&wd->list_waiting_desc, &waiting_desc);
@@ -384,19 +384,19 @@ out:
 
 inline
 struct grpc_desc* handle_in_interrupt(struct grpc_desc* desc){
-	struct __rpc_synchro *__synchro;
+	struct __grpc_synchro *__synchro;
 	struct waiting_desc *wd;
 
 	__synchro = desc->__synchro;
 
 	if(__synchro)
-		__rpc_synchro_get(__synchro);
+		__grpc_synchro_get(__synchro);
 
  continue_in_synchro:
 
-	rpc_handlers[desc->service->handler](desc);
+	grpc_handlers[desc->service->handler](desc);
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	if(__synchro){
 		spin_lock_bh(&__synchro->lock);
@@ -415,31 +415,31 @@ struct grpc_desc* handle_in_interrupt(struct grpc_desc* desc){
 
 			desc = wd->desc;
 			desc->thread = NULL;
-			desc->state = RPC_STATE_RUN;
+			desc->state = GRPC_STATE_RUN;
 
 			kfree(wd);
 
-			if(desc->service->flags & RPC_FLAGS_NOBLOCK)
+			if(desc->service->flags & GRPC_FLAGS_NOBLOCK)
 				goto continue_in_synchro;
 		}else{
 			atomic_inc(&__synchro->v);
 			spin_unlock_bh(&__synchro->lock);
 		}
 
-		__rpc_synchro_put(__synchro);
+		__grpc_synchro_put(__synchro);
 
 	}
 
 	return desc;
 }
 
-int rpc_handle_new(struct grpc_desc* desc){
+int grpc_handle_new(struct grpc_desc* desc){
 	struct threads_pool* thread_pool = &per_cpu(threads_pool, smp_processor_id());
-	struct __rpc_synchro *__synchro;
+	struct __grpc_synchro *__synchro;
 	int i, r=0;
 
 	if (!desc->__synchro) {
-		r = rpc_synchro_lookup(desc);
+		r = grpc_synchro_lookup(desc);
 		if (r)
 			return r;
 	}
@@ -464,7 +464,7 @@ int rpc_handle_new(struct grpc_desc* desc){
 			}
 
 			wd->desc = desc;
-			desc->state = RPC_STATE_HANDLE;
+			desc->state = GRPC_STATE_HANDLE;
 
 			list_waiting_ordered_add(&__synchro->list_waiting_head,
 						 wd);
@@ -474,15 +474,15 @@ int rpc_handle_new(struct grpc_desc* desc){
 		}
 	}
 
-	// Is it a disabled rpc ?
-	if(unlikely(test_bit(desc->rpcid, rpc_mask))){
+	// Is it a disabled grpc ?
+	if(unlikely(test_bit(desc->grpcid, grpc_mask))){
 		if (queue_waiting_desc(desc))
 			r = -ENOMEM;
 		return r;
 	};
 
 	// Is it an interruption-ready handler ?
-	if(likely(desc->service->flags & RPC_FLAGS_NOBLOCK)
+	if(likely(desc->service->flags & GRPC_FLAGS_NOBLOCK)
 	   && !(desc = handle_in_interrupt(desc)))
 		return r;
 	
@@ -497,7 +497,7 @@ int rpc_handle_new(struct grpc_desc* desc){
 
 		thread_pool->desc[i] = desc;
 		desc->thread = thread_pool->threads[i];
-		desc->state = RPC_STATE_RUN;
+		desc->state = GRPC_STATE_RUN;
 
 		wake_up_process(desc->thread);
 	}else{
@@ -514,7 +514,7 @@ int rpc_handle_new(struct grpc_desc* desc){
 	return r;
 };
 
-void rpc_wake_up_thread(struct grpc_desc *desc){
+void grpc_wake_up_thread(struct grpc_desc *desc){
 	struct threads_pool* thread_pool = &per_cpu(threads_pool, smp_processor_id());
 	int i;
 
@@ -529,7 +529,7 @@ void rpc_wake_up_thread(struct grpc_desc *desc){
 
 		if(desc){
 			desc->thread = thread_pool->threads[i];
-			desc->state = RPC_STATE_RUN;
+			desc->state = GRPC_STATE_RUN;
 		};
 
 		wake_up_process(thread_pool->threads[i]);
@@ -564,9 +564,9 @@ int thread_pool_init(void){
 	INIT_LIST_HEAD(&waiting_desc);
 	spin_lock_init(&waiting_desc_lock);
 
-	rpc_handlers[RPC_HANDLER_KTHREAD] = rpc_handler_kthread;
-	rpc_handlers[RPC_HANDLER_KTHREAD_VOID] = rpc_handler_kthread_void;
-	rpc_handlers[RPC_HANDLER_KTHREAD_INT] = rpc_handler_kthread_int;
+	grpc_handlers[GRPC_HANDLER_KTHREAD] = grpc_handler_kthread;
+	grpc_handlers[GRPC_HANDLER_KTHREAD_VOID] = grpc_handler_kthread_void;
+	grpc_handlers[GRPC_HANDLER_KTHREAD_INT] = grpc_handler_kthread_int;
 
 	init_completion(&init_complete);
 	atomic_inc(&new_thread_data.request[smp_processor_id()]);

@@ -18,29 +18,29 @@
 #include <net/grpc/grpcid.h>
 #include <net/grpc/grpc.h>
 
-#include "rpc_internal.h"
+#include "grpc_internal.h"
 
 LIST_HEAD(list_synchro_head);
 
 inline
-void __rpc_synchro_init(struct __rpc_synchro *__rpc_synchro,
+void __grpc_synchro_init(struct __grpc_synchro *__grpc_synchro,
 			int max){
-	__rpc_synchro->key = 0;
-	atomic_set(&__rpc_synchro->usage, 1);
-	atomic_set(&__rpc_synchro->v, max);
-	INIT_LIST_HEAD(&__rpc_synchro->list_waiting_head);
-	spin_lock_init(&__rpc_synchro->lock);
-	__rpc_synchro->tree = NULL;
-	__rpc_synchro->flags = 0;
+	__grpc_synchro->key = 0;
+	atomic_set(&__grpc_synchro->usage, 1);
+	atomic_set(&__grpc_synchro->v, max);
+	INIT_LIST_HEAD(&__grpc_synchro->list_waiting_head);
+	spin_lock_init(&__grpc_synchro->lock);
+	__grpc_synchro->tree = NULL;
+	__grpc_synchro->flags = 0;
 }
 
 /*
- * RPC synchro
+ * GRPC synchro
  */
-struct rpc_synchro* rpc_synchro_new(int max,
+struct grpc_synchro* grpc_synchro_new(int max,
 				    char *label,
 				    int order){
-	struct rpc_synchro *ret;
+	struct grpc_synchro *ret;
 	hcc_node_t i;
 
 	ret = kmalloc(sizeof(*ret), GFP_KERNEL);
@@ -65,7 +65,7 @@ struct rpc_synchro* rpc_synchro_new(int max,
 		}
 	}else{
 		for(i=0;i<HCC_MAX_NODES;i++)
-			__rpc_synchro_init(&ret->nodes[i].tab, max);
+			__grpc_synchro_init(&ret->nodes[i].tab, max);
 	}
 
 	list_add_tail(&ret->list_synchro, &list_synchro_head);
@@ -73,20 +73,20 @@ struct rpc_synchro* rpc_synchro_new(int max,
 }
 
 inline
-int rpc_synchro_lookup_order0(struct grpc_desc *desc){
-	__rpc_synchro_get(&desc->service->synchro->nodes[desc->client].tab);
+int grpc_synchro_lookup_order0(struct grpc_desc *desc){
+	__grpc_synchro_get(&desc->service->synchro->nodes[desc->client].tab);
 	desc->__synchro = &desc->service->synchro->nodes[desc->client].tab;
 	return 0;
 
 };
 
 inline
-int rpc_synchro_lookup_order1(struct grpc_desc *desc){
+int grpc_synchro_lookup_order1(struct grpc_desc *desc){
 	struct grpc_desc_elem *descelem;
 	unsigned long key;
-	struct rpc_synchro *synchro;
-	struct __rpc_synchro *__synchro;
-	struct __rpc_synchro_tree *__rpc_synchro_tree;
+	struct grpc_synchro *synchro;
+	struct __grpc_synchro *__synchro;
+	struct __grpc_synchro_tree *__grpc_synchro_tree;
 
 	synchro = desc->service->synchro;
 
@@ -95,33 +95,33 @@ int rpc_synchro_lookup_order1(struct grpc_desc *desc){
 
 	key = *((unsigned long*)descelem->data);
 
-	__rpc_synchro_tree = &synchro->nodes[desc->client].tree;
+	__grpc_synchro_tree = &synchro->nodes[desc->client].tree;
 
-	spin_lock(&__rpc_synchro_tree->lock);
-	__synchro = radix_tree_lookup(&__rpc_synchro_tree->rt, key);
+	spin_lock(&__grpc_synchro_tree->lock);
+	__synchro = radix_tree_lookup(&__grpc_synchro_tree->rt, key);
 
-	if(__synchro && __rpc_synchro_get(__synchro)) {
+	if(__synchro && __grpc_synchro_get(__synchro)) {
 		/* __synchro is beeing freed. Just remove it from the tree and
 		 * replace it with a clean new one. */
-		radix_tree_delete(&__rpc_synchro_tree->rt, __synchro->key);
-		__synchro->flags &= __RPC_SYNCHRO_DEAD;
+		radix_tree_delete(&__grpc_synchro_tree->rt, __synchro->key);
+		__synchro->flags &= __GRPC_SYNCHRO_DEAD;
 		__synchro = NULL;
 	}
 	if (!__synchro){
-		__synchro = kmem_cache_alloc(__rpc_synchro_cachep, GFP_ATOMIC);
+		__synchro = kmem_cache_alloc(__grpc_synchro_cachep, GFP_ATOMIC);
 		if(!__synchro){
-			spin_unlock(&__rpc_synchro_tree->lock);
+			spin_unlock(&__grpc_synchro_tree->lock);
 			return -ENOMEM;
 		}
 
-		__rpc_synchro_init(__synchro, synchro->max);
+		__grpc_synchro_init(__synchro, synchro->max);
 
 		__synchro->key = key;
-		__synchro->tree = __rpc_synchro_tree;
+		__synchro->tree = __grpc_synchro_tree;
 
-		radix_tree_insert(&__rpc_synchro_tree->rt, key, __synchro);
+		radix_tree_insert(&__grpc_synchro_tree->rt, key, __synchro);
 	}
-	spin_unlock(&__rpc_synchro_tree->lock);
+	spin_unlock(&__grpc_synchro_tree->lock);
 
 	desc->__synchro = __synchro;
 
@@ -129,7 +129,7 @@ int rpc_synchro_lookup_order1(struct grpc_desc *desc){
 }
 
 inline
-int rpc_synchro_lookup_order_generic(struct grpc_desc *desc){
+int grpc_synchro_lookup_order_generic(struct grpc_desc *desc){
 #if 0
 	if((desc->desc_recv[0]->received_packets & desc->service->synchro->mask_packets)
 	   == desc->service->synchro->mask_packets){
@@ -140,13 +140,13 @@ int rpc_synchro_lookup_order_generic(struct grpc_desc *desc){
 	return -ENOENT;
 #endif
 
-	printk("rpc_synchro_lookup: order > 1 => TODO\n");
+	printk("grpc_synchro_lookup: order > 1 => TODO\n");
 	BUG();
 
 	return 0;
 }
 
-int rpc_synchro_lookup(struct grpc_desc *desc){
+int grpc_synchro_lookup(struct grpc_desc *desc){
 
 	int order;
 
@@ -156,10 +156,10 @@ int rpc_synchro_lookup(struct grpc_desc *desc){
 	order = desc->service->synchro->order;
 
 	if(likely(order==0)){
-		return rpc_synchro_lookup_order0(desc);
+		return grpc_synchro_lookup_order0(desc);
 	}else if (likely(order==1)){
-		return rpc_synchro_lookup_order1(desc);
+		return grpc_synchro_lookup_order1(desc);
 	}else{
-		return rpc_synchro_lookup_order_generic(desc);
+		return grpc_synchro_lookup_order_generic(desc);
 	}
 }

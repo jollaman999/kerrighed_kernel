@@ -13,13 +13,13 @@
 #include <net/grpc/grpcid.h>
 #include <net/grpc/grpc.h>
 
-#include "rpc_internal.h"
+#include "grpc_internal.h"
 
-static struct timer_list rpc_timer;
-struct work_struct rpc_work;
-struct rpc_service pingpong_service;
+static struct timer_list grpc_timer;
+struct work_struct grpc_work;
+struct grpc_service pingpong_service;
 
-static void rpc_pingpong_handler (struct grpc_desc *grpc_desc,
+static void grpc_pingpong_handler (struct grpc_desc *grpc_desc,
 				  void *data,
 				  size_t size){
 	unsigned long l = *(unsigned long*)data;
@@ -29,7 +29,7 @@ static void rpc_pingpong_handler (struct grpc_desc *grpc_desc,
 	grpc_pack(grpc_desc, 0, &l, sizeof(l));
 };
 
-static void rpc_worker(struct work_struct *data)
+static void grpc_worker(struct work_struct *data)
 {
 	static unsigned long l = 0;
 	hccnodemask_t n;
@@ -41,32 +41,32 @@ static void rpc_worker(struct work_struct *data)
 	hccnodes_clear(n);
 	hccnode_set(0, n);
 
-	r = rpc_async(RPC_PINGPONG, 0, &l, sizeof(l));
+	r = grpc_async(GRPC_PINGPONG, 0, &l, sizeof(l));
 	if(r<0)
 		return;
 	
 }
 
-static void rpc_timer_cb(unsigned long _arg)
+static void grpc_timer_cb(unsigned long _arg)
 {
 	return;
-	queue_work(hcc_wq, &rpc_work);
-	mod_timer(&rpc_timer, jiffies + 2*HZ);
+	queue_work(hcc_wq, &grpc_work);
+	mod_timer(&grpc_timer, jiffies + 2*HZ);
 }
 
-int rpc_monitor_init(void){
-	rpc_register_void(RPC_PINGPONG,
-			  rpc_pingpong_handler, 0);
+int grpc_monitor_init(void){
+	grpc_register_void(GRPC_PINGPONG,
+			  grpc_pingpong_handler, 0);
 	
-	init_timer(&rpc_timer);
-	rpc_timer.function = rpc_timer_cb;
-	rpc_timer.data = 0;
+	init_timer(&grpc_timer);
+	grpc_timer.function = grpc_timer_cb;
+	grpc_timer.data = 0;
 	if(hcc_node_id != 0)
-		mod_timer(&rpc_timer, jiffies + 10*HZ);
-	INIT_WORK(&rpc_work, rpc_worker);
+		mod_timer(&grpc_timer, jiffies + 10*HZ);
+	INIT_WORK(&grpc_work, grpc_worker);
 
 	return 0;
 }
 
-void rpc_monitor_cleanup(void){
+void grpc_monitor_cleanup(void){
 }

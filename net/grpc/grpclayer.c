@@ -20,9 +20,9 @@
 #include <net/grpc/grpcid.h>
 #include <net/grpc/grpc.h>
 
-#include "rpc_internal.h"
+#include "grpc_internal.h"
 
-/* In __rpc_send, unsure atomicity of rpc_link_seq_id and grpc_desc_set_id */
+/* In __grpc_send, unsure atomicity of grpc_link_seq_id and grpc_desc_set_id */
 static spinlock_t lock_id;
 
 hcc_node_t grpc_desc_get_client(struct grpc_desc *desc){
@@ -30,7 +30,7 @@ hcc_node_t grpc_desc_get_client(struct grpc_desc *desc){
 	return desc->client;
 }
 
-void rpc_new_desc_id_lock(void)
+void grpc_new_desc_id_lock(void)
 {
 	if (!irqs_disabled())
 		local_bh_disable();
@@ -38,7 +38,7 @@ void rpc_new_desc_id_lock(void)
 	hashtable_lock(desc_clt);
 }
 
-void rpc_new_desc_id_unlock(void)
+void grpc_new_desc_id_unlock(void)
 {
 	hashtable_unlock(desc_clt);
 	spin_unlock(&lock_id);
@@ -47,58 +47,58 @@ void rpc_new_desc_id_unlock(void)
 }
 
 inline
-int __rpc_send(struct grpc_desc* desc,
+int __grpc_send(struct grpc_desc* desc,
 		      unsigned long seq_id, int __flags,
 		      const void* data, size_t size,
-		      int rpc_flags)
+		      int grpc_flags)
 {
 	int err = 0;
 
 	switch (desc->type) {
-	case RPC_RQ_CLT:
+	case GRPC_RQ_CLT:
 		if (desc->desc_id == 0) {
 
-			rpc_new_desc_id_lock();
+			grpc_new_desc_id_lock();
 
 			grpc_desc_set_id(desc->desc_id);
 
 			if (__hashtable_add(desc_clt, desc->desc_id, desc)) {
-				rpc_new_desc_id_unlock();
+				grpc_new_desc_id_unlock();
 
 				desc->desc_id = 0;
 
 				return -ENOMEM;
 			}
 
-			/* Calls rpc_new_desc_id_unlock() on success */
-			// printk("===__rpc_send seq_id %u \n",seq_id);
-			err = __rpc_send_ll(desc, &desc->nodes,
+			/* Calls grpc_new_desc_id_unlock() on success */
+			// printk("===__grpc_send seq_id %u \n",seq_id);
+			err = __grpc_send_ll(desc, &desc->nodes,
 					    seq_id,
 					    __flags, data, size,
-					    rpc_flags | RPC_FLAGS_NEW_DESC_ID);
+					    grpc_flags | GRPC_FLAGS_NEW_DESC_ID);
 			if (err) {
 				__hashtable_remove(desc_clt, desc->desc_id);
-				rpc_new_desc_id_unlock();
+				grpc_new_desc_id_unlock();
 
 				desc->desc_id = 0;
 			}
 
 		} else
-			err = __rpc_send_ll(desc, &desc->nodes,
+			err = __grpc_send_ll(desc, &desc->nodes,
 					    seq_id,
 					    __flags, data, size,
-					    rpc_flags);
+					    grpc_flags);
 		break;
 
-	case RPC_RQ_SRV: {
+	case GRPC_RQ_SRV: {
 		hccnodemask_t nodes;
 
 		hccnodes_clear(nodes);
 		hccnode_set(desc->client, nodes);
 
-		err = __rpc_send_ll(desc, &nodes, seq_id,
+		err = __grpc_send_ll(desc, &nodes, seq_id,
 				    __flags, data, size,
-				    rpc_flags);
+				    grpc_flags);
 		break;
 	}
 
@@ -110,7 +110,7 @@ int __rpc_send(struct grpc_desc* desc,
 	return err;
 }
 
-struct grpc_desc* rpc_begin_m(enum rpcid rpcid,
+struct grpc_desc* grpc_begin_m(enum grpcid grpcid,
 			     hccnodemask_t* nodes)
 {
 	struct grpc_desc* desc;
@@ -121,7 +121,7 @@ struct grpc_desc* rpc_begin_m(enum rpcid rpcid,
 		goto oom;
 
 	__hccnodes_copy(&desc->nodes, nodes);
-	desc->type = RPC_RQ_CLT;
+	desc->type = GRPC_RQ_CLT;
 	desc->client = hcc_node_id;
 	
 	desc->desc_send = grpc_desc_send_alloc();
@@ -134,14 +134,14 @@ struct grpc_desc* rpc_begin_m(enum rpcid rpcid,
 			goto oom_free_desc_recv;
 	}
 
-	desc->rpcid = rpcid;
-	desc->service = rpc_services[rpcid];
+	desc->grpcid = grpcid;
+	desc->service = grpc_services[grpcid];
 	desc->client = hcc_node_id;
 
-	if (__rpc_emergency_send_buf_alloc(desc, 0))
+	if (__grpc_emergency_send_buf_alloc(desc, 0))
 		goto oom_free_desc_recv;
 
-	desc->state = RPC_STATE_RUN;
+	desc->state = GRPC_STATE_RUN;
 
 	return desc;
 
@@ -158,7 +158,7 @@ oom:
 }
 
 inline
-int __rpc_end_pack(struct grpc_desc* desc)
+int __grpc_end_pack(struct grpc_desc* desc)
 {
 	struct grpc_desc_elem *descelem, *safe;
 	int err = 0;
@@ -173,12 +173,12 @@ int __rpc_end_pack(struct grpc_desc* desc)
 		 */
 		if (!err) {
 			err = -EPIPE;
-			if (!(desc->desc_send->flags & RPC_FLAGS_CLOSED)) {
-				err = __rpc_send(desc, descelem->seq_id, 0,
+			if (!(desc->desc_send->flags & GRPC_FLAGS_CLOSED)) {
+				err = __grpc_send(desc, descelem->seq_id, 0,
 						 descelem->data, descelem->size,
 						 0);
 				if (err)
-					rpc_cancel_pack(desc);
+					grpc_cancel_pack(desc);
 			}
 		}
 		list_del(&descelem->list_desc_elem);
@@ -188,7 +188,7 @@ int __rpc_end_pack(struct grpc_desc* desc)
 }
 
 inline
-int __rpc_end_unpack(struct grpc_desc_recv* desc_recv)
+int __grpc_end_unpack(struct grpc_desc_recv* desc_recv)
 {
 	while (!list_empty(&desc_recv->list_provided_head)) {
 		set_current_state(TASK_INTERRUPTIBLE);
@@ -197,7 +197,7 @@ int __rpc_end_unpack(struct grpc_desc_recv* desc_recv)
 	return 0;
 }
 
-static void __rpc_end_unpack_clean_queue(struct list_head *elem_head)
+static void __grpc_end_unpack_clean_queue(struct list_head *elem_head)
 {
 	struct grpc_desc_elem *iter, *safe;
 
@@ -208,7 +208,7 @@ static void __rpc_end_unpack_clean_queue(struct list_head *elem_head)
 }
 
 inline
-int __rpc_end_unpack_clean(struct grpc_desc* desc)
+int __grpc_end_unpack_clean(struct grpc_desc* desc)
 {
 	int i;
 
@@ -218,9 +218,9 @@ int __rpc_end_unpack_clean(struct grpc_desc* desc)
 		desc->desc_recv[i] = NULL;
 
 		if (unlikely(!list_empty(&desc_recv->list_desc_head)))
-			__rpc_end_unpack_clean_queue(&desc_recv->list_desc_head);
+			__grpc_end_unpack_clean_queue(&desc_recv->list_desc_head);
 		if (unlikely(!list_empty(&desc_recv->list_signal_head)))
-			__rpc_end_unpack_clean_queue(&desc_recv->list_signal_head);
+			__grpc_end_unpack_clean_queue(&desc_recv->list_signal_head);
 
 		kmem_cache_free(grpc_desc_recv_cachep, desc_recv);
 	}
@@ -228,7 +228,7 @@ int __rpc_end_unpack_clean(struct grpc_desc* desc)
 	return 0;
 }
 
-int rpc_end(struct grpc_desc* desc, int flags)
+int grpc_end(struct grpc_desc* desc, int flags)
 {
 	struct grpc_desc_send *grpc_desc_send;
 	struct hashtable_t* desc_ht;
@@ -236,22 +236,22 @@ int rpc_end(struct grpc_desc* desc, int flags)
 
 	lockdep_off();
 	
-	err = __rpc_end_pack(desc);
+	err = __grpc_end_pack(desc);
 
 	switch(desc->type){
-	case RPC_RQ_CLT:{
+	case GRPC_RQ_CLT:{
 		int i;
 
 		for_each_hccnode_mask(i, desc->nodes){
-			__rpc_end_unpack(desc->desc_recv[i]);
+			__grpc_end_unpack(desc->desc_recv[i]);
 		}
 
 		desc_ht = desc_clt;
 		break;
 	}
-	case RPC_RQ_SRV:
+	case GRPC_RQ_SRV:
 		
-		__rpc_end_unpack(desc->desc_recv[0]);
+		__grpc_end_unpack(desc->desc_recv[0]);
 
 		desc_ht = desc_srv[desc->client];
 		break;
@@ -263,7 +263,7 @@ int rpc_end(struct grpc_desc* desc, int flags)
 	spin_lock_bh(&desc->desc_lock);
 	hashtable_lock(desc_ht);
 
-	desc->state = RPC_STATE_END;
+	desc->state = GRPC_STATE_END;
 
 	__hashtable_remove(desc_ht, desc->desc_id);
 	BUG_ON(__hashtable_find(desc_ht, desc->desc_id));
@@ -271,16 +271,16 @@ int rpc_end(struct grpc_desc* desc, int flags)
 	hashtable_unlock(desc_ht);
 	spin_unlock_bh(&desc->desc_lock);
 
-	__rpc_emergency_send_buf_free(desc);
+	__grpc_emergency_send_buf_free(desc);
 
 	grpc_desc_send = desc->desc_send;
 	desc->desc_send = NULL;
 	kmem_cache_free(grpc_desc_send_cachep, grpc_desc_send);
 
-	__rpc_end_unpack_clean(desc);
+	__grpc_end_unpack_clean(desc);
 
 	if(desc->__synchro)
-		__rpc_synchro_put(desc->__synchro);
+		__grpc_synchro_put(desc->__synchro);
 
 	grpc_desc_put(desc);
 
@@ -288,13 +288,13 @@ int rpc_end(struct grpc_desc* desc, int flags)
 	return err;
 }
 
-int rpc_cancel_pack(struct grpc_desc* desc)
+int grpc_cancel_pack(struct grpc_desc* desc)
 {
 	int last_pack;
 	unsigned long seq_id;
 	int err = 0;
 
-	if (desc->desc_send->flags & RPC_FLAGS_CLOSED)
+	if (desc->desc_send->flags & GRPC_FLAGS_CLOSED)
 		goto out;
 
 	last_pack = list_empty(&desc->desc_send->list_desc_head);
@@ -308,18 +308,18 @@ int rpc_cancel_pack(struct grpc_desc* desc)
 		seq_id = next->seq_id;
 	}
 
-	err = __rpc_send(desc, seq_id,
-			 __RPC_HEADER_FLAGS_CANCEL_PACK,
+	err = __grpc_send(desc, seq_id,
+			 __GRPC_HEADER_FLAGS_CANCEL_PACK,
 			 0, 0,
-			 RPC_FLAGS_EMERGENCY_BUF);
+			 GRPC_FLAGS_EMERGENCY_BUF);
 
 	/*
-	 * if RPC_FLAGS_EMERGENCY_BUF was used too many times, then
+	 * if GRPC_FLAGS_EMERGENCY_BUF was used too many times, then
 	 * either MAX_EMERGENCY_SEND should be increased or the caller fixed.
 	 */
 	WARN_ON(err);
 	if (!err)
-		desc->desc_send->flags |= RPC_FLAGS_CLOSED;
+		desc->desc_send->flags |= GRPC_FLAGS_CLOSED;
 	else if (last_pack)
 		/* Allow caller to retry */
 		atomic_dec(&desc->desc_send->seq_id);
@@ -328,32 +328,32 @@ out:
 	return err;
 }
 
-void rpc_cancel_unpack_from(struct grpc_desc *desc, hcc_node_t node)
+void grpc_cancel_unpack_from(struct grpc_desc *desc, hcc_node_t node)
 {
 	struct grpc_desc_recv *desc_recv = desc->desc_recv[node];
 
-	desc_recv->flags |= RPC_FLAGS_CLOSED;
+	desc_recv->flags |= GRPC_FLAGS_CLOSED;
 	/* TODO: send a notification to the sender so that it stops sending */
 }
 
-void rpc_cancel_unpack(struct grpc_desc* desc)
+void grpc_cancel_unpack(struct grpc_desc* desc)
 {
 	hcc_node_t node;
 
 	for_each_hccnode_mask(node, desc->nodes)
-		rpc_cancel_unpack_from(desc, node);
+		grpc_cancel_unpack_from(desc, node);
 }
 
-int rpc_cancel(struct grpc_desc* desc){
+int grpc_cancel(struct grpc_desc* desc){
 	int err;
 
-	err = rpc_cancel_pack(desc);
-	rpc_cancel_unpack(desc);
+	err = grpc_cancel_pack(desc);
+	grpc_cancel_unpack(desc);
 
 	return err;
 }
 
-int rpc_forward(struct grpc_desc* desc, hcc_node_t node){
+int grpc_forward(struct grpc_desc* desc, hcc_node_t node){
 	return 0;
 }
 
@@ -361,10 +361,10 @@ int grpc_pack(struct grpc_desc* desc, int flags, const void* data, size_t size)
 {
 	int err = -EPIPE;
 
-	if (desc->desc_send->flags & RPC_FLAGS_CLOSED)
+	if (desc->desc_send->flags & GRPC_FLAGS_CLOSED)
 		goto out;
 
-	if (flags & RPC_FLAGS_LATER) {
+	if (flags & GRPC_FLAGS_LATER) {
 		struct grpc_desc_elem *descelem;
 
 		err = -ENOMEM;
@@ -381,7 +381,7 @@ int grpc_pack(struct grpc_desc* desc, int flags, const void* data, size_t size)
 		return descelem->seq_id;
 	}
 
-	err = __rpc_send(desc, atomic_inc_return(&desc->desc_send->seq_id), 0,
+	err = __grpc_send(desc, atomic_inc_return(&desc->desc_send->seq_id), 0,
 			 data, size,
 			 0);
 	if (err)
@@ -392,7 +392,7 @@ out:
 	return err;
 }
 
-int rpc_wait_pack(struct grpc_desc* desc, int seq_id)
+int grpc_wait_pack(struct grpc_desc* desc, int seq_id)
 {
 	struct grpc_desc_elem *descelem, *safe;
 	int err;
@@ -406,8 +406,8 @@ int rpc_wait_pack(struct grpc_desc* desc, int seq_id)
 				break;
 
 			err = -EPIPE;
-			if (!(desc->desc_send->flags & RPC_FLAGS_CLOSED))
-				err = __rpc_send(desc, descelem->seq_id, 0,
+			if (!(desc->desc_send->flags & GRPC_FLAGS_CLOSED))
+				err = __grpc_send(desc, descelem->seq_id, 0,
 						 descelem->data, descelem->size,
 						 0);
 			if (err) {
@@ -423,7 +423,7 @@ int rpc_wait_pack(struct grpc_desc* desc, int seq_id)
 	return seq_id;
 }
 
-static void __rpc_signal_dequeue_pending(struct grpc_desc *desc,
+static void __grpc_signal_dequeue_pending(struct grpc_desc *desc,
 					 struct grpc_desc_recv *desc_recv,
 					 struct list_head *head)
 {
@@ -434,40 +434,40 @@ static void __rpc_signal_dequeue_pending(struct grpc_desc *desc,
 	list_for_each_entry_safe(descelem, tmp_elem,
 				 &desc_recv->list_signal_head, list_desc_elem) {
 		if (descelem->seq_id > seq_id
-		    || (descelem->flags & __RPC_HEADER_FLAGS_SIGACK))
+		    || (descelem->flags & __GRPC_HEADER_FLAGS_SIGACK))
 			break;
 		list_move_tail(&descelem->list_desc_elem, head);
 	}
 }
 
-static void __rpc_signal_deliver_pending(struct grpc_desc *desc,
+static void __grpc_signal_deliver_pending(struct grpc_desc *desc,
 					 struct list_head *head)
 {
 	struct grpc_desc_elem *descelem, *tmp_elem;
 
 	list_for_each_entry_safe(descelem, tmp_elem, head, list_desc_elem) {
 		list_del(&descelem->list_desc_elem);
-		rpc_do_signal(desc, descelem);
+		grpc_do_signal(desc, descelem);
 	}
 }
 
-void rpc_signal_deliver_pending(struct grpc_desc *desc,
+void grpc_signal_deliver_pending(struct grpc_desc *desc,
 				struct grpc_desc_recv *desc_recv)
 {
 	LIST_HEAD(signals_head);
 
 	spin_lock_bh(&desc->desc_lock);
 	if (unlikely(!list_empty(&desc_recv->list_signal_head)))
-		__rpc_signal_dequeue_pending(desc, desc_recv, &signals_head);
+		__grpc_signal_dequeue_pending(desc, desc_recv, &signals_head);
 	spin_unlock_bh(&desc->desc_lock);
 	if (unlikely(!list_empty(&signals_head)))
-		__rpc_signal_deliver_pending(desc, &signals_head);
+		__grpc_signal_deliver_pending(desc, &signals_head);
 }
 
 /* Dequeue sigacks up to ones sent after the next data to unpack */
 static
 struct grpc_desc_elem *
-__rpc_signal_dequeue_sigack(struct grpc_desc *desc,
+__grpc_signal_dequeue_sigack(struct grpc_desc *desc,
 			    struct grpc_desc_recv *desc_recv)
 {
 	struct grpc_desc_elem *ret = NULL;
@@ -479,7 +479,7 @@ __rpc_signal_dequeue_sigack(struct grpc_desc *desc,
 		seq_id = desc_recv->iter ? desc_recv->iter->seq_id : 0;
 		sig = list_entry(desc_recv->list_signal_head.next,
 				 struct grpc_desc_elem, list_desc_elem);
-		if ((sig->flags & __RPC_HEADER_FLAGS_SIGACK)
+		if ((sig->flags & __GRPC_HEADER_FLAGS_SIGACK)
 		    && sig->seq_id <= seq_id + 1) {
 			list_del(&sig->list_desc_elem);
 			ret = sig;
@@ -503,9 +503,9 @@ int __grpc_unpack_from_node(struct grpc_desc* desc, hcc_node_t node,
 	BUG_ON(!desc);
 	BUG_ON(!data);
 
-	if (desc_recv->flags & RPC_FLAGS_CLOSED)
-		return RPC_EPIPE;
-	if (unlikely(desc_recv->flags & RPC_FLAGS_REPOST))
+	if (desc_recv->flags & GRPC_FLAGS_CLOSED)
+		return GRPC_EPIPE;
+	if (unlikely(desc_recv->flags & GRPC_FLAGS_REPOST))
 		atomic_set(&seq_id, atomic_read(&desc_recv->seq_id));
 	else
 		atomic_set(&seq_id, atomic_inc_return(&desc_recv->seq_id));
@@ -513,17 +513,17 @@ int __grpc_unpack_from_node(struct grpc_desc* desc, hcc_node_t node,
  restart:
 	spin_lock_bh(&desc->desc_lock);
 
-	/* Return rpc_signalacks ASAP */
+	/* Return grpc_signalacks ASAP */
 	if (unlikely(!list_empty(&desc_recv->list_signal_head))) {
 		for (;;) {
-			descelem = __rpc_signal_dequeue_sigack(desc, desc_recv);
+			descelem = __grpc_signal_dequeue_sigack(desc, desc_recv);
 			if (!descelem)
 				break;
-			if (flags & RPC_FLAGS_SIGACK) {
+			if (flags & GRPC_FLAGS_SIGACK) {
 				spin_unlock_bh(&desc->desc_lock);
 				grpc_desc_elem_free(descelem);
-				desc_recv->flags |= RPC_FLAGS_REPOST;
-				return RPC_ESIGACK;
+				desc_recv->flags |= GRPC_FLAGS_REPOST;
+				return GRPC_ESIGACK;
 			}
 			/* Store discarded sigacks in a list to free them with
 			 * desc_lock released */
@@ -568,42 +568,42 @@ int __grpc_unpack_from_node(struct grpc_desc* desc, hcc_node_t node,
 	/* Signals sent right after the matching pack() must be delivered
 	 * now (actually with desc_recv's lock released). */
 	if (unlikely(!list_empty(&desc_recv->list_signal_head)))
-		__rpc_signal_dequeue_pending(desc, desc_recv, &signals_head);
+		__grpc_signal_dequeue_pending(desc, desc_recv, &signals_head);
 
 	spin_unlock_bh(&desc->desc_lock);
 
 	if (unlikely(!list_empty(&signals_head)))
-		__rpc_signal_deliver_pending(desc, &signals_head);
+		__grpc_signal_deliver_pending(desc, &signals_head);
 	if (unlikely(!list_empty(&sigacks_head)))
-		__rpc_end_unpack_clean_queue(&sigacks_head);
-	if (desc_recv->iter->flags & __RPC_HEADER_FLAGS_CANCEL_PACK) {
-		desc_recv->flags |= RPC_FLAGS_CLOSED;
-		return RPC_EPIPE;
+		__grpc_end_unpack_clean_queue(&sigacks_head);
+	if (desc_recv->iter->flags & __GRPC_HEADER_FLAGS_CANCEL_PACK) {
+		desc_recv->flags |= GRPC_FLAGS_CLOSED;
+		return GRPC_EPIPE;
 	}
 
-	if (flags & RPC_FLAGS_NOCOPY) {
-		struct rpc_data *rpc_data = data;
+	if (flags & GRPC_FLAGS_NOCOPY) {
+		struct grpc_data *grpc_data = data;
 
-		__rpc_get_raw_data(desc_recv->iter->raw);
+		__grpc_get_raw_data(desc_recv->iter->raw);
 
-		rpc_data->raw = desc_recv->iter->raw;
-		rpc_data->data = desc_recv->iter->data;
-		rpc_data->size = size;
+		grpc_data->raw = desc_recv->iter->raw;
+		grpc_data->data = desc_recv->iter->data;
+		grpc_data->size = size;
 
 	} else if (desc_recv->iter->size <= size) {
 		memcpy(data, desc_recv->iter->data, desc_recv->iter->size);
 	} else {
 		printk("unsufficient room for received packet (%d  %lu-%lu)!\n",
-		       desc->rpcid,
+		       desc->grpcid,
 		       desc->desc_id, desc_recv->iter->seq_id);
 		BUG();
 	}
 
-	desc_recv->flags &= ~RPC_FLAGS_REPOST;
-	return RPC_EOK;
+	desc_recv->flags &= ~GRPC_FLAGS_REPOST;
+	return GRPC_EOK;
 
  __restart:
-	if (flags&RPC_FLAGS_NOBLOCK) {
+	if (flags&GRPC_FLAGS_NOBLOCK) {
 		struct grpc_desc_elem *descelem;
 
 		descelem = kmem_cache_alloc(grpc_desc_elem_cachep, GFP_ATOMIC);
@@ -623,29 +623,29 @@ int __grpc_unpack_from_node(struct grpc_desc* desc, hcc_node_t node,
 			desc_recv->iter_provided = descelem;
 		
 		spin_unlock_bh(&desc->desc_lock);
-		desc_recv->flags &= ~RPC_FLAGS_REPOST;
-		return RPC_EOK;
+		desc_recv->flags &= ~GRPC_FLAGS_REPOST;
+		return GRPC_EOK;
 	}
 
 	desc->thread = current;
 	desc->wait_from = node;
-	desc->state = RPC_STATE_WAIT1;
-	set_current_state(flags & RPC_FLAGS_INTR ? TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE);
+	desc->state = GRPC_STATE_WAIT1;
+	set_current_state(flags & GRPC_FLAGS_INTR ? TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE);
 	spin_unlock_bh(&desc->desc_lock);
 
 	schedule();
-	if (signal_pending(current) && (flags & RPC_FLAGS_INTR)) {
-		desc_recv->flags |= RPC_FLAGS_REPOST;
-		return RPC_EINTR;
+	if (signal_pending(current) && (flags & GRPC_FLAGS_INTR)) {
+		desc_recv->flags |= GRPC_FLAGS_REPOST;
+		return GRPC_EINTR;
 	}
 
 	goto restart;
 }
 
-enum rpc_error
+enum grpc_error
 grpc_unpack(struct grpc_desc* desc, int flags, void* data, size_t size){
 	switch(desc->type){
-	case RPC_RQ_CLT:{
+	case GRPC_RQ_CLT:{
 		hcc_node_t node;
 		// ASSUME that only one node is set in desc->nodes
 		// If it's not a single request, the result of this function (in this case)
@@ -659,7 +659,7 @@ grpc_unpack(struct grpc_desc* desc, int flags, void* data, size_t size){
 		
 		return __grpc_unpack_from_node(desc, node, flags, data, size);
 	}
-	case RPC_RQ_SRV:
+	case GRPC_RQ_SRV:
 		return __grpc_unpack_from_node(desc, 0, flags, data, size);
 	default:
 		printk("unexpected case\n");
@@ -669,17 +669,17 @@ grpc_unpack(struct grpc_desc* desc, int flags, void* data, size_t size){
 	return 0;
 }
 
-enum rpc_error
+enum grpc_error
 grpc_unpack_from(struct grpc_desc* desc, hcc_node_t node,
 		int flags, void* data, size_t size)
 {
 	printk("grpc_unpack_from start hcc_node_t %d \n",node);
 	switch(desc->type){
-	case RPC_RQ_CLT:
-		printk("RPC_RQ_CLT ENTER\n");
+	case GRPC_RQ_CLT:
+		printk("GRPC_RQ_CLT ENTER\n");
 		return __grpc_unpack_from_node(desc, node, flags, data, size);
-	case RPC_RQ_SRV:
-		printk("RPC_RQ_SRV ENTER\n");
+	case GRPC_RQ_SRV:
+		printk("GRPC_RQ_SRV ENTER\n");
 		if(node == desc->client)
 			return __grpc_unpack_from_node(desc, node, flags, data, size);
 		return 0;
@@ -691,11 +691,11 @@ grpc_unpack_from(struct grpc_desc* desc, hcc_node_t node,
 	return 0;
 }
 
-hcc_node_t rpc_wait_return(struct grpc_desc* desc, int* value)
+hcc_node_t grpc_wait_return(struct grpc_desc* desc, int* value)
 {
 	hcc_node_t node;
 
-	if (desc->type != RPC_RQ_CLT)
+	if (desc->type != GRPC_RQ_CLT)
 		return -1;
 
 
@@ -716,7 +716,7 @@ hcc_node_t rpc_wait_return(struct grpc_desc* desc, int* value)
 		}
 	}
 
-	desc->state = RPC_STATE_WAIT;
+	desc->state = GRPC_STATE_WAIT;
 	desc->thread = current;
 	set_current_state(TASK_INTERRUPTIBLE);
 	spin_unlock_bh(&desc->desc_lock);
@@ -726,10 +726,10 @@ hcc_node_t rpc_wait_return(struct grpc_desc* desc, int* value)
 	goto __restart;
 }
 
-int rpc_wait_return_from(struct grpc_desc* desc, hcc_node_t node)
+int grpc_wait_return_from(struct grpc_desc* desc, hcc_node_t node)
 {
 
-	if(desc->type != RPC_RQ_CLT)
+	if(desc->type != GRPC_RQ_CLT)
 		return -1;
 
  __restart:
@@ -743,7 +743,7 @@ int rpc_wait_return_from(struct grpc_desc* desc, hcc_node_t node)
 		return value;
 	}
 	
-	desc->state = RPC_STATE_WAIT1;
+	desc->state = GRPC_STATE_WAIT1;
 	desc->wait_from = node;
 	desc->thread = current;
 	set_current_state(TASK_INTERRUPTIBLE);
@@ -754,11 +754,11 @@ int rpc_wait_return_from(struct grpc_desc* desc, hcc_node_t node)
 	goto __restart;
 }
 
-int rpc_wait_all(struct grpc_desc *desc)
+int grpc_wait_all(struct grpc_desc *desc)
 {
 	int i;
 	
-	if(desc->type != RPC_RQ_CLT)
+	if(desc->type != GRPC_RQ_CLT)
 		return -1;
 
 	// on doit tester si tous les retours sont effectuee
@@ -771,7 +771,7 @@ int rpc_wait_all(struct grpc_desc *desc)
 			continue;
 		
 		spin_lock_bh(&desc->desc_lock);
-		desc->state = RPC_STATE_WAIT;
+		desc->state = GRPC_STATE_WAIT;
 		desc->thread = current;
 		set_current_state(TASK_INTERRUPTIBLE);
 		spin_unlock_bh(&desc->desc_lock);
@@ -783,38 +783,38 @@ int rpc_wait_all(struct grpc_desc *desc)
 	return 0;
 }
 
-int rpc_signal(struct grpc_desc* desc, int sigid)
+int grpc_signal(struct grpc_desc* desc, int sigid)
 {
-	if (desc->desc_send->flags & RPC_FLAGS_CLOSED)
+	if (desc->desc_send->flags & GRPC_FLAGS_CLOSED)
 		return -EPIPE;
-	return __rpc_send(desc, atomic_read(&desc->desc_send->seq_id),
-			  __RPC_HEADER_FLAGS_SIGNAL,
+	return __grpc_send(desc, atomic_read(&desc->desc_send->seq_id),
+			  __GRPC_HEADER_FLAGS_SIGNAL,
 			  &sigid, sizeof(sigid),
 			  0);
 }
 
-int __rpc_signalack(struct grpc_desc* desc)
+int __grpc_signalack(struct grpc_desc* desc)
 {
 	int v;
 
-	if (desc->desc_send->flags & RPC_FLAGS_CLOSED)
+	if (desc->desc_send->flags & GRPC_FLAGS_CLOSED)
 		return -EPIPE;
-	return __rpc_send(desc, atomic_read(&desc->desc_send->seq_id),
-			  __RPC_HEADER_FLAGS_SIGNAL | __RPC_HEADER_FLAGS_SIGACK,
+	return __grpc_send(desc, atomic_read(&desc->desc_send->seq_id),
+			  __GRPC_HEADER_FLAGS_SIGNAL | __GRPC_HEADER_FLAGS_SIGACK,
 			  &v, sizeof(v),
 			  0);
 }
 
-void rpc_free_buffer(struct rpc_data *rpc_data)
+void grpc_free_buffer(struct grpc_data *grpc_data)
 {
-	__rpc_put_raw_data(rpc_data->raw);
+	__grpc_put_raw_data(grpc_data->raw);
 }
 
-int rpclayer_init(void)
+int grpclayer_init(void)
 {
 	spin_lock_init(&lock_id);
 	return 0;
 }
 
-void rpclayer_cleanup(void){
+void grpclayer_cleanup(void){
 }

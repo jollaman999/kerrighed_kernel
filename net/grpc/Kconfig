@@ -1,16 +1,16 @@
 #
-# HCC RPC Configuration
+# HCC GRPC Configuration
 #
 
 config HCC_GRPC
-	bool "HCC RPC Protocol"
+	bool "HCC GRPC Protocol"
 	depends on TIPC
 	---help---
-	  Cluster-aware Remote Procedure Call (RPC) framework.
+	  Cluster-aware Remote Procedure Call (GRPC) framework.
 
 	  This protocol is dedicated to distributed operating system services.
 	  User-space application are not supposed to use this protocol.
 
-	  For more informations about KRPC, see http://www.hcc.org
+	  For more informations about GRPC, see http://www.hcc.org
 
 	  Currently, if you are not planning to run HCC, say N.

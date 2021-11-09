@@ -9,9 +9,9 @@
 #include <net/grpc/grpc.h>
 #include <hcc/ghotplug.h>
 
-#include "rpc_internal.h"
+#include "grpc_internal.h"
 
-static void rpc_remove(hccnodemask_t * vector)
+static void grpc_remove(hccnodemask_t * vector)
 {
 	printk("Have to send all the tx_queue before stopping the node\n");
 };
@@ -24,13 +24,13 @@ static void rpc_remove(hccnodemask_t * vector)
  */
 
 #ifdef CONFIG_HCC
-static int rpc_notification(struct notifier_block *nb, ghotplug_event_t event,
+static int grpc_notification(struct notifier_block *nb, ghotplug_event_t event,
 			    void *data){
 	struct hotplug_node_set *node_set = data;
 	
 	switch(event){
 	case GHOTPLUG_NOTIFY_REMOVE:
-		rpc_remove(&node_set->v);
+		grpc_remove(&node_set->v);
 		break;
 	default:
 		break;
@@ -40,12 +40,12 @@ static int rpc_notification(struct notifier_block *nb, ghotplug_event_t event,
 };
 #endif
 
-int rpc_hotplug_init(void){
+int grpc_hotplug_init(void){
 #ifdef CONFIG_HCC
-	register_ghotplug_notifier(rpc_notification, GHOTPLUG_PRIO_RPC);
+	register_ghotplug_notifier(grpc_notification, GHOTPLUG_PRIO_GRPC);
 #endif
 	return 0;
 };
 
-void rpc_hotplug_cleanup(void){
+void grpc_hotplug_cleanup(void){
 };
