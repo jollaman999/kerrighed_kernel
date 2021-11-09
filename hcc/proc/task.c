@@ -104,7 +104,7 @@ static int task_first_touch(struct gdm_obj *obj_entry,
 /*
  * @author Innogrid HCC
  */
-static int task_import_object(struct rpc_desc *desc,
+static int task_import_object(struct grpc_desc *desc,
 			      struct gdm_set *set,
 			      struct gdm_obj *obj_entry,
 			      objid_t objid,
@@ -193,7 +193,7 @@ static void task_update_object(struct task_gdm_object *obj)
 /*
  * @author Innogrid HCC
  */
-static int task_export_object(struct rpc_desc *desc,
+static int task_export_object(struct grpc_desc *desc,
 			      struct gdm_set *set,
 			      struct gdm_obj *obj_entry,
 			      objid_t objid,

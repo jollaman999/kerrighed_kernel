@@ -1246,7 +1246,7 @@ struct kill_info_msg {
 	pid_t session;
 };
 
-static int handle_kill_proc_info(struct rpc_desc *desc, void *_msg, size_t size)
+static int handle_kill_proc_info(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	struct kill_info_msg msg;
 	struct pid *pid;
@@ -1382,7 +1382,7 @@ out_unlock:
 EXPORT_SYMBOL_GPL(kill_pid_info_as_uid);
 
 #ifdef CONFIG_HCC_PROC
-static int handle_kill_pg_info(struct rpc_desc *desc, void *_msg, size_t size)
+static int handle_kill_pg_info(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	struct kill_info_msg *msg = _msg;
 	const struct cred *old_cred;
@@ -1422,7 +1422,7 @@ err_cancel:
 static int hcc_kill_pg_info(int sig, struct siginfo *info, pid_t pgid)
 {
 	struct kill_info_msg msg;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	hccnodemask_t nodes;
 	hcc_node_t node;
 	int retval = -ESRCH;

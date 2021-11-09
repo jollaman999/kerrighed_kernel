@@ -712,7 +712,7 @@ struct app_stop_msg {
 	long app_id;
 };
 
-static void handle_app_stop(struct rpc_desc *desc, void *_msg, size_t size)
+static void handle_app_stop(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	int r;
 	struct app_stop_msg *msg = _msg;
@@ -778,7 +778,7 @@ out_unlock:
 
 int global_stop(struct app_gdm_object *obj)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	struct app_stop_msg msg;
 	int err_rpc, r;
 
@@ -868,7 +868,7 @@ struct app_continue_msg {
 	int first_run;
 };
 
-static void handle_app_continue(struct rpc_desc *desc, void *_msg, size_t size)
+static void handle_app_continue(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	int r = 0;
 	struct app_continue_msg *msg = _msg;
@@ -890,7 +890,7 @@ err:
 
 static int global_continue(struct app_gdm_object *obj)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	struct app_continue_msg msg;
 	int r = 0;
 
@@ -971,7 +971,7 @@ struct app_kill_msg {
 	int signal;
 };
 
-static void handle_app_kill(struct rpc_desc *desc, void *_msg, size_t size)
+static void handle_app_kill(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	int r;
 	struct app_kill_msg *msg = _msg;
@@ -1002,7 +1002,7 @@ err:
 
 static int global_kill(struct app_gdm_object *obj, int signal)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	struct app_kill_msg msg;
 	int r = 0;
 

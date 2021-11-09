@@ -24,7 +24,7 @@
 #include <hcc/ghost.h>
 #include <hcc/action.h>
 
-struct rpc_desc;
+struct grpc_desc;
 
 /*--------------------------------------------------------------------------*
  *                                                                          *

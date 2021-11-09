@@ -213,7 +213,7 @@ long hcc_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 		    size_t msgsz, int msgflg, struct ipc_namespace *ns,
 		    pid_t tgid)
 {
-	struct rpc_desc * desc;
+	struct grpc_desc * desc;
 	struct gdm_set *master_set;
 	hcc_node_t* master_node;
 	void *buffer;
@@ -286,7 +286,7 @@ exit:
 	return r;
 }
 
-static void handle_do_msg_send(struct rpc_desc *desc, void *_msg, size_t size)
+static void handle_do_msg_send(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	void *mtext;
 	long r;
@@ -337,7 +337,7 @@ long hcc_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 		    size_t msgsz, long msgtyp, int msgflg,
 		    struct ipc_namespace *ns, pid_t tgid)
 {
-	struct rpc_desc * desc;
+	struct grpc_desc * desc;
 	enum rpc_error err;
 	struct gdm_set *master_set;
 	hcc_node_t *master_node;
@@ -423,7 +423,7 @@ err_rpc:
 	goto exit;
 }
 
-static void handle_do_msg_rcv(struct rpc_desc *desc, void *_msg, size_t size)
+static void handle_do_msg_rcv(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	void *mtext;
 	long msgsz, pmtype;

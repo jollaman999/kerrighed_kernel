@@ -39,7 +39,7 @@
 
 static DEFINE_MUTEX(faf_poll_mutex);
 
-static int pack_path(struct rpc_desc *desc, const struct path *path)
+static int pack_path(struct grpc_desc *desc, const struct path *path)
 {
 	char *tmp, *name;
 	struct path phys_root;
@@ -75,7 +75,7 @@ out:
 	return err;
 }
 
-static int pack_root(struct rpc_desc *desc)
+static int pack_root(struct grpc_desc *desc)
 {
 	struct path root;
 	int ret;
@@ -92,7 +92,7 @@ static int pack_root(struct rpc_desc *desc)
 	return ret;
 }
 
-static int pack_root_pwd(struct rpc_desc *desc)
+static int pack_root_pwd(struct grpc_desc *desc)
 {
 	struct path root, pwd;
 	int ret;
@@ -114,7 +114,7 @@ static int pack_root_pwd(struct rpc_desc *desc)
 	return ret;
 }
 
-static int pack_context(struct rpc_desc *desc)
+static int pack_context(struct grpc_desc *desc)
 {
 	int err;
 
@@ -141,7 +141,7 @@ off_t hcc_faf_lseek (struct file * file,
 	faf_client_data_t *data = file->private_data;
 	struct faf_seek_msg msg;
 	off_t r;
-	struct rpc_desc* desc;
+	struct grpc_desc* desc;
 
 	msg.server_fd = data->server_fd;
 	msg.offset = offset;
@@ -176,7 +176,7 @@ long hcc_faf_llseek (struct file *file,
 	faf_client_data_t *data = file->private_data;
 	struct faf_llseek_msg msg;
 	long r;
-	struct rpc_desc* desc;
+	struct grpc_desc* desc;
 
 	msg.server_fd = data->server_fd;
 	msg.offset_high = offset_high;
@@ -212,7 +212,7 @@ ssize_t hcc_faf_read(struct file * file, char *buf, size_t count, loff_t *pos)
 	loff_t fpos;
 	char *kbuff;
 	int err;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 
 	kbuff = kmalloc(PAGE_SIZE, GFP_KERNEL);
 	if (!kbuff)
@@ -302,7 +302,7 @@ ssize_t hcc_faf_write(struct file * file, const char *buf,
 	loff_t fpos;
 	char *kbuff;
 	int err;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 
 	kbuff = kmalloc(PAGE_SIZE, GFP_KERNEL);
 	if (!kbuff)
@@ -387,7 +387,7 @@ ssize_t hcc_faf_readv(struct file *file, const struct iovec __user *vec,
 	struct iovec *iov = iovstack;
 	int iovcnt;
 	size_t total_len;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err;
 
 	ret.ret = rw_copy_check_uvector(READ, vec, vlen,
@@ -451,7 +451,7 @@ ssize_t hcc_faf_writev(struct file *file, const struct iovec __user *vec,
 	struct iovec *iov = iovstack;
 	int iovcnt;
 	size_t total_len;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err;
 
 	ret.ret = rw_copy_check_uvector(WRITE, vec, vlen,
@@ -519,7 +519,7 @@ long hcc_faf_ioctl (struct file *file,
 	faf_client_data_t *data = file->private_data;
 	struct faf_ctl_msg msg;
 	long r;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err;
 
 	msg.server_fd = data->server_fd;
@@ -575,7 +575,7 @@ long hcc_faf_fcntl (struct file *file,
 {
 	faf_client_data_t *data = file->private_data;
 	struct faf_ctl_msg msg;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err;
 	long r;
 
@@ -658,7 +658,7 @@ long hcc_faf_fcntl64 (struct file *file,
 	faf_client_data_t *data = file->private_data;
 	struct faf_ctl_msg msg;
 	long r;
-	struct rpc_desc* desc;
+	struct grpc_desc* desc;
 	int err;
 
 	msg.server_fd = data->server_fd;
@@ -726,7 +726,7 @@ long hcc_faf_fstat (struct file *file,
 	faf_client_data_t *data = file->private_data;
 	struct faf_stat_msg msg;
 	long r;
-	struct rpc_desc* desc;
+	struct grpc_desc* desc;
 
 	msg.server_fd = data->server_fd;
 
@@ -758,7 +758,7 @@ long hcc_faf_fstatfs(struct file *file,
 	struct faf_statfs_msg msg;
 	long r;
 	enum rpc_error err;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 
 	msg.server_fd = data->server_fd;
 
@@ -814,7 +814,7 @@ long hcc_faf_flock (struct file *file,
 {
 	faf_client_data_t *data = file->private_data;
 	struct faf_ctl_msg msg;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	long r;
 	int err;
 
@@ -854,7 +854,7 @@ static char *__hcc_faf_d_path(const struct path *root, const struct file *file,
 {
 	faf_client_data_t *data = file->private_data;
 	struct faf_d_path_msg msg;
-	struct rpc_desc* desc;
+	struct grpc_desc* desc;
 	int len;
 	int err;
 
@@ -984,7 +984,7 @@ long hcc_faf_bind (struct file * file,
 {
 	faf_client_data_t *data = file->private_data;
 	struct faf_bind_msg msg;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err, r;
 
 	msg.server_fd = data->server_fd;
@@ -1032,7 +1032,7 @@ long hcc_faf_connect (struct file * file,
 {
 	faf_client_data_t *data = file->private_data;
 	struct faf_bind_msg msg;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int r, err;
 
 	msg.server_fd = data->server_fd;
@@ -1102,7 +1102,7 @@ long hcc_faf_accept(struct file * file,
 	int sa_len;
 	struct file *newfile;
 	int fd;
-	struct rpc_desc* desc;
+	struct grpc_desc* desc;
 
 	BUG_ON (data->server_id == hcc_node_id);
 
@@ -1202,7 +1202,7 @@ long hcc_faf_getsockname (struct file * file,
 	struct faf_bind_msg msg;
 	struct sockaddr_storage sa;
 	int sa_len;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int r = -EFAULT;
 
 	msg.server_fd = data->server_fd;
@@ -1234,7 +1234,7 @@ long hcc_faf_getpeername (struct file * file,
 	struct faf_bind_msg msg;
 	struct sockaddr_storage sa;
 	int sa_len;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int r;
 
 	msg.server_fd = data->server_fd;
@@ -1281,7 +1281,7 @@ long hcc_faf_setsockopt (struct file * file,
 {
 	faf_client_data_t *data = file->private_data;
 	struct faf_setsockopt_msg msg;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int r, err;
 
 	msg.server_fd = data->server_fd;
@@ -1333,7 +1333,7 @@ long hcc_faf_getsockopt (struct file * file,
 	faf_client_data_t *data = file->private_data;
 	struct faf_getsockopt_msg msg;
 	int r, err;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 
 	msg.server_fd = data->server_fd;
 
@@ -1382,7 +1382,7 @@ ssize_t hcc_faf_sendmsg(struct file *file, struct msghdr *msghdr,
 	struct faf_sendmsg_msg msg;
 	ssize_t r;
 	int err;
-	struct rpc_desc* desc;
+	struct grpc_desc* desc;
 
 	msg.server_fd = data->server_fd;
 	msg.total_len = total_len;
@@ -1426,7 +1426,7 @@ ssize_t hcc_faf_recvmsg(struct file *file, struct msghdr *msghdr,
 	struct faf_sendmsg_msg msg;
 	ssize_t r;
 	int err;
-	struct rpc_desc* desc;
+	struct grpc_desc* desc;
 
 	msg.server_fd = data->server_fd;
 	msg.total_len = total_len;
@@ -1482,7 +1482,7 @@ int hcc_faf_poll_wait(struct file *file, int wait)
 {
 	faf_client_data_t *data = file->private_data;
 	struct faf_poll_wait_msg msg;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	unsigned int revents;
 	int err = -ENOMEM, res = 0;
 	long old_state = current->state;
@@ -1568,7 +1568,7 @@ unsigned int faf_poll (struct file *file,
 	return revents;
 }
 
-static void handle_faf_poll_notify(struct rpc_desc *desc,
+static void handle_faf_poll_notify(struct grpc_desc *desc,
 				   void *_msg,
 				   size_t size)
 {

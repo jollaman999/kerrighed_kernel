@@ -362,7 +362,7 @@ struct checkpoint_request_msg {
 	int flags;
 };
 
-static void handle_do_chkpt(struct rpc_desc *desc, void *_msg, size_t size)
+static void handle_do_chkpt(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	struct checkpoint_request_msg *msg = _msg;
 	struct app_struct *app = find_local_app(msg->app_id);
@@ -406,7 +406,7 @@ error:
 
 static int global_do_chkpt(struct app_gdm_object *obj, int flags)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	struct checkpoint_request_msg msg;
 	int r, err_rpc;
 
@@ -573,7 +573,7 @@ exit_gdmput:
 	return r;
 }
 
-static void handle_cr_exclude(struct rpc_desc *desc, void *_msg, size_t size)
+static void handle_cr_exclude(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	struct app_struct *app;
 	struct cr_mm_region mm_region;
@@ -605,7 +605,7 @@ int app_cr_exclude(struct cr_mm_region *mm_regions)
 {
 	long app_id;
 	struct app_gdm_object *obj;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	struct cr_mm_region *element;
 	int r;
 

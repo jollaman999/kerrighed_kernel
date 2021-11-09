@@ -110,7 +110,7 @@ static inline long __get_appid_from_local_pid(pid_t pid)
 
 long get_appid_from_pid(pid_t pid)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	hcc_node_t n = HCC_NODE_ID_NONE;
 	struct getappid_request_msg msg;
 	long app_id;
@@ -161,7 +161,7 @@ err:
 }
 
 static
-void handle_get_appid_from_pid(struct rpc_desc *desc, void *_msg, size_t size)
+void handle_get_appid_from_pid(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	struct getappid_request_msg *msg = _msg;
 	long app_id;

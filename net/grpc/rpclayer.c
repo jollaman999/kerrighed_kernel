@@ -22,10 +22,10 @@
 
 #include "rpc_internal.h"
 
-/* In __rpc_send, unsure atomicity of rpc_link_seq_id and rpc_desc_set_id */
+/* In __rpc_send, unsure atomicity of rpc_link_seq_id and grpc_desc_set_id */
 static spinlock_t lock_id;
 
-hcc_node_t rpc_desc_get_client(struct rpc_desc *desc){
+hcc_node_t grpc_desc_get_client(struct grpc_desc *desc){
 	BUG_ON(!desc);
 	return desc->client;
 }
@@ -47,7 +47,7 @@ void rpc_new_desc_id_unlock(void)
 }
 
 inline
-int __rpc_send(struct rpc_desc* desc,
+int __rpc_send(struct grpc_desc* desc,
 		      unsigned long seq_id, int __flags,
 		      const void* data, size_t size,
 		      int rpc_flags)
@@ -60,7 +60,7 @@ int __rpc_send(struct rpc_desc* desc,
 
 			rpc_new_desc_id_lock();
 
-			rpc_desc_set_id(desc->desc_id);
+			grpc_desc_set_id(desc->desc_id);
 
 			if (__hashtable_add(desc_clt, desc->desc_id, desc)) {
 				rpc_new_desc_id_unlock();
@@ -110,13 +110,13 @@ int __rpc_send(struct rpc_desc* desc,
 	return err;
 }
 
-struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
+struct grpc_desc* rpc_begin_m(enum rpcid rpcid,
 			     hccnodemask_t* nodes)
 {
-	struct rpc_desc* desc;
+	struct grpc_desc* desc;
 	int i;
 
-	desc = rpc_desc_alloc();
+	desc = grpc_desc_alloc();
 	if(!desc)
 		goto oom;
 
@@ -124,12 +124,12 @@ struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
 	desc->type = RPC_RQ_CLT;
 	desc->client = hcc_node_id;
 	
-	desc->desc_send = rpc_desc_send_alloc();
+	desc->desc_send = grpc_desc_send_alloc();
 	if(!desc->desc_send)
 		goto oom_free_desc;
 
 	for_each_hccnode_mask(i, desc->nodes){
-		desc->desc_recv[i] = rpc_desc_recv_alloc();
+		desc->desc_recv[i] = grpc_desc_recv_alloc();
 		if(!desc->desc_recv[i])
 			goto oom_free_desc_recv;
 	}
@@ -148,19 +148,19 @@ struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
 oom_free_desc_recv:
 	for_each_hccnode_mask(i, desc->nodes)
 		if (desc->desc_recv[i])
-			kmem_cache_free(rpc_desc_recv_cachep,
+			kmem_cache_free(grpc_desc_recv_cachep,
 					desc->desc_recv[i]);
-	kmem_cache_free(rpc_desc_send_cachep, desc->desc_send);
+	kmem_cache_free(grpc_desc_send_cachep, desc->desc_send);
 oom_free_desc:
-	rpc_desc_put(desc);
+	grpc_desc_put(desc);
 oom:
 	return NULL;
 }
 
 inline
-int __rpc_end_pack(struct rpc_desc* desc)
+int __rpc_end_pack(struct grpc_desc* desc)
 {
-	struct rpc_desc_elem *descelem, *safe;
+	struct grpc_desc_elem *descelem, *safe;
 	int err = 0;
 
 	list_for_each_entry_safe(descelem, safe,
@@ -182,13 +182,13 @@ int __rpc_end_pack(struct rpc_desc* desc)
 			}
 		}
 		list_del(&descelem->list_desc_elem);
-		kmem_cache_free(rpc_desc_elem_cachep, descelem);
+		kmem_cache_free(grpc_desc_elem_cachep, descelem);
 	}
 	return err;
 }
 
 inline
-int __rpc_end_unpack(struct rpc_desc_recv* desc_recv)
+int __rpc_end_unpack(struct grpc_desc_recv* desc_recv)
 {
 	while (!list_empty(&desc_recv->list_provided_head)) {
 		set_current_state(TASK_INTERRUPTIBLE);
@@ -199,21 +199,21 @@ int __rpc_end_unpack(struct rpc_desc_recv* desc_recv)
 
 static void __rpc_end_unpack_clean_queue(struct list_head *elem_head)
 {
-	struct rpc_desc_elem *iter, *safe;
+	struct grpc_desc_elem *iter, *safe;
 
 	list_for_each_entry_safe(iter, safe, elem_head, list_desc_elem) {
 		list_del(&iter->list_desc_elem);
-		rpc_desc_elem_free(iter);
+		grpc_desc_elem_free(iter);
 	}
 }
 
 inline
-int __rpc_end_unpack_clean(struct rpc_desc* desc)
+int __rpc_end_unpack_clean(struct grpc_desc* desc)
 {
 	int i;
 
 	for_each_hccnode_mask(i, desc->nodes){
-		struct rpc_desc_recv* desc_recv = desc->desc_recv[i];
+		struct grpc_desc_recv* desc_recv = desc->desc_recv[i];
 
 		desc->desc_recv[i] = NULL;
 
@@ -222,15 +222,15 @@ int __rpc_end_unpack_clean(struct rpc_desc* desc)
 		if (unlikely(!list_empty(&desc_recv->list_signal_head)))
 			__rpc_end_unpack_clean_queue(&desc_recv->list_signal_head);
 
-		kmem_cache_free(rpc_desc_recv_cachep, desc_recv);
+		kmem_cache_free(grpc_desc_recv_cachep, desc_recv);
 	}
 	
 	return 0;
 }
 
-int rpc_end(struct rpc_desc* desc, int flags)
+int rpc_end(struct grpc_desc* desc, int flags)
 {
-	struct rpc_desc_send *rpc_desc_send;
+	struct grpc_desc_send *grpc_desc_send;
 	struct hashtable_t* desc_ht;
 	int err;
 
@@ -273,22 +273,22 @@ int rpc_end(struct rpc_desc* desc, int flags)
 
 	__rpc_emergency_send_buf_free(desc);
 
-	rpc_desc_send = desc->desc_send;
+	grpc_desc_send = desc->desc_send;
 	desc->desc_send = NULL;
-	kmem_cache_free(rpc_desc_send_cachep, rpc_desc_send);
+	kmem_cache_free(grpc_desc_send_cachep, grpc_desc_send);
 
 	__rpc_end_unpack_clean(desc);
 
 	if(desc->__synchro)
 		__rpc_synchro_put(desc->__synchro);
 
-	rpc_desc_put(desc);
+	grpc_desc_put(desc);
 
 	lockdep_on();
 	return err;
 }
 
-int rpc_cancel_pack(struct rpc_desc* desc)
+int rpc_cancel_pack(struct grpc_desc* desc)
 {
 	int last_pack;
 	unsigned long seq_id;
@@ -301,10 +301,10 @@ int rpc_cancel_pack(struct rpc_desc* desc)
 	if (last_pack) {
 		seq_id = atomic_inc_return(&desc->desc_send->seq_id);
 	} else {
-		struct rpc_desc_elem *next;
+		struct grpc_desc_elem *next;
 
 		next = list_entry(desc->desc_send->list_desc_head.next,
-				  struct rpc_desc_elem, list_desc_elem);
+				  struct grpc_desc_elem, list_desc_elem);
 		seq_id = next->seq_id;
 	}
 
@@ -328,15 +328,15 @@ out:
 	return err;
 }
 
-void rpc_cancel_unpack_from(struct rpc_desc *desc, hcc_node_t node)
+void rpc_cancel_unpack_from(struct grpc_desc *desc, hcc_node_t node)
 {
-	struct rpc_desc_recv *desc_recv = desc->desc_recv[node];
+	struct grpc_desc_recv *desc_recv = desc->desc_recv[node];
 
 	desc_recv->flags |= RPC_FLAGS_CLOSED;
 	/* TODO: send a notification to the sender so that it stops sending */
 }
 
-void rpc_cancel_unpack(struct rpc_desc* desc)
+void rpc_cancel_unpack(struct grpc_desc* desc)
 {
 	hcc_node_t node;
 
@@ -344,7 +344,7 @@ void rpc_cancel_unpack(struct rpc_desc* desc)
 		rpc_cancel_unpack_from(desc, node);
 }
 
-int rpc_cancel(struct rpc_desc* desc){
+int rpc_cancel(struct grpc_desc* desc){
 	int err;
 
 	err = rpc_cancel_pack(desc);
@@ -353,11 +353,11 @@ int rpc_cancel(struct rpc_desc* desc){
 	return err;
 }
 
-int rpc_forward(struct rpc_desc* desc, hcc_node_t node){
+int rpc_forward(struct grpc_desc* desc, hcc_node_t node){
 	return 0;
 }
 
-int grpc_pack(struct rpc_desc* desc, int flags, const void* data, size_t size)
+int grpc_pack(struct grpc_desc* desc, int flags, const void* data, size_t size)
 {
 	int err = -EPIPE;
 
@@ -365,10 +365,10 @@ int grpc_pack(struct rpc_desc* desc, int flags, const void* data, size_t size)
 		goto out;
 
 	if (flags & RPC_FLAGS_LATER) {
-		struct rpc_desc_elem *descelem;
+		struct grpc_desc_elem *descelem;
 
 		err = -ENOMEM;
-		descelem = kmem_cache_alloc(rpc_desc_elem_cachep, GFP_ATOMIC);
+		descelem = kmem_cache_alloc(grpc_desc_elem_cachep, GFP_ATOMIC);
 		if (!descelem)
 			goto out;
 
@@ -392,9 +392,9 @@ out:
 	return err;
 }
 
-int rpc_wait_pack(struct rpc_desc* desc, int seq_id)
+int rpc_wait_pack(struct grpc_desc* desc, int seq_id)
 {
-	struct rpc_desc_elem *descelem, *safe;
+	struct grpc_desc_elem *descelem, *safe;
 	int err;
 	int last_seq_id = 0;
 
@@ -416,18 +416,18 @@ int rpc_wait_pack(struct rpc_desc* desc, int seq_id)
 			}
 			last_seq_id = descelem->seq_id;
 			list_del(&descelem->list_desc_elem);
-			kmem_cache_free(rpc_desc_elem_cachep, descelem);
+			kmem_cache_free(grpc_desc_elem_cachep, descelem);
 		}
 	}
 
 	return seq_id;
 }
 
-static void __rpc_signal_dequeue_pending(struct rpc_desc *desc,
-					 struct rpc_desc_recv *desc_recv,
+static void __rpc_signal_dequeue_pending(struct grpc_desc *desc,
+					 struct grpc_desc_recv *desc_recv,
 					 struct list_head *head)
 {
-	struct rpc_desc_elem *descelem, *tmp_elem;
+	struct grpc_desc_elem *descelem, *tmp_elem;
 	unsigned long seq_id;
 
 	seq_id = desc_recv->iter ? desc_recv->iter->seq_id : 0;
@@ -440,10 +440,10 @@ static void __rpc_signal_dequeue_pending(struct rpc_desc *desc,
 	}
 }
 
-static void __rpc_signal_deliver_pending(struct rpc_desc *desc,
+static void __rpc_signal_deliver_pending(struct grpc_desc *desc,
 					 struct list_head *head)
 {
-	struct rpc_desc_elem *descelem, *tmp_elem;
+	struct grpc_desc_elem *descelem, *tmp_elem;
 
 	list_for_each_entry_safe(descelem, tmp_elem, head, list_desc_elem) {
 		list_del(&descelem->list_desc_elem);
@@ -451,8 +451,8 @@ static void __rpc_signal_deliver_pending(struct rpc_desc *desc,
 	}
 }
 
-void rpc_signal_deliver_pending(struct rpc_desc *desc,
-				struct rpc_desc_recv *desc_recv)
+void rpc_signal_deliver_pending(struct grpc_desc *desc,
+				struct grpc_desc_recv *desc_recv)
 {
 	LIST_HEAD(signals_head);
 
@@ -466,19 +466,19 @@ void rpc_signal_deliver_pending(struct rpc_desc *desc,
 
 /* Dequeue sigacks up to ones sent after the next data to unpack */
 static
-struct rpc_desc_elem *
-__rpc_signal_dequeue_sigack(struct rpc_desc *desc,
-			    struct rpc_desc_recv *desc_recv)
+struct grpc_desc_elem *
+__rpc_signal_dequeue_sigack(struct grpc_desc *desc,
+			    struct grpc_desc_recv *desc_recv)
 {
-	struct rpc_desc_elem *ret = NULL;
+	struct grpc_desc_elem *ret = NULL;
 
 	if (unlikely(!list_empty(&desc_recv->list_signal_head))) {
-		struct rpc_desc_elem *sig;
+		struct grpc_desc_elem *sig;
 		unsigned long seq_id;
 
 		seq_id = desc_recv->iter ? desc_recv->iter->seq_id : 0;
 		sig = list_entry(desc_recv->list_signal_head.next,
-				 struct rpc_desc_elem, list_desc_elem);
+				 struct grpc_desc_elem, list_desc_elem);
 		if ((sig->flags & __RPC_HEADER_FLAGS_SIGACK)
 		    && sig->seq_id <= seq_id + 1) {
 			list_del(&sig->list_desc_elem);
@@ -490,12 +490,12 @@ __rpc_signal_dequeue_sigack(struct rpc_desc *desc,
 }
 
 inline
-int __grpc_unpack_from_node(struct rpc_desc* desc, hcc_node_t node,
+int __grpc_unpack_from_node(struct grpc_desc* desc, hcc_node_t node,
 			   int flags, void* data, size_t size)
 {
 
-	struct rpc_desc_elem *descelem;
-	struct rpc_desc_recv* desc_recv = desc->desc_recv[node];
+	struct grpc_desc_elem *descelem;
+	struct grpc_desc_recv* desc_recv = desc->desc_recv[node];
 	LIST_HEAD(signals_head);
 	LIST_HEAD(sigacks_head);
 	atomic_t seq_id;
@@ -521,7 +521,7 @@ int __grpc_unpack_from_node(struct rpc_desc* desc, hcc_node_t node,
 				break;
 			if (flags & RPC_FLAGS_SIGACK) {
 				spin_unlock_bh(&desc->desc_lock);
-				rpc_desc_elem_free(descelem);
+				grpc_desc_elem_free(descelem);
 				desc_recv->flags |= RPC_FLAGS_REPOST;
 				return RPC_ESIGACK;
 			}
@@ -538,7 +538,7 @@ int __grpc_unpack_from_node(struct rpc_desc* desc, hcc_node_t node,
 		} else {
 
 			descelem = container_of(desc_recv->list_desc_head.next,
-						struct rpc_desc_elem,
+						struct grpc_desc_elem,
 						list_desc_elem);
 
 			if (descelem->seq_id != 1) {
@@ -547,7 +547,7 @@ int __grpc_unpack_from_node(struct rpc_desc* desc, hcc_node_t node,
 			desc_recv->iter = descelem;
 		}
 	} else {
-		struct rpc_desc_elem *next_desc_recv;
+		struct grpc_desc_elem *next_desc_recv;
 
 		if (list_is_last(&desc_recv->iter->list_desc_elem,
 				 &desc_recv->list_desc_head)) {
@@ -555,7 +555,7 @@ int __grpc_unpack_from_node(struct rpc_desc* desc, hcc_node_t node,
 		}
 
 		next_desc_recv = container_of(desc_recv->iter->list_desc_elem.next,
-					      struct rpc_desc_elem,
+					      struct grpc_desc_elem,
 					      list_desc_elem);
 
 		if (desc_recv->iter->seq_id+1 != next_desc_recv->seq_id) {
@@ -604,9 +604,9 @@ int __grpc_unpack_from_node(struct rpc_desc* desc, hcc_node_t node,
 
  __restart:
 	if (flags&RPC_FLAGS_NOBLOCK) {
-		struct rpc_desc_elem *descelem;
+		struct grpc_desc_elem *descelem;
 
-		descelem = kmem_cache_alloc(rpc_desc_elem_cachep, GFP_ATOMIC);
+		descelem = kmem_cache_alloc(grpc_desc_elem_cachep, GFP_ATOMIC);
 		if (!descelem) {
 			printk("OOM in __grpc_unpack_from_node\n");
 			BUG();
@@ -643,7 +643,7 @@ int __grpc_unpack_from_node(struct rpc_desc* desc, hcc_node_t node,
 }
 
 enum rpc_error
-grpc_unpack(struct rpc_desc* desc, int flags, void* data, size_t size){
+grpc_unpack(struct grpc_desc* desc, int flags, void* data, size_t size){
 	switch(desc->type){
 	case RPC_RQ_CLT:{
 		hcc_node_t node;
@@ -670,7 +670,7 @@ grpc_unpack(struct rpc_desc* desc, int flags, void* data, size_t size){
 }
 
 enum rpc_error
-grpc_unpack_from(struct rpc_desc* desc, hcc_node_t node,
+grpc_unpack_from(struct grpc_desc* desc, hcc_node_t node,
 		int flags, void* data, size_t size)
 {
 	printk("grpc_unpack_from start hcc_node_t %d \n",node);
@@ -691,7 +691,7 @@ grpc_unpack_from(struct rpc_desc* desc, hcc_node_t node,
 	return 0;
 }
 
-hcc_node_t rpc_wait_return(struct rpc_desc* desc, int* value)
+hcc_node_t rpc_wait_return(struct grpc_desc* desc, int* value)
 {
 	hcc_node_t node;
 
@@ -726,7 +726,7 @@ hcc_node_t rpc_wait_return(struct rpc_desc* desc, int* value)
 	goto __restart;
 }
 
-int rpc_wait_return_from(struct rpc_desc* desc, hcc_node_t node)
+int rpc_wait_return_from(struct grpc_desc* desc, hcc_node_t node)
 {
 
 	if(desc->type != RPC_RQ_CLT)
@@ -754,7 +754,7 @@ int rpc_wait_return_from(struct rpc_desc* desc, hcc_node_t node)
 	goto __restart;
 }
 
-int rpc_wait_all(struct rpc_desc *desc)
+int rpc_wait_all(struct grpc_desc *desc)
 {
 	int i;
 	
@@ -783,7 +783,7 @@ int rpc_wait_all(struct rpc_desc *desc)
 	return 0;
 }
 
-int rpc_signal(struct rpc_desc* desc, int sigid)
+int rpc_signal(struct grpc_desc* desc, int sigid)
 {
 	if (desc->desc_send->flags & RPC_FLAGS_CLOSED)
 		return -EPIPE;
@@ -793,7 +793,7 @@ int rpc_signal(struct rpc_desc* desc, int sigid)
 			  0);
 }
 
-int __rpc_signalack(struct rpc_desc* desc)
+int __rpc_signalack(struct grpc_desc* desc)
 {
 	int v;
 

@@ -107,7 +107,7 @@ retry:
 /************************** Low mem notify management ************************/
 
 
-void handle_notify_low_mem (struct rpc_desc* desc,
+void handle_notify_low_mem (struct grpc_desc* desc,
 			    void *msg,
 			    size_t size)
 {

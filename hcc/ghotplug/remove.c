@@ -70,7 +70,7 @@ void do_other_node_remove(struct ghotplug_node_set *node_set)
 	rpc_async_m(NODE_REMOVE_ACK, &node_set->v, NULL, 0);				
 }
 
-static void handle_node_remove(struct rpc_desc *desc, void *data, size_t size)
+static void handle_node_remove(struct grpc_desc *desc, void *data, size_t size)
 {
 	struct ghotplug_node_set *node_set;
 
@@ -86,13 +86,13 @@ static void handle_node_remove(struct rpc_desc *desc, void *data, size_t size)
 }
 
 /* we receive the ack from cluster about our remove operation */
-static void handle_node_remove_ack(struct rpc_desc *desc, void *data, size_t size)
+static void handle_node_remove_ack(struct grpc_desc *desc, void *data, size_t size)
 {
 	printk("Need to take care that node %d ack the remove (if needed)\n", desc->client);
 }
 
 /* cluster receive the confirmation about the remove operation */
-static int handle_node_remove_confirm(struct rpc_desc *desc, void *data, size_t size)
+static int handle_node_remove_confirm(struct grpc_desc *desc, void *data, size_t size)
 {
 	if(desc->client==hcc_node_id)
 		return 0;
@@ -131,7 +131,7 @@ inline void __fwd_remove_cb(struct ghotplug_node_set *node_set)
 	}
 }
 
-static void handle_node_fwd_remove(struct rpc_desc *desc, void *data, size_t size)
+static void handle_node_fwd_remove(struct grpc_desc *desc, void *data, size_t size)
 {
 	__fwd_remove_cb(data);
 }
@@ -164,7 +164,7 @@ static int nodes_remove(void __user *arg)
 	return 0;
 }
 
-static void handle_node_poweroff(struct rpc_desc *desc)
+static void handle_node_poweroff(struct grpc_desc *desc)
 {
 	emergency_sync();
 	emergency_remount();

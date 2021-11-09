@@ -28,7 +28,7 @@ int __nodes_add(struct ghotplug_context *ctx)
 	return 0;
 }
 
-static void handle_node_add(struct rpc_desc *rpc_desc, void *data, size_t size)
+static void handle_node_add(struct grpc_desc *grpc_desc, void *data, size_t size)
 {
 	struct ghotplug_context *ctx;
 	struct hcc_namespace *ns = find_get_hcc_ns();

@@ -271,7 +271,7 @@ struct ipcsem_wakeup_msg {
 	int error;
 };
 
-void handle_ipcsem_wakeup_process(struct rpc_desc *desc, void *_msg,
+void handle_ipcsem_wakeup_process(struct grpc_desc *desc, void *_msg,
 				  size_t size)
 {
 	struct ipcsem_wakeup_msg *msg = _msg;
@@ -339,7 +339,7 @@ out_unlock:
 void hcc_ipc_sem_wakeup_process(struct sem_queue *q, int error)
 {
 	struct ipcsem_wakeup_msg msg;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 
 	msg.requester = hcc_node_id;
 	msg.sem_id = q->semid;

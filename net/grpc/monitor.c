@@ -19,14 +19,14 @@ static struct timer_list rpc_timer;
 struct work_struct rpc_work;
 struct rpc_service pingpong_service;
 
-static void rpc_pingpong_handler (struct rpc_desc *rpc_desc,
+static void rpc_pingpong_handler (struct grpc_desc *grpc_desc,
 				  void *data,
 				  size_t size){
 	unsigned long l = *(unsigned long*)data;
 
 	l++;
 	
-	grpc_pack(rpc_desc, 0, &l, sizeof(l));
+	grpc_pack(grpc_desc, 0, &l, sizeof(l));
 };
 
 static void rpc_worker(struct work_struct *data)

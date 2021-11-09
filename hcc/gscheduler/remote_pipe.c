@@ -19,7 +19,7 @@
 #include <net/grpc/grpc.h>
 #include <net/grpc/grpcid.h>
 
-static void handle_pipe_get_remote_value(struct rpc_desc *desc)
+static void handle_pipe_get_remote_value(struct grpc_desc *desc)
 {
 	struct gscheduler_pipe *pipe;
 	struct gscheduler_source *source;
@@ -139,7 +139,7 @@ static int start_pipe_get_remote_value(
 	const void *in_value_p, unsigned int in_nr)
 {
 	struct remote_pipe_desc *show_desc = &sink->remote_pipe;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	size_t in_size = sink->type->get_value_types.in_type_size;
 	int err;
 

@@ -157,7 +157,7 @@ static int signal_struct_first_touch(struct gdm_obj *obj_entry,
  * to dest is allowed in the import time.
  * @author Innogrid HCC
  */
-static int signal_struct_import_object(struct rpc_desc *desc,
+static int signal_struct_import_object(struct grpc_desc *desc,
 				       struct gdm_set *set,
 				       struct gdm_obj *obj_entry,
 				       objid_t objid,
@@ -260,7 +260,7 @@ static int signal_struct_import_object(struct rpc_desc *desc,
 /*
  * @author Innogrid HCC
  */
-static int signal_struct_export_object(struct rpc_desc *desc,
+static int signal_struct_export_object(struct grpc_desc *desc,
 				       struct gdm_set *set,
 				       struct gdm_obj *obj_entry,
 				       objid_t objid,

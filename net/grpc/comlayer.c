@@ -491,7 +491,7 @@ void tipc_reachable_node_worker(struct work_struct *work){
 
 #define MAX_EMERGENCY_SEND 2
 
-int __rpc_emergency_send_buf_alloc(struct rpc_desc *desc, size_t size)
+int __rpc_emergency_send_buf_alloc(struct grpc_desc *desc, size_t size)
 {
 	struct rpc_tx_elem **elem;
 	int nr_dest;
@@ -521,7 +521,7 @@ oom:
 	goto out;
 }
 
-void __rpc_emergency_send_buf_free(struct rpc_desc *desc)
+void __rpc_emergency_send_buf_free(struct grpc_desc *desc)
 {
 	struct rpc_tx_elem **elem = desc->desc_send->emergency_send_buf;
 	int i;
@@ -535,7 +535,7 @@ void __rpc_emergency_send_buf_free(struct rpc_desc *desc)
 	kfree(elem);
 }
 
-static struct rpc_tx_elem *next_emergency_send_buf(struct rpc_desc *desc)
+static struct rpc_tx_elem *next_emergency_send_buf(struct grpc_desc *desc)
 {
 	struct rpc_tx_elem **elems = desc->desc_send->emergency_send_buf;
 	struct rpc_tx_elem *buf = NULL;
@@ -550,7 +550,7 @@ static struct rpc_tx_elem *next_emergency_send_buf(struct rpc_desc *desc)
 	return buf;
 }
 
-int __rpc_send_ll(struct rpc_desc* desc,
+int __rpc_send_ll(struct grpc_desc* desc,
 			 hccnodemask_t *nodes,
 			 unsigned long seq_id,
 			 int __flags,
@@ -647,10 +647,10 @@ int __rpc_send_ll(struct rpc_desc* desc,
 }
 
 inline
-void insert_in_seqid_order(struct rpc_desc_elem* desc_elem,
-			   struct rpc_desc_recv* desc_recv)
+void insert_in_seqid_order(struct grpc_desc_elem* desc_elem,
+			   struct grpc_desc_recv* desc_recv)
 {
-	struct rpc_desc_elem *iter;
+	struct grpc_desc_elem *iter;
 	struct list_head *at;
 
 	if (unlikely(desc_elem->flags & __RPC_HEADER_FLAGS_SIGNAL)) {
@@ -690,7 +690,7 @@ void insert_in_seqid_order(struct rpc_desc_elem* desc_elem,
  */
 static
 inline
-int do_action(struct rpc_desc *desc, struct __rpc_header *h)
+int do_action(struct grpc_desc *desc, struct __rpc_header *h)
 {
 	switch (desc->state) {
 	case RPC_STATE_NEW:
@@ -714,21 +714,21 @@ int do_action(struct rpc_desc *desc, struct __rpc_header *h)
 	return 0;
 }
 
-void rpc_desc_elem_free(struct rpc_desc_elem *elem)
+void grpc_desc_elem_free(struct grpc_desc_elem *elem)
 {
 	kfree_skb(elem->raw);
-	kmem_cache_free(rpc_desc_elem_cachep, elem);
+	kmem_cache_free(grpc_desc_elem_cachep, elem);
 }
 
-void rpc_do_signal(struct rpc_desc *desc,
-		   struct rpc_desc_elem *signal_elem)
+void rpc_do_signal(struct grpc_desc *desc,
+		   struct grpc_desc_elem *signal_elem)
 {
 	if (desc->thread)
 		send_sig(*(int*)signal_elem->data, desc->thread, 0);
 
 	__rpc_signalack(desc);
 
-	rpc_desc_elem_free(signal_elem);
+	grpc_desc_elem_free(signal_elem);
 }
 
 /*
@@ -736,9 +736,9 @@ void rpc_do_signal(struct rpc_desc *desc,
  * We found the right descriptor, is-there a waiting buffer ?
  */
 inline
-int handle_valid_desc(struct rpc_desc *desc,
-		      struct rpc_desc_recv *desc_recv,
-		      struct rpc_desc_elem* descelem,
+int handle_valid_desc(struct grpc_desc *desc,
+		      struct grpc_desc_recv *desc_recv,
+		      struct grpc_desc_elem* descelem,
 		      struct __rpc_header *h,
 		      struct sk_buff *buf){
 	int err;
@@ -753,10 +753,10 @@ int handle_valid_desc(struct rpc_desc *desc,
 		// there are some waiting buffer. is-there one for us ?
 		if (unlikely(h->flags & __RPC_HEADER_FLAGS_SIGNAL)
 		    && (!(h->flags & __RPC_HEADER_FLAGS_SIGACK))) {
-			struct rpc_desc_elem *provided;
+			struct grpc_desc_elem *provided;
 
 			provided = list_entry(desc_recv->list_provided_head.prev,
-					      struct rpc_desc_elem, list_desc_elem);
+					      struct grpc_desc_elem, list_desc_elem);
 			
 			if (descelem->seq_id <= provided->seq_id) {
 
@@ -822,19 +822,19 @@ int handle_valid_desc(struct rpc_desc *desc,
 	return err;
 }
 
-static struct rpc_desc *server_rpc_desc_setup(const struct __rpc_header *h)
+static struct grpc_desc *server_grpc_desc_setup(const struct __rpc_header *h)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 
-	desc = rpc_desc_alloc();
+	desc = grpc_desc_alloc();
 	if (!desc)
 		goto out;
 
-	desc->desc_send = rpc_desc_send_alloc();
+	desc->desc_send = grpc_desc_send_alloc();
 	if (!desc->desc_send)
 		goto err_desc_send;
 
-	desc->desc_recv[0] = rpc_desc_recv_alloc();
+	desc->desc_recv[0] = grpc_desc_recv_alloc();
 	if (!desc->desc_recv[0])
 		goto err_desc_recv;
 
@@ -854,7 +854,7 @@ static struct rpc_desc *server_rpc_desc_setup(const struct __rpc_header *h)
 
 	desc->state = RPC_STATE_NEW;
 
-	rpc_desc_get(desc);
+	grpc_desc_get(desc);
 
 	BUG_ON(h->desc_id != desc->desc_id);
 	if (__hashtable_add(desc_srv[h->client], h->desc_id, desc))
@@ -864,14 +864,14 @@ out:
 	return desc;
 
 err_hashtable:
-	rpc_desc_put(desc);
+	grpc_desc_put(desc);
 	__rpc_emergency_send_buf_free(desc);
 err_emergency_send:
-	kmem_cache_free(rpc_desc_recv_cachep, desc->desc_recv[0]);
+	kmem_cache_free(grpc_desc_recv_cachep, desc->desc_recv[0]);
 err_desc_recv:
-	kmem_cache_free(rpc_desc_send_cachep, desc->desc_send);
+	kmem_cache_free(grpc_desc_send_cachep, desc->desc_send);
 err_desc_send:
-	rpc_desc_put(desc);
+	grpc_desc_put(desc);
 	return NULL;
 }
 
@@ -886,9 +886,9 @@ static int tipc_handler_ordered(struct sk_buff *buf,
 {
 	unsigned char const* iter;
 	struct __rpc_header *h;
-	struct rpc_desc *desc;
-	struct rpc_desc_elem* descelem;
-	struct rpc_desc_recv* desc_recv;
+	struct grpc_desc *desc;
+	struct grpc_desc_elem* descelem;
+	struct grpc_desc_recv* desc_recv;
 	struct hashtable_t* desc_ht;
 	int err = 0;
 
@@ -907,21 +907,21 @@ static int tipc_handler_ordered(struct sk_buff *buf,
 
 	if (desc) {
 		BUG_ON(desc->desc_id != h->desc_id);
-		rpc_desc_get(desc);
+		grpc_desc_get(desc);
 
 	} else {
 		
-		spin_lock(&rpc_desc_done_lock[h->client]);
-		if (unlikely(h->desc_id <= rpc_desc_done_id[h->client])) {
+		spin_lock(&grpc_desc_done_lock[h->client]);
+		if (unlikely(h->desc_id <= grpc_desc_done_id[h->client])) {
 			
-			spin_unlock(&rpc_desc_done_lock[h->client]);
+			spin_unlock(&grpc_desc_done_lock[h->client]);
 			hashtable_unlock(desc_ht);
 			goto out;
 
 		}
 
-		rpc_desc_done_id[h->client] = h->desc_id;
-		spin_unlock(&rpc_desc_done_lock[h->client]);
+		grpc_desc_done_id[h->client] = h->desc_id;
+		spin_unlock(&grpc_desc_done_lock[h->client]);
 
 		if(h->flags & __RPC_HEADER_FLAGS_SRV_REPLY){
 
@@ -932,7 +932,7 @@ static int tipc_handler_ordered(struct sk_buff *buf,
 
 		}else{
 
-			desc = server_rpc_desc_setup(h);
+			desc = server_grpc_desc_setup(h);
 			if (!desc) {
 				/*
 				 * Drop the packet, but not silently.
@@ -990,11 +990,11 @@ static int tipc_handler_ordered(struct sk_buff *buf,
 
 	hashtable_unlock(desc_ht);
 
-	descelem = kmem_cache_alloc(rpc_desc_elem_cachep, GFP_ATOMIC);
+	descelem = kmem_cache_alloc(grpc_desc_elem_cachep, GFP_ATOMIC);
 	if (!descelem) {
 		/*
-		 * Same OOM handling as for new rpc_desc above, except that we
-		 * keep the rpc_desc, even if we just created it, because it is
+		 * Same OOM handling as for new grpc_desc above, except that we
+		 * keep the grpc_desc, even if we just created it, because it is
 		 * now visible in the hashtable and it would just add
 		 * complexity to try to free it.
 		 */
@@ -1016,7 +1016,7 @@ static int tipc_handler_ordered(struct sk_buff *buf,
 	    (desc_recv->flags & RPC_FLAGS_CLOSED)) {
 		// This side is closed. Discard the packet
 		spin_unlock(&desc->desc_lock);
-		rpc_desc_elem_free(descelem);
+		grpc_desc_elem_free(descelem);
 		goto out_put;
 	}
 
@@ -1024,10 +1024,10 @@ static int tipc_handler_ordered(struct sk_buff *buf,
 	err = handle_valid_desc(desc, desc_recv, descelem, h, buf);
 	if (err)
 		/* Same OOM handling as above */
-		rpc_desc_elem_free(descelem);
+		grpc_desc_elem_free(descelem);
 
 out_put:
-	rpc_desc_put(desc);
+	grpc_desc_put(desc);
 out:
 	return err;
 }

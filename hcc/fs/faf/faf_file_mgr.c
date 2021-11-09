@@ -208,7 +208,7 @@ struct dvfs_mobility_operations dvfs_mobility_faf_ops = {
 	.file_import = faf_file_import,
 };
 
-int __send_faf_file_desc(struct rpc_desc *desc, struct file *file)
+int __send_faf_file_desc(struct grpc_desc *desc, struct file *file)
 {
 	int r, fdesc_size;
 	void *fdesc;
@@ -239,7 +239,7 @@ out:
 	return r;
 }
 
-int send_faf_file_desc(struct rpc_desc *desc, struct file *file)
+int send_faf_file_desc(struct grpc_desc *desc, struct file *file)
 {
 	int r;
 
@@ -261,7 +261,7 @@ out:
 	return r;
 }
 
-struct file *rcv_faf_file_desc(struct rpc_desc *desc)
+struct file *rcv_faf_file_desc(struct grpc_desc *desc)
 {
 	int r, first_import;
 	void *fdesc;

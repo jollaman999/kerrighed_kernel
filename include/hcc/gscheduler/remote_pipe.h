@@ -4,7 +4,7 @@
 #include <linux/workqueue.h>
 #include <hcc/sys/types.h>
 
-struct rpc_desc;
+struct grpc_desc;
 
 /*
  * Internal descriptor to hold the necessary state during an asynchronous
@@ -13,7 +13,7 @@ struct rpc_desc;
 struct remote_pipe_desc {
 	int pending;
 	struct work_struct work;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	hcc_node_t node;
 	void *value_p;
 	int ret;

@@ -220,7 +220,7 @@ static int hcc_set_pid_cap(pid_t pid, const kernel_hcc_cap_t *requested_cap)
 }
 
 #ifdef CONFIG_HCC_PROC
-static int handle_set_pid_cap(struct rpc_desc* desc, void *_msg, size_t size)
+static int handle_set_pid_cap(struct grpc_desc* desc, void *_msg, size_t size)
 {
 	struct pid *pid;
 	kernel_hcc_cap_t cap;
@@ -345,7 +345,7 @@ static int hcc_get_pid_cap(pid_t pid, kernel_hcc_cap_t *resulting_cap)
 }
 
 #ifdef CONFIG_HCC_PROC
-static int handle_get_pid_cap(struct rpc_desc *desc, void *_msg, size_t size)
+static int handle_get_pid_cap(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	struct pid *pid;
 	kernel_hcc_cap_t cap;
@@ -380,7 +380,7 @@ err_cancel:
 
 static int remote_get_pid_cap(pid_t pid, kernel_hcc_cap_t *cap)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err = -ESRCH;
 	int res;
 

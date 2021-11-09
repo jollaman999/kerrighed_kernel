@@ -73,7 +73,7 @@ struct rpc_synchro* rpc_synchro_new(int max,
 }
 
 inline
-int rpc_synchro_lookup_order0(struct rpc_desc *desc){
+int rpc_synchro_lookup_order0(struct grpc_desc *desc){
 	__rpc_synchro_get(&desc->service->synchro->nodes[desc->client].tab);
 	desc->__synchro = &desc->service->synchro->nodes[desc->client].tab;
 	return 0;
@@ -81,8 +81,8 @@ int rpc_synchro_lookup_order0(struct rpc_desc *desc){
 };
 
 inline
-int rpc_synchro_lookup_order1(struct rpc_desc *desc){
-	struct rpc_desc_elem *descelem;
+int rpc_synchro_lookup_order1(struct grpc_desc *desc){
+	struct grpc_desc_elem *descelem;
 	unsigned long key;
 	struct rpc_synchro *synchro;
 	struct __rpc_synchro *__synchro;
@@ -91,7 +91,7 @@ int rpc_synchro_lookup_order1(struct rpc_desc *desc){
 	synchro = desc->service->synchro;
 
 	descelem = list_entry(desc->desc_recv[0]->list_desc_head.next,
-			      struct rpc_desc_elem, list_desc_elem);
+			      struct grpc_desc_elem, list_desc_elem);
 
 	key = *((unsigned long*)descelem->data);
 
@@ -129,7 +129,7 @@ int rpc_synchro_lookup_order1(struct rpc_desc *desc){
 }
 
 inline
-int rpc_synchro_lookup_order_generic(struct rpc_desc *desc){
+int rpc_synchro_lookup_order_generic(struct grpc_desc *desc){
 #if 0
 	if((desc->desc_recv[0]->received_packets & desc->service->synchro->mask_packets)
 	   == desc->service->synchro->mask_packets){
@@ -146,7 +146,7 @@ int rpc_synchro_lookup_order_generic(struct rpc_desc *desc){
 	return 0;
 }
 
-int rpc_synchro_lookup(struct rpc_desc *desc){
+int rpc_synchro_lookup(struct grpc_desc *desc){
 
 	int order;
 

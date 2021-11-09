@@ -77,7 +77,7 @@ int mm_remove_object (void *object,
  *  @param  buffer    Buffer to export object data in.
  *  @param  obj_entry  Object entry of the object to export.
  */
-int mm_export_object (struct rpc_desc *desc,
+int mm_export_object (struct grpc_desc *desc,
 		      struct gdm_set *set,
 		      struct gdm_obj *obj_entry,
 		      objid_t objid,
@@ -118,7 +118,7 @@ int mm_export_object (struct rpc_desc *desc,
  *  @param  obj_entry  Object entry of the object to import.
  *  @param  _buffer   Data to import in the object.
  */
-int mm_import_object (struct rpc_desc *desc,
+int mm_import_object (struct grpc_desc *desc,
 		      struct gdm_set *_set,
 		      struct gdm_obj *obj_entry,
 		      objid_t objid,

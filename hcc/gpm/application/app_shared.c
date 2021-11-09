@@ -632,7 +632,7 @@ exit_unset_fs:
 
 /*--------------------------------------------------------------------------*/
 
-static int send_dist_objects_list(struct rpc_desc *desc,
+static int send_dist_objects_list(struct grpc_desc *desc,
 				  struct app_struct *app)
 {
 	enum shared_obj_type end = NO_OBJ;
@@ -693,7 +693,7 @@ static void clear_dist_shared_indexes(struct rb_root *dist_shared_indexes)
 		clear_one_dist_shared_index(node, dist_shared_indexes);
 }
 
-static int rcv_dist_objects_list_from(struct rpc_desc *desc,
+static int rcv_dist_objects_list_from(struct grpc_desc *desc,
 				      struct rb_root *dist_shared_indexes,
 				      hcc_node_t node)
 {
@@ -757,7 +757,7 @@ error:
 	return r;
 }
 
-static int send_full_dist_objects_list(struct rpc_desc *desc,
+static int send_full_dist_objects_list(struct grpc_desc *desc,
 				       struct rb_root *dist_shared_indexes)
 {
 	enum shared_obj_type end = NO_OBJ;
@@ -803,7 +803,7 @@ err:
 }
 
 
-static int rcv_full_dist_objects_list(struct rpc_desc *desc,
+static int rcv_full_dist_objects_list(struct grpc_desc *desc,
 				      struct app_struct *app)
 
 {
@@ -859,7 +859,7 @@ error:
 	return r;
 }
 
-int local_chkpt_shared(struct rpc_desc *desc,
+int local_chkpt_shared(struct grpc_desc *desc,
 		       struct app_struct *app,
 		       int chkpt_sn)
 {
@@ -886,7 +886,7 @@ error:
 	return r;
 }
 
-int global_chkpt_shared(struct rpc_desc *desc,
+int global_chkpt_shared(struct grpc_desc *desc,
 			struct app_gdm_object *obj)
 {
 	int r = 0;
@@ -1049,7 +1049,7 @@ error:
 	return r;
 }
 
-static int send_restored_objects(struct rpc_desc *desc, struct app_struct *app,
+static int send_restored_objects(struct grpc_desc *desc, struct app_struct *app,
 				 enum shared_obj_type from,
 				 enum shared_obj_type to)
 {
@@ -1127,7 +1127,7 @@ static void clear_restored_dist_shared_indexes(
 }
 
 static int rcv_restored_dist_objects_list_from(
-	struct rpc_desc *desc,
+	struct grpc_desc *desc,
 	struct rb_root *dist_shared_indexes,
 	hcc_node_t node)
 {
@@ -1193,7 +1193,7 @@ error:
 }
 
 static int send_full_restored_dist_objects_list(
-	struct rpc_desc *desc,
+	struct grpc_desc *desc,
 	struct rb_root *dist_shared_indexes)
 {
 	enum shared_obj_type end = NO_OBJ;
@@ -1237,7 +1237,7 @@ err_pack:
 }
 
 static int rcv_full_restored_objects(
-	struct rpc_desc *desc,
+	struct grpc_desc *desc,
 	struct app_struct *app)
 {
 	int r;
@@ -1337,7 +1337,7 @@ static void clear_substitution_files(struct rb_root *files)
 		clear_one_substitution_file(node, files);
 }
 
-static int send_substitution_files(struct rpc_desc *desc,
+static int send_substitution_files(struct grpc_desc *desc,
 				   struct rb_root *substitution_files)
 {
 	enum shared_obj_type end = NO_OBJ;
@@ -1383,7 +1383,7 @@ err_pack:
 	return r;
 }
 
-static int rcv_substitution_files(struct rpc_desc *desc,
+static int rcv_substitution_files(struct grpc_desc *desc,
 				  struct app_struct *app)
 {
 	int r;
@@ -1682,7 +1682,7 @@ int local_restart_shared_complete(struct app_struct *app,
 	return 0;
 }
 
-static int local_restart_shared_objects(struct rpc_desc *desc,
+static int local_restart_shared_objects(struct grpc_desc *desc,
 					struct app_struct *app,
 					struct task_struct *fake,
 					int chkpt_sn,
@@ -1748,7 +1748,7 @@ err_close_ghost:
 	goto err;
 }
 
-int local_restart_shared(struct rpc_desc *desc,
+int local_restart_shared(struct grpc_desc *desc,
 			 struct app_struct *app,
 			 struct task_struct *fake,
 			 int chkpt_sn)
@@ -1795,7 +1795,7 @@ err_ghost_fs:
 	return r;
 }
 
-static int global_restart_shared_objects(struct rpc_desc *desc,
+static int global_restart_shared_objects(struct grpc_desc *desc,
 					 struct app_gdm_object *obj)
 {
 	int r = 0;
@@ -1841,7 +1841,7 @@ err_rpc:
 	goto error;
 }
 
-int global_restart_shared(struct rpc_desc *desc,
+int global_restart_shared(struct grpc_desc *desc,
 			  struct app_gdm_object *obj,
 			  struct restart_request *req)
 {

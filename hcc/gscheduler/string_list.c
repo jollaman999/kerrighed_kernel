@@ -68,7 +68,7 @@ static void string_list_make_empty(struct string_list_object *object)
 	}
 }
 
-static int string_list_import_object(struct rpc_desc *desc,
+static int string_list_import_object(struct grpc_desc *desc,
 				     struct gdm_set *set,
 				     struct gdm_obj *obj_entry,
 				     objid_t objid,
@@ -107,7 +107,7 @@ out:
 	return err;
 }
 
-static int string_list_export_object(struct rpc_desc *desc,
+static int string_list_export_object(struct grpc_desc *desc,
 				     struct gdm_set *set,
 				     struct gdm_obj *obj_entry,
 				     objid_t objid,

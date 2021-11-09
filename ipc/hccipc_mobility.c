@@ -729,7 +729,7 @@ exit:
 	return r;
 }
 
-static int receive_fd_from_network(struct rpc_desc *desc)
+static int receive_fd_from_network(struct grpc_desc *desc)
 {
 	int r, fd;
 	struct file *file;
@@ -763,7 +763,7 @@ struct msgq_checkpoint_msg
 	int msqid;
 };
 
-void handle_msg_checkpoint(struct rpc_desc *desc, void *_msg, size_t size)
+void handle_msg_checkpoint(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	int r, fd;
 	struct msgq_checkpoint_msg *msg = _msg;
@@ -792,7 +792,7 @@ int __sys_msgq_checkpoint(int msqid, int fd)
 	hcc_node_t *master_node;
 	struct ipc_namespace *ns;
 	struct file *file;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 
 	ns = find_get_hcc_ipcns();
 

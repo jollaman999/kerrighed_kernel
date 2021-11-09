@@ -14,12 +14,12 @@
 struct gpm_action;
 #endif
 
-int pack_creds(struct rpc_desc *desc, const struct cred *cred)
+int pack_creds(struct grpc_desc *desc, const struct cred *cred)
 {
 	return grpc_pack_type(desc, *cred);
 }
 
-int unpack_creds(struct rpc_desc *desc, struct cred *cred)
+int unpack_creds(struct grpc_desc *desc, struct cred *cred)
 {
 	struct cred tmp;
 	int err;
@@ -56,7 +56,7 @@ out:
 	return err;
 }
 
-const struct cred *unpack_override_creds(struct rpc_desc *desc)
+const struct cred *unpack_override_creds(struct grpc_desc *desc)
 {
 	const struct cred *old_cred;
 	struct cred *cred;

@@ -63,7 +63,7 @@ typedef void (*ruaccess_handler_t)(const struct ruaccess_req *req, void *buf,
 
 struct ruaccess_desc {
 	struct hlist_node list;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	struct task_struct *thread;
 	mm_segment_t old_fs;
 	int err;
@@ -76,7 +76,7 @@ struct ruaccess_desc {
 static struct hlist_head desc_table[RUACCESS_DESC_BUCKETS];
 static DEFINE_SPINLOCK(desc_table_lock);
 
-static struct ruaccess_desc *ruaccess_desc_alloc(struct rpc_desc *desc)
+static struct ruaccess_desc *ruaccess_desc_alloc(struct grpc_desc *desc)
 {
 	struct ruaccess_desc *ru_desc;
 	struct task_struct *tsk = current;
@@ -129,7 +129,7 @@ static void ruaccess_desc_free(struct ruaccess_desc *desc)
 	call_rcu(&desc->rcu, ruaccess_desc_delayed_free);
 }
 
-int prepare_ruaccess(struct rpc_desc *desc)
+int prepare_ruaccess(struct grpc_desc *desc)
 {
 	struct ruaccess_desc *ru_desc;
 	int err;
@@ -155,7 +155,7 @@ out:
 	return err;
 }
 
-int cleanup_ruaccess(struct rpc_desc *desc)
+int cleanup_ruaccess(struct grpc_desc *desc)
 {
 	struct ruaccess_req req = { .op = RUACCESS_END };
 	struct ruaccess_desc *ru_desc;
@@ -182,7 +182,7 @@ out:
 static int do_ruaccess(struct ruaccess_req *req, unsigned long *ret, void *buf)
 {
 	struct ruaccess_desc *ru_desc;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	unsigned long count;
 	int err;
 
@@ -404,7 +404,7 @@ static ruaccess_handler_t ruaccess_handler[] = {
 	[RUACCESS_CLEAR] = handle_clear
 };
 
-static int handle_ruaccess_req(struct rpc_desc *desc, const struct ruaccess_req *req)
+static int handle_ruaccess_req(struct grpc_desc *desc, const struct ruaccess_req *req)
 {
 	void *buf = NULL;
 	unsigned long ret;
@@ -443,7 +443,7 @@ out:
 	return err;
 }
 
-int handle_ruaccess(struct rpc_desc *desc)
+int handle_ruaccess(struct grpc_desc *desc)
 {
 	struct ruaccess_req req;
 	int err;

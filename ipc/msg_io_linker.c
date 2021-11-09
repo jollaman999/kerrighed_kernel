@@ -255,7 +255,7 @@ int msq_remove_object(void *object, struct gdm_set *set, objid_t objid)
  *  @param  buffer    Buffer to export object data in.
  *  @param  object    The object to export data from.
  */
-int msq_export_object (struct rpc_desc *desc,
+int msq_export_object (struct grpc_desc *desc,
 		       struct gdm_set *set,
 		       struct gdm_obj *obj_entry,
 		       objid_t objid,
@@ -280,7 +280,7 @@ int msq_export_object (struct rpc_desc *desc,
  *  @param  object    The object to import data in.
  *  @param  buffer    Data to import in the object.
  */
-int msq_import_object (struct rpc_desc *desc,
+int msq_import_object (struct grpc_desc *desc,
 		       struct gdm_set *set,
 		       struct gdm_obj *obj_entry,
 		       objid_t objid,

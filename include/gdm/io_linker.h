@@ -82,7 +82,7 @@ enum
 
 
 
-struct rpc_desc;
+struct grpc_desc;
 
 /** IO linker struct
  *  Describe IO linker interface functions, name, etc.
@@ -109,9 +109,9 @@ struct iolinker_struct {
                          objid_t objid, gdm_obj_state_t state);
   int (*alloc_object) (struct gdm_obj * obj_entry, struct gdm_set * set,
                        objid_t objid);
-  int (*import_object) (struct rpc_desc *desc, struct gdm_set *set,
+  int (*import_object) (struct grpc_desc *desc, struct gdm_set *set,
 			struct gdm_obj *obj_entry, objid_t objid, int flags);
-  int (*export_object) (struct rpc_desc *desc, struct gdm_set *set,
+  int (*export_object) (struct grpc_desc *desc, struct gdm_set *set,
 			struct gdm_obj *obj_entry, objid_t objid, int flags);
   hcc_node_t (*default_owner) (struct gdm_set * set, objid_t objid,
                                      const hccnodemask_t * nodes, int nr_nodes);
@@ -270,7 +270,7 @@ int gdm_io_change_state (struct gdm_obj * obj_entry,
  *  @param obj_entry    Object entry to import data into.
  *  @param buffer       Buffer containing data to import.
  */
-int gdm_io_import_object (struct rpc_desc *desc, struct gdm_set *set,
+int gdm_io_import_object (struct grpc_desc *desc, struct gdm_set *set,
 			   struct gdm_obj *obj_entry, objid_t objid,
 			   int flags);
 
@@ -281,7 +281,7 @@ int gdm_io_import_object (struct rpc_desc *desc, struct gdm_set *set,
  *  @param obj_entry    Object entry to export data from.
  *  @param buffer       Buffer to export data to.
  */
-int gdm_io_export_object (struct rpc_desc *desc, struct gdm_set *set,
+int gdm_io_export_object (struct grpc_desc *desc, struct gdm_set *set,
 			   struct gdm_obj *obj_entry, objid_t objid,
 			   int flags);
 hcc_node_t gdm_io_default_owner (struct gdm_set * set, objid_t objid);

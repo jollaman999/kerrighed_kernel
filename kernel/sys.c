@@ -1098,7 +1098,7 @@ struct setpgid_message {
 };
 
 static
-int handle_forward_setpgid(struct rpc_desc *desc, void *_msg, size_t size)
+int handle_forward_setpgid(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	const struct setpgid_message *msg = _msg;
 	struct pid_namespace *ns;
@@ -1269,7 +1269,7 @@ out:
 }
 
 #ifdef CONFIG_HCC_PROC
-static int handle_getpgid(struct rpc_desc *desc, void *msg, size_t size)
+static int handle_getpgid(struct grpc_desc *desc, void *msg, size_t size)
 {
 	struct pid *pid;
 	const struct cred *old_cred;
@@ -1357,7 +1357,7 @@ out:
 }
 
 #ifdef CONFIG_HCC_PROC
-static int handle_getsid(struct rpc_desc *desc, void *msg, size_t size)
+static int handle_getsid(struct grpc_desc *desc, void *msg, size_t size)
 {
 	struct pid *pid;
 	const struct cred *old_cred;

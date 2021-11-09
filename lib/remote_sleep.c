@@ -8,7 +8,7 @@
 #include <linux/errno.h>
 #include <net/grpc/grpc.h>
 
-int remote_sleep_prepare(struct rpc_desc *desc)
+int remote_sleep_prepare(struct grpc_desc *desc)
 {
 	int dummy, err;
 
@@ -25,7 +25,7 @@ void remote_sleep_finish(void)
 	ignore_signals(current);
 }
 
-int unpack_remote_sleep_res_prepare(struct rpc_desc *desc)
+int unpack_remote_sleep_res_prepare(struct grpc_desc *desc)
 {
 	int dummy, err;
 
@@ -45,7 +45,7 @@ int unpack_remote_sleep_res_prepare(struct rpc_desc *desc)
  *
  *  @return		0 in case of success, or negative error code.
  */
-int unpack_remote_sleep_res(struct rpc_desc *desc, void *res, size_t size)
+int unpack_remote_sleep_res(struct grpc_desc *desc, void *res, size_t size)
 {
 	int err, flags;
 

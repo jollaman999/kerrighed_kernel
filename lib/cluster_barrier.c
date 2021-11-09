@@ -81,7 +81,7 @@ int cluster_barrier(struct cluster_barrier *barrier,
 {
 	struct cluster_barrier_core *core_bar;
 	struct cluster_barrier_id id;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err = 0;
 
 	BUG_ON (!__hccnode_isset(hcc_node_id, nodes));
@@ -119,7 +119,7 @@ int cluster_barrier(struct cluster_barrier *barrier,
 /*****************************************************************************/
 
 
-static int handle_enter_barrier(struct rpc_desc* desc,
+static int handle_enter_barrier(struct grpc_desc* desc,
 				void *_msg, size_t size)
 {
 	struct cluster_barrier_id *id = ((struct cluster_barrier_id *) _msg);
@@ -152,7 +152,7 @@ static int handle_enter_barrier(struct rpc_desc* desc,
 }
 
 
-static int handle_exit_barrier(struct rpc_desc* desc,
+static int handle_exit_barrier(struct grpc_desc* desc,
 			       void *_msg, size_t size)
 {
 	struct cluster_barrier_id *id = ((struct cluster_barrier_id *) _msg);

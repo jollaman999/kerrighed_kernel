@@ -10,7 +10,7 @@
 #include "faf_tools.h"
 
 static
-int send_user_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len)
+int send_user_iov(struct grpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len)
 {
 	void *page;
 	void __user *iov_base;
@@ -65,7 +65,7 @@ out_free:
 }
 
 static
-int send_kernel_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len)
+int send_kernel_iov(struct grpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len)
 {
 	size_t iov_len, sent;
 	int i, err = 0;
@@ -88,7 +88,7 @@ int send_kernel_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t
 }
 
 int
-send_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len, int flags)
+send_iov(struct grpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len, int flags)
 {
 	int err;
 
@@ -101,7 +101,7 @@ send_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len,
 }
 
 static
-int recv_user_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len)
+int recv_user_iov(struct grpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len)
 {
 	void *page;
 	void __user *iov_base;
@@ -159,7 +159,7 @@ out_free:
 }
 
 static
-int recv_kernel_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len)
+int recv_kernel_iov(struct grpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len)
 {
 	size_t iov_len, rcvd;
 	int i, err = 0;
@@ -226,7 +226,7 @@ void free_iov(struct iovec *iov, int iovcnt)
 	kfree(iov);
 }
 
-int recv_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len, int flags)
+int recv_iov(struct grpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len, int flags)
 {
 	int err;
 
@@ -238,7 +238,7 @@ int recv_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_
 	return err;
 }
 
-int send_msghdr(struct rpc_desc* desc,
+int send_msghdr(struct grpc_desc* desc,
 		struct msghdr *msghdr,
 		size_t total_len,
 		int flags)
@@ -261,7 +261,7 @@ int send_msghdr(struct rpc_desc* desc,
 	return err;
 }
 
-int recv_msghdr(struct rpc_desc* desc,
+int recv_msghdr(struct grpc_desc* desc,
 		struct msghdr *msghdr,
 		size_t total_len,
 		int flags)

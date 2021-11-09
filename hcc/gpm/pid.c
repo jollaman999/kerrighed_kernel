@@ -97,7 +97,7 @@ static int pid_first_touch(struct gdm_obj *obj_entry,
 /*
  * @author Innogrid HCC
  */
-static int pid_import_object(struct rpc_desc *desc,
+static int pid_import_object(struct grpc_desc *desc,
 			     struct gdm_set *set,
 			     struct gdm_obj *obj_entry,
 			     objid_t objid,
@@ -111,7 +111,7 @@ static int pid_import_object(struct rpc_desc *desc,
 /*
  * @author Innogrid HCC
  */
-static int pid_export_object(struct rpc_desc *desc,
+static int pid_export_object(struct grpc_desc *desc,
 			     struct gdm_set *set,
 			     struct gdm_obj *obj_entry,
 			     objid_t objid,
@@ -514,7 +514,7 @@ struct pid_reservation_msg {
 	pid_t pid;
 };
 
-static int handle_reserve_pid(struct rpc_desc *desc, void *_msg, size_t size)
+static int handle_reserve_pid(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	struct pid_reservation_msg *msg = _msg;
 	int r = __reserve_pid(msg->pid);
@@ -573,7 +573,7 @@ static void __end_pid_reservation(int nr)
 	rcu_read_unlock();
 }
 
-static int handle_end_pid_reservation(struct rpc_desc *desc, void *_msg,
+static int handle_end_pid_reservation(struct grpc_desc *desc, void *_msg,
 				      size_t size)
 {
 	struct pid_reservation_msg *msg = _msg;
@@ -740,7 +740,7 @@ out:
 	return r;
 }
 
-static int handle_pid_link_task(struct rpc_desc *desc, void *_msg, size_t size)
+static int handle_pid_link_task(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	struct pid_link_task_msg *msg = _msg;
 

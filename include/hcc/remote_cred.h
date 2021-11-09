@@ -5,11 +5,11 @@
 #include <linux/cred.h>
 #include <linux/rcupdate.h>
 
-struct rpc_desc;
+struct grpc_desc;
 
-int pack_creds(struct rpc_desc *desc, const struct cred *cred);
-int unpack_creds(struct rpc_desc *desc, struct cred *cred);
-const struct cred *unpack_override_creds(struct rpc_desc *desc);
+int pack_creds(struct grpc_desc *desc, const struct cred *cred);
+int unpack_creds(struct grpc_desc *desc, struct cred *cred);
+const struct cred *unpack_override_creds(struct grpc_desc *desc);
 
 static inline int permissions_ok(struct task_struct *task_to_act_on)
 {

@@ -25,7 +25,7 @@ enum {
 #define RPC_FLAGS_NEW_DESC_ID	(1<<__RPC_FLAGS_NEW_DESC_ID)
 #define RPC_FLAGS_CLOSED	(1<<__RPC_FLAGS_CLOSED)
 
-struct rpc_desc_send {
+struct grpc_desc_send {
 	atomic_t seq_id;
 	spinlock_t lock;
 	struct list_head list_desc_head;
@@ -33,15 +33,15 @@ struct rpc_desc_send {
 	int flags;
 };
 
-struct rpc_desc_recv {
+struct grpc_desc_recv {
 	atomic_t seq_id;
 	atomic_t nbunexpected;
 	unsigned long received_packets;      // bitfield
 	struct list_head list_desc_head;
 	struct list_head list_provided_head;
 	struct list_head list_signal_head;
-	struct rpc_desc_elem *iter;
-	struct rpc_desc_elem *iter_provided;
+	struct grpc_desc_elem *iter;
+	struct grpc_desc_elem *iter_provided;
 	int flags;
 };
 
@@ -99,7 +99,7 @@ struct __rpc_header {
 	int flags;
 };
 
-struct rpc_desc_elem {
+struct grpc_desc_elem {
 	unsigned long seq_id;
 	void* raw;
 	void* data;
@@ -124,14 +124,14 @@ extern struct rpc_service** rpc_services;
 struct hashtable_t;
 extern struct hashtable_t* desc_srv[HCC_MAX_NODES];
 extern struct hashtable_t* desc_clt;
-extern unsigned long rpc_desc_id;
-extern unsigned long rpc_desc_done_id[HCC_MAX_NODES];
-extern spinlock_t rpc_desc_done_lock[HCC_MAX_NODES];
+extern unsigned long grpc_desc_id;
+extern unsigned long grpc_desc_done_id[HCC_MAX_NODES];
+extern spinlock_t grpc_desc_done_lock[HCC_MAX_NODES];
 
-extern struct kmem_cache* rpc_desc_cachep;
-extern struct kmem_cache* rpc_desc_send_cachep;
-extern struct kmem_cache* rpc_desc_recv_cachep;
-extern struct kmem_cache* rpc_desc_elem_cachep;
+extern struct kmem_cache* grpc_desc_cachep;
+extern struct kmem_cache* grpc_desc_send_cachep;
+extern struct kmem_cache* grpc_desc_recv_cachep;
+extern struct kmem_cache* grpc_desc_elem_cachep;
 extern struct kmem_cache* rpc_tx_elem_cachep;
 extern struct kmem_cache* __rpc_synchro_cachep;
 
@@ -145,28 +145,28 @@ extern unsigned long rpc_link_send_seq_id[HCC_MAX_NODES];
 extern unsigned long rpc_link_send_ack_id[HCC_MAX_NODES];
 extern unsigned long rpc_link_recv_seq_id[HCC_MAX_NODES];
 
-struct rpc_desc* rpc_desc_alloc(void);
-struct rpc_desc_send* rpc_desc_send_alloc(void);
-struct rpc_desc_recv* rpc_desc_recv_alloc(void);
-void rpc_desc_elem_free(struct rpc_desc_elem *elem);
+struct grpc_desc* grpc_desc_alloc(void);
+struct grpc_desc_send* grpc_desc_send_alloc(void);
+struct grpc_desc_recv* grpc_desc_recv_alloc(void);
+void grpc_desc_elem_free(struct grpc_desc_elem *elem);
 
-void rpc_desc_get(struct rpc_desc* desc);
-void rpc_desc_put(struct rpc_desc* desc);
+void grpc_desc_get(struct grpc_desc* desc);
+void grpc_desc_put(struct grpc_desc* desc);
 
-void rpc_do_signal(struct rpc_desc *desc,
-		   struct rpc_desc_elem *signal_elem);
-void rpc_signal_deliver_pending(struct rpc_desc *desc,
-				struct rpc_desc_recv *desc_recv);
-int __rpc_signalack(struct rpc_desc* desc);
+void rpc_do_signal(struct grpc_desc *desc,
+		   struct grpc_desc_elem *signal_elem);
+void rpc_signal_deliver_pending(struct grpc_desc *desc,
+				struct grpc_desc_recv *desc_recv);
+int __rpc_signalack(struct grpc_desc* desc);
 
-int rpc_handle_new(struct rpc_desc* desc);
-void rpc_wake_up_thread(struct rpc_desc *desc);
+int rpc_handle_new(struct grpc_desc* desc);
+void rpc_wake_up_thread(struct grpc_desc *desc);
 
 void rpc_new_desc_id_lock(void);
 void rpc_new_desc_id_unlock(void);
-int __rpc_emergency_send_buf_alloc(struct rpc_desc *desc, size_t size);
-void __rpc_emergency_send_buf_free(struct rpc_desc *desc);
-int __rpc_send_ll(struct rpc_desc* desc,
+int __rpc_emergency_send_buf_alloc(struct grpc_desc *desc, size_t size);
+void __rpc_emergency_send_buf_free(struct grpc_desc *desc);
+int __rpc_send_ll(struct grpc_desc* desc,
 		  hccnodemask_t *nodes,
 		  unsigned long seq_id,
 		  int __flags,
@@ -176,8 +176,8 @@ int __rpc_send_ll(struct rpc_desc* desc,
 void __rpc_put_raw_data(void *raw);
 void __rpc_get_raw_data(void *raw);
 
-void __rpc_synchro_free(struct rpc_desc *desc);
-int rpc_synchro_lookup(struct rpc_desc* desc);
+void __rpc_synchro_free(struct grpc_desc *desc);
+int rpc_synchro_lookup(struct grpc_desc* desc);
 
 int comlayer_init(void);
 void comlayer_enable(void);
@@ -194,10 +194,10 @@ int rpc_monitor_init(void);
     :"=a" (p), "=m" (rpc_link_send_seq_id[node]) \
     :"a" (1) : "memory")
 
-#define rpc_desc_set_id(p) \
+#define grpc_desc_set_id(p) \
   __asm__ __volatile__( \
     "lock xadd %%eax, %1" \
-    :"=a" (p), "=m" (rpc_desc_id) \
+    :"=a" (p), "=m" (grpc_desc_id) \
     :"a" (1) : "memory")
 
 #endif

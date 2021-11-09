@@ -48,7 +48,7 @@ int hcc_do_fork(unsigned long clone_flags,
 	static hcc_node_t distant_node = -1;
 #endif
 	struct gpm_action remote_clone;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	struct completion vfork;
 	pid_t remote_pid = -1;
 	int retval = -ENOSYS;
@@ -125,7 +125,7 @@ out:
 	return remote_pid;
 }
 
-static void handle_remote_clone(struct rpc_desc *desc, void *msg, size_t size)
+static void handle_remote_clone(struct grpc_desc *desc, void *msg, size_t size)
 {
 	struct gpm_action *action = msg;
 	struct task_struct *task;
@@ -272,7 +272,7 @@ void cleanup_vfork_done(struct task_struct *task)
 	task_unlock(task);
 }
 
-static void handle_vfork_done(struct rpc_desc *desc, void *data, size_t size)
+static void handle_vfork_done(struct grpc_desc *desc, void *data, size_t size)
 {
 	struct completion *vfork_done = *(struct completion **)data;
 

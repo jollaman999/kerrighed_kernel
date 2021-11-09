@@ -357,7 +357,7 @@ struct init_restart_msg {
 	pid_t substitution_sid;
 };
 
-static void handle_init_restart(struct rpc_desc *desc, void *_msg, size_t size)
+static void handle_init_restart(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	struct init_restart_msg *msg = _msg;
 	hcc_node_t n = hcc_node_id;
@@ -433,7 +433,7 @@ out:
 
 static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int flags)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	struct init_restart_msg msg;
 	hccnodemask_t nodes, nodes_to_replace;
 	hcc_node_t prev_available_node = 0;
@@ -674,7 +674,7 @@ end:
 }
 
 static inline int send_pids_list(pids_list_t *orphan_pids,
-				 struct rpc_desc *desc)
+				 struct grpc_desc *desc)
 {
 	int r = 0;
 	unique_pid_t *upid;
@@ -707,7 +707,7 @@ static inline void free_pids_list(pids_list_t *orphan_pids)
 }
 
 static inline int return_orphan_sessions_and_prgps(struct app_struct *app,
-						   struct rpc_desc *desc)
+						   struct grpc_desc *desc)
 {
 	int r = 0, checkpointed;
 	task_state_t *t;
@@ -752,7 +752,7 @@ err:
 	return r;
 }
 
-static inline int get_orphan_sessions_and_pgrps(struct rpc_desc *desc,
+static inline int get_orphan_sessions_and_pgrps(struct grpc_desc *desc,
 						hccnodemask_t nodes,
 						pids_list_t *orphan_pids)
 {
@@ -1043,7 +1043,7 @@ struct restart_request_msg {
 	task_identity_t requester_task;
 };
 
-static void handle_do_restart(struct rpc_desc *desc, void *_msg, size_t size)
+static void handle_do_restart(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	int pid_err, r;
 	pid_t root_pid = 0;
@@ -1198,7 +1198,7 @@ static int global_do_restart(struct app_gdm_object *obj,
 			     const task_identity_t *requester,
 			     struct restart_request *req)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	struct restart_request_msg msg;
 	pids_list_t orphan_pids;
 	pid_t *root_pid = &req->root_pid;

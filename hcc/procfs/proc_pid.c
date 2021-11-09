@@ -654,7 +654,7 @@ retry:
 	return task_obj;
 }
 
-static void handle_req_available_tgids(struct rpc_desc *desc,
+static void handle_req_available_tgids(struct grpc_desc *desc,
 				       void *_msg, size_t size)
 {
 	struct pid_list_msg *msg = _msg;
@@ -710,7 +710,7 @@ static int fill_next_remote_tgids(hcc_node_t node,
 	hcc_node_t host_node;
 	struct tgid_iter iter;
 	struct pid_list_msg msg;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	pid_t pid_array[PROC_MAXPIDS];
 	int nr_pids;
 #ifdef CONFIG_HCC_GPM

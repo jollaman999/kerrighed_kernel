@@ -71,7 +71,7 @@ out:
 	return ret;
 }
 
-static void handle_read_proc_pid_environ(struct rpc_desc *desc,
+static void handle_read_proc_pid_environ(struct grpc_desc *desc,
 					 void *_msg, size_t size)
 {
 	struct environ_read_msg *msg = _msg;
@@ -132,7 +132,7 @@ static int do_environ_read(struct file *file, struct proc_distant_pid_info *task
 			   char *buf, size_t count, loff_t *ppos)
 {
 	struct environ_read_msg msg;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int bytes_read;
 	loff_t new_pos;
 	int err;
@@ -294,7 +294,7 @@ struct generic_proc_read_msg {
 
 typedef int proc_read_t(struct task_struct *task, char *buffer);
 
-static void handle_generic_proc_read(struct rpc_desc *desc, void *_msg,
+static void handle_generic_proc_read(struct grpc_desc *desc, void *_msg,
 				     proc_read_t *proc_read,
 				     enum rpcid REQ)
 {
@@ -355,7 +355,7 @@ static int generic_proc_read(struct proc_distant_pid_info *task,
 			     char *buffer, enum rpcid req)
 {
 	struct generic_proc_read_msg msg;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int bytes_read;
 	int err;
 
@@ -400,7 +400,7 @@ out_err:
 
 /* Entries */
 
-static void handle_read_proc_pid_cmdline(struct rpc_desc *desc,
+static void handle_read_proc_pid_cmdline(struct grpc_desc *desc,
 					 void *_msg, size_t size)
 {
 	handle_generic_proc_read(desc, _msg, proc_pid_cmdline,
@@ -412,7 +412,7 @@ int hcc_proc_pid_cmdline(struct proc_distant_pid_info *task, char *buffer)
 	return generic_proc_read(task, buffer, REQ_PROC_PID_CMDLINE);
 }
 
-static void handle_read_proc_pid_auxv(struct rpc_desc *desc,
+static void handle_read_proc_pid_auxv(struct grpc_desc *desc,
 				      void *_msg, size_t size)
 {
 	handle_generic_proc_read(desc, _msg, proc_pid_auxv,
@@ -424,7 +424,7 @@ int hcc_proc_pid_auxv(struct proc_distant_pid_info *task, char *buffer)
 	return generic_proc_read(task, buffer, REQ_PROC_PID_AUXV);
 }
 
-static void handle_read_proc_pid_limits(struct rpc_desc *desc,
+static void handle_read_proc_pid_limits(struct grpc_desc *desc,
 					void *_msg, size_t size)
 {
 	handle_generic_proc_read(desc, _msg, proc_pid_limits,
@@ -437,7 +437,7 @@ int hcc_proc_pid_limits(struct proc_distant_pid_info *task, char *buffer)
 }
 
 #ifdef CONFIG_HAVE_ARCH_TRACEHOOK
-static void handle_read_proc_pid_syscall(struct rpc_desc *desc,
+static void handle_read_proc_pid_syscall(struct grpc_desc *desc,
 					 void *_msg, size_t size)
 {
 	handle_generic_proc_read(desc, _msg, proc_pid_syscall,
@@ -451,7 +451,7 @@ int hcc_proc_pid_syscall(struct proc_distant_pid_info *task, char *buffer)
 #endif
 
 #ifdef CONFIG_KALLSYMS
-static void handle_read_proc_pid_wchan(struct rpc_desc *desc,
+static void handle_read_proc_pid_wchan(struct grpc_desc *desc,
 				       void *_msg, size_t size)
 {
 	handle_generic_proc_read(desc, _msg, proc_pid_wchan,
@@ -465,7 +465,7 @@ int hcc_proc_pid_wchan(struct proc_distant_pid_info *task, char *buffer)
 #endif
 
 #ifdef CONFIG_SCHEDSTATS
-static void handle_read_proc_pid_schedstat(struct rpc_desc *desc,
+static void handle_read_proc_pid_schedstat(struct grpc_desc *desc,
 					   void *_msg, size_t size)
 {
 	handle_generic_proc_read(desc, _msg, proc_pid_schedstat,
@@ -478,7 +478,7 @@ int hcc_proc_pid_schedstat(struct proc_distant_pid_info *task, char *buffer)
 }
 #endif
 
-static void handle_read_proc_pid_oom_score(struct rpc_desc *desc,
+static void handle_read_proc_pid_oom_score(struct grpc_desc *desc,
 					   void *_msg, size_t size)
 {
 	handle_generic_proc_read(desc, _msg, proc_oom_score,
@@ -491,7 +491,7 @@ int hcc_proc_pid_oom_score(struct proc_distant_pid_info *task, char *buffer)
 }
 
 #ifdef CONFIG_TASK_IO_ACCOUNTING
-static void handle_read_proc_tgid_io_accounting(struct rpc_desc *desc,
+static void handle_read_proc_tgid_io_accounting(struct grpc_desc *desc,
 						void *_msg, size_t size)
 {
 	handle_generic_proc_read(desc, _msg, proc_tgid_io_accounting,
@@ -505,7 +505,7 @@ int hcc_proc_tgid_io_accounting(struct proc_distant_pid_info *task, char *buffer
 #endif
 
 #ifdef CONFIG_HCC_GPM
-static void handle_read_gpm_type_show(struct rpc_desc *desc,
+static void handle_read_gpm_type_show(struct grpc_desc *desc,
 						void *_msg, size_t size)
 {
 	handle_generic_proc_read(desc, _msg, gpm_type_show,
@@ -517,7 +517,7 @@ int hcc_proc_gpm_type_show(struct proc_distant_pid_info *task, char *buffer)
 	return generic_proc_read(task, buffer, REQ_PROC_GPM_TYPE_SHOW);
 }
 
-static void handle_read_gpm_source_show(struct rpc_desc *desc,
+static void handle_read_gpm_source_show(struct grpc_desc *desc,
 						void *_msg, size_t size)
 {
 	handle_generic_proc_read(desc, _msg, gpm_source_show,
@@ -529,7 +529,7 @@ int hcc_proc_gpm_source_show(struct proc_distant_pid_info *task, char *buffer)
 	return generic_proc_read(task, buffer, REQ_PROC_GPM_SOURCE_SHOW);
 }
 
-static void handle_read_gpm_target_show(struct rpc_desc *desc,
+static void handle_read_gpm_target_show(struct grpc_desc *desc,
 						void *_msg, size_t size)
 {
 	handle_generic_proc_read(desc, _msg, gpm_target_show,
@@ -703,7 +703,7 @@ err_free_data:
 	goto out;
 }
 
-static void handle_generic_proc_show(struct rpc_desc *desc, void *_msg,
+static void handle_generic_proc_show(struct grpc_desc *desc, void *_msg,
 				     proc_show_t *proc_show,
 				     enum rpcid REQ)
 {
@@ -787,7 +787,7 @@ out_err:
 static void generic_proc_show_release(struct inode *inode, struct file *file)
 {
 	struct hcc_proc_single_private *private = file->private_data;
-	struct rpc_desc *desc = private->data;
+	struct grpc_desc *desc = private->data;
 	size_t count = 0;
 	int err;
 
@@ -806,7 +806,7 @@ static int generic_proc_show(struct file *file,
 	struct generic_proc_show_msg msg;
 	struct hcc_proc_single_private *private = file->private_data;
 	struct pid_namespace *ns = file->f_dentry->d_sb->s_fs_info;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int bytes_read;
 	int err;
 
@@ -866,7 +866,7 @@ out_err:
 
 /* Entries */
 
-static void handle_read_proc_pid_status(struct rpc_desc *desc,
+static void handle_read_proc_pid_status(struct grpc_desc *desc,
 					void *_msg, size_t size)
 {
 	handle_generic_proc_show(desc, _msg, proc_pid_status,
@@ -879,7 +879,7 @@ int hcc_proc_pid_status(struct file *file, struct proc_distant_pid_info *task,
 	return generic_proc_show(file, task, buf, count, REQ_PROC_PID_STATUS);
 }
 
-static void handle_read_proc_pid_personality(struct rpc_desc *desc,
+static void handle_read_proc_pid_personality(struct grpc_desc *desc,
 					     void *_msg, size_t size)
 {
 	handle_generic_proc_show(desc, _msg, proc_pid_personality,
@@ -893,7 +893,7 @@ int hcc_proc_pid_personality(struct file *file,
 	return generic_proc_show(file, task, buf, count, REQ_PROC_PID_PERSONALITY);
 }
 
-static void handle_read_proc_tgid_stat(struct rpc_desc *desc,
+static void handle_read_proc_tgid_stat(struct grpc_desc *desc,
 				       void *_msg, size_t size)
 {
 	handle_generic_proc_show(desc, _msg, proc_tgid_stat,
@@ -906,7 +906,7 @@ int hcc_proc_tgid_stat(struct file *file, struct proc_distant_pid_info *task,
 	return generic_proc_show(file, task, buf, count, REQ_PROC_TGID_STAT);
 }
 
-static void handle_read_proc_pid_statm(struct rpc_desc *desc,
+static void handle_read_proc_pid_statm(struct grpc_desc *desc,
 				       void *_msg, size_t size)
 {
 	handle_generic_proc_show(desc, _msg, proc_pid_statm,
@@ -920,7 +920,7 @@ int hcc_proc_pid_statm(struct file *file, struct proc_distant_pid_info *task,
 }
 
 #ifdef CONFIG_STACKTRACE
-static void handle_read_proc_pid_stack(struct rpc_desc *desc,
+static void handle_read_proc_pid_stack(struct grpc_desc *desc,
 				       void *_msg, size_t size)
 {
 	handle_generic_proc_show(desc, _msg, proc_pid_stack,

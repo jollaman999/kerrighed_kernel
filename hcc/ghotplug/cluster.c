@@ -513,7 +513,7 @@ struct hcc_namespace *create_hcc_container(struct hcc_namespace *ns)
 	return ns;
 }
 
-static int send_kernel_version(struct rpc_desc *desc)
+static int send_kernel_version(struct grpc_desc *desc)
 {
 	hcc_node_t node;
 	int len, err, ret;
@@ -542,7 +542,7 @@ error:
 	return err;
 }
 
-static int check_kernel_version(struct rpc_desc *desc)
+static int check_kernel_version(struct grpc_desc *desc)
 {
 	char *uts_version;
 	int len, err, ret;
@@ -585,11 +585,11 @@ error:
 	return err;
 }
 
-static void handle_cluster_start(struct rpc_desc *desc, void *data, size_t size)
+static void handle_cluster_start(struct grpc_desc *desc, void *data, size_t size)
 {
 	struct cluster_start_msg *msg = data;
 	struct ghotplug_context *ctx = NULL;
-	int master = rpc_desc_get_client(desc) == hcc_node_id;
+	int master = grpc_desc_get_client(desc) == hcc_node_id;
 	char *page;
 	int ret = 0;
 	int err;
@@ -689,7 +689,7 @@ cancel:
 
 static void cluster_start_worker(struct work_struct *work)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	char *page;
 	hcc_node_t node;
 	int ret;
@@ -851,7 +851,7 @@ static int cluster_restart(void *arg)
 }
 
 #ifndef CONFIG_HCC_GHOTPLUG_DEL
-static void handle_node_poweroff(struct rpc_desc *desc)
+static void handle_node_poweroff(struct grpc_desc *desc)
 {
 	emergency_sync();
 	emergency_remount();

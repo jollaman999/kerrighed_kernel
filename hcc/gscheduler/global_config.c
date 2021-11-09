@@ -284,13 +284,13 @@ struct config_op_message {
 	enum config_op op;
 };
 
-static struct rpc_desc *__global_config_op_begin(hccnodemask_t *nodes,
+static struct grpc_desc *__global_config_op_begin(hccnodemask_t *nodes,
 						 enum config_op op)
 {
 	struct config_op_message msg = {
 		.op = op
 	};
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err;
 
 	desc = rpc_begin_m(GLOBAL_CONFIG_OP, nodes);
@@ -313,15 +313,15 @@ static struct rpc_desc *__global_config_op_begin(hccnodemask_t *nodes,
  * @param op	       op code of the operation
  * @param nodes	       valid pointer to a nodes set
  *
- * @return	       a valid rpc_desc to do operation-specific communications,
+ * @return	       a valid grpc_desc to do operation-specific communications,
  *		       or error. nodes is filled with the nodes contacted for
  *		       the operation.
  */
-static struct rpc_desc *global_config_op_begin(enum config_op op,
+static struct grpc_desc *global_config_op_begin(enum config_op op,
 					       hccnodemask_t *nodes)
 {
 	hccnodemask_t _nodes = hccnode_online_map;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 
 	hccnode_clear(hcc_node_id, _nodes);
 	desc = __global_config_op_begin(&_nodes, op);
@@ -334,7 +334,7 @@ static struct rpc_desc *global_config_op_begin(enum config_op op,
  * Close a global config operation by retrieving the result from all contacted
  * nodes.
  *
- * @param desc	       rpc_desc as returned by global_config_op_begin.
+ * @param desc	       grpc_desc as returned by global_config_op_begin.
  *		       Will be closed before returning a result.
  * @param nodes	       valid pointer to a nodes set, previously filled by
  *		       global_config_op_begin
@@ -342,7 +342,7 @@ static struct rpc_desc *global_config_op_begin(enum config_op op,
  * @return	       0 if the operation succeeded on all contacted nodes, or
  *                     error
  */
-static int global_config_op_end(struct rpc_desc *desc, hccnodemask_t *nodes)
+static int global_config_op_end(struct grpc_desc *desc, hccnodemask_t *nodes)
 {
 	int res = 0;
 	hcc_node_t node;
@@ -362,15 +362,15 @@ out:
 	return res;
 }
 
-static void handle_global_config_write(struct rpc_desc *desc,
+static void handle_global_config_write(struct grpc_desc *desc,
 				       void *_msg, size_t size);
-static void handle_global_config_dir_op(struct rpc_desc *desc,
+static void handle_global_config_dir_op(struct grpc_desc *desc,
 					void *_msg, size_t size);
 
 /**
  * Generic RPC handler for global config operations
  */
-static void handle_global_config_op(struct rpc_desc *desc,
+static void handle_global_config_op(struct grpc_desc *desc,
 				    void *_msg, size_t size)
 {
 	struct config_op_message *msg = _msg;
@@ -389,7 +389,7 @@ static void handle_global_config_op(struct rpc_desc *desc,
  *
  * @return	       0 is success, or error
  */
-static int pack_string(struct rpc_desc *desc, const char *string)
+static int pack_string(struct grpc_desc *desc, const char *string)
 {
 	size_t len = strlen(string);
 	int err;
@@ -410,7 +410,7 @@ out:
  * @return	       a valid string pointer or error. The string must be
  *		       freed with put_string.
  */
-static char *unpack_get_string(struct rpc_desc *desc)
+static char *unpack_get_string(struct grpc_desc *desc)
 {
 	size_t len;
 	char *string;
@@ -443,7 +443,7 @@ static void put_string(char *string)
 
 static
 int
-do_global_config_write(struct rpc_desc *desc, hccnodemask_t *nodes,
+do_global_config_write(struct grpc_desc *desc, hccnodemask_t *nodes,
 		       struct config_item *item,
 		       struct configfs_attribute *attr,
 		       const char *page, size_t count)
@@ -479,7 +479,7 @@ static int global_config_write(struct config_item *item,
 			       struct configfs_attribute *attr,
 			       const char *page, size_t count)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	hccnodemask_t nodes;
 
 	desc = global_config_op_begin(CO_WRITE, &nodes);
@@ -493,7 +493,7 @@ static int __global_config_write(hccnodemask_t *nodes,
 				 struct configfs_attribute *attr,
 				 const char *page, size_t count)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 
 	desc = __global_config_op_begin(nodes, CO_WRITE);
 	if (IS_ERR(desc))
@@ -504,7 +504,7 @@ static int __global_config_write(hccnodemask_t *nodes,
 /**
  * RPC handler for global attribute store
  */
-static void handle_global_config_write(struct rpc_desc *desc,
+static void handle_global_config_write(struct grpc_desc *desc,
 				       void *_msg, size_t size)
 {
 	struct path old_root;
@@ -564,7 +564,7 @@ err_path:
 	goto out;
 }
 
-static int do_global_config_dir_op(struct rpc_desc *desc, hccnodemask_t *nodes,
+static int do_global_config_dir_op(struct grpc_desc *desc, hccnodemask_t *nodes,
 				   enum config_op op,
 				   const char *name, const char *old_name)
 {
@@ -595,7 +595,7 @@ err_cancel:
 static int __global_config_dir_op(hccnodemask_t *nodes, enum config_op op,
 				  const char *name, const char *old_name)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err;
 
 	desc = __global_config_op_begin(nodes, op);
@@ -624,7 +624,7 @@ out:
 static int global_config_dir_op(enum config_op op,
 				const char *name, const char *old_name)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	hccnodemask_t nodes;
 	int err;
 
@@ -664,7 +664,7 @@ static int handle_global_config_symlink(struct inode *dir,
  * (mkdir, rmdir, symlink, unlink)
  * The directory operation is made as if a user did the operation locally.
  */
-static void handle_global_config_dir_op(struct rpc_desc *desc,
+static void handle_global_config_dir_op(struct grpc_desc *desc,
 					void *_msg, size_t size)
 {
 	const struct config_op_message *msg = _msg;
@@ -1396,7 +1396,7 @@ void global_config_attr_store_error(struct string_list_object *list,
 	}
 }
 
-int global_config_pack_item(struct rpc_desc *desc, struct config_item *item)
+int global_config_pack_item(struct grpc_desc *desc, struct config_item *item)
 {
 	char *path = get_full_path(item, NULL);
 	int err;
@@ -1456,7 +1456,7 @@ out:
 	return child;
 }
 
-struct config_item *global_config_unpack_get_item(struct rpc_desc *desc)
+struct config_item *global_config_unpack_get_item(struct grpc_desc *desc)
 {
 	struct config_item *item;
 	char *path = unpack_get_string(desc);

@@ -24,11 +24,11 @@ struct remote_syscall_header {
 	size_t payload;
 };
 
-struct rpc_desc *hcc_remote_syscall_begin(int req, pid_t pid,
+struct grpc_desc *hcc_remote_syscall_begin(int req, pid_t pid,
 					  const void *msg, size_t size)
 {
 	struct remote_syscall_header hdr;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	hcc_node_t node;
 	int err = -ESRCH;
 
@@ -78,7 +78,7 @@ err:
 	return ERR_PTR(err);
 }
 
-void hcc_remote_syscall_end(struct rpc_desc *desc, pid_t pid)
+void hcc_remote_syscall_end(struct grpc_desc *desc, pid_t pid)
 {
 	rpc_end(desc, 0);
 	hcc_unlock_pid_location(pid);
@@ -86,7 +86,7 @@ void hcc_remote_syscall_end(struct rpc_desc *desc, pid_t pid)
 
 int hcc_remote_syscall_simple(int req, pid_t pid, const void *msg, size_t size)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int ret, err;
 
 	desc = hcc_remote_syscall_begin(req, pid, msg, size);
@@ -103,7 +103,7 @@ out:
 	return ret;
 }
 
-struct pid *hcc_handle_remote_syscall_begin(struct rpc_desc *desc,
+struct pid *hcc_handle_remote_syscall_begin(struct grpc_desc *desc,
 					    const void *_msg, size_t size,
 					    void *msg,
 					    const struct cred **old_cred)

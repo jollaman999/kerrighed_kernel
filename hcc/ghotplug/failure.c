@@ -56,7 +56,7 @@ void hcc_failure(hccnodemask_t * vector)
 	queue_work(hcc_ha_wq, &recovery_work);
 }
 
-static void handle_node_fail(struct rpc_desc *desc, void *data, size_t size)
+static void handle_node_fail(struct grpc_desc *desc, void *data, size_t size)
 {
 	emergency_sync();
 	emergency_remount();

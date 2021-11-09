@@ -13,14 +13,14 @@ enum {
 };
 
 int
-send_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len, int flags);
-int recv_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len, int flags);
+send_iov(struct grpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len, int flags);
+int recv_iov(struct grpc_desc *desc, struct iovec *iov, int iovcnt, size_t total_len, int flags);
 int alloc_iov(struct iovec **iov, int *iovcnt, size_t total_len);
 void free_iov(struct iovec *iov, int iovcnt);
 
-int send_msghdr(struct rpc_desc *desc, struct msghdr *msghdr,
+int send_msghdr(struct grpc_desc *desc, struct msghdr *msghdr,
 		size_t total_len, int flags);
-int recv_msghdr(struct rpc_desc *desc, struct msghdr *msghdr, size_t total_len, int flags);
+int recv_msghdr(struct grpc_desc *desc, struct msghdr *msghdr, size_t total_len, int flags);
 void free_msghdr(struct msghdr *msghdr);
 
 #endif // __FAF_TOOLS__

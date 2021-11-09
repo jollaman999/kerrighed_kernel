@@ -14,7 +14,7 @@
 /** Handler for remote mmap.
  *  @author Innogrid HCC
  */
-int handle_do_mmap_region (struct rpc_desc* desc,
+int handle_do_mmap_region (struct grpc_desc* desc,
 			   void *msgIn, size_t size)
 {
 	struct mm_mmap_msg *msg = msgIn;
@@ -46,7 +46,7 @@ int handle_do_mmap_region (struct rpc_desc* desc,
 /** Handler for remote mremap.
  *  @author Innogrid HCC
  */
-int handle_do_mremap (struct rpc_desc* desc,
+int handle_do_mremap (struct grpc_desc* desc,
 		      void *msgIn, size_t size)
 {
 	struct mm_mmap_msg *msg = msgIn;
@@ -72,7 +72,7 @@ int handle_do_mremap (struct rpc_desc* desc,
 /** Handler for remote munmap.
  *  @author Innogrid HCC
  */
-int handle_do_munmap (struct rpc_desc* desc,
+int handle_do_munmap (struct grpc_desc* desc,
 		      void *msgIn, size_t size)
 {
 	struct mm_mmap_msg *msg = msgIn;
@@ -97,7 +97,7 @@ int handle_do_munmap (struct rpc_desc* desc,
 /** Handler for remote brk.
  *  @author Innogrid HCC
  */
-int handle_do_brk (struct rpc_desc* desc,
+int handle_do_brk (struct grpc_desc* desc,
 		   void *msgIn, size_t size)
 {
 	struct mm_mmap_msg *msg = msgIn;
@@ -122,7 +122,7 @@ int handle_do_brk (struct rpc_desc* desc,
 /** Handler for remote expand_stack.
  *  @author Innogrid HCC
  */
-int handle_expand_stack (struct rpc_desc* desc,
+int handle_expand_stack (struct grpc_desc* desc,
 			 void *msgIn, size_t size)
 {
 	struct mm_mmap_msg *msg = msgIn;
@@ -151,7 +151,7 @@ int handle_expand_stack (struct rpc_desc* desc,
 /** Handler for remote mprotect.
  *  @author Innogrid HCC
  */
-int handle_do_mprotect (struct rpc_desc* desc,
+int handle_do_mprotect (struct grpc_desc* desc,
 			void *msgIn, size_t size)
 {
 	struct mm_mmap_msg *msg = msgIn;

@@ -146,7 +146,7 @@ static int children_first_touch(struct gdm_obj *obj_entry,
 	return children_alloc_object(obj_entry, set, objid);
 }
 
-static int children_export_object(struct rpc_desc *desc,
+static int children_export_object(struct grpc_desc *desc,
 				  struct gdm_set *set,
 				  struct gdm_obj *obj_entry,
 				  objid_t objid,
@@ -178,7 +178,7 @@ out:
 	return retval;
 }
 
-static int children_import_object(struct rpc_desc *desc,
+static int children_import_object(struct grpc_desc *desc,
 				  struct gdm_set *set,
 				  struct gdm_obj *obj_entry,
 				  objid_t objid,

@@ -23,7 +23,7 @@ static int global_lock_alloc_object(struct gdm_obj *obj_entry,
 }
 
 /* Avoid a useless grpc_pack() ... */
-static int global_lock_export_object(struct rpc_desc *desc,
+static int global_lock_export_object(struct grpc_desc *desc,
 				     struct gdm_set *set,
 				     struct gdm_obj *obj_entry,
 				     objid_t objid,
@@ -33,7 +33,7 @@ static int global_lock_export_object(struct rpc_desc *desc,
 }
 
 /* ... and its useless grpc_unpack() counterpart */
-static int global_lock_import_object(struct rpc_desc *desc,
+static int global_lock_import_object(struct grpc_desc *desc,
 				     struct gdm_set *set,
 				     struct gdm_obj *obj_entry,
 				     objid_t objid,

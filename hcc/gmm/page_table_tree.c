@@ -728,7 +728,7 @@ static void gdm_pt_for_each_obj_entry(struct gdm_set *set,
 
 
 
-static void gdm_pt_export (struct rpc_desc* desc, struct gdm_set *set)
+static void gdm_pt_export (struct grpc_desc* desc, struct gdm_set *set)
 {
 	struct mm_struct *mm = set->obj_set;
 
@@ -739,7 +739,7 @@ static void gdm_pt_export (struct rpc_desc* desc, struct gdm_set *set)
 
 
 
-static void *gdm_pt_import (struct rpc_desc* desc, int *free_data)
+static void *gdm_pt_import (struct grpc_desc* desc, int *free_data)
 {
 	struct mm_struct *mm = NULL;
 	unique_id_t mm_id;

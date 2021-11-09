@@ -59,7 +59,7 @@ out:
 	return 0;
 }
 
-static int pidmap_map_import_object(struct rpc_desc *desc, struct gdm_set *set,
+static int pidmap_map_import_object(struct grpc_desc *desc, struct gdm_set *set,
 				    struct gdm_obj *obj_entry, objid_t objid,
 				    int flags)
 {
@@ -68,7 +68,7 @@ static int pidmap_map_import_object(struct rpc_desc *desc, struct gdm_set *set,
 	return grpc_unpack_type(desc, map->host);
 }
 
-static int pidmap_map_export_object(struct rpc_desc *desc, struct gdm_set *set,
+static int pidmap_map_export_object(struct grpc_desc *desc, struct gdm_set *set,
 				    struct gdm_obj *obj_entry, objid_t objid,
 				    int flags)
 {
@@ -230,7 +230,7 @@ void pidmap_map_cleanup(struct hcc_namespace *hcc_ns)
 	}
 }
 
-static int recv_pidmap(struct rpc_desc *desc,
+static int recv_pidmap(struct grpc_desc *desc,
 		       hcc_node_t node,
 		       struct pid_namespace *pidmap_ns)
 {
@@ -308,7 +308,7 @@ err:
 	goto freepage;
 }
 
-static int send_pidmap(struct rpc_desc *desc, struct pid_namespace *pidmap_ns)
+static int send_pidmap(struct grpc_desc *desc, struct pid_namespace *pidmap_ns)
 {
 	struct pidmap *map;
 	int i, nr_pages;
@@ -351,7 +351,7 @@ out:
 	return err;
 }
 
-static void handle_pidmap_steal(struct rpc_desc *desc, void *_msg, size_t size)
+static void handle_pidmap_steal(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	hcc_node_t node = *(hcc_node_t *)_msg;
 	struct pid_namespace *pidmap_ns = foreign_pidmap[node];
@@ -369,7 +369,7 @@ int pidmap_map_add(struct ghotplug_context *ctx)
 {
 	struct pid_namespace *ns = ctx->ns->root_nsproxy.pid_ns;
 	hcc_node_t host_node;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err;
 
 	if (!hccnode_isset(hcc_node_id, ctx->node_set.v))

@@ -150,7 +150,7 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 			   hcc_node_t target)
 {
 	struct gpm_action migration;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	pid_t remote_pid;
 
 	BUG_ON(tsk == NULL);
@@ -258,7 +258,7 @@ static void hcc_task_migrate(int sig, struct siginfo *info,
  *  Process migration handler.
  *  @author Innogrid HCC
  */
-static void handle_migrate(struct rpc_desc *desc, void *msg, size_t size)
+static void handle_migrate(struct grpc_desc *desc, void *msg, size_t size)
 {
 	struct gpm_action *action = msg;
 	struct task_struct *task;
@@ -380,7 +380,7 @@ struct migration_request_msg {
 	hcc_node_t destination_node_id;
 };
 
-static int handle_migrate_remote_process(struct rpc_desc *desc,
+static int handle_migrate_remote_process(struct grpc_desc *desc,
 					 void *_msg, size_t size)
 {
 	struct migration_request_msg msg;

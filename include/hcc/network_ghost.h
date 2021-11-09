@@ -16,7 +16,7 @@
  *                                                                          *
  *--------------------------------------------------------------------------*/
 
-struct rpc_desc;
+struct grpc_desc;
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -33,6 +33,6 @@ struct rpc_desc;
  *  @return        0 if everything ok
  *                 Negative value otherwise.
  */
-ghost_t * create_network_ghost(int access, struct rpc_desc *desc);
+ghost_t * create_network_ghost(int access, struct grpc_desc *desc);
 
 #endif /* __NETWORK_GHOST_H__ */

@@ -53,7 +53,7 @@ struct notify_parent_request {
 	struct siginfo info;
 };
 
-static void handle_do_notify_parent(struct rpc_desc *desc,
+static void handle_do_notify_parent(struct grpc_desc *desc,
 				    void *msg, size_t size)
 {
 	struct notify_parent_request *req = msg;
@@ -115,7 +115,7 @@ int hcc_do_notify_parent(struct task_struct *task, struct siginfo *info)
 	struct notify_parent_request req;
 	int ret;
 	hcc_node_t parent_node = task->task_obj->parent_node;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err = -ENOMEM;
 
 	BUG_ON(task->parent != baby_sitter);
@@ -288,7 +288,7 @@ struct wait_task_result {
 	struct task_io_accounting ioac;
 };
 
-static void handle_wait_task_zombie(struct rpc_desc *desc,
+static void handle_wait_task_zombie(struct grpc_desc *desc,
 				    void *_msg, size_t size)
 {
 	struct wait_task_request *req = _msg;
@@ -375,7 +375,7 @@ int hcc_wait_task_zombie(struct wait_opts *wo,
 	struct wait_task_request req;
 	int retval;
 	struct wait_task_result res;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	struct siginfo __user *infop;
 	bool noreap = wo->wo_flags & WNOWAIT;
 	int err;
@@ -671,7 +671,7 @@ struct notify_remote_child_reaper_msg {
 	pid_t zombie_pid;
 };
 
-static void handle_notify_remote_child_reaper(struct rpc_desc *desc,
+static void handle_notify_remote_child_reaper(struct grpc_desc *desc,
 					      void *_msg,
 					      size_t size)
 {

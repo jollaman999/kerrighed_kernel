@@ -20,7 +20,7 @@
  */
 int network_ghost_read(struct ghost *ghost, void *buff, size_t length)
 {
-	struct rpc_desc *desc = ghost->data;
+	struct grpc_desc *desc = ghost->data;
 	int retval;
 
 	retval = grpc_unpack(desc, 0, buff, length);
@@ -43,7 +43,7 @@ int network_ghost_read(struct ghost *ghost, void *buff, size_t length)
  */
 int network_ghost_write(struct ghost *ghost, const void *buff, size_t length)
 {
-	struct rpc_desc *desc = ghost->data;
+	struct grpc_desc *desc = ghost->data;
 	int retval;
 
 	retval = grpc_pack(desc, 0, buff, length);
@@ -83,7 +83,7 @@ struct ghost_operations ghost_network_ops = {
  *  @return        0 if everything ok
  *                 Negative value otherwise.
  */
-ghost_t * create_network_ghost(int access, struct rpc_desc *desc)
+ghost_t * create_network_ghost(int access, struct grpc_desc *desc)
 {
 	struct ghost *ghost;
 

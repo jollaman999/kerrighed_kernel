@@ -33,10 +33,10 @@ extern int memory_remove_page (void *object,
 extern int memory_alloc_object (struct gdm_obj * objEntry,
 				struct gdm_set * gdm, objid_t objid);
 
-extern int memory_import_object (struct rpc_desc *desc, struct gdm_set *set,
+extern int memory_import_object (struct grpc_desc *desc, struct gdm_set *set,
 				 struct gdm_obj *objEntry, objid_t objid,
 				 int flags);
-extern int memory_export_object (struct rpc_desc *desc, struct gdm_set *set,
+extern int memory_export_object (struct grpc_desc *desc, struct gdm_set *set,
 				 struct gdm_obj *objEntry, objid_t objid,
 				 int flags);
 

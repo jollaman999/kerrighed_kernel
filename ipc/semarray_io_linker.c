@@ -306,7 +306,7 @@ int semarray_remove_object(void *object, struct gdm_set * set,
 	return 0;
 }
 
-static inline void __export_semarray(struct rpc_desc *desc,
+static inline void __export_semarray(struct grpc_desc *desc,
 				     const semarray_object_t *sem_object,
 				     const struct sem_array* sma)
 {
@@ -314,7 +314,7 @@ static inline void __export_semarray(struct rpc_desc *desc,
 	grpc_pack(desc, 0, sma->sem_base, sma->sem_nsems * sizeof (struct sem));
 }
 
-static inline void __export_semundos(struct rpc_desc *desc,
+static inline void __export_semundos(struct grpc_desc *desc,
 				     const struct sem_array* sma)
 {
 	long nb_semundo = 0;
@@ -333,7 +333,7 @@ static inline void __export_semundos(struct rpc_desc *desc,
 	}
 }
 
-static inline void __export_one_local_semqueue(struct rpc_desc *desc,
+static inline void __export_one_local_semqueue(struct grpc_desc *desc,
 					       const struct sem_queue* q)
 {
 	/* Fill q2->sleeper with the pid (and not tgid) of q->sleeper
@@ -354,7 +354,7 @@ static inline void __export_one_local_semqueue(struct rpc_desc *desc,
 	}
 }
 
-static inline void __export_one_remote_semqueue(struct rpc_desc *desc,
+static inline void __export_one_remote_semqueue(struct grpc_desc *desc,
 						const struct sem_queue* q)
 {
 	grpc_pack(desc, 0, q, sizeof(struct sem_queue));
@@ -368,7 +368,7 @@ static inline void __export_one_remote_semqueue(struct rpc_desc *desc,
 	}
 }
 
-static inline void __export_semqueues(struct rpc_desc *desc,
+static inline void __export_semqueues(struct grpc_desc *desc,
 				      const struct sem_array* sma)
 {
 	struct sem_queue *q;
@@ -399,7 +399,7 @@ static inline void __export_semqueues(struct rpc_desc *desc,
  *  @param  buffer    Buffer to export object data in.
  *  @param  object    The object to export data from.
  */
-int semarray_export_object (struct rpc_desc *desc,
+int semarray_export_object (struct grpc_desc *desc,
 			    struct gdm_set *set,
 			    struct gdm_obj *obj_entry,
 			    objid_t objid,
@@ -420,7 +420,7 @@ int semarray_export_object (struct rpc_desc *desc,
 	return 0;
 }
 
-static inline int __import_semarray(struct rpc_desc *desc,
+static inline int __import_semarray(struct grpc_desc *desc,
 				    semarray_object_t *sem_object)
 {
 	struct sem_array buffer;
@@ -445,7 +445,7 @@ static inline int __import_semarray(struct rpc_desc *desc,
 	return 0;
 }
 
-static inline int __import_semundos(struct rpc_desc *desc,
+static inline int __import_semundos(struct grpc_desc *desc,
 				    struct sem_array *sma)
 {
 	struct sem_undo* undo;
@@ -487,7 +487,7 @@ static inline void __unimport_semundos(struct sem_array *sma)
 	}
 }
 
-static inline int import_one_semqueue(struct rpc_desc *desc,
+static inline int import_one_semqueue(struct grpc_desc *desc,
 				      struct sem_array *sma)
 {
 	unique_id_t undo_proc_list_id;
@@ -536,7 +536,7 @@ exit:
 	return r;
 }
 
-static inline int __import_semqueues(struct rpc_desc *desc,
+static inline int __import_semqueues(struct grpc_desc *desc,
 				     struct sem_array *sma)
 {
 	long nb_sempending, i;
@@ -585,7 +585,7 @@ static inline void __unimport_semqueues(struct sem_array *sma)
  *  @param  object    The object to import data in.
  *  @param  buffer    Data to import in the object.
  */
-int semarray_import_object (struct rpc_desc *desc,
+int semarray_import_object (struct grpc_desc *desc,
 			    struct gdm_set *set,
 			    struct gdm_obj *obj_entry,
 			    objid_t objid,

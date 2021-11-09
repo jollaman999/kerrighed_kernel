@@ -177,7 +177,7 @@ typedef struct gdm_obj {
 
 
 struct gdm_set;
-struct rpc_desc;
+struct grpc_desc;
 
 typedef struct gdm_set_ops {
 	void *(*obj_set_alloc) (struct gdm_set *set, void *data);
@@ -197,8 +197,8 @@ typedef struct gdm_set_ops {
 	void (*for_each_obj_entry)(struct gdm_set *set,
 				   int(*f)(unsigned long, void *, void*),
 				   void *data);
-	void (*export) (struct rpc_desc* desc, struct gdm_set *set);
-	void *(*import) (struct rpc_desc* desc, int *free_data);
+	void (*export) (struct grpc_desc* desc, struct gdm_set *set);
+	void *(*import) (struct grpc_desc* desc, int *free_data);
 } gdm_set_ops_t;
 
 

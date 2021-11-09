@@ -7235,7 +7235,7 @@ struct setscheduler_msg {
 };
 
 static
-int handle_sched_setscheduler(struct rpc_desc *desc, void *_msg, size_t size)
+int handle_sched_setscheduler(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	struct setscheduler_msg msg;
 	struct pid *pid;
@@ -7328,7 +7328,7 @@ SYSCALL_DEFINE2(sched_setparam, pid_t, pid, struct sched_param __user *, param)
 
 #ifdef CONFIG_HCC_PROC
 static
-int handle_sched_getscheduler(struct rpc_desc *desc, void *msg, size_t size)
+int handle_sched_getscheduler(struct grpc_desc *desc, void *msg, size_t size)
 {
 	struct pid *pid;
 	const struct cred *old_cred;
@@ -7358,7 +7358,7 @@ static int hcc_gsched_getscheduler(pid_t pid)
 
 #ifdef CONFIG_HCC_PROC
 static
-int handle_sched_getparam(struct rpc_desc *desc, void *msg, size_t size)
+int handle_sched_getparam(struct grpc_desc *desc, void *msg, size_t size)
 {
 	struct pid *pid;
 	struct sched_param param;
@@ -7391,7 +7391,7 @@ out:
 
 static int hcc_gsched_getparam(pid_t pid, struct sched_param *param)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int res, r;
 
 	desc = hcc_remote_syscall_begin(PROC_SCHED_GETPARAM, pid, NULL, 0);

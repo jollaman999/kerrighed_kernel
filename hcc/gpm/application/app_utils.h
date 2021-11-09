@@ -10,7 +10,7 @@
 
 #include <net/grpc/grpc.h>
 
-static inline int app_wait_returns_from_nodes(struct rpc_desc *desc,
+static inline int app_wait_returns_from_nodes(struct grpc_desc *desc,
 					      hccnodemask_t nodes)
 {
 	hcc_node_t node;
@@ -28,7 +28,7 @@ static inline int app_wait_returns_from_nodes(struct rpc_desc *desc,
 	return r;
 }
 
-static inline int send_result(struct rpc_desc *desc, int result)
+static inline int send_result(struct grpc_desc *desc, int result)
 {
 	int r;
 	enum rpc_error error;
@@ -47,7 +47,7 @@ err_rpc:
 	goto exit;
 }
 
-static inline int ask_nodes_to_continue(struct rpc_desc *desc,
+static inline int ask_nodes_to_continue(struct grpc_desc *desc,
 					hccnodemask_t nodes,
 					int result)
 {

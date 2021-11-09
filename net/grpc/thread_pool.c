@@ -29,7 +29,7 @@ typedef unsigned long threads_vector_t;
 struct threads_pool {
 	threads_vector_t threads_vector;
 	struct task_struct* threads[THREADS_VECTOR_WIDTH];
-	struct rpc_desc* desc[THREADS_VECTOR_WIDTH];
+	struct grpc_desc* desc[THREADS_VECTOR_WIDTH];
 	int nbthreads;
 };
 
@@ -37,7 +37,7 @@ DEFINE_PER_CPU(struct threads_pool, threads_pool);
 
 struct waiting_desc {
 	struct list_head list_waiting_desc;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 };
 
 struct list_head waiting_desc;
@@ -48,7 +48,7 @@ struct {
 	struct delayed_work dwork;
 } new_thread_data;
 
-void (*rpc_handlers[RPC_HANDLER_MAX])(struct rpc_desc* desc);
+void (*rpc_handlers[RPC_HANDLER_MAX])(struct grpc_desc* desc);
 
 #define HCC_GRPC_INIT_FDTABLE \
 {                                                       \
@@ -77,11 +77,11 @@ struct task_struct *first_grpc = NULL;
 
 static struct completion init_complete;
 
-void rpc_handler_kthread(struct rpc_desc* desc){
+void rpc_handler_kthread(struct grpc_desc* desc){
 	((rpc_handler_t)desc->service->h)(desc);
 };
 
-void rpc_handler_kthread_void(struct rpc_desc* desc){
+void rpc_handler_kthread_void(struct grpc_desc* desc){
 	int err;
 	struct rpc_data rpc_data;
 
@@ -107,7 +107,7 @@ void rpc_handler_kthread_void(struct rpc_desc* desc){
 
 };
 
-void rpc_handler_kthread_int(struct rpc_desc* desc){
+void rpc_handler_kthread_int(struct grpc_desc* desc){
 	int res;
 	int id;
 	int err;
@@ -135,7 +135,7 @@ void rpc_handler_kthread_int(struct rpc_desc* desc){
 };
 
 inline
-void do_grpc_handler(struct rpc_desc* desc,
+void do_grpc_handler(struct grpc_desc* desc,
 		       int thread_pool_id){
 	struct __rpc_synchro* __synchro;
 	hcc_node_t client;
@@ -177,7 +177,7 @@ void do_grpc_handler(struct rpc_desc* desc,
 
 			spin_unlock_bh(&__synchro->lock);
 
-			rpc_desc_put(wd->desc);
+			grpc_desc_put(wd->desc);
 
 			desc = wd->desc;
 			desc->thread = current;
@@ -211,7 +211,7 @@ static int thread_pool_init_fs(void)
 
 int thread_pool_run(void* _data){
 	struct threads_pool* thread_pool;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int j;
 
 	/*
@@ -278,7 +278,7 @@ int thread_pool_run(void* _data){
 			spin_unlock_bh(&waiting_desc_lock);
 
 			//put: remove from the list
-			rpc_desc_put(wd->desc);
+			grpc_desc_put(wd->desc);
 			
 			desc = wd->desc;
 			desc->thread = current;
@@ -341,7 +341,7 @@ inline
 void list_waiting_ordered_add(struct list_head *head,
 			      struct waiting_desc *wd){
 	//get: going to add to a list
-	rpc_desc_get(wd->desc);
+	grpc_desc_get(wd->desc);
 
 	if(list_empty(head)){
 		list_add(&wd->list_waiting_desc, head);
@@ -360,7 +360,7 @@ void list_waiting_ordered_add(struct list_head *head,
 };
 
 inline
-int queue_waiting_desc(struct rpc_desc* desc){
+int queue_waiting_desc(struct grpc_desc* desc){
 	struct waiting_desc* wd;
 	int r = 0;
 
@@ -370,7 +370,7 @@ int queue_waiting_desc(struct rpc_desc* desc){
 		goto out;
 	};
 
-	rpc_desc_get(desc);
+	grpc_desc_get(desc);
 	wd->desc = desc;
 	desc->state = RPC_STATE_HANDLE;
 
@@ -383,7 +383,7 @@ out:
 }
 
 inline
-struct rpc_desc* handle_in_interrupt(struct rpc_desc* desc){
+struct grpc_desc* handle_in_interrupt(struct grpc_desc* desc){
 	struct __rpc_synchro *__synchro;
 	struct waiting_desc *wd;
 
@@ -411,7 +411,7 @@ struct rpc_desc* handle_in_interrupt(struct rpc_desc* desc){
 
 			spin_unlock_bh(&__synchro->lock);
 
-			rpc_desc_put(wd->desc);
+			grpc_desc_put(wd->desc);
 
 			desc = wd->desc;
 			desc->thread = NULL;
@@ -433,7 +433,7 @@ struct rpc_desc* handle_in_interrupt(struct rpc_desc* desc){
 	return desc;
 }
 
-int rpc_handle_new(struct rpc_desc* desc){
+int rpc_handle_new(struct grpc_desc* desc){
 	struct threads_pool* thread_pool = &per_cpu(threads_pool, smp_processor_id());
 	struct __rpc_synchro *__synchro;
 	int i, r=0;
@@ -514,7 +514,7 @@ int rpc_handle_new(struct rpc_desc* desc){
 	return r;
 };
 
-void rpc_wake_up_thread(struct rpc_desc *desc){
+void rpc_wake_up_thread(struct grpc_desc *desc){
 	struct threads_pool* thread_pool = &per_cpu(threads_pool, smp_processor_id());
 	int i;
 

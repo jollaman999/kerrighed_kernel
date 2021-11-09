@@ -206,7 +206,7 @@ void global_config_attr_store_error(struct string_list_object *list,
  */
 void global_config_drop(struct global_config_item *item);
 
-struct rpc_desc;
+struct grpc_desc;
 /**
  * Pack information so that a peer config_item can be reached on a peer node.
  *
@@ -216,7 +216,7 @@ struct rpc_desc;
  * @return		0 if successful, or
  *			negative error code
  */
-int global_config_pack_item(struct rpc_desc *desc, struct config_item *item);
+int global_config_pack_item(struct grpc_desc *desc, struct config_item *item);
 /**
  * Find and get a reference on the local peer item of a remote item
  *
@@ -225,7 +225,7 @@ int global_config_pack_item(struct rpc_desc *desc, struct config_item *item);
  * @return		Valid pointer to a config_item, or
  *			negative error pointer
  */
-struct config_item *global_config_unpack_get_item(struct rpc_desc *desc);
+struct config_item *global_config_unpack_get_item(struct grpc_desc *desc);
 
 struct gpm_action;
 

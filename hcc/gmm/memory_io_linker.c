@@ -53,7 +53,7 @@ int memory_alloc_object (struct gdm_obj * obj_entry,
  *  @param  object    The object to import data in.
  *  @param  buffer    Data to import in the object.
  */
-int memory_import_object (struct rpc_desc *desc,
+int memory_import_object (struct grpc_desc *desc,
 			  struct gdm_set *set,
 			  struct gdm_obj *obj_entry,
 			  objid_t objid,
@@ -76,7 +76,7 @@ int memory_import_object (struct rpc_desc *desc,
  *  @param  buffer    Buffer to export object data in.
  *  @param  object    The object to export data from.
  */
-int memory_export_object (struct rpc_desc *desc,
+int memory_export_object (struct grpc_desc *desc,
 			  struct gdm_set *set,
 			  struct gdm_obj *obj_entry,
 			  objid_t objid,
