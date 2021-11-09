@@ -144,7 +144,7 @@ int undolist_export_object (struct rpc_desc *desc,
 
 	undo_list = obj_entry->object;
 
-	r = rpc_pack_type(desc, *undo_list);
+	r = grpc_pack_type(desc, *undo_list);
 	if (r)
 		goto error;
 
@@ -152,13 +152,13 @@ int undolist_export_object (struct rpc_desc *desc,
 	for (un = undo_list->list; un;  un = un->next)
 		nb_semundo++;
 
-	r = rpc_pack_type(desc, nb_semundo);
+	r = grpc_pack_type(desc, nb_semundo);
 
 	BUG_ON(nb_semundo != atomic_read(&undo_list->semcnt));
 
 	/* really sending the semundo identifier */
 	for (un = undo_list->list; un;  un = un->next) {
-		r = rpc_pack_type(desc, *un);
+		r = grpc_pack_type(desc, *un);
 		if (r)
 			goto error;
 	}
@@ -184,11 +184,11 @@ int undolist_import_object (struct rpc_desc *desc,
 
 	undo_list = obj_entry->object;
 
-	r = rpc_unpack_type(desc, *undo_list);
+	r = grpc_unpack_type(desc, *undo_list);
 	if (r)
 		goto error;
 
-	r = rpc_unpack_type(desc, nb_semundo);
+	r = grpc_unpack_type(desc, nb_semundo);
 	if (r)
 		goto error;
 
@@ -201,7 +201,7 @@ int undolist_import_object (struct rpc_desc *desc,
 			goto error;
 		}
 
-		r = rpc_unpack_type(desc, *un);
+		r = grpc_unpack_type(desc, *un);
 		if (r)
 			goto error;
 

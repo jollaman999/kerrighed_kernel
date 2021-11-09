@@ -290,11 +290,11 @@ static void handle_set_copyset(struct rpc_desc *desc)
 	hcc_node_t true_owner;
 	hcc_node_t potential_owner;
 
-	rpc_unpack_type(desc, set_id);
-	rpc_unpack_type(desc, objid);
-	rpc_unpack_type(desc, map);
-	rpc_unpack_type(desc, true_owner);
-	rpc_unpack_type(desc, potential_owner);
+	grpc_unpack_type(desc, set_id);
+	grpc_unpack_type(desc, objid);
+	grpc_unpack_type(desc, map);
+	grpc_unpack_type(desc, true_owner);
+	grpc_unpack_type(desc, potential_owner);
 
 	// check if the object is available on this node
 	// check if we are in the received copyset
@@ -331,8 +331,8 @@ static void handle_set_copyset(struct rpc_desc *desc)
 
 					desc = rpc_begin(GDM_ADVERTISE_OWNER,
 							 nth_online_hccnode(objid % hcc_nb_nodes));
-					rpc_pack_type(desc, set_id);
-					rpc_pack_type(desc, objid);
+					grpc_pack_type(desc, set_id);
+					grpc_pack_type(desc, objid);
 					rpc_end(desc, 0);
 				};
 
@@ -404,11 +404,11 @@ static void handle_set_copyset(struct rpc_desc *desc)
 		// Forward the request
 		new_desc = rpc_begin(hccnode_next_online_in_ring(hcc_node_id),
 				     GDM_COPYSET);
-		rpc_pack_type(new_desc, set_id);
-		rpc_pack_type(new_desc, objid);
-		rpc_pack_type(new_desc, map);
-		rpc_pack_type(new_desc, true_owner);
-		rpc_pack_type(new_desc, potential_owner);
+		grpc_pack_type(new_desc, set_id);
+		grpc_pack_type(new_desc, objid);
+		grpc_pack_type(new_desc, map);
+		grpc_pack_type(new_desc, true_owner);
+		grpc_pack_type(new_desc, potential_owner);
 		rpc_end(new_desc, 0);
 	};
 
@@ -429,11 +429,11 @@ static void handle_select_owner(struct rpc_desc *desc)
 	hcc_node_t sender;
 	int sync;
 
-	rpc_unpack_type(desc, sender);
-	rpc_unpack_type(desc, set_id);
-	rpc_unpack_type(desc, objid);
-	rpc_unpack_type(desc, copyset);
-	rpc_unpack_type(desc, sync);
+	grpc_unpack_type(desc, sender);
+	grpc_unpack_type(desc, set_id);
+	grpc_unpack_type(desc, objid);
+	grpc_unpack_type(desc, copyset);
+	grpc_unpack_type(desc, sync);
 
 	if (sync != HCC_NODE_ID_NONE) {
 		hccnode_set(sync, select_sync);
@@ -480,11 +480,11 @@ static void handle_select_owner(struct rpc_desc *desc)
 
 		new_desc = rpc_begin(GDM_SELECT_OWNER,
 				     hccnode_next_online_in_ring(hcc_node_id));
-		rpc_pack_type(new_desc, sender);
-		rpc_pack_type(new_desc, set_id);
-		rpc_pack_type(new_desc, objid);
-		rpc_pack_type(new_desc, copyset);
-		rpc_pack_type(new_desc, sync);
+		grpc_pack_type(new_desc, sender);
+		grpc_pack_type(new_desc, set_id);
+		grpc_pack_type(new_desc, objid);
+		grpc_pack_type(new_desc, copyset);
+		grpc_pack_type(new_desc, sync);
 		rpc_end(new_desc, 0);
 
 	};
@@ -560,11 +560,11 @@ static int browse_failure(unsigned long objid, void *_obj_entry,
 
 		desc = rpc_begin(GDM_COPYSET,
 				 hccnode_next_online_in_ring(hcc_node_id));
-		rpc_pack_type(desc, set->id);
-		rpc_pack_type(desc, objid);
-		rpc_pack_type(desc, copyset);
-		rpc_pack_type(desc, unknown);
-		rpc_pack_type(desc, hcc_node_id);
+		grpc_pack_type(desc, set->id);
+		grpc_pack_type(desc, objid);
+		grpc_pack_type(desc, copyset);
+		grpc_pack_type(desc, unknown);
+		grpc_pack_type(desc, hcc_node_id);
 		rpc_end(desc, 0);
 
 		break;
@@ -581,8 +581,8 @@ static int browse_failure(unsigned long objid, void *_obj_entry,
 
 			desc = rpc_begin(GDM_ADVERTISE_OWNER,
 					 get_prob_owner(obj_entry));
-			rpc_pack_type(desc, set->id);
-			rpc_pack_type(desc, objid);
+			grpc_pack_type(desc, set->id);
+			grpc_pack_type(desc, objid);
 			rpc_end(desc, 0);
 		};
 
@@ -707,11 +707,11 @@ static void set_failure(hccnodemask_t * vector)
 
 	desc = rpc_begin(GDM_SELECT_OWNER,
 			 hccnode_next_online_in_ring(hcc_node_id));
-	rpc_pack_type(desc, hcc_node_id);
-	rpc_pack_type(desc, set_id);
-	rpc_pack_type(desc, objid);
-	rpc_pack_type(desc, v);
-	rpc_pack_type(desc, sync);
+	grpc_pack_type(desc, hcc_node_id);
+	grpc_pack_type(desc, set_id);
+	grpc_pack_type(desc, objid);
+	grpc_pack_type(desc, v);
+	grpc_pack_type(desc, sync);
 	rpc_end(desc, 0);
 
 };

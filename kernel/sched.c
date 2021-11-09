@@ -7376,7 +7376,7 @@ int handle_sched_getparam(struct rpc_desc *desc, void *msg, size_t size)
 	if (retval)
 		goto out_end;
 
-	err = rpc_pack_type(desc, param);
+	err = grpc_pack_type(desc, param);
 	if (err) {
 		rpc_cancel(desc);
 		retval = err;
@@ -7400,13 +7400,13 @@ static int hcc_gsched_getparam(pid_t pid, struct sched_param *param)
 		goto out;
 	}
 
-	r = rpc_unpack_type(desc, res);
+	r = grpc_unpack_type(desc, res);
 	if (r)
 		goto err_cancel;
 	r = res;
 	if (r)
 		goto out_end;
-	r = rpc_unpack_type(desc, *param);
+	r = grpc_unpack_type(desc, *param);
 	if (r)
 		goto err_cancel;
 

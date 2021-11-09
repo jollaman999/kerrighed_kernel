@@ -366,10 +366,10 @@ static void handle_init_restart(struct rpc_desc *desc, void *_msg, size_t size)
 	int r;
 
 	if (msg->recovery) {
-		r = rpc_unpack_type(desc, n);
+		r = grpc_unpack_type(desc, n);
 		if (r)
 			goto err_rpc;
-		r = rpc_unpack_type(desc, duplicate);
+		r = grpc_unpack_type(desc, duplicate);
 		if (r)
 			goto err_rpc;
 	}
@@ -385,7 +385,7 @@ static void handle_init_restart(struct rpc_desc *desc, void *_msg, size_t size)
 
 	revert_creds(old_cred);
 send_res:
-	r = rpc_pack_type(desc, r);
+	r = grpc_pack_type(desc, r);
 	if (r)
 		goto err_rpc;
 
@@ -484,7 +484,7 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 	if (!hccnodes_empty(nodes)) {
 		desc = rpc_begin_m(APP_INIT_RESTART, &nodes);
 
-		r = rpc_pack_type(desc, msg);
+		r = grpc_pack_type(desc, msg);
 		if (r)
 			goto err_rpc;
 		r = pack_creds(desc, current_cred());
@@ -507,15 +507,15 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 		hccnode_set(recovery_node, nodes);
 
 		desc = rpc_begin(APP_INIT_RESTART, recovery_node);
-		r = rpc_pack_type(desc, msg);
+		r = grpc_pack_type(desc, msg);
 		if (r)
 			goto err_rpc;
 
-		r = rpc_pack_type(desc, node);
+		r = grpc_pack_type(desc, node);
 		if (r)
 			goto err_rpc;
 
-		r = rpc_pack_type(desc, duplicate);
+		r = grpc_pack_type(desc, duplicate);
 		if (r)
 			goto err_rpc;
 
@@ -523,7 +523,7 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 		if (r)
 			goto err_rpc;
 
-		r = rpc_unpack_type_from(desc, recovery_node, r);
+		r = grpc_unpack_type_from(desc, recovery_node, r);
 		if (r)
 			goto err_rpc;
 
@@ -679,11 +679,11 @@ static inline int send_pids_list(pids_list_t *orphan_pids,
 	int r = 0;
 	unique_pid_t *upid;
 
-	r = rpc_pack_type(desc, orphan_pids->nb);
+	r = grpc_pack_type(desc, orphan_pids->nb);
 	if (r)
 		goto err;
 	list_for_each_entry(upid, &(orphan_pids->pids), next) {
-		r = rpc_pack_type(desc, upid->pid);
+		r = grpc_pack_type(desc, upid->pid);
 		if (r)
 			goto err;
 	}
@@ -766,12 +766,12 @@ static inline int get_orphan_sessions_and_pgrps(struct rpc_desc *desc,
 		int local_orphans;
 		pid_t pid;
 
-		r = rpc_unpack_type_from(desc, node, local_orphans);
+		r = grpc_unpack_type_from(desc, node, local_orphans);
 		if (r)
 			goto err;
 
 		for (i=0; i< local_orphans; i++) {
-			r = rpc_unpack_type_from(desc, node, pid);
+			r = grpc_unpack_type_from(desc, node, pid);
 			if (r)
 				goto err;
 
@@ -780,7 +780,7 @@ static inline int get_orphan_sessions_and_pgrps(struct rpc_desc *desc,
 				goto err;
 		}
 
-		r = rpc_unpack_type_from(desc, node, r);
+		r = grpc_unpack_type_from(desc, node, r);
 		if (r)
 			goto err;
         }
@@ -1087,7 +1087,7 @@ static void handle_do_restart(struct rpc_desc *desc, void *_msg, size_t size)
 #ifdef CONFIG_HCC_DEBUG
 	{
 		int magic;
-		r = rpc_unpack_type(desc, magic);
+		r = grpc_unpack_type(desc, magic);
 		BUG_ON(r);
 		BUG_ON(magic != 40);
 	}
@@ -1164,7 +1164,7 @@ static void handle_do_restart(struct rpc_desc *desc, void *_msg, size_t size)
 #ifdef CONFIG_HCC_DEBUG
 	{
 		int magic;
-		r = rpc_unpack_type(desc, magic);
+		r = grpc_unpack_type(desc, magic);
 		BUG_ON(r);
 		BUG_ON(magic != 48);
 	}
@@ -1179,7 +1179,7 @@ err_end_pid:
 	if (r) {
 		local_abort_restart(app, fake);
 		app = NULL;
-		r = rpc_pack_type(desc, r);
+		r = grpc_pack_type(desc, r);
 		rpc_cancel(desc);
 	}
 
@@ -1213,7 +1213,7 @@ static int global_do_restart(struct app_gdm_object *obj,
 	if (!desc)
 		return -ENOMEM;
 
-	r = rpc_pack_type(desc, msg);
+	r = grpc_pack_type(desc, msg);
 	if (r)
 		goto err_no_pids;
 	r = pack_creds(desc, current_cred());
@@ -1225,7 +1225,7 @@ static int global_do_restart(struct app_gdm_object *obj,
 	if (r)
 		goto err_no_pids;
 
-	r = rpc_pack_type(desc, r);
+	r = grpc_pack_type(desc, r);
 	if (r)
 		goto err_no_pids;
 
@@ -1240,14 +1240,14 @@ static int global_do_restart(struct app_gdm_object *obj,
 		goto error;
 
 	/* loading of shared objects */
-	r = rpc_pack_type(desc, r);
+	r = grpc_pack_type(desc, r);
 	if (r)
 		goto error;
 
 #ifdef CONFIG_HCC_DEBUG
 	{
 		int magic = 40;
-		r = rpc_pack_type(desc, magic);
+		r = grpc_pack_type(desc, magic);
 		BUG_ON(r);
 	}
 #endif
@@ -1277,7 +1277,7 @@ static int global_do_restart(struct app_gdm_object *obj,
 		goto error;
 
 	/* requesting root_pid */
-	r = rpc_pack_type(desc, r);
+	r = grpc_pack_type(desc, r);
 	if (r)
 		goto error;
 
@@ -1305,14 +1305,14 @@ static int global_do_restart(struct app_gdm_object *obj,
 	r = ask_nodes_to_continue(desc, obj->nodes, r);
 
 	/* inform other nodes about current restart status */
-	r = rpc_pack_type(desc, r);
+	r = grpc_pack_type(desc, r);
 	if (r)
 		goto error;
 
 #ifdef CONFIG_HCC_DEBUG
 	{
 		int magic = 48;
-		r = rpc_pack_type(desc, magic);
+		r = grpc_pack_type(desc, magic);
 		BUG_ON(r);
 	}
 #endif

@@ -63,7 +63,7 @@ int memory_import_object (struct rpc_desc *desc,
 	char *data;
 
 	data = (char *)kmap(page);
-	rpc_unpack(desc, 0, data, PAGE_SIZE);
+	grpc_unpack(desc, 0, data, PAGE_SIZE);
 	kunmap(page);
 
 //	copy_buff_to_highpage ((struct page *) obj_entry->object, buffer);
@@ -86,7 +86,7 @@ int memory_export_object (struct rpc_desc *desc,
 	char *data;
 
 	data = (char *)kmap_atomic(page, KM_USER0);
-	rpc_pack(desc, 0, data, PAGE_SIZE);
+	grpc_pack(desc, 0, data, PAGE_SIZE);
 	kunmap_atomic(data, KM_USER0);
 
 //	copy_highpage_to_buff (buffer, (struct page *) obj_entry->object);

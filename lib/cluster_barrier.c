@@ -100,8 +100,8 @@ int cluster_barrier(struct cluster_barrier *barrier,
 
 	desc = rpc_begin(RPC_ENTER_BARRIER, master);
 
-	rpc_pack_type (desc, id);
-	rpc_pack(desc, 0, nodes, sizeof(hccnodemask_t));
+	grpc_pack_type (desc, id);
+	grpc_pack(desc, 0, nodes, sizeof(hccnodemask_t));
 
 	rpc_end(desc, 0);
 
@@ -127,7 +127,7 @@ static int handle_enter_barrier(struct rpc_desc* desc,
 	struct cluster_barrier *barrier;
 	hccnodemask_t nodes;
 
-	rpc_unpack(desc, 0, &nodes, sizeof(hccnodemask_t));
+	grpc_unpack(desc, 0, &nodes, sizeof(hccnodemask_t));
 
 	barrier = hashtable_find (barrier_table, id->key);
 	BUG_ON(!barrier);

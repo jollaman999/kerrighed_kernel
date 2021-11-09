@@ -779,7 +779,7 @@ void handle_msg_checkpoint(struct rpc_desc *desc, void *_msg, size_t size)
 	sys_close (fd);
 
 error:
-	r = rpc_pack_type(desc, r);
+	r = grpc_pack_type(desc, r);
 	if (r)
 		rpc_cancel(desc);
 }
@@ -819,7 +819,7 @@ int __sys_msgq_checkpoint(int msqid, int fd)
 	_gdm_put_object(master_set, index);
 
 	msg.msqid = msqid;
-	r = rpc_pack_type(desc, msg);
+	r = grpc_pack_type(desc, msg);
 	if (r)
 		goto err_rpc;
 
@@ -827,7 +827,7 @@ int __sys_msgq_checkpoint(int msqid, int fd)
 	if (r)
 		goto err_rpc;
 
-	r = rpc_unpack_type(desc, err);
+	r = grpc_unpack_type(desc, err);
 	if (r)
 		goto err_rpc;
 

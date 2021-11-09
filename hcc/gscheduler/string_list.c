@@ -82,12 +82,12 @@ static int string_list_import_object(struct rpc_desc *desc,
 
 	string_list_make_empty(obj);
 
-	err = rpc_unpack_type(desc, nr_elt);
+	err = grpc_unpack_type(desc, nr_elt);
 	if (err)
 		goto out;
 
 	for (; nr_elt > 0; nr_elt--) {
-		err = rpc_unpack_type(desc, len);
+		err = grpc_unpack_type(desc, len);
 		if (err)
 			break;
 		elt = element_alloc(len);
@@ -95,7 +95,7 @@ static int string_list_import_object(struct rpc_desc *desc,
 			err = -ENOMEM;
 			break;
 		}
-		err = rpc_unpack(desc, 0, elt->string, len + 1);
+		err = grpc_unpack(desc, 0, elt->string, len + 1);
 		if (err) {
 			element_free(elt);
 			break;
@@ -121,16 +121,16 @@ static int string_list_export_object(struct rpc_desc *desc,
 
 	list_for_each_entry(elt, &obj->head, list)
 		nr_elt++;
-	err = rpc_pack_type(desc, nr_elt);
+	err = grpc_pack_type(desc, nr_elt);
 	if (err)
 		goto out;
 
 	list_for_each_entry(elt, &obj->head, list) {
 		len = strlen(elt->string);
-		err = rpc_pack_type(desc, len);
+		err = grpc_pack_type(desc, len);
 		if (err)
 			break;
-		err = rpc_pack(desc, 0, elt->string, len + 1);
+		err = grpc_pack(desc, 0, elt->string, len + 1);
 		if (err)
 			break;
 	}

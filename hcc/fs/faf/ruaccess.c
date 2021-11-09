@@ -173,7 +173,7 @@ int cleanup_ruaccess(struct rpc_desc *desc)
 	err = ru_desc->err;
 	if (err)
 		goto out;
-	err = rpc_pack_type(desc, req);
+	err = grpc_pack_type(desc, req);
 out:
 	ruaccess_desc_free(ru_desc);
 	return err;
@@ -193,26 +193,26 @@ static int do_ruaccess(struct ruaccess_req *req, unsigned long *ret, void *buf)
 		goto out;
 	desc = ru_desc->desc;
 
-	err = rpc_pack_type(desc, *req);
+	err = grpc_pack_type(desc, *req);
 	if (err)
 		goto out_err;
 	if (req->type == RUACCESS_TO) {
-		err = rpc_pack(desc, 0, buf, req->len);
+		err = grpc_pack(desc, 0, buf, req->len);
 		if (err)
 			goto out_err;
 	}
 	if (req->type == RUACCESS_FROM) {
-		err = rpc_unpack_type(desc, count);
+		err = grpc_unpack_type(desc, count);
 		if (err)
 			goto out_err;
 		if (count) {
 			BUG_ON(count > req->len);
-			err = rpc_unpack(desc, 0, buf, count);
+			err = grpc_unpack(desc, 0, buf, count);
 			if (err)
 				goto out_err;
 		}
 	}
-	err = rpc_unpack_type(desc, *ret);
+	err = grpc_unpack_type(desc, *ret);
 	if (err)
 		goto out_err;
 
@@ -418,7 +418,7 @@ static int handle_ruaccess_req(struct rpc_desc *desc, const struct ruaccess_req 
 			goto out;
 	}
 	if (req->type == RUACCESS_TO) {
-		err = rpc_unpack(desc, 0, buf, req->len);
+		err = grpc_unpack(desc, 0, buf, req->len);
 		if (err)
 			goto out;
 	}
@@ -427,16 +427,16 @@ static int handle_ruaccess_req(struct rpc_desc *desc, const struct ruaccess_req 
 
 	if (req->type == RUACCESS_FROM) {
 		BUG_ON(count > req->len);
-		err = rpc_pack_type(desc, count);
+		err = grpc_pack_type(desc, count);
 		if (err)
 			goto out;
 		if (count) {
-			err = rpc_pack(desc, 0, buf, count);
+			err = grpc_pack(desc, 0, buf, count);
 			if (err)
 				goto out;
 		}
 	}
-	err = rpc_pack_type(desc, ret);
+	err = grpc_pack_type(desc, ret);
 
 out:
 	kfree(buf);
@@ -451,7 +451,7 @@ int handle_ruaccess(struct rpc_desc *desc)
 	BUG_ON(!segment_eq(get_fs(), USER_DS));
 
 	for (;;) {
-		err = rpc_unpack_type(desc, req);
+		err = grpc_unpack_type(desc, req);
 		if (err)
 			break;
 		if (req.op == RUACCESS_END)

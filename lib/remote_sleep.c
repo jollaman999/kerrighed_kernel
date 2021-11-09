@@ -13,7 +13,7 @@ int remote_sleep_prepare(struct rpc_desc *desc)
 	int dummy, err;
 
 	current->sighand->action[SIGINT - 1].sa.sa_handler = SIG_DFL;
-	err = rpc_pack_type(desc, dummy);
+	err = grpc_pack_type(desc, dummy);
 	if (err)
 		ignore_signals(current);
 
@@ -29,7 +29,7 @@ int unpack_remote_sleep_res_prepare(struct rpc_desc *desc)
 {
 	int dummy, err;
 
-	err = rpc_unpack_type(desc, dummy);
+	err = grpc_unpack_type(desc, dummy);
 	if (err > 0)
 		err = -EPIPE;
 	return err;
@@ -51,7 +51,7 @@ int unpack_remote_sleep_res(struct rpc_desc *desc, void *res, size_t size)
 
 	flags = RPC_FLAGS_INTR;
 	for (;;) {
-		err = rpc_unpack(desc, flags, res, size);
+		err = grpc_unpack(desc, flags, res, size);
 		switch (err) {
 			case RPC_EOK:
 				return 0;

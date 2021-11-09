@@ -78,10 +78,10 @@ static int unpack_path(struct rpc_desc *desc, struct path *path)
 	if (!tmp)
 		goto out;
 
-	err = rpc_unpack_type(desc, len);
+	err = grpc_unpack_type(desc, len);
 	if (err)
 		goto out_free;
-	err = rpc_unpack(desc, 0, tmp, len);
+	err = grpc_unpack(desc, 0, tmp, len);
 	if (err)
 		goto out_free;
 
@@ -211,10 +211,10 @@ void handle_faf_read(struct rpc_desc* desc, void *msgIn, size_t size)
 		r = vfs_read(file, buf, buf_size, &fpos);
 
 		if (r > 0) {
-			err = rpc_pack_type(desc, r);
+			err = grpc_pack_type(desc, r);
 			if (err)
 				goto cancel;
-			err = rpc_pack(desc, 0, buf, r);
+			err = grpc_pack(desc, 0, buf, r);
 			if (err)
 				goto cancel;
 		}
@@ -236,12 +236,12 @@ error:
 	 */
 	if (r > 0)
 		r = 0;
-	err = rpc_pack_type(desc, r);
+	err = grpc_pack_type(desc, r);
 	if (err)
 		goto cancel;
 
 	/* send the updated file position */
-	err = rpc_pack_type(desc, fpos);
+	err = grpc_pack_type(desc, fpos);
 	if (err)
 		goto cancel;
 
@@ -294,7 +294,7 @@ void handle_faf_write(struct rpc_desc* desc, void *msgIn, size_t size)
 	file = fget(msg->server_fd);
 
 	while (to_recv > 0) {
-		err = rpc_unpack_type(desc, buf_size);
+		err = grpc_unpack_type(desc, buf_size);
 		if (err)
 			goto cancel;
 
@@ -304,7 +304,7 @@ void handle_faf_write(struct rpc_desc* desc, void *msgIn, size_t size)
 			break;
 		}
 
-		err = rpc_unpack(desc, 0, buf, buf_size);
+		err = grpc_unpack(desc, 0, buf, buf_size);
 		if (err)
 			goto cancel;
 
@@ -320,12 +320,12 @@ void handle_faf_write(struct rpc_desc* desc, void *msgIn, size_t size)
 	}
 
 error:
-	err = rpc_pack_type(desc, nr_received);
+	err = grpc_pack_type(desc, nr_received);
 	if (err)
 		goto cancel;
 
 	/* send the updated file position */
-	err = rpc_pack_type(desc, fpos);
+	err = grpc_pack_type(desc, fpos);
 	if (err)
 		goto cancel;
 
@@ -370,7 +370,7 @@ static void handle_faf_readv(struct rpc_desc *desc, void *__msg, size_t size)
 
 	remote_sleep_finish();
 
-	err = rpc_pack_type(desc, ret);
+	err = grpc_pack_type(desc, ret);
 	if (err)
 		goto cancel;
 	if (ret.ret <= 0)
@@ -422,7 +422,7 @@ static void handle_faf_writev(struct rpc_desc *desc, void *__msg, size_t size)
 
 	remote_sleep_finish();
 
-	err = rpc_pack_type(desc, ret);
+	err = grpc_pack_type(desc, ret);
 	if (err)
 		goto cancel;
 
@@ -472,7 +472,7 @@ void handle_faf_ioctl(struct rpc_desc *desc,
 	if (err)
 		goto out_sleep_finish;
 
-	err = rpc_pack_type(desc, r);
+	err = grpc_pack_type(desc, r);
 
 out_sleep_finish:
 	remote_sleep_finish();
@@ -525,17 +525,17 @@ void handle_faf_fcntl (struct rpc_desc* desc,
 	remote_sleep_finish();
 	revert_creds(old_cred);
 
-	err = rpc_pack_type(desc, r);
+	err = grpc_pack_type(desc, r);
 	if (unlikely(err))
 		goto cancel;
 
 	if (!r) {
 		if (msg->cmd == F_GETLK) {
-			err = rpc_pack_type(desc, msg->flock);
+			err = grpc_pack_type(desc, msg->flock);
 			if (unlikely(err))
 				goto cancel;
 		} else if (msg->cmd == F_GETOWN_EX) {
-			err = rpc_pack_type(desc, msg->owner);
+			err = grpc_pack_type(desc, msg->owner);
 			if (unlikely(err))
 				goto cancel;
 		}
@@ -581,12 +581,12 @@ void handle_faf_fcntl64 (struct rpc_desc* desc,
 	remote_sleep_finish();
 	revert_creds(old_cred);
 
-	err = rpc_pack_type(desc, r);
+	err = grpc_pack_type(desc, r);
 	if (unlikely(err))
 		goto cancel;
 
 	if (!r && msg->cmd == F_GETLK64) {
-		err = rpc_pack_type(desc, msg->flock64);
+		err = grpc_pack_type(desc, msg->flock64);
 		if (unlikely(err))
 			goto cancel;
 	}
@@ -612,8 +612,8 @@ void handle_faf_fstat (struct rpc_desc* desc,
 
 	r = vfs_fstat (msg->server_fd, &statbuf);
 
-	rpc_pack_type(desc, r);
-	rpc_pack_type(desc, statbuf);
+	grpc_pack_type(desc, r);
+	grpc_pack_type(desc, statbuf);
 }
 
 /** Handler for doing an FSTATFS in a FAF open file.
@@ -632,12 +632,12 @@ static void handle_faf_fstatfs(struct rpc_desc* desc,
 
 	r = sys_fstatfs(msg->server_fd, &statbuf);
 
-	err_rpc = rpc_pack_type(desc, r);
+	err_rpc = grpc_pack_type(desc, r);
 	if (err_rpc)
 		goto err_rpc;
 
 	if (!r)
-		err_rpc = rpc_pack_type(desc, statbuf);
+		err_rpc = grpc_pack_type(desc, statbuf);
 err_rpc:
 	if (err_rpc)
 		rpc_cancel(desc);
@@ -657,7 +657,7 @@ void handle_faf_lseek (struct rpc_desc* desc,
 
 	r = sys_lseek (msg->server_fd, msg->offset, msg->origin);
 
-	rpc_pack_type(desc, r);
+	grpc_pack_type(desc, r);
 }
 
 /** Handler for seeking in a FAF open file.
@@ -676,8 +676,8 @@ void handle_faf_llseek (struct rpc_desc* desc,
 	r = sys_llseek (msg->server_fd, msg->offset_high, msg->offset_low,
 			&result, msg->origin);
 
-	rpc_pack_type(desc, r);
-	rpc_pack_type(desc, result);
+	grpc_pack_type(desc, r);
+	grpc_pack_type(desc, result);
 }
 
 /** Handler for syncing in a FAF open file.
@@ -725,7 +725,7 @@ void handle_faf_flock(struct rpc_desc *desc,
 	remote_sleep_finish();
 	revert_creds(old_cred);
 
-	err = rpc_pack_type(desc, r);
+	err = grpc_pack_type(desc, r);
 	if (err)
 		goto cancel;
 
@@ -1048,7 +1048,7 @@ void handle_faf_poll_wait(struct rpc_desc *desc, void *_msg, size_t size)
 		res = faf_polled_fd_add(desc->client,
 					msg->server_fd,
 					msg->objid);
-		err = rpc_pack_type(desc, res);
+		err = grpc_pack_type(desc, res);
 		if (err)
 			goto err;
 	}
@@ -1058,7 +1058,7 @@ void handle_faf_poll_wait(struct rpc_desc *desc, void *_msg, size_t size)
 	revents = file->f_op->poll(file, NULL);
 	fput(file);
 
-	err = rpc_pack_type(desc, revents);
+	err = grpc_pack_type(desc, revents);
 	if (err)
 		goto err;
 
@@ -1140,15 +1140,15 @@ void handle_faf_d_path (struct rpc_desc* desc,
 	else
 		len = strlen(file_name) + 1;
 
-	err = rpc_pack_type(desc, len);
+	err = grpc_pack_type(desc, len);
 	if (err)
 		goto err_cancel;
 	if (len >= 0) {
-		err = rpc_pack(desc, 0, file_name, len);
+		err = grpc_pack(desc, 0, file_name, len);
 		if (err)
 			goto err_cancel;
 		if (msg->deleted) {
-			err = rpc_pack_type(desc, deleted);
+			err = grpc_pack_type(desc, deleted);
 			if (err)
 				goto err_cancel;
 		}
@@ -1213,7 +1213,7 @@ void handle_faf_connect(struct rpc_desc *desc,
 
 	remote_sleep_finish();
 
-	err = rpc_pack_type(desc, r);
+	err = grpc_pack_type(desc, r);
 	if (err)
 		goto cancel;
 
@@ -1254,7 +1254,7 @@ void handle_faf_accept (struct rpc_desc *desc,
 
 	remote_sleep_finish();
 
-	err = rpc_pack_type(desc, r);
+	err = grpc_pack_type(desc, r);
 	if (err)
 		goto err_close_file;
 
@@ -1275,11 +1275,11 @@ void handle_faf_accept (struct rpc_desc *desc,
 	/* Increment the DVFS count for the client node */
 	get_dvfs_file(r, file->f_objid);
 
-	err = rpc_pack_type(desc, msg->addrlen);
+	err = grpc_pack_type(desc, msg->addrlen);
 	if (err)
 		goto err_close_faf_file;
 
-	err = rpc_pack(desc, 0, &msg->sa, msg->addrlen);
+	err = grpc_pack(desc, 0, &msg->sa, msg->addrlen);
 	if (err)
 		goto err_close_faf_file;
 
@@ -1287,7 +1287,7 @@ void handle_faf_accept (struct rpc_desc *desc,
 	if (err)
 		goto err_close_faf_file;
 
-	err = rpc_unpack_type(desc, r);
+	err = grpc_unpack_type(desc, r);
 	if (err)
 		goto err_close_faf_file;
 
@@ -1322,8 +1322,8 @@ int handle_faf_getsockname (struct rpc_desc* desc,
 	r = sys_getsockname(msg->server_fd,
 			    (struct sockaddr *)&msg->sa, &msg->addrlen);
 
-	rpc_pack_type(desc, msg->addrlen);
-	rpc_pack(desc, 0, &msg->sa, msg->addrlen);
+	grpc_pack_type(desc, msg->addrlen);
+	grpc_pack(desc, 0, &msg->sa, msg->addrlen);
 
 	chroot_to_prev_root(&prev_root);
 
@@ -1342,8 +1342,8 @@ int handle_faf_getpeername (struct rpc_desc* desc,
 	r = sys_getpeername(msg->server_fd,
 			    (struct sockaddr *)&msg->sa, &msg->addrlen);
 
-	rpc_pack_type(desc, msg->addrlen);
-	rpc_pack(desc, 0, &msg->sa, msg->addrlen);
+	grpc_pack_type(desc, msg->addrlen);
+	grpc_pack(desc, 0, &msg->sa, msg->addrlen);
 
 	chroot_to_prev_root(&prev_root);
 
@@ -1383,7 +1383,7 @@ void handle_faf_setsockopt (struct rpc_desc *desc,
 	err = cleanup_ruaccess(desc);
 	if (err)
 		goto out_err;
-	err = rpc_pack_type(desc, r);
+	err = grpc_pack_type(desc, r);
 	if (err)
 		goto out_err;
 
@@ -1422,7 +1422,7 @@ void handle_faf_getsockopt (struct rpc_desc *desc,
 	err = cleanup_ruaccess(desc);
 	if (err)
 		goto out_err;
-	err = rpc_pack_type(desc, r);
+	err = grpc_pack_type(desc, r);
 		goto out_err;
 
 exit:
@@ -1460,7 +1460,7 @@ void handle_faf_sendmsg(struct rpc_desc *desc,
 
 	remote_sleep_finish();
 
-	err = rpc_pack_type(desc, r);
+	err = grpc_pack_type(desc, r);
 	if (err)
 		goto cancel;
 
@@ -1496,7 +1496,7 @@ void handle_faf_recvmsg(struct rpc_desc *desc,
 
 	remote_sleep_finish();
 
-	err = rpc_pack_type(desc, r);
+	err = grpc_pack_type(desc, r);
 	if (err)
 		goto cancel;
 

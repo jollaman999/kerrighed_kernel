@@ -105,7 +105,7 @@ static int pid_import_object(struct rpc_desc *desc,
 {
 	struct pid_gdm_object *obj = obj_entry->object;
 
-	return rpc_unpack_type(desc, obj->node_count);
+	return grpc_unpack_type(desc, obj->node_count);
 }
 
 /*
@@ -119,7 +119,7 @@ static int pid_export_object(struct rpc_desc *desc,
 {
 	struct pid_gdm_object *obj = obj_entry->object;
 
-	return rpc_pack_type(desc, obj->node_count);
+	return grpc_pack_type(desc, obj->node_count);
 }
 
 static void delayed_pid_free(struct rcu_head *rhp)

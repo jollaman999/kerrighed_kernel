@@ -26,7 +26,7 @@ static void rpc_pingpong_handler (struct rpc_desc *rpc_desc,
 
 	l++;
 	
-	rpc_pack(rpc_desc, 0, &l, sizeof(l));
+	grpc_pack(rpc_desc, 0, &l, sizeof(l));
 };
 
 static void rpc_worker(struct work_struct *data)

@@ -267,7 +267,7 @@ int msq_export_object (struct rpc_desc *desc,
 	msq_object = obj_entry->object;
 	msq_object->mobile_msq = *msq_object->local_msq;
 
-	r = rpc_pack(desc, 0, msq_object, sizeof(msq_object_t));
+	r = grpc_pack(desc, 0, msq_object, sizeof(msq_object_t));
 
 	return r;
 }
@@ -292,7 +292,7 @@ int msq_import_object (struct rpc_desc *desc,
 
 	msq_object = obj_entry->object;
 
-	r = rpc_unpack(desc, 0, &buffer, sizeof(msq_object_t));
+	r = grpc_unpack(desc, 0, &buffer, sizeof(msq_object_t));
 	if (r)
 		goto error;
 

@@ -18,7 +18,7 @@ static inline int app_wait_returns_from_nodes(struct rpc_desc *desc,
 	enum rpc_error error;
 
 	for_each_hccnode_mask(node, nodes) {
-		error = rpc_unpack_type_from(desc, node, ret);
+		error = grpc_unpack_type_from(desc, node, ret);
 		if (error) /* unpack has failed */
 			r = error;
 		else if (ret)
@@ -33,10 +33,10 @@ static inline int send_result(struct rpc_desc *desc, int result)
 	int r;
 	enum rpc_error error;
 
-	error = rpc_pack_type(desc, result);
+	error = grpc_pack_type(desc, result);
 	if (error)
 		goto err_rpc;
-	error = rpc_unpack_type(desc, r);
+	error = grpc_unpack_type(desc, r);
 	if (error)
 		goto err_rpc;
 
@@ -54,7 +54,7 @@ static inline int ask_nodes_to_continue(struct rpc_desc *desc,
 	int r;
 	enum rpc_error error;
 
-	error = rpc_pack_type(desc, result);
+	error = grpc_pack_type(desc, result);
 	if (error)
 		goto err_rpc;
 

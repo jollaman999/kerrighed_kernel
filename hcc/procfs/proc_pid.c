@@ -686,10 +686,10 @@ static void handle_req_available_tgids(struct rpc_desc *desc,
 
 	put_pid_ns(pid_ns);
 
-	retval = rpc_pack_type(desc, nr_tgids);
+	retval = grpc_pack_type(desc, nr_tgids);
 	if (retval)
 		goto out_err_cancel;
-	retval = rpc_pack_type(desc, pid_array);
+	retval = grpc_pack_type(desc, pid_array);
 	if (retval)
 		goto out_err_cancel;
 
@@ -735,14 +735,14 @@ static int fill_next_remote_tgids(hcc_node_t node,
 	if (!desc)
 		goto out_unlock;
 
-	retval = rpc_pack_type(desc, msg);
+	retval = grpc_pack_type(desc, msg);
 	if (retval)
 		goto err_cancel;
 
-	retval = rpc_unpack_type(desc, nr_pids);
+	retval = grpc_unpack_type(desc, nr_pids);
 	if (retval)
 		goto err_cancel;
-	retval = rpc_unpack_type(desc, pid_array);
+	retval = grpc_unpack_type(desc, pid_array);
 	if (retval)
 		goto err_cancel;
 

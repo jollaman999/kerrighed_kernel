@@ -79,7 +79,7 @@ int file_export_object (struct rpc_desc *desc,
 	struct dvfs_file_struct *dvfs_file;
 
 	dvfs_file = obj_entry->object;
-	rpc_pack(desc, 0, dvfs_file, sizeof(struct dvfs_file_struct));
+	grpc_pack(desc, 0, dvfs_file, sizeof(struct dvfs_file_struct));
 
 	return 0;
 }
@@ -99,7 +99,7 @@ int file_import_object (struct rpc_desc *desc,
 	struct dvfs_file_struct *dvfs_file, buffer;
 
 	dvfs_file = obj_entry->object;
-	rpc_unpack(desc, 0, &buffer, sizeof(struct dvfs_file_struct));
+	grpc_unpack(desc, 0, &buffer, sizeof(struct dvfs_file_struct));
 
 	dvfs_file->f_pos = buffer.f_pos;
 	dvfs_file->count = buffer.count;

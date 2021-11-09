@@ -297,7 +297,7 @@ static struct rpc_desc *__global_config_op_begin(hccnodemask_t *nodes,
 	if (!desc)
 		return ERR_PTR(-ENOMEM);
 
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err) {
 		rpc_cancel(desc);
 		rpc_end(desc, 0);
@@ -349,7 +349,7 @@ static int global_config_op_end(struct rpc_desc *desc, hccnodemask_t *nodes)
 	int err;
 
 	for_each_hccnode_mask(node, *nodes) {
-		err = rpc_unpack_type_from(desc, node, res);
+		err = grpc_unpack_type_from(desc, node, res);
 		if (!err && res) {
 			rpc_cancel(desc);
 			goto out;
@@ -394,10 +394,10 @@ static int pack_string(struct rpc_desc *desc, const char *string)
 	size_t len = strlen(string);
 	int err;
 
-	err = rpc_pack_type(desc, len);
+	err = grpc_pack_type(desc, len);
 	if (err)
 		goto out;
-	err = rpc_pack(desc, 0, string, len + 1);
+	err = grpc_pack(desc, 0, string, len + 1);
 out:
 	return err;
 }
@@ -416,14 +416,14 @@ static char *unpack_get_string(struct rpc_desc *desc)
 	char *string;
 	int err;
 
-	err = rpc_unpack_type(desc, len);
+	err = grpc_unpack_type(desc, len);
 	if (err)
 		goto err;
 	err = -ENOMEM;
 	string = kmalloc(len + 1, GFP_KERNEL);
 	if (!string)
 		goto err;
-	err = rpc_unpack(desc, 0, string, len + 1);
+	err = grpc_unpack(desc, 0, string, len + 1);
 	if (err)
 		goto err_string;
 out:
@@ -460,10 +460,10 @@ do_global_config_write(struct rpc_desc *desc, hccnodemask_t *nodes,
 	if (err)
 		goto err_cancel;
 
-	err = rpc_pack_type(desc, count);
+	err = grpc_pack_type(desc, count);
 	if (err)
 		goto err_cancel;
-	err = rpc_pack(desc, 0, page, count);
+	err = grpc_pack(desc, 0, page, count);
 	if (err)
 		goto err_cancel;
 
@@ -519,13 +519,13 @@ static void handle_global_config_write(struct rpc_desc *desc,
 	path = unpack_get_string(desc);
 	if (IS_ERR(path))
 		goto err_path;
-	err = rpc_unpack_type(desc, count);
+	err = grpc_unpack_type(desc, count);
 	if (err)
 		goto err_count;
 	buf = kmalloc(count, GFP_KERNEL);
 	if (!buf)
 		goto err_count;
-	err = rpc_unpack(desc, 0, buf, count);
+	err = grpc_unpack(desc, 0, buf, count);
 	if (err)
 		goto err_buf;
 
@@ -548,7 +548,7 @@ static void handle_global_config_write(struct rpc_desc *desc,
 chroot_restore:
 	chroot_restore(&old_root);
 
-	rpc_pack_type(desc, err);
+	grpc_pack_type(desc, err);
 
 	kfree(buf);
 	put_string(path);
@@ -709,7 +709,7 @@ static void handle_global_config_dir_op(struct rpc_desc *desc,
 	put_child_dentry(d_child);
 
 out_pack:
-	rpc_pack_type(desc, err);
+	grpc_pack_type(desc, err);
 	put_string(old_name);
 	put_string(name);
 out:

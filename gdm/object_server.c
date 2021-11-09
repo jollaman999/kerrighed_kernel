@@ -600,7 +600,7 @@ void handle_object_receive (struct rpc_desc* desc,
 	BUG_ON (desc->client < 0 || desc->client > HCC_MAX_NODES);
 
 	if (msg->object_state & GDM_OWNER_OBJ) {
-		res = rpc_unpack(desc, 0, &master_info, sizeof(masterObj_t));
+		res = grpc_unpack(desc, 0, &master_info, sizeof(masterObj_t));
 		if (res)
 			return;
 	}
@@ -611,7 +611,7 @@ void handle_object_receive (struct rpc_desc* desc,
 	if (!obj_entry) {
 		if (msg->flags & GDM_SYNC_OBJECT) {
 			res = -EINVAL;
-			rpc_pack_type(desc, res);
+			grpc_pack_type(desc, res);
 		}
 		return;
 	}
@@ -703,7 +703,7 @@ void handle_object_receive (struct rpc_desc* desc,
 
 	if (msg->flags & GDM_SYNC_OBJECT) {
 		res = gdm_io_sync_object(obj_entry, set, msg->objid);
-		rpc_pack_type(desc, res);
+		grpc_pack_type(desc, res);
 	}
 
 	return;

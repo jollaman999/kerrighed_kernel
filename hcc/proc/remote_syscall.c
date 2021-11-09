@@ -55,11 +55,11 @@ struct rpc_desc *hcc_remote_syscall_begin(int req, pid_t pid,
 
 	hdr.pid = pid;
 	hdr.payload = size;
-	err = rpc_pack_type(desc, hdr);
+	err = grpc_pack_type(desc, hdr);
 	if (err)
 		goto err_cancel;
 	if (size) {
-		err = rpc_pack(desc, 0, msg, size);
+		err = grpc_pack(desc, 0, msg, size);
 		if (err)
 			goto err_cancel;
 	}
@@ -94,7 +94,7 @@ int hcc_remote_syscall_simple(int req, pid_t pid, const void *msg, size_t size)
 		ret = PTR_ERR(desc);
 		goto out;
 	}
-	err = rpc_unpack_type(desc, ret);
+	err = grpc_unpack_type(desc, ret);
 	if (err)
 		ret = err;
 	hcc_remote_syscall_end(desc, pid);
@@ -113,7 +113,7 @@ struct pid *hcc_handle_remote_syscall_begin(struct rpc_desc *desc,
 	int err;
 
 	if (hdr->payload) {
-		err = rpc_unpack(desc, 0, msg, hdr->payload);
+		err = grpc_unpack(desc, 0, msg, hdr->payload);
 		if (err)
 			goto err_cancel;
 	}

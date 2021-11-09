@@ -114,7 +114,7 @@ static int task_import_object(struct rpc_desc *desc,
 	struct task_gdm_object src;
 	int retval;
 
-	retval = rpc_unpack_type(desc, src);
+	retval = grpc_unpack_type(desc, src);
 	if (retval)
 		return retval;
 
@@ -211,7 +211,7 @@ static int task_export_object(struct rpc_desc *desc,
 	}
 	read_unlock(&tasklist_lock);
 
-	return rpc_pack_type(desc, *src);
+	return grpc_pack_type(desc, *src);
 }
 
 static void delayed_task_put(struct rcu_head *rhp)

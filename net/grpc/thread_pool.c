@@ -87,7 +87,7 @@ void rpc_handler_kthread_void(struct rpc_desc* desc){
 
 	BUG_ON(!desc);
 	
-	err = rpc_unpack(desc, RPC_FLAGS_NOCOPY,
+	err = grpc_unpack(desc, RPC_FLAGS_NOCOPY,
 			 &rpc_data, 0);
 	
 	if(!err){
@@ -113,12 +113,12 @@ void rpc_handler_kthread_int(struct rpc_desc* desc){
 	int err;
 	struct rpc_data rpc_data;
 
-	err = rpc_unpack(desc, RPC_FLAGS_NOCOPY,
+	err = grpc_unpack(desc, RPC_FLAGS_NOCOPY,
 			 &rpc_data, 0);
 	
 	if(!err){
 	
-		id = rpc_pack(desc, RPC_FLAGS_LATER,
+		id = grpc_pack(desc, RPC_FLAGS_LATER,
 				&res, sizeof(res));
 
 		res = ((rpc_handler_int_t)desc->service->h)(desc,

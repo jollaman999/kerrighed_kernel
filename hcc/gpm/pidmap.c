@@ -65,7 +65,7 @@ static int pidmap_map_import_object(struct rpc_desc *desc, struct gdm_set *set,
 {
 	struct pidmap_map *map = obj_entry->object;
 
-	return rpc_unpack_type(desc, map->host);
+	return grpc_unpack_type(desc, map->host);
 }
 
 static int pidmap_map_export_object(struct rpc_desc *desc, struct gdm_set *set,
@@ -74,7 +74,7 @@ static int pidmap_map_export_object(struct rpc_desc *desc, struct gdm_set *set,
 {
 	struct pidmap_map *map = obj_entry->object;
 
-	return rpc_pack_type(desc, map->host);
+	return grpc_pack_type(desc, map->host);
 }
 
 static int pidmap_map_remove_object(void *object,
@@ -244,13 +244,13 @@ static int recv_pidmap(struct rpc_desc *desc,
 	if (!page)
 		return -ENOMEM;
 
-	err = rpc_unpack_type(desc, nr_pages);
+	err = grpc_unpack_type(desc, nr_pages);
 	if (err)
 		goto err;
 	BUG_ON(!nr_pages);
 
 	for (i = 0; i < nr_pages; i++) {
-		err = rpc_unpack_type(desc, page_index);
+		err = grpc_unpack_type(desc, page_index);
 		if (err)
 			goto err;
 		map = &pidmap_ns->pidmap[page_index];
@@ -259,10 +259,10 @@ static int recv_pidmap(struct rpc_desc *desc,
 			if (err)
 				goto err;
 		}
-		err = rpc_unpack(desc, 0, page, PAGE_SIZE);
+		err = grpc_unpack(desc, 0, page, PAGE_SIZE);
 		if (err)
 			goto err;
-		err = rpc_unpack_type(desc, nr_free);
+		err = grpc_unpack_type(desc, nr_free);
 		if (err)
 			goto err;
 		if (page_index == 0) {
@@ -285,7 +285,7 @@ static int recv_pidmap(struct rpc_desc *desc,
 			goto err;
 	}
 
-	err = rpc_pack_type(desc, err);
+	err = grpc_pack_type(desc, err);
 	if (err)
 		goto err;
 
@@ -321,7 +321,7 @@ static int send_pidmap(struct rpc_desc *desc, struct pid_namespace *pidmap_ns)
 			nr_pages++;
 	BUG_ON(!nr_pages);
 
-	err = rpc_pack_type(desc, nr_pages);
+	err = grpc_pack_type(desc, nr_pages);
 	if (err)
 		goto out;
 
@@ -331,19 +331,19 @@ static int send_pidmap(struct rpc_desc *desc, struct pid_namespace *pidmap_ns)
 		if (nr_free == BITS_PER_PAGE)
 			continue;
 
-		err = rpc_pack_type(desc, i);
+		err = grpc_pack_type(desc, i);
 		if (err)
 			goto out;
-		err = rpc_pack(desc, 0, map->page, PAGE_SIZE);
+		err = grpc_pack(desc, 0, map->page, PAGE_SIZE);
 		if (err)
 			goto out;
-		err = rpc_pack_type(desc, nr_free);
+		err = grpc_pack_type(desc, nr_free);
 		if (err)
 			goto out;
 	}
 
 	/* Make sure that the transfer went fine */
-	err = rpc_unpack_type(desc, err);
+	err = grpc_unpack_type(desc, err);
 	if (err > 0)
 		err = -EPIPE;
 
@@ -400,7 +400,7 @@ int pidmap_map_add(struct ghotplug_context *ctx)
 	if (!desc)
 		goto unlock;
 
-	err = rpc_pack_type(desc, hcc_node_id);
+	err = grpc_pack_type(desc, hcc_node_id);
 	if (err)
 		goto cancel;
 

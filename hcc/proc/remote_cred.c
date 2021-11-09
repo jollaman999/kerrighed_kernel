@@ -16,7 +16,7 @@ struct gpm_action;
 
 int pack_creds(struct rpc_desc *desc, const struct cred *cred)
 {
-	return rpc_pack_type(desc, *cred);
+	return grpc_pack_type(desc, *cred);
 }
 
 int unpack_creds(struct rpc_desc *desc, struct cred *cred)
@@ -24,7 +24,7 @@ int unpack_creds(struct rpc_desc *desc, struct cred *cred)
 	struct cred tmp;
 	int err;
 
-	err = rpc_unpack_type(desc, tmp);
+	err = grpc_unpack_type(desc, tmp);
 	if (err)
 		goto out;
 

@@ -250,7 +250,7 @@ int shmid_export_object (struct rpc_desc *desc,
 	shp_object = obj_entry->object;
 	shp_object->mobile_shp = *shp_object->local_shp;
 
-	rpc_pack(desc, 0, shp_object, sizeof(shmid_object_t));
+	grpc_pack(desc, 0, shp_object, sizeof(shmid_object_t));
 	return 0;
 }
 
@@ -272,7 +272,7 @@ int shmid_import_object (struct rpc_desc *desc,
 	struct shmid_kernel *shp;
 
 	shp_object = obj_entry->object;
-	rpc_unpack(desc, 0, &buffer, sizeof(shmid_object_t));
+	grpc_unpack(desc, 0, &buffer, sizeof(shmid_object_t));
 
 	shp_object->mobile_shp = buffer.mobile_shp;
 	shp_object->set_id = buffer.set_id;

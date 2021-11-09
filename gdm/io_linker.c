@@ -376,7 +376,7 @@ int gdm_io_import_object (struct rpc_desc *desc,
 	if (io && io->import_object)
 		res = io->import_object(desc, set, obj_entry, objid, flags);
 	else
-		res = rpc_unpack(desc, 0, obj_entry->object, set->obj_size);
+		res = grpc_unpack(desc, 0, obj_entry->object, set->obj_size);
 
 	return res;
 }
@@ -402,7 +402,7 @@ int gdm_io_export_object (struct rpc_desc *desc,
 	if (io && io->export_object)
 		res = io->export_object(desc, set, obj_entry, objid, flags);
 	else
-		res = rpc_pack(desc, 0, obj_entry->object, set->obj_size);
+		res = grpc_pack(desc, 0, obj_entry->object, set->obj_size);
 
 	return res;
 }

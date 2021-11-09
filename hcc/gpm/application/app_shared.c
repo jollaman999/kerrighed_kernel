@@ -647,20 +647,20 @@ static int send_dist_objects_list(struct rpc_desc *desc,
 		this = container_of(idx, struct shared_object, index);
 
 		if (this->checkpoint.locality != LOCAL_ONLY) {
-			r = rpc_pack_type(desc, idx->type);
+			r = grpc_pack_type(desc, idx->type);
 			if (r)
 				goto err_pack;
 
-			r = rpc_pack_type(desc, idx->key);
+			r = grpc_pack_type(desc, idx->key);
 			if (r)
 				goto err_pack;
 
-			r = rpc_pack_type(desc, this->checkpoint.locality);
+			r = grpc_pack_type(desc, this->checkpoint.locality);
 			if (r)
 				goto err_pack;
 		}
 	}
-	r = rpc_pack_type(desc, end);
+	r = grpc_pack_type(desc, end);
 
 err_pack:
 	return r;
@@ -700,7 +700,7 @@ static int rcv_dist_objects_list_from(struct rpc_desc *desc,
 	int r;
 	enum shared_obj_type type;
 
-	r = rpc_unpack_type_from(desc, node, type);
+	r = grpc_unpack_type_from(desc, node, type);
 	if (r)
 		goto error;
 
@@ -710,11 +710,11 @@ static int rcv_dist_objects_list_from(struct rpc_desc *desc,
 		unsigned long key;
 		enum object_locality locality = LOCAL_ONLY;
 
-		r = rpc_unpack_type_from(desc, node, key);
+		r = grpc_unpack_type_from(desc, node, key);
 		if (r)
 			goto error;
 
-		r = rpc_unpack_type_from(desc, node, locality);
+		r = grpc_unpack_type_from(desc, node, locality);
 		if (r)
 			goto error;
 
@@ -748,7 +748,7 @@ static int rcv_dist_objects_list_from(struct rpc_desc *desc,
 		hccnode_set(node, s->nodes);
 
 		/* next ! */
-		r = rpc_unpack_type_from(desc, node, type);
+		r = grpc_unpack_type_from(desc, node, type);
 		if (r)
 			goto error;
 	}
@@ -780,23 +780,23 @@ static int send_full_dist_objects_list(struct rpc_desc *desc,
 			goto err;
 		}
 
-		r = rpc_pack_type(desc, idx->type);
+		r = grpc_pack_type(desc, idx->type);
 		if (r)
 			goto err;
 
-		r = rpc_pack_type(desc, idx->key);
+		r = grpc_pack_type(desc, idx->key);
 		if (r)
 			goto err;
 
-		r = rpc_pack_type(desc, this->master_node);
+		r = grpc_pack_type(desc, this->master_node);
 		if (r)
 			goto err;
 
-		r = rpc_pack_type(desc, this->nodes);
+		r = grpc_pack_type(desc, this->nodes);
 		if (r)
 			goto err;
 	}
-	r = rpc_pack_type(desc, end);
+	r = grpc_pack_type(desc, end);
 
 err:
 	return r;
@@ -811,21 +811,21 @@ static int rcv_full_dist_objects_list(struct rpc_desc *desc,
 	struct rb_node *node;
 	struct dist_shared_index s;
 
-	r = rpc_unpack_type(desc, s.index.type);
+	r = grpc_unpack_type(desc, s.index.type);
 	if (r)
 		goto error;
 
 	while (s.index.type != NO_OBJ) {
 
-		r = rpc_unpack_type(desc, s.index.key);
+		r = grpc_unpack_type(desc, s.index.key);
 		if (r)
 			goto error;
 
-		r = rpc_unpack_type(desc, s.master_node);
+		r = grpc_unpack_type(desc, s.master_node);
 		if (r)
 			goto error;
 
-		r = rpc_unpack_type(desc, s.nodes);
+		r = grpc_unpack_type(desc, s.nodes);
 		if (r)
 			goto error;
 
@@ -850,7 +850,7 @@ static int rcv_full_dist_objects_list(struct rpc_desc *desc,
 		}
 
 		/* next ! */
-		r = rpc_unpack_type(desc, s.index.type);
+		r = grpc_unpack_type(desc, s.index.type);
 		if (r)
 			goto error;
 	}
@@ -913,7 +913,7 @@ int global_chkpt_shared(struct rpc_desc *desc,
 	 * a new RPC desc to each node */
 
 	/* go ahead, nodes should prepare to receive the list */
-	r = rpc_pack_type(desc, r);
+	r = grpc_pack_type(desc, r);
 	if (r)
 		goto err_clear_shared;
 
@@ -1070,28 +1070,28 @@ static int send_restored_objects(struct rpc_desc *desc, struct app_struct *app,
 
 		if (this->restart.locality == SHARED_MASTER &&
 		    (idx->type >= from && idx->type <= to)) {
-			r = rpc_pack_type(desc, idx->type);
+			r = grpc_pack_type(desc, idx->type);
 			if (r)
 				goto err_pack;
 
-			r = rpc_pack_type(desc, idx->key);
+			r = grpc_pack_type(desc, idx->key);
 			if (r)
 				goto err_pack;
 
-			r = rpc_pack_type(desc, this->restart.data_size);
+			r = grpc_pack_type(desc, this->restart.data_size);
 			if (r)
 				goto err_pack;
 
 			if (this->restart.data_size)
-				r = rpc_pack(desc, 0, this->restart.data,
+				r = grpc_pack(desc, 0, this->restart.data,
 					     this->restart.data_size);
 			else
-				r = rpc_pack_type(desc, this->restart.data);
+				r = grpc_pack_type(desc, this->restart.data);
 			if (r)
 				goto err_pack;
 		}
 	}
-	r = rpc_pack_type(desc, end);
+	r = grpc_pack_type(desc, end);
 
 err_pack:
 	return r;
@@ -1134,7 +1134,7 @@ static int rcv_restored_dist_objects_list_from(
 	int r;
 	enum shared_obj_type type;
 
-	r = rpc_unpack_type_from(desc, node, type);
+	r = grpc_unpack_type_from(desc, node, type);
 	if (r)
 		goto error;
 
@@ -1144,11 +1144,11 @@ static int rcv_restored_dist_objects_list_from(
 		void *data;
 		size_t data_size;
 
-		r = rpc_unpack_type_from(desc, node, key);
+		r = grpc_unpack_type_from(desc, node, key);
 		if (r)
 			goto error;
 
-		r = rpc_unpack_type_from(desc, node, data_size);
+		r = grpc_unpack_type_from(desc, node, data_size);
 		if (r)
 			goto error;
 
@@ -1165,9 +1165,9 @@ static int rcv_restored_dist_objects_list_from(
 
 		if (data_size) {
 			data = &s[1];
-			r = rpc_unpack_from(desc, node, 0, data, data_size);
+			r = grpc_unpack_from(desc, node, 0, data, data_size);
 		} else
-			r = rpc_unpack_type_from(desc, node, data);
+			r = grpc_unpack_type_from(desc, node, data);
 
 		if (r) {
 			kfree(s);
@@ -1183,7 +1183,7 @@ static int rcv_restored_dist_objects_list_from(
 		}
 
 		/* next ! */
-		r = rpc_unpack_type_from(desc, node, type);
+		r = grpc_unpack_type_from(desc, node, type);
 		if (r)
 			goto error;
 	}
@@ -1209,28 +1209,28 @@ static int send_full_restored_dist_objects_list(
 		this = container_of(idx, struct restored_dist_shared_index,
 				    index);
 
-		r = rpc_pack_type(desc, idx->type);
+		r = grpc_pack_type(desc, idx->type);
 		if (r)
 			goto err_pack;
 
-		r = rpc_pack_type(desc, idx->key);
+		r = grpc_pack_type(desc, idx->key);
 		if (r)
 			goto err_pack;
 
-		r = rpc_pack_type(desc, this->data_size);
+		r = grpc_pack_type(desc, this->data_size);
 		if (r)
 			goto err_pack;
 
 		if (this->data_size)
-			r = rpc_pack(desc, 0, this->data,
+			r = grpc_pack(desc, 0, this->data,
 				     this->data_size);
 		else
-			r = rpc_pack_type(desc, this->data);
+			r = grpc_pack_type(desc, this->data);
 
 		if (r)
 			goto err_pack;
 	}
-	r = rpc_pack_type(desc, end);
+	r = grpc_pack_type(desc, end);
 
 err_pack:
 	return r;
@@ -1243,18 +1243,18 @@ static int rcv_full_restored_objects(
 	int r;
 	struct restored_dist_shared_index s;
 
-	r = rpc_unpack_type(desc, s.index.type);
+	r = grpc_unpack_type(desc, s.index.type);
 	if (r)
 		goto error;
 
 	while (s.index.type != NO_OBJ) {
 		struct shared_object *obj;
 
-		r = rpc_unpack_type(desc, s.index.key);
+		r = grpc_unpack_type(desc, s.index.key);
 		if (r)
 			goto error;
 
-		r = rpc_unpack_type(desc, s.data_size);
+		r = grpc_unpack_type(desc, s.data_size);
 		if (r)
 			goto error;
 
@@ -1271,10 +1271,10 @@ static int rcv_full_restored_objects(
 
 		if (s.data_size) {
 			s.data = &obj[1];
-			r = rpc_unpack(desc, 0, s.data, s.data_size);
+			r = grpc_unpack(desc, 0, s.data, s.data_size);
 		}
 		else
-			r = rpc_unpack_type(desc, s.data);
+			r = grpc_unpack_type(desc, s.data);
 
 		if (r) {
 			kfree(obj);
@@ -1291,7 +1291,7 @@ static int rcv_full_restored_objects(
 			kfree(obj);
 
 		/* next ! */
-		r = rpc_unpack_type(desc, s.index.type);
+		r = grpc_unpack_type(desc, s.index.type);
 		if (r)
 			goto error;
 	}
@@ -1352,32 +1352,32 @@ static int send_substitution_files(struct rpc_desc *desc,
 		idx = container_of(node, struct shared_index, node);
 		this = container_of(idx, struct substitution_file, index);
 
-		r = rpc_pack_type(desc, idx->type);
+		r = grpc_pack_type(desc, idx->type);
 		if (r)
 			goto err_pack;
 
-		r = rpc_pack_type(desc, idx->key);
+		r = grpc_pack_type(desc, idx->key);
 		if (r)
 			goto err_pack;
 
-		r = rpc_pack_type(desc, this->node);
+		r = grpc_pack_type(desc, this->node);
 		if (r)
 			goto err_pack;
 
-		r = rpc_pack_type(desc, this->data_size);
+		r = grpc_pack_type(desc, this->data_size);
 		if (r)
 			goto err_pack;
 
 		if (this->data_size)
-			r = rpc_pack(desc, 0, this->data,
+			r = grpc_pack(desc, 0, this->data,
 				     this->data_size);
 		else
-			r = rpc_pack_type(desc, this->data);
+			r = grpc_pack_type(desc, this->data);
 
 		if (r)
 			goto err_pack;
 	}
-	r = rpc_pack_type(desc, end);
+	r = grpc_pack_type(desc, end);
 
 err_pack:
 	return r;
@@ -1392,7 +1392,7 @@ static int rcv_substitution_files(struct rpc_desc *desc,
 	size_t data_size;
 	void *data;
 
-	r = rpc_unpack_type(desc, index.type);
+	r = grpc_unpack_type(desc, index.type);
 	if (r)
 		goto error;
 
@@ -1405,15 +1405,15 @@ static int rcv_substitution_files(struct rpc_desc *desc,
 			goto error;
 		}
 
-		r = rpc_unpack_type(desc, index.key);
+		r = grpc_unpack_type(desc, index.key);
 		if (r)
 			goto error;
 
-		r = rpc_unpack_type(desc, node);
+		r = grpc_unpack_type(desc, node);
 		if (r)
 			goto error;
 
-		r = rpc_unpack_type(desc, data_size);
+		r = grpc_unpack_type(desc, data_size);
 		if (r)
 			goto error;
 
@@ -1427,10 +1427,10 @@ static int rcv_substitution_files(struct rpc_desc *desc,
 
 		if (data_size) {
 			data = &obj[1];
-			r = rpc_unpack(desc, 0, data, data_size);
+			r = grpc_unpack(desc, 0, data, data_size);
 		}
 		else
-			r = rpc_unpack_type(desc, data);
+			r = grpc_unpack_type(desc, data);
 
 		if (r) {
 			kfree(obj);
@@ -1457,13 +1457,13 @@ static int rcv_substitution_files(struct rpc_desc *desc,
 			}
 		} else
 			/* object is useless here
-			 * one day, with a good implementation of rpc_pack_to,
+			 * one day, with a good implementation of grpc_pack_to,
 			 * this code path may disappear
 			 */
 			kfree(obj);
 
 		/* next ! */
-		r = rpc_unpack_type(desc, index.type);
+		r = grpc_unpack_type(desc, index.type);
 		if (r)
 			goto error;
 	}
@@ -1809,7 +1809,7 @@ static int global_restart_shared_objects(struct rpc_desc *desc,
 		goto error;
 
 	/* 2) request the list of restored distributed objects */
-	err_rpc = rpc_pack_type(desc, r);
+	err_rpc = grpc_pack_type(desc, r);
 	if (err_rpc)
 		goto err_rpc;
 
@@ -1827,7 +1827,7 @@ static int global_restart_shared_objects(struct rpc_desc *desc,
 	/* 3) Send the list to every node
 	 * this is not optimized but otherwise, we need to open
 	 * a new RPC desc to each node */
-	err_rpc = rpc_pack_type(desc, r);
+	err_rpc = grpc_pack_type(desc, r);
 	if (err_rpc)
 		goto err_rpc;
 

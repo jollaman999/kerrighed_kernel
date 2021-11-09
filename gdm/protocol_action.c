@@ -102,12 +102,12 @@ static inline int send_msg_to_object_receiver(hcc_node_t dest,
 	if (!desc)
 		OOM;
 
-	err = rpc_pack_type(desc, object_send_msg);
+	err = grpc_pack_type(desc, object_send_msg);
 	if (err)
 		goto err_cancel;
 
 	if (object_state & GDM_OWNER_OBJ) {
-		err = rpc_pack(desc, 0, &obj_entry->master_obj,
+		err = grpc_pack(desc, 0, &obj_entry->master_obj,
 			       sizeof(masterObj_t));
 		if (err)
 			goto err_cancel;
@@ -120,7 +120,7 @@ static inline int send_msg_to_object_receiver(hcc_node_t dest,
 	}
 
 	if (flags & GDM_SYNC_OBJECT)
-		rpc_unpack_type (desc, err);
+		grpc_unpack_type (desc, err);
 
 	rpc_end(desc, 0);
 

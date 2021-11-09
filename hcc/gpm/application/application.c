@@ -787,7 +787,7 @@ int global_stop(struct app_gdm_object *obj)
 	msg.app_id = obj->app_id;
 
 	desc = rpc_begin_m(APP_STOP, &obj->nodes);
-	err_rpc = rpc_pack_type(desc, msg);
+	err_rpc = grpc_pack_type(desc, msg);
 	if (err_rpc)
 		goto err_rpc;
 
@@ -811,7 +811,7 @@ int global_stop(struct app_gdm_object *obj)
 		goto error;
 
 	/* informing nodes that everyting is fine */
-	err_rpc = rpc_pack_type(desc, r);
+	err_rpc = grpc_pack_type(desc, r);
 	if (err_rpc)
 		goto err_rpc;
 
@@ -878,7 +878,7 @@ static void handle_app_continue(struct rpc_desc *desc, void *_msg, size_t size)
 
 	__local_continue(app, msg->first_run);
 
-	r = rpc_pack_type(desc, r);
+	r = grpc_pack_type(desc, r);
 	if (r)
 		goto err;
 
@@ -907,7 +907,7 @@ static int global_continue(struct app_gdm_object *obj)
 
 	desc = rpc_begin_m(APP_CONTINUE, &obj->nodes);
 
-	r = rpc_pack_type(desc, msg);
+	r = grpc_pack_type(desc, msg);
 	if (r)
 		goto err_rpc;
 
@@ -991,7 +991,7 @@ static void handle_app_kill(struct rpc_desc *desc, void *_msg, size_t size)
 	revert_creds(old_cred);
 
 send_res:
-	r = rpc_pack_type(desc, r);
+	r = grpc_pack_type(desc, r);
 	if (r)
 		goto err;
 
@@ -1013,7 +1013,7 @@ static int global_kill(struct app_gdm_object *obj, int signal)
 
 	desc = rpc_begin_m(APP_KILL, &obj->nodes);
 
-	r = rpc_pack_type(desc, msg);
+	r = grpc_pack_type(desc, msg);
 	if (r)
 		goto err_rpc;
 	r = pack_creds(desc, current_cred());

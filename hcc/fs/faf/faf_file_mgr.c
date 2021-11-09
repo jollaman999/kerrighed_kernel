@@ -220,15 +220,15 @@ int __send_faf_file_desc(struct rpc_desc *desc, struct file *file)
 	if (r)
 		goto out;
 
-	r = rpc_pack_type(desc, file->f_objid);
+	r = grpc_pack_type(desc, file->f_objid);
 	if (r)
 		goto out_free_fdesc;
 
-	r = rpc_pack_type(desc, fdesc_size);
+	r = grpc_pack_type(desc, fdesc_size);
 	if (r)
 		goto out_free_fdesc;
 
-	r = rpc_pack(desc, 0, fdesc, fdesc_size);
+	r = grpc_pack(desc, 0, fdesc, fdesc_size);
 	if (r)
 		goto out_free_fdesc;
 
@@ -270,11 +270,11 @@ struct file *rcv_faf_file_desc(struct rpc_desc *desc)
 	struct dvfs_file_struct *dvfs_file = NULL;
 	struct file *file = NULL;
 
-	r = rpc_unpack_type(desc, fobjid);
+	r = grpc_unpack_type(desc, fobjid);
 	if (r)
 		goto error;
 
-	r = rpc_unpack_type(desc, fdesc_size);
+	r = grpc_unpack_type(desc, fdesc_size);
 	if (r)
 		goto error;
 
@@ -284,7 +284,7 @@ struct file *rcv_faf_file_desc(struct rpc_desc *desc)
 		goto error;
 	}
 
-	r = rpc_unpack(desc, 0, fdesc, fdesc_size);
+	r = grpc_unpack(desc, 0, fdesc, fdesc_size);
 	if (r)
 		goto err_free_desc;
 

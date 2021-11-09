@@ -136,14 +136,14 @@ long get_appid_from_pid(pid_t pid)
 	desc = rpc_begin(APP_REMOTE_CHKPT, n);
 	if (!desc)
 		goto out_unlock;
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto err;
 	err = pack_creds(desc, current_cred());
 	if (err)
 		goto err;
 
-	err = rpc_unpack_type(desc, app_id);
+	err = grpc_unpack_type(desc, app_id);
 	if (err)
 		goto err;
 out_end:
@@ -178,7 +178,7 @@ void handle_get_appid_from_pid(struct rpc_desc *desc, void *_msg, size_t size)
 
 	revert_creds(old_cred);
 
-	err = rpc_pack_type(desc, app_id);
+	err = grpc_pack_type(desc, app_id);
 
 out:
 	if (err)

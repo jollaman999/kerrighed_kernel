@@ -1444,7 +1444,7 @@ static int hcc_kill_pg_info(int sig, struct siginfo *info, pid_t pgid)
 	desc = rpc_begin_m(PROC_KILL_PG_INFO, &nodes);
 
 	make_kill_info_msg(&msg, sig, info, pgid);
-	retval = rpc_pack_type(desc, msg);
+	retval = grpc_pack_type(desc, msg);
 	if (retval)
 		goto err_cancel;
 	retval = pack_creds(desc, current_cred());

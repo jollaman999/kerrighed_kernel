@@ -103,15 +103,15 @@ static void handle_read_proc_pid_environ(struct rpc_desc *desc,
 
 	revert_creds(old_cred);
 
-	err = rpc_pack_type(desc, res);
+	err = grpc_pack_type(desc, res);
 	if (err)
 		goto out_err_cancel;
 	if (res > 0) {
-		err = rpc_pack(desc, 0, (char *)page, res);
+		err = grpc_pack(desc, 0, (char *)page, res);
 		if (err)
 			goto out_err_cancel;
 	}
-	err = rpc_pack_type(desc, msg->pos);
+	err = grpc_pack_type(desc, msg->pos);
 	if (err)
 		goto out_err_cancel;
 
@@ -148,23 +148,23 @@ static int do_environ_read(struct file *file, struct proc_distant_pid_info *task
 	if (!desc)
 		goto out_err;
 
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto out_err_cancel;
 	err = pack_creds(desc, current_cred());
 	if (err)
 		goto out_err_cancel;
 
-	err = rpc_unpack_type(desc, bytes_read);
+	err = grpc_unpack_type(desc, bytes_read);
 	if (err)
 		goto out_err_cancel;
 	if (bytes_read > 0) {
 		BUG_ON(bytes_read > count);
-		err = rpc_unpack(desc, 0, buf, bytes_read);
+		err = grpc_unpack(desc, 0, buf, bytes_read);
 	}
 	if (err)
 		goto out_err_cancel;
-	err = rpc_unpack_type(desc, new_pos);
+	err = grpc_unpack_type(desc, new_pos);
 	if (err)
 		goto out_err_cancel;
 	*ppos = new_pos;
@@ -327,11 +327,11 @@ static void handle_generic_proc_read(struct rpc_desc *desc, void *_msg,
 		res = proc_read(tsk, (char *)page);
 
 out_res:
-	err = rpc_pack_type(desc, res);
+	err = grpc_pack_type(desc, res);
 	if (err)
 		goto out_err_cancel;
 	if (res > 0) {
-		err = rpc_pack(desc, 0, (char *)page, res);
+		err = grpc_pack(desc, 0, (char *)page, res);
 		if (err)
 			goto out_err_cancel;
 	}
@@ -368,18 +368,18 @@ static int generic_proc_read(struct proc_distant_pid_info *task,
 	if (!desc)
 		goto out_err;
 
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto out_err_cancel;
 	err = pack_creds(desc, current_cred());
 	if (err)
 		goto out_err_cancel;
 
-	err = rpc_unpack_type(desc, bytes_read);
+	err = grpc_unpack_type(desc, bytes_read);
 	if (err)
 		goto out_err_cancel;
 	if (bytes_read > 0)
-		err = rpc_unpack(desc, 0, buffer, bytes_read);
+		err = grpc_unpack(desc, 0, buffer, bytes_read);
 	if (err)
 		goto out_err_cancel;
 
@@ -740,7 +740,7 @@ static void handle_generic_proc_show(struct rpc_desc *desc, void *_msg,
 	fd = res;
 
 	for (;;) {
-		err = rpc_unpack_type(desc, count);
+		err = grpc_unpack_type(desc, count);
 		if (err)
 			goto out_err_cancel;
 		if (!count)
@@ -748,11 +748,11 @@ static void handle_generic_proc_show(struct rpc_desc *desc, void *_msg,
 
 		res = sys_read(fd, (void *)page, count);
 
-		err = rpc_pack_type(desc, res);
+		err = grpc_pack_type(desc, res);
 		if (err)
 			goto out_err_cancel;
 		if (res > 0) {
-			err = rpc_pack(desc, 0, (char *)page, res);
+			err = grpc_pack(desc, 0, (char *)page, res);
 			if (err)
 				goto out_err_cancel;
 		}
@@ -778,7 +778,7 @@ out_err_cancel:
 	goto out;
 
 out_err:
-	err = rpc_pack_type(desc, res);
+	err = grpc_pack_type(desc, res);
 	if (err)
 		goto out_err_cancel;
 	goto out;
@@ -791,7 +791,7 @@ static void generic_proc_show_release(struct inode *inode, struct file *file)
 	size_t count = 0;
 	int err;
 
-	err = rpc_pack_type(desc, count);
+	err = grpc_pack_type(desc, count);
 	if (err)
 		rpc_cancel(desc);
 	rpc_end(desc, 0);
@@ -829,7 +829,7 @@ static int generic_proc_show(struct file *file,
 		private->data = desc;
 		file->private_data = private;
 
-		err = rpc_pack_type(desc, msg);
+		err = grpc_pack_type(desc, msg);
 		if (err)
 			goto out_err_cancel;
 		err = pack_creds(desc, current_cred());
@@ -839,15 +839,15 @@ static int generic_proc_show(struct file *file,
 		desc = private->data;
 	}
 
-	err = rpc_pack_type(desc, count);
+	err = grpc_pack_type(desc, count);
 	if (err)
 		goto out_err_cancel;
-	err = rpc_unpack_type(desc, bytes_read);
+	err = grpc_unpack_type(desc, bytes_read);
 	if (err)
 		goto out_err_cancel;
 	if (bytes_read > 0) {
 		BUG_ON(bytes_read > count);
-		err = rpc_unpack(desc, 0, buf, bytes_read);
+		err = grpc_unpack(desc, 0, buf, bytes_read);
 	}
 	if (err)
 		goto out_err_cancel;

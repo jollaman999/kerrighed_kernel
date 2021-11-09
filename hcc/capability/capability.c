@@ -363,7 +363,7 @@ static int handle_get_pid_cap(struct rpc_desc *desc, void *_msg, size_t size)
 	if (ret)
 		goto out_end;
 
-	ret = rpc_pack_type(desc, cap);
+	ret = grpc_pack_type(desc, cap);
 	if (ret)
 		goto err_cancel;
 
@@ -390,14 +390,14 @@ static int remote_get_pid_cap(pid_t pid, kernel_hcc_cap_t *cap)
 		goto out;
 	}
 
-	err = rpc_unpack_type(desc, res);
+	err = grpc_unpack_type(desc, res);
 	if (err)
 		goto err_cancel;
 	if (res) {
 		err = res;
 		goto out_end;
 	}
-	err = rpc_unpack_type(desc, *cap);
+	err = grpc_unpack_type(desc, *cap);
 	if (err)
 		goto err_cancel;
 

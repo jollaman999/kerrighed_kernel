@@ -423,7 +423,7 @@ static int global_do_chkpt(struct app_gdm_object *obj, int flags)
 	msg.flags = flags;
 
 	desc = rpc_begin_m(APP_DO_CHKPT, &obj->nodes);
-	err_rpc = rpc_pack_type(desc, msg);
+	err_rpc = grpc_pack_type(desc, msg);
 	if (err_rpc)
 		goto err_rpc;
 	err_rpc = pack_creds(desc, current_cred());
@@ -435,7 +435,7 @@ static int global_do_chkpt(struct app_gdm_object *obj, int flags)
 	if (r)
 		goto err_chkpt;
 
-	err_rpc = rpc_pack_type(desc, r);
+	err_rpc = grpc_pack_type(desc, r);
 	if (err_rpc)
 		goto err_rpc;
 
@@ -443,7 +443,7 @@ static int global_do_chkpt(struct app_gdm_object *obj, int flags)
 	if (r)
 		goto err_chkpt;
 
-	err_rpc = rpc_pack_type(desc, r);
+	err_rpc = grpc_pack_type(desc, r);
 	if (err_rpc)
 		goto err_rpc;
 
@@ -452,7 +452,7 @@ static int global_do_chkpt(struct app_gdm_object *obj, int flags)
 		goto exit;
 
 err_chkpt:
-	err_rpc = rpc_pack_type(desc, r);
+	err_rpc = grpc_pack_type(desc, r);
 	if (err_rpc)
 		goto err_rpc;
 exit_rpc:
@@ -583,7 +583,7 @@ static void handle_cr_exclude(struct rpc_desc *desc, void *_msg, size_t size)
 	app = find_local_app(*app_id);
 
 	do {
-		r = rpc_unpack(desc, 0, &mm_region, sizeof(struct cr_mm_region));
+		r = grpc_unpack(desc, 0, &mm_region, sizeof(struct cr_mm_region));
 		if (r)
 			goto error;
 
@@ -648,13 +648,13 @@ int app_cr_exclude(struct cr_mm_region *mm_regions)
 		goto exit_gdmput;
 	}
 
-	r = rpc_pack_type(desc, app_id);
+	r = grpc_pack_type(desc, app_id);
 	if (r)
 		goto exit_rpc;
 
 	element = mm_regions;
 	while (element) {
-		r = rpc_pack(desc, 0, element, sizeof(struct cr_mm_region));
+		r = grpc_pack(desc, 0, element, sizeof(struct cr_mm_region));
 		if (r)
 			goto exit_rpc;
 

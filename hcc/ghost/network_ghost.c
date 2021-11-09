@@ -23,7 +23,7 @@ int network_ghost_read(struct ghost *ghost, void *buff, size_t length)
 	struct rpc_desc *desc = ghost->data;
 	int retval;
 
-	retval = rpc_unpack(desc, 0, buff, length);
+	retval = grpc_unpack(desc, 0, buff, length);
 	if (retval == RPC_EPIPE)
 		retval = -EPIPE;
 	BUG_ON(retval > 0);
@@ -46,7 +46,7 @@ int network_ghost_write(struct ghost *ghost, const void *buff, size_t length)
 	struct rpc_desc *desc = ghost->data;
 	int retval;
 
-	retval = rpc_pack(desc, 0, buff, length);
+	retval = grpc_pack(desc, 0, buff, length);
 
 	return retval;
 }

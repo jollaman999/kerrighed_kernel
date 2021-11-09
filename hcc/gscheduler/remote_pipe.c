@@ -37,10 +37,10 @@ static void handle_pipe_get_remote_value(struct rpc_desc *desc)
 	pipe = to_gscheduler_pipe(item);
 	source = pipe->source;
 	types = &gscheduler_source_type_of(source)->get_value_types;
-	err = rpc_unpack_type(desc, nr);
+	err = grpc_unpack_type(desc, nr);
 	if (err)
 		goto err_put_item;
-	err = rpc_unpack_type(desc, in_nr);
+	err = grpc_unpack_type(desc, in_nr);
 	if (err)
 		goto err_put_item;
 	err = -ENOMEM;
@@ -57,7 +57,7 @@ static void handle_pipe_get_remote_value(struct rpc_desc *desc)
 		in_value_p = kmalloc(in_size, GFP_KERNEL);
 		if (!in_value_p)
 			goto err_free_value_p;
-		err = rpc_unpack(desc, 0, in_value_p, in_size);
+		err = grpc_unpack(desc, 0, in_value_p, in_size);
 		if (err)
 			goto err_free_in_value_p;
 	}
@@ -65,11 +65,11 @@ static void handle_pipe_get_remote_value(struct rpc_desc *desc)
 	ret = gscheduler_source_get_value(source, value_p, nr,
 					 in_value_p, in_nr);
 
-	err = rpc_pack_type(desc, ret);
+	err = grpc_pack_type(desc, ret);
 	if (err)
 		goto err_free_in_value_p;
 	if (ret > 0) {
-		err = rpc_pack(desc, 0,
+		err = grpc_pack(desc, 0,
 			       value_p,
 			       ret * types->out_type_size);
 		if (err)
@@ -102,13 +102,13 @@ static void pipe_get_remote_value_worker(struct work_struct *work)
 	int ret;
 	int err;
 
-	err = rpc_unpack_type(show_desc->desc, ret);
+	err = grpc_unpack_type(show_desc->desc, ret);
 	if (err)
 		goto err_cancel;
 	show_desc->ret = ret;
 	if (ret <= 0)
 		goto end_request;
-	err = rpc_unpack(show_desc->desc, 0,
+	err = grpc_unpack(show_desc->desc, 0,
 			 show_desc->value_p, value_type_size * ret);
 	if (err)
 		goto err_cancel;
@@ -155,14 +155,14 @@ static int start_pipe_get_remote_value(
 	err = global_config_pack_item(desc, &local_pipe->config.cg_item);
 	if (err)
 		goto err_cancel;
-	err = rpc_pack_type(desc, nr);
+	err = grpc_pack_type(desc, nr);
 	if (err)
 		goto err_cancel;
-	err = rpc_pack_type(desc, in_nr);
+	err = grpc_pack_type(desc, in_nr);
 	if (err)
 		goto err_cancel;
 	if (in_nr) {
-		err = rpc_pack(desc, 0, in_value_p, in_nr * in_size);
+		err = grpc_pack(desc, 0, in_value_p, in_nr * in_size);
 		if (err)
 			goto err_cancel;
 	}

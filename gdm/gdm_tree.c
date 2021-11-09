@@ -404,7 +404,7 @@ static void gdm_tree_export (struct rpc_desc* desc, struct gdm_set *set)
 {
 	struct gdm_tree *tree = set->obj_set;
 
-	rpc_pack_type(desc, tree->tree_type);
+	grpc_pack_type(desc, tree->tree_type);
 }
 
 
@@ -416,7 +416,7 @@ static void *gdm_tree_import (struct rpc_desc* desc, int *free_data)
 	tree_type = kmalloc (sizeof (int), GFP_KERNEL);
 	*free_data = 1;
 
-	rpc_unpack(desc, 0, tree_type, sizeof (int));
+	grpc_unpack(desc, 0, tree_type, sizeof (int));
 	return tree_type;
 }
 

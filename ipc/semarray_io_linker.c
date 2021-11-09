@@ -310,8 +310,8 @@ static inline void __export_semarray(struct rpc_desc *desc,
 				     const semarray_object_t *sem_object,
 				     const struct sem_array* sma)
 {
-	rpc_pack(desc, 0, sma, sizeof(struct sem_array));
-	rpc_pack(desc, 0, sma->sem_base, sma->sem_nsems * sizeof (struct sem));
+	grpc_pack(desc, 0, sma, sizeof(struct sem_array));
+	grpc_pack(desc, 0, sma->sem_base, sma->sem_nsems * sizeof (struct sem));
 }
 
 static inline void __export_semundos(struct rpc_desc *desc,
@@ -323,12 +323,12 @@ static inline void __export_semundos(struct rpc_desc *desc,
 	list_for_each_entry(un, &sma->list_id, list_id)
 		nb_semundo++;
 
-	rpc_pack_type(desc, nb_semundo);
+	grpc_pack_type(desc, nb_semundo);
 
 	list_for_each_entry(un, &sma->list_id, list_id) {
 		BUG_ON(!list_empty(&un->list_proc));
 
-		rpc_pack(desc, 0, un, sizeof(struct sem_undo) +
+		grpc_pack(desc, 0, un, sizeof(struct sem_undo) +
 			 sma->sem_nsems * sizeof(short));
 	}
 }
@@ -343,28 +343,28 @@ static inline void __export_one_local_semqueue(struct rpc_desc *desc,
 	/* Make remote_sleeper_pid(q2) equal to q->sleeper's pid */
 	q2.sleeper = (void*)((long)(task_pid_knr(q->sleeper)));
 
-	rpc_pack_type(desc, q2);
+	grpc_pack_type(desc, q2);
 	if (q->nsops)
-		rpc_pack(desc, 0, q->sops,
+		grpc_pack(desc, 0, q->sops,
 			 q->nsops * sizeof(struct sembuf));
 
 	if (q->undo) {
 		BUG_ON(!list_empty(&q->undo->list_proc));
-		rpc_pack_type(desc, q->undo->proc_list_id);
+		grpc_pack_type(desc, q->undo->proc_list_id);
 	}
 }
 
 static inline void __export_one_remote_semqueue(struct rpc_desc *desc,
 						const struct sem_queue* q)
 {
-	rpc_pack(desc, 0, q, sizeof(struct sem_queue));
+	grpc_pack(desc, 0, q, sizeof(struct sem_queue));
 	if (q->nsops)
-		rpc_pack(desc, 0, q->sops,
+		grpc_pack(desc, 0, q->sops,
 			 q->nsops * sizeof(struct sembuf));
 
 	if (q->undo) {
 		BUG_ON(!list_empty(&q->undo->list_proc));
-		rpc_pack_type(desc, q->undo->proc_list_id);
+		grpc_pack_type(desc, q->undo->proc_list_id);
 	}
 }
 
@@ -382,7 +382,7 @@ static inline void __export_semqueues(struct rpc_desc *desc,
 	list_for_each_entry(q, &sma->remote_sem_pending, list)
 		nb_sem_pending++;
 
-	rpc_pack_type(desc, nb_sem_pending);
+	grpc_pack_type(desc, nb_sem_pending);
 
 	/* send local sem_queues */
 	list_for_each_entry(q, &sma->sem_pending, list)
@@ -426,7 +426,7 @@ static inline int __import_semarray(struct rpc_desc *desc,
 	struct sem_array buffer;
 	int size_sems;
 
-	rpc_unpack_type(desc, buffer);
+	grpc_unpack_type(desc, buffer);
 	sem_object->imported_sem = buffer;
 
 	size_sems = sem_object->imported_sem.sem_nsems * sizeof(struct sem);
@@ -435,7 +435,7 @@ static inline int __import_semarray(struct rpc_desc *desc,
 	if (!sem_object->mobile_sem_base)
 		return -ENOMEM;
 
-	rpc_unpack(desc, 0, sem_object->mobile_sem_base, size_sems);
+	grpc_unpack(desc, 0, sem_object->mobile_sem_base, size_sems);
 	sem_object->imported_sem.sem_base = sem_object->mobile_sem_base;
 
 	INIT_LIST_HEAD(&sem_object->imported_sem.sem_pending);
@@ -454,7 +454,7 @@ static inline int __import_semundos(struct rpc_desc *desc,
 	size_undo = sizeof(struct sem_undo) +
 		sma->sem_nsems * sizeof(short);
 
-	rpc_unpack_type(desc, nb_semundo);
+	grpc_unpack_type(desc, nb_semundo);
 
 	BUG_ON(!list_empty(&sma->list_id));
 
@@ -463,7 +463,7 @@ static inline int __import_semundos(struct rpc_desc *desc,
 		if (!undo)
 			goto unalloc_undos;
 
-		rpc_unpack(desc, 0, undo, size_undo);
+		grpc_unpack(desc, 0, undo, size_undo);
 		INIT_LIST_HEAD(&undo->list_id);
 		INIT_LIST_HEAD(&undo->list_proc);
 
@@ -497,7 +497,7 @@ static inline int import_one_semqueue(struct rpc_desc *desc,
 	if (!q)
 		goto exit;
 
-	rpc_unpack(desc, 0, q, sizeof(struct sem_queue));
+	grpc_unpack(desc, 0, q, sizeof(struct sem_queue));
 	INIT_LIST_HEAD(&q->list);
 
 	if (q->nsops) {
@@ -505,11 +505,11 @@ static inline int import_one_semqueue(struct rpc_desc *desc,
 				  GFP_KERNEL);
 		if (!q->sops)
 			goto unalloc_q;
-		rpc_unpack(desc, 0, q->sops, q->nsops * sizeof(struct sembuf));
+		grpc_unpack(desc, 0, q->sops, q->nsops * sizeof(struct sembuf));
 	}
 
 	if (q->undo) {
-		rpc_unpack_type(desc, undo_proc_list_id);
+		grpc_unpack_type(desc, undo_proc_list_id);
 
 		list_for_each_entry(undo, &sma->list_id, list_id) {
 			if (undo->proc_list_id == undo_proc_list_id) {
@@ -542,7 +542,7 @@ static inline int __import_semqueues(struct rpc_desc *desc,
 	long nb_sempending, i;
 	int r;
 
-	r = rpc_unpack_type(desc, nb_sempending);
+	r = grpc_unpack_type(desc, nb_sempending);
 	if (r)
 		goto err;
 

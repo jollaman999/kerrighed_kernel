@@ -357,7 +357,7 @@ int rpc_forward(struct rpc_desc* desc, hcc_node_t node){
 	return 0;
 }
 
-int rpc_pack(struct rpc_desc* desc, int flags, const void* data, size_t size)
+int grpc_pack(struct rpc_desc* desc, int flags, const void* data, size_t size)
 {
 	int err = -EPIPE;
 
@@ -490,7 +490,7 @@ __rpc_signal_dequeue_sigack(struct rpc_desc *desc,
 }
 
 inline
-int __rpc_unpack_from_node(struct rpc_desc* desc, hcc_node_t node,
+int __grpc_unpack_from_node(struct rpc_desc* desc, hcc_node_t node,
 			   int flags, void* data, size_t size)
 {
 
@@ -608,7 +608,7 @@ int __rpc_unpack_from_node(struct rpc_desc* desc, hcc_node_t node,
 
 		descelem = kmem_cache_alloc(rpc_desc_elem_cachep, GFP_ATOMIC);
 		if (!descelem) {
-			printk("OOM in __rpc_unpack_from_node\n");
+			printk("OOM in __grpc_unpack_from_node\n");
 			BUG();
 		}
 		
@@ -643,7 +643,7 @@ int __rpc_unpack_from_node(struct rpc_desc* desc, hcc_node_t node,
 }
 
 enum rpc_error
-rpc_unpack(struct rpc_desc* desc, int flags, void* data, size_t size){
+grpc_unpack(struct rpc_desc* desc, int flags, void* data, size_t size){
 	switch(desc->type){
 	case RPC_RQ_CLT:{
 		hcc_node_t node;
@@ -657,10 +657,10 @@ rpc_unpack(struct rpc_desc* desc, int flags, void* data, size_t size){
 		
 		BUG_ON(node >= HCC_MAX_NODES);
 		
-		return __rpc_unpack_from_node(desc, node, flags, data, size);
+		return __grpc_unpack_from_node(desc, node, flags, data, size);
 	}
 	case RPC_RQ_SRV:
-		return __rpc_unpack_from_node(desc, 0, flags, data, size);
+		return __grpc_unpack_from_node(desc, 0, flags, data, size);
 	default:
 		printk("unexpected case\n");
 		BUG();
@@ -670,18 +670,18 @@ rpc_unpack(struct rpc_desc* desc, int flags, void* data, size_t size){
 }
 
 enum rpc_error
-rpc_unpack_from(struct rpc_desc* desc, hcc_node_t node,
+grpc_unpack_from(struct rpc_desc* desc, hcc_node_t node,
 		int flags, void* data, size_t size)
 {
-	printk("rpc_unpack_from start hcc_node_t %d \n",node);
+	printk("grpc_unpack_from start hcc_node_t %d \n",node);
 	switch(desc->type){
 	case RPC_RQ_CLT:
 		printk("RPC_RQ_CLT ENTER\n");
-		return __rpc_unpack_from_node(desc, node, flags, data, size);
+		return __grpc_unpack_from_node(desc, node, flags, data, size);
 	case RPC_RQ_SRV:
 		printk("RPC_RQ_SRV ENTER\n");
 		if(node == desc->client)
-			return __rpc_unpack_from_node(desc, node, flags, data, size);
+			return __grpc_unpack_from_node(desc, node, flags, data, size);
 		return 0;
 	default:
 		printk("unexpected case\n");
@@ -709,7 +709,7 @@ hcc_node_t rpc_wait_return(struct rpc_desc* desc, int* value)
 			spin_unlock_bh(&desc->desc_lock);
 
 			if(value)
-				rpc_unpack_from(desc, node,
+				grpc_unpack_from(desc, node,
 						0, value, sizeof(*value));
 
 			return node;
@@ -739,7 +739,7 @@ int rpc_wait_return_from(struct rpc_desc* desc, hcc_node_t node)
 		int value;
 
 		spin_unlock_bh(&desc->desc_lock);
-		rpc_unpack_type_from(desc, node, value);
+		grpc_unpack_type_from(desc, node, value);
 		return value;
 	}
 	

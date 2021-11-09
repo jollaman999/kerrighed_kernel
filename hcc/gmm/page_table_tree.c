@@ -734,7 +734,7 @@ static void gdm_pt_export (struct rpc_desc* desc, struct gdm_set *set)
 
 	hccnode_set (desc->client, mm->copyset);
 
-	rpc_pack_type(desc, mm->mm_id);
+	grpc_pack_type(desc, mm->mm_id);
 }
 
 
@@ -744,7 +744,7 @@ static void *gdm_pt_import (struct rpc_desc* desc, int *free_data)
 	struct mm_struct *mm = NULL;
 	unique_id_t mm_id;
 
-	rpc_unpack_type (desc, mm_id);
+	grpc_unpack_type (desc, mm_id);
 	*free_data = 0;
 
 	if (mm_id)

@@ -142,14 +142,14 @@ struct rpc_desc* rpc_begin_m(enum rpcid rpcid,
 
 int rpc_cancel(struct rpc_desc* desc);
 
-int rpc_pack(struct rpc_desc* desc, int flags, const void* data, size_t size);
+int grpc_pack(struct rpc_desc* desc, int flags, const void* data, size_t size);
 int rpc_wait_pack(struct rpc_desc* desc, int seq_id);
 int rpc_cancel_pack(struct rpc_desc* desc);
 
 int rpc_forward(struct rpc_desc* desc, hcc_node_t node);
 
-enum rpc_error rpc_unpack(struct rpc_desc* desc, int flags, void* data, size_t size);
-enum rpc_error rpc_unpack_from(struct rpc_desc* desc, hcc_node_t node,
+enum rpc_error grpc_unpack(struct rpc_desc* desc, int flags, void* data, size_t size);
+enum rpc_error grpc_unpack_from(struct rpc_desc* desc, hcc_node_t node,
 			       int flags, void* data, size_t size);
 void rpc_cancel_unpack(struct rpc_desc* desc);
 
@@ -174,9 +174,9 @@ void rpc_disable_local_lowmem_mode(void);
  * Convenient define
  */
 
-#define rpc_pack_type(desc, v) rpc_pack(desc, 0, &v, sizeof(v))
-#define rpc_unpack_type(desc, v) rpc_unpack(desc, 0, &v, sizeof(v))
-#define rpc_unpack_type_from(desc, n, v) rpc_unpack_from(desc, n, 0, &v, sizeof(v))
+#define grpc_pack_type(desc, v) grpc_pack(desc, 0, &v, sizeof(v))
+#define grpc_unpack_type(desc, v) grpc_unpack(desc, 0, &v, sizeof(v))
+#define grpc_unpack_type_from(desc, n, v) grpc_unpack_from(desc, n, 0, &v, sizeof(v))
 
 /*
  * Convenient functions
@@ -228,9 +228,9 @@ int rpc_async_m(enum rpcid rpcid,
 	if (!desc)
 		goto out;
 
-	err = rpc_pack(desc, 0, data, size);
+	err = grpc_pack(desc, 0, data, size);
 
-	/* rpc_end() always succeeds without delayed rpc_pack() */
+	/* rpc_end() always succeeds without delayed grpc_pack() */
 	rpc_end(desc, 0);
 
 out:
@@ -262,7 +262,7 @@ int rpc_sync_m(enum rpcid rpcid,
 	if (!desc)
 		goto out;
 
-	r = rpc_pack(desc, 0, data, size);
+	r = grpc_pack(desc, 0, data, size);
 	if (r)
 		goto end;
 
@@ -272,7 +272,7 @@ int rpc_sync_m(enum rpcid rpcid,
 	r = 0;
 
 	__for_each_hccnode_mask(i, nodes){
-		rpc_unpack_type_from(desc, i, rold);
+		grpc_unpack_type_from(desc, i, rold);
 		if(first){
 			r = rold;
 			first = 0;
@@ -282,7 +282,7 @@ int rpc_sync_m(enum rpcid rpcid,
 	};
 
 end:
-	/* rpc_end() always succeeds without delayed rpc_pack() */
+	/* rpc_end() always succeeds without delayed grpc_pack() */
 	rpc_end(desc, 0);
 
 out:

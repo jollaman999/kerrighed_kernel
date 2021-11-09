@@ -90,22 +90,22 @@ int mm_export_object (struct rpc_desc *desc,
 
 	hccnode_set (desc->client, mm->copyset);
 
-	rpc_pack(desc, 0, &mm->mm_id, sizeof(unique_id_t));
-	rpc_pack(desc, 0, &mm->anon_vma_gdm_id, sizeof(unique_id_t));
-	rpc_pack(desc, 0, &mm->context.vdso, sizeof(void*));
-	rpc_pack(desc, 0, &mm->copyset, sizeof(hccnodemask_t));
+	grpc_pack(desc, 0, &mm->mm_id, sizeof(unique_id_t));
+	grpc_pack(desc, 0, &mm->anon_vma_gdm_id, sizeof(unique_id_t));
+	grpc_pack(desc, 0, &mm->context.vdso, sizeof(void*));
+	grpc_pack(desc, 0, &mm->copyset, sizeof(hccnodemask_t));
 
 	get_unmap_exec_id = hccsyms_export(mm->get_unmapped_exec_area);
 	BUG_ON(mm->get_unmapped_exec_area && get_unmap_exec_id == HCCSYMS_UNDEF);
-	rpc_pack_type(desc, get_unmap_exec_id);
+	grpc_pack_type(desc, get_unmap_exec_id);
 
 	get_unmap_id = hccsyms_export(mm->get_unmapped_area);
 	BUG_ON(mm->get_unmapped_area && get_unmap_id == HCCSYMS_UNDEF);
-	rpc_pack_type(desc, get_unmap_id);
+	grpc_pack_type(desc, get_unmap_id);
 
 	unmap_id = hccsyms_export(mm->unmap_area);
 	BUG_ON(mm->unmap_area && unmap_id == HCCSYMS_UNDEF);
-	rpc_pack_type(desc, unmap_id);
+	grpc_pack_type(desc, unmap_id);
 
 	return 0;
 }
@@ -133,15 +133,15 @@ int mm_import_object (struct rpc_desc *desc,
 
 	mm = obj_entry->object;
 
-	r = rpc_unpack (desc, 0, &mm_id, sizeof(unique_id_t));
+	r = grpc_unpack (desc, 0, &mm_id, sizeof(unique_id_t));
 	if (r)
 		return r;
 
-	r = rpc_unpack (desc, 0, &gdm_id, sizeof(unique_id_t));
+	r = grpc_unpack (desc, 0, &gdm_id, sizeof(unique_id_t));
 	if (r)
 		return r;
 
-	r = rpc_unpack (desc, 0, &context_vdso, sizeof(void*));
+	r = grpc_unpack (desc, 0, &context_vdso, sizeof(void*));
 	if (r)
 		return r;
 
@@ -158,21 +158,21 @@ int mm_import_object (struct rpc_desc *desc,
 		mm->context.vdso = context_vdso;
 	}
 
-	r = rpc_unpack(desc, 0, &mm->copyset, sizeof(hccnodemask_t));
+	r = grpc_unpack(desc, 0, &mm->copyset, sizeof(hccnodemask_t));
 	if (r)
 		return r;
 
-	r = rpc_unpack_type(desc, get_unmap_exec_id);
+	r = grpc_unpack_type(desc, get_unmap_exec_id);
 	if (r)
 		return r;
 	mm->get_unmapped_exec_area = hccsyms_import (get_unmap_exec_id);
 
-	r = rpc_unpack_type(desc, get_unmap_id);
+	r = grpc_unpack_type(desc, get_unmap_id);
 	if (r)
 		return r;
 	mm->get_unmapped_area = hccsyms_import (get_unmap_id);
 
-	r = rpc_unpack_type(desc, unmap_id);
+	r = grpc_unpack_type(desc, unmap_id);
 	if (r)
 		return r;
 	mm->unmap_area = hccsyms_import (unmap_id);

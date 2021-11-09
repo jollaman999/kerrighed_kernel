@@ -331,7 +331,7 @@ out_unlock:
 	sem_unlock(sma, -1);
 	rcu_read_unlock();
 
-	rpc_pack_type(desc, msg->error);
+	grpc_pack_type(desc, msg->error);
 
 	put_ipc_ns(ns);
 }
@@ -347,8 +347,8 @@ void hcc_ipc_sem_wakeup_process(struct sem_queue *q, int error)
 	msg.error = error;
 
 	desc = rpc_begin(IPC_SEM_WAKEUP, q->node);
-	rpc_pack_type(desc, msg);
-	rpc_unpack_type(desc, msg.error);
+	grpc_pack_type(desc, msg);
+	grpc_unpack_type(desc, msg.error);
 	rpc_end(desc, 0);
 }
 

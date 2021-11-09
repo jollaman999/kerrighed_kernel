@@ -519,16 +519,16 @@ static int send_kernel_version(struct rpc_desc *desc)
 	int len, err, ret;
 
 	len = strlen(UTS_VERSION) + 1;
-	err = rpc_pack_type(desc, len);
+	err = grpc_pack_type(desc, len);
 	if (err)
 		goto error;
 
-	err = rpc_pack(desc, 0, UTS_VERSION, len);
+	err = grpc_pack(desc, 0, UTS_VERSION, len);
 	if (err)
 		goto error;
 
 	for_each_hccnode_mask(node, desc->nodes) {
-		err = rpc_unpack_type_from(desc, node, ret);
+		err = grpc_unpack_type_from(desc, node, ret);
 		if (err)
 			goto error;
 
@@ -547,7 +547,7 @@ static int check_kernel_version(struct rpc_desc *desc)
 	char *uts_version;
 	int len, err, ret;
 
-	err = rpc_unpack_type(desc, len);
+	err = grpc_unpack_type(desc, len);
 	if (err)
 		goto error;
 
@@ -562,7 +562,7 @@ static int check_kernel_version(struct rpc_desc *desc)
 		goto error;
 	}
 
-	err = rpc_unpack(desc, 0, uts_version, len);
+	err = grpc_unpack(desc, 0, uts_version, len);
 	if (err)
 		goto err_free_version;
 
@@ -573,7 +573,7 @@ static int check_kernel_version(struct rpc_desc *desc)
 		ret = -EPERM;
 	}
 
-	err = rpc_pack_type(desc, ret);
+	err = grpc_pack_type(desc, ret);
 	if (err)
 		goto err_free_version;
 
@@ -638,10 +638,10 @@ static void handle_cluster_start(struct rpc_desc *desc, void *data, size_t size)
 		ctx->node_set = msg->node_set;
 	}
 
-	err = rpc_pack_type(desc, ret);
+	err = grpc_pack_type(desc, ret);
 	if (err)
 		goto cancel;
-	err = rpc_unpack_type(desc, ret);
+	err = grpc_unpack_type(desc, ret);
 	if (err)
 		goto cancel;
 
@@ -710,7 +710,7 @@ static void cluster_start_worker(struct work_struct *work)
 
 	if (!desc)
 		goto out;
-	err = rpc_pack_type(desc, cluster_start_msg);
+	err = grpc_pack_type(desc, cluster_start_msg);
 	if (err)
 		goto end;
 
@@ -720,13 +720,13 @@ static void cluster_start_worker(struct work_struct *work)
 
 	for_each_hccnode_mask(node, cluster_start_ctx->node_set.v) {
 		printk("for each hccnode %d\n",node);
-		err = rpc_unpack_type_from(desc, node, ret);
+		err = grpc_unpack_type_from(desc, node, ret);
 		if (err)
 			goto cancel;
 	}
 
 	ret = 0;
-	err = rpc_pack_type(desc, ret);
+	err = grpc_pack_type(desc, ret);
 	if (err)
 		goto cancel;
 	/*

@@ -168,7 +168,7 @@ static int signal_struct_import_object(struct rpc_desc *desc,
 	struct signal_struct tmp_sig;
 	int retval;
 
-	retval = rpc_unpack_type(desc, tmp_sig);
+	retval = grpc_unpack_type(desc, tmp_sig);
 	if (retval)
 		return retval;
 #ifdef CONFIG_TASKSTATS
@@ -177,14 +177,14 @@ static int signal_struct_import_object(struct rpc_desc *desc,
 		tmp_sig.stats = kmem_cache_alloc(taskstats_cache, GFP_KERNEL);
 		if (!tmp_sig.stats)
 			return retval;
-		retval = rpc_unpack_type(desc, *tmp_sig.stats);
+		retval = grpc_unpack_type(desc, *tmp_sig.stats);
 		if (retval) {
 			kmem_cache_free(taskstats_cache, tmp_sig.stats);
 			return retval;
 		}
 	}
 #endif
-	retval = rpc_unpack_type(desc, obj->count);
+	retval = grpc_unpack_type(desc, obj->count);
 	if (retval)
 		return retval;
 
@@ -283,17 +283,17 @@ static int signal_struct_export_object(struct rpc_desc *desc,
 	rcu_read_unlock();
 	if (tsk && !lock_task_sighand(tsk, &flags))
 		BUG();
-	retval = rpc_pack_type(desc, *obj->signal);
+	retval = grpc_pack_type(desc, *obj->signal);
 #ifdef CONFIG_TASKSTATS
 	if (!retval && obj->signal->stats)
-		retval = rpc_pack_type(desc, *obj->signal->stats);
+		retval = grpc_pack_type(desc, *obj->signal->stats);
 #endif
 	if (tsk) {
 		unlock_task_sighand(tsk, &flags);
 		put_task_struct(tsk);
 	}
 	if (!retval)
-		retval = rpc_pack_type(desc, obj->count);
+		retval = grpc_pack_type(desc, obj->count);
 
 	return retval;
 }

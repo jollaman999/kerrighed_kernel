@@ -62,10 +62,10 @@ static int pack_path(struct rpc_desc *desc, const struct path *path)
 		goto out_free;
 	len = strlen(name) + 1;
 
-	err = rpc_pack_type(desc, len);
+	err = grpc_pack_type(desc, len);
 	if (err)
 		goto out_free;
-	err = rpc_pack(desc, 0, name, len);
+	err = grpc_pack(desc, 0, name, len);
 
 out_free:
 	free_page((unsigned long)tmp);
@@ -149,9 +149,9 @@ off_t hcc_faf_lseek (struct file * file,
 
 	desc = rpc_begin(RPC_FAF_LSEEK, data->server_id);
 
-	rpc_pack_type(desc, msg);
+	grpc_pack_type(desc, msg);
 
-	rpc_unpack_type(desc, r);
+	grpc_unpack_type(desc, r);
 
 	rpc_end(desc, 0);
 
@@ -185,10 +185,10 @@ long hcc_faf_llseek (struct file *file,
 
 	desc = rpc_begin(RPC_FAF_LLSEEK, data->server_id);
 
-	rpc_pack_type(desc, msg);
+	grpc_pack_type(desc, msg);
 
-	rpc_unpack_type(desc, r);
-	rpc_unpack(desc, 0, result, sizeof(*result));
+	grpc_unpack_type(desc, r);
+	grpc_unpack(desc, 0, result, sizeof(*result));
 
 	rpc_end(desc, 0);
 
@@ -228,7 +228,7 @@ ssize_t hcc_faf_read(struct file * file, char *buf, size_t count, loff_t *pos)
 		goto out;
 
 	/* Send read request */
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto cancel;
 
@@ -243,7 +243,7 @@ ssize_t hcc_faf_read(struct file * file, char *buf, size_t count, loff_t *pos)
 
 	while (nr > 0) {
 		/* Receive file data */
-		err = rpc_unpack(desc, 0, kbuff, nr);
+		err = grpc_unpack(desc, 0, kbuff, nr);
 		if (err)
 			goto cancel;
 		err = copy_to_user(&buf[received], kbuff, nr);
@@ -262,7 +262,7 @@ ssize_t hcc_faf_read(struct file * file, char *buf, size_t count, loff_t *pos)
 		nr = received;
 
 	/* Receive the updated offset */
-	err = rpc_unpack_type(desc, fpos);
+	err = grpc_unpack_type(desc, fpos);
 	if (err)
 		goto cancel;
 	*pos = fpos;
@@ -318,7 +318,7 @@ ssize_t hcc_faf_write(struct file * file, const char *buf,
 		goto out;
 
 	/* Send write request */
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto cancel;
 
@@ -334,14 +334,14 @@ ssize_t hcc_faf_write(struct file * file, const char *buf,
 		if (err)
 			buf_size = -EFAULT;
 
-		err = rpc_pack_type(desc, buf_size);
+		err = grpc_pack_type(desc, buf_size);
 		if (err)
 			goto cancel;
 
 		if (buf_size < 0) /* copy_from_user has failed */
 			break;
 
-		err = rpc_pack(desc, 0, kbuff, buf_size);
+		err = grpc_pack(desc, 0, kbuff, buf_size);
 		if (err)
 			goto cancel;
 
@@ -356,7 +356,7 @@ ssize_t hcc_faf_write(struct file * file, const char *buf,
 		send_sig(SIGPIPE, current, 0);
 
 	/* Receive the updated offset */
-	err = rpc_unpack_type(desc, fpos);
+	err = grpc_unpack_type(desc, fpos);
 	if (err)
 		goto cancel;
 	*pos = fpos;
@@ -405,7 +405,7 @@ ssize_t hcc_faf_readv(struct file *file, const struct iovec __user *vec,
 	msg.server_fd = data->server_fd;
 	msg.count = total_len;
 	msg.pos = *pos;
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto cancel;
 
@@ -469,7 +469,7 @@ ssize_t hcc_faf_writev(struct file *file, const struct iovec __user *vec,
 	msg.server_fd = data->server_fd;
 	msg.count = total_len;
 	msg.pos = *pos;
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto cancel;
 
@@ -531,7 +531,7 @@ long hcc_faf_ioctl (struct file *file,
 	if (!desc)
 		goto out_err;
 
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto out_cancel;
 	err = pack_context(desc);
@@ -598,7 +598,7 @@ long hcc_faf_fcntl (struct file *file,
 	if (unlikely(!desc))
 		goto out;
 
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (unlikely(err))
 		goto cancel;
 	err = pack_creds(desc, current_cred());
@@ -614,7 +614,7 @@ long hcc_faf_fcntl (struct file *file,
 
 	if (!r) {
 		if (cmd == F_GETLK) {
-			err = rpc_unpack_type(desc, msg.flock);
+			err = grpc_unpack_type(desc, msg.flock);
 			if (unlikely(err))
 				goto cancel;
 			r = -EFAULT;
@@ -622,7 +622,7 @@ long hcc_faf_fcntl (struct file *file,
 					&msg.flock, sizeof(msg.flock)))
 				r = 0;
 		} else if (cmd == F_GETOWN_EX) {
-			err = rpc_unpack_type(desc, msg.owner);
+			err = grpc_unpack_type(desc, msg.owner);
 			if (unlikely(err))
 				goto cancel;
 			r = -EFAULT;
@@ -677,7 +677,7 @@ long hcc_faf_fcntl64 (struct file *file,
 	if (unlikely(!desc))
 		goto out;
 
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (unlikely(err))
 		goto cancel;
 	err = pack_creds(desc, current_cred());
@@ -692,7 +692,7 @@ long hcc_faf_fcntl64 (struct file *file,
 		goto cancel;
 
 	if (!r && cmd == F_GETLK64) {
-		err = rpc_unpack_type(desc, msg.flock64);
+		err = grpc_unpack_type(desc, msg.flock64);
 		if (unlikely(err))
 			goto cancel;
 		r = -EFAULT;
@@ -732,10 +732,10 @@ long hcc_faf_fstat (struct file *file,
 
 	desc = rpc_begin(RPC_FAF_FSTAT, data->server_id);
 
-	rpc_pack_type(desc, msg);
+	grpc_pack_type(desc, msg);
 
-	rpc_unpack_type(desc, r);
-	rpc_unpack_type(desc, buffer);
+	grpc_unpack_type(desc, r);
+	grpc_unpack_type(desc, buffer);
 
 	rpc_end(desc, 0);
 
@@ -764,16 +764,16 @@ long hcc_faf_fstatfs(struct file *file,
 
 	desc = rpc_begin(RPC_FAF_FSTATFS, data->server_id);
 
-	r = rpc_pack_type(desc, msg);
+	r = grpc_pack_type(desc, msg);
 	if (r)
 		goto exit;
 
-	err = rpc_unpack_type(desc, r);
+	err = grpc_unpack_type(desc, r);
 	if (err)
 		goto err_rpc;
 
 	if (!r)
-		err = rpc_unpack_type(desc, buffer);
+		err = grpc_unpack_type(desc, buffer);
 
 	rpc_end(desc, 0);
 
@@ -825,7 +825,7 @@ long hcc_faf_flock (struct file *file,
 	if (!desc)
 		return -ENOMEM;
 
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto cancel;
 	err = pack_creds(desc, current_cred());
@@ -867,7 +867,7 @@ static char *__hcc_faf_d_path(const struct path *root, const struct file *file,
 	desc = rpc_begin(RPC_FAF_D_PATH, data->server_id);
 	if (!desc)
 		return ERR_PTR(-ENOMEM);
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto err_cancel;
 	err = pack_creds(desc, current_cred());
@@ -877,15 +877,15 @@ static char *__hcc_faf_d_path(const struct path *root, const struct file *file,
 	if (err)
 		goto err_cancel;
 
-	err = rpc_unpack_type(desc, len);
+	err = grpc_unpack_type(desc, len);
 	if (err)
 		goto err_cancel;
 	if (len >= 0) {
-		err = rpc_unpack(desc, 0, buff, len);
+		err = grpc_unpack(desc, 0, buff, len);
 		if (err)
 			goto err_cancel;
 		if (deleted) {
-			err = rpc_unpack_type(desc, *deleted);
+			err = grpc_unpack_type(desc, *deleted);
 			if (err)
 				goto err_cancel;
 		}
@@ -1000,14 +1000,14 @@ long hcc_faf_bind (struct file * file,
 	if (!desc)
 		goto out;
 
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto cancel;
 	err = pack_context(desc);
 	if (err)
 		goto cancel;
 
-	err = rpc_unpack_type(desc, r);
+	err = grpc_unpack_type(desc, r);
 	if (err)
 		goto cancel;
 
@@ -1049,7 +1049,7 @@ long hcc_faf_connect (struct file * file,
 		goto out;
 	}
 
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto cancel;
 	err = pack_context(desc);
@@ -1127,7 +1127,7 @@ long hcc_faf_accept(struct file * file,
 	if (!desc)
 		goto out_put_fd;
 
-	r = rpc_pack_type(desc, msg);
+	r = grpc_pack_type(desc, msg);
 	if (r)
 		goto err_cancel;
 
@@ -1145,11 +1145,11 @@ long hcc_faf_accept(struct file * file,
 		goto out_put_fd;
 	}
 
-	r = rpc_unpack_type(desc, sa_len);
+	r = grpc_unpack_type(desc, sa_len);
 	if (r)
 		goto err_cancel;
 
-	r = rpc_unpack(desc, 0, &sa, sa_len);
+	r = grpc_unpack(desc, 0, &sa, sa_len);
 	if (r)
 		goto err_cancel;
 
@@ -1163,7 +1163,7 @@ long hcc_faf_accept(struct file * file,
 	 * We have enough to clean up the new file ourself if needed. Tell it
 	 * to the server.
 	 */
-	r = rpc_pack_type(desc, fd);
+	r = grpc_pack_type(desc, fd);
 	if (r)
 		goto err_close_faf_file;
 
@@ -1210,12 +1210,12 @@ long hcc_faf_getsockname (struct file * file,
 		goto out;
 
 	desc = rpc_begin(RPC_FAF_GETSOCKNAME, data->server_id);
-	rpc_pack_type(desc, msg);
+	grpc_pack_type(desc, msg);
 	pack_root(desc);
 
-	rpc_unpack_type(desc, r);
-	rpc_unpack_type(desc, sa_len);
-	rpc_unpack(desc, 0, &sa, sa_len);
+	grpc_unpack_type(desc, r);
+	grpc_unpack_type(desc, sa_len);
+	grpc_unpack(desc, 0, &sa, sa_len);
 	rpc_end(desc, 0);
 
 	if (!r)
@@ -1243,11 +1243,11 @@ long hcc_faf_getpeername (struct file * file,
 		return -EFAULT;
 
 	desc = rpc_begin(RPC_FAF_GETPEERNAME, data->server_id);
-	rpc_pack_type(desc, msg);
+	grpc_pack_type(desc, msg);
 	pack_root(desc);
-	rpc_unpack_type(desc, r);
-	rpc_unpack_type(desc, sa_len);
-	rpc_unpack(desc, 0, &sa, sa_len);
+	grpc_unpack_type(desc, r);
+	grpc_unpack_type(desc, sa_len);
+	grpc_unpack(desc, 0, &sa, sa_len);
 	rpc_end(desc, 0);
 
 	if (!r)
@@ -1297,7 +1297,7 @@ long hcc_faf_setsockopt (struct file * file,
 		goto out;
 	}
 
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto err_cancel;
 	err = pack_context(desc);
@@ -1306,7 +1306,7 @@ long hcc_faf_setsockopt (struct file * file,
 	err = handle_ruaccess(desc);
 	if (err)
 		goto err_cancel;
-	err = rpc_unpack_type(desc, r);
+	err = grpc_unpack_type(desc, r);
 	if (err)
 		goto err_cancel;
 
@@ -1348,7 +1348,7 @@ long hcc_faf_getsockopt (struct file * file,
 		goto out;
 	}
 
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto err_cancel;
 	err = pack_context(desc);
@@ -1357,7 +1357,7 @@ long hcc_faf_getsockopt (struct file * file,
 	err = handle_ruaccess(desc);
 	if (err)
 		goto err_cancel;
-	err = rpc_unpack_type(desc, r);
+	err = grpc_unpack_type(desc, r);
 	if (err)
 		goto err_cancel;
 
@@ -1391,7 +1391,7 @@ ssize_t hcc_faf_sendmsg(struct file *file, struct msghdr *msghdr,
 	desc = rpc_begin(RPC_FAF_SENDMSG, data->server_id);
 	if (!desc)
 		return -ENOMEM;
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto cancel;
 
@@ -1435,7 +1435,7 @@ ssize_t hcc_faf_recvmsg(struct file *file, struct msghdr *msghdr,
 	desc = rpc_begin(RPC_FAF_RECVMSG, data->server_id);
 	if (!desc)
 		return -ENOMEM;
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto cancel;
 
@@ -1496,15 +1496,15 @@ int hcc_faf_poll_wait(struct file *file, int wait)
 	desc = rpc_begin(RPC_FAF_POLL_WAIT, data->server_id);
 	if (!desc)
 		goto out;
-	err = rpc_pack_type(desc, msg);
+	err = grpc_pack_type(desc, msg);
 	if (err)
 		goto err_cancel;
 	if (wait) {
-		err = rpc_unpack_type(desc, res);
+		err = grpc_unpack_type(desc, res);
 		if (err)
 			goto err_cancel;
 	}
-	err = rpc_unpack_type(desc, revents);
+	err = grpc_unpack_type(desc, revents);
 	if (err)
 		goto err_cancel;
 
@@ -1517,7 +1517,7 @@ out_end:
 
 out:
 	/*
-	 * after sleeping rpc_unpack() returns with
+	 * after sleeping grpc_unpack() returns with
 	 * current->state == TASK_RUNNING
 	 */
 	set_current_state(old_state);

@@ -101,7 +101,7 @@ static void handle_do_notify_parent(struct rpc_desc *desc,
 
 	read_unlock(&tasklist_lock);
 
-	err = rpc_pack_type(desc, ret);
+	err = grpc_pack_type(desc, ret);
 	if (err)
 		rpc_cancel(desc);
 }
@@ -129,10 +129,10 @@ int hcc_do_notify_parent(struct task_struct *task, struct siginfo *info)
 	desc = rpc_begin(PROC_DO_NOTIFY_PARENT, parent_node);
 	if (!desc)
 		goto err;
-	err = rpc_pack_type(desc, req);
+	err = grpc_pack_type(desc, req);
 	if (err)
 		goto err_cancel;
-	err = rpc_unpack_type(desc, ret);
+	err = grpc_unpack_type(desc, ret);
 	if (err)
 		goto err_cancel;
 	rpc_end(desc, 0);
@@ -353,12 +353,12 @@ static void handle_wait_task_zombie(struct rpc_desc *desc,
 		read_unlock(&tasklist_lock);
 
 out_send_res:
-	err = rpc_pack_type(desc, retval);
+	err = grpc_pack_type(desc, retval);
 	if (err)
 		goto err_cancel;
 	if (retval) {
 		BUG_ON(retval < 0);
-		err = rpc_pack_type(desc, res);
+		err = grpc_pack_type(desc, res);
 		if (err)
 			goto err_cancel;
 	}
@@ -395,16 +395,16 @@ int hcc_wait_task_zombie(struct wait_opts *wo,
 	/* True as long as no remote ptrace is allowed */
 	req.real_parent_tgid = task_tgid_knr(current);
 	req.options = wo->wo_flags;
-	err = rpc_pack_type(desc, req);
+	err = grpc_pack_type(desc, req);
 	if (err)
 		goto err_cancel;
 
-	err = rpc_unpack_type(desc, retval);
+	err = grpc_unpack_type(desc, retval);
 	if (err)
 		goto err_cancel;
 	if (retval) {
 		BUG_ON(retval < 0);
-		err = rpc_unpack_type(desc, res);
+		err = grpc_unpack_type(desc, res);
 		if (err)
 			goto err_cancel;
 

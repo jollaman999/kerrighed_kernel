@@ -285,7 +285,7 @@ int find_gdm_set_remotely(struct gdm_set *gdm_set)
 	gdm_id.ns_id = gdm_set->ns->id;
 
 	desc = rpc_begin(REQ_GDM_SET_LOOKUP, gdm_set_mgr_node_id);
-	rpc_pack_type(desc, gdm_id);
+	grpc_pack_type(desc, gdm_id);
 
 	msg_size = sizeof(msg_gdm_set_t) + MAX_PRIVATE_DATA_SIZE;
 
@@ -293,7 +293,7 @@ int find_gdm_set_remotely(struct gdm_set *gdm_set)
 	if (msg == NULL)
 		OOM;
 
-	rpc_unpack(desc, 0, msg, msg_size);
+	grpc_unpack(desc, 0, msg, msg_size);
 
 	if (msg->gdm_set_id != GDM_SET_UNUSED) {
 		set_ops = hccsyms_import (msg->set_ops);
@@ -592,7 +592,7 @@ int handle_req_gdm_set_lookup(struct rpc_desc* desc,
 	memcpy(msg->private_data, gdm_set->private_data, gdm_set->private_data_size);
 
 done:
-	rpc_pack(desc, 0, msg, msg_size);
+	grpc_pack(desc, 0, msg, msg_size);
 	if (msg->gdm_set_id != GDM_SET_UNUSED)
 		gdm_set->ops->export(desc, gdm_set);
 

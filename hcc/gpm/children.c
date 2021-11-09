@@ -159,17 +159,17 @@ static int children_export_object(struct rpc_desc *desc,
 	BUG_ON(!obj);
 	BUG_ON(!(obj->tgid & GLOBAL_PID_MASK));
 
-	retval = rpc_pack_type(desc, obj->nr_children);
+	retval = grpc_pack_type(desc, obj->nr_children);
 	if (unlikely(retval))
 		goto out;
-	retval = rpc_pack_type(desc, obj->nr_threads);
+	retval = grpc_pack_type(desc, obj->nr_threads);
 	if (unlikely(retval))
 		goto out;
-	retval = rpc_pack_type(desc, obj->self_exec_id);
+	retval = grpc_pack_type(desc, obj->self_exec_id);
 	if (unlikely(retval))
 		goto out;
 	list_for_each_entry(child, &obj->children, sibling) {
-		retval = rpc_pack_type(desc, *child);
+		retval = grpc_pack_type(desc, *child);
 		if (unlikely(retval))
 			goto out;
 	}
@@ -195,13 +195,13 @@ static int children_import_object(struct rpc_desc *desc,
 	BUG_ON(!obj);
 	BUG_ON(!(obj->tgid & GLOBAL_PID_MASK));
 
-	retval = rpc_unpack_type(desc, nr_children);
+	retval = grpc_unpack_type(desc, nr_children);
 	if (unlikely(retval))
 		goto out;
-	retval = rpc_unpack_type(desc, obj->nr_threads);
+	retval = grpc_unpack_type(desc, obj->nr_threads);
 	if (unlikely(retval))
 		goto out;
-	retval = rpc_unpack_type(desc, obj->self_exec_id);
+	retval = grpc_unpack_type(desc, obj->self_exec_id);
 	if (unlikely(retval))
 		goto out;
 
@@ -227,7 +227,7 @@ static int children_import_object(struct rpc_desc *desc,
 		/* Does not need that child be linked to the obj->children
 		 * list, but only to a list */
 		remove_child_links(obj, child);
-		retval = rpc_unpack_type(desc, *child);
+		retval = grpc_unpack_type(desc, *child);
 		if (unlikely(retval))
 			goto err_free_child;
 		/* Put the child to the obj->children list */
@@ -243,7 +243,7 @@ static int children_import_object(struct rpc_desc *desc,
 			retval = -ENOMEM;
 			goto out;
 		}
-		retval = rpc_unpack_type(desc, *child);
+		retval = grpc_unpack_type(desc, *child);
 		if (unlikely(retval))
 			goto err_free_child;
 		set_child_links(obj, child);

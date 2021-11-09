@@ -53,7 +53,7 @@ int send_user_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t t
 			page_offset += iov_len;
 		}
 
-		err = rpc_pack(desc, 0, page, max_page_offset);
+		err = grpc_pack(desc, 0, page, max_page_offset);
 		if (err)
 			break;
 	}
@@ -79,7 +79,7 @@ int send_kernel_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t
 
 		if (sent + iov_len > total_len)
 			iov_len = total_len - sent;
-		err = rpc_pack(desc, 0, iov[i].iov_base, iov_len);
+		err = grpc_pack(desc, 0, iov[i].iov_base, iov_len);
 		if (err)
 			break;
 	}
@@ -119,7 +119,7 @@ int recv_user_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t t
 		if (rcvd + max_page_offset > total_len)
 			max_page_offset = total_len - rcvd;
 
-		err = rpc_unpack(desc, 0, page, max_page_offset);
+		err = grpc_unpack(desc, 0, page, max_page_offset);
 		if (err) {
 			if (err > 0)
 				err = -EPIPE;
@@ -173,7 +173,7 @@ int recv_kernel_iov(struct rpc_desc *desc, struct iovec *iov, int iovcnt, size_t
 
 		if (rcvd + iov_len > total_len)
 			iov_len = total_len - rcvd;
-		err = rpc_unpack(desc, 0, iov[i].iov_base, iov_len);
+		err = grpc_unpack(desc, 0, iov[i].iov_base, iov_len);
 		if (err) {
 			if (err > 0)
 				err = -EPIPE;
@@ -245,14 +245,14 @@ int send_msghdr(struct rpc_desc* desc,
 {
 	int err;
 
-	err = rpc_pack(desc, 0, msghdr, sizeof(*msghdr));
+	err = grpc_pack(desc, 0, msghdr, sizeof(*msghdr));
 	if (err)
 		return err;
 	if (!(flags & MSG_HDR_ONLY)) {
-		err = rpc_pack(desc, 0, msghdr->msg_name, msghdr->msg_namelen);
+		err = grpc_pack(desc, 0, msghdr->msg_name, msghdr->msg_namelen);
 		if (err)
 			return err;
-		err = rpc_pack(desc, 0, msghdr->msg_control, msghdr->msg_controllen);
+		err = grpc_pack(desc, 0, msghdr->msg_control, msghdr->msg_controllen);
 		if (err)
 			return err;
 		err = send_iov(desc, msghdr->msg_iov, msghdr->msg_iovlen, total_len, flags);
@@ -272,7 +272,7 @@ int recv_msghdr(struct rpc_desc* desc,
 
 	BUG_ON((flags & MSG_USER) && (flags & MSG_HDR_ONLY));
 
-	err = rpc_unpack(desc, 0, msg, sizeof(*msg));
+	err = grpc_unpack(desc, 0, msg, sizeof(*msg));
 	if (err)
 		goto out_err;
 
@@ -304,10 +304,10 @@ int recv_msghdr(struct rpc_desc* desc,
 		goto err_free_iov;
 
 	if (!(flags & MSG_HDR_ONLY)) {
-		err = rpc_unpack(desc, 0, msg->msg_name, msg->msg_namelen);
+		err = grpc_unpack(desc, 0, msg->msg_name, msg->msg_namelen);
 		if (err)
 			goto err_free_control;
-		err = rpc_unpack(desc, 0, msg->msg_control, msg->msg_controllen);
+		err = grpc_unpack(desc, 0, msg->msg_control, msg->msg_controllen);
 		if (err)
 			goto err_free_control;
 		err = recv_iov(desc, msg->msg_iov, msg->msg_iovlen, total_len, flags);

@@ -27,7 +27,7 @@ pid_t send_task(struct rpc_desc *desc,
 		goto out;
 	}
 
-	err = rpc_pack_type(desc, *action);
+	err = grpc_pack_type(desc, *action);
 	if (err)
 		goto out_close;
 
@@ -35,7 +35,7 @@ pid_t send_task(struct rpc_desc *desc,
 	if (err)
 		goto out_close;
 
-	err = rpc_unpack_type(desc, pid_remote_task);
+	err = grpc_unpack_type(desc, pid_remote_task);
 	post_export_process(action, ghost, tsk);
 	if (err) {
 		if (err == RPC_EPIPE)
@@ -66,7 +66,7 @@ struct task_struct *recv_task(struct rpc_desc *desc, struct gpm_action *action)
 		goto err_close;
 
 	pid = task_pid_knr(new_tsk);
-	err = rpc_pack_type(desc, pid);
+	err = grpc_pack_type(desc, pid);
 	if (err)
 		goto err_close;
 

@@ -262,11 +262,11 @@ long hcc_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 	desc = rpc_begin(IPC_MSG_SEND, *master_node);
 	_gdm_put_object(master_set, index);
 
-	r = rpc_pack_type(desc, msg);
+	r = grpc_pack_type(desc, msg);
 	if (r)
 		goto exit_rpc;
 
-	r = rpc_pack(desc, 0, buffer, msgsz);
+	r = grpc_pack(desc, 0, buffer, msgsz);
 	if (r)
 		goto exit_rpc;
 
@@ -302,7 +302,7 @@ static void handle_do_msg_send(struct rpc_desc *desc, void *_msg, size_t size)
 		goto exit_put_ns;
 	}
 
-	r = rpc_unpack(desc, 0, mtext, msg->msgsz);
+	r = grpc_unpack(desc, 0, mtext, msg->msgsz);
 	if (r)
 		goto exit_free_text;
 
@@ -315,7 +315,7 @@ static void handle_do_msg_send(struct rpc_desc *desc, void *_msg, size_t size)
 
 	remote_sleep_finish();
 
-	r = rpc_pack_type(desc, r);
+	r = grpc_pack_type(desc, r);
 
 exit_free_text:
 	kfree(mtext);
@@ -377,7 +377,7 @@ long hcc_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	desc = rpc_begin(IPC_MSG_RCV, *master_node);
 	_gdm_put_object(master_set, index);
 
-	r = rpc_pack_type(desc, msg);
+	r = grpc_pack_type(desc, msg);
 	if (r)
 		goto exit;
 
@@ -389,7 +389,7 @@ long hcc_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	if (!err) {
 		if (r > 0) {
 			/* get the real msg type */
-			err = rpc_unpack(desc, 0, pmtype, sizeof(long));
+			err = grpc_unpack(desc, 0, pmtype, sizeof(long));
 			if (err)
 				goto err_rpc;
 
@@ -399,7 +399,7 @@ long hcc_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 				goto exit;
 			}
 
-			err = rpc_unpack(desc, 0, buffer, r);
+			err = grpc_unpack(desc, 0, buffer, r);
 			if (err) {
 				kfree(buffer);
 				goto err_rpc;
@@ -447,15 +447,15 @@ static void handle_do_msg_rcv(struct rpc_desc *desc, void *_msg, size_t size)
 
 	remote_sleep_finish();
 
-	r = rpc_pack_type(desc, msgsz);
+	r = grpc_pack_type(desc, msgsz);
 	if (r || msgsz <= 0)
 		goto exit_free_text;
 
-	r = rpc_pack_type(desc, pmtype); /* send the real type of msg */
+	r = grpc_pack_type(desc, pmtype); /* send the real type of msg */
 	if (r)
 		goto exit_free_text;
 
-	r = rpc_pack(desc, 0, mtext, msgsz);
+	r = grpc_pack(desc, 0, mtext, msgsz);
 	if (r)
 		goto exit_free_text;
 

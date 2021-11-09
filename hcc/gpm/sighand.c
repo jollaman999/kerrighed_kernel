@@ -126,11 +126,11 @@ static int sighand_struct_import_object(struct rpc_desc *desc,
 	if (!tmp)
 		return -ENOMEM;
 
-	retval = rpc_unpack_type(desc, tmp->count);
+	retval = grpc_unpack_type(desc, tmp->count);
 	if (likely(!retval))
-		retval = rpc_unpack_type(desc, tmp->action);
+		retval = grpc_unpack_type(desc, tmp->action);
 	if (likely(!retval))
-		retval = rpc_unpack_type(desc, obj->count);
+		retval = grpc_unpack_type(desc, obj->count);
 
 	if (likely(!retval)) {
 		dest = obj->sighand;
@@ -161,11 +161,11 @@ static int sighand_struct_export_object(struct rpc_desc *desc,
 	int retval;
 
 	src = obj->sighand;
-	retval = rpc_pack_type(desc, src->count);
+	retval = grpc_pack_type(desc, src->count);
 	if (likely(!retval))
-		retval = rpc_pack_type(desc, src->action);
+		retval = grpc_pack_type(desc, src->action);
 	if (likely(!retval))
-		retval = rpc_pack_type(desc, obj->count);
+		retval = grpc_pack_type(desc, obj->count);
 
 	return retval;
 }
