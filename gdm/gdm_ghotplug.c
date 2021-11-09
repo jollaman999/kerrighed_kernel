@@ -726,8 +726,8 @@ static void set_failure(hccnodemask_t * vector)
 
 static int gdm_notification(struct notifier_block *nb, ghotplug_event_t event,
 			     void *data){
-	struct hotplug_context *ctx;
-	struct hotplug_node_set *node_set;
+	struct ghotplug_context *ctx;
+	struct ghotplug_node_set *node_set;
 
 	switch(event){
 	case GHOTPLUG_NOTIFY_ADD:
@@ -749,8 +749,8 @@ static int gdm_notification(struct notifier_block *nb, ghotplug_event_t event,
 	return NOTIFY_OK;
 };
 
-int gdm_hotplug_init(void){
-	gdm_barrier = alloc_cluster_barrier(GDM_HOTPLUG_BARRIER);
+int gdm_ghotplug_init(void){
+	gdm_barrier = alloc_cluster_barrier(GDM_GHOTPLUG_BARRIER);
 	BUG_ON (IS_ERR(gdm_barrier));
 
 //	rpc_register(GDM_COPYSET, handle_set_copyset, 0);
@@ -760,5 +760,5 @@ int gdm_hotplug_init(void){
 	return 0;
 };
 
-void gdm_hotplug_cleanup(void){
+void gdm_ghotplug_cleanup(void){
 };

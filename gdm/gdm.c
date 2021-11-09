@@ -38,8 +38,8 @@ int (*kh_copy_gdm_info)(unsigned long clone_flags, struct task_struct * tsk);
 
 struct kmem_cache *gdm_info_cachep;
 
-int gdm_hotplug_init(void);
-void gdm_hotplug_cleanup(void);
+int gdm_ghotplug_init(void);
+void gdm_ghotplug_cleanup(void);
 
 
 /** Initialize the gdm field of the hcc_task field of the given task.
@@ -100,7 +100,7 @@ int init_gdm (void)
 
 	hook_register(&kh_copy_gdm_info, kcb_copy_gdm_info);
 
-	gdm_hotplug_init();
+	gdm_ghotplug_init();
 
 	init_gdm_test ();
 
@@ -128,7 +128,7 @@ void cleanup_gdm (void)
 
 	hccsyms_unregister (HCCSYMS_GDM_TREE_OPS);
 
-	gdm_hotplug_cleanup();
+	gdm_ghotplug_cleanup();
 
 	stop_run_queue_thread ();
 

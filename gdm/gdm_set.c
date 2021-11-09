@@ -375,7 +375,7 @@ check_no_lock:
 		goto recheck_state;
 	}
 	/* Make sure we only use bypass_frozen when GDM are frozen (i.e.
-	   hotplug cases) */
+	   ghotplug cases) */
 	BUG_ON ((flags & GDM_LOCK_FREE) && !gdm_frozen(gdm_set));
 
 	switch (gdm_set->state) {
