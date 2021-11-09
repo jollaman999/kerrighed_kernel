@@ -178,7 +178,7 @@ static int handle_exit_barrier(struct rpc_desc* desc,
 /*****************************************************************************/
 
 static int barrier_notification(struct notifier_block *nb,
-				hotplug_event_t event,
+				ghotplug_event_t event,
 				void *data)
 {
 	switch(event){
@@ -210,5 +210,5 @@ void init_cluster_barrier(void)
 	rpc_register_int (RPC_ENTER_BARRIER, handle_enter_barrier, 0);
 	rpc_register_int (RPC_EXIT_BARRIER, handle_exit_barrier, 0);
 
-	register_hotplug_notifier(barrier_notification, HOTPLUG_PRIO_BARRIER);
+	register_ghotplug_notifier(barrier_notification, GHOTPLUG_PRIO_BARRIER);
 }

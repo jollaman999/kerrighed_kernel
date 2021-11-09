@@ -14,7 +14,7 @@
 
 struct workqueue_struct *hcc_ha_wq;
 
-struct ghotplug_context *hotplug_ctx_alloc(struct hcc_namespace *ns)
+struct ghotplug_context *ghotplug_ctx_alloc(struct hcc_namespace *ns)
 {
 	struct ghotplug_context *ctx;
 
@@ -44,16 +44,16 @@ int init_ghotplug(void)
 	hcc_ha_wq = create_workqueue("hccHA");
 	BUG_ON(hcc_ha_wq == NULL);
 
-	hotplug_hooks_init();
+	ghotplug_hooks_init();
 
-	hotplug_add_init();
+	ghotplug_add_init();
 #ifdef CONFIG_HCC_GHOTPLUG_DEL
-	hotplug_remove_init();
+	ghotplug_remove_init();
 #endif
-	hotplug_failure_init();
-	hotplug_cluster_init();
-	hotplug_namespace_init();
-	hotplug_membership_init();
+	ghotplug_failure_init();
+	ghotplug_cluster_init();
+	ghotplug_namespace_init();
+	ghotplug_membership_init();
 
 	return 0;
 };

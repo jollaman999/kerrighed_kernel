@@ -724,7 +724,7 @@ static void set_failure(hccnodemask_t * vector)
  *
  */
 
-static int gdm_notification(struct notifier_block *nb, hotplug_event_t event,
+static int gdm_notification(struct notifier_block *nb, ghotplug_event_t event,
 			     void *data){
 	struct hotplug_context *ctx;
 	struct hotplug_node_set *node_set;
@@ -756,7 +756,7 @@ int gdm_hotplug_init(void){
 //	rpc_register(GDM_COPYSET, handle_set_copyset, 0);
 //	rpc_register(GDM_SELECT_OWNER, handle_select_owner, 0);
 
-	register_hotplug_notifier(gdm_notification, HOTPLUG_PRIO_GDM);
+	register_ghotplug_notifier(gdm_notification, GHOTPLUG_PRIO_GDM);
 	return 0;
 };
 

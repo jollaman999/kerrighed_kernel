@@ -65,13 +65,13 @@ struct workqueue_struct *hcc_wq;
 struct workqueue_struct *hcc_nb_wq;
 
 struct kobject* hccsys;
-struct kobject* hcchotplugsys;
+struct kobject* hccghotplugsys;
 
 #define deffct(p) extern int init_##p(void); extern void cleanup_##p(void)
 
 deffct(tools);
 #ifdef CONFIG_HCC_GHOTPLUG
-deffct(hotplug);
+deffct(ghotplug);
 #endif
 #ifdef CONFIG_HCC_GRPC
 deffct(rpc);
@@ -602,8 +602,8 @@ static int init_sysfs(void){
 	if(!hccsys)
 		return -1;
 
-	hcchotplugsys = kobject_create_and_add("hotplug", hccsys);
-	if(!hcchotplugsys)
+	hccghotplugsys = kobject_create_and_add("ghotplug", hccsys);
+	if(!hccghotplugsys)
 		return -1;
 
 	r = sysfs_create_group(hccsys, &attr_group);

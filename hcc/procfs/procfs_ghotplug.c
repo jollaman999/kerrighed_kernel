@@ -63,7 +63,7 @@ static int procfs_notification(struct notifier_block *nb, ghotplug_event_t event
 };
 
 int procfs_ghotplug_init(void){
-	register_ghotplug_notifier(procfs_notification, HOTPLUG_PRIO_MEMBERSHIP_ONLINE);
+	register_ghotplug_notifier(procfs_notification, GHOTPLUG_PRIO_MEMBERSHIP_ONLINE);
 	return 0;
 };
 

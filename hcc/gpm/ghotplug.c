@@ -93,7 +93,7 @@ static int gpm_notification(struct notifier_block *nb, ghotplug_event_t event,
 
 int gpm_ghotplug_init(void)
 {
-	register_ghotplug_notifier(gpm_notification, HOTPLUG_PRIO_EPM);
+	register_ghotplug_notifier(gpm_notification, GHOTPLUG_PRIO_EPM);
 	return 0;
 }
 

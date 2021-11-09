@@ -24,7 +24,7 @@ static void rpc_remove(hccnodemask_t * vector)
  */
 
 #ifdef CONFIG_HCC
-static int rpc_notification(struct notifier_block *nb, hotplug_event_t event,
+static int rpc_notification(struct notifier_block *nb, ghotplug_event_t event,
 			    void *data){
 	struct hotplug_node_set *node_set = data;
 	
@@ -42,7 +42,7 @@ static int rpc_notification(struct notifier_block *nb, hotplug_event_t event,
 
 int rpc_hotplug_init(void){
 #ifdef CONFIG_HCC
-	register_hotplug_notifier(rpc_notification, HOTPLUG_PRIO_RPC);
+	register_ghotplug_notifier(rpc_notification, GHOTPLUG_PRIO_RPC);
 #endif
 	return 0;
 };

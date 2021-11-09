@@ -608,7 +608,7 @@ static void handle_cluster_start(struct rpc_desc *desc, void *data, size_t size)
 		    && msg->seq_id == cluster_start_msg.seq_id) {
 			BUG_ON(!hccnodes_equal(msg->node_set.v,
 					       cluster_start_ctx->node_set.v));
-			hotplug_ctx_get(cluster_start_ctx);
+			ghotplug_ctx_get(cluster_start_ctx);
 			ctx = cluster_start_ctx;
 			err = 0;
 		}
@@ -679,7 +679,7 @@ static void handle_cluster_start(struct rpc_desc *desc, void *data, size_t size)
 out:
 	mutex_unlock(&cluster_start_mutex);
 	if (ctx)
-		hotplug_ctx_put(ctx);
+		ghotplug_ctx_put(ctx);
 	return;
 
 cancel:
@@ -743,7 +743,7 @@ out:
 	else
 		printk("hcc: [ADD] Setting up new nodes succeeded.\n");
 	spin_lock(&cluster_start_lock);
-	hotplug_ctx_put(cluster_start_ctx);
+	ghotplug_ctx_put(cluster_start_ctx);
 	cluster_start_ctx = NULL;
 	spin_unlock(&cluster_start_lock);
 	return;
@@ -769,7 +769,7 @@ int do_cluster_start(struct ghotplug_context *ctx)
 					"reached! You should reboot host.\n");
 		} else {
 			r = 0;
-			hotplug_ctx_get(ctx);
+			ghotplug_ctx_get(ctx);
 			cluster_start_ctx = ctx;
 			cluster_start_msg.seq_id++;
 			hccnodes_or(cluster_start_msg.node_set.v,
@@ -803,7 +803,7 @@ static int boot_node_ready(struct hcc_namespace *ns)
 	ctx->node_set.v = hccnodemask_of_node(hcc_node_id);
 
 	r = do_cluster_start(ctx);
-	hotplug_ctx_put(ctx);
+	ghotplug_ctx_put(ctx);
 
 	if (!r)
 		do_cluster_wait_for_start();
@@ -916,13 +916,13 @@ static int cluster_nodes(void __user *arg)
 
 	for (bcl = 0; bcl < HCC_MAX_NODES; bcl++) {
 		if (hccnode_online(bcl))
-			state = HOTPLUG_NODE_ONLINE;
+			state = GHOTPLUG_NODE_ONLINE;
 		else if (hccnode_present(bcl))
-			state = HOTPLUG_NODE_PRESENT;
+			state = GHOTPLUG_NODE_PRESENT;
 		else if (hccnode_possible(bcl))
-			state = HOTPLUG_NODE_POSSIBLE;
+			state = GHOTPLUG_NODE_POSSIBLE;
 		else
-			state = HOTPLUG_NODE_INVALID;
+			state = GHOTPLUG_NODE_INVALID;
 		if (__put_user(state, &unodes[bcl]))
 			goto out;
 	}
@@ -951,8 +951,8 @@ int ghotplug_cluster_init(void)
 {
 	int bcl;
 
-	if (sysfs_create_group(hcchotplugsys, &attr_group))
-		panic("Couldn't initialize /sys/hcc/hotplug!\n");
+	if (sysfs_create_group(hccghotplugsys, &attr_group))
+		panic("Couldn't initialize /sys/hcc/ghotplug!\n");
 
 	for (bcl = 0; bcl < HCC_MAX_CLUSTERS; bcl++) {
 		clusters_status[bcl] = CLUSTER_UNDEF;
@@ -963,11 +963,11 @@ int ghotplug_cluster_init(void)
 	rpc_register(NODE_POWEROFF, handle_node_poweroff, 0);
 #endif
 
-	register_proc_service(KSYS_HOTPLUG_READY, node_ready);
-	register_proc_service(KSYS_HOTPLUG_SHUTDOWN, cluster_stop);
-	register_proc_service(KSYS_HOTPLUG_RESTART, cluster_restart);
-	register_proc_service(KSYS_HOTPLUG_STATUS, cluster_status);
-	register_proc_service(KSYS_HOTPLUG_NODES, cluster_nodes);
+	register_proc_service(KSYS_GHOTPLUG_READY, node_ready);
+	register_proc_service(KSYS_GHOTPLUG_SHUTDOWN, cluster_stop);
+	register_proc_service(KSYS_GHOTPLUG_RESTART, cluster_restart);
+	register_proc_service(KSYS_GHOTPLUG_STATUS, cluster_status);
+	register_proc_service(KSYS_GHOTPLUG_NODES, cluster_nodes);
 
 	return 0;
 }

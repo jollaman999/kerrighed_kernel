@@ -1,5 +1,5 @@
 /*
- *  hcc/hotplug/namespace.c
+ *  hcc/ghotplug/namespace.c
  *
  *  Copyright (C) 2019-2021 Innogrid HCC.
  */
@@ -151,6 +151,6 @@ int hcc_set_cluster_creator(void __user *arg)
 
 int ghotplug_namespace_init(void)
 {
-	return __register_proc_service(KSYS_HOTPLUG_SET_CREATOR,
+	return __register_proc_service(KSYS_GHOTPLUG_SET_CREATOR,
 				       hcc_set_cluster_creator, false);
 }

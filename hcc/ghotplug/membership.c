@@ -77,9 +77,9 @@ int membership_present_notification(struct notifier_block *nb,
 int ghotplug_membership_init(void)
 {
 	register_ghotplug_notifier(membership_present_notification,
-				  HOTPLUG_PRIO_MEMBERSHIP_PRESENT);
+				  GHOTPLUG_PRIO_MEMBERSHIP_PRESENT);
 	register_ghotplug_notifier(membership_online_notification,
-				  HOTPLUG_PRIO_MEMBERSHIP_ONLINE);
+				  GHOTPLUG_PRIO_MEMBERSHIP_ONLINE);
 	return 0;
 }
 

@@ -144,13 +144,13 @@ int init_gscheduler(void)
 		goto err_register;
 	}
 
-	ret = register_ghotplug_notifier(hotplug_notifier,
-					HOTPLUG_PRIO_SCHED);
+	ret = register_ghotplug_notifier(ghotplug_notifier,
+					GHOTPLUG_PRIO_SCHED);
 	if (ret)
 		goto err_ghotplug;
 
 	ret = register_ghotplug_notifier(post_ghotplug_notifier,
-					HOTPLUG_PRIO_SCHED_POST);
+					GHOTPLUG_PRIO_SCHED_POST);
 	if (ret)
 		goto err_ghotplug;
 

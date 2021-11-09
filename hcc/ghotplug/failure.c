@@ -25,7 +25,7 @@
 hccnodemask_t failure_vector;
 struct work_struct fail_work;
 struct work_struct recovery_work;
-struct notifier_block *hotplug_failure_notifier_list;
+struct notifier_block *ghotplug_failure_notifier_list;
 
 static void recovery_worker(struct work_struct *data)
 {
@@ -96,7 +96,7 @@ int ghotplug_failure_init(void)
 
 	rpc_register_void(NODE_FAIL, handle_node_fail, 0);
 	
-	register_proc_service(KSYS_HOTPLUG_FAIL, nodes_fail);
+	register_proc_service(KSYS_GHOTPLUG_FAIL, nodes_fail);
 
 	return 0;
 }

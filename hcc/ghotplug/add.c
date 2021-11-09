@@ -24,7 +24,7 @@
 
 int __nodes_add(struct ghotplug_context *ctx)
 {
-	hotplug_add_notify(ctx, GHOTPLUG_NOTIFY_ADD);
+	ghotplug_add_notify(ctx, GHOTPLUG_NOTIFY_ADD);
 	return 0;
 }
 
@@ -46,7 +46,7 @@ static void handle_node_add(struct rpc_desc *rpc_desc, void *data, size_t size)
 
 	__nodes_add(ctx);
 
-	hotplug_ctx_put(ctx);
+	ghotplug_ctx_put(ctx);
 
 	page = (char *)__get_free_page(GFP_KERNEL);
 	if (page) {
@@ -133,7 +133,7 @@ static int nodes_add(void __user *arg)
 	err = do_nodes_add(ctx);
 
 out:
-	hotplug_ctx_put(ctx);
+	ghotplug_ctx_put(ctx);
 
 	return err;
 }
@@ -142,7 +142,7 @@ int ghotplug_add_init(void)
 {
 	rpc_register_void(NODE_ADD, handle_node_add, 0);
 
-	register_proc_service(KSYS_HOTPLUG_ADD, nodes_add);
+	register_proc_service(KSYS_GHOTPLUG_ADD, nodes_add);
 	return 0;
 }
 

@@ -8,12 +8,12 @@
 #include <linux/sched.h>
 #include <linux/hcc_hashtable.h>
 
-#define HOTPLUG_MAX_HOOKS 256
+#define GHOTPLUG_MAX_HOOKS 256
 
 static struct {
 	void (**hook) (void);
 	void *fct;
-} hooks_table[HOTPLUG_MAX_HOOKS];
+} hooks_table[GHOTPLUG_MAX_HOOKS];
 
 static int hooks_index;
 static DECLARE_MUTEX (hooks_lock);
@@ -21,7 +21,7 @@ static DECLARE_MUTEX (hooks_lock);
 void hook_register(void (**hk) (void), void *f)
 {
 
-	BUG_ON(hooks_index >= HOTPLUG_MAX_HOOKS);
+	BUG_ON(hooks_index >= GHOTPLUG_MAX_HOOKS);
 	BUG_ON(hk == NULL);
 
 	down(&hooks_lock);
