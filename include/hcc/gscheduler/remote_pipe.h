@@ -20,8 +20,8 @@ struct remote_pipe_desc {
 	spinlock_t lock;
 };
 
-struct scheduler_sink;
-struct scheduler_pipe;
+struct gscheduler_sink;
+struct gscheduler_pipe;
 
 /**
  * Get the value of a remote globalized pipe source
@@ -51,35 +51,35 @@ struct scheduler_pipe;
  *			-EAGAIN if the results are not available yet, or
  *			other negative error code
  */
-int scheduler_pipe_get_remote_value(
-	struct scheduler_sink *sink,
-	struct scheduler_pipe *local_pipe,
+int gscheduler_pipe_get_remote_value(
+	struct gscheduler_sink *sink,
+	struct gscheduler_pipe *local_pipe,
 	hcc_node_t node,
 	void *value_p, unsigned int nr,
 	const void *in_value_p, unsigned int in_nr);
 
 /**
- * Initialize the remote_pipe_desc embedded in a scheduler_sink
+ * Initialize the remote_pipe_desc embedded in a gscheduler_sink
  *
  * @param sink		sink containing the remote_pipe_desc
  */
-void scheduler_sink_remote_pipe_init(struct scheduler_sink *sink);
+void gscheduler_sink_remote_pipe_init(struct gscheduler_sink *sink);
 /**
- * Cleanup the remote_pipe_desc embedded in a scheduler_sink
+ * Cleanup the remote_pipe_desc embedded in a gscheduler_sink
  *
  * @param sink		sink containing the remote_pipe_desc
  */
 static inline
-void scheduler_sink_remote_pipe_cleanup(struct scheduler_sink *sink)
+void gscheduler_sink_remote_pipe_cleanup(struct gscheduler_sink *sink)
 {
 }
 
 /**
- * Break any pending request to a remote scheduler_pipe
+ * Break any pending request to a remote gscheduler_pipe
  * May block
  *
  * @param sink		sink containing the remote_pipe_desc
  */
-void scheduler_sink_remote_pipe_disconnect(struct scheduler_sink *sink);
+void gscheduler_sink_remote_pipe_disconnect(struct gscheduler_sink *sink);
 
 #endif /* __HCC_GSCHEDULER_REMOTE_PIPE_H__ */

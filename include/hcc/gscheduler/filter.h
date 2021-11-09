@@ -8,9 +8,9 @@
 #include <hcc/gscheduler/port.h>
 
 /*
- * A filter is a scheduler_port having a source. A filter collects data/events
+ * A filter is a gscheduler_port having a source. A filter collects data/events
  * from a source connected to its sink, and generates data/events related to
- * what it collects. Filters sources are connected to scheduler_ports when doing
+ * what it collects. Filters sources are connected to gscheduler_ports when doing
  * mkdir in ports directories, and filters sinks are connected to lower sources
  * the same way as ports.
  *
@@ -22,84 +22,84 @@
  */
 
 /* Structure representing a filter */
-struct scheduler_filter {
-	struct scheduler_source source;
-	struct scheduler_port port;
+struct gscheduler_filter {
+	struct gscheduler_source source;
+	struct gscheduler_port port;
 };
 
-#define SCHEDULER_FILTER_ATTR_SIZE SCHEDULER_PORT_ATTR_SIZE
+#define GSCHEDULER_FILTER_ATTR_SIZE GSCHEDULER_PORT_ATTR_SIZE
 
 /*
  * Structure representing a filter attribute
  * Just an API translation from  port attributes
  */
-struct scheduler_filter_attribute {
-	struct scheduler_port_attribute port_attr;
+struct gscheduler_filter_attribute {
+	struct gscheduler_port_attribute port_attr;
 };
 
 /*
- * Convenience macros to define a scheduler_filter_attribute
+ * Convenience macros to define a gscheduler_filter_attribute
  *
  * These convenience macros should be used the following way:
  *
  * First, implemented methods must be defined using the
- * DEFINE_SCHEDULER_FILTER_ATTRIBUTE_<method> macros. Second, the
- * scheduler_filter_attribute must be filled using
- * {BEGIN,END}_SCHEDULER_FILTER_ATTRIBUTE and SCHEDULER_FILTER_ATTRIBUTE_*
+ * DEFINE_GSCHEDULER_FILTER_ATTRIBUTE_<method> macros. Second, the
+ * gscheduler_filter_attribute must be filled using
+ * {BEGIN,END}_GSCHEDULER_FILTER_ATTRIBUTE and GSCHEDULER_FILTER_ATTRIBUTE_*
  * macros:
  *
- *	BEGIN_SCHEDULER_FILTER_ATTRIBUTE(var_name, name, mode),
+ *	BEGIN_GSCHEDULER_FILTER_ATTRIBUTE(var_name, name, mode),
  * if needed:
- *		.SCHEDULER_FILTER_ATTRIBUTE_<method>(name),
+ *		.GSCHEDULER_FILTER_ATTRIBUTE_<method>(name),
  *		...
  * and finally:
- *	END_SCHEDULER_FILTER_ATTRIBUTE(name);
+ *	END_GSCHEDULER_FILTER_ATTRIBUTE(name);
  */
 
 /**
  * Convenience macro to start the definition of a
- * scheduler_filter_attribute. The definition must end with
- * END_SCHEDULER_FILTER_ATTRIBUTE(name).
+ * gscheduler_filter_attribute. The definition must end with
+ * END_GSCHEDULER_FILTER_ATTRIBUTE(name).
  *
- * @param var_name	name of the scheduler_filter_attribute variable
+ * @param var_name	name of the gscheduler_filter_attribute variable
  * @param name		name of the attribute entry in the filter directory
  * @param mode		access mode of the attribute entry
  */
-#define BEGIN_SCHEDULER_FILTER_ATTRIBUTE(var_name, name, mode)		\
-	struct scheduler_filter_attribute var_name = {			\
-		.port_attr = SCHEDULER_PORT_ATTRIBUTE_INIT(#name, mode,	\
+#define BEGIN_GSCHEDULER_FILTER_ATTRIBUTE(var_name, name, mode)		\
+	struct gscheduler_filter_attribute var_name = {			\
+		.port_attr = GSCHEDULER_PORT_ATTRIBUTE_INIT(#name, mode,	\
 							   NULL, NULL)
 
 /**
  * Convenience macro to attach a previously defined show() method to a
- * scheduler_filter_attribute. The show() method must have been defined earlier
- * with DEFINE_SCHEDULER_FILTER_ATTRIBUTE_SHOW(name, ...).
+ * gscheduler_filter_attribute. The show() method must have been defined earlier
+ * with DEFINE_GSCHEDULER_FILTER_ATTRIBUTE_SHOW(name, ...).
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_ATTRIBUTE
+ *			BEGIN_GSCHEDULER_FILTER_ATTRIBUTE
  */
-#define SCHEDULER_FILTER_ATTRIBUTE_SHOW(name)	\
+#define GSCHEDULER_FILTER_ATTRIBUTE_SHOW(name)	\
 	port_attr.show = name##_port_attr_show
 
 /**
  * Convenience macro to attach a previously defined store() method to a
- * scheduler_filter_attribute. The store() method must have been defined earlier
- * with DEFINE_SCHEDULER_FILTER_ATTRIBUTE_STORE(name, ...).
+ * gscheduler_filter_attribute. The store() method must have been defined earlier
+ * with DEFINE_GSCHEDULER_FILTER_ATTRIBUTE_STORE(name, ...).
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_ATTRIBUTE
+ *			BEGIN_GSCHEDULER_FILTER_ATTRIBUTE
  */
-#define SCHEDULER_FILTER_ATTRIBUTE_STORE(name)		\
+#define GSCHEDULER_FILTER_ATTRIBUTE_STORE(name)		\
 	port_attr.store = name##_port_attr_store
 
 /**
- * End the definition of a scheduler_filter_attribute. Must close any
- * BEGIN_SCHEDULER_FILTER_ATTRIBUTE section.
+ * End the definition of a gscheduler_filter_attribute. Must close any
+ * BEGIN_GSCHEDULER_FILTER_ATTRIBUTE section.
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_ATTRIBUTE
+ *			BEGIN_GSCHEDULER_FILTER_ATTRIBUTE
  */
-#define END_SCHEDULER_FILTER_ATTRIBUTE(name)	\
+#define END_GSCHEDULER_FILTER_ATTRIBUTE(name)	\
 	}
 
 /**
@@ -108,26 +108,26 @@ struct scheduler_filter_attribute {
  *
  * @param name		name of the filter attribute
  * @param filter	filter which attribute is read
- * @param attr		scheduler_filter_attribute describing the attribute
+ * @param attr		gscheduler_filter_attribute describing the attribute
  * @param page		4Kbytes buffer to fill in
  */
-#define DEFINE_SCHEDULER_FILTER_ATTRIBUTE_SHOW(name, filter, attr, page)    \
-	static ssize_t name##_show(struct scheduler_filter *,		    \
-				   struct scheduler_filter_attribute *,     \
+#define DEFINE_GSCHEDULER_FILTER_ATTRIBUTE_SHOW(name, filter, attr, page)    \
+	static ssize_t name##_show(struct gscheduler_filter *,		    \
+				   struct gscheduler_filter_attribute *,     \
 				   char *);				    \
 	static ssize_t name##_port_attr_show(				    \
-		struct scheduler_port *port,				    \
-		struct scheduler_port_attribute *port_attr, char *page)	    \
+		struct gscheduler_port *port,				    \
+		struct gscheduler_port_attribute *port_attr, char *page)	    \
 	{								    \
 		return name##_show(					    \
-			container_of(port, struct scheduler_filter, port),  \
+			container_of(port, struct gscheduler_filter, port),  \
 			container_of(port_attr,				    \
-				     struct scheduler_filter_attribute,     \
+				     struct gscheduler_filter_attribute,     \
 				     port_attr),			    \
 			page);						    \
 	}								    \
-	static ssize_t name##_show(struct scheduler_filter *filter,	    \
-				   struct scheduler_filter_attribute *attr, \
+	static ssize_t name##_show(struct gscheduler_filter *filter,	    \
+				   struct gscheduler_filter_attribute *attr, \
 				   char *page)
 
 /**
@@ -136,29 +136,29 @@ struct scheduler_filter_attribute {
  *
  * @param name		name of the filter attribute
  * @param filter	filter which attribute is to be modified
- * @param attr		scheduler_filter_attribute describing the attribute
+ * @param attr		gscheduler_filter_attribute describing the attribute
  * @param page		buffer containing the data to modify attribute
  * @param count		number of bytes contained in buffer
  */
-#define DEFINE_SCHEDULER_FILTER_ATTRIBUTE_STORE(name, filter, attr,	     \
+#define DEFINE_GSCHEDULER_FILTER_ATTRIBUTE_STORE(name, filter, attr,	     \
 						page, count)		     \
-	static ssize_t name##_store(struct scheduler_filter *,		     \
-				   struct scheduler_filter_attribute *,      \
+	static ssize_t name##_store(struct gscheduler_filter *,		     \
+				   struct gscheduler_filter_attribute *,      \
 				   const char *, size_t);		     \
 	static ssize_t name##_port_attr_store(				     \
-		struct scheduler_port *port,				     \
-		struct scheduler_port_attribute *port_attr,		     \
+		struct gscheduler_port *port,				     \
+		struct gscheduler_port_attribute *port_attr,		     \
 		const char *page, size_t count)				     \
 	{								     \
 		return name##_store(					     \
-			container_of(port, struct scheduler_filter, port),   \
+			container_of(port, struct gscheduler_filter, port),   \
 			container_of(port_attr,				     \
-				     struct scheduler_filter_attribute,      \
+				     struct gscheduler_filter_attribute,      \
 				     port_attr),			     \
 			page, count);					     \
 	}								     \
-	static ssize_t name##_store(struct scheduler_filter *filter,	     \
-				    struct scheduler_filter_attribute *attr, \
+	static ssize_t name##_store(struct gscheduler_filter *filter,	     \
+				    struct gscheduler_filter_attribute *attr, \
 				    const char *page, size_t count)
 
 /* End of convenience macros */
@@ -167,19 +167,19 @@ struct scheduler_filter_attribute {
  * Structure describing a type of filter. Filter of this type can be created
  * once the type is registered.
  */
-struct scheduler_filter_type {
-	struct scheduler_source_type source_type;
-	struct scheduler_port_type port_type;
-	struct scheduler_filter_attribute **attrs;
+struct gscheduler_filter_type {
+	struct gscheduler_source_type source_type;
+	struct gscheduler_port_type port_type;
+	struct gscheduler_filter_attribute **attrs;
 };
 
 /**
- * Mandatory macro to define a scheduler_filter_type. Can be used through the
- * BEGIN_SCHEDULER_FILTER_TYPE helper.
+ * Mandatory macro to define a gscheduler_filter_type. Can be used through the
+ * BEGIN_GSCHEDULER_FILTER_TYPE helper.
  *
  * @param filter_type	variable name of the filter type
  * @param owner		module providing this type
- * @param name		unique name among scheduler_port_type names
+ * @param name		unique name among gscheduler_port_type names
  * @param new		port_type constructor for this filter type
  * @param destroy	port_type destructor for this filter type
  * @param get_value	(source) callback to get the filtered value
@@ -208,9 +208,9 @@ struct scheduler_filter_type {
  * @param snk_get_param_type_size
  *			size in bytes of a snk_get_param_type parameter
  * @param _attrs	NULL-terminated array of custom
- *			scheduler_filter_attributes, or NULL
+ *			gscheduler_filter_attributes, or NULL
  */
-#define SCHEDULER_FILTER_TYPE_INIT(filter_type, owner, name,		\
+#define GSCHEDULER_FILTER_TYPE_INIT(filter_type, owner, name,		\
 				   new, destroy,			\
 				   get_value, update_value, show_value, \
 				   get_remote_value,			\
@@ -225,13 +225,13 @@ struct scheduler_filter_type {
 				   _attrs)				\
 	{								\
 		.source_type =						\
-			SCHEDULER_SOURCE_TYPE_INIT(get_value, show_value, \
+			GSCHEDULER_SOURCE_TYPE_INIT(get_value, show_value, \
 						   src_value_type,	\
 						   src_value_type_size, \
 						   src_get_param_type,	\
 						   src_get_param_type_size), \
 		.port_type =						\
-			SCHEDULER_PORT_TYPE_INIT(filter_type.port_type, \
+			GSCHEDULER_PORT_TYPE_INIT(filter_type.port_type, \
 						 owner, name,		\
 						 update_value,		\
 						 snk_value_type,	\
@@ -245,157 +245,157 @@ struct scheduler_filter_type {
 	}
 
 /*
- * Convenience macros to define a scheduler_filter_type
+ * Convenience macros to define a gscheduler_filter_type
  *
  * These convenience macros should be used the following way:
  *
  * First, implemented methods must be defined using the
- * DEFINE_SCHEDULER_FILTER_<method> macros. Second, the scheduler_filter_type
- * must be filled using {BEGIN,END}_SCHEDULER_FILTER_TYPE and SCHEDULER_FILTER_*
+ * DEFINE_GSCHEDULER_FILTER_<method> macros. Second, the gscheduler_filter_type
+ * must be filled using {BEGIN,END}_GSCHEDULER_FILTER_TYPE and GSCHEDULER_FILTER_*
  * macros:
  *
- *	BEGIN_SCHEDULER_FILTER_TYPE(name),
- *		.SCHEDULER_FILTER_SOURCE_VALUE_TYPE(name, type),
- *		.SCHEDULER_FILTER_PORT_VALUE_TYPE(name, type),
+ *	BEGIN_GSCHEDULER_FILTER_TYPE(name),
+ *		.GSCHEDULER_FILTER_SOURCE_VALUE_TYPE(name, type),
+ *		.GSCHEDULER_FILTER_PORT_VALUE_TYPE(name, type),
  * if needed:
- *		.SCHEDULER_FILTER_<method>(name),
- *		.SCHEDULER_FILTER_SOURCE_PARAM_TYPE(name, type),
- *		.SCHEDULER_FILTER_PORT_PARAM_TYPE(name, type),
- *		.SCHEDULER_FILTER_ATTRS(name, attrs),
+ *		.GSCHEDULER_FILTER_<method>(name),
+ *		.GSCHEDULER_FILTER_SOURCE_PARAM_TYPE(name, type),
+ *		.GSCHEDULER_FILTER_PORT_PARAM_TYPE(name, type),
+ *		.GSCHEDULER_FILTER_ATTRS(name, attrs),
  *		...
  * and finally:
- *	END_SCHEDULER_FILTER_TYPE(name);
+ *	END_GSCHEDULER_FILTER_TYPE(name);
  */
 
 /**
- * Convenience macro to start the definition of a scheduler_filter_type. The
- * definition must end with END_SCHEDULER_FILTER_TYPE(name). The variable will
+ * Convenience macro to start the definition of a gscheduler_filter_type. The
+ * definition must end with END_GSCHEDULER_FILTER_TYPE(name). The variable will
  * be called name_type.
  *
- * @param name		name of the scheduler_filter type
+ * @param name		name of the gscheduler_filter type
  */
-#define BEGIN_SCHEDULER_FILTER_TYPE(name)			   \
-	struct scheduler_filter_type name##_type = {		   \
-		.source_type = SCHEDULER_SOURCE_TYPE_INIT(	   \
-			scheduler_filter_simple_source_get_value,  \
-			scheduler_filter_simple_source_show_value, \
+#define BEGIN_GSCHEDULER_FILTER_TYPE(name)			   \
+	struct gscheduler_filter_type name##_type = {		   \
+		.source_type = GSCHEDULER_SOURCE_TYPE_INIT(	   \
+			gscheduler_filter_simple_source_get_value,  \
+			gscheduler_filter_simple_source_show_value, \
 			NULL, 0, NULL, 0),			   \
-		.port_type = SCHEDULER_PORT_TYPE_INIT(		   \
+		.port_type = GSCHEDULER_PORT_TYPE_INIT(		   \
 			name##_type.port_type, THIS_MODULE, #name, \
-			scheduler_filter_simple_sink_update_value, \
+			gscheduler_filter_simple_sink_update_value, \
 			NULL, 0, NULL, 0,			   \
 			&name##_type.source_type,		   \
-			scheduler_port_get_remote_value,	   \
+			gscheduler_port_get_remote_value,	   \
 			name##_port_new, name##_port_destroy)
 
 /**
  * Convenience macro to attach a previously defined get_value() method to a
- * scheduler_filter type. The get_value() method must have been defined earlier
- * with DEFINE_SCHEDULER_FILTER_GET_VALUE(name, ...).
+ * gscheduler_filter type. The get_value() method must have been defined earlier
+ * with DEFINE_GSCHEDULER_FILTER_GET_VALUE(name, ...).
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_TYPE
+ *			BEGIN_GSCHEDULER_FILTER_TYPE
  */
-#define SCHEDULER_FILTER_GET_VALUE(name)				    \
-	__SCHEDULER_SOURCE_GET_VALUE(source_type., name##_source_get_value)
+#define GSCHEDULER_FILTER_GET_VALUE(name)				    \
+	__GSCHEDULER_SOURCE_GET_VALUE(source_type., name##_source_get_value)
 
 /**
  * Convenience macro to attach a previously defined update_value() method to a
- * scheduler_filter type. The update_value() method must have been defined earlier
- * with DEFINE_SCHEDULER_FILTER_UPDATE_VALUE(name, ...).
+ * gscheduler_filter type. The update_value() method must have been defined earlier
+ * with DEFINE_GSCHEDULER_FILTER_UPDATE_VALUE(name, ...).
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_TYPE
+ *			BEGIN_GSCHEDULER_FILTER_TYPE
  */
-#define SCHEDULER_FILTER_UPDATE_VALUE(name)			\
-	__SCHEDULER_PORT_UPDATE_VALUE(port_type., name##_port)
+#define GSCHEDULER_FILTER_UPDATE_VALUE(name)			\
+	__GSCHEDULER_PORT_UPDATE_VALUE(port_type., name##_port)
 
 /**
  * Convenience macro to attach a previously defined show_value() method to a
- * scheduler_filter type. The show_value() method must have been defined earlier
- * with DEFINE_SCHEDULER_FILTER_SHOW_VALUE(name, ...).
+ * gscheduler_filter type. The show_value() method must have been defined earlier
+ * with DEFINE_GSCHEDULER_FILTER_SHOW_VALUE(name, ...).
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_TYPE
+ *			BEGIN_GSCHEDULER_FILTER_TYPE
  */
-#define SCHEDULER_FILTER_SHOW_VALUE(name)				      \
-	__SCHEDULER_SOURCE_SHOW_VALUE(source_type., name##_source_show_value)
+#define GSCHEDULER_FILTER_SHOW_VALUE(name)				      \
+	__GSCHEDULER_SOURCE_SHOW_VALUE(source_type., name##_source_show_value)
 
 /**
  * Convenience macro to attach a previously defined get_remote_value() method to
- * a scheduler_filter type. The get_remote_value() method must have been defined
- * earlier with DEFINE_SCHEDULER_FILTER_GET_REMOTE_VALUE(name, ...).
+ * a gscheduler_filter type. The get_remote_value() method must have been defined
+ * earlier with DEFINE_GSCHEDULER_FILTER_GET_REMOTE_VALUE(name, ...).
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_TYPE
+ *			BEGIN_GSCHEDULER_FILTER_TYPE
  */
-#define SCHEDULER_FILTER_GET_REMOTE_VALUE(name)				\
-	__SCHEDULER_PORT_GET_REMOTE_VALUE(port_type., name##_port)
+#define GSCHEDULER_FILTER_GET_REMOTE_VALUE(name)				\
+	__GSCHEDULER_PORT_GET_REMOTE_VALUE(port_type., name##_port)
 
 /**
- * Convenience macro to declare the value type generated by a scheduler
- * filter. Must be used within all BEGIN_SCHEDULER_FILTER_TYPE sections.
+ * Convenience macro to declare the value type generated by a gscheduler
+ * filter. Must be used within all BEGIN_GSCHEDULER_FILTER_TYPE sections.
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_TYPE
+ *			BEGIN_GSCHEDULER_FILTER_TYPE
  * @param type		litteral expression of the value type output by the
  *			source
  */
-#define SCHEDULER_FILTER_SOURCE_VALUE_TYPE(name, type)		\
-	__SCHEDULER_SOURCE_VALUE_TYPE(source_type., type)
+#define GSCHEDULER_FILTER_SOURCE_VALUE_TYPE(name, type)		\
+	__GSCHEDULER_SOURCE_VALUE_TYPE(source_type., type)
 
 /**
  * Convenience macro to declare the parameter type of the get_value() method of
  * a filter's source.
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_TYPE
+ *			BEGIN_GSCHEDULER_FILTER_TYPE
  * @param type		litteral expression of the parameter type
  */
-#define SCHEDULER_FILTER_SOURCE_PARAM_TYPE(name, type)		\
-	__SCHEDULER_SOURCE_PARAM_TYPE(source_type., type)
+#define GSCHEDULER_FILTER_SOURCE_PARAM_TYPE(name, type)		\
+	__GSCHEDULER_SOURCE_PARAM_TYPE(source_type., type)
 
 /**
- * Convenience macro to declare the value type collected by a scheduler
- * filter. Must be used within all BEGIN_SCHEDULER_FILTER_TYPE sections.
+ * Convenience macro to declare the value type collected by a gscheduler
+ * filter. Must be used within all BEGIN_GSCHEDULER_FILTER_TYPE sections.
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_TYPE
+ *			BEGIN_GSCHEDULER_FILTER_TYPE
  * @param type		litteral expression of the value type read by the sink
  */
-#define SCHEDULER_FILTER_PORT_VALUE_TYPE(name, type)			\
-	__SCHEDULER_PORT_VALUE_TYPE(port_type., name##_port, type)
+#define GSCHEDULER_FILTER_PORT_VALUE_TYPE(name, type)			\
+	__GSCHEDULER_PORT_VALUE_TYPE(port_type., name##_port, type)
 
 /**
  * Convenience macro to declare the parameter type used when calling the
  * get_value() method of a connected source.
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_TYPE
+ *			BEGIN_GSCHEDULER_FILTER_TYPE
  * @param type		litteral expression of the parameter type
  */
-#define SCHEDULER_FILTER_PORT_PARAM_TYPE(name, type)			\
-	__SCHEDULER_PORT_PARAM_TYPE(port_type., name##_port, type)
+#define GSCHEDULER_FILTER_PORT_PARAM_TYPE(name, type)			\
+	__GSCHEDULER_PORT_PARAM_TYPE(port_type., name##_port, type)
 
 /**
  * Convenience macro to attach custom filter attributes to a filter type.
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_TYPE
+ *			BEGIN_GSCHEDULER_FILTER_TYPE
  * @param attrs		NULL terminated array of pointers to custom filter
- *			attributes (struct scheduler_filter_attribute)
+ *			attributes (struct gscheduler_filter_attribute)
  */
-#define SCHEDULER_FILTER_ATTRIBUTES(name, _attrs)	\
+#define GSCHEDULER_FILTER_ATTRIBUTES(name, _attrs)	\
 	attrs = _attrs
 
 /**
- * End the definition of a scheduler_filter_type. Must close any
- * BEGIN_SCHEDULER_FILTER_TYPE section.
+ * End the definition of a gscheduler_filter_type. Must close any
+ * BEGIN_GSCHEDULER_FILTER_TYPE section.
  *
  * @param name		must match the name used with
- *			BEGIN_SCHEDULER_FILTER_TYPE
+ *			BEGIN_GSCHEDULER_FILTER_TYPE
  */
-#define END_SCHEDULER_FILTER_TYPE(name)		\
+#define END_GSCHEDULER_FILTER_TYPE(name)		\
 	}
 
 /**
@@ -408,10 +408,10 @@ struct scheduler_filter_type {
  * @param ptr		name of the type *arg of the method
  * @param nr		name of the array length arg of the method
  */
-#define DEFINE_SCHEDULER_FILTER_GET_VALUE(name, filter, type, ptr, nr)	       \
-	static int name##_get_value(struct scheduler_filter *,		       \
+#define DEFINE_GSCHEDULER_FILTER_GET_VALUE(name, filter, type, ptr, nr)	       \
+	static int name##_get_value(struct gscheduler_filter *,		       \
 				    type *, unsigned int);		       \
-	static int name##_source_get_value(struct scheduler_source *source,    \
+	static int name##_source_get_value(struct gscheduler_source *source,    \
 					   void *__ptr, unsigned int __nr,     \
 					   const void *__in_ptr,	       \
 					   unsigned int __in_nr)	       \
@@ -419,10 +419,10 @@ struct scheduler_filter_type {
 		if (!__nr)						       \
 			return 0;					       \
 		return name##_get_value(				       \
-			container_of(source, struct scheduler_filter, source), \
+			container_of(source, struct gscheduler_filter, source), \
 			__ptr, __nr);					       \
 	}								       \
-	static int name##_get_value(struct scheduler_filter *filter,	       \
+	static int name##_get_value(struct gscheduler_filter *filter,	       \
 				    type *ptr, unsigned int nr)
 
 /**
@@ -438,22 +438,22 @@ struct scheduler_filter_type {
  * @param in_ptr	name of the in_type *arg of the method
  * @param in_nr		name of the parameters array length arg of the method
  */
-#define DEFINE_SCHEDULER_FILTER_GET_VALUE_WITH_INPUT(name, filter,	       \
+#define DEFINE_GSCHEDULER_FILTER_GET_VALUE_WITH_INPUT(name, filter,	       \
 						     type, ptr, nr,	       \
 						     in_type, in_ptr, in_nr)   \
-	static int name##_get_value(struct scheduler_filter *,		       \
+	static int name##_get_value(struct gscheduler_filter *,		       \
 				    type *, unsigned int,		       \
 				    const in_type *, unsigned int);	       \
-	static int name##_source_get_value(struct scheduler_source *source,    \
+	static int name##_source_get_value(struct gscheduler_source *source,    \
 					   void *__ptr, unsigned int __nr,     \
 					   const void *__in_ptr,	       \
 					   unsigned int __in_nr)	       \
 	{								       \
 		return name##_get_value(				       \
-			container_of(source, struct scheduler_filter, source), \
+			container_of(source, struct gscheduler_filter, source), \
 			__ptr, __nr, __in_ptr, __in_nr);		       \
 	}								       \
-	static int name##_get_value(struct scheduler_filter *filter,	       \
+	static int name##_get_value(struct gscheduler_filter *filter,	       \
 				    type *ptr, unsigned int nr,		       \
 				    const in_type *in_ptr,		       \
 				    unsigned int in_nr)
@@ -466,18 +466,18 @@ struct scheduler_filter_type {
  * @param filter	name of the struct filter *arg of the method
  * @param page		name of the buffer arg of the method
  */
-#define DEFINE_SCHEDULER_FILTER_SHOW_VALUE(name, filter, page)		       \
-	static ssize_t name##_show_value(struct scheduler_filter *filter,      \
+#define DEFINE_GSCHEDULER_FILTER_SHOW_VALUE(name, filter, page)		       \
+	static ssize_t name##_show_value(struct gscheduler_filter *filter,      \
 					 char *page);			       \
 	static ssize_t name##_source_show_value(			       \
-		struct scheduler_source *source,			       \
+		struct gscheduler_source *source,			       \
 		char *page)						       \
 	{								       \
 		return name##_show_value(				       \
-			container_of(source, struct scheduler_filter, source), \
+			container_of(source, struct gscheduler_filter, source), \
 			page);						       \
 	}								       \
-	static ssize_t name##_show_value(struct scheduler_filter *filter,      \
+	static ssize_t name##_show_value(struct gscheduler_filter *filter,      \
 					 char *page)
 
 /**
@@ -487,17 +487,17 @@ struct scheduler_filter_type {
  * @param name		name of the filter type
  * @param filter	name of the struct filter *arg of the method
  */
-#define DEFINE_SCHEDULER_FILTER_UPDATE_VALUE(name, filter)		   \
-	static void name##_update_value(struct scheduler_filter *);	   \
+#define DEFINE_GSCHEDULER_FILTER_UPDATE_VALUE(name, filter)		   \
+	static void name##_update_value(struct gscheduler_filter *);	   \
 	static void name##_port_sink_update_value(			   \
-		struct scheduler_sink *sink,				   \
-		struct scheduler_source *source)			   \
+		struct gscheduler_sink *sink,				   \
+		struct gscheduler_source *source)			   \
 	{								   \
 		name##_update_value(					   \
 			container_of(sink,				   \
-				     struct scheduler_filter, port.sink)); \
+				     struct gscheduler_filter, port.sink)); \
 	}								   \
-	static void name##_update_value(struct scheduler_filter *filter)
+	static void name##_update_value(struct gscheduler_filter *filter)
 
 /**
  * Convenience macro to define a typed get_remote_value() method with
@@ -513,15 +513,15 @@ struct scheduler_filter_type {
  * @param in_ptr	name of the in_type *arg of the method
  * @param in_nr		name of the parameters array length arg of the method
  */
-#define DEFINE_SCHEDULER_FILTER_GET_REMOTE_VALUE(name, filter, node,	     \
+#define DEFINE_GSCHEDULER_FILTER_GET_REMOTE_VALUE(name, filter, node,	     \
 						 type, ptr, nr,		     \
 						 in_type, in_ptr, in_nr)     \
-	static int name##_get_remote_value(struct scheduler_filter *filter,  \
+	static int name##_get_remote_value(struct gscheduler_filter *filter,  \
 					   hcc_node_t node,	     \
 					   type *ptr, unsigned int nr,	     \
 					   const in_type *in_ptr,	     \
 					   unsigned int in_nr);		     \
-	static int name##_port_get_remote_value(struct scheduler_port *port, \
+	static int name##_port_get_remote_value(struct gscheduler_port *port, \
 						hcc_node_t node,	     \
 						void *__ptr,		     \
 						unsigned int __nr,	     \
@@ -529,11 +529,11 @@ struct scheduler_filter_type {
 						unsigned int __in_nr)	     \
 	{								     \
 		return name##_get_remote_value(				     \
-			container_of(port, struct scheduler_filter, port),   \
+			container_of(port, struct gscheduler_filter, port),   \
 			node,						     \
 			__ptr, __nr, __in_ptr, __in_nr);		     \
 	}								     \
-	static int name##_get_remote_value(struct scheduler_filter *filter,  \
+	static int name##_get_remote_value(struct gscheduler_filter *filter,  \
 					   hcc_node_t node,	     \
 					   type *ptr, unsigned int nr,	     \
 					   const in_type *in_ptr,	     \
@@ -546,13 +546,13 @@ struct scheduler_filter_type {
  * @param name		name of the filter type
  * @param fname		configfs entry name of the new filter
  */
-#define DEFINE_SCHEDULER_FILTER_NEW(name, fname)			  \
-	static struct scheduler_filter *name##_new(const char *);	  \
-	static struct scheduler_port *name##_port_new(const char *fname)  \
+#define DEFINE_GSCHEDULER_FILTER_NEW(name, fname)			  \
+	static struct gscheduler_filter *name##_new(const char *);	  \
+	static struct gscheduler_port *name##_port_new(const char *fname)  \
 	{								  \
 		return &name##_new(fname)->port;			  \
 	}								  \
-	static struct scheduler_filter *name##_new(const char *fname)
+	static struct gscheduler_filter *name##_new(const char *fname)
 
 /**
  * Convenience macro to define the mandatory destructor for a filter type. The
@@ -561,21 +561,21 @@ struct scheduler_filter_type {
  * @param name		name of the filter type
  * @param filter	filter to destroy
  */
-#define DEFINE_SCHEDULER_FILTER_DESTROY(name, filter)			    \
-	static void name##_destroy(struct scheduler_filter *);		    \
-	static void name##_port_destroy(struct scheduler_port *port)	    \
+#define DEFINE_GSCHEDULER_FILTER_DESTROY(name, filter)			    \
+	static void name##_destroy(struct gscheduler_filter *);		    \
+	static void name##_port_destroy(struct gscheduler_port *port)	    \
 	{								    \
 		name##_destroy(						    \
-			container_of(port, struct scheduler_filter, port)); \
+			container_of(port, struct gscheduler_filter, port)); \
 	}								    \
-	static void name##_destroy(struct scheduler_filter *filter)
+	static void name##_destroy(struct gscheduler_filter *filter)
 
 /* End of convenience macros */
 
 /**
  * Register a new filter type
  *
- * @param type		type initialized with SCHEDULER_FILTER_TYPE[_INIT] to
+ * @param type		type initialized with GSCHEDULER_FILTER_TYPE[_INIT] to
  *			register
  *
  * @return		0 is successful,
@@ -584,16 +584,16 @@ struct scheduler_filter_type {
  *			-EEXIST if a filter type of the same name is already
  *			registered
  */
-int scheduler_filter_type_register(struct scheduler_filter_type *type);
+int gscheduler_filter_type_register(struct gscheduler_filter_type *type);
 /**
  * Unregister a filter type. Must *only* be called at module unloading.
  *
  * @param type		The filter type to unregister
  */
-void scheduler_filter_type_unregister(struct scheduler_filter_type *type);
+void gscheduler_filter_type_unregister(struct gscheduler_filter_type *type);
 
 /**
- * Initialize a scheduler_filter. Must be called by filter constructors.
+ * Initialize a gscheduler_filter. Must be called by filter constructors.
  *
  * @param filter	filter to initialize
  * @param name		name of the new filter. Must match the name given as
@@ -606,23 +606,23 @@ void scheduler_filter_type_unregister(struct scheduler_filter_type *type);
  * @return		0 if successful,
  *			-ENODEV if the type is not registered
  */
-int scheduler_filter_init(struct scheduler_filter *filter,
+int gscheduler_filter_init(struct gscheduler_filter *filter,
 			  const char *name,
-			  struct scheduler_filter_type *type,
+			  struct gscheduler_filter_type *type,
 			  struct config_group **default_groups);
 /**
- * Cleanup a scheduler filter. Must be called by the filter destructor.
+ * Cleanup a gscheduler filter. Must be called by the filter destructor.
  *
  * @param filter	filter to cleanup
  */
-void scheduler_filter_cleanup(struct scheduler_filter *filter);
+void gscheduler_filter_cleanup(struct gscheduler_filter *filter);
 
 /**
  * Get a reference on a filter.
  *
  * @param filter	filter to get the reference on
  */
-static inline void scheduler_filter_get(struct scheduler_filter *filter)
+static inline void gscheduler_filter_get(struct gscheduler_filter *filter)
 {
 	config_group_get(&filter->port.pipe.config);
 }
@@ -632,21 +632,21 @@ static inline void scheduler_filter_get(struct scheduler_filter *filter)
  *
  * @param filter	filter to put the reference on
  */
-static inline void scheduler_filter_put(struct scheduler_filter *filter)
+static inline void gscheduler_filter_put(struct gscheduler_filter *filter)
 {
 	config_group_put(&filter->port.pipe.config);
 }
 
 /**
- * Lock a filter. This will *not* prevent the scheduler_pipe subsystem from
+ * Lock a filter. This will *not* prevent the gscheduler_pipe subsystem from
  * calling update_value and show_value callbacks. This will however block
  * subscription/unsubscription of sinks to this filter.
  *
  * @param filter	filter to lock
  */
-static inline void scheduler_filter_lock(struct scheduler_filter *filter)
+static inline void gscheduler_filter_lock(struct gscheduler_filter *filter)
 {
-	scheduler_source_lock(&filter->source);
+	gscheduler_source_lock(&filter->source);
 }
 
 /**
@@ -654,13 +654,13 @@ static inline void scheduler_filter_lock(struct scheduler_filter *filter)
  *
  * @param filter	filter to unlock
  */
-static inline void scheduler_filter_unlock(struct scheduler_filter *filter)
+static inline void gscheduler_filter_unlock(struct gscheduler_filter *filter)
 {
-	scheduler_source_unlock(&filter->source);
+	gscheduler_source_unlock(&filter->source);
 }
 
-/* Trivial get_value method for a scheduler_filter */
-extern source_get_value_t scheduler_filter_simple_source_get_value;
+/* Trivial get_value method for a gscheduler_filter */
+extern source_get_value_t gscheduler_filter_simple_source_get_value;
 
 /**
  * Get the value from the source connected to a filter
@@ -676,16 +676,16 @@ extern source_get_value_t scheduler_filter_simple_source_get_value;
  */
 static inline
 int
-scheduler_filter_simple_get_value_with_input(struct scheduler_filter *filter,
+gscheduler_filter_simple_get_value_with_input(struct gscheduler_filter *filter,
 					     void *value_p, int nr_value,
 					     void *param_p, int nr_param)
 {
 	/*
 	 * Optimization: one stack frame less than:
-	 * return scheduler_filter_simple_source_get_value(&filter->source,
+	 * return gscheduler_filter_simple_source_get_value(&filter->source,
 	 *						   ...);
 	 */
-	return scheduler_port_get_value(&filter->port,
+	return gscheduler_port_get_value(&filter->port,
 					value_p, nr_value, param_p, nr_param);
 }
 /**
@@ -700,20 +700,20 @@ scheduler_filter_simple_get_value_with_input(struct scheduler_filter *filter,
  */
 static inline
 int
-scheduler_filter_simple_get_value(struct scheduler_filter *filter,
+gscheduler_filter_simple_get_value(struct gscheduler_filter *filter,
 				  void *value_p, int nr_value)
 {
 	/*
 	 * Optimization: one stack frame less than:
-	 * return scheduler_filter_simple_source_get_value(&filter->source,
+	 * return gscheduler_filter_simple_source_get_value(&filter->source,
 	 *						   ...);
 	 */
-	return scheduler_port_get_value(&filter->port,
+	return gscheduler_port_get_value(&filter->port,
 					value_p, nr_value, NULL, 0);
 }
 
-/* Trivial show_value() method for a scheduler_filter */
-extern source_show_value_t scheduler_filter_simple_source_show_value;
+/* Trivial show_value() method for a gscheduler_filter */
+extern source_show_value_t gscheduler_filter_simple_source_show_value;
 
 /**
  * Show the value collected by a filter (from a its connected source) as a string
@@ -727,18 +727,18 @@ extern source_show_value_t scheduler_filter_simple_source_show_value;
  */
 static inline
 ssize_t
-scheduler_filter_simple_show_value(struct scheduler_filter *filter, char *page)
+gscheduler_filter_simple_show_value(struct gscheduler_filter *filter, char *page)
 {
 	/*
 	 * Optimization: one stack frame less than:
-	 * return scheduler_filter_simple_source_show_value(&filter->source,
+	 * return gscheduler_filter_simple_source_show_value(&filter->source,
 	 *						    page);
 	 */
-	return scheduler_port_show_value(&filter->port, page);
+	return gscheduler_port_show_value(&filter->port, page);
 }
 
 /* Trivial update_value() method for a filter */
-extern sink_update_value_t scheduler_filter_simple_sink_update_value;
+extern sink_update_value_t gscheduler_filter_simple_sink_update_value;
 
 /**
  * Propagate a notification to the sink connected to a filter
@@ -746,9 +746,9 @@ extern sink_update_value_t scheduler_filter_simple_sink_update_value;
  * @param filter	filter being notified
  */
 static inline
-void scheduler_filter_simple_update_value(struct scheduler_filter *filter)
+void gscheduler_filter_simple_update_value(struct gscheduler_filter *filter)
 {
-	scheduler_filter_simple_sink_update_value(&filter->port.sink, NULL);
+	gscheduler_filter_simple_sink_update_value(&filter->port.sink, NULL);
 }
 
 /**
@@ -773,12 +773,12 @@ void scheduler_filter_simple_update_value(struct scheduler_filter *filter)
  */
 static inline
 int
-scheduler_filter_simple_get_remote_value(struct scheduler_filter *filter,
+gscheduler_filter_simple_get_remote_value(struct gscheduler_filter *filter,
 					 hcc_node_t node,
 					 void *value_p, unsigned int nr_value,
 					 const void *param_p, unsigned int nr_param)
 {
-	return scheduler_port_get_remote_value(&filter->port, node,
+	return gscheduler_port_get_remote_value(&filter->port, node,
 					       value_p, nr_value,
 					       param_p, nr_param);
 }

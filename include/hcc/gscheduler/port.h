@@ -11,15 +11,15 @@
 #include <hcc/gscheduler/global_config.h>
 
 /*
- * A scheduler_port is a scheduler_pipe having at least a scheduler_sink. The
- * sink can connect to another scheduler_pipe having a source.
+ * A gscheduler_port is a gscheduler_pipe having at least a gscheduler_sink. The
+ * sink can connect to another gscheduler_pipe having a source.
  *
- * Doing mkdir in a scheduler_port directory creates a new scheduler_port having
+ * Doing mkdir in a gscheduler_port directory creates a new gscheduler_port having
  * a source, which type is named after the new subdir name. The creator port's
  * sink is connected to the created port's source.
  *
  * Creating a symlink from an entry of port's directory to another
- * scheduler_pipe directory (currently this is only allowed for probe sources)
+ * gscheduler_pipe directory (currently this is only allowed for probe sources)
  * connects the port's sink to the symlink target's source.
  *
  * In both kind of connections, the connection is publish-subscribe enabled if
@@ -27,8 +27,8 @@
  * its source already has subscribers.
  */
 
-struct scheduler_port;
-struct scheduler_port_type;
+struct gscheduler_port;
+struct gscheduler_port_type;
 
 /**
  * prototype for a port callback that gets the value of a remote lower source
@@ -45,7 +45,7 @@ struct scheduler_port_type;
  *			retry later, or
  *			other negative error code
  */
-typedef int port_get_remote_value_t(struct scheduler_port *port,
+typedef int port_get_remote_value_t(struct gscheduler_port *port,
 				    hcc_node_t node,
 				    void *value_p, unsigned int nr,
 				    const void *in_value_p,
@@ -59,7 +59,7 @@ typedef int port_get_remote_value_t(struct scheduler_port *port,
  * @return		valid pointer to a new port, or
  *			NULL if no port could be successfully created
  */
-typedef struct scheduler_port *port_new_t(const char *name);
+typedef struct gscheduler_port *port_new_t(const char *name);
 
 /**
  * prototype for a port type callback that destroys a port (for instance frees
@@ -67,18 +67,18 @@ typedef struct scheduler_port *port_new_t(const char *name);
  *
  * @param port		port to destroy
  */
-typedef void port_destroy_t(struct scheduler_port *);
+typedef void port_destroy_t(struct gscheduler_port *);
 
 
 /*
  * Structure representing a type of port. Must be initialized with
- * SCHEDULER_PORT_TYPE_INIT (for instance through BEGIN_SCHEDULER_PORT_TYPE and
- * SCHEDULER_PORT_* helpers).
+ * GSCHEDULER_PORT_TYPE_INIT (for instance through BEGIN_GSCHEDULER_PORT_TYPE and
+ * GSCHEDULER_PORT_* helpers).
  */
-struct scheduler_port_type {
+struct gscheduler_port_type {
 	const char *name;
-	struct scheduler_sink_type sink_type;
-	struct scheduler_pipe_type pipe_type;
+	struct gscheduler_sink_type sink_type;
+	struct gscheduler_pipe_type pipe_type;
 	/* method to get the value from a remote node */
 	port_get_remote_value_t *get_remote_value;
 	/** constructor of ports of this type */
@@ -89,19 +89,19 @@ struct scheduler_port_type {
 };
 
 /* Structure representing a port */
-struct scheduler_port {
-	struct scheduler_sink sink;
-	struct scheduler_pipe pipe;
-	struct scheduler_pipe *peer_pipe;
+struct gscheduler_port {
+	struct gscheduler_sink sink;
+	struct gscheduler_pipe pipe;
+	struct gscheduler_pipe *peer_pipe;
 	struct global_config_item global_item;	/** global config item referring
 						  * to the connected source */
 	struct global_config_attrs global_attrs;
 };
 
-struct scheduler_port_attribute;
+struct gscheduler_port_attribute;
 
 /* Same limitation as configfs (see SIMPLE_ATTR_SIZE in fs/configfs/file.c) */
-#define SCHEDULER_PORT_ATTR_SIZE 4096
+#define GSCHEDULER_PORT_ATTR_SIZE 4096
 
 /**
  * prototype for a port_attribute callback that reads a port attribute
@@ -113,8 +113,8 @@ struct scheduler_port_attribute;
  * @return		number of bytes written to page, or
  *			negative error code
  */
-typedef ssize_t port_attribute_show_t(struct scheduler_port *port,
-				      struct scheduler_port_attribute *attr,
+typedef ssize_t port_attribute_show_t(struct gscheduler_port *port,
+				      struct gscheduler_port_attribute *attr,
 				      char *page);
 /**
  * prototype for a port_attribute callback that modifies a port attribute
@@ -127,15 +127,15 @@ typedef ssize_t port_attribute_show_t(struct scheduler_port *port,
  * @return		number of bytes read from buffer, or
  *			negative error code
  */
-typedef ssize_t port_attribute_store_t(struct scheduler_port *port,
-				       struct scheduler_port_attribute *attr,
+typedef ssize_t port_attribute_store_t(struct gscheduler_port *port,
+				       struct gscheduler_port_attribute *attr,
 				       const char *buffer, size_t count);
 
 /*
- * Structure representing a scheduler_port attribute. Must be initialized with
- * SCHEDULER_PORT_ATTRIBUTE_INIT.
+ * Structure representing a gscheduler_port attribute. Must be initialized with
+ * GSCHEDULER_PORT_ATTRIBUTE_INIT.
  */
-struct scheduler_port_attribute {
+struct gscheduler_port_attribute {
 	struct configfs_attribute config;
 	/** method to read a custom attribute of a port of this type */
 	port_attribute_show_t *show;
@@ -144,14 +144,14 @@ struct scheduler_port_attribute {
 };
 
 /**
- * Mandatory macro to define a scheduler_port_type. Can be called through
- * the BEGIN_SCHEDULER_PORT_TYPE helper.
+ * Mandatory macro to define a gscheduler_port_type. Can be called through
+ * the BEGIN_GSCHEDULER_PORT_TYPE helper.
  *
  * @param port_type	variable name of the port type
  * @param owner		module providing this port type
  * @param _name		string containing the unique name of this port type
  * @param snk_update_value
- *			method to give to the scheduler_sink of a
+ *			method to give to the gscheduler_sink of a
  *			port of this type
  * @param snk_value_type
  *			string containing the type name of lower source's values
@@ -163,13 +163,13 @@ struct scheduler_port_attribute {
  * @param snk_get_param_type_size
  *			size in bytes of a snk_get_param_type parameter
  * @param source_type	optional source type to attach to the
- *			scheduler_pipe_type of this port type
+ *			gscheduler_pipe_type of this port type
  * @param _get_remote_value
  *			get_remote_value() method of this port type
  * @param _new		creator of ports of this type
  * @param _destroy	destructors of ports of this type
  */
-#define SCHEDULER_PORT_TYPE_INIT(port_type, owner, _name,		\
+#define GSCHEDULER_PORT_TYPE_INIT(port_type, owner, _name,		\
 				 snk_update_value,			      \
 				 snk_value_type, snk_value_type_size,	      \
 				 snk_get_param_type, snk_get_param_type_size, \
@@ -179,13 +179,13 @@ struct scheduler_port_attribute {
 				 _destroy)				\
 	{								\
 		.name = _name,						\
-		.sink_type = SCHEDULER_SINK_TYPE_INIT(			\
+		.sink_type = GSCHEDULER_SINK_TYPE_INIT(			\
 			snk_update_value,				\
 			snk_value_type,					\
 			snk_value_type_size,				\
 			snk_get_param_type,				\
 			snk_get_param_type_size),			\
-		.pipe_type = SCHEDULER_PIPE_TYPE_INIT(			\
+		.pipe_type = GSCHEDULER_PIPE_TYPE_INIT(			\
 			owner,						\
 			NULL, NULL,					\
 			source_type, &port_type.sink_type),		\
@@ -195,129 +195,129 @@ struct scheduler_port_attribute {
 	}
 
 /*
- * Convenience macros to define a scheduler_port_type
+ * Convenience macros to define a gscheduler_port_type
  *
  * These convenience macros should be used the following way:
  *
  * First, implemented methods must be defined using the
- * DEFINE_SCHEDULER_PORT_<method> macros. Second, the scheduler_port_type must
- * be filled using {BEGIN,END}_SCHEDULER_PORT_TYPE and SCHEDULER_PORT_* macros:
+ * DEFINE_GSCHEDULER_PORT_<method> macros. Second, the gscheduler_port_type must
+ * be filled using {BEGIN,END}_GSCHEDULER_PORT_TYPE and GSCHEDULER_PORT_* macros:
  *
- *	BEGIN_SCHEDULER_PORT_TYPE(name),
- *		.SCHEDULER_PORT_VALUE_TYPE(name, type),
+ *	BEGIN_GSCHEDULER_PORT_TYPE(name),
+ *		.GSCHEDULER_PORT_VALUE_TYPE(name, type),
  * if needed:
- *		.SCHEDULER_PORT_<method>(name),
- *		.SCHEDULER_PORT_PARAM_TYPE(name, type),
- *		.SCHEDULER_PORT_ATTRS(name, attrs),
+ *		.GSCHEDULER_PORT_<method>(name),
+ *		.GSCHEDULER_PORT_PARAM_TYPE(name, type),
+ *		.GSCHEDULER_PORT_ATTRS(name, attrs),
  *		...
  * and finally:
- *	END_SCHEDULER_PORT_TYPE(name);
+ *	END_GSCHEDULER_PORT_TYPE(name);
  */
 
 /**
- * Convenience macro to start the definition of a scheduler_port_type. The
- * definition must end with END_SCHEDULER_PORT_TYPE(name). The variable will be
+ * Convenience macro to start the definition of a gscheduler_port_type. The
+ * definition must end with END_GSCHEDULER_PORT_TYPE(name). The variable will be
  * called name_type.
  *
- * @param name		name of the scheduler_port type
+ * @param name		name of the gscheduler_port type
  */
-#define BEGIN_SCHEDULER_PORT_TYPE(_name)			   \
-	struct scheduler_port_type _name##_type = {		   \
+#define BEGIN_GSCHEDULER_PORT_TYPE(_name)			   \
+	struct gscheduler_port_type _name##_type = {		   \
 		.name = #_name,					   \
-		.sink_type = SCHEDULER_SINK_TYPE_INIT(NULL,	   \
+		.sink_type = GSCHEDULER_SINK_TYPE_INIT(NULL,	   \
 						      NULL, 0,	   \
 						      NULL, 0),	   \
-		.pipe_type = SCHEDULER_PIPE_TYPE_INIT(		   \
+		.pipe_type = GSCHEDULER_PIPE_TYPE_INIT(		   \
 			THIS_MODULE,				   \
 			NULL, NULL,				   \
 			NULL, &_name##_type.sink_type)
 
 /* Helper to define convenience initializers in super classes */
-#define __SCHEDULER_PORT_UPDATE_VALUE(prefix, name)			\
-	__SCHEDULER_SINK_UPDATE_VALUE(prefix sink_type.,		\
+#define __GSCHEDULER_PORT_UPDATE_VALUE(prefix, name)			\
+	__GSCHEDULER_SINK_UPDATE_VALUE(prefix sink_type.,		\
 				      name##_sink_update_value)
 
 /**
  * Convenience macro to attach a previously defined update_value() method to a
- * scheduler_port type. The update_value() method must have been defined earlier
- * with DEFINE_SCHEDULER_PORT_UPDATE_VALUE(name, ...).
+ * gscheduler_port type. The update_value() method must have been defined earlier
+ * with DEFINE_GSCHEDULER_PORT_UPDATE_VALUE(name, ...).
  *
- * @param name		must match the name used with BEGIN_SCHEDULER_PORT_TYPE
+ * @param name		must match the name used with BEGIN_GSCHEDULER_PORT_TYPE
  */
-#define SCHEDULER_PORT_UPDATE_VALUE(name)	\
-	__SCHEDULER_PORT_UPDATE_VALUE(, name)
+#define GSCHEDULER_PORT_UPDATE_VALUE(name)	\
+	__GSCHEDULER_PORT_UPDATE_VALUE(, name)
 
 /* Helper to define convenience initializers in super classes */
-#define __SCHEDULER_PORT_VALUE_TYPE(prefix, name, type)		\
-	__SCHEDULER_SINK_VALUE_TYPE(prefix sink_type., type)
+#define __GSCHEDULER_PORT_VALUE_TYPE(prefix, name, type)		\
+	__GSCHEDULER_SINK_VALUE_TYPE(prefix sink_type., type)
 
 /**
- * Convenience macro to declare the value type of a scheduler port. Must be used
- * within all BEGIN_SCHEDULER_PORT_TYPE sections.
+ * Convenience macro to declare the value type of a gscheduler port. Must be used
+ * within all BEGIN_GSCHEDULER_PORT_TYPE sections.
  *
- * @param name		must match the name used with BEGIN_SCHEDULER_PORT_TYPE
+ * @param name		must match the name used with BEGIN_GSCHEDULER_PORT_TYPE
  * @param type		litteral expression of the value type read by the sink
  */
-#define SCHEDULER_PORT_VALUE_TYPE(name, type)		\
-	__SCHEDULER_PORT_VALUE_TYPE(, name, type)
+#define GSCHEDULER_PORT_VALUE_TYPE(name, type)		\
+	__GSCHEDULER_PORT_VALUE_TYPE(, name, type)
 
 /* Helper to define convenience initializers in super classes */
-#define __SCHEDULER_PORT_PARAM_TYPE(prefix, name, type)		\
-	__SCHEDULER_SINK_PARAM_TYPE(prefix sink_type., type)
+#define __GSCHEDULER_PORT_PARAM_TYPE(prefix, name, type)		\
+	__GSCHEDULER_SINK_PARAM_TYPE(prefix sink_type., type)
 
 /**
  * Convenience macro to declare the parameter type used when calling the
  * get_value() method of a connected source.
  *
- * @param name		must match the name used with BEGIN_SCHEDULER_PORT_TYPE
+ * @param name		must match the name used with BEGIN_GSCHEDULER_PORT_TYPE
  * @param type		litteral expression of the parameter type
  */
-#define SCHEDULER_PORT_PARAM_TYPE(name, type)		\
-	__SCHEDULER_PORT_PARAM_TYPE(, name, type)
+#define GSCHEDULER_PORT_PARAM_TYPE(name, type)		\
+	__GSCHEDULER_PORT_PARAM_TYPE(, name, type)
 
 /* Helper to define convenience initializers in super classes */
-#define __SCHEDULER_PORT_SOURCE_TYPE(prefix, name, source_type)		\
-	__SCHEDULER_PIPE_SOURCE_TYPE(prefix pipe_type., source_type)
+#define __GSCHEDULER_PORT_SOURCE_TYPE(prefix, name, source_type)		\
+	__GSCHEDULER_PIPE_SOURCE_TYPE(prefix pipe_type., source_type)
 
 /**
  * Convenience macro to attach a source type to the pipe_type embedded in a
- * scheduler_port_type
+ * gscheduler_port_type
  *
- * @param name		must match the name used with BEGIN_SCHEDULER_PORT_TYPE
+ * @param name		must match the name used with BEGIN_GSCHEDULER_PORT_TYPE
  * @param source_type	source_type to attach
  */
-#define SCHEDULER_PORT_SOURCE_TYPE(name, source_type)		\
-	__SCHEDULER_PORT_SOURCE_TYPE(, name, source_type)
+#define GSCHEDULER_PORT_SOURCE_TYPE(name, source_type)		\
+	__GSCHEDULER_PORT_SOURCE_TYPE(, name, source_type)
 
 /* Helper to define convenience initializers in super classes */
-#define __SCHEDULER_PORT_GET_REMOTE_VALUE(prefix, name)		\
+#define __GSCHEDULER_PORT_GET_REMOTE_VALUE(prefix, name)		\
 	prefix get_remote_value = name##_get_remote_value
 
 /**
  * Convenience macro to attach a previously defined get_remte_value() method to
- * a scheduler_port type. The get_remote_value() method must have been defined
- * earlier with DEFINE_SCHEDULER_PORT_GET_REMOTE_VALUE(name, ...).
+ * a gscheduler_port type. The get_remote_value() method must have been defined
+ * earlier with DEFINE_GSCHEDULER_PORT_GET_REMOTE_VALUE(name, ...).
  *
- * @param name		must match the name used with BEGIN_SCHEDULER_PORT_TYPE
+ * @param name		must match the name used with BEGIN_GSCHEDULER_PORT_TYPE
  */
-#define SCHEDULER_PORT_GET_REMOTE_VALUE(name)		\
-	__SCHEDULER_PORT_GET_REMOTE_VALUE(, name)
+#define GSCHEDULER_PORT_GET_REMOTE_VALUE(name)		\
+	__GSCHEDULER_PORT_GET_REMOTE_VALUE(, name)
 
 /* Helper to define convenience initializers in super classes */
-#define __SCHEDULER_PORT_NEW(prefix, name)	\
+#define __GSCHEDULER_PORT_NEW(prefix, name)	\
 	prefix new = name##_new
 
 /**
  * Convenience macro to attach a previously defined constructor to a port type.
  * The constructor must have been defined earlier and must be called name_new.
  *
- * @param name		must match the name used with BEGIN_SCHEDULER_PORT_TYPE
+ * @param name		must match the name used with BEGIN_GSCHEDULER_PORT_TYPE
  */
-#define SCHEDULER_PORT_NEW(name)		\
-	__SCHEDULER_PORT_NEW(, name)
+#define GSCHEDULER_PORT_NEW(name)		\
+	__GSCHEDULER_PORT_NEW(, name)
 
 /* Helper to define convenience initializers in super classes */
-#define __SCHEDULER_PORT_DESTROY(prefix, name)	\
+#define __GSCHEDULER_PORT_DESTROY(prefix, name)	\
 	prefix destroy = name##_destroy
 
 /**
@@ -325,60 +325,60 @@ struct scheduler_port_attribute {
  * The destructor must have been defined earlier and must be called
  * name_destroy.
  *
- * @param name		must match the name used with BEGIN_SCHEDULER_PORT_TYPE
+ * @param name		must match the name used with BEGIN_GSCHEDULER_PORT_TYPE
  */
-#define SCHEDULER_PORT_DESTROY(name)		\
-	__SCHEDULER_PORT_DESTROY(, name)
+#define GSCHEDULER_PORT_DESTROY(name)		\
+	__GSCHEDULER_PORT_DESTROY(, name)
 
 /**
- * End the definition of a scheduler_port_type. Must close any
- * BEGIN_SCHEDULER_PORT_TYPE section.
+ * End the definition of a gscheduler_port_type. Must close any
+ * BEGIN_GSCHEDULER_PORT_TYPE section.
  *
- * @param name		must match the name used with BEGIN_SCHEDULER_PORT_TYPE
+ * @param name		must match the name used with BEGIN_GSCHEDULER_PORT_TYPE
  */
-#define END_SCHEDULER_PORT_TYPE(name)		\
+#define END_GSCHEDULER_PORT_TYPE(name)		\
 	}
 
 /**
  * Convenience macro to define an update_value() method for a port.
  * The method will be called name_update_value.
  *
- * @param name		name of the scheduler_port type
+ * @param name		name of the gscheduler_port type
  * @param port		name of the port arg of the method
  */
-#define DEFINE_SCHEDULER_PORT_UPDATE_VALUE(name, port)			      \
-	static void name##_update_value(struct scheduler_port *);	      \
-	static void name##_sink_update_value(struct scheduler_sink *sink,     \
-					     struct scheduler_source *source) \
+#define DEFINE_GSCHEDULER_PORT_UPDATE_VALUE(name, port)			      \
+	static void name##_update_value(struct gscheduler_port *);	      \
+	static void name##_sink_update_value(struct gscheduler_sink *sink,     \
+					     struct gscheduler_source *source) \
 	{								      \
 		name##_update_value(					      \
-			container_of(sink, struct scheduler_port, sink));     \
+			container_of(sink, struct gscheduler_port, sink));     \
 	}								      \
-	static void name##_update_value(struct scheduler_port *port)
+	static void name##_update_value(struct gscheduler_port *port)
 
 /**
  * Convenience macro to define an get_remote_value() method for a port, without
  * parameters given to the source. The method will be called
  * name_get_remote_value.
  *
- * @param name		name of the scheduler_port type
+ * @param name		name of the gscheduler_port type
  * @param port		name of the port arg of the method
  * @param value_type	type of the values read by the sink (eg. int)
  * @param value_p	name of the type *arg of the method
  * @param nr_value	name of the array length parameter of the method
  */
-#define DEFINE_SCHEDULER_PORT_GET_REMOTE_VALUE(name, port,		      \
+#define DEFINE_GSCHEDULER_PORT_GET_REMOTE_VALUE(name, port,		      \
 					       value_type, value_p, nr_value) \
-	static int name##_get_remote_value(struct scheduler_port *,	      \
+	static int name##_get_remote_value(struct gscheduler_port *,	      \
 					   value_type *, int);		      \
 	static int name##_get_remote_value_untyped(			      \
-		struct scheduler_port *port,				      \
+		struct gscheduler_port *port,				      \
 		void *vp, int nr_v,					      \
 		const void *pp, int nr_p)				      \
 	{								      \
 		return name##_get_remote_value(port, vp, nr_v);		      \
 	}								      \
-	static int name##_get_remote_value(struct scheduler_port *port,       \
+	static int name##_get_remote_value(struct gscheduler_port *port,       \
 					   value_type *value_p, int nr_value)
 
 /**
@@ -386,7 +386,7 @@ struct scheduler_port_attribute {
  * parameters given to the source. The method will be called
  * name_get_remote_value.
  *
- * @param name		name of the scheduler_port type
+ * @param name		name of the gscheduler_port type
  * @param port		name of the port arg of the method
  * @param value_type	type of the values read by the sink (eg. int)
  * @param value_p	name of the type *arg of the method
@@ -395,36 +395,36 @@ struct scheduler_port_attribute {
  * @param param_p	name of the param_type *arg of the method
  * @param nr_param	name of the parameters array length arg of the method
  */
-#define DEFINE_SCHEDULER_PORT_GET_REMOTE_VALUE_WITH_INPUT(		      \
+#define DEFINE_GSCHEDULER_PORT_GET_REMOTE_VALUE_WITH_INPUT(		      \
 	name, port,							      \
 	value_type, value_p, nr_value,					      \
 	param_type, param_p, nr_param)					      \
-	static int name##_get_remote_value(struct scheduler_port *,	      \
+	static int name##_get_remote_value(struct gscheduler_port *,	      \
 					   value_type *, int,		      \
 					   const param_type *, int);	      \
 	static int name##_get_remote_value_untyped(			      \
-		struct scheduler_port *port,				      \
+		struct gscheduler_port *port,				      \
 		void *vp, int nr_v,					      \
 		const void *pp, int nr_p)				      \
 	{								      \
 		return name##_get_remote_value(port, vp, nr_v, pp, nr_p);     \
 	}								      \
 	static int name##_get_remote_value(				      \
-		struct scheduler_port *port,				      \
+		struct gscheduler_port *port,				      \
 		value_type *value_p, int nr_value,			      \
 		const param_type *param_p, int nr_param)
 
 /* End of convenience macros */
 
 /**
- * Mandatory initializer for a scheduler_port_attribute.
+ * Mandatory initializer for a gscheduler_port_attribute.
  *
  * @param name		name of the attribute entry in the port directory
  * @param mode		access mode of the attribute entry
  * @param _show		show callback of the attribute
  * @param _store	store callback of the attribute
  */
-#define SCHEDULER_PORT_ATTRIBUTE_INIT(name, mode, _show, _store) \
+#define GSCHEDULER_PORT_ATTRIBUTE_INIT(name, mode, _show, _store) \
 	{							 \
 		.config = {					 \
 			.ca_name = name,			 \
@@ -438,9 +438,9 @@ struct scheduler_port_attribute {
 /* Tool functions for port designers */
 
 /**
- * Initialize a scheduler port type
+ * Initialize a gscheduler port type
  * Must be called before creating any port of this type. Is called through
- * scheduler_port_type_register().
+ * gscheduler_port_type_register().
  *
  * @param type		type to init
  * @param attrs		NULL-terminated array of pointers to custom attributes,
@@ -449,14 +449,14 @@ struct scheduler_port_attribute {
  * @return		0 is successful, or
  *			-ENOMEM if no sufficient memory could be allocated
  */
-int scheduler_port_type_init(struct scheduler_port_type *type,
+int gscheduler_port_type_init(struct gscheduler_port_type *type,
 			     struct configfs_attribute **attrs);
 /**
  * Free the resources allocated at type initialization
  *
  * @param type		type to cleanup
  */
-void scheduler_port_type_cleanup(struct scheduler_port_type *type);
+void gscheduler_port_type_cleanup(struct gscheduler_port_type *type);
 
 /**
  * Initialize and register a new port type
@@ -469,17 +469,17 @@ void scheduler_port_type_cleanup(struct scheduler_port_type *type);
  *			-ENOMEM if not sufficient memory could be allocated,
  *			-EEXIST if a type of this name is already registered.
  */
-int scheduler_port_type_register(struct scheduler_port_type *type,
+int gscheduler_port_type_register(struct gscheduler_port_type *type,
 				 struct configfs_attribute **attrs);
 /**
  * Unregister and cleanup a port type. Must be called at module unload *only*.
  *
  * @param type		type to unregister
  */
-void scheduler_port_type_unregister(struct scheduler_port_type *type);
+void gscheduler_port_type_unregister(struct gscheduler_port_type *type);
 
 /**
- * Initialize a new scheduler_port. Must be called by scheduler_port
+ * Initialize a new gscheduler_port. Must be called by gscheduler_port
  * constructors.
  *
  * @param port		port to initialize
@@ -494,18 +494,18 @@ void scheduler_port_type_unregister(struct scheduler_port_type *type);
  * @return		0 if successful,
  *			negative error code if error
  */
-int scheduler_port_init(struct scheduler_port *port,
+int gscheduler_port_init(struct gscheduler_port *port,
 			const char *name,
-			struct scheduler_port_type *type,
-			struct scheduler_source *source,
+			struct gscheduler_port_type *type,
+			struct gscheduler_source *source,
 			struct config_group **default_groups);
 /**
- * Cleanup a scheduler_port before freeing it. Must be called by the port's
+ * Cleanup a gscheduler_port before freeing it. Must be called by the port's
  * destructor.
  *
  * @param port		port to cleanup
  */
-void scheduler_port_cleanup(struct scheduler_port *port);
+void gscheduler_port_cleanup(struct gscheduler_port *port);
 
 /**
  * Helper to refer to a port through its embedded config_group (for instance
@@ -516,7 +516,7 @@ void scheduler_port_cleanup(struct scheduler_port *port);
  * @return		address of the embedded config_group of the port
  */
 static inline
-struct config_group *scheduler_port_config_group(struct scheduler_port *port)
+struct config_group *gscheduler_port_config_group(struct gscheduler_port *port)
 {
 	return &port->pipe.config;
 }
@@ -536,11 +536,11 @@ struct config_group *scheduler_port_config_group(struct scheduler_port *port)
  *			negative error code
  */
 static inline
-int scheduler_port_get_value(struct scheduler_port *port,
+int gscheduler_port_get_value(struct gscheduler_port *port,
 			     void *value_p, unsigned int nr,
 			     const void *in_value_p, unsigned int in_nr)
 {
-	return scheduler_sink_get_value(&port->sink,
+	return gscheduler_sink_get_value(&port->sink,
 					value_p, nr,
 					in_value_p, in_nr);
 }
@@ -556,9 +556,9 @@ int scheduler_port_get_value(struct scheduler_port *port,
  *			negative error code
  */
 static inline
-ssize_t scheduler_port_show_value(struct scheduler_port *port, char *page)
+ssize_t gscheduler_port_show_value(struct gscheduler_port *port, char *page)
 {
-	return scheduler_sink_show_value(&port->sink, page);
+	return gscheduler_sink_show_value(&port->sink, page);
 }
 
 /**
@@ -572,6 +572,6 @@ ssize_t scheduler_port_show_value(struct scheduler_port *port, char *page)
  * See the definition of port_get_remote_value_t for the descriptions of
  * parameters and return value.
  */
-extern port_get_remote_value_t scheduler_port_get_remote_value;
+extern port_get_remote_value_t gscheduler_port_get_remote_value;
 
 #endif /* __HCC_GSCHEDULER_PORT_H__ */

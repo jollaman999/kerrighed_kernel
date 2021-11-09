@@ -1647,7 +1647,7 @@ int global_config_start(void)
 		goto err_set;
 	}
 
-	global_config_barrier = alloc_cluster_barrier(SCHED_GHOTPLUG_BARRIER);
+	global_config_barrier = alloc_cluster_barrier(GSCHED_GHOTPLUG_BARRIER);
 	if (IS_ERR(global_config_barrier)) {
 		err = PTR_ERR(global_config_barrier);
 		goto err_barrier;

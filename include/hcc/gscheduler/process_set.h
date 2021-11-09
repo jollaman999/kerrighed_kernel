@@ -38,7 +38,7 @@ struct process_subset {
 
 /**
  * process_set represents a set of processes that are taken care of by
- * particular scheduler. This set can contain processes or process groups.
+ * particular gscheduler. This set can contain processes or process groups.
  * A particual process_set can be marked that it contains all processes.
  */
 struct process_set {

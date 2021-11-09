@@ -10,33 +10,33 @@
 #include <hcc/gscheduler/remote_pipe.h>
 
 /*
- * A scheduler_source represents a source of information.
+ * A gscheduler_source represents a source of information.
  *
- * Information can be queried from a scheduler_source, and a scheduler_source
+ * Information can be queried from a gscheduler_source, and a gscheduler_source
  * may publish updates to subscribers. Subscribers are represented by
- * scheduler_sink structures.
+ * gscheduler_sink structures.
  *
- * To make its value(s) available, a scheduler_source provides a get_value()
+ * To make its value(s) available, a gscheduler_source provides a get_value()
  * method. The value(s) can be queried using
- * scheduler_source_get_value(). Values are typed, and an optional, typed array
- * of parameters can be given to scheduler_source_get_value(). A source can also
+ * gscheduler_source_get_value(). Values are typed, and an optional, typed array
+ * of parameters can be given to gscheduler_source_get_value(). A source can also
  * make its value(s) available as text through a show_value() method. This
- * method must be called through the scheduler_source_show_value() function.
+ * method must be called through the gscheduler_source_show_value() function.
  *
- * To publish updates to its subscribers (scheduler_sink), a scheduler_source
- * calls scheduler_source_publish(). To this end a scheduler_sink subscribing to
- * a scheduler_source must provide an update_value() method.
+ * To publish updates to its subscribers (gscheduler_sink), a gscheduler_source
+ * calls gscheduler_source_publish(). To this end a gscheduler_sink subscribing to
+ * a gscheduler_source must provide an update_value() method.
  *
- * To access the values of the source connected to a scheduler_sink, one can use
- * the scheduler_sink_get_value() (typed) and scheduler_sink_show_value() (text)
+ * To access the values of the source connected to a gscheduler_sink, one can use
+ * the gscheduler_sink_get_value() (typed) and gscheduler_sink_show_value() (text)
  * methods.
  *
- * A scheduler_pipe represents a scheduler_source or a scheduler_sink, or both
- * as a single directory in configfs. The value of the scheduler_source can be
- * read in the "value" configfs_attribute of the scheduler_pipe's directory,
- * provided that the scheduler_source provides a show_value() method. The value
- * collected by the scheduler_sink from its connected source (if any) can be
- * read in the "collected_value" configfs_attribute of the scheduler_pipe's
+ * A gscheduler_pipe represents a gscheduler_source or a gscheduler_sink, or both
+ * as a single directory in configfs. The value of the gscheduler_source can be
+ * read in the "value" configfs_attribute of the gscheduler_pipe's directory,
+ * provided that the gscheduler_source provides a show_value() method. The value
+ * collected by the gscheduler_sink from its connected source (if any) can be
+ * read in the "collected_value" configfs_attribute of the gscheduler_pipe's
  * directory.
  */
 
@@ -48,14 +48,14 @@ struct get_value_types {
 	size_t in_type_size;
 };
 
-/* Type definitions for scheduler_source */
+/* Type definitions for gscheduler_source */
 
-struct scheduler_source;
+struct gscheduler_source;
 
 /**
  * prototype for the method to get the source's value
  *
- * When called through scheduler_source_get_value(), the arguments are
+ * When called through gscheduler_source_get_value(), the arguments are
  * checked so that no array pointer is NULL if its size is not 0, and at least
  * one array has elements.
  *
@@ -70,7 +70,7 @@ struct scheduler_source;
  * @return		number of values filled, or
  *			negative error code
  */
-typedef int source_get_value_t(struct scheduler_source *source,
+typedef int source_get_value_t(struct gscheduler_source *source,
 			       void *value_p, unsigned int nr,
 			       const void *in_value_p, unsigned int in_nr);
 /**
@@ -84,11 +84,11 @@ typedef int source_get_value_t(struct scheduler_source *source,
  * @return		number of bytes written to buffer, or
  *			negative error code
  */
-typedef ssize_t source_show_value_t(struct scheduler_source *source,
+typedef ssize_t source_show_value_t(struct gscheduler_source *source,
 				    char *page);
 
-/* To initialize with SCHEDULER_SOURCE_TYPE[_INIT]. */
-struct scheduler_source_type {
+/* To initialize with GSCHEDULER_SOURCE_TYPE[_INIT]. */
+struct gscheduler_source_type {
 	/** functions for reading source's value */
 
 	/* typed binary read with optional parameters */
@@ -100,8 +100,8 @@ struct scheduler_source_type {
 };
 
 /**
- * Mandatory macro to define a scheduler_source_type. Can be used through
- * SCHEDULER_SOURCE_TYPE.
+ * Mandatory macro to define a gscheduler_source_type. Can be used through
+ * GSCHEDULER_SOURCE_TYPE.
  *
  * @param _get_value	get_value method of the source
  * @param _show_value	show_value method of the source
@@ -114,7 +114,7 @@ struct scheduler_source_type {
  * @param get_param_type_size
  *			size in bytes of a get_param_type parameter
  */
-#define SCHEDULER_SOURCE_TYPE_INIT(_get_value, _show_value,		\
+#define GSCHEDULER_SOURCE_TYPE_INIT(_get_value, _show_value,		\
 				   value_type, value_type_size,		\
 				   get_param_type, get_param_type_size) \
 	{								\
@@ -129,20 +129,20 @@ struct scheduler_source_type {
 	}
 
 /**
- * Convenience macro to define a scheduler_source_type.
+ * Convenience macro to define a gscheduler_source_type.
  *
- * @param name		name of the variable for the scheduler_source_type
+ * @param name		name of the variable for the gscheduler_source_type
  * @param get_value	get_value method of the source
  * @param show_value	show_value method of the source
  * @param value_type	type of source's values (eg. unsigned int)
  * @param get_param_type
  *			type of the parameters for the get_value method
  */
-#define SCHEDULER_SOURCE_TYPE(name,				   \
+#define GSCHEDULER_SOURCE_TYPE(name,				   \
 			      get_value, show_value,		   \
 			      value_type, get_param_type)	   \
-	struct scheduler_source_type name =			   \
-		SCHEDULER_SOURCE_TYPE_INIT(get_value, show_value,  \
+	struct gscheduler_source_type name =			   \
+		GSCHEDULER_SOURCE_TYPE_INIT(get_value, show_value,  \
 					   #value_type,		   \
 					   sizeof(value_type),	   \
 					   #get_param_type,	   \
@@ -150,97 +150,97 @@ struct scheduler_source_type {
 
 /*
  * Internal helpers to define convenience initializing macros for super-classes
- * of scheduler_source_type
+ * of gscheduler_source_type
  */
 
 /**
- * Initializer for the get_value() method of a scheduler_source_type
+ * Initializer for the get_value() method of a gscheduler_source_type
  *
- * @param prefix	prefix to the scheduler_source_type field in the
+ * @param prefix	prefix to the gscheduler_source_type field in the
  *			super-class initializer
  * @param _get_value	function to set as the get_value() method
  */
-#define __SCHEDULER_SOURCE_GET_VALUE(prefix, _get_value)	\
+#define __GSCHEDULER_SOURCE_GET_VALUE(prefix, _get_value)	\
 	prefix get_value = _get_value
 /**
  * Initializer for the type of value output by the get_value() method of a
- * scheduler_source_type
+ * gscheduler_source_type
  *
- * @param prefix	prefix to the scheduler_source_type field in the
+ * @param prefix	prefix to the gscheduler_source_type field in the
  *			super-class initializer
  * @param type		litteral expression of the type to set
  */
-#define __SCHEDULER_SOURCE_VALUE_TYPE(prefix, type)		\
+#define __GSCHEDULER_SOURCE_VALUE_TYPE(prefix, type)		\
 	prefix get_value_types.out_type = #type,		\
 	.prefix get_value_types.out_type_size = sizeof(type)
 /**
  * Initializer for the type of parameter taken by the get_value() method of a
- * scheduler_source_type
+ * gscheduler_source_type
  *
- * @param prefix	prefix to the scheduler_source_type field in the
+ * @param prefix	prefix to the gscheduler_source_type field in the
  *			super-class initializer
  * @param type		litteral expression of the type to set
  */
-#define __SCHEDULER_SOURCE_PARAM_TYPE(prefix, type)		\
+#define __GSCHEDULER_SOURCE_PARAM_TYPE(prefix, type)		\
 	prefix get_value_types.in_type = #type,			\
 	.prefix get_value_types.in_type_size = sizeof(type)
 /**
- * Initializer for the show_value() method of a scheduler_source_type
+ * Initializer for the show_value() method of a gscheduler_source_type
  *
- * @param prefix	prefix to the scheduler_source_type field in the
+ * @param prefix	prefix to the gscheduler_source_type field in the
  *			super-class initializer
  * @param _show_value	function to set as the show_value method
  */
-#define __SCHEDULER_SOURCE_SHOW_VALUE(prefix, _show_value)	\
+#define __GSCHEDULER_SOURCE_SHOW_VALUE(prefix, _show_value)	\
 	prefix show_value = _show_value
 
 /*
- * Structure representing a scheduler source. Must be initiliazed with
- * scheduler_source_init()
+ * Structure representing a gscheduler source. Must be initiliazed with
+ * gscheduler_source_init()
  */
-struct scheduler_source {
-	struct scheduler_source_type *type;
+struct gscheduler_source {
+	struct gscheduler_source_type *type;
 	struct list_head pub_sub_head;
 	spinlock_t lock;
 };
 
 /**
- * Get the scheduler_source_type of a scheduler_source
+ * Get the gscheduler_source_type of a gscheduler_source
  *
  * @param source	source to get the type of
  *
- * @return		pointer to the scheduler_source_type of source
+ * @return		pointer to the gscheduler_source_type of source
  */
 static inline
-struct scheduler_source_type *
-scheduler_source_type_of(struct scheduler_source *source)
+struct gscheduler_source_type *
+gscheduler_source_type_of(struct gscheduler_source *source)
 {
 	return source->type;
 }
 
-/* Type definitions for scheduler_sink */
+/* Type definitions for gscheduler_sink */
 
-struct scheduler_sink;
+struct gscheduler_sink;
 
 /**
- * prototype for the method to notify a scheduler_sink of an update from
+ * prototype for the method to notify a gscheduler_sink of an update from
  * its source
  *
  * @param sink		sink to be notified
  * @param source	source notifying sink
  */
-typedef void sink_update_value_t(struct scheduler_sink *,
-				 struct scheduler_source *);
+typedef void sink_update_value_t(struct gscheduler_sink *,
+				 struct gscheduler_source *);
 
-/* To initialize with SCHEDULER_SINK_TYPE_INIT. */
-struct scheduler_sink_type {
+/* To initialize with GSCHEDULER_SINK_TYPE_INIT. */
+struct gscheduler_sink_type {
 	sink_update_value_t *update_value;
-	/* types used when calling scheduler_sink_get_value() */
+	/* types used when calling gscheduler_sink_get_value() */
 	struct get_value_types get_value_types;
 };
 
 /**
- * Mandatory macro to define a scheduler_sink_type.
+ * Mandatory macro to define a gscheduler_sink_type.
  *
  * @param _update_value	update_value() method of the sink
  * @param value_type	string containing the type name of source's values
@@ -252,7 +252,7 @@ struct scheduler_sink_type {
  * @param get_param_type_size
  *			size in bytes of a get_param_type parameter, or 0
  */
-#define SCHEDULER_SINK_TYPE_INIT(_update_value,			      \
+#define GSCHEDULER_SINK_TYPE_INIT(_update_value,			      \
 				 value_type, value_type_size,	      \
 				 get_param_type, get_param_type_size) \
 	{							      \
@@ -266,46 +266,46 @@ struct scheduler_sink_type {
 	}
 
 /**
- * Initializer for the update_value() method of a scheduler_sink_type
+ * Initializer for the update_value() method of a gscheduler_sink_type
  *
- * @param prefix	prefix to the scheduler_sink_type field in the
+ * @param prefix	prefix to the gscheduler_sink_type field in the
  *			super-class initializer
  * @param _update_value	function to set as the update_value() method
  */
-#define __SCHEDULER_SINK_UPDATE_VALUE(prefix, _update_value)	\
+#define __GSCHEDULER_SINK_UPDATE_VALUE(prefix, _update_value)	\
 	prefix update_value = _update_value
 
 /**
  * Initializer for the type of value output by the get_value() methods of
- * sources connected to sinks of a scheduler_sink_type
+ * sources connected to sinks of a gscheduler_sink_type
  *
- * @param prefix	prefix to the scheduler_sink_type field in the
+ * @param prefix	prefix to the gscheduler_sink_type field in the
  *			super-class initializer
  * @param type		litteral expression of the type to set
  */
-#define __SCHEDULER_SINK_VALUE_TYPE(prefix, type)		\
+#define __GSCHEDULER_SINK_VALUE_TYPE(prefix, type)		\
 	prefix get_value_types.out_type = #type,		\
 	.prefix get_value_types.out_type_size = sizeof(type)
 
 /**
  * Initializer for the type of parameter taken by the get_value() methods of
- * sources connected to sinks of a scheduler_sink_type
+ * sources connected to sinks of a gscheduler_sink_type
  *
- * @param prefix	prefix to the scheduler_sink_type field in the
+ * @param prefix	prefix to the gscheduler_sink_type field in the
  *			super-class initializer
  * @param type		litteral expression of the type to set
  */
-#define __SCHEDULER_SINK_PARAM_TYPE(prefix, type)		\
+#define __GSCHEDULER_SINK_PARAM_TYPE(prefix, type)		\
 	prefix get_value_types.in_type = #type,			\
 	.prefix get_value_types.in_type_size = sizeof(type)
 
 /*
- * Structure representing a scheduler sink. Must be initialized with
- * scheduler_sink_init()
+ * Structure representing a gscheduler sink. Must be initialized with
+ * gscheduler_sink_init()
  */
-struct scheduler_sink {
-	struct scheduler_sink_type *type;
-	struct scheduler_source *source;
+struct gscheduler_sink {
+	struct gscheduler_sink_type *type;
+	struct gscheduler_source *source;
 	struct list_head pub_sub_list;
 	int subscribed;
 
@@ -314,18 +314,18 @@ struct scheduler_sink {
 };
 
 /*
- * To initialize with SCHEDULER_PIPE_TYPE[_INIT]. Initialization must be
- * completed by scheduler_pipe_type_init() at runtime.
+ * To initialize with GSCHEDULER_PIPE_TYPE[_INIT]. Initialization must be
+ * completed by gscheduler_pipe_type_init() at runtime.
  */
-struct scheduler_pipe_type {
+struct gscheduler_pipe_type {
 	struct config_item_type item_type;
-	struct scheduler_source_type *source_type;
-	struct scheduler_sink_type *sink_type;
+	struct gscheduler_source_type *source_type;
+	struct gscheduler_sink_type *sink_type;
 };
 
 /**
- * Mandatory macro to define a scheduler_pipe_type. Can be used through
- * SCHEDULER_PIPE_TYPE.
+ * Mandatory macro to define a gscheduler_pipe_type. Can be used through
+ * GSCHEDULER_PIPE_TYPE.
  *
  * @param owner		module providing the pipe type
  * @param item_ops	config_item_operations for the pipe configfs item
@@ -333,7 +333,7 @@ struct scheduler_pipe_type {
  * @param _source_type	type of sources of this pipe type or NULL
  * @param _sink_type	type of sinks of this pipe type or NULL
  */
-#define SCHEDULER_PIPE_TYPE_INIT(owner, item_ops, group_ops, \
+#define GSCHEDULER_PIPE_TYPE_INIT(owner, item_ops, group_ops, \
 				 _source_type, _sink_type)   \
 	{						     \
 		.item_type = {				     \
@@ -347,113 +347,113 @@ struct scheduler_pipe_type {
 	}
 
 /**
- * Convenience macro to define a scheduler_pipe_type.
+ * Convenience macro to define a gscheduler_pipe_type.
  *
- * @param name		name of the variable for the scheduler_pipe_type
+ * @param name		name of the variable for the gscheduler_pipe_type
  * @param item_ops	config_item_operations for the pipe configfs item
  * @param group_ops	config_group_operations for the pipe configfs group
  * @param source_type	pointer to the type of sources of this pipe type or NULL
  * @param sink_type	pointer tp the type of sinks of this pipe type or NULL
  */
-#define SCHEDULER_PIPE_TYPE(name, item_ops, group_ops, source_type, sink_type) \
-	struct scheduler_pipe_type name =				       \
-		SCHEDULER_PIPE_TYPE_INIT(THIS_MODULE, item_ops, group_ops,     \
+#define GSCHEDULER_PIPE_TYPE(name, item_ops, group_ops, source_type, sink_type) \
+	struct gscheduler_pipe_type name =				       \
+		GSCHEDULER_PIPE_TYPE_INIT(THIS_MODULE, item_ops, group_ops,     \
 					 source_type, sink_type)
 
 /**
- * Initializer for the source_type of sources of a scheduler_pipe_type
+ * Initializer for the source_type of sources of a gscheduler_pipe_type
  *
- * @param prefix	prefix to the scheduler_pipe_type field in the
+ * @param prefix	prefix to the gscheduler_pipe_type field in the
  *			super-class initializer
  * @param _source_type	pointer to the source type to set
  */
-#define __SCHEDULER_PIPE_SOURCE_TYPE(prefix, _source_type)	\
+#define __GSCHEDULER_PIPE_SOURCE_TYPE(prefix, _source_type)	\
 	prefix source_type = _source_type
 
 /**
- * Get the scheduler_pipe_type embedding a config_item_type
+ * Get the gscheduler_pipe_type embedding a config_item_type
  *
  * @param type		pointer to the embedded config_item_type
  *
- * @return		pointer to the scheduler_pipe_type embedding type
+ * @return		pointer to the gscheduler_pipe_type embedding type
  */
 static inline
-struct scheduler_pipe_type *
-to_scheduler_pipe_type(struct config_item_type *type)
+struct gscheduler_pipe_type *
+to_gscheduler_pipe_type(struct config_item_type *type)
 {
-	return container_of(type, struct scheduler_pipe_type, item_type);
+	return container_of(type, struct gscheduler_pipe_type, item_type);
 }
 
 /*
- * Structure representing a scheduler sink. Must be initialized with
- * scheduler_pipe_init()
+ * Structure representing a gscheduler sink. Must be initialized with
+ * gscheduler_pipe_init()
  */
-struct scheduler_pipe {
+struct gscheduler_pipe {
 	struct config_group config;
-	struct scheduler_source *source;
-	struct scheduler_sink *sink;
+	struct gscheduler_source *source;
+	struct gscheduler_sink *sink;
 };
 
 /**
- * Get the scheduler_pipe embedding a config_item
+ * Get the gscheduler_pipe embedding a config_item
  *
  * @param item		pointer to the embedded config_item
  *
- * @return		pointer to the scheduler_pipe embedding item
+ * @return		pointer to the gscheduler_pipe embedding item
  */
 static inline
-struct scheduler_pipe *to_scheduler_pipe(struct config_item *item)
+struct gscheduler_pipe *to_gscheduler_pipe(struct config_item *item)
 {
-	return container_of(item, struct scheduler_pipe, config.cg_item);
+	return container_of(item, struct gscheduler_pipe, config.cg_item);
 }
 
 /**
- * Get the scheduler_pipe_type of a scheduler_pipe
+ * Get the gscheduler_pipe_type of a gscheduler_pipe
  *
  * @param pipe		pipe to get the type of
  *
- * @return		pointer to the scheduler_pipe_type of pipe
+ * @return		pointer to the gscheduler_pipe_type of pipe
  */
 static inline
-struct scheduler_pipe_type *scheduler_pipe_type_of(struct scheduler_pipe *pipe)
+struct gscheduler_pipe_type *gscheduler_pipe_type_of(struct gscheduler_pipe *pipe)
 {
-	return to_scheduler_pipe_type(pipe->config.cg_item.ci_type);
+	return to_gscheduler_pipe_type(pipe->config.cg_item.ci_type);
 }
 
 /**
- * Initialize a scheduler_source
+ * Initialize a gscheduler_source
  *
  * @param source	source to initialize
  * @param type		type of the source
  */
-void scheduler_source_init(struct scheduler_source *source,
-			   struct scheduler_source_type *type);
+void gscheduler_source_init(struct gscheduler_source *source,
+			   struct gscheduler_source_type *type);
 /**
- * Cleanup a scheduler_source (eg. before freeing the structure)
+ * Cleanup a gscheduler_source (eg. before freeing the structure)
  *
  * @param source	source to cleanup
  */
-static inline void scheduler_source_cleanup(struct scheduler_source *source)
+static inline void gscheduler_source_cleanup(struct gscheduler_source *source)
 {
 }
 
 /**
- * Initialize a scheduler_sink
+ * Initialize a gscheduler_sink
  *
  * @param sink		sink to initialize
  * @param type		type of the sink
  */
-void scheduler_sink_init(struct scheduler_sink *sink,
-			 struct scheduler_sink_type *type);
+void gscheduler_sink_init(struct gscheduler_sink *sink,
+			 struct gscheduler_sink_type *type);
 /**
- * Cleanup a scheduler_sink (eg. before freeing the structure)
+ * Cleanup a gscheduler_sink (eg. before freeing the structure)
  *
  * @param sink		sink to cleanup
  */
-void scheduler_sink_cleanup(struct scheduler_sink *sink);
+void gscheduler_sink_cleanup(struct gscheduler_sink *sink);
 
 /**
- * Tells whether a sink can safely call scheduler_source_get_value() on a
+ * Tells whether a sink can safely call gscheduler_source_get_value() on a
  * source, that is whether the types are compatible.
  *
  * @param sink_type	type of the sink
@@ -462,8 +462,8 @@ void scheduler_sink_cleanup(struct scheduler_sink *sink);
  * @return		0 if types are not compatible,
  *			not 0 otherwise
  */
-int scheduler_types_compatible(const struct scheduler_sink_type *sink_type,
-			       const struct scheduler_source_type *source_type);
+int gscheduler_types_compatible(const struct gscheduler_sink_type *sink_type,
+			       const struct gscheduler_source_type *source_type);
 
 /**
  * Connect a sink to a source
@@ -472,8 +472,8 @@ int scheduler_types_compatible(const struct scheduler_sink_type *sink_type,
  * @param source	source to connect the sink to
  * @param subscribe	subscribe to source's updates if not 0
  */
-void scheduler_sink_connect(struct scheduler_sink *sink,
-			    struct scheduler_source *source,
+void gscheduler_sink_connect(struct gscheduler_sink *sink,
+			    struct gscheduler_source *source,
 			    int subscribe);
 /**
  * Disconnect a sink from a source and break any pending request to a remote
@@ -484,20 +484,20 @@ void scheduler_sink_connect(struct scheduler_sink *sink,
  *
  * @param sink		sink to disconnect
  */
-void scheduler_sink_disconnect(struct scheduler_sink *sink);
+void gscheduler_sink_disconnect(struct gscheduler_sink *sink);
 
 /**
  * Get the source connected to a sink, or return NULL
  * Caller must take care of races with
- * scheduler_pipe_sink_{connect,disconnect}(), or hold RCU lock until it stops
+ * gscheduler_pipe_sink_{connect,disconnect}(), or hold RCU lock until it stops
  * using the source.
  *
  * @param sink		sink to get the source of
  *
  * @return		pointer to the connected source, or NULL
  */
-struct scheduler_source *
-scheduler_sink_get_peer_source(struct scheduler_sink *sink);
+struct gscheduler_source *
+gscheduler_sink_get_peer_source(struct gscheduler_sink *sink);
 
 /**
  * Test whether a source has subscribers
@@ -507,7 +507,7 @@ scheduler_sink_get_peer_source(struct scheduler_sink *sink);
  *
  * @return		true iff source has at least one subscriber
  */
-int scheduler_source_has_subscribers(struct scheduler_source *source);
+int gscheduler_source_has_subscribers(struct gscheduler_source *source);
 /**
  * Test whether a sink has subscribed to a source
  *
@@ -515,16 +515,16 @@ int scheduler_source_has_subscribers(struct scheduler_source *source);
  *
  * @return		true iff sink has subscribed to a source
  */
-int scheduler_sink_subscribed(struct scheduler_sink *sink);
+int gscheduler_sink_subscribed(struct gscheduler_sink *sink);
 
 /**
  * Lock a source. This will *not* prevent the source value from being queried
- * nor prevent the scheduler_pipe subsystem to propagate update notifications
+ * nor prevent the gscheduler_pipe subsystem to propagate update notifications
  * from this source. However this will block subscriptions/unsubscriptions.
  *
  * @param source	source to lock
  */
-static inline void scheduler_source_lock(struct scheduler_source *source)
+static inline void gscheduler_source_lock(struct gscheduler_source *source)
 {
 	spin_lock(&source->lock);
 }
@@ -534,7 +534,7 @@ static inline void scheduler_source_lock(struct scheduler_source *source)
  *
  * @param source	source to unlock
  */
-static inline void scheduler_source_unlock(struct scheduler_source *source)
+static inline void gscheduler_source_unlock(struct gscheduler_source *source)
 {
 	spin_unlock(&source->lock);
 }
@@ -551,7 +551,7 @@ static inline void scheduler_source_unlock(struct scheduler_source *source)
  * @return		number of values filled, or
  *			negative error code
  */
-int scheduler_source_get_value(struct scheduler_source *source,
+int gscheduler_source_get_value(struct gscheduler_source *source,
 			       void *value_p, unsigned int nr,
 			       const void *in_value_p, unsigned int in_nr);
 /**
@@ -563,7 +563,7 @@ int scheduler_source_get_value(struct scheduler_source *source,
  * @return		number of bytes written to buffer, or
  *			negative error code
  */
-ssize_t scheduler_source_show_value(struct scheduler_source *source,
+ssize_t gscheduler_source_show_value(struct gscheduler_source *source,
 				    char *page);
 
 /**
@@ -571,7 +571,7 @@ ssize_t scheduler_source_show_value(struct scheduler_source *source,
  *
  * @param source	source publish an update
  */
-void scheduler_source_publish(struct scheduler_source *source);
+void gscheduler_source_publish(struct gscheduler_source *source);
 
 /**
  * Get the value from the source connected to a sink
@@ -585,7 +585,7 @@ void scheduler_source_publish(struct scheduler_source *source);
  * @return		number of values filled, or
  *			negative error code
  */
-int scheduler_sink_get_value(struct scheduler_sink *sink,
+int gscheduler_sink_get_value(struct gscheduler_sink *sink,
 			     void *value_p, unsigned int nr,
 			     const void *in_value_p, unsigned int in_nr);
 
@@ -599,11 +599,11 @@ int scheduler_sink_get_value(struct scheduler_sink *sink,
  * @return		number of bytes written to buffer, or
  *			negative error code
  */
-ssize_t scheduler_sink_show_value(struct scheduler_sink *sink, char *page);
+ssize_t gscheduler_sink_show_value(struct gscheduler_sink *sink, char *page);
 
 
 /**
- * Complete initialization of a scheduler_pipe_type
+ * Complete initialization of a gscheduler_pipe_type
  *
  * @param type		type to finish initializing
  * @param attrs		NULL-terminated list of custom configfs-attribute, or
@@ -612,17 +612,17 @@ ssize_t scheduler_sink_show_value(struct scheduler_sink *sink, char *page);
  * @return		0 if successful,
  *			-ENOMEM if not sufficient memory could be allocated
  */
-int scheduler_pipe_type_init(struct scheduler_pipe_type *type,
+int gscheduler_pipe_type_init(struct gscheduler_pipe_type *type,
 			     struct configfs_attribute **attrs);
 /**
- * Cleanup a scheduler_pipe_type (eg. before freeing the structure)
+ * Cleanup a gscheduler_pipe_type (eg. before freeing the structure)
  *
  * @param type		type to cleanup
  */
-void scheduler_pipe_type_cleanup(struct scheduler_pipe_type *type);
+void gscheduler_pipe_type_cleanup(struct gscheduler_pipe_type *type);
 
 /**
- * Initialize a scheduler_pipe
+ * Initialize a gscheduler_pipe
  *
  * @param pipe		source to initialize
  * @param name		name of the configfs directory representing the source
@@ -636,22 +636,22 @@ void scheduler_pipe_type_cleanup(struct scheduler_pipe_type *type);
  * @return		0 if successful,
  *			negative error code if error
  */
-int scheduler_pipe_init(struct scheduler_pipe *pipe,
+int gscheduler_pipe_init(struct gscheduler_pipe *pipe,
 			const char *name,
-			struct scheduler_pipe_type *type,
-			struct scheduler_source *source,
-			struct scheduler_sink *sink,
+			struct gscheduler_pipe_type *type,
+			struct gscheduler_source *source,
+			struct gscheduler_sink *sink,
 			struct config_group **default_groups);
 /**
- * Cleanup a scheduler_pipe (eg. before freeing the structure)
+ * Cleanup a gscheduler_pipe (eg. before freeing the structure)
  *
  * @param pipe		pipe to cleanup
  */
-static inline void scheduler_pipe_cleanup(struct scheduler_pipe *pipe)
+static inline void gscheduler_pipe_cleanup(struct gscheduler_pipe *pipe)
 {
 }
 
-/* Functions to be used by super classes of scheduler_pipe */
+/* Functions to be used by super classes of gscheduler_pipe */
 
 /**
  * Super classes are responsible for calling this method when their respective
@@ -668,7 +668,7 @@ static inline void scheduler_pipe_cleanup(struct scheduler_pipe *pipe)
  * @return		number of bytes written in page, or
  *			negative error code
  */
-ssize_t scheduler_pipe_show_attribute(struct scheduler_pipe *pipe,
+ssize_t gscheduler_pipe_show_attribute(struct gscheduler_pipe *pipe,
 				      struct configfs_attribute *attr,
 				      char *page,
 				      int *handled);
@@ -688,7 +688,7 @@ ssize_t scheduler_pipe_show_attribute(struct scheduler_pipe *pipe,
  * @return		number of bytes written to attribute, or
  *			negative error code
  */
-ssize_t scheduler_pipe_store_attribute(struct scheduler_pipe *pipe,
+ssize_t gscheduler_pipe_store_attribute(struct gscheduler_pipe *pipe,
 				       struct configfs_attribute *attr,
 				       const char *page, size_t count,
 				       int *handled);

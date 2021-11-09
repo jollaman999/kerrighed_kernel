@@ -1,131 +1,131 @@
-#ifndef __HCC_GSCHEDULER_SCHEDULER_H__
-#define __HCC_GSCHEDULER_SCHEDULER_H__
+#ifndef __HCC_GSCHEDULER_GSCHEDULER_H__
+#define __HCC_GSCHEDULER_GSCHEDULER_H__
 
 #include <hcc/gscheduler/process_set.h>
 
-struct scheduler_policy;
-struct scheduler;
+struct gscheduler_policy;
+struct gscheduler;
 
 /**
- * Get a reference on a scheduler
+ * Get a reference on a gscheduler
  *
- * @param scheduler	scheduler to get a reference on
+ * @param gscheduler	gscheduler to get a reference on
  */
-void scheduler_get(struct scheduler *scheduler);
+void gscheduler_get(struct gscheduler *gscheduler);
 /**
- * Put a reference on a scheduler
+ * Put a reference on a gscheduler
  *
- * @param scheduler	scheduler to put a reference on
+ * @param gscheduler	gscheduler to put a reference on
  */
-void scheduler_put(struct scheduler *scheduler);
+void gscheduler_put(struct gscheduler *gscheduler);
 
 /**
- * Get a reference on the scheduler owning a scheduler_policy
- * The reference must be put with scheduler_put()
+ * Get a reference on the gscheduler owning a gscheduler_policy
+ * The reference must be put with gscheduler_put()
  *
- * @param policy	scheduling policy of the searched scheduler
+ * @param policy	scheduling policy of the searched gscheduler
  *
- * @return		scheduler owning the scheduler_policy, or
- *			NULL if the scheduler_policy is not used anymore
+ * @return		gscheduler owning the gscheduler_policy, or
+ *			NULL if the gscheduler_policy is not used anymore
  */
-struct scheduler *
-scheduler_policy_get_scheduler(struct scheduler_policy *policy);
+struct gscheduler *
+gscheduler_policy_get_gscheduler(struct gscheduler_policy *policy);
 
 /**
- * Get a reference on the scheduler owning a process set
- * The reference must be put with scheduler_put()
+ * Get a reference on the gscheduler owning a process set
+ * The reference must be put with gscheduler_put()
  *
- * @param pset		process set of the searched scheduler
+ * @param pset		process set of the searched gscheduler
  *
- * @return		scheduler owning the process set
+ * @return		gscheduler owning the process set
  */
-struct scheduler *process_set_get_scheduler(struct process_set *pset);
+struct gscheduler *process_set_get_gscheduler(struct process_set *pset);
 
 /**
- * Get a reference on the sched policy of a scheduler
- * The reference must be put with scheduler_policy_put()
+ * Get a reference on the sched policy of a gscheduler
+ * The reference must be put with gscheduler_policy_put()
  *
- * @param scheduler	scheduler which sched policy to get
+ * @param gscheduler	gscheduler which sched policy to get
  *
- * @return		sched policy of the scheduler
+ * @return		sched policy of the gscheduler
  */
-struct scheduler_policy *
-scheduler_get_scheduler_policy(struct scheduler *scheduler);
+struct gscheduler_policy *
+gscheduler_get_gscheduler_policy(struct gscheduler *gscheduler);
 
 /**
- * Get a reference on the process set managed by a scheduler
+ * Get a reference on the process set managed by a gscheduler
  * The reference must be put with process_set_put()
  *
- * @param scheduler	scheduler to get the process set of
+ * @param gscheduler	gscheduler to get the process set of
  *
- * @return		process set of the scheduler, or
- *			NULL if the scheduler is not active anymore
+ * @return		process set of the gscheduler, or
+ *			NULL if the gscheduler is not active anymore
  */
-struct process_set *scheduler_get_process_set(struct scheduler *scheduler);
+struct process_set *gscheduler_get_process_set(struct gscheduler *gscheduler);
 
 /**
- * Get the current node set of the scheduler
+ * Get the current node set of the gscheduler
  *
- * @param scheduler	scheduler which node set to get
- * @param node_set	node_set to copy the scheduler's node set in
+ * @param gscheduler	gscheduler which node set to get
+ * @param node_set	node_set to copy the gscheduler's node set in
  */
-void scheduler_get_node_set(struct scheduler *scheduler,
+void gscheduler_get_node_set(struct gscheduler *gscheduler,
 			    hccnodemask_t *node_set);
 
 /**
  * do {} while () style macro to begin an iteration over all universal
- * schedulers (that is set to handle all processes)
+ * gschedulers (that is set to handle all processes)
  *
- * @param scheduler	the scheduler * to use as a loop cursor
+ * @param gscheduler	the gscheduler * to use as a loop cursor
  */
-#define do_each_scheduler_universal(scheduler)			       \
+#define do_each_gscheduler_universal(gscheduler)			       \
 	do {							       \
 		struct process_set *__pset;			       \
 		for_each_process_set_full(__pset) {		       \
-			scheduler = process_set_get_scheduler(__pset); \
-			if (scheduler) {			       \
+			gscheduler = process_set_get_gscheduler(__pset); \
+			if (gscheduler) {			       \
 				do {
 
 /**
  * do {} while () style macro to end an iteration over all universal
- * schedulers (that is set to handle all processes)
- * Arguments must be the same as for do_each_scheduler_universal()
+ * gschedulers (that is set to handle all processes)
+ * Arguments must be the same as for do_each_gscheduler_universal()
  */
-#define while_each_scheduler_universal(scheduler)		       \
+#define while_each_gscheduler_universal(gscheduler)		       \
 				} while (0);			       \
-				scheduler_put(scheduler);	       \
+				gscheduler_put(gscheduler);	       \
 			}					       \
 		}						       \
 	} while (0)
 
 /**
- * do {} while () style macro to begin an iteration over the schedulers managing
+ * do {} while () style macro to begin an iteration over the gschedulers managing
  * a task
  * Schedulers attached to all tasks have to be separately parsed with
- * do_each_scheduler_universal()
+ * do_each_gscheduler_universal()
  * caller must hold either RCU lock or tasklist_lock
  *
- * @param scheduler	the scheduler * to use a loop cursor
- * @param task		task which schedulers to iterate over
+ * @param gscheduler	the gscheduler * to use a loop cursor
+ * @param task		task which gschedulers to iterate over
  */
-#define do_each_scheduler_task(scheduler, task)			       \
+#define do_each_gscheduler_task(gscheduler, task)			       \
 	do {							       \
 		struct process_set *__pset;			       \
 		do_each_process_set_task(__pset, task) {	       \
-			scheduler = process_set_get_scheduler(__pset); \
-			if (scheduler) {			       \
+			gscheduler = process_set_get_gscheduler(__pset); \
+			if (gscheduler) {			       \
 				do {
 
 /**
- * do {} while () style macro to end an iteration over the schedulers managing
+ * do {} while () style macro to end an iteration over the gschedulers managing
  * a task
- * Arguments must be the same as for do_each_scheduler_task()
+ * Arguments must be the same as for do_each_gscheduler_task()
  */
-#define while_each_scheduler_task(scheduler, task)		       \
+#define while_each_gscheduler_task(gscheduler, task)		       \
 				} while (0);			       \
-				scheduler_put(scheduler);	       \
+				gscheduler_put(gscheduler);	       \
 			}					       \
 		} while_each_process_set_task(__pset, task);	       \
 	} while (0)
 
-#endif /* __HCC_GSCHEDULER_SCHEDULER_H__ */
+#endif /* __HCC_GSCHEDULER_GSCHEDULER_H__ */
