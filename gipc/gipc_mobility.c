@@ -32,7 +32,7 @@
 #include <hcc/regular_file_mgr.h>
 #include <hcc/pid.h>
 #include "gipc_handler.h"
-#include "gipc_mobilityh"
+#include "gipc_mobility.h"
 #include "hccshm.h"
 #include "hccmsg.h"
 #include "hccsem.h"

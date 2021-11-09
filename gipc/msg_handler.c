@@ -22,7 +22,7 @@
 #include "gipcmap_io_linker.h"
 #include "util.h"
 #include "hccmsg.h"
-#include "gipc_mobilityh"
+#include "gipc_mobility.h"
 
 struct msghccops {
 	struct hccipc_ops hccops;
