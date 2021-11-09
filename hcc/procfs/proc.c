@@ -66,7 +66,7 @@ static inline hcc_node_t get_req_node(hcc_node_t nodeid)
 #ifdef CONFIG_HCC_GCAP
 	if (nodeid == PROC_STAT_DEPEND_ON_CAPABILITY) {
 		if (cap_raised
-		    (current->hcc_caps.effective, GCAP_SEE_LOCAL_PROC_STAT))
+		    (current->hcc_gcaps.effective, GCAP_SEE_LOCAL_PROC_STAT))
 			return hcc_node_id;
 		else
 			return HCC_MAX_NODES;

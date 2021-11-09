@@ -54,7 +54,7 @@ int can_be_checkpointed(struct task_struct *task_to_checkpoint)
 		goto exit;
 
 	/* Check capabilities */
-	if (!can_use_hcc_cap(task_to_checkpoint, GCAP_CHECKPOINTABLE))
+	if (!can_use_hcc_gcap(task_to_checkpoint, GCAP_CHECKPOINTABLE))
 		goto exit;
 
 	return 1; /* means true */

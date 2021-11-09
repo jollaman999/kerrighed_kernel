@@ -1492,7 +1492,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	sched_fork(p, clone_flags);
 
 #ifdef CONFIG_HCC_GCAP
-	hcc_cap_fork(p, clone_flags);
+	hcc_gcap_fork(p, clone_flags);
 #endif /* CONFIG_HCC_GCAP */
 
 #ifdef CONFIG_HCC_GDM
@@ -1985,20 +1985,20 @@ long do_fork(unsigned long clone_flags,
 #ifdef CONFIG_HCC_GPM
 #ifdef CONFIG_HCC_GCAP
 	nr = 0;
-	if (can_use_hcc_cap(current, GCAP_DISTANT_FORK))
+	if (can_use_hcc_gcap(current, GCAP_DISTANT_FORK))
 	{
-		restore = can_parent_inherite_hcc_cap(current, GCAP_DISTANT_FORK);
+		restore = can_parent_inherite_hcc_gcap(current, GCAP_DISTANT_FORK);
 		if (restore) {
-			cap_lower(current->hcc_caps.effective, GCAP_DISTANT_FORK);
-			cap_lower(current->hcc_caps.inheritable_effective, GCAP_DISTANT_FORK);
+			cap_lower(current->hcc_gcaps.effective, GCAP_DISTANT_FORK);
+			cap_lower(current->hcc_gcaps.inheritable_effective, GCAP_DISTANT_FORK);
 		}
 #endif
 		nr = hcc_do_fork(clone_flags, stack_start, regs, stack_size,
 				 parent_tidptr, child_tidptr, trace);
 #ifdef CONFIG_HCC_GCAP
 		if (restore) {
-			cap_raise(current->hcc_caps.effective, GCAP_DISTANT_FORK);
-			cap_raise(current->hcc_caps.inheritable_effective, GCAP_DISTANT_FORK);
+			cap_raise(current->hcc_gcaps.effective, GCAP_DISTANT_FORK);
+			cap_raise(current->hcc_gcaps.inheritable_effective, GCAP_DISTANT_FORK);
 		}
 #endif
 		if (nr > 0)

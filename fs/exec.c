@@ -1405,7 +1405,7 @@ int prepare_binprm(struct linux_binprm *bprm)
 	bprm->cred_prepared = 1;
 
 #ifdef CONFIG_HCC_GCAP
-	retval = hcc_cap_prepare_binprm(bprm);
+	retval = hcc_gcap_prepare_binprm(bprm);
 	if (retval)
 		return retval;
 #endif
@@ -1626,7 +1626,7 @@ int do_execve(const char * filename,
 	current->fs->in_exec = 0;
 	current->in_execve = 0;
 #ifdef CONFIG_HCC_GCAP
-	hcc_cap_finish_exec(bprm);
+	hcc_gcap_finish_exec(bprm);
 #endif
 	acct_update_integrals(current);
 	free_bprm(bprm);

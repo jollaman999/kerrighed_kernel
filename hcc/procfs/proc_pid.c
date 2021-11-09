@@ -538,7 +538,7 @@ struct dentry *hcc_proc_pid_lookup(struct inode *dir,
 	struct task_gdm_object *obj;
 
 #ifdef CONFIG_HCC_GCAP
-	if (can_use_hcc_cap(current, GCAP_SEE_LOCAL_PROC_STAT))
+	if (can_use_hcc_gcap(current, GCAP_SEE_LOCAL_PROC_STAT))
 		goto out_no_task;
 #endif
 
@@ -591,7 +591,7 @@ static int hcc_proc_pid_fill_cache(struct file *filp,
 		return retval;
 	}
 #if defined(CONFIG_HCC_GPM) && defined(CONFIG_HCC_GCAP)
-	if (can_use_hcc_cap(current, GCAP_SEE_LOCAL_PROC_STAT))
+	if (can_use_hcc_gcap(current, GCAP_SEE_LOCAL_PROC_STAT))
 		return retval;
 #endif
 
@@ -765,7 +765,7 @@ static int fill_next_remote_tgids(hcc_node_t node,
 		rcu_read_unlock();
 #ifdef CONFIG_HCC_GCAP
 		if (!iter.task
-		    && can_use_hcc_cap(current, GCAP_SEE_LOCAL_PROC_STAT))
+		    && can_use_hcc_gcap(current, GCAP_SEE_LOCAL_PROC_STAT))
 			continue;
 #endif
 #endif /* CONFIG_HCC_GPM */
@@ -826,7 +826,7 @@ static int fill_next_local_tgids(struct file *filp,
 		if (!iter.task) {
 #ifdef CONFIG_HCC_GPM
 #ifdef CONFIG_HCC_GCAP
-			if (can_use_hcc_cap(current, GCAP_SEE_LOCAL_PROC_STAT))
+			if (can_use_hcc_gcap(current, GCAP_SEE_LOCAL_PROC_STAT))
 				continue;
 #endif
 			/* Maybe a migrated thread group leader */
@@ -930,7 +930,7 @@ int hcc_proc_pid_readdir(struct file *filp,
 	     filp->f_pos = GLOBAL_PID_NODE(0, node) + offset) {
 #if defined(CONFIG_HCC_GCAP) && !defined(CONFIG_HCC_GPM)
 		if (node != hcc_node_id
-		    && can_use_hcc_cap(current, GCAP_SEE_LOCAL_PROC_STAT))
+		    && can_use_hcc_gcap(current, GCAP_SEE_LOCAL_PROC_STAT))
 			continue;
 #endif
 

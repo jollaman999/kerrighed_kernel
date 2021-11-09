@@ -22,18 +22,18 @@ enum {
        CAP_SIZE /* keep as last capability */
 };
 
-typedef struct hcc_cap_struct
+typedef struct hcc_gcap_struct
 {
-	int hcc_cap_effective;
-	int hcc_cap_permitted;
-	int hcc_cap_inheritable_permitted;
-	int hcc_cap_inheritable_effective;
-} hcc_cap_t;
+	int hcc_gcap_effective;
+	int hcc_gcap_permitted;
+	int hcc_gcap_inheritable_permitted;
+	int hcc_gcap_inheritable_effective;
+} hcc_gcap_t;
 
-typedef struct hcc_cap_pid_desc
+typedef struct hcc_gcap_pid_desc
 {
 	pid_t pid;
-	hcc_cap_t *caps;
-} hcc_cap_pid_t;
+	hcc_gcap_t *caps;
+} hcc_gcap_pid_t;
 
 #endif /* _HCC_GCAPABILITIES_H */

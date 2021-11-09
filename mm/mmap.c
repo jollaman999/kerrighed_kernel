@@ -210,7 +210,7 @@ int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
 		/* Now, check for cluster wide memory space if the process
 		 * has the USE_REMOTE_MEMORY capability.
 		 */
-		if (!can_use_hcc_cap(current, GCAP_USE_REMOTE_MEMORY))
+		if (!can_use_hcc_gcap(current, GCAP_USE_REMOTE_MEMORY))
 			goto error;
 
 		for_each_online_hccnode(node) {

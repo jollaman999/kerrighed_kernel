@@ -11,12 +11,12 @@
 #include <linux/capability.h>
 #include <hcc/sys/capabilities.h>
 
-typedef struct kernel_hcc_cap_struct {
+typedef struct kernel_hcc_gcap_struct {
 	kernel_cap_t effective;
 	kernel_cap_t permitted;
 	kernel_cap_t inheritable_permitted;
 	kernel_cap_t inheritable_effective;
-} kernel_hcc_cap_t;
+} kernel_hcc_gcap_t;
 
 /*
  * MACROS
@@ -66,12 +66,12 @@ typedef struct kernel_hcc_cap_struct {
 struct task_struct;
 struct linux_binprm;
 
-int can_use_hcc_cap(struct task_struct *task, int cap);
-int can_parent_inherite_hcc_cap(struct task_struct *task, int cap);
+int can_use_hcc_gcap(struct task_struct *task, int cap);
+int can_parent_inherite_hcc_gcap(struct task_struct *task, int cap);
 
-void hcc_cap_fork(struct task_struct *task, unsigned long clone_flags);
-int hcc_cap_prepare_binprm(struct linux_binprm *bprm);
-void hcc_cap_finish_exec(struct linux_binprm *bprm);
+void hcc_gcap_fork(struct task_struct *task, unsigned long clone_flags);
+int hcc_gcap_prepare_binprm(struct linux_binprm *bprm);
+void hcc_gcap_finish_exec(struct linux_binprm *bprm);
 
 #endif /* CONFIG_HCC_GCAP */
 

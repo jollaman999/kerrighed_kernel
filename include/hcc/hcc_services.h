@@ -26,27 +26,27 @@
 
 #define KSYS_SET_CAP          _IOW(HCC_PROC_MAGIC, \
                                    TOOLS_PROC_BASE + 0, \
-                                   hcc_cap_t )
+                                   hcc_gcap_t )
 
 #define KSYS_GET_CAP          _IOR(HCC_PROC_MAGIC, \
                                    TOOLS_PROC_BASE + 1, \
-                                   hcc_cap_t )
+                                   hcc_gcap_t )
 
 #define KSYS_SET_PID_CAP      _IOW(HCC_PROC_MAGIC, \
                                    TOOLS_PROC_BASE + 2, \
-                                   hcc_cap_pid_t )
+                                   hcc_gcap_pid_t )
 
 #define KSYS_GET_PID_CAP      _IOR(HCC_PROC_MAGIC, \
                                    TOOLS_PROC_BASE + 3, \
-                                   hcc_cap_pid_t )
+                                   hcc_gcap_pid_t )
 
 #define KSYS_SET_FATHER_CAP   _IOW(HCC_PROC_MAGIC, \
                                    TOOLS_PROC_BASE + 4, \
-                                   hcc_cap_t )
+                                   hcc_gcap_t )
 
 #define KSYS_GET_FATHER_CAP   _IOR(HCC_PROC_MAGIC, \
                                    TOOLS_PROC_BASE + 5, \
-                                   hcc_cap_t )
+                                   hcc_gcap_t )
 
 #define KSYS_NB_MAX_NODES     _IOR(HCC_PROC_MAGIC, \
                                    TOOLS_PROC_BASE + 6,  \

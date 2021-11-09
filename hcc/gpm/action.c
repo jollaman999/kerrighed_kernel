@@ -67,9 +67,9 @@ int hcc_action_disable(struct task_struct *task, hcc_gpm_action_t action,
 		atomic_t *array;
 
 		if (inheritable)
-			array = task->hcc_cap_unavailable;
+			array = task->hcc_gcap_unavailable;
 		else
-			array = task->hcc_cap_unavailable_private;
+			array = task->hcc_gcap_unavailable_private;
 		atomic_inc(&array[action_to_cap(action)]);
 	}
 	action_lock_unlock();
@@ -88,9 +88,9 @@ int hcc_action_enable(struct task_struct *task, hcc_gpm_action_t action,
 		return -EINVAL;
 
 	if (inheritable)
-		array = task->hcc_cap_unavailable;
+		array = task->hcc_gcap_unavailable;
 	else
-		array = task->hcc_cap_unavailable_private;
+		array = task->hcc_gcap_unavailable_private;
 	if (unlikely(atomic_add_negative(-1, &array[cap])))
 		BUG();
 
@@ -107,7 +107,7 @@ int hcc_action_start(struct task_struct *task, hcc_gpm_action_t action)
 		return -EINVAL;
 
 	action_lock_lock();
-	if (!can_use_hcc_cap(task, action_to_cap(action)))
+	if (!can_use_hcc_gcap(task, action_to_cap(action)))
 		retval = -EPERM;
 	else if (unlikely(task->hcc_action_flags & flag))
 		retval = -EALREADY;

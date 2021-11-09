@@ -40,7 +40,7 @@ void (*kh_zap_pte)(struct mm_struct *mm, unsigned long addr,
 
 int hcc_do_execve(struct task_struct *tsk, struct mm_struct *mm)
 {
-	if (can_use_hcc_cap(current, GCAP_USE_REMOTE_MEMORY))
+	if (can_use_hcc_gcap(current, GCAP_USE_REMOTE_MEMORY))
 		return init_anon_vma_gdm_set(tsk, mm);
 
 	return 0;
@@ -264,7 +264,7 @@ static struct mm_struct *kcb_copy_mm(struct task_struct * tsk,
 	if (clone_flags & CLONE_VFORK)
 		goto done_put;
 
-	if (cap_raised(tsk->hcc_caps.effective, GCAP_USE_REMOTE_MEMORY) ||
+	if (cap_raised(tsk->hcc_gcaps.effective, GCAP_USE_REMOTE_MEMORY) ||
 	    oldmm->anon_vma_gdm_set) {
 		if (init_anon_vma_gdm_set(tsk, mm) != 0) {
 			BUG();

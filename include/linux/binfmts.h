@@ -51,7 +51,7 @@ struct linux_binprm{
 #ifdef CONFIG_HCC_GCAP
 	/* The model needs changes with filesystem support ... */
 #if 0
-	kernel_cap_t hcc_cap_permitted, hcc_cap_forced, hcc_cap_effective;
+	kernel_cap_t hcc_gcap_permitted, hcc_gcap_forced, hcc_gcap_effective;
 #endif /* 0 */
 #endif /* CONFIG_HCC_GCAP */
 	unsigned int per_clear;	/* bits to clear in current->personality */

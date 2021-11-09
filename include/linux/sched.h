@@ -1774,10 +1774,10 @@ struct task_struct {
 #endif
 #endif /* __GENKYSMS__ */
 #ifdef CONFIG_HCC_GCAP
-	kernel_hcc_cap_t hcc_caps;
-	atomic_t hcc_cap_used[CAP_SIZE];
-	atomic_t hcc_cap_unavailable[CAP_SIZE];
-	atomic_t hcc_cap_unavailable_private[CAP_SIZE];
+	kernel_hcc_gcap_t hcc_gcaps;
+	atomic_t hcc_gcap_used[CAP_SIZE];
+	atomic_t hcc_gcap_unavailable[CAP_SIZE];
+	atomic_t hcc_gcap_unavailable_private[CAP_SIZE];
 #endif
 #ifdef CONFIG_HCC_GDM
 	struct gdm_info_struct *gdm_info;

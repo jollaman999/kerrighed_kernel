@@ -119,7 +119,7 @@ int __may_migrate(struct task_struct *task)
 		&& permissions_ok(task)
 #ifdef CONFIG_HCC_GCAP
 		/* check capabilities */
-		&& can_use_hcc_cap(task, GCAP_CAN_MIGRATE)
+		&& can_use_hcc_gcap(task, GCAP_CAN_MIGRATE)
 #endif /* CONFIG_HCC_GCAP */
 		&& !hcc_action_pending(task, GPM_MIGRATE)
 		/* Implementation limitation */
@@ -162,7 +162,7 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 	 * migration request.
 	 */
 #ifdef CONFIG_HCC_GCAP
-	if (!can_use_hcc_cap(tsk, GCAP_CAN_MIGRATE))
+	if (!can_use_hcc_gcap(tsk, GCAP_CAN_MIGRATE))
 		return -ENOSYS;
 #endif
 	if (!migration_implemented(tsk))

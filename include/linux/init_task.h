@@ -127,7 +127,7 @@ extern struct cred init_cred;
 #endif
 
 #ifdef CONFIG_HCC_GCAP
-#define INIT_HCC_GCAP .hcc_caps = {			    \
+#define INIT_HCC_GCAP .hcc_gcaps = {			    \
 	.permitted = HCC_GCAP_INIT_PERM_SET,		    \
 	.effective = HCC_GCAP_INIT_EFF_SET,		    \
 	.inheritable_permitted = HCC_GCAP_INIT_INH_PERM_SET, \

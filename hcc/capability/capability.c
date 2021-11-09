@@ -26,17 +26,17 @@
 #include <net/grpc/grpcid.h>
 #endif
 
-int can_use_hcc_cap(struct task_struct *task, int cap)
+int can_use_hcc_gcap(struct task_struct *task, int cap)
 {
-	return (cap_raised(task->hcc_caps.effective, cap)
-		&& !atomic_read(&task->hcc_cap_unavailable[cap])
-		&& !atomic_read(&task->hcc_cap_unavailable_private[cap]));
+	return (cap_raised(task->hcc_gcaps.effective, cap)
+		&& !atomic_read(&task->hcc_gcap_unavailable[cap])
+		&& !atomic_read(&task->hcc_gcap_unavailable_private[cap]));
 }
 
-void hcc_cap_fork(struct task_struct *task, unsigned long clone_flags)
+void hcc_gcap_fork(struct task_struct *task, unsigned long clone_flags)
 {
-	kernel_hcc_cap_t *caps = &current->hcc_caps;
-	kernel_hcc_cap_t *new_caps = &task->hcc_caps;
+	kernel_hcc_gcap_t *caps = &current->hcc_gcaps;
+	kernel_hcc_gcap_t *new_caps = &task->hcc_gcaps;
 	kernel_cap_t new_hcc_effective;
 	int i;
 
@@ -48,7 +48,7 @@ void hcc_cap_fork(struct task_struct *task, unsigned long clone_flags)
 
 	/*
 	 * Compute the new capabilities and reset the private
-	 * hcc_cap_unavailable array
+	 * hcc_gcap_unavailable array
 	 */
 	new_hcc_effective = cap_intersect(caps->inheritable_effective,
 					  caps->inheritable_permitted);
@@ -57,35 +57,35 @@ void hcc_cap_fork(struct task_struct *task, unsigned long clone_flags)
 	new_caps->effective = new_hcc_effective;
 
 	for (i = 0; i < CAP_SIZE; i++)
-		atomic_set(&task->hcc_cap_unavailable_private[i], 0);
+		atomic_set(&task->hcc_gcap_unavailable_private[i], 0);
 	/* The other fields have been inherited by copy. */
 }
 
-int hcc_cap_prepare_binprm(struct linux_binprm *bprm)
+int hcc_gcap_prepare_binprm(struct linux_binprm *bprm)
 {
 	/* The model needs changes with filesystem support ... */
 #if 0
-	cap_clear(bprm->hcc_cap_forced);
-	cap_set_full(bprm->hcc_cap_permitted);
-	cap_set_full(bprm->hcc_cap_effective);
+	cap_clear(bprm->hcc_gcap_forced);
+	cap_set_full(bprm->hcc_gcap_permitted);
+	cap_set_full(bprm->hcc_gcap_effective);
 #endif /* 0 */
 	return 0;
 }
 
-void hcc_cap_finish_exec(struct linux_binprm *bprm)
+void hcc_gcap_finish_exec(struct linux_binprm *bprm)
 {
 	/* The model needs changes with filesystem support ... */
 #if 0
-	kernel_hcc_cap_t *caps = &current->hcc_caps;
+	kernel_hcc_gcap_t *caps = &current->hcc_gcaps;
 	kernel_cap_t new_hcc_permitted, new_hcc_effective;
 
 	task_lock(current);
 	new_hcc_permitted = cap_intersect(caps->inheritable_permitted,
-					  bprm->hcc_cap_permitted);
+					  bprm->hcc_gcap_permitted);
 	new_hcc_permitted = cap_combine(new_hcc_permitted,
-					bprm->hcc_cap_forced);
+					bprm->hcc_gcap_forced);
 
-	new_hcc_effective = cap_intersect(bprm->hcc_cap_effective,
+	new_hcc_effective = cap_intersect(bprm->hcc_gcap_effective,
 					  new_hcc_permitted);
 	new_hcc_effective = cap_intersect(caps->inheritable_effective,
 					  new_hcc_effective);
@@ -97,9 +97,9 @@ void hcc_cap_finish_exec(struct linux_binprm *bprm)
 }
 
 static int hcc_set_cap(struct task_struct *tsk,
-		       const kernel_hcc_cap_t *requested_cap)
+		       const kernel_hcc_gcap_t *requested_cap)
 {
-	kernel_hcc_cap_t *caps = &tsk->hcc_caps;
+	kernel_hcc_gcap_t *caps = &tsk->hcc_gcaps;
 	kernel_cap_t tmp_cap;
 	struct nsproxy *nsp;
 	int res;
@@ -138,7 +138,7 @@ static int hcc_set_cap(struct task_struct *tsk,
 
 	res = -EBUSY;
 	for (i = 0; i < CAP_SIZE; i++)
-		if (atomic_read(&tsk->hcc_cap_used[i])
+		if (atomic_read(&tsk->hcc_gcap_used[i])
 		    && !cap_raised(requested_cap->effective, i))
 			goto out_unlock;
 
@@ -163,11 +163,11 @@ out:
 }
 
 #ifdef CONFIG_HCC_PROC
-static int remote_set_pid_cap(pid_t pid, const kernel_hcc_cap_t *cap);
+static int remote_set_pid_cap(pid_t pid, const kernel_hcc_gcap_t *cap);
 #endif
 
 static int hcc_set_father_cap(struct task_struct *tsk,
-			      const kernel_hcc_cap_t *requested_cap)
+			      const kernel_hcc_gcap_t *requested_cap)
 {
 	int retval = 0;
 
@@ -201,7 +201,7 @@ static int hcc_set_father_cap(struct task_struct *tsk,
 	return retval;
 }
 
-static int hcc_set_pid_cap(pid_t pid, const kernel_hcc_cap_t *requested_cap)
+static int hcc_set_pid_cap(pid_t pid, const kernel_hcc_gcap_t *requested_cap)
 {
 	struct task_struct *tsk;
 	int retval = -ESRCH;
@@ -223,7 +223,7 @@ static int hcc_set_pid_cap(pid_t pid, const kernel_hcc_cap_t *requested_cap)
 static int handle_set_pid_cap(struct grpc_desc* desc, void *_msg, size_t size)
 {
 	struct pid *pid;
-	kernel_hcc_cap_t cap;
+	kernel_hcc_gcap_t cap;
 	const struct cred *old_cred;
 	int ret;
 
@@ -242,16 +242,16 @@ out:
 	return ret;
 }
 
-static int remote_set_pid_cap(pid_t pid, const kernel_hcc_cap_t *cap)
+static int remote_set_pid_cap(pid_t pid, const kernel_hcc_gcap_t *cap)
 {
 	return hcc_remote_syscall_simple(PROC_SET_PID_CAP, pid,
 					 cap, sizeof(*cap));
 }
 #endif /* CONFIG_HCC_PROC */
 
-static int hcc_get_cap(struct task_struct *tsk, kernel_hcc_cap_t *resulting_cap)
+static int hcc_get_cap(struct task_struct *tsk, kernel_hcc_gcap_t *resulting_cap)
 {
-	kernel_hcc_cap_t *caps = &tsk->hcc_caps;
+	kernel_hcc_gcap_t *caps = &tsk->hcc_gcaps;
 	int res;
 
 	task_lock(tsk);
@@ -269,11 +269,11 @@ static int hcc_get_cap(struct task_struct *tsk, kernel_hcc_cap_t *resulting_cap)
 }
 
 #ifdef CONFIG_HCC_PROC
-static int remote_get_pid_cap(pid_t pid, kernel_hcc_cap_t *cap);
+static int remote_get_pid_cap(pid_t pid, kernel_hcc_gcap_t *cap);
 #endif
 
 static int hcc_get_father_cap(struct task_struct *son,
-			      kernel_hcc_cap_t *resulting_cap)
+			      kernel_hcc_gcap_t *resulting_cap)
 {
 	int retval = 0;
 
@@ -308,15 +308,15 @@ static int hcc_get_father_cap(struct task_struct *son,
 	return retval;
 }
 
-int can_parent_inherite_hcc_cap(struct task_struct *son, int cap)
+int can_parent_inherite_hcc_gcap(struct task_struct *son, int cap)
 {
 	int retval = 0;
 
 	if (son->real_parent != baby_sitter) {
-		retval = (cap_raised(son->real_parent->hcc_caps.effective, cap) &
-			cap_raised(son->real_parent->hcc_caps.inheritable_effective, cap));
+		retval = (cap_raised(son->real_parent->hcc_gcaps.effective, cap) &
+			cap_raised(son->real_parent->hcc_gcaps.inheritable_effective, cap));
 	} else {
-		kernel_hcc_cap_t pcap;
+		kernel_hcc_gcap_t pcap;
 
 		hcc_get_father_cap(son, &pcap);
 		retval = (cap_raised(pcap.effective, cap) &
@@ -326,7 +326,7 @@ int can_parent_inherite_hcc_cap(struct task_struct *son, int cap)
 	return retval;
 }
 
-static int hcc_get_pid_cap(pid_t pid, kernel_hcc_cap_t *resulting_cap)
+static int hcc_get_pid_cap(pid_t pid, kernel_hcc_gcap_t *resulting_cap)
 {
 	struct task_struct *tsk;
 	int retval = -ESRCH;
@@ -348,7 +348,7 @@ static int hcc_get_pid_cap(pid_t pid, kernel_hcc_cap_t *resulting_cap)
 static int handle_get_pid_cap(struct grpc_desc *desc, void *_msg, size_t size)
 {
 	struct pid *pid;
-	kernel_hcc_cap_t cap;
+	kernel_hcc_gcap_t cap;
 	const struct cred *old_cred;
 	int ret;
 
@@ -378,7 +378,7 @@ err_cancel:
 	goto out_end;
 }
 
-static int remote_get_pid_cap(pid_t pid, kernel_hcc_cap_t *cap)
+static int remote_get_pid_cap(pid_t pid, kernel_hcc_gcap_t *cap)
 {
 	struct grpc_desc *desc;
 	int err = -ESRCH;
@@ -417,36 +417,36 @@ err_cancel:
 
 /* HCC syscalls interface */
 
-static int user_to_kernel_hcc_cap(const hcc_cap_t __user *user_caps,
-				  kernel_hcc_cap_t *caps)
+static int user_to_kernel_hcc_gcap(const hcc_gcap_t __user *user_caps,
+				  kernel_hcc_gcap_t *caps)
 {
-	hcc_cap_t ucaps;
+	hcc_gcap_t ucaps;
 
 	if (copy_from_user(&ucaps, user_caps, sizeof(ucaps)))
 		return -EFAULT;
 
 	BUILD_BUG_ON(sizeof(kernel_cap_t) != 2 * sizeof(__u32));
 
-	caps->permitted = (kernel_cap_t){{ ucaps.hcc_cap_permitted, 0 }};
-	caps->effective = (kernel_cap_t){{ ucaps.hcc_cap_effective, 0 }};
+	caps->permitted = (kernel_cap_t){{ ucaps.hcc_gcap_permitted, 0 }};
+	caps->effective = (kernel_cap_t){{ ucaps.hcc_gcap_effective, 0 }};
 	caps->inheritable_permitted =
-		(kernel_cap_t){{ ucaps.hcc_cap_inheritable_permitted, 0 }};
+		(kernel_cap_t){{ ucaps.hcc_gcap_inheritable_permitted, 0 }};
 	caps->inheritable_effective =
-		(kernel_cap_t){{ ucaps.hcc_cap_inheritable_effective, 0 }};
+		(kernel_cap_t){{ ucaps.hcc_gcap_inheritable_effective, 0 }};
 
 	return 0;
 }
 
 static int proc_set_pid_cap(void __user *arg)
 {
-	struct hcc_cap_pid_desc desc;
-	kernel_hcc_cap_t caps;
+	struct hcc_gcap_pid_desc desc;
+	kernel_hcc_gcap_t caps;
 	int r = -EFAULT;
 
 	if (copy_from_user(&desc, arg, sizeof(desc)))
 		goto out;
 
-	if (user_to_kernel_hcc_cap(desc.caps, &caps))
+	if (user_to_kernel_hcc_gcap(desc.caps, &caps))
 		goto out;
 
 	r = hcc_set_pid_cap(desc.pid, &caps);
@@ -457,10 +457,10 @@ out:
 
 static int proc_set_father_cap(void __user *arg)
 {
-	kernel_hcc_cap_t caps;
+	kernel_hcc_gcap_t caps;
 	int r;
 
-	r = user_to_kernel_hcc_cap(arg, &caps);
+	r = user_to_kernel_hcc_gcap(arg, &caps);
 	if (!r)
 		r = hcc_set_father_cap(current, &caps);
 
@@ -469,27 +469,27 @@ static int proc_set_father_cap(void __user *arg)
 
 static int proc_set_cap(void __user *arg)
 {
-	kernel_hcc_cap_t caps;
+	kernel_hcc_gcap_t caps;
 	int r;
 
-	r = user_to_kernel_hcc_cap(arg, &caps);
+	r = user_to_kernel_hcc_gcap(arg, &caps);
 	if (!r)
 		r = hcc_set_cap(current, &caps);
 
 	return r;
 }
 
-static int kernel_to_user_hcc_cap(const kernel_hcc_cap_t *caps,
-				  hcc_cap_t __user *user_caps)
+static int kernel_to_user_hcc_gcap(const kernel_hcc_gcap_t *caps,
+				  hcc_gcap_t __user *user_caps)
 {
-	hcc_cap_t ucaps;
+	hcc_gcap_t ucaps;
 	int r = 0;
 
-	ucaps.hcc_cap_permitted = caps->permitted.cap[0];
-	ucaps.hcc_cap_effective = caps->effective.cap[0];
-	ucaps.hcc_cap_inheritable_permitted =
+	ucaps.hcc_gcap_permitted = caps->permitted.cap[0];
+	ucaps.hcc_gcap_effective = caps->effective.cap[0];
+	ucaps.hcc_gcap_inheritable_permitted =
 		caps->inheritable_permitted.cap[0];
-	ucaps.hcc_cap_inheritable_effective =
+	ucaps.hcc_gcap_inheritable_effective =
 		caps->inheritable_effective.cap[0];
 
 	if (copy_to_user(user_caps, &ucaps, sizeof(ucaps)))
@@ -500,32 +500,32 @@ static int kernel_to_user_hcc_cap(const kernel_hcc_cap_t *caps,
 
 static int proc_get_cap(void __user *arg)
 {
-	kernel_hcc_cap_t caps;
+	kernel_hcc_gcap_t caps;
 	int r;
 
 	r = hcc_get_cap(current, &caps);
 	if (!r)
-		r = kernel_to_user_hcc_cap(&caps, arg);
+		r = kernel_to_user_hcc_gcap(&caps, arg);
 
 	return r;
 }
 
 static int proc_get_father_cap(void __user *arg)
 {
-	kernel_hcc_cap_t caps;
+	kernel_hcc_gcap_t caps;
 	int r;
 
 	r = hcc_get_father_cap(current, &caps);
 	if (!r)
-		r = kernel_to_user_hcc_cap(&caps, arg);
+		r = kernel_to_user_hcc_gcap(&caps, arg);
 
 	return r;
 }
 
 static int proc_get_pid_cap(void __user *arg)
 {
-	struct hcc_cap_pid_desc desc;
-	kernel_hcc_cap_t caps;
+	struct hcc_gcap_pid_desc desc;
+	kernel_hcc_gcap_t caps;
 	int r = -EFAULT;
 
 	BUG_ON(sizeof(int) != sizeof(pid_t));
@@ -536,7 +536,7 @@ static int proc_get_pid_cap(void __user *arg)
 	r = hcc_get_pid_cap(desc.pid, &caps);
 
 	if (!r)
-		r = kernel_to_user_hcc_cap(&caps, desc.caps);
+		r = kernel_to_user_hcc_gcap(&caps, desc.caps);
 
 out:
 	return r;
@@ -548,7 +548,7 @@ static int proc_get_supported_cap(void __user *arg)
 	return put_user(HCC_GCAP_SUPPORTED.cap[0], set);
 }
 
-int init_hcc_cap(void)
+int init_hcc_gcap(void)
 {
 	int r;
 
@@ -604,7 +604,7 @@ int init_hcc_cap(void)
 	goto out;
 }
 
-void cleanup_hcc_cap(void)
+void cleanup_hcc_gcap(void)
 {
 	unregister_proc_service(KSYS_GET_SUPPORTED_CAP);
 	unregister_proc_service(KSYS_GET_PID_CAP);
