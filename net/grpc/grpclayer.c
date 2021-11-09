@@ -795,7 +795,7 @@ int grpc_signal(struct grpc_desc* desc, int sigid)
 
 int __grpc_signalack(struct grpc_desc* desc)
 {
-	int v;
+	int v = 0;
 
 	if (desc->desc_send->flags & GRPC_FLAGS_CLOSED)
 		return -EPIPE;
