@@ -55,7 +55,7 @@
 #include <net/grpc/grpc.h>
 #endif
 
-#define RPC_MAX_PAGES 1700
+#define GRPC_MAX_PAGES 1700
 
 struct scan_control {
 	/* Incremented by the number of inactive pages that were scanned */
@@ -608,9 +608,9 @@ redo:
 #ifdef CONFIG_HCC_GMM
 static int check_injection_flow(void)
 {
-	long i = 0, limit = RPC_MAX_PAGES;
+	long i = 0, limit = GRPC_MAX_PAGES;
 
-	if ((rpc_consumed_bytes() / PAGE_SIZE) < limit)
+	if ((grpc_consumed_bytes() / PAGE_SIZE) < limit)
 		return 0;
 
 	if (current_is_kswapd())
@@ -618,7 +618,7 @@ static int check_injection_flow(void)
 	else
 		limit = 4 * limit / 5;
 
-	while ((rpc_consumed_bytes() / PAGE_SIZE) > limit) {
+	while ((grpc_consumed_bytes() / PAGE_SIZE) > limit) {
 		schedule();
 		i++;
 	}
