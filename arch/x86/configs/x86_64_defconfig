@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32-krg_xeon
-# Tue Nov  9 18:39:37 2021
+# Tue Nov  9 18:41:29 2021
 #
 CONFIG_64BIT=y
 # CONFIG_X86_32 is not set
@@ -1099,8 +1099,7 @@ CONFIG_MAC80211_LEDS=y
 # CONFIG_MAC80211_MESSAGE_TRACING is not set
 # CONFIG_MAC80211_DEBUG_MENU is not set
 CONFIG_MAC80211_STA_HASH_MAX_SIZE=0
-CONFIG_WIMAX=m
-CONFIG_WIMAX_DEBUG_LEVEL=8
+# CONFIG_WIMAX is not set
 CONFIG_RFKILL=m
 CONFIG_RFKILL_LEDS=y
 CONFIG_RFKILL_INPUT=y
@@ -1855,15 +1854,8 @@ CONFIG_PCMCIA_SPECTRUM=m
 # CONFIG_ORINOCO_USB is not set
 
 #
-# WiMAX Wireless Broadband devices
+# Enable WiMAX (Networking options) to see the WiMAX drivers
 #
-CONFIG_WIMAX_I2400M=m
-
-#
-# Enable MMC support to see WiMAX SDIO drivers
-#
-CONFIG_WIMAX_I2400M_USB=m
-CONFIG_WIMAX_I2400M_DEBUG_LEVEL=8
 
 #
 # USB Network Adapters
