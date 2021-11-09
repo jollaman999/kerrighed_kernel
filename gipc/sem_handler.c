@@ -14,11 +14,11 @@
 #include <hcc/pid.h>
 #include <net/grpc/grpc.h>
 #include <hcc/ghotplug.h>
-#include "ipc_handler.h"
+#include "gipc_handler.h"
 #include "sem_handler.h"
 #include "semarray_io_linker.h"
 #include "semundolst_io_linker.h"
-#include "ipcmap_io_linker.h"
+#include "gipcmap_io_linker.h"
 #include "util.h"
 #include "hccsem.h"
 
@@ -141,7 +141,7 @@ static struct kern_ipc_perm *kcb_ipc_sem_findkey(struct ipc_ids *ids, key_t key)
  *
  *  @author Innogrid HCC
  */
-int hcc_ipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma,
+int hcc_gipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma,
 					   int nsems)
 {
 	semarray_object_t *sem_object;
@@ -236,7 +236,7 @@ exit:
 	_gdm_put_object(undo_list_set, proc_list_id);
 }
 
-void hcc_ipc_sem_freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
+void hcc_gipc_sem_freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 {
 	int index;
 	struct sem_undo* un, *tu;
@@ -261,7 +261,7 @@ void hcc_ipc_sem_freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 	sem_unlock(sma, -1);
 	_gdm_remove_frozen_object(sem_ids(ns).hccops->data_gdm_set, index);
 
-	hcc_ipc_rmid(&sem_ids(ns), index);
+	hcc_gipc_rmid(&sem_ids(ns), index);
 }
 
 struct ipcsem_wakeup_msg {
@@ -280,7 +280,7 @@ void handle_ipcsem_wakeup_process(struct grpc_desc *desc, void *_msg,
 	struct ipc_namespace *ns;
 	int i;
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	BUG_ON(!ns);
 
 	/* take only a local lock because the requester node has the gdm lock
@@ -336,7 +336,7 @@ out_unlock:
 	put_ipc_ns(ns);
 }
 
-void hcc_ipc_sem_wakeup_process(struct sem_queue *q, int error)
+void hcc_gipc_sem_wakeup_process(struct sem_queue *q, int error)
 {
 	struct ipcsem_wakeup_msg msg;
 	struct grpc_desc *desc;
@@ -485,7 +485,7 @@ exit:
 	return r;
 }
 
-int hcc_ipc_sem_copy_semundo(unsigned long clone_flags,
+int hcc_gipc_sem_copy_semundo(unsigned long clone_flags,
 			     struct task_struct *tsk)
 {
 	int r = 0;
@@ -556,7 +556,7 @@ exit:
 	return r;
 }
 
-struct sem_undo * hcc_ipc_sem_find_undo(struct sem_array* sma)
+struct sem_undo * hcc_gipc_sem_find_undo(struct sem_array* sma)
 {
 	struct sem_undo * undo;
 	int r = 0;
@@ -670,7 +670,7 @@ exit_unlock:
 	rcu_read_unlock();
 }
 
-void hcc_ipc_sem_exit_sem(struct ipc_namespace *ns,
+void hcc_gipc_sem_exit_sem(struct ipc_namespace *ns,
 			  struct task_struct * task)
 {
 	struct gdm_set *undo_list_gdm_set;

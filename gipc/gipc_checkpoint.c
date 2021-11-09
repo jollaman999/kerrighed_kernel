@@ -10,8 +10,8 @@
 #include <linux/syscalls.h>
 #include <hcc/ghost.h>
 #include <hcc/file_ghost.h>
-#include "hccipc_mobility.h"
-#include "ipc_checkpoint.h"
+#include "gipc_mobilityh"
+#include "gipc_checkpoint.h"
 
 int sys_msgq_checkpoint(int msqid, int fd)
 {

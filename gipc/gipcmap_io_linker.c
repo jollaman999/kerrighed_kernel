@@ -1,12 +1,12 @@
 /** GDM IPC allocation bitmap Linker.
- *  @file ipcmap_io_linker.c
+ *  @file gipcmap_io_linker.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #define MODULE_NAME "IPC map linker  "
 #include <gdm/gdm.h>
-#include "ipcmap_io_linker.h"
+#include "gipcmap_io_linker.h"
 
 struct kmem_cache *ipcmap_object_cachep;
 

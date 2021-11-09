@@ -31,8 +31,8 @@
 #include <hcc/file.h>
 #include <hcc/regular_file_mgr.h>
 #include <hcc/pid.h>
-#include "ipc_handler.h"
-#include "hccipc_mobility.h"
+#include "gipc_handler.h"
+#include "gipc_mobilityh"
 #include "hccshm.h"
 #include "hccmsg.h"
 #include "hccsem.h"
@@ -93,7 +93,7 @@ struct file *reopen_shm_file_entry_from_hcc_desc(struct task_struct *task,
 	BUG_ON (!task);
 	BUG_ON (!desc);
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	BUG_ON(!ns);
 
 	shmid = desc->shm.shmid;
@@ -153,7 +153,7 @@ out_put_dentry:
 	shp->shm_nattch--;
 	if (shp->shm_nattch == 0 &&
 	    shp->shm_perm.mode & SHM_DEST)
-		hcc_ipc_shm_destroy(ns, shp);
+		hcc_gipc_shm_destroy(ns, shp);
 	else
 		shm_unlock(shp);
 	up_write(&shm_ids(ns).rw_mutex);
@@ -173,7 +173,7 @@ int export_ipc_namespace(struct gpm_action *action,
 int import_ipc_namespace(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
-	task->nsproxy->ipc_ns = find_get_hcc_ipcns();
+	task->nsproxy->ipc_ns = find_get_hcc_gipcns();
 	BUG_ON(!task->nsproxy->ipc_ns);
 
 	return 0;
@@ -674,7 +674,7 @@ static int export_full_local_sysv_msgq(ghost_t *ghost, int msgid)
 	struct msg_queue *msq;
 	struct ipc_namespace *ns;
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	if (!ns)
 		return -ENOSYS;
 
@@ -794,7 +794,7 @@ int __sys_msgq_checkpoint(int msqid, int fd)
 	struct file *file;
 	struct grpc_desc *desc;
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 
 	index = ipcid_to_idx(msqid);
 
@@ -959,7 +959,7 @@ int import_full_sysv_msgq(ghost_t *ghost)
 	if (r)
 		goto out;
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	if (!ns)
 		return -ENOSYS;
 
@@ -1002,7 +1002,7 @@ out:
 	return r;
 
 out_freeque:
-	hcc_ipc_msg_freeque(ns, &msq->q_perm);
+	hcc_gipc_msg_freeque(ns, &msq->q_perm);
 	goto out_put_ns;
 }
 
@@ -1016,7 +1016,7 @@ int export_full_sysv_sem(ghost_t *ghost, int semid)
 	struct ipc_namespace *ns;
 	struct sem_array *sma;
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	if (!ns)
 		return -ENOSYS;
 
@@ -1065,7 +1065,7 @@ int import_full_sysv_sem(ghost_t *ghost)
 	if (r)
 		goto out;
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	if (!ns)
 		return -ENOSYS;
 
@@ -1107,7 +1107,7 @@ out:
 	return r;
 
 out_freeary:
-	hcc_ipc_sem_freeary(ns, &sma->sem_perm);
+	hcc_gipc_sem_freeary(ns, &sma->sem_perm);
 	goto out_put_ns;
 }
 
@@ -1186,7 +1186,7 @@ int export_full_sysv_shm(ghost_t *ghost, int shmid)
 	struct ipc_namespace *ns;
 	struct shmid_kernel *shp;
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	if (!ns)
 		return -ENOSYS;
 
@@ -1320,7 +1320,7 @@ int import_full_sysv_shm(ghost_t *ghost)
 	if (r)
 		goto out;
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	if (!ns)
 		return -ENOSYS;
 
@@ -1364,7 +1364,7 @@ out:
 	return r;
 out_freeshm:
 	BUG_ON(shp->shm_nattch);
-	hcc_ipc_shm_destroy(ns, shp);
+	hcc_gipc_shm_destroy(ns, shp);
 	goto out;
 }
 

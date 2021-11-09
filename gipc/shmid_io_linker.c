@@ -12,7 +12,7 @@
 #include <linux/shmem_fs.h>
 #include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
-#include "ipc_handler.h"
+#include "gipc_handler.h"
 #include "hccshm.h"
 #include "util.h"
 #include "shmid_io_linker.h"
@@ -164,7 +164,7 @@ int shmid_insert_object (struct gdm_obj * obj_entry,
 	/* This is the first time the object is inserted locally. We need
 	 * to allocate kernel shm structures.
 	 */
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	BUG_ON(!ns);
 
 	shp = create_local_shp(ns, &shp_object->mobile_shp, shp_object->set_id);
@@ -217,7 +217,7 @@ int shmid_remove_object (void *object,
 	if (shp_object) {
 		struct ipc_namespace *ns;
 
-		ns = find_get_hcc_ipcns();
+		ns = find_get_hcc_gipcns();
 		BUG_ON(!ns);
 
 		shp = shp_object->local_shp;

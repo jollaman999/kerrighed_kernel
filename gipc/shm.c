@@ -107,9 +107,9 @@ static void do_shm_rmid(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 
 	if (shp->shm_nattch){
 #ifdef CONFIG_HCC_GIPC
-		if (is_hcc_ipc(&shm_ids(ns))
+		if (is_hcc_gipc(&shm_ids(ns))
 		    && shp->shm_perm.key != IPC_PRIVATE)
-			hcc_ipc_shm_rmkey(ns, shp->shm_perm.key);
+			hcc_gipc_shm_rmkey(ns, shp->shm_perm.key);
 #endif
 		shp->shm_perm.mode |= SHM_DEST;
 		/* Do not find it any more */
@@ -258,8 +258,8 @@ static bool shm_may_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 #ifdef CONFIG_HCC_GIPC
 static void shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 {
-	if (is_hcc_ipc(&shm_ids(ns)))
-		hcc_ipc_shm_destroy(ns, shp);
+	if (is_hcc_gipc(&shm_ids(ns)))
+		hcc_gipc_shm_destroy(ns, shp);
 	else
 		local_shm_destroy(ns, shp);
 }
@@ -609,8 +609,8 @@ int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 
 	ns->shm_tot += numpages;
 #ifdef CONFIG_HCC_GIPC
-	if (is_hcc_ipc(&shm_ids(ns))) {
-		error = hcc_ipc_shm_newseg(ns, shp) ;
+	if (is_hcc_gipc(&shm_ids(ns))) {
+		error = hcc_gipc_shm_newseg(ns, shp) ;
 		if (error)
 			goto no_file;
 	} else

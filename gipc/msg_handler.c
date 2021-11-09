@@ -16,13 +16,13 @@
 #include <gdm/gdm.h>
 #include <net/grpc/grpc.h>
 #include <hcc/ghotplug.h>
-#include "ipc_handler.h"
+#include "gipc_handler.h"
 #include "msg_handler.h"
 #include "msg_io_linker.h"
-#include "ipcmap_io_linker.h"
+#include "gipcmap_io_linker.h"
 #include "util.h"
 #include "hccmsg.h"
-#include "hccipc_mobility.h"
+#include "gipc_mobilityh"
 
 struct msghccops {
 	struct hccipc_ops hccops;
@@ -117,7 +117,7 @@ static struct kern_ipc_perm *kcb_ipc_msg_findkey(struct ipc_ids *ids, key_t key)
  *
  *  @author Innogrid HCC
  */
-int hcc_ipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
+int hcc_gipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 {
 	struct gdm_set *master_set;
 	msq_object_t *msq_object;
@@ -170,7 +170,7 @@ err_put:
 	return err;
 }
 
-void hcc_ipc_msg_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
+void hcc_gipc_msg_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 {
 	int index;
 	key_t key;
@@ -194,7 +194,7 @@ void hcc_ipc_msg_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 
 	_gdm_remove_frozen_object(ipcp->hccops->data_gdm_set, index);
 
-	hcc_ipc_rmid(&msg_ids(ns), index);
+	hcc_gipc_rmid(&msg_ids(ns), index);
 }
 
 /*****************************************************************************/
@@ -209,7 +209,7 @@ struct msgsnd_msg
 	size_t msgsz;
 };
 
-long hcc_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
+long hcc_gipc_msgsnd(int msqid, long mtype, void __user *mtext,
 		    size_t msgsz, int msgflg, struct ipc_namespace *ns,
 		    pid_t tgid)
 {
@@ -293,7 +293,7 @@ static void handle_do_msg_send(struct grpc_desc *desc, void *_msg, size_t size)
 	struct msgsnd_msg *msg = _msg;
 	struct ipc_namespace *ns;
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	BUG_ON(!ns);
 
 	mtext = kmalloc(msg->msgsz, GFP_KERNEL);
@@ -333,7 +333,7 @@ struct msgrcv_msg
 	size_t msgsz;
 };
 
-long hcc_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
+long hcc_gipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 		    size_t msgsz, long msgtyp, int msgflg,
 		    struct ipc_namespace *ns, pid_t tgid)
 {
@@ -431,7 +431,7 @@ static void handle_do_msg_rcv(struct grpc_desc *desc, void *_msg, size_t size)
 	struct msgrcv_msg *msg = _msg;
 	struct ipc_namespace *ns;
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	BUG_ON(!ns);
 
 	mtext = kmalloc(msg->msgsz, GFP_KERNEL);

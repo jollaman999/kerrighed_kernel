@@ -14,10 +14,10 @@
 #include <gdm/gdm.h>
 #include <hcc/ghotplug.h>
 #include "hccshm.h"
-#include "ipc_handler.h"
+#include "gipc_handler.h"
 #include "shm_handler.h"
 #include "shmid_io_linker.h"
-#include "ipcmap_io_linker.h"
+#include "gipcmap_io_linker.h"
 #include "shm_memory_linker.h"
 
 /*****************************************************************************/
@@ -100,7 +100,7 @@ static struct kern_ipc_perm *kcb_ipc_shm_findkey(struct ipc_ids *ids, key_t key)
  *
  *  @author Innogrid HCC
  */
-int hcc_ipc_shm_newseg (struct ipc_namespace *ns, struct shmid_kernel *shp)
+int hcc_gipc_shm_newseg (struct ipc_namespace *ns, struct shmid_kernel *shp)
 {
 	shmid_object_t *shp_object;
 	struct gdm_set *gdm;
@@ -159,12 +159,12 @@ err_put:
 
 }
 
-void hcc_ipc_shm_rmkey(struct ipc_namespace *ns, key_t key)
+void hcc_gipc_shm_rmkey(struct ipc_namespace *ns, key_t key)
 {
 	_gdm_remove_object(shm_ids(ns).hccops->key_gdm_set, key);
 }
 
-void hcc_ipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
+void hcc_gipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 {
 	struct gdm_set *mm_set;
 	int index;
@@ -185,7 +185,7 @@ void hcc_ipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 	_gdm_remove_frozen_object(shm_ids(ns).hccops->data_gdm_set, index);
 	_destroy_gdm_set(mm_set);
 
-	hcc_ipc_rmid(&shm_ids(ns), index);
+	hcc_gipc_rmid(&shm_ids(ns), index);
 }
 
 /*****************************************************************************/

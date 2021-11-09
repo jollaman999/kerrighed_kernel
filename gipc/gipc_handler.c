@@ -1,5 +1,5 @@
 /** Common code for IPC mechanism accross the cluster
- *  @file ipc_handler.c
+ *  @file gipc_handler.c
  *
  *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
  *  Copyright (C) 2019-2021, Innogrid HCC.
@@ -18,14 +18,14 @@
 #include <hcc/hcc_syscalls.h>
 #include <hcc/hcc_services.h>
 #include <hcc/procfs.h>
-#include "ipc_checkpoint.h"
-#include "ipcmap_io_linker.h"
-#include "ipc_handler.h"
+#include "gipc_checkpoint.h"
+#include "gipcmap_io_linker.h"
+#include "gipc_handler.h"
 #include "util.h"
 #include "hccmsg.h"
 
 
-struct ipc_namespace *find_get_hcc_ipcns(void)
+struct ipc_namespace *find_get_hcc_gipcns(void)
 {
 	struct hcc_namespace *hcc_ns;
 	struct ipc_namespace *ipc_ns;
@@ -55,7 +55,7 @@ error:
 /*                                                                           */
 /*****************************************************************************/
 
-int hcc_ipc_get_maxid(struct ipc_ids* ids)
+int hcc_gipc_get_maxid(struct ipc_ids* ids)
 {
 	ipcmap_object_t *ipc_map;
 	int max_id;
@@ -67,7 +67,7 @@ int hcc_ipc_get_maxid(struct ipc_ids* ids)
 	return max_id;
 }
 
-int hcc_ipc_get_new_id(struct ipc_ids* ids)
+int hcc_gipc_get_new_id(struct ipc_ids* ids)
 {
 	ipcmap_object_t *ipc_map, *max_id;
 	int i = 1, id = -1, offset;
@@ -99,7 +99,7 @@ int hcc_ipc_get_new_id(struct ipc_ids* ids)
 	return id;
 }
 
-int hcc_ipc_get_this_id(struct ipc_ids *ids, int id)
+int hcc_gipc_get_this_id(struct ipc_ids *ids, int id)
 {
 	ipcmap_object_t *ipc_map, *max_id;
 	int i, offset, ret = 0;
@@ -126,7 +126,7 @@ out_id_unavailable:
 	return ret;
 }
 
-void hcc_ipc_rmid(struct ipc_ids* ids, int index)
+void hcc_gipc_rmid(struct ipc_ids* ids, int index)
 {
 	ipcmap_object_t *ipc_map, *max_id;
 	int i, offset;

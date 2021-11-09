@@ -188,7 +188,7 @@ config HCC_FAF
 	  If unsure, say Y.
 
 config HCC_GIPC
-	bool "HCCIPC"
+	bool "HCCGIPC"
 	depends on HCC && HCC_GDM && HCC_GMM && IPC_NS
 	help
 	  HCC's global IPC management

@@ -42,8 +42,8 @@
 
 #ifdef CONFIG_HCC_GIPC
 #include <gdm/gdm.h>
-#include "ipcmap_io_linker.h"
-#include "ipc_handler.h"
+#include "gipcmap_io_linker.h"
+#include "gipc_handler.h"
 #include "msg_handler.h"
 #include "sem_handler.h"
 #include "shm_handler.h"
@@ -197,7 +197,7 @@ static struct kern_ipc_perm *ipc_findkey(struct ipc_ids *ids, key_t key)
 	int total;
 
 #ifdef CONFIG_HCC_GIPC
-	if (is_hcc_ipc(ids)) {
+	if (is_hcc_gipc(ids)) {
 		ipc = ids->hccops->ipc_findkey(ids, key);
 		if (IS_ERR(ipc))
 			ipc = NULL;
@@ -237,8 +237,8 @@ int ipc_get_maxid(struct ipc_ids *ids)
 	int total, id;
 
 #ifdef CONFIG_HCC_GIPC
-	if (is_hcc_ipc(ids))
-		return hcc_ipc_get_maxid(ids);
+	if (is_hcc_gipc(ids))
+		return hcc_gipc_get_maxid(ids);
 #endif
 
 	if (ids->in_use == 0)
@@ -281,10 +281,10 @@ static int hcc_idr_get_new(struct ipc_ids *ids, struct kern_ipc_perm *new, int *
 {
 	int err;
 
-	if (is_hcc_ipc(ids)) {
+	if (is_hcc_gipc(ids)) {
 		int ipcid, lid;
 
-		ipcid = hcc_ipc_get_new_id(ids);
+		ipcid = hcc_gipc_get_new_id(ids);
 		if (ipcid == -1) {
 			err = -ENOMEM;
 			goto error;
@@ -318,7 +318,7 @@ static int ipc_reserveid(struct ipc_ids *ids, struct kern_ipc_perm *new,
 
 	lid = ipcid_to_idx(requested_id);
 
-	err = hcc_ipc_get_this_id(ids, lid);
+	err = hcc_gipc_get_this_id(ids, lid);
 	if (err)
 		goto out;
 
@@ -358,7 +358,7 @@ static int ipc_reserveid(struct ipc_ids *ids, struct kern_ipc_perm *new,
 out_free_idr_id:
 	idr_remove(&ids->ipcs_idr, id);
 out_free_hcc_id:
-	hcc_ipc_rmid(ids, lid);
+	hcc_gipc_rmid(ids, lid);
 out:
 	spin_unlock(&new->lock);
 	rcu_read_unlock();
@@ -883,7 +883,7 @@ out:
 #ifdef CONFIG_HCC_GIPC
 struct kern_ipc_perm *ipc_lock(struct ipc_ids *ids, int id)
 {
-	if (is_hcc_ipc(ids))
+	if (is_hcc_gipc(ids))
 		return ids->hccops->ipc_lock(ids, id);
 
 	return local_ipc_lock(ids, id);
@@ -1248,7 +1248,7 @@ void sem_rcu_free(struct rcu_head *head)
 	ipc_rcu_free(head);
 }
 
-int is_hcc_ipc(struct ipc_ids *ids)
+int is_hcc_gipc(struct ipc_ids *ids)
 {
 	if (ids->hccops)
 		return 1;

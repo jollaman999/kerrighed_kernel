@@ -12,17 +12,17 @@ struct msg_msgseg {
 
 /** HCC Hooks **/
 
-int hcc_ipc_msg_newque(struct ipc_namespace *ns,
+int hcc_gipc_msg_newque(struct ipc_namespace *ns,
 		       struct msg_queue *msq);
 
-void hcc_ipc_msg_freeque(struct ipc_namespace *ns,
+void hcc_gipc_msg_freeque(struct ipc_namespace *ns,
 			 struct kern_ipc_perm *ipcp);
 
-long hcc_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
+long hcc_gipc_msgsnd(int msqid, long mtype, void __user *mtext,
 		    size_t msgsz, int msgflg, struct ipc_namespace *ns,
 		    pid_t tgid);
 
-long hcc_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
+long hcc_gipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 		    size_t msgsz, long msgtyp, int msgflg,
 		    struct ipc_namespace *ns, pid_t tgid);
 

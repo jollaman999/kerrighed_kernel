@@ -20,7 +20,7 @@
 #include <linux/swap.h>
 #include <gdm/gdm.h>
 #include "hccshm.h"
-#include "ipc_handler.h"
+#include "gipc_handler.h"
 
 extern int memory_first_touch (struct gdm_obj * obj_entry,
 			       struct gdm_set * set, objid_t objid,int flags);
@@ -67,7 +67,7 @@ int shm_memory_insert_page(struct gdm_obj *objEntry, struct gdm_set *gdm,
 	int ret, shm_id;
 	struct ipc_namespace *ns;
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	BUG_ON(!ns);
 
 	shm_id = *(int *) gdm->private_data;
@@ -320,7 +320,7 @@ static int hcc_shmem_mmap(struct file *file, struct vm_area_struct *vma)
 	{
 		struct ipc_namespace *ns;
 
-		ns = find_get_hcc_ipcns();
+		ns = find_get_hcc_gipcns();
 		BUG_ON(!ns);
 
 		BUG_ON(sfd->ns != ns);

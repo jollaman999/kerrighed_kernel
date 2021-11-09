@@ -1,5 +1,5 @@
 /** GDM IPC allocation bitmap Linker.
- *  @file ipcmap_io_linker.h
+ *  @file gipcmap_io_linker.h
  *
  *  Manage a distributed allocation bitmap for IPC ids.
  *  @author Innogrid HCC

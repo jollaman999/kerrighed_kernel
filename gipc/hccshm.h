@@ -9,9 +9,9 @@ struct vm_area_struct;
 
 
 /** HCC Hooks **/
-int hcc_ipc_shm_newseg(struct ipc_namespace *ns, struct shmid_kernel * shp);
-void hcc_ipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp);
-void hcc_ipc_shm_rmkey(struct ipc_namespace *ns, key_t key);
+int hcc_gipc_shm_newseg(struct ipc_namespace *ns, struct shmid_kernel * shp);
+void hcc_gipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp);
+void hcc_gipc_shm_rmkey(struct ipc_namespace *ns, key_t key);
 
 /** Exported variables  **/
 

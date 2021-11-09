@@ -286,7 +286,7 @@ struct hccipc_ops {
 int local_ipc_reserveid(struct ipc_ids* ids, struct kern_ipc_perm* new,
                         int size);
 
-int is_hcc_ipc(struct ipc_ids *ids);
+int is_hcc_gipc(struct ipc_ids *ids);
 
 int hcc_msg_init_ns(struct ipc_namespace *ns);
 int hcc_sem_init_ns(struct ipc_namespace *ns);

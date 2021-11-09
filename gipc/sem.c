@@ -460,8 +460,8 @@ int newary(struct ipc_namespace *ns, struct ipc_params *params)
 #ifdef CONFIG_HCC_GIPC
 	INIT_LIST_HEAD(&sma->remote_sem_pending);
 
-	if (is_hcc_ipc(&sem_ids(ns))) {
-		retval = hcc_ipc_sem_newary(ns, sma, nsems);
+	if (is_hcc_gipc(&sem_ids(ns))) {
+		retval = hcc_gipc_sem_newary(ns, sma, nsems);
 		if (retval) {
 			ipc_rcu_putref(sma, sem_rcu_free);
 			return retval;
@@ -627,7 +627,7 @@ static void wake_up_sem_queue(struct sem_queue *q, int error)
 	q->status = IN_WAKEUP;
 #ifdef CONFIG_HCC_GIPC
 	if (remote)
-		hcc_ipc_sem_wakeup_process(q, error);
+		hcc_gipc_sem_wakeup_process(q, error);
 	else
 #endif
 	wake_up_process(q->sleeper);
@@ -1002,8 +1002,8 @@ static void free_un(struct rcu_head *head)
 static void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 {
 #ifdef CONFIG_HCC_GIPC
-	if (is_hcc_ipc(&sem_ids(ns)))
-		hcc_ipc_sem_freeary(ns, ipcp);
+	if (is_hcc_gipc(&sem_ids(ns)))
+		hcc_gipc_sem_freeary(ns, ipcp);
 	else
 		local_freeary(ns, ipcp);
 }
@@ -1019,7 +1019,7 @@ static void freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 	int i;
 
 #ifdef CONFIG_HCC_GIPC
-	if (is_hcc_ipc(&sem_ids(ns)))
+	if (is_hcc_gipc(&sem_ids(ns)))
 		BUG_ON(!list_empty(&sma->list_id));
 #endif
 
@@ -1808,7 +1808,7 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 	}
 
 #ifdef CONFIG_HCC_GIPC
-	if (is_hcc_ipc(&sem_ids(ns)))
+	if (is_hcc_gipc(&sem_ids(ns)))
 		un = NULL;
 	else
 #endif
@@ -1859,7 +1859,7 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 
 #ifdef CONFIG_HCC_GIPC
 	if (undos && sma->sem_perm.hccops) {
-		un = hcc_ipc_sem_find_undo(sma);
+		un = hcc_gipc_sem_find_undo(sma);
 		if (IS_ERR(un)) {
 			error = PTR_ERR(un);
 			goto out_unlock_free;
@@ -2018,8 +2018,8 @@ int copy_semundo(unsigned long clone_flags, struct task_struct *tsk)
 
 	ns = task_nsproxy(tsk)->ipc_ns;
 
-	if (is_hcc_ipc(&sem_ids(ns)))
-		return hcc_ipc_sem_copy_semundo(clone_flags, tsk);
+	if (is_hcc_gipc(&sem_ids(ns)))
+		return hcc_gipc_sem_copy_semundo(clone_flags, tsk);
 
 	return __copy_semundo(clone_flags, tsk);
 }
@@ -2199,8 +2199,8 @@ void exit_sem(struct task_struct *tsk)
 
 	ipcns = ns->ipc_ns;
 
-	if (is_hcc_ipc(&sem_ids(ipcns)))
-		hcc_ipc_sem_exit_sem(ipcns, tsk);
+	if (is_hcc_gipc(&sem_ids(ipcns)))
+		hcc_gipc_sem_exit_sem(ipcns, tsk);
 
 	/* let call __exit_sem in case process has been created
 	 * before the HCC loading

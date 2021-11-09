@@ -13,7 +13,7 @@
 #include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 
-#include "ipc_handler.h"
+#include "gipc_handler.h"
 #include "msg_io_linker.h"
 #include "util.h"
 #include "hccmsg.h"
@@ -176,7 +176,7 @@ int msq_insert_object (struct gdm_obj * obj_entry,
 	} else {
 		struct ipc_namespace *ns;
 
-		ns = find_get_hcc_ipcns();
+		ns = find_get_hcc_gipcns();
 		BUG_ON(!ns);
 
 		/* This is the first time the object is inserted locally. We need
@@ -227,7 +227,7 @@ int msq_remove_object(void *object, struct gdm_set *set, objid_t objid)
 	struct msg_queue *msq;
 	struct ipc_namespace *ns;
 
-	ns = find_get_hcc_ipcns();
+	ns = find_get_hcc_gipcns();
 	BUG_ON(!ns);
 
 	msq_object = object;

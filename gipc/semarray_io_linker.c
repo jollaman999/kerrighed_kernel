@@ -15,7 +15,7 @@
 #include <gdm/gdm.h>
 #include <hcc/pid.h>
 
-#include "ipc_handler.h"
+#include "gipc_handler.h"
 #include "semarray_io_linker.h"
 #include "util.h"
 #include "hccsem.h"
@@ -208,7 +208,7 @@ int semarray_insert_object (struct gdm_obj * obj_entry,
 	if (!sem_object->local_sem) {
 		struct ipc_namespace *ns;
 
-		ns = find_get_hcc_ipcns();
+		ns = find_get_hcc_gipcns();
 		BUG_ON(!ns);
 
 		/* This is the first time the object is inserted locally.
@@ -286,7 +286,7 @@ int semarray_remove_object(void *object, struct gdm_set * set,
 	if (sem_object) {
 		struct ipc_namespace *ns;
 
-		ns = find_get_hcc_ipcns();
+		ns = find_get_hcc_gipcns();
 		BUG_ON(!ns);
 
 		sma = sem_object->local_sem;

@@ -248,8 +248,8 @@ int newque(struct ipc_namespace *ns, struct ipc_params *params)
 	}
 
 #ifdef CONFIG_HCC_GIPC
-	if (is_hcc_ipc(&msg_ids(ns))) {
-		retval = hcc_ipc_msg_newque(ns, msq) ;
+	if (is_hcc_gipc(&msg_ids(ns))) {
+		retval = hcc_gipc_msg_newque(ns, msq) ;
 		if (retval) {
 			/* release locks held by ipc_addid */
 			local_ipc_unlock(&msq->q_perm);
@@ -323,8 +323,8 @@ static void expunge_all(struct msg_queue *msq, int res)
 #ifdef CONFIG_HCC_GIPC
 static void freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 {
-	if (is_hcc_ipc(&msg_ids(ns)))
-		hcc_ipc_msg_freeque(ns, ipcp);
+	if (is_hcc_gipc(&msg_ids(ns)))
+		hcc_gipc_msg_freeque(ns, ipcp);
 	else
 		local_master_freeque(ns, ipcp);
 }
@@ -727,8 +727,8 @@ long do_msgsnd(int msqid, long mtype, void __user *mtext,
 	if (mtype < 1)
 		return -EINVAL;
 
-	if (is_hcc_ipc(&msg_ids(ns)))
-		r = hcc_ipc_msgsnd(msqid, mtype, mtext, msgsz, msgflg,
+	if (is_hcc_gipc(&msg_ids(ns)))
+		r = hcc_gipc_msgsnd(msqid, mtype, mtext, msgsz, msgflg,
 				  ns, task_tgid_vnr(current));
 	else {
 		r = __do_msgsnd(msqid, mtype, mtext, msgsz, msgflg,
@@ -912,8 +912,8 @@ long do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	long r;
 	struct ipc_namespace *ns = current->nsproxy->ipc_ns;
 
-	if (is_hcc_ipc(&msg_ids(ns)))
-		r = hcc_ipc_msgrcv(msqid, pmtype, mtext, msgsz, msgtyp, msgflg,
+	if (is_hcc_gipc(&msg_ids(ns)))
+		r = hcc_gipc_msgrcv(msqid, pmtype, mtext, msgsz, msgtyp, msgflg,
 				  ns, task_tgid_vnr(current));
 	else
 		r = __do_msgrcv(msqid, pmtype, mtext, msgsz, msgtyp, msgflg,
