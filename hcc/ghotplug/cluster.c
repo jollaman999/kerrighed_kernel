@@ -652,7 +652,7 @@ static void handle_cluster_start(struct grpc_desc *desc, void *data, size_t size
 	hooks_start();
 	up_write(&hcc_init_sem);
 
-	rpc_enable_all();
+	grpc_enable_all();
 
 	SET_HCC_CLUSTER_FLAGS(HCCFLAGS_RUNNING);
 	SET_HCC_NODE_FLAGS(HCCFLAGS_RUNNING);
@@ -683,7 +683,7 @@ out:
 	return;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
@@ -706,7 +706,7 @@ static void cluster_start_worker(struct work_struct *work)
 
 	free_page((unsigned long)page);
 
-	desc = rpc_begin_m(CLUSTER_START, &cluster_start_ctx->node_set.v);
+	desc = grpc_begin_m(CLUSTER_START, &cluster_start_ctx->node_set.v);
 
 	if (!desc)
 		goto out;
@@ -735,7 +735,7 @@ static void cluster_start_worker(struct work_struct *work)
 	 * transactions will be queued until the nodes are ready.
 	 */
 end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 out:
 	if (err)
 		printk(KERN_ERR "hcc: [ADD] Setting up new nodes failed! err=%d\n",
@@ -748,7 +748,7 @@ out:
 	spin_unlock(&cluster_start_lock);
 	return;
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -EPIPE;
 	goto end;
@@ -844,7 +844,7 @@ static int cluster_restart(void *arg)
 	if (!capable(CAP_SYS_BOOT))
 		return -EPERM;
 
-	rpc_async_m(NODE_FAIL, &hccnode_online_map,
+	grpc_async_m(NODE_FAIL, &hccnode_online_map,
 		    &unused, sizeof(unused));
 	
 	return 0;
@@ -876,7 +876,7 @@ static int cluster_stop(void *arg)
 	if (!capable(CAP_SYS_BOOT))
 		return -EPERM;
 
-	rpc_async_m(NODE_POWEROFF, &hccnode_online_map,
+	grpc_async_m(NODE_POWEROFF, &hccnode_online_map,
 		    &unused, sizeof(unused));
 	
 	return 0;
@@ -958,9 +958,9 @@ int ghotplug_cluster_init(void)
 		clusters_status[bcl] = CLUSTER_UNDEF;
 	}
 
-	rpc_register_void(CLUSTER_START, handle_cluster_start, 0);
+	grpc_register_void(CLUSTER_START, handle_cluster_start, 0);
 #ifndef CONFIG_HCC_GHOTPLUG_DEL
-	rpc_register(NODE_POWEROFF, handle_node_poweroff, 0);
+	grpc_register(NODE_POWEROFF, handle_node_poweroff, 0);
 #endif
 
 	register_proc_service(KSYS_GHOTPLUG_READY, node_ready);

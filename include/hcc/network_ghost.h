@@ -28,7 +28,7 @@ struct grpc_desc;
  *  @author Innogrid HCC
  *
  *  @param  access Ghost access (READ/WRITE)
- *  @param  desc   RPC descriptor to send/receive data on.
+ *  @param  desc   GRPC descriptor to send/receive data on.
  *
  *  @return        0 if everything ok
  *                 Negative value otherwise.

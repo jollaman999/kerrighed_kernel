@@ -124,7 +124,7 @@ out:
 	return;
 
 out_err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
@@ -144,7 +144,7 @@ static int do_environ_read(struct file *file, struct proc_distant_pid_info *task
 	msg.pos = *ppos;
 
 	err = -ENOMEM;
-	desc = rpc_begin(REQ_PROC_PID_ENVIRON, task->prob_node);
+	desc = grpc_begin(REQ_PROC_PID_ENVIRON, task->prob_node);
 	if (!desc)
 		goto out_err;
 
@@ -169,7 +169,7 @@ static int do_environ_read(struct file *file, struct proc_distant_pid_info *task
 		goto out_err_cancel;
 	*ppos = new_pos;
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	return bytes_read;
@@ -177,8 +177,8 @@ out:
 out_err_cancel:
 	if (err > 0)
 		err = -EPIPE;
-	rpc_cancel(desc);
-	rpc_end(desc, 0);
+	grpc_cancel(desc);
+	grpc_end(desc, 0);
 out_err:
 	bytes_read = err;
 	goto out;
@@ -296,7 +296,7 @@ typedef int proc_read_t(struct task_struct *task, char *buffer);
 
 static void handle_generic_proc_read(struct grpc_desc *desc, void *_msg,
 				     proc_read_t *proc_read,
-				     enum rpcid REQ)
+				     enum grpcid REQ)
 {
 	struct generic_proc_read_msg *msg = _msg;
 	struct task_struct *tsk;
@@ -347,12 +347,12 @@ out:
 	return;
 
 out_err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
 static int generic_proc_read(struct proc_distant_pid_info *task,
-			     char *buffer, enum rpcid req)
+			     char *buffer, enum grpcid req)
 {
 	struct generic_proc_read_msg msg;
 	struct grpc_desc *desc;
@@ -364,7 +364,7 @@ static int generic_proc_read(struct proc_distant_pid_info *task,
 	msg.pid = task->pid;
 
 	err = -ENOMEM;
-	desc = rpc_begin(req, task->prob_node);
+	desc = grpc_begin(req, task->prob_node);
 	if (!desc)
 		goto out_err;
 
@@ -383,7 +383,7 @@ static int generic_proc_read(struct proc_distant_pid_info *task,
 	if (err)
 		goto out_err_cancel;
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	return bytes_read;
@@ -391,8 +391,8 @@ out:
 out_err_cancel:
 	if (err > 0)
 		err = -EPIPE;
-	rpc_cancel(desc);
-	rpc_end(desc, 0);
+	grpc_cancel(desc);
+	grpc_end(desc, 0);
 out_err:
 	bytes_read = err;
 	goto out;
@@ -705,7 +705,7 @@ err_free_data:
 
 static void handle_generic_proc_show(struct grpc_desc *desc, void *_msg,
 				     proc_show_t *proc_show,
-				     enum rpcid REQ)
+				     enum grpcid REQ)
 {
 	struct generic_proc_show_msg *msg = _msg;
 	struct pid_namespace *ns = find_get_hcc_pid_ns();
@@ -774,7 +774,7 @@ out:
 out_err_cancel:
 	if (err > 0)
 		err = -EPIPE;
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 
 out_err:
@@ -793,15 +793,15 @@ static void generic_proc_show_release(struct inode *inode, struct file *file)
 
 	err = grpc_pack_type(desc, count);
 	if (err)
-		rpc_cancel(desc);
-	rpc_end(desc, 0);
+		grpc_cancel(desc);
+	grpc_end(desc, 0);
 	kfree(private);
 }
 
 static int generic_proc_show(struct file *file,
 			     struct proc_distant_pid_info *task,
 			     char *buf, size_t count,
-			     enum rpcid req)
+			     enum grpcid req)
 {
 	struct generic_proc_show_msg msg;
 	struct hcc_proc_single_private *private = file->private_data;
@@ -820,7 +820,7 @@ static int generic_proc_show(struct file *file,
 		private = kmalloc(sizeof(*private), GFP_KERNEL);
 		if (!private)
 			goto out_err;
-		desc = rpc_begin(req, task->prob_node);
+		desc = grpc_begin(req, task->prob_node);
 		if (!desc) {
 			kfree(private);
 			goto out_err;
@@ -858,7 +858,7 @@ out:
 out_err_cancel:
 	if (err > 0)
 		err = -EPIPE;
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 out_err:
 	bytes_read = err;
 	goto out;
@@ -937,38 +937,38 @@ int hcc_proc_pid_stack(struct file *file, struct proc_distant_pid_info *task,
 void proc_pid_file_init(void)
 {
 	/* REG() entries */
-	rpc_register_void(REQ_PROC_PID_ENVIRON, handle_read_proc_pid_environ, 0);
+	grpc_register_void(REQ_PROC_PID_ENVIRON, handle_read_proc_pid_environ, 0);
 	/* INF() entries */
-	rpc_register_void(REQ_PROC_PID_CMDLINE, handle_read_proc_pid_cmdline, 0);
-	rpc_register_void(REQ_PROC_PID_AUXV, handle_read_proc_pid_auxv, 0);
-	rpc_register_void(REQ_PROC_PID_LIMITS, handle_read_proc_pid_limits, 0);
+	grpc_register_void(REQ_PROC_PID_CMDLINE, handle_read_proc_pid_cmdline, 0);
+	grpc_register_void(REQ_PROC_PID_AUXV, handle_read_proc_pid_auxv, 0);
+	grpc_register_void(REQ_PROC_PID_LIMITS, handle_read_proc_pid_limits, 0);
 #ifdef CONFIG_HAVE_ARCH_TRACEHOOK
-	rpc_register_void(REQ_PROC_PID_SYSCALL, handle_read_proc_pid_syscall, 0);
+	grpc_register_void(REQ_PROC_PID_SYSCALL, handle_read_proc_pid_syscall, 0);
 #endif
 #ifdef CONFIG_KALLSYMS
-	rpc_register_void(REQ_PROC_PID_WCHAN, handle_read_proc_pid_wchan, 0);
+	grpc_register_void(REQ_PROC_PID_WCHAN, handle_read_proc_pid_wchan, 0);
 #endif
 #ifdef CONFIG_SCHEDSTATS
-	rpc_register_void(REQ_PROC_PID_SCHEDSTAT, handle_read_proc_pid_schedstat, 0);
+	grpc_register_void(REQ_PROC_PID_SCHEDSTAT, handle_read_proc_pid_schedstat, 0);
 #endif
-	rpc_register_void(REQ_PROC_PID_OOM_SCORE, handle_read_proc_pid_oom_score, 0);
+	grpc_register_void(REQ_PROC_PID_OOM_SCORE, handle_read_proc_pid_oom_score, 0);
 #ifdef CONFIG_TASK_IO_ACCOUNTING
-	rpc_register_void(REQ_PROC_TGID_IO_ACCOUNTING,
+	grpc_register_void(REQ_PROC_TGID_IO_ACCOUNTING,
 			  handle_read_proc_tgid_io_accounting, 0);
 #endif
 #ifdef CONFIG_HCC_GPM
-	rpc_register_void(REQ_PROC_GPM_TYPE_SHOW, handle_read_gpm_type_show, 0);
-	rpc_register_void(REQ_PROC_GPM_SOURCE_SHOW, handle_read_gpm_source_show, 0);
-	rpc_register_void(REQ_PROC_GPM_TARGET_SHOW, handle_read_gpm_target_show, 0);
+	grpc_register_void(REQ_PROC_GPM_TYPE_SHOW, handle_read_gpm_type_show, 0);
+	grpc_register_void(REQ_PROC_GPM_SOURCE_SHOW, handle_read_gpm_source_show, 0);
+	grpc_register_void(REQ_PROC_GPM_TARGET_SHOW, handle_read_gpm_target_show, 0);
 #endif
 	/* ONE() entries */
-	rpc_register_void(REQ_PROC_PID_STATUS, handle_read_proc_pid_status, 0);
-	rpc_register_void(REQ_PROC_PID_PERSONALITY,
+	grpc_register_void(REQ_PROC_PID_STATUS, handle_read_proc_pid_status, 0);
+	grpc_register_void(REQ_PROC_PID_PERSONALITY,
 			  handle_read_proc_pid_personality, 0);
-	rpc_register_void(REQ_PROC_TGID_STAT, handle_read_proc_tgid_stat, 0);
-	rpc_register_void(REQ_PROC_PID_STATM, handle_read_proc_pid_statm, 0);
+	grpc_register_void(REQ_PROC_TGID_STAT, handle_read_proc_tgid_stat, 0);
+	grpc_register_void(REQ_PROC_PID_STATM, handle_read_proc_pid_statm, 0);
 #ifdef CONFIG_STACKTRACE
-	rpc_register_void(REQ_PROC_PID_STACK, handle_read_proc_pid_stack, 0);
+	grpc_register_void(REQ_PROC_PID_STACK, handle_read_proc_pid_stack, 0);
 #endif
 }
 

@@ -210,7 +210,7 @@ struct grpc_desc;
 /**
  * Pack information so that a peer config_item can be reached on a peer node.
  *
- * @param desc		RPC descriptor to pack item identification info
+ * @param desc		GRPC descriptor to pack item identification info
  * @param item		local peer item of item to reach on peer nodes
  *
  * @return		0 if successful, or
@@ -220,7 +220,7 @@ int global_config_pack_item(struct grpc_desc *desc, struct config_item *item);
 /**
  * Find and get a reference on the local peer item of a remote item
  *
- * @param desc		RPC descriptor to unpack item identification info
+ * @param desc		GRPC descriptor to unpack item identification info
  *
  * @return		Valid pointer to a config_item, or
  *			negative error pointer

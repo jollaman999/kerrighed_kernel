@@ -346,10 +346,10 @@ void hcc_ipc_sem_wakeup_process(struct sem_queue *q, int error)
 	msg.pid = remote_sleeper_pid(q); /* q->pid contains the tgid */
 	msg.error = error;
 
-	desc = rpc_begin(IPC_SEM_WAKEUP, q->node);
+	desc = grpc_begin(IPC_SEM_WAKEUP, q->node);
 	grpc_pack_type(desc, msg);
 	grpc_unpack_type(desc, msg.error);
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 }
 
 static inline struct semundo_list_object * __create_semundo_proc_list(
@@ -819,7 +819,7 @@ void sem_handler_init (void)
 	register_io_linker(SEMKEY_LINKER, &semkey_linker);
 	register_io_linker(SEMUNDO_LINKER, &semundo_linker);
 
-	rpc_register_void(IPC_SEM_WAKEUP, handle_ipcsem_wakeup_process, 0);
+	grpc_register_void(IPC_SEM_WAKEUP, handle_ipcsem_wakeup_process, 0);
 }
 
 

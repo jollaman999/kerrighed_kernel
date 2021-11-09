@@ -763,7 +763,7 @@ out:
 		revert_creds(old_cred);
 
 	if (r)
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 
 	return;
 
@@ -780,20 +780,20 @@ int global_stop(struct app_gdm_object *obj)
 {
 	struct grpc_desc *desc;
 	struct app_stop_msg msg;
-	int err_rpc, r;
+	int err_grpc, r;
 
 	/* prepare message */
 	msg.requester = hcc_node_id;
 	msg.app_id = obj->app_id;
 
-	desc = rpc_begin_m(APP_STOP, &obj->nodes);
-	err_rpc = grpc_pack_type(desc, msg);
-	if (err_rpc)
-		goto err_rpc;
+	desc = grpc_begin_m(APP_STOP, &obj->nodes);
+	err_grpc = grpc_pack_type(desc, msg);
+	if (err_grpc)
+		goto err_grpc;
 
-	err_rpc = pack_creds(desc, current_cred());
-	if (err_rpc)
-		goto err_rpc;
+	err_grpc = pack_creds(desc, current_cred());
+	if (err_grpc)
+		goto err_grpc;
 
 	/* waiting results from the node hosting the application */
 	r = app_wait_returns_from_nodes(desc, obj->nodes);
@@ -811,18 +811,18 @@ int global_stop(struct app_gdm_object *obj)
 		goto error;
 
 	/* informing nodes that everyting is fine */
-	err_rpc = grpc_pack_type(desc, r);
-	if (err_rpc)
-		goto err_rpc;
+	err_grpc = grpc_pack_type(desc, r);
+	if (err_grpc)
+		goto err_grpc;
 
 exit:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 	return r;
 
-err_rpc:
-	r = err_rpc;
+err_grpc:
+	r = err_grpc;
 error:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto exit;
 }
 
@@ -885,7 +885,7 @@ static void handle_app_continue(struct grpc_desc *desc, void *_msg, size_t size)
 	return;
 
 err:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 }
 
 static int global_continue(struct app_gdm_object *obj)
@@ -905,22 +905,22 @@ static int global_continue(struct app_gdm_object *obj)
 	else
 		msg.first_run = 0;
 
-	desc = rpc_begin_m(APP_CONTINUE, &obj->nodes);
+	desc = grpc_begin_m(APP_CONTINUE, &obj->nodes);
 
 	r = grpc_pack_type(desc, msg);
 	if (r)
-		goto err_rpc;
+		goto err_grpc;
 
 	/* waiting results from the node hosting the application */
 	r = app_wait_returns_from_nodes(desc, obj->nodes);
 
 exit:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	return r;
 
-err_rpc:
-	rpc_cancel(desc);
+err_grpc:
+	grpc_cancel(desc);
 	goto exit;
 }
 
@@ -997,7 +997,7 @@ send_res:
 
 	return;
 err:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 }
 
 static int global_kill(struct app_gdm_object *obj, int signal)
@@ -1011,25 +1011,25 @@ static int global_kill(struct app_gdm_object *obj, int signal)
 	msg.app_id = obj->app_id;
 	msg.signal = signal;
 
-	desc = rpc_begin_m(APP_KILL, &obj->nodes);
+	desc = grpc_begin_m(APP_KILL, &obj->nodes);
 
 	r = grpc_pack_type(desc, msg);
 	if (r)
-		goto err_rpc;
+		goto err_grpc;
 	r = pack_creds(desc, current_cred());
 	if (r)
-		goto err_rpc;
+		goto err_grpc;
 
 	/* waiting results from the node hosting the application */
 	r = app_wait_returns_from_nodes(desc, obj->nodes);
 
 exit:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	return r;
 
-err_rpc:
-	rpc_cancel(desc);
+err_grpc:
+	grpc_cancel(desc);
 	goto exit;
 }
 
@@ -1242,13 +1242,13 @@ void application_cr_server_init(void)
 	app_struct_cachep = KMEM_CACHE(app_struct, cache_flags);
 	task_state_cachep = KMEM_CACHE(task_and_state, cache_flags);
 
-	rpc_register_void(APP_STOP, handle_app_stop, 0);
-	rpc_register_void(APP_CONTINUE, handle_app_continue, 0);
-	rpc_register_void(APP_KILL, handle_app_kill, 0);
+	grpc_register_void(APP_STOP, handle_app_stop, 0);
+	grpc_register_void(APP_CONTINUE, handle_app_continue, 0);
+	grpc_register_void(APP_KILL, handle_app_kill, 0);
 
-	application_frontier_rpc_init();
-	application_checkpoint_rpc_init();
-	application_restart_rpc_init();
+	application_frontier_grpc_init();
+	application_checkpoint_grpc_init();
+	application_restart_grpc_init();
 }
 
 void application_cr_server_finalize(void)

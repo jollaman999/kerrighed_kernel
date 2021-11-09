@@ -74,7 +74,7 @@ deffct(tools);
 deffct(ghotplug);
 #endif
 #ifdef CONFIG_HCC_GRPC
-deffct(rpc);
+deffct(grpc);
 #endif
 #ifdef CONFIG_HCC_STREAM
 deffct(stream);
@@ -333,8 +333,8 @@ int init_hcc_communication_system(void)
 	hcc_nb_nodes = 0;
 
 #ifdef CONFIG_HCC_GRPC
-	if (init_rpc())
-		goto err_rpc;
+	if (init_grpc())
+		goto err_grpc;
 #endif
 
 #ifdef CONFIG_HCC_GHOTPLUG
@@ -351,7 +351,7 @@ err_ghotplug:
 	cleanup_ghotplug();
 #endif
 #ifdef CONFIG_HCC_GRPC
-err_rpc:
+err_grpc:
 #endif
 	cleanup_tools();
 err_tools:
@@ -467,7 +467,7 @@ int init_hcc_upper_layers(void)
       err_ghost:
 #endif
 #ifdef CONFIG_HCC_GRPC
-	cleanup_rpc();
+	cleanup_grpc();
 #endif
 	return -1;
 }
@@ -548,10 +548,10 @@ static ssize_t net_devices_store(struct kobject *obj,
 	int err;
 
 	if (sysfs_streq(page, "+ALL") || sysfs_streq(page, "ALL")) {
-		rpc_enable_alldev();
+		grpc_enable_alldev();
 		return count;
 	} else if (sysfs_streq(page, "-ALL")) {
-		rpc_disable_alldev();
+		grpc_disable_alldev();
 		return count;
 	}
 
@@ -562,13 +562,13 @@ static ssize_t net_devices_store(struct kobject *obj,
 
 	switch (name[0]) {
 	case '-':
-		err = rpc_disable_dev(name + 1);
+		err = grpc_disable_dev(name + 1);
 		break;
 	case '+':
 		name++;
 		/* Fallthrough */
 	default:
-		err = rpc_enable_dev(name);
+		err = grpc_enable_dev(name);
 		break;
 	}
 	if (err)
@@ -645,5 +645,5 @@ void __init hcc_init(void){
 
 	printk("HCC... loaded!\n");
 
-	rpc_enable(CLUSTER_START);
+	grpc_enable(CLUSTER_START);
 }

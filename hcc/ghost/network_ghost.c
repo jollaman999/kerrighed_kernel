@@ -24,7 +24,7 @@ int network_ghost_read(struct ghost *ghost, void *buff, size_t length)
 	int retval;
 
 	retval = grpc_unpack(desc, 0, buff, length);
-	if (retval == RPC_EPIPE)
+	if (retval == GRPC_EPIPE)
 		retval = -EPIPE;
 	BUG_ON(retval > 0);
 
@@ -78,7 +78,7 @@ struct ghost_operations ghost_network_ops = {
  *  @author Innogrid HCC
  *
  *  @param  access Ghost access (READ/WRITE)
- *  @param  desc   RPC descriptor to send/receive on.
+ *  @param  desc   GRPC descriptor to send/receive on.
  *
  *  @return        0 if everything ok
  *                 Negative value otherwise.

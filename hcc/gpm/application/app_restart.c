@@ -368,10 +368,10 @@ static void handle_init_restart(struct grpc_desc *desc, void *_msg, size_t size)
 	if (msg->recovery) {
 		r = grpc_unpack_type(desc, n);
 		if (r)
-			goto err_rpc;
+			goto err_grpc;
 		r = grpc_unpack_type(desc, duplicate);
 		if (r)
-			goto err_rpc;
+			goto err_grpc;
 	}
 
 	old_cred = unpack_override_creds(desc);
@@ -387,12 +387,12 @@ static void handle_init_restart(struct grpc_desc *desc, void *_msg, size_t size)
 send_res:
 	r = grpc_pack_type(desc, r);
 	if (r)
-		goto err_rpc;
+		goto err_grpc;
 
 	return;
 
-err_rpc:
-	rpc_cancel(desc);
+err_grpc:
+	grpc_cancel(desc);
 	return;
 }
 
@@ -482,18 +482,18 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 	}
 
 	if (!hccnodes_empty(nodes)) {
-		desc = rpc_begin_m(APP_INIT_RESTART, &nodes);
+		desc = grpc_begin_m(APP_INIT_RESTART, &nodes);
 
 		r = grpc_pack_type(desc, msg);
 		if (r)
-			goto err_rpc;
+			goto err_grpc;
 		r = pack_creds(desc, current_cred());
 		if (r)
-			goto err_rpc;
+			goto err_grpc;
 
 		/* waiting results */
 		r = app_wait_returns_from_nodes(desc, nodes);
-		rpc_end(desc, 0);
+		grpc_end(desc, 0);
 	}
 
 	/* some nodes may be unavailable */
@@ -506,37 +506,37 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 
 		hccnode_set(recovery_node, nodes);
 
-		desc = rpc_begin(APP_INIT_RESTART, recovery_node);
+		desc = grpc_begin(APP_INIT_RESTART, recovery_node);
 		r = grpc_pack_type(desc, msg);
 		if (r)
-			goto err_rpc;
+			goto err_grpc;
 
 		r = grpc_pack_type(desc, node);
 		if (r)
-			goto err_rpc;
+			goto err_grpc;
 
 		r = grpc_pack_type(desc, duplicate);
 		if (r)
-			goto err_rpc;
+			goto err_grpc;
 
 		r = pack_creds(desc, current_cred());
 		if (r)
-			goto err_rpc;
+			goto err_grpc;
 
 		r = grpc_unpack_type_from(desc, recovery_node, r);
 		if (r)
-			goto err_rpc;
+			goto err_grpc;
 
-		rpc_end(desc, 0);
+		grpc_end(desc, 0);
 	}
 
 	hccnodes_copy(obj->nodes, nodes);
 exit:
 	return r;
 
-err_rpc:
-	rpc_cancel(desc);
-	rpc_end(desc, 0);
+err_grpc:
+	grpc_cancel(desc);
+	grpc_end(desc, 0);
 	goto exit;
 }
 
@@ -1180,7 +1180,7 @@ err_end_pid:
 		local_abort_restart(app, fake);
 		app = NULL;
 		r = grpc_pack_type(desc, r);
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 	}
 
 	if (fake)
@@ -1209,7 +1209,7 @@ static int global_do_restart(struct app_gdm_object *obj,
 	msg.app_id = obj->app_id;
 	msg.requester_task = *requester;
 
-	desc = rpc_begin_m(APP_DO_RESTART, &obj->nodes);
+	desc = grpc_begin_m(APP_DO_RESTART, &obj->nodes);
 	if (!desc)
 		return -ENOMEM;
 
@@ -1325,16 +1325,16 @@ exit_free_pid:
 	free_pids_list(&orphan_pids);
 
 exit:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	return r;
 
 error:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto exit_free_pid;
 
 err_no_pids:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto exit;
 }
 
@@ -1380,8 +1380,8 @@ exit_app_busy:
 	return r;
 }
 
-void application_restart_rpc_init(void)
+void application_restart_grpc_init(void)
 {
-	rpc_register_void(APP_INIT_RESTART, handle_init_restart, 0);
-	rpc_register_void(APP_DO_RESTART, handle_do_restart, 0);
+	grpc_register_void(APP_INIT_RESTART, handle_init_restart, 0);
+	grpc_register_void(APP_DO_RESTART, handle_do_restart, 0);
 }

@@ -49,7 +49,7 @@ struct grpc_desc *hcc_remote_syscall_begin(int req, pid_t pid,
 		goto err;
 
 	err = -ENOMEM;
-	desc = rpc_begin(req, node);
+	desc = grpc_begin(req, node);
 	if (!desc)
 		goto err_unlock;
 
@@ -70,8 +70,8 @@ struct grpc_desc *hcc_remote_syscall_begin(int req, pid_t pid,
 	return desc;
 
 err_cancel:
-	rpc_cancel(desc);
-	rpc_end(desc, 0);
+	grpc_cancel(desc);
+	grpc_end(desc, 0);
 err_unlock:
 	hcc_unlock_pid_location(pid);
 err:
@@ -80,7 +80,7 @@ err:
 
 void hcc_remote_syscall_end(struct grpc_desc *desc, pid_t pid)
 {
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 	hcc_unlock_pid_location(pid);
 }
 
@@ -134,7 +134,7 @@ struct pid *hcc_handle_remote_syscall_begin(struct grpc_desc *desc,
 err_cancel:
 	if (err > 0)
 		err = -EPIPE;
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	return ERR_PTR(err);
 }
 

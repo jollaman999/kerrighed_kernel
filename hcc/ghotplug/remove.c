@@ -23,7 +23,7 @@
 #include <tools/workqueue.h>
 #include <tools/hcc_syscalls.h>
 #include <tools/hcc_services.h>
-#include <rpc/grpc.h>
+#include <grpc/grpc.h>
 
 #include "ghotplug_internal.h"
 
@@ -41,7 +41,7 @@ void do_local_node_remove(struct ghotplug_node_set *node_set)
 	ghotplug_remove_notify(node_set, GHOTPLUG_NOTIFY_REMOVE_DISTANT);
 
 	printk("...confirm\n");
-	rpc_sync_m(NODE_REMOVE_CONFIRM, &hccnode_online_map, node_set, sizeof(*node_set));
+	grpc_sync_m(NODE_REMOVE_CONFIRM, &hccnode_online_map, node_set, sizeof(*node_set));
 
 	CLEAR_HCC_NODE_FLAGS(HCCFLAGS_RUNNING);
 
@@ -67,7 +67,7 @@ void do_other_node_remove(struct ghotplug_node_set *node_set)
 {
 	printk("do_other_node_remove\n");
 	ghotplug_remove_notify(node_set, GHOTPLUG_NOTIFY_REMOVE_ADVERT);
-	rpc_async_m(NODE_REMOVE_ACK, &node_set->v, NULL, 0);				
+	grpc_async_m(NODE_REMOVE_ACK, &node_set->v, NULL, 0);				
 }
 
 static void handle_node_remove(struct grpc_desc *desc, void *data, size_t size)
@@ -107,7 +107,7 @@ inline void __fwd_remove_cb(struct ghotplug_node_set *node_set)
 	printk("__fwd_remove_cb: begin (%d / %d)\n", node_set->subclusterid, hcc_subsession_id);
 	if (node_set->subclusterid == hcc_subsession_id) {
 
-		rpc_async_m(NODE_REMOVE, &hccnode_online_map, node_set, sizeof(*node_set));
+		grpc_async_m(NODE_REMOVE, &hccnode_online_map, node_set, sizeof(*node_set));
 		
 	} else {
 		hcc_node_t node;
@@ -127,7 +127,7 @@ inline void __fwd_remove_cb(struct ghotplug_node_set *node_set)
 		}
 
 		printk("send a NODE_FWD_REMOVE to %d\n", node);
-		rpc_async(NODE_FWD_REMOVE, node, node_set, sizeof(*node_set));
+		grpc_async(NODE_FWD_REMOVE, node, node_set, sizeof(*node_set));
 	}
 }
 
@@ -198,7 +198,7 @@ static int nodes_poweroff(void __user *arg)
 	if (err)
 		return err;
 
-	rpc_async_m(NODE_POWEROFF, &node_set.v,
+	grpc_async_m(NODE_POWEROFF, &node_set.v,
 		    &unused, sizeof(unused));
 	
 	return 0;
@@ -207,11 +207,11 @@ static int nodes_poweroff(void __user *arg)
 
 int ghotplug_remove_init(void)
 {
-	rpc_register(NODE_POWEROFF, handle_node_poweroff, 0);
-	rpc_register_void(NODE_REMOVE, handle_node_remove, 0);
-	rpc_register_void(NODE_REMOVE_ACK, handle_node_remove_ack, 0);
-	rpc_register_void(NODE_FWD_REMOVE, handle_node_fwd_remove, 0);
-	rpc_register_int(NODE_REMOVE_CONFIRM, handle_node_remove_confirm, 0);
+	grpc_register(NODE_POWEROFF, handle_node_poweroff, 0);
+	grpc_register_void(NODE_REMOVE, handle_node_remove, 0);
+	grpc_register_void(NODE_REMOVE_ACK, handle_node_remove_ack, 0);
+	grpc_register_void(NODE_FWD_REMOVE, handle_node_fwd_remove, 0);
+	grpc_register_int(NODE_REMOVE_CONFIRM, handle_node_remove_confirm, 0);
 	
 	register_proc_service(KSYS_GHOTPLUG_REMOVE, nodes_remove);
 	register_proc_service(KSYS_GHOTPLUG_POWEROFF, nodes_poweroff);

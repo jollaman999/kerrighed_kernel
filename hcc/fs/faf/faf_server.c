@@ -190,7 +190,7 @@ void handle_faf_read(struct grpc_desc* desc, void *msgIn, size_t size)
 
 	err = remote_sleep_prepare(desc);
 	if (err) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 
@@ -255,7 +255,7 @@ out:
 	return;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
@@ -278,7 +278,7 @@ void handle_faf_write(struct grpc_desc* desc, void *msgIn, size_t size)
 
 	r = remote_sleep_prepare(desc);
 	if (r) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 
@@ -339,7 +339,7 @@ out:
 	return;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
@@ -387,7 +387,7 @@ out_free:
 	return;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out_free;
 }
 
@@ -433,7 +433,7 @@ out_free:
 	return;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out_free;
 }
 
@@ -454,7 +454,7 @@ void handle_faf_ioctl(struct grpc_desc *desc,
 
 	err = unpack_context(desc, &prev_root, &old_cred);
 	if (err) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 
@@ -485,7 +485,7 @@ out:
 	return;
 
 out_err:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
@@ -543,7 +543,7 @@ void handle_faf_fcntl (struct grpc_desc* desc,
 
 	return;
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 }
 
 #if BITS_PER_LONG == 32
@@ -593,7 +593,7 @@ void handle_faf_fcntl64 (struct grpc_desc* desc,
 
 	return;
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 }
 #endif
 
@@ -628,19 +628,19 @@ static void handle_faf_fstatfs(struct grpc_desc* desc,
 	struct statfs statbuf;
 	struct faf_statfs_msg *msg = msgIn;
 	long r;
-	int err_rpc;
+	int err_grpc;
 
 	r = sys_fstatfs(msg->server_fd, &statbuf);
 
-	err_rpc = grpc_pack_type(desc, r);
-	if (err_rpc)
-		goto err_rpc;
+	err_grpc = grpc_pack_type(desc, r);
+	if (err_grpc)
+		goto err_grpc;
 
 	if (!r)
-		err_rpc = grpc_pack_type(desc, statbuf);
-err_rpc:
-	if (err_rpc)
-		rpc_cancel(desc);
+		err_grpc = grpc_pack_type(desc, statbuf);
+err_grpc:
+	if (err_grpc)
+		grpc_cancel(desc);
 }
 
 /** Handler for seeking in a FAF open file.
@@ -732,7 +732,7 @@ void handle_faf_flock(struct grpc_desc *desc,
 	return;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 }
 
 /*
@@ -743,7 +743,7 @@ static void faf_poll_notify_node(hcc_node_t node, unsigned long dvfs_id)
 {
 	int err;
 
-	err = rpc_async(RPC_FAF_POLL_NOTIFY, node, &dvfs_id, sizeof(dvfs_id));
+	err = grpc_async(GRPC_FAF_POLL_NOTIFY, node, &dvfs_id, sizeof(dvfs_id));
 	if (err)
 		printk(KERN_WARNING "faf_poll_notify_node: "
 		       "failed to notify node %d for %lu\n",
@@ -1067,7 +1067,7 @@ void handle_faf_poll_wait(struct grpc_desc *desc, void *_msg, size_t size)
 err:
 	if (msg->wait && !res)
 		faf_polled_fd_remove(desc->client, msg->server_fd, msg->objid);
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 }
 
 static
@@ -1090,8 +1090,8 @@ static void faf_poll_init(void)
 	for (i = 0; i < FAF_POLLED_FD_HASH_SIZE; i++)
 		INIT_HLIST_HEAD(&faf_polled_fd_hash[i]);
 
-	rpc_register_void(RPC_FAF_POLL_WAIT, handle_faf_poll_wait, 0);
-	rpc_register_void(RPC_FAF_POLL_DEQUEUE, handle_faf_poll_dequeue, 0);
+	grpc_register_void(GRPC_FAF_POLL_WAIT, handle_faf_poll_wait, 0);
+	grpc_register_void(GRPC_FAF_POLL_DEQUEUE, handle_faf_poll_dequeue, 0);
 }
 
 
@@ -1116,13 +1116,13 @@ void handle_faf_d_path (struct grpc_desc* desc,
 
 	old_cred = unpack_override_creds(desc);
 	if (IS_ERR(old_cred)) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 	err = unpack_root(desc, &prev_root);
 	if (err) {
 		revert_creds(old_cred);
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 
@@ -1163,7 +1163,7 @@ out:
 	return;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
@@ -1179,7 +1179,7 @@ int handle_faf_bind (struct grpc_desc* desc,
 
 	r = unpack_context(desc, &prev_root, &old_cred);
 	if (r) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return r;
 	}
 
@@ -1200,7 +1200,7 @@ void handle_faf_connect(struct grpc_desc *desc,
 
 	r = unpack_context(desc, &prev_root, &old_cred);
 	if (r) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 
@@ -1223,7 +1223,7 @@ out:
 	return;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
@@ -1295,7 +1295,7 @@ out:
 	return;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 
 err_close_faf_file:
@@ -1371,7 +1371,7 @@ void handle_faf_setsockopt (struct grpc_desc *desc,
 
 	err = unpack_context(desc, &prev_root, &old_cred);
 	if (err) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 
@@ -1393,7 +1393,7 @@ exit:
 	return;
 
 out_err:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -ENOMEM;
 	r = err;
@@ -1410,7 +1410,7 @@ void handle_faf_getsockopt (struct grpc_desc *desc,
 
 	err = unpack_context(desc, &prev_root, &old_cred);
 	if (err) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 
@@ -1431,7 +1431,7 @@ exit:
 	return;
 
 out_err:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -ENOMEM;
 	r = err;
@@ -1448,7 +1448,7 @@ void handle_faf_sendmsg(struct grpc_desc *desc,
 
 	err = recv_msghdr(desc, &msghdr, msg->total_len, 0);
 	if (err) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 
@@ -1470,7 +1470,7 @@ out_free:
 	return;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out_free;
 }
 
@@ -1484,7 +1484,7 @@ void handle_faf_recvmsg(struct grpc_desc *desc,
 
 	err = recv_msghdr(desc, &msghdr, msg->total_len, MSG_HDR_ONLY);
 	if (err) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 
@@ -1513,7 +1513,7 @@ out_free:
 	return;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out_free;
 }
 
@@ -1544,38 +1544,38 @@ int handle_faf_notify_close (struct grpc_desc* desc,
 /* FAF handler Initialisation */
 void faf_server_init (void)
 {
-	rpc_register_void(RPC_FAF_READ, handle_faf_read, 0);
-	rpc_register_void(RPC_FAF_WRITE, handle_faf_write, 0);
-	rpc_register_void(RPC_FAF_READV, handle_faf_readv, 0);
-	rpc_register_void(RPC_FAF_WRITEV, handle_faf_writev, 0);
+	grpc_register_void(GRPC_FAF_READ, handle_faf_read, 0);
+	grpc_register_void(GRPC_FAF_WRITE, handle_faf_write, 0);
+	grpc_register_void(GRPC_FAF_READV, handle_faf_readv, 0);
+	grpc_register_void(GRPC_FAF_WRITEV, handle_faf_writev, 0);
 	faf_poll_init();
-	rpc_register_void(RPC_FAF_IOCTL, handle_faf_ioctl, 0);
-	rpc_register_void(RPC_FAF_FCNTL, handle_faf_fcntl, 0);
+	grpc_register_void(GRPC_FAF_IOCTL, handle_faf_ioctl, 0);
+	grpc_register_void(GRPC_FAF_FCNTL, handle_faf_fcntl, 0);
 
 #if BITS_PER_LONG == 32
-	rpc_register_void(RPC_FAF_FCNTL64, handle_faf_fcntl64, 0);
+	grpc_register_void(GRPC_FAF_FCNTL64, handle_faf_fcntl64, 0);
 #endif
 
-	rpc_register_void(RPC_FAF_FSTAT, handle_faf_fstat, 0);
-	rpc_register_void(RPC_FAF_FSTATFS, handle_faf_fstatfs, 0);
-	rpc_register_int(RPC_FAF_FSYNC, handle_faf_fsync, 0);
-	rpc_register_void(RPC_FAF_FLOCK, handle_faf_flock, 0);
-	rpc_register_void(RPC_FAF_LSEEK, handle_faf_lseek, 0);
-	rpc_register_void(RPC_FAF_LLSEEK, handle_faf_llseek, 0);
-	rpc_register_void(RPC_FAF_D_PATH, handle_faf_d_path, 0);
+	grpc_register_void(GRPC_FAF_FSTAT, handle_faf_fstat, 0);
+	grpc_register_void(GRPC_FAF_FSTATFS, handle_faf_fstatfs, 0);
+	grpc_register_int(GRPC_FAF_FSYNC, handle_faf_fsync, 0);
+	grpc_register_void(GRPC_FAF_FLOCK, handle_faf_flock, 0);
+	grpc_register_void(GRPC_FAF_LSEEK, handle_faf_lseek, 0);
+	grpc_register_void(GRPC_FAF_LLSEEK, handle_faf_llseek, 0);
+	grpc_register_void(GRPC_FAF_D_PATH, handle_faf_d_path, 0);
 
-	rpc_register_int(RPC_FAF_BIND, handle_faf_bind, 0);
-	rpc_register_void(RPC_FAF_CONNECT, handle_faf_connect, 0);
-	rpc_register_int(RPC_FAF_LISTEN, handle_faf_listen, 0);
-	rpc_register_void(RPC_FAF_ACCEPT, handle_faf_accept, 0);
-	rpc_register_int(RPC_FAF_GETSOCKNAME, handle_faf_getsockname, 0);
-	rpc_register_int(RPC_FAF_GETPEERNAME, handle_faf_getpeername, 0);
-	rpc_register_int(RPC_FAF_SHUTDOWN, handle_faf_shutdown, 0);
-	rpc_register_void(RPC_FAF_SETSOCKOPT, handle_faf_setsockopt, 0);
-	rpc_register_void(RPC_FAF_GETSOCKOPT, handle_faf_getsockopt, 0);
-	rpc_register_void(RPC_FAF_SENDMSG, handle_faf_sendmsg, 0);
-	rpc_register_void(RPC_FAF_RECVMSG, handle_faf_recvmsg, 0);
-	rpc_register_int(RPC_FAF_NOTIFY_CLOSE, handle_faf_notify_close, 0);
+	grpc_register_int(GRPC_FAF_BIND, handle_faf_bind, 0);
+	grpc_register_void(GRPC_FAF_CONNECT, handle_faf_connect, 0);
+	grpc_register_int(GRPC_FAF_LISTEN, handle_faf_listen, 0);
+	grpc_register_void(GRPC_FAF_ACCEPT, handle_faf_accept, 0);
+	grpc_register_int(GRPC_FAF_GETSOCKNAME, handle_faf_getsockname, 0);
+	grpc_register_int(GRPC_FAF_GETPEERNAME, handle_faf_getpeername, 0);
+	grpc_register_int(GRPC_FAF_SHUTDOWN, handle_faf_shutdown, 0);
+	grpc_register_void(GRPC_FAF_SETSOCKOPT, handle_faf_setsockopt, 0);
+	grpc_register_void(GRPC_FAF_GETSOCKOPT, handle_faf_getsockopt, 0);
+	grpc_register_void(GRPC_FAF_SENDMSG, handle_faf_sendmsg, 0);
+	grpc_register_void(GRPC_FAF_RECVMSG, handle_faf_recvmsg, 0);
+	grpc_register_int(GRPC_FAF_NOTIFY_CLOSE, handle_faf_notify_close, 0);
 }
 
 /* FAF server Finalization */

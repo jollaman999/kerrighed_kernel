@@ -773,7 +773,7 @@ bool hcc_wait_consider_task(struct remote_child *child,
 	 */
 	if (child->exit_state == EXIT_ZOMBIE
 	    && !hcc_delay_group_leader(child)) {
-		/* Avoid doing an RPC when we already know the result */
+		/* Avoid doing an GRPC when we already know the result */
 		if (!likely(wo->wo_flags & WEXITED))
 			return false;
 

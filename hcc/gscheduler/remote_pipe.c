@@ -89,7 +89,7 @@ err_free_value_p:
 err_put_item:
 	config_item_put(item);
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 }
 
 static void pipe_get_remote_value_worker(struct work_struct *work)
@@ -114,7 +114,7 @@ static void pipe_get_remote_value_worker(struct work_struct *work)
 		goto err_cancel;
 
 end_request:
-	err = rpc_end(show_desc->desc, 0);
+	err = grpc_end(show_desc->desc, 0);
 
 	spin_lock(&show_desc->lock);
 	show_desc->pending = 0;
@@ -123,8 +123,8 @@ end_request:
 	return;
 
 err_cancel:
-	rpc_cancel(show_desc->desc);
-	if (err == RPC_EPIPE)
+	grpc_cancel(show_desc->desc);
+	if (err == GRPC_EPIPE)
 		err = -EPIPE;
 	BUG_ON(err >= 0);
 	show_desc->ret = err;
@@ -149,7 +149,7 @@ static int start_pipe_get_remote_value(
 		return gscheduler_source_get_value(local_pipe->source,
 						  value_p, nr,
 						  in_value_p, in_nr);
-	desc = rpc_begin(SCHED_PIPE_GET_REMOTE_VALUE, node);
+	desc = grpc_begin(SCHED_PIPE_GET_REMOTE_VALUE, node);
 	if (!desc)
 		return -ENOMEM;
 	err = global_config_pack_item(desc, &local_pipe->config.cg_item);
@@ -175,8 +175,8 @@ static int start_pipe_get_remote_value(
 	return -EAGAIN;
 
 err_cancel:
-	rpc_cancel(desc);
-	rpc_end(desc, 0);
+	grpc_cancel(desc);
+	grpc_end(desc, 0);
 	BUG_ON(err == -EAGAIN);
 	return err;
 }
@@ -252,7 +252,7 @@ void gscheduler_sink_remote_pipe_disconnect(struct gscheduler_sink *sink)
 
 int remote_pipe_start(void)
 {
-	return rpc_register(SCHED_PIPE_GET_REMOTE_VALUE,
+	return grpc_register(SCHED_PIPE_GET_REMOTE_VALUE,
 			    handle_pipe_get_remote_value, 0);
 }
 

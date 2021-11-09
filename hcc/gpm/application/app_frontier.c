@@ -133,7 +133,7 @@ long get_appid_from_pid(pid_t pid)
 	msg.requester = hcc_node_id;
 	msg.pid = pid;
 
-	desc = rpc_begin(APP_REMOTE_CHKPT, n);
+	desc = grpc_begin(APP_REMOTE_CHKPT, n);
 	if (!desc)
 		goto out_unlock;
 	err = grpc_pack_type(desc, msg);
@@ -147,7 +147,7 @@ long get_appid_from_pid(pid_t pid)
 	if (err)
 		goto err;
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out_unlock:
 	hcc_unlock_pid_location(pid);
@@ -156,7 +156,7 @@ out_unlock:
 	return app_id;
 
 err:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out_end;
 }
 
@@ -182,10 +182,10 @@ void handle_get_appid_from_pid(struct grpc_desc *desc, void *_msg, size_t size)
 
 out:
 	if (err)
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 }
 
-void application_frontier_rpc_init(void)
+void application_frontier_grpc_init(void)
 {
-	rpc_register_void(APP_REMOTE_CHKPT, handle_get_appid_from_pid, 0);
+	grpc_register_void(APP_REMOTE_CHKPT, handle_get_appid_from_pid, 0);
 }

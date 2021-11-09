@@ -103,7 +103,7 @@ static void handle_do_notify_parent(struct grpc_desc *desc,
 
 	err = grpc_pack_type(desc, ret);
 	if (err)
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 }
 
 /*
@@ -126,7 +126,7 @@ int hcc_do_notify_parent(struct task_struct *task, struct siginfo *info)
 	req.ptrace = task->ptrace;
 	req.info = *info;
 
-	desc = rpc_begin(PROC_DO_NOTIFY_PARENT, parent_node);
+	desc = grpc_begin(PROC_DO_NOTIFY_PARENT, parent_node);
 	if (!desc)
 		goto err;
 	err = grpc_pack_type(desc, req);
@@ -135,7 +135,7 @@ int hcc_do_notify_parent(struct task_struct *task, struct siginfo *info)
 	err = grpc_unpack_type(desc, ret);
 	if (err)
 		goto err_cancel;
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	if (!err)
@@ -143,8 +143,8 @@ out:
 	return 0;
 
 err_cancel:
-	rpc_cancel(desc);
-	rpc_end(desc, 0);
+	grpc_cancel(desc);
+	grpc_end(desc, 0);
 err:
 	printk(KERN_ERR "error: child %d cannot notify remote parent %d\n",
 	       task_pid_knr(task), req.parent_pid);
@@ -366,7 +366,7 @@ out_send_res:
 	return;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 }
 
 int hcc_wait_task_zombie(struct wait_opts *wo,
@@ -387,7 +387,7 @@ int hcc_wait_task_zombie(struct wait_opts *wo,
 	 */
 	BUG_ON(!hccnode_online(child->node));
 
-	desc = rpc_begin(PROC_WAIT_TASK_ZOMBIE, child->node);
+	desc = grpc_begin(PROC_WAIT_TASK_ZOMBIE, child->node);
 	if (!desc)
 		return -ENOMEM;
 
@@ -460,12 +460,12 @@ int hcc_wait_task_zombie(struct wait_opts *wo,
 			retval = child->pid;
 	}
 out:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	return retval;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -EPIPE;
 	retval = err;
@@ -715,7 +715,7 @@ void notify_remote_child_reaper(pid_t zombie_pid,
 	BUG_ON(zombie_location == HCC_NODE_ID_NONE);
 	BUG_ON(zombie_location == hcc_node_id);
 
-	rpc_async(PROC_NOTIFY_REMOTE_CHILD_REAPER, zombie_location,
+	grpc_async(PROC_NOTIFY_REMOTE_CHILD_REAPER, zombie_location,
 		  &msg, sizeof(msg));
 }
 
@@ -727,10 +727,10 @@ void notify_remote_child_reaper(pid_t zombie_pid,
 void proc_hcc_exit_start(void)
 {
 #ifdef CONFIG_HCC_GPM
-	rpc_register_void(PROC_DO_NOTIFY_PARENT, handle_do_notify_parent, 0);
-	rpc_register_void(PROC_NOTIFY_REMOTE_CHILD_REAPER,
+	grpc_register_void(PROC_DO_NOTIFY_PARENT, handle_do_notify_parent, 0);
+	grpc_register_void(PROC_NOTIFY_REMOTE_CHILD_REAPER,
 			  handle_notify_remote_child_reaper, 0);
-	rpc_register_void(PROC_WAIT_TASK_ZOMBIE, handle_wait_task_zombie, 0);
+	grpc_register_void(PROC_WAIT_TASK_ZOMBIE, handle_wait_task_zombie, 0);
 #endif
 }
 

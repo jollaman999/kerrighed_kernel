@@ -549,7 +549,7 @@ int reserve_pid(pid_t pid)
 		BUG_ON(host_node == HCC_NODE_ID_NONE);
 	}
 
-	r = rpc_sync(PROC_RESERVE_PID, host_node, &msg, sizeof(msg));
+	r = grpc_sync(PROC_RESERVE_PID, host_node, &msg, sizeof(msg));
 
 	pidmap_map_read_unlock();
 
@@ -597,7 +597,7 @@ int end_pid_reservation(pid_t pid)
 	host_node = pidmap_node(ORIG_NODE(pid));
 	BUG_ON(host_node == HCC_NODE_ID_NONE);
 
-	r = rpc_sync(PROC_END_PID_RESERVATION, host_node, &msg, sizeof(msg));
+	r = grpc_sync(PROC_END_PID_RESERVATION, host_node, &msg, sizeof(msg));
 
 	pidmap_map_read_unlock();
 
@@ -702,7 +702,7 @@ int hcc_pid_link_task(pid_t pid)
 	host_node = pidmap_node(ORIG_NODE(pid));
 	BUG_ON(host_node == HCC_NODE_ID_NONE);
 
-	r = rpc_sync(PROC_PID_LINK_TASK, host_node, &msg, sizeof(msg));
+	r = grpc_sync(PROC_PID_LINK_TASK, host_node, &msg, sizeof(msg));
 
 	pidmap_map_read_unlock();
 
@@ -775,9 +775,9 @@ void gpm_pid_start(void)
 	if (IS_ERR(pid_gdm_set))
 		OOM;
 
-	rpc_register_int(PROC_RESERVE_PID, handle_reserve_pid, 0);
-	rpc_register_int(PROC_PID_LINK_TASK, handle_pid_link_task, 0);
-	rpc_register_int(PROC_END_PID_RESERVATION,
+	grpc_register_int(PROC_RESERVE_PID, handle_reserve_pid, 0);
+	grpc_register_int(PROC_PID_LINK_TASK, handle_pid_link_task, 0);
+	grpc_register_int(PROC_END_PID_RESERVATION,
 			 handle_end_pid_reservation, 0);
 }
 

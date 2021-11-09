@@ -357,7 +357,7 @@ static void handle_pidmap_steal(struct grpc_desc *desc, void *_msg, size_t size)
 	struct pid_namespace *pidmap_ns = foreign_pidmap[node];
 
 	if (send_pidmap(desc, pidmap_ns)) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 
@@ -396,7 +396,7 @@ int pidmap_map_add(struct ghotplug_context *ctx)
 	BUG_ON(host_node == hcc_node_id);
 
 	err = -ENOMEM;
-	desc = rpc_begin(GPM_PIDMAP_STEAL, host_node);
+	desc = grpc_begin(GPM_PIDMAP_STEAL, host_node);
 	if (!desc)
 		goto unlock;
 
@@ -411,7 +411,7 @@ int pidmap_map_add(struct ghotplug_context *ctx)
 	pidmap_map.host[hcc_node_id] = hcc_node_id;
 
 end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 unlock:
 	pidmap_map_write_unlock();
@@ -419,7 +419,7 @@ unlock:
 	return err;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -EPIPE;
 	goto end;
@@ -436,7 +436,7 @@ void gpm_pidmap_start(void)
 	if (IS_ERR(pidmap_map_gdm_set))
 		OOM;
 
-	rpc_register_void(GPM_PIDMAP_STEAL, handle_pidmap_steal, 0);
+	grpc_register_void(GPM_PIDMAP_STEAL, handle_pidmap_steal, 0);
 }
 
 void gpm_pidmap_exit(void)

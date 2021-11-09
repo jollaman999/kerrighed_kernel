@@ -39,7 +39,7 @@ int unpack_remote_sleep_res_prepare(struct grpc_desc *desc)
  *  Unpack the result value of a remote, sleepable, interruptible operation
  *  @author Innogrid HCC
  *
- *  @param desc		The RPC descriptor to get the result from.
+ *  @param desc		The GRPC descriptor to get the result from.
  *  @param res		Pointer to store the result.
  *  @param size		Size of the result.
  *
@@ -49,15 +49,15 @@ int unpack_remote_sleep_res(struct grpc_desc *desc, void *res, size_t size)
 {
 	int err, flags;
 
-	flags = RPC_FLAGS_INTR;
+	flags = GRPC_FLAGS_INTR;
 	for (;;) {
 		err = grpc_unpack(desc, flags, res, size);
 		switch (err) {
-			case RPC_EOK:
+			case GRPC_EOK:
 				return 0;
-			case RPC_EINTR:
-				BUG_ON(flags != RPC_FLAGS_INTR);
-				rpc_signal(desc, SIGINT);
+			case GRPC_EINTR:
+				BUG_ON(flags != GRPC_FLAGS_INTR);
+				grpc_signal(desc, SIGINT);
 				/*
 				 * We do not need to explicitly receive SIGACK,
 				 * since the server will return the result
@@ -65,7 +65,7 @@ int unpack_remote_sleep_res(struct grpc_desc *desc, void *res, size_t size)
 				 */
 				flags = 0;
 				break;
-			case RPC_EPIPE:
+			case GRPC_EPIPE:
 				return -EPIPE;
 			default:
 				BUG();

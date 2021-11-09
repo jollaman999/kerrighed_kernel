@@ -85,7 +85,7 @@ int hcc_do_fork(unsigned long clone_flags,
 		goto out_action_stop;
 
 	retval = -ENOMEM;
-	desc = rpc_begin(RPC_GPM_REMOTE_CLONE, distant_node);
+	desc = grpc_begin(GRPC_GPM_REMOTE_CLONE, distant_node);
 	if (!desc)
 		goto out_action_stop;
 
@@ -108,12 +108,12 @@ int hcc_do_fork(unsigned long clone_flags,
 	remote_pid = send_task(desc, task, regs, &remote_clone);
 
 	if (remote_pid < 0)
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 	else {
 		task->gpm_type = GPM_REMOTE_CLONE;
 		task->gpm_target = distant_node;
 	}
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	if (remote_pid > 0 && (clone_flags & CLONE_VFORK))
 		wait_for_vfork_done(task, &vfork);
@@ -132,7 +132,7 @@ static void handle_remote_clone(struct grpc_desc *desc, void *msg, size_t size)
 
 	task = recv_task(desc, action);
 	if (!task) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 
@@ -283,7 +283,7 @@ void hcc_vfork_done(struct completion *vfork_done)
 {
 	struct vfork_done_proxy *proxy = (struct vfork_done_proxy *)vfork_done;
 
-	rpc_async(PROC_VFORK_DONE, proxy->waiter_node,
+	grpc_async(PROC_VFORK_DONE, proxy->waiter_node,
 		  &proxy->waiter_vfork_done, sizeof(proxy->waiter_vfork_done));
 	vfork_done_proxy_free(proxy);
 }
@@ -297,9 +297,9 @@ int gpm_remote_clone_start(void)
 {
 	vfork_done_proxy_cachep = KMEM_CACHE(vfork_done_proxy, SLAB_PANIC);
 
-	if (rpc_register_void(RPC_GPM_REMOTE_CLONE, handle_remote_clone, 0))
+	if (grpc_register_void(GRPC_GPM_REMOTE_CLONE, handle_remote_clone, 0))
 		BUG();
-	if (rpc_register_void(PROC_VFORK_DONE, handle_vfork_done, 0))
+	if (grpc_register_void(PROC_VFORK_DONE, handle_vfork_done, 0))
 		BUG();
 
 	return 0;

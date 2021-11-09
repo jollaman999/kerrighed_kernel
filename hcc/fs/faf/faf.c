@@ -182,7 +182,7 @@ void check_last_faf_client_close(struct file *file,
 		msg.server_fd = data->server_fd;
 		msg.objid = file->f_objid;
 
-		rpc_async(RPC_FAF_NOTIFY_CLOSE, data->server_id,
+		grpc_async(GRPC_FAF_NOTIFY_CLOSE, data->server_id,
 			  &msg, sizeof(msg));
 	}
 

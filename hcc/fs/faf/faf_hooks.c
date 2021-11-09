@@ -147,13 +147,13 @@ off_t hcc_faf_lseek (struct file * file,
 	msg.offset = offset;
 	msg.origin = origin;
 
-	desc = rpc_begin(RPC_FAF_LSEEK, data->server_id);
+	desc = grpc_begin(GRPC_FAF_LSEEK, data->server_id);
 
 	grpc_pack_type(desc, msg);
 
 	grpc_unpack_type(desc, r);
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	return r;
 }
@@ -183,14 +183,14 @@ long hcc_faf_llseek (struct file *file,
 	msg.offset_low = offset_low;
 	msg.origin = origin;
 
-	desc = rpc_begin(RPC_FAF_LLSEEK, data->server_id);
+	desc = grpc_begin(GRPC_FAF_LLSEEK, data->server_id);
 
 	grpc_pack_type(desc, msg);
 
 	grpc_unpack_type(desc, r);
 	grpc_unpack(desc, 0, result, sizeof(*result));
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	return r;
 }
@@ -223,7 +223,7 @@ ssize_t hcc_faf_read(struct file * file, char *buf, size_t count, loff_t *pos)
 	msg.pos = *pos;
 
 	nr = -ENOMEM;
-	desc = rpc_begin(RPC_FAF_READ, data->server_id);
+	desc = grpc_begin(GRPC_FAF_READ, data->server_id);
 	if (!desc)
 		goto out;
 
@@ -268,7 +268,7 @@ ssize_t hcc_faf_read(struct file * file, char *buf, size_t count, loff_t *pos)
 	*pos = fpos;
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	kfree(kbuff);
@@ -276,7 +276,7 @@ out:
 	return nr;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -EPIPE;
 	nr = err;
@@ -313,7 +313,7 @@ ssize_t hcc_faf_write(struct file * file, const char *buf,
 	msg.pos = *pos;
 
 	nr = -ENOMEM;
-	desc = rpc_begin(RPC_FAF_WRITE, data->server_id);
+	desc = grpc_begin(GRPC_FAF_WRITE, data->server_id);
 	if (!desc)
 		goto out;
 
@@ -362,7 +362,7 @@ ssize_t hcc_faf_write(struct file * file, const char *buf,
 	*pos = fpos;
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	kfree(kbuff);
@@ -370,7 +370,7 @@ out:
 	return nr;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -EPIPE;
 	nr = err;
@@ -398,7 +398,7 @@ ssize_t hcc_faf_readv(struct file *file, const struct iovec __user *vec,
 	total_len = ret.ret;
 
 	ret.ret = -ENOMEM;
-	desc = rpc_begin(RPC_FAF_READV, data->server_id);
+	desc = grpc_begin(GRPC_FAF_READV, data->server_id);
 	if (!desc)
 		goto out;
 
@@ -425,7 +425,7 @@ ssize_t hcc_faf_readv(struct file *file, const struct iovec __user *vec,
 		goto cancel;
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	if (iov != iovstack)
@@ -434,7 +434,7 @@ out:
 	return ret.ret;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -EPIPE;
 	ret.ret = err;
@@ -462,7 +462,7 @@ ssize_t hcc_faf_writev(struct file *file, const struct iovec __user *vec,
 	total_len = ret.ret;
 
 	ret.ret = -ENOMEM;
-	desc = rpc_begin(RPC_FAF_WRITEV, data->server_id);
+	desc = grpc_begin(GRPC_FAF_WRITEV, data->server_id);
 	if (!desc)
 		goto out;
 
@@ -489,7 +489,7 @@ ssize_t hcc_faf_writev(struct file *file, const struct iovec __user *vec,
 		send_sig(SIGPIPE, current, 0);
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	if (iov != iovstack)
@@ -498,7 +498,7 @@ out:
 	return ret.ret;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -EPIPE;
 	ret.ret = err;
@@ -527,7 +527,7 @@ long hcc_faf_ioctl (struct file *file,
 	msg.arg = arg;
 
 	err = -ENOMEM;
-	desc = rpc_begin(RPC_FAF_IOCTL, data->server_id);
+	desc = grpc_begin(GRPC_FAF_IOCTL, data->server_id);
 	if (!desc)
 		goto out_err;
 
@@ -547,14 +547,14 @@ long hcc_faf_ioctl (struct file *file,
 	err = unpack_remote_sleep_res_type(desc, r);
 	if (err)
 		goto out_cancel;
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	return r;
 
 out_cancel:
-	rpc_cancel(desc);
-	rpc_end(desc, 0);
+	grpc_cancel(desc);
+	grpc_end(desc, 0);
 	if (err > 0)
 		err = -ENOMEM;
 out_err:
@@ -594,7 +594,7 @@ long hcc_faf_fcntl (struct file *file,
 		msg.arg = arg;
 
 	r = -ENOLCK;
-	desc = rpc_begin(RPC_FAF_FCNTL, data->server_id);
+	desc = grpc_begin(GRPC_FAF_FCNTL, data->server_id);
 	if (unlikely(!desc))
 		goto out;
 
@@ -633,13 +633,13 @@ long hcc_faf_fcntl (struct file *file,
 	}
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	return r;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out_end;
 }
 
@@ -672,7 +672,7 @@ long hcc_faf_fcntl64 (struct file *file,
 		msg.arg = arg;
 
 	r = -ENOLCK;
-	desc = rpc_begin(RPC_FAF_FCNTL64,
+	desc = grpc_begin(GRPC_FAF_FCNTL64,
 			 data->server_id);
 	if (unlikely(!desc))
 		goto out;
@@ -702,13 +702,13 @@ long hcc_faf_fcntl64 (struct file *file,
 	}
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	return r;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out_end;
 }
 #endif
@@ -730,14 +730,14 @@ long hcc_faf_fstat (struct file *file,
 
 	msg.server_fd = data->server_fd;
 
-	desc = rpc_begin(RPC_FAF_FSTAT, data->server_id);
+	desc = grpc_begin(GRPC_FAF_FSTAT, data->server_id);
 
 	grpc_pack_type(desc, msg);
 
 	grpc_unpack_type(desc, r);
 	grpc_unpack_type(desc, buffer);
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	*statbuf = buffer;
 
@@ -757,12 +757,12 @@ long hcc_faf_fstatfs(struct file *file,
 	faf_client_data_t *data = file->private_data;
 	struct faf_statfs_msg msg;
 	long r;
-	enum rpc_error err;
+	enum grpc_error err;
 	struct grpc_desc *desc;
 
 	msg.server_fd = data->server_fd;
 
-	desc = rpc_begin(RPC_FAF_FSTATFS, data->server_id);
+	desc = grpc_begin(GRPC_FAF_FSTATFS, data->server_id);
 
 	r = grpc_pack_type(desc, msg);
 	if (r)
@@ -770,18 +770,18 @@ long hcc_faf_fstatfs(struct file *file,
 
 	err = grpc_unpack_type(desc, r);
 	if (err)
-		goto err_rpc;
+		goto err_grpc;
 
 	if (!r)
 		err = grpc_unpack_type(desc, buffer);
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	*statfsbuf = buffer;
 
 exit:
 	return r;
-err_rpc:
+err_grpc:
 	r = -EPIPE;
 	goto exit;
 }
@@ -799,7 +799,7 @@ long hcc_faf_fsync (struct file *file)
 
 	msg.server_fd = data->server_fd;
 
-	r = rpc_sync(RPC_FAF_FSYNC, data->server_id, &msg, sizeof(msg));
+	r = grpc_sync(GRPC_FAF_FSYNC, data->server_id, &msg, sizeof(msg));
 
 	return r;
 }
@@ -821,7 +821,7 @@ long hcc_faf_flock (struct file *file,
 	msg.server_fd = data->server_fd;
 	msg.cmd = cmd;
 
-	desc = rpc_begin(RPC_FAF_FLOCK, data->server_id);
+	desc = grpc_begin(GRPC_FAF_FLOCK, data->server_id);
 	if (!desc)
 		return -ENOMEM;
 
@@ -840,11 +840,11 @@ long hcc_faf_flock (struct file *file,
 		goto cancel;
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 	return r;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	r = err;
 	goto out_end;
 }
@@ -864,7 +864,7 @@ static char *__hcc_faf_d_path(const struct path *root, const struct file *file,
 	msg.deleted = !!deleted;
 	msg.count = size;
 
-	desc = rpc_begin(RPC_FAF_D_PATH, data->server_id);
+	desc = grpc_begin(GRPC_FAF_D_PATH, data->server_id);
 	if (!desc)
 		return ERR_PTR(-ENOMEM);
 	err = grpc_pack_type(desc, msg);
@@ -893,12 +893,12 @@ static char *__hcc_faf_d_path(const struct path *root, const struct file *file,
 		buff = ERR_PTR(len);
 	}
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	return buff;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -EPIPE;
 	buff = ERR_PTR(err);
@@ -996,7 +996,7 @@ long hcc_faf_bind (struct file * file,
 	msg.addrlen = addrlen;
 
 	r = -ENOMEM;
-	desc = rpc_begin(RPC_FAF_BIND, data->server_id);
+	desc = grpc_begin(GRPC_FAF_BIND, data->server_id);
 	if (!desc)
 		goto out;
 
@@ -1012,12 +1012,12 @@ long hcc_faf_bind (struct file * file,
 		goto cancel;
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 out:
 	return r;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -EPIPE;
 	r = err;
@@ -1043,7 +1043,7 @@ long hcc_faf_connect (struct file * file,
 
 	msg.addrlen = addrlen;
 
-	desc = rpc_begin(RPC_FAF_CONNECT, data->server_id);
+	desc = grpc_begin(GRPC_FAF_CONNECT, data->server_id);
 	if (!desc) {
 		r = -ENOMEM;
 		goto out;
@@ -1064,13 +1064,13 @@ long hcc_faf_connect (struct file * file,
 		goto cancel;
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	return r;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	r = err;
 	goto out_end;
 }
@@ -1086,7 +1086,7 @@ long hcc_faf_listen (struct file * file,
 
 	msg.backlog = backlog;
 
-	r = rpc_sync(RPC_FAF_LISTEN, data->server_id, &msg, sizeof(msg));
+	r = grpc_sync(GRPC_FAF_LISTEN, data->server_id, &msg, sizeof(msg));
 
 	return r;
 }
@@ -1123,7 +1123,7 @@ long hcc_faf_accept(struct file * file,
 		msg.addrlen = 0;
 	}
 
-	desc = rpc_begin(RPC_FAF_ACCEPT, data->server_id);
+	desc = grpc_begin(GRPC_FAF_ACCEPT, data->server_id);
 	if (!desc)
 		goto out_put_fd;
 
@@ -1141,7 +1141,7 @@ long hcc_faf_accept(struct file * file,
 	}
 
 	if (r<0) {
-		rpc_end(desc, 0);
+		grpc_end(desc, 0);
 		goto out_put_fd;
 	}
 
@@ -1167,7 +1167,7 @@ long hcc_faf_accept(struct file * file,
 	if (r)
 		goto err_close_faf_file;
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	if (upeer_sockaddr) {
 		r = move_addr_to_user((struct sockaddr *)&sa, sa_len,
@@ -1183,8 +1183,8 @@ out:
 	return r;
 
 err_cancel:
-	rpc_cancel(desc);
-	rpc_end(desc, 0);
+	grpc_cancel(desc);
+	grpc_end(desc, 0);
 out_put_fd:
 	put_unused_fd(fd);
 	goto out;
@@ -1209,14 +1209,14 @@ long hcc_faf_getsockname (struct file * file,
 	if (get_user(msg.addrlen, usockaddr_len))
 		goto out;
 
-	desc = rpc_begin(RPC_FAF_GETSOCKNAME, data->server_id);
+	desc = grpc_begin(GRPC_FAF_GETSOCKNAME, data->server_id);
 	grpc_pack_type(desc, msg);
 	pack_root(desc);
 
 	grpc_unpack_type(desc, r);
 	grpc_unpack_type(desc, sa_len);
 	grpc_unpack(desc, 0, &sa, sa_len);
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	if (!r)
 		r = move_addr_to_user((struct sockaddr *)&sa, sa_len,
@@ -1242,13 +1242,13 @@ long hcc_faf_getpeername (struct file * file,
 	if (get_user(msg.addrlen, usockaddr_len))
 		return -EFAULT;
 
-	desc = rpc_begin(RPC_FAF_GETPEERNAME, data->server_id);
+	desc = grpc_begin(GRPC_FAF_GETPEERNAME, data->server_id);
 	grpc_pack_type(desc, msg);
 	pack_root(desc);
 	grpc_unpack_type(desc, r);
 	grpc_unpack_type(desc, sa_len);
 	grpc_unpack(desc, 0, &sa, sa_len);
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	if (!r)
 		r = move_addr_to_user((struct sockaddr *)&sa, sa_len,
@@ -1268,7 +1268,7 @@ long hcc_faf_shutdown (struct file * file,
 
 	msg.how = how;
 
-	r = rpc_sync(RPC_FAF_SHUTDOWN, data->server_id, &msg, sizeof(msg));
+	r = grpc_sync(GRPC_FAF_SHUTDOWN, data->server_id, &msg, sizeof(msg));
 
 	return r;
 }
@@ -1291,7 +1291,7 @@ long hcc_faf_setsockopt (struct file * file,
 	msg.optval = optval;
 	msg.optlen = optlen;
 
-	desc = rpc_begin(RPC_FAF_SETSOCKOPT, data->server_id);
+	desc = grpc_begin(GRPC_FAF_SETSOCKOPT, data->server_id);
 	if (!desc) {
 		r = -ENOMEM;
 		goto out;
@@ -1311,13 +1311,13 @@ long hcc_faf_setsockopt (struct file * file,
 		goto err_cancel;
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	return r;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -ENOMEM;
 	r = err;
@@ -1342,7 +1342,7 @@ long hcc_faf_getsockopt (struct file * file,
 	msg.optval = optval;
 	msg.optlen = optlen;
 
-	desc = rpc_begin(RPC_FAF_GETSOCKOPT, data->server_id);
+	desc = grpc_begin(GRPC_FAF_GETSOCKOPT, data->server_id);
 	if (!desc) {
 		r = -ENOMEM;
 		goto out;
@@ -1362,13 +1362,13 @@ long hcc_faf_getsockopt (struct file * file,
 		goto err_cancel;
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	return r;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -ENOMEM;
 	r = err;
@@ -1388,7 +1388,7 @@ ssize_t hcc_faf_sendmsg(struct file *file, struct msghdr *msghdr,
 	msg.total_len = total_len;
 	msg.flags = msghdr->msg_flags;
 
-	desc = rpc_begin(RPC_FAF_SENDMSG, data->server_id);
+	desc = grpc_begin(GRPC_FAF_SENDMSG, data->server_id);
 	if (!desc)
 		return -ENOMEM;
 	err = grpc_pack_type(desc, msg);
@@ -1409,12 +1409,12 @@ ssize_t hcc_faf_sendmsg(struct file *file, struct msghdr *msghdr,
 		send_sig(SIGPIPE, current, 0);
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	return r;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	r = err;
 	goto out_end;
 }
@@ -1432,7 +1432,7 @@ ssize_t hcc_faf_recvmsg(struct file *file, struct msghdr *msghdr,
 	msg.total_len = total_len;
 	msg.flags = flags;
 
-	desc = rpc_begin(RPC_FAF_RECVMSG, data->server_id);
+	desc = grpc_begin(GRPC_FAF_RECVMSG, data->server_id);
 	if (!desc)
 		return -ENOMEM;
 	err = grpc_pack_type(desc, msg);
@@ -1461,12 +1461,12 @@ ssize_t hcc_faf_recvmsg(struct file *file, struct msghdr *msghdr,
 	msghdr->msg_control += msghdr->msg_controllen;
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	return r;
 
 cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -EPIPE;
 	r = err;
@@ -1493,7 +1493,7 @@ int hcc_faf_poll_wait(struct file *file, int wait)
 	msg.objid = file->f_objid;
 	msg.wait = wait;
 
-	desc = rpc_begin(RPC_FAF_POLL_WAIT, data->server_id);
+	desc = grpc_begin(GRPC_FAF_POLL_WAIT, data->server_id);
 	if (!desc)
 		goto out;
 	err = grpc_pack_type(desc, msg);
@@ -1513,7 +1513,7 @@ int hcc_faf_poll_wait(struct file *file, int wait)
 	data->poll_revents = revents;
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	/*
@@ -1524,7 +1524,7 @@ out:
 	return err;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -ENOMEM;
 	goto out_end;
@@ -1538,7 +1538,7 @@ void hcc_faf_poll_dequeue(struct file *file)
 
 	msg.server_fd = data->server_fd;
 	msg.objid = file->f_objid;
-	err = rpc_async(RPC_FAF_POLL_DEQUEUE, data->server_id,
+	err = grpc_async(GRPC_FAF_POLL_DEQUEUE, data->server_id,
 			&msg, sizeof(msg));
 	if (err)
 		printk("faf_poll: memory leak on server %d!\n", data->server_id);
@@ -1602,7 +1602,7 @@ struct file_operations faf_file_ops = {
 
 void faf_hooks_init (void)
 {
-	rpc_register_void(RPC_FAF_POLL_NOTIFY, handle_faf_poll_notify, 0);
+	grpc_register_void(GRPC_FAF_POLL_NOTIFY, handle_faf_poll_notify, 0);
 }
 
 /* FAF Hooks Finalization */

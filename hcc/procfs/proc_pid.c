@@ -697,7 +697,7 @@ out:
 	return;
 
 out_err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
@@ -731,7 +731,7 @@ static int fill_next_remote_tgids(hcc_node_t node,
 		iter.tgid = GLOBAL_PID_MASK;
 	msg.next_tgid = iter.tgid;
 
-	desc = rpc_begin(REQ_AVAILABLE_TGIDS, host_node);
+	desc = grpc_begin(REQ_AVAILABLE_TGIDS, host_node);
 	if (!desc)
 		goto out_unlock;
 
@@ -746,7 +746,7 @@ static int fill_next_remote_tgids(hcc_node_t node,
 	if (retval)
 		goto err_cancel;
 
-	retval = rpc_end(desc, 0);
+	retval = grpc_end(desc, 0);
 	if (retval)
 		goto out_unlock;
 
@@ -789,8 +789,8 @@ out_unlock:
 	goto out;
 
 err_cancel:
-	rpc_cancel(desc);
-	rpc_end(desc, 0);
+	grpc_cancel(desc);
+	grpc_end(desc, 0);
 	goto out_unlock;
 }
 
@@ -949,7 +949,7 @@ out:
  */
 int proc_pid_init(void)
 {
-	rpc_register_void(REQ_AVAILABLE_TGIDS, handle_req_available_tgids, 0);
+	grpc_register_void(REQ_AVAILABLE_TGIDS, handle_req_available_tgids, 0);
 
 	proc_pid_file_init();
 

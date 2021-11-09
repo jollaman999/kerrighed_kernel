@@ -422,7 +422,7 @@ void hcc_do_mmap_region(struct vm_area_struct *vma,
 	hccnodes_copy(copyset, mm->copyset);
 	hccnode_clear(hcc_node_id, copyset);
 
-	rpc_sync_m(RPC_MM_MMAP_REGION, &copyset, &msg, sizeof(msg));
+	grpc_sync_m(GRPC_MM_MMAP_REGION, &copyset, &msg, sizeof(msg));
 }
 
 
@@ -446,7 +446,7 @@ void hcc_do_munmap(struct mm_struct *mm,
 	hccnodes_copy(copyset, mm->copyset);
 	hccnode_clear(hcc_node_id, copyset);
 
-	rpc_sync_m(RPC_MM_MUNMAP, &copyset, &msg, sizeof(msg));
+	grpc_sync_m(GRPC_MM_MUNMAP, &copyset, &msg, sizeof(msg));
 }
 
 void hcc_do_mremap(struct mm_struct *mm, unsigned long addr,
@@ -475,7 +475,7 @@ void hcc_do_mremap(struct mm_struct *mm, unsigned long addr,
 	hccnodes_copy(copyset, mm->copyset);
 	hccnode_clear(hcc_node_id, copyset);
 
-	rpc_sync_m(RPC_MM_MREMAP, &copyset, &msg, sizeof(msg));
+	grpc_sync_m(GRPC_MM_MREMAP, &copyset, &msg, sizeof(msg));
 }
 
 void hcc_do_brk(struct mm_struct *mm,
@@ -499,7 +499,7 @@ void hcc_do_brk(struct mm_struct *mm,
 	hccnodes_copy(copyset, mm->copyset);
 	hccnode_clear(hcc_node_id, copyset);
 
-	rpc_sync_m(RPC_MM_DO_BRK, &copyset, &msg, sizeof(msg));
+	grpc_sync_m(GRPC_MM_DO_BRK, &copyset, &msg, sizeof(msg));
 }
 
 int hcc_expand_stack(struct vm_area_struct *vma,
@@ -522,7 +522,7 @@ int hcc_expand_stack(struct vm_area_struct *vma,
 	hccnodes_copy(copyset, mm->copyset);
 	hccnode_clear(hcc_node_id, copyset);
 
-	r = rpc_sync_m(RPC_MM_EXPAND_STACK, &copyset, &msg, sizeof(msg));
+	r = grpc_sync_m(GRPC_MM_EXPAND_STACK, &copyset, &msg, sizeof(msg));
 
 	return r;
 }
@@ -551,7 +551,7 @@ void hcc_do_mprotect(struct mm_struct *mm,
 	hccnodes_copy(copyset, mm->copyset);
 	hccnode_clear(hcc_node_id, copyset);
 
-	rpc_sync_m(RPC_MM_MPROTECT, &copyset, &msg, sizeof(msg));
+	grpc_sync_m(GRPC_MM_MPROTECT, &copyset, &msg, sizeof(msg));
 }
 
 

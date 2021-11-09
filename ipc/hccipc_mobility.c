@@ -781,7 +781,7 @@ void handle_msg_checkpoint(struct grpc_desc *desc, void *_msg, size_t size)
 error:
 	r = grpc_pack_type(desc, r);
 	if (r)
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 }
 
 int __sys_msgq_checkpoint(int msqid, int fd)
@@ -815,21 +815,21 @@ int __sys_msgq_checkpoint(int msqid, int fd)
 
 	file = fget(fd);
 
-	desc = rpc_begin(IPC_MSG_CHKPT, *master_node);
+	desc = grpc_begin(IPC_MSG_CHKPT, *master_node);
 	_gdm_put_object(master_set, index);
 
 	msg.msqid = msqid;
 	r = grpc_pack_type(desc, msg);
 	if (r)
-		goto err_rpc;
+		goto err_grpc;
 
 	r = send_faf_file_desc(desc, file);
 	if (r)
-		goto err_rpc;
+		goto err_grpc;
 
 	r = grpc_unpack_type(desc, err);
 	if (r)
-		goto err_rpc;
+		goto err_grpc;
 
 	r = err;
 
@@ -839,8 +839,8 @@ out:
 	put_ipc_ns(ns);
 	return r;
 
-err_rpc:
-	rpc_cancel(desc);
+err_grpc:
+	grpc_cancel(desc);
 	goto out_put_file;
 }
 

@@ -374,7 +374,7 @@ out:
 	return ret;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out_end;
 }
 
@@ -408,7 +408,7 @@ out:
 	return err;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	if (err > 0)
 		err = -EPIPE;
 	goto out_end;
@@ -582,8 +582,8 @@ int init_hcc_gcap(void)
 		goto unreg_get_pid_cap;
 
 #ifdef CONFIG_HCC_PROC
-	rpc_register_int(PROC_GET_PID_CAP, handle_get_pid_cap, 0);
-	rpc_register_int(PROC_SET_PID_CAP, handle_set_pid_cap, 0);
+	grpc_register_int(PROC_GET_PID_CAP, handle_get_pid_cap, 0);
+	grpc_register_int(PROC_SET_PID_CAP, handle_set_pid_cap, 0);
 #endif
 
  out:

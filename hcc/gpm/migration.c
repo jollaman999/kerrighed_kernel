@@ -168,7 +168,7 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 	if (!migration_implemented(tsk))
 		return -ENOSYS;
 
-	desc = rpc_begin(RPC_GPM_MIGRATE, target);
+	desc = grpc_begin(GRPC_GPM_MIGRATE, target);
 	if (!desc)
 		return -ENOMEM;
 
@@ -195,8 +195,8 @@ static int do_task_migrate(struct task_struct *tsk, struct pt_regs *regs,
 	remote_pid = send_task(desc, tsk, regs, &migration);
 
 	if (remote_pid < 0)
-		rpc_cancel(desc);
-	rpc_end(desc, 0);
+		grpc_cancel(desc);
+	grpc_end(desc, 0);
 
 	if (remote_pid < 0) {
 		struct task_gdm_object *obj;
@@ -268,7 +268,7 @@ static void handle_migrate(struct grpc_desc *desc, void *msg, size_t size)
 #endif
 	task = recv_task(desc, action);
 	if (!task) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		return;
 	}
 
@@ -483,9 +483,9 @@ void hcc_syscall_exit(long syscall_nr)
 int gpm_migration_start(void)
 {
 	hcc_handler[HCC_SIG_MIGRATE] = hcc_task_migrate;
-	if (rpc_register_void(RPC_GPM_MIGRATE, handle_migrate, 0))
+	if (grpc_register_void(GRPC_GPM_MIGRATE, handle_migrate, 0))
 		BUG();
-	if (rpc_register_int(PROC_REQUEST_MIGRATION,
+	if (grpc_register_int(PROC_REQUEST_MIGRATION,
 			     handle_migrate_remote_process, 0))
 		BUG();
 

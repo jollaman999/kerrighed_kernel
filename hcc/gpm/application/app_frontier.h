@@ -8,6 +8,6 @@
 
 long get_appid_from_pid(pid_t pid);
 
-void application_frontier_rpc_init(void);
+void application_frontier_grpc_init(void);
 
 #endif /* __APPLICATION_FRONTIER_H__ */

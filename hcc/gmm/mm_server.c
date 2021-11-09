@@ -173,12 +173,12 @@ int handle_do_mprotect (struct grpc_desc* desc,
 
 void mm_server_init (void)
 {
-	rpc_register_int(RPC_MM_MMAP_REGION, handle_do_mmap_region, 0);
-	rpc_register_int(RPC_MM_MREMAP, handle_do_mremap, 0);
-	rpc_register_int(RPC_MM_MUNMAP, handle_do_munmap, 0);
-	rpc_register_int(RPC_MM_DO_BRK, handle_do_brk, 0);
-	rpc_register_int(RPC_MM_EXPAND_STACK, handle_expand_stack, 0);
-	rpc_register_int(RPC_MM_MPROTECT, handle_do_mprotect, 0);
+	grpc_register_int(GRPC_MM_MMAP_REGION, handle_do_mmap_region, 0);
+	grpc_register_int(GRPC_MM_MREMAP, handle_do_mremap, 0);
+	grpc_register_int(GRPC_MM_MUNMAP, handle_do_munmap, 0);
+	grpc_register_int(GRPC_MM_DO_BRK, handle_do_brk, 0);
+	grpc_register_int(GRPC_MM_EXPAND_STACK, handle_expand_stack, 0);
+	grpc_register_int(GRPC_MM_MPROTECT, handle_do_mprotect, 0);
 }
 
 

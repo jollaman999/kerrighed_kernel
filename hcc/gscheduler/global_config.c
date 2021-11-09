@@ -10,7 +10,7 @@
  * The principle is to replicate the operations done at user-level (mkdir,
  * rmdir, symlink, unlink, and write), and to infer from the context if the
  * operation is directly done by user-level, or by the replication engine. The
- * current criterion is whether current is a kernel thread (assuming an RPC
+ * current criterion is whether current is a kernel thread (assuming an GRPC
  * handler) or not.
  *
  * To ensure that all operations on a given item are done in the same order on
@@ -293,14 +293,14 @@ static struct grpc_desc *__global_config_op_begin(hccnodemask_t *nodes,
 	struct grpc_desc *desc;
 	int err;
 
-	desc = rpc_begin_m(GLOBAL_CONFIG_OP, nodes);
+	desc = grpc_begin_m(GLOBAL_CONFIG_OP, nodes);
 	if (!desc)
 		return ERR_PTR(-ENOMEM);
 
 	err = grpc_pack_type(desc, msg);
 	if (err) {
-		rpc_cancel(desc);
-		rpc_end(desc, 0);
+		grpc_cancel(desc);
+		grpc_end(desc, 0);
 		return ERR_PTR(err);
 	} else {
 		return desc;
@@ -351,13 +351,13 @@ static int global_config_op_end(struct grpc_desc *desc, hccnodemask_t *nodes)
 	for_each_hccnode_mask(node, *nodes) {
 		err = grpc_unpack_type_from(desc, node, res);
 		if (!err && res) {
-			rpc_cancel(desc);
+			grpc_cancel(desc);
 			goto out;
 		}
 	}
 
 out:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	return res;
 }
@@ -368,7 +368,7 @@ static void handle_global_config_dir_op(struct grpc_desc *desc,
 					void *_msg, size_t size);
 
 /**
- * Generic RPC handler for global config operations
+ * Generic GRPC handler for global config operations
  */
 static void handle_global_config_op(struct grpc_desc *desc,
 				    void *_msg, size_t size)
@@ -384,7 +384,7 @@ static void handle_global_config_op(struct grpc_desc *desc,
 /**
  * Helper function to send a string
  *
- * @param desc	       RPC descriptor to send on
+ * @param desc	       GRPC descriptor to send on
  * @param string       string to send
  *
  * @return	       0 is success, or error
@@ -405,7 +405,7 @@ out:
 /**
  * Helper function to receive a string
  *
- * @param desc	       RPC descriptor to receive from
+ * @param desc	       GRPC descriptor to receive from
  *
  * @return	       a valid string pointer or error. The string must be
  *		       freed with put_string.
@@ -470,8 +470,8 @@ do_global_config_write(struct grpc_desc *desc, hccnodemask_t *nodes,
 	return global_config_op_end(desc, nodes);
 
 err_cancel:
-	rpc_cancel(desc);
-	rpc_end(desc, 0);
+	grpc_cancel(desc);
+	grpc_end(desc, 0);
 	return err;
 }
 
@@ -502,7 +502,7 @@ static int __global_config_write(hccnodemask_t *nodes,
 }
 
 /**
- * RPC handler for global attribute store
+ * GRPC handler for global attribute store
  */
 static void handle_global_config_write(struct grpc_desc *desc,
 				       void *_msg, size_t size)
@@ -560,7 +560,7 @@ err_buf:
 err_count:
 	put_string(path);
 err_path:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
@@ -587,8 +587,8 @@ out:
 	return err;
 
 err_cancel:
-	rpc_cancel(desc);
-	rpc_end(desc, 0);
+	grpc_cancel(desc);
+	grpc_end(desc, 0);
 	goto out;
 }
 
@@ -660,7 +660,7 @@ static int handle_global_config_symlink(struct inode *dir,
 }
 
 /**
- * Generic RPC handler for a global directory operation
+ * Generic GRPC handler for a global directory operation
  * (mkdir, rmdir, symlink, unlink)
  * The directory operation is made as if a user did the operation locally.
  */
@@ -719,7 +719,7 @@ err_old_name:
 	put_child_dentry(d_child);
 	put_string(name);
 err_name:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
@@ -1584,7 +1584,7 @@ int global_config_add(struct ghotplug_context *ctx)
 
 	down_write(&attrs_rwsem);
 
-	rpc_enable(GLOBAL_CONFIG_OP);
+	grpc_enable(GLOBAL_CONFIG_OP);
 
 	err = cluster_barrier(global_config_barrier, &nodes, master);
 	if (err)
@@ -1606,7 +1606,7 @@ out_check:
 	err = err ? : err2;
 	if (err) {
 		if (hccnode_isset(hcc_node_id, ctx->node_set.v))
-			rpc_disable(GLOBAL_CONFIG_OP);
+			grpc_disable(GLOBAL_CONFIG_OP);
 		up_write(&attrs_rwsem);
 		if (master == hcc_node_id)
 			global_config_thaw();
@@ -1653,14 +1653,14 @@ int global_config_start(void)
 		goto err_barrier;
 	}
 
-	err = rpc_register_void(GLOBAL_CONFIG_OP, handle_global_config_op, 0);
+	err = grpc_register_void(GLOBAL_CONFIG_OP, handle_global_config_op, 0);
 	if (err)
-		goto err_rpc;
+		goto err_grpc;
 
 out:
 	return err;
 
-err_rpc:
+err_grpc:
 
 err_barrier:
 

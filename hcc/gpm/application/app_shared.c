@@ -910,7 +910,7 @@ int global_chkpt_shared(struct grpc_desc *desc,
 
 	/* 2) send the list to every node
 	 * this is not optimized but otherwise, we need to open
-	 * a new RPC desc to each node */
+	 * a new GRPC desc to each node */
 
 	/* go ahead, nodes should prepare to receive the list */
 	r = grpc_pack_type(desc, r);
@@ -1799,7 +1799,7 @@ static int global_restart_shared_objects(struct grpc_desc *desc,
 					 struct app_gdm_object *obj)
 {
 	int r = 0;
-	int err_rpc = 0;
+	int err_grpc = 0;
 	hcc_node_t node;
 	struct rb_root dist_shared_indexes = RB_ROOT;
 
@@ -1809,9 +1809,9 @@ static int global_restart_shared_objects(struct grpc_desc *desc,
 		goto error;
 
 	/* 2) request the list of restored distributed objects */
-	err_rpc = grpc_pack_type(desc, r);
-	if (err_rpc)
-		goto err_rpc;
+	err_grpc = grpc_pack_type(desc, r);
+	if (err_grpc)
+		goto err_grpc;
 
 	for_each_hccnode_mask(node, obj->nodes) {
 		r = rcv_restored_dist_objects_list_from(desc,
@@ -1826,18 +1826,18 @@ static int global_restart_shared_objects(struct grpc_desc *desc,
 
 	/* 3) Send the list to every node
 	 * this is not optimized but otherwise, we need to open
-	 * a new RPC desc to each node */
-	err_rpc = grpc_pack_type(desc, r);
-	if (err_rpc)
-		goto err_rpc;
+	 * a new GRPC desc to each node */
+	err_grpc = grpc_pack_type(desc, r);
+	if (err_grpc)
+		goto err_grpc;
 
 	r = send_full_restored_dist_objects_list(desc, &dist_shared_indexes);
 
 error:
 	clear_restored_dist_shared_indexes(&dist_shared_indexes);
 	return r;
-err_rpc:
-	r = err_rpc;
+err_grpc:
+	r = err_grpc;
 	goto error;
 }
 

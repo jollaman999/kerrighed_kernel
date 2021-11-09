@@ -408,7 +408,7 @@ static int global_do_chkpt(struct app_gdm_object *obj, int flags)
 {
 	struct grpc_desc *desc;
 	struct checkpoint_request_msg msg;
-	int r, err_rpc;
+	int r, err_grpc;
 
 	r = __get_next_chkptsn(obj->app_id, obj->chkpt_sn);
 	if (r < 0)
@@ -422,49 +422,49 @@ static int global_do_chkpt(struct app_gdm_object *obj, int flags)
 	msg.chkpt_sn = obj->chkpt_sn;
 	msg.flags = flags;
 
-	desc = rpc_begin_m(APP_DO_CHKPT, &obj->nodes);
-	err_rpc = grpc_pack_type(desc, msg);
-	if (err_rpc)
-		goto err_rpc;
-	err_rpc = pack_creds(desc, current_cred());
-	if (err_rpc)
-		goto err_rpc;
+	desc = grpc_begin_m(APP_DO_CHKPT, &obj->nodes);
+	err_grpc = grpc_pack_type(desc, msg);
+	if (err_grpc)
+		goto err_grpc;
+	err_grpc = pack_creds(desc, current_cred());
+	if (err_grpc)
+		goto err_grpc;
 
 	/* waiting results from the nodes hosting the application */
 	r = app_wait_returns_from_nodes(desc, obj->nodes);
 	if (r)
 		goto err_chkpt;
 
-	err_rpc = grpc_pack_type(desc, r);
-	if (err_rpc)
-		goto err_rpc;
+	err_grpc = grpc_pack_type(desc, r);
+	if (err_grpc)
+		goto err_grpc;
 
 	r = global_chkpt_shared(desc, obj);
 	if (r)
 		goto err_chkpt;
 
-	err_rpc = grpc_pack_type(desc, r);
-	if (err_rpc)
-		goto err_rpc;
+	err_grpc = grpc_pack_type(desc, r);
+	if (err_grpc)
+		goto err_grpc;
 
 	r = save_app_gdm_object(obj);
 	if (r)
 		goto exit;
 
 err_chkpt:
-	err_rpc = grpc_pack_type(desc, r);
-	if (err_rpc)
-		goto err_rpc;
-exit_rpc:
-	rpc_end(desc, 0);
+	err_grpc = grpc_pack_type(desc, r);
+	if (err_grpc)
+		goto err_grpc;
+exit_grpc:
+	grpc_end(desc, 0);
 
 exit:
 	return r;
 
-err_rpc:
-	r = err_rpc;
-	rpc_cancel(desc);
-	goto exit_rpc;
+err_grpc:
+	r = err_grpc;
+	grpc_cancel(desc);
+	goto exit_grpc;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -597,7 +597,7 @@ static void handle_cr_exclude(struct grpc_desc *desc, void *_msg, size_t size)
 out:
 	return;
 error:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
@@ -642,7 +642,7 @@ int app_cr_exclude(struct cr_mm_region *mm_regions)
 		goto exit_gdmput;
 	}
 
-	desc = rpc_begin_m(APP_EXCL_MM_REGION, &obj->nodes);
+	desc = grpc_begin_m(APP_EXCL_MM_REGION, &obj->nodes);
 	if (!desc) {
 		r = -ENOMEM;
 		goto exit_gdmput;
@@ -650,23 +650,23 @@ int app_cr_exclude(struct cr_mm_region *mm_regions)
 
 	r = grpc_pack_type(desc, app_id);
 	if (r)
-		goto exit_rpc;
+		goto exit_grpc;
 
 	element = mm_regions;
 	while (element) {
 		r = grpc_pack(desc, 0, element, sizeof(struct cr_mm_region));
 		if (r)
-			goto exit_rpc;
+			goto exit_grpc;
 
 		element = element->next;
 	}
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 exit_gdmput:
 	gdm_put_object(gdm_def_ns, APP_GDM_ID, app_id);
 	return r;
-exit_rpc:
-	rpc_cancel(desc);
+exit_grpc:
+	grpc_cancel(desc);
 	goto exit_gdmput;
 }
 
@@ -770,8 +770,8 @@ exit:
 	return r;
 }
 
-void application_checkpoint_rpc_init(void)
+void application_checkpoint_grpc_init(void)
 {
-	rpc_register_void(APP_DO_CHKPT, handle_do_chkpt, 0);
-	rpc_register_void(APP_EXCL_MM_REGION, handle_cr_exclude, 0);
+	grpc_register_void(APP_DO_CHKPT, handle_do_chkpt, 0);
+	grpc_register_void(APP_EXCL_MM_REGION, handle_cr_exclude, 0);
 }

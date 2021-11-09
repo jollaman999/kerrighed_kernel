@@ -90,7 +90,7 @@ static int do_nodes_add(struct ghotplug_context *ctx)
 
 	/* Send request to all members of the current cluster */
 	for_each_online_hccnode(node)
-		rpc_async(NODE_ADD, node, &ctx->node_set, sizeof(ctx->node_set));
+		grpc_async(NODE_ADD, node, &ctx->node_set, sizeof(ctx->node_set));
 
 	printk("hcc: [ADD] Adding nodes succeeded.\n");
 
@@ -140,7 +140,7 @@ out:
 
 int ghotplug_add_init(void)
 {
-	rpc_register_void(NODE_ADD, handle_node_add, 0);
+	grpc_register_void(NODE_ADD, handle_node_add, 0);
 
 	register_proc_service(KSYS_GHOTPLUG_ADD, nodes_add);
 	return 0;

@@ -84,7 +84,7 @@ static int nodes_fail(void __user *arg)
 	if (err)
 		return err;
 	
-	rpc_async_m(NODE_FAIL, &node_set.v,
+	grpc_async_m(NODE_FAIL, &node_set.v,
 		    &unused, sizeof(unused));
 	
 	return 0;
@@ -94,7 +94,7 @@ int ghotplug_failure_init(void)
 {
 	INIT_WORK(&recovery_work, recovery_worker);
 
-	rpc_register_void(NODE_FAIL, handle_node_fail, 0);
+	grpc_register_void(NODE_FAIL, handle_node_fail, 0);
 	
 	register_proc_service(KSYS_GHOTPLUG_FAIL, nodes_fail);
 

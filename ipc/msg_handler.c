@@ -259,27 +259,27 @@ long hcc_ipc_msgsnd(int msqid, long mtype, void __user *mtext,
 	if (r)
 		goto exit_free_buffer;
 
-	desc = rpc_begin(IPC_MSG_SEND, *master_node);
+	desc = grpc_begin(IPC_MSG_SEND, *master_node);
 	_gdm_put_object(master_set, index);
 
 	r = grpc_pack_type(desc, msg);
 	if (r)
-		goto exit_rpc;
+		goto exit_grpc;
 
 	r = grpc_pack(desc, 0, buffer, msgsz);
 	if (r)
-		goto exit_rpc;
+		goto exit_grpc;
 
 	r = unpack_remote_sleep_res_prepare(desc);
 	if (r)
-		goto exit_rpc;
+		goto exit_grpc;
 
 	err = unpack_remote_sleep_res_type(desc, r);
 	if (err)
 		r = err;
 
-exit_rpc:
-	rpc_end(desc, 0);
+exit_grpc:
+	grpc_end(desc, 0);
 exit_free_buffer:
 	kfree(buffer);
 exit:
@@ -338,7 +338,7 @@ long hcc_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 		    struct ipc_namespace *ns, pid_t tgid)
 {
 	struct grpc_desc * desc;
-	enum rpc_error err;
+	enum grpc_error err;
 	struct gdm_set *master_set;
 	hcc_node_t *master_node;
 	void * buffer;
@@ -374,7 +374,7 @@ long hcc_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	msg.tgid = tgid;
 	msg.msgsz = msgsz;
 
-	desc = rpc_begin(IPC_MSG_RCV, *master_node);
+	desc = grpc_begin(IPC_MSG_RCV, *master_node);
 	_gdm_put_object(master_set, index);
 
 	r = grpc_pack_type(desc, msg);
@@ -391,7 +391,7 @@ long hcc_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 			/* get the real msg type */
 			err = grpc_unpack(desc, 0, pmtype, sizeof(long));
 			if (err)
-				goto err_rpc;
+				goto err_grpc;
 
 			buffer = kmalloc(r, GFP_KERNEL);
 			if (!buffer) {
@@ -402,7 +402,7 @@ long hcc_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 			err = grpc_unpack(desc, 0, buffer, r);
 			if (err) {
 				kfree(buffer);
-				goto err_rpc;
+				goto err_grpc;
 			}
 
 			retval = copy_to_user(mtext, buffer, r);
@@ -415,10 +415,10 @@ long hcc_ipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	}
 
 exit:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 	return r;
 
-err_rpc:
+err_grpc:
 	r = -EPIPE;
 	goto exit;
 }
@@ -570,9 +570,9 @@ void msg_handler_init(void)
 	register_io_linker(MSGKEY_LINKER, &msqkey_linker);
 	register_io_linker(MSGMASTER_LINKER, &msqmaster_linker);
 
-	rpc_register_void(IPC_MSG_SEND, handle_do_msg_send, 0);
-	rpc_register_void(IPC_MSG_RCV, handle_do_msg_rcv, 0);
-	rpc_register_void(IPC_MSG_CHKPT, handle_msg_checkpoint, 0);
+	grpc_register_void(IPC_MSG_SEND, handle_do_msg_send, 0);
+	grpc_register_void(IPC_MSG_RCV, handle_do_msg_rcv, 0);
+	grpc_register_void(IPC_MSG_CHKPT, handle_msg_checkpoint, 0);
 }
 
 
