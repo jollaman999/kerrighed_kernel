@@ -7378,7 +7378,7 @@ int handle_sched_getparam(struct grpc_desc *desc, void *msg, size_t size)
 
 	err = grpc_pack_type(desc, param);
 	if (err) {
-		rpc_cancel(desc);
+		grpc_cancel(desc);
 		retval = err;
 	}
 
@@ -7419,7 +7419,7 @@ out:
 err_cancel:
 	if (r > 0)
 		r = -EPIPE;
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out_end;
 }
 #endif /* CONFIG_HCC_PROC */
@@ -8054,9 +8054,9 @@ out:
 #ifdef CONFIG_HCC_PROC
 void remote_sched_init(void)
 {
-	rpc_register_int(PROC_SCHED_SETSCHEDULER, handle_sched_setscheduler, 0);
-	rpc_register_int(PROC_SCHED_GETPARAM, handle_sched_getparam, 0);
-	rpc_register_int(PROC_SCHED_GETSCHEDULER, handle_sched_getscheduler, 0);
+	grpc_register_int(PROC_SCHED_SETSCHEDULER, handle_sched_setscheduler, 0);
+	grpc_register_int(PROC_SCHED_GETPARAM, handle_sched_getparam, 0);
+	grpc_register_int(PROC_SCHED_GETSCHEDULER, handle_sched_getscheduler, 0);
 }
 #endif /* CONFIG_HCC_PROC */
 

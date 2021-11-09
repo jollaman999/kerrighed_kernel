@@ -1125,7 +1125,7 @@ static int hcc_forward_setpgid(hcc_node_t node, pid_t pid, pid_t pgid)
 	msg.pgid = pgid;
 	msg.parent_session = task_session_knr(current);
 
-	retval = rpc_sync(PROC_FORWARD_SETPGID, node, &msg, sizeof(msg));
+	retval = grpc_sync(PROC_FORWARD_SETPGID, node, &msg, sizeof(msg));
 
 out:
 	return retval;
@@ -1396,10 +1396,10 @@ SYSCALL_DEFINE1(getsid, pid_t, pid)
 
 void remote_sys_init(void)
 {
-	rpc_register_int(PROC_GETPGID, handle_getpgid, 0);
-	rpc_register_int(PROC_GETSID, handle_getsid, 0);
+	grpc_register_int(PROC_GETPGID, handle_getpgid, 0);
+	grpc_register_int(PROC_GETSID, handle_getsid, 0);
 #ifdef CONFIG_HCC_GPM
-	rpc_register_int(PROC_FORWARD_SETPGID, handle_forward_setpgid, 0);
+	grpc_register_int(PROC_FORWARD_SETPGID, handle_forward_setpgid, 0);
 #endif
 }
 #endif /* CONFIG_HCC_PROC */

@@ -1415,7 +1415,7 @@ static int handle_kill_pg_info(struct grpc_desc *desc, void *_msg, size_t size)
 	return retval;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	return -EPIPE;
 }
 
@@ -1441,7 +1441,7 @@ static int hcc_kill_pg_info(int sig, struct siginfo *info, pid_t pgid)
 	if (hccnodes_empty(nodes))
 		goto out;
 
-	desc = rpc_begin_m(PROC_KILL_PG_INFO, &nodes);
+	desc = grpc_begin_m(PROC_KILL_PG_INFO, &nodes);
 
 	make_kill_info_msg(&msg, sig, info, pgid);
 	retval = grpc_pack_type(desc, msg);
@@ -1453,19 +1453,19 @@ static int hcc_kill_pg_info(int sig, struct siginfo *info, pid_t pgid)
 
 	retval = -ESRCH;
 	for_each_hccnode_mask(node, nodes) {
-		retval = rpc_wait_return_from(desc, node);
+		retval = grpc_wait_return_from(desc, node);
 		if (!retval)
 			break;
 	}
 
 out_end:
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 out:
 	return retval;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out_end;
 }
 
@@ -3127,8 +3127,8 @@ __attribute__((weak)) const char *arch_vma_name(struct vm_area_struct *vma)
 #ifdef CONFIG_HCC_PROC
 void remote_signals_init(void)
 {
-	rpc_register_int(PROC_KILL_PROC_INFO, handle_kill_proc_info, 0);
-	rpc_register_int(PROC_KILL_PG_INFO, handle_kill_pg_info, 0);
+	grpc_register_int(PROC_KILL_PROC_INFO, handle_kill_proc_info, 0);
+	grpc_register_int(PROC_KILL_PG_INFO, handle_kill_pg_info, 0);
 }
 #endif /* CONFIG_HCC_PROC */
 
