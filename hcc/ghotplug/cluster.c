@@ -51,7 +51,7 @@
 #include <hcc/gscheduler/info.h>
 #endif
 
-#include "hotplug_internal.h"
+#include "ghotplug_internal.h"
 
 #define ADVERTISE_PERIOD (2*HZ)
 #define UNIVERSE_PERIOD (60*HZ)

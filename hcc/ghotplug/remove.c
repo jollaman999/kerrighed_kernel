@@ -25,7 +25,7 @@
 #include <tools/hcc_services.h>
 #include <rpc/rpc.h>
 
-#include "hotplug_internal.h"
+#include "ghotplug_internal.h"
 
 inline
 void do_local_node_remove(struct ghotplug_node_set *node_set)

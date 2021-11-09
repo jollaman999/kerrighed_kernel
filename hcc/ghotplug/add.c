@@ -20,7 +20,7 @@
 #include <hcc/hcc_syscalls.h>
 #include <hcc/hcc_services.h>
 
-#include "hotplug_internal.h"
+#include "ghotplug_internal.h"
 
 int __nodes_add(struct ghotplug_context *ctx)
 {

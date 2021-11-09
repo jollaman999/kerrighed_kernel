@@ -10,7 +10,7 @@
 #include <net/grpc/rpcid.h>
 #include <net/grpc/rpc.h>
 
-#include "hotplug_internal.h"
+#include "ghotplug_internal.h"
 
 struct workqueue_struct *hcc_ha_wq;
 

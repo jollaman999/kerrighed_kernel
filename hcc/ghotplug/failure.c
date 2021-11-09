@@ -20,7 +20,7 @@
 #include <net/grpc/rpcid.h>
 #include <net/grpc/rpc.h>
 
-#include "hotplug_internal.h"
+#include "ghotplug_internal.h"
 
 hccnodemask_t failure_vector;
 struct work_struct fail_work;
