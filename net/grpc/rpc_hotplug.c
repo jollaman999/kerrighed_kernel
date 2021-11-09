@@ -29,7 +29,7 @@ static int rpc_notification(struct notifier_block *nb, hotplug_event_t event,
 	struct hotplug_node_set *node_set = data;
 	
 	switch(event){
-	case HOTPLUG_NOTIFY_REMOVE:
+	case GHOTPLUG_NOTIFY_REMOVE:
 		rpc_remove(&node_set->v);
 		break;
 	default:

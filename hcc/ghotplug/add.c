@@ -24,7 +24,7 @@
 
 int __nodes_add(struct ghotplug_context *ctx)
 {
-	hotplug_add_notify(ctx, HOTPLUG_NOTIFY_ADD);
+	hotplug_add_notify(ctx, GHOTPLUG_NOTIFY_ADD);
 	return 0;
 }
 

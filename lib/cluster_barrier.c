@@ -182,16 +182,16 @@ static int barrier_notification(struct notifier_block *nb,
 				void *data)
 {
 	switch(event){
-	case HOTPLUG_NOTIFY_ADD:
+	case GHOTPLUG_NOTIFY_ADD:
 		rpc_enable(RPC_ENTER_BARRIER);
 		rpc_enable(RPC_EXIT_BARRIER);
 		break;
 
-	case HOTPLUG_NOTIFY_REMOVE:
+	case GHOTPLUG_NOTIFY_REMOVE:
 		/* TODO */
 		break;
 
-	case HOTPLUG_NOTIFY_FAIL:
+	case GHOTPLUG_NOTIFY_FAIL:
 		/* TODO */
 		break;
 

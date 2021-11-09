@@ -46,12 +46,12 @@ static int procfs_notification(struct notifier_block *nb, ghotplug_event_t event
 	struct ghotplug_node_set *node_set;
 
 	switch(event){
-	case HOTPLUG_NOTIFY_ADD:
+	case GHOTPLUG_NOTIFY_ADD:
 		ctx = data;
 		procfs_add(&ctx->node_set.v);
 		break;
 
-	case HOTPLUG_NOTIFY_REMOVE_ADVERT:
+	case GHOTPLUG_NOTIFY_REMOVE_ADVERT:
 		node_set = data;
 		procfs_remove(&node_set->v);
 		break;

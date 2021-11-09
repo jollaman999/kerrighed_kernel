@@ -73,11 +73,11 @@ static int gpm_notification(struct notifier_block *nb, ghotplug_event_t event,
 	int err;
 
 	switch(event){
-	case HOTPLUG_NOTIFY_ADD:
+	case GHOTPLUG_NOTIFY_ADD:
 		ctx = data;
 		err = gpm_add(ctx);
 		break;
-	case HOTPLUG_NOTIFY_REMOVE:
+	case GHOTPLUG_NOTIFY_REMOVE:
 		node_set = data;
 		err = gpm_remove(&node_set->v);
 		break;

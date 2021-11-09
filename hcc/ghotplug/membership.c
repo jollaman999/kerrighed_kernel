@@ -35,20 +35,20 @@ int membership_online_notification(struct notifier_block *nb,
 {
 	
 	switch(event){
-	case HOTPLUG_NOTIFY_ADD:{
+	case GHOTPLUG_NOTIFY_ADD:{
 		struct ghotplug_context *ctx = data;
 		membership_online_add(&ctx->node_set.v);
 		break;
 	}
 
-	case HOTPLUG_NOTIFY_REMOVE_LOCAL:{
+	case GHOTPLUG_NOTIFY_REMOVE_LOCAL:{
 		hcc_node_t node;
 		for_each_online_hccnode(node)
 			if(node != hcc_node_id)
 				clear_hccnode_online(node);
 	}
 		
-	case HOTPLUG_NOTIFY_REMOVE_ADVERT:{
+	case GHOTPLUG_NOTIFY_REMOVE_ADVERT:{
 		struct ghotplug_node_set *node_set = data;
 		membership_online_remove(&node_set->v);
 		break;

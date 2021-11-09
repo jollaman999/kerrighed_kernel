@@ -730,15 +730,15 @@ static int gdm_notification(struct notifier_block *nb, hotplug_event_t event,
 	struct hotplug_node_set *node_set;
 
 	switch(event){
-	case HOTPLUG_NOTIFY_ADD:
+	case GHOTPLUG_NOTIFY_ADD:
 		ctx = data;
 		set_add(&ctx->node_set.v);
 		break;
-	case HOTPLUG_NOTIFY_REMOVE:
+	case GHOTPLUG_NOTIFY_REMOVE:
 		node_set = data;
 		set_remove(&node_set->v);
 		break;
-	case HOTPLUG_NOTIFY_FAIL:
+	case GHOTPLUG_NOTIFY_FAIL:
 		node_set = data;
 //		set_failure(&node_set->v);
 		break;

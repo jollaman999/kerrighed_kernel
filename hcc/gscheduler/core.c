@@ -38,7 +38,7 @@ static int ghotplug_notifier(struct notifier_block *nb,
 	int err;
 
 	switch(event){
-	case HOTPLUG_NOTIFY_ADD:
+	case GHOTPLUG_NOTIFY_ADD:
 		ctx = data;
 		err = add(ctx);
 		break;
@@ -70,7 +70,7 @@ static int post_ghotplug_notifier(struct notifier_block *nb,
 	int err;
 
 	switch(event){
-	case HOTPLUG_NOTIFY_ADD:
+	case GHOTPLUG_NOTIFY_ADD:
 		ctx = data;
 		err = post_add(ctx);
 		break;

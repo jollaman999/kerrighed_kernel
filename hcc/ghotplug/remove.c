@@ -36,9 +36,9 @@ void do_local_node_remove(struct ghotplug_node_set *node_set)
 	printk("do_local_node_remove\n");
 
 	printk("...notify local\n");
-	hotplug_remove_notify(node_set, HOTPLUG_NOTIFY_REMOVE_LOCAL);
+	hotplug_remove_notify(node_set, GHOTPLUG_NOTIFY_REMOVE_LOCAL);
 	printk("...notify_distant\n");
-	hotplug_remove_notify(node_set, HOTPLUG_NOTIFY_REMOVE_DISTANT);
+	hotplug_remove_notify(node_set, GHOTPLUG_NOTIFY_REMOVE_DISTANT);
 
 	printk("...confirm\n");
 	rpc_sync_m(NODE_REMOVE_CONFIRM, &hccnode_online_map, node_set, sizeof(*node_set));
@@ -66,7 +66,7 @@ inline
 void do_other_node_remove(struct ghotplug_node_set *node_set)
 {
 	printk("do_other_node_remove\n");
-	hotplug_remove_notify(node_set, HOTPLUG_NOTIFY_REMOVE_ADVERT);
+	hotplug_remove_notify(node_set, GHOTPLUG_NOTIFY_REMOVE_ADVERT);
 	rpc_async_m(NODE_REMOVE_ACK, &node_set->v, NULL, 0);				
 }
 
@@ -97,7 +97,7 @@ static int handle_node_remove_confirm(struct rpc_desc *desc, void *data, size_t 
 	if(desc->client==hcc_node_id)
 		return 0;
 	
-	hotplug_remove_notify((void*)&desc->client, HOTPLUG_NOTIFY_REMOVE_ACK);
+	hotplug_remove_notify((void*)&desc->client, GHOTPLUG_NOTIFY_REMOVE_ACK);
 	printk("HCC: node %d removed\n", desc->client);
 	return 0;
 }
