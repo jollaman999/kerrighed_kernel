@@ -9,8 +9,8 @@
 #include <hcc/sys/types.h>
 #include <hcc/hccinit.h>
 
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 #include <gdm/object_server.h>
 #include "protocol_action.h"
@@ -21,7 +21,7 @@
  */
 static inline void forward_object_server_msg (struct gdm_obj * obj_entry,
 					      struct gdm_set *set,
-					      enum rpcid msg_type,
+					      enum grpcid msg_type,
 					      void *_msg)
 {
 	msg_server_t *msg = (msg_server_t *)_msg;
@@ -35,7 +35,7 @@ static inline void forward_object_server_msg (struct gdm_obj * obj_entry,
 	BUG_ON(prob_owner == hcc_node_id);
 
 	msg->req_id = 0;
-	rpc_async(msg_type, prob_owner, _msg, sizeof(msg_server_t));
+	grpc_async(msg_type, prob_owner, _msg, sizeof(msg_server_t));
 }
 
 
@@ -180,7 +180,7 @@ exit_no_unlock:
 	return 0;
 }
 
-void handle_invalidation_ack (struct rpc_desc* desc,
+void handle_invalidation_ack (struct grpc_desc* desc,
 			     void *_msg, size_t size){
 	__handle_invalidation_ack(desc->client, _msg);
 }
@@ -192,7 +192,7 @@ void handle_invalidation_ack (struct rpc_desc* desc,
  *
  *  @param msg  Message received from the requesting node.
  */
-void handle_remove_ack (struct rpc_desc* desc,
+void handle_remove_ack (struct grpc_desc* desc,
 		       void *_msg, size_t size)
 {
 	msg_server_t *msg = _msg;
@@ -246,7 +246,7 @@ void handle_remove_ack (struct rpc_desc* desc,
  *
  *  @param msg  Message received from the requesting node.
  */
-void handle_remove_ack2 (struct rpc_desc* desc,
+void handle_remove_ack2 (struct grpc_desc* desc,
 		       void *_msg, size_t size)
 {
 	msg_server_t *msg = _msg;
@@ -290,7 +290,7 @@ exit_no_unlock:
  *
  *  @param msg  Message received from the requesting node.
  */
-void handle_remove_done (struct rpc_desc* desc,
+void handle_remove_done (struct grpc_desc* desc,
 			void *_msg, size_t size)
 {
 	rm_done_msg_server_t *msg = _msg;
@@ -392,7 +392,7 @@ exit_no_unlock:
 	return 0;
 }
 
-void handle_object_invalidation (struct rpc_desc* desc,
+void handle_object_invalidation (struct grpc_desc* desc,
                                 void *_msg, size_t size)
 {
 	__handle_object_invalidation(desc->client, _msg);
@@ -483,7 +483,7 @@ exit_no_unlock:
 	return 0;
 }
 
-void handle_object_remove_req (struct rpc_desc* desc,
+void handle_object_remove_req (struct grpc_desc* desc,
 			      void *_msg, size_t size)
 {
 	__handle_object_remove_req(desc->client, _msg);
@@ -540,7 +540,7 @@ static inline int __handle_send_ownership_req (hcc_node_t sender,
 	return 0;
 }
 
-void handle_send_ownership_req (struct rpc_desc* desc,
+void handle_send_ownership_req (struct grpc_desc* desc,
                                void *_msg, size_t size){
 	__handle_send_ownership_req(desc->client, _msg);
 };
@@ -552,7 +552,7 @@ void handle_send_ownership_req (struct rpc_desc* desc,
  *  @param sender  Node sending the ownership.
  *  @param msg     Message received from the requesting node.
  */
-void handle_change_ownership_ack (struct rpc_desc* desc,
+void handle_change_ownership_ack (struct grpc_desc* desc,
                                  void *_msg, size_t size)
 {
 	msg_server_t *msg = _msg;
@@ -587,7 +587,7 @@ void handle_change_ownership_ack (struct rpc_desc* desc,
  *  @param sender  Node sending the object.
  *  @param msg     Message received from the requesting node.
  */
-void handle_object_receive (struct rpc_desc* desc,
+void handle_object_receive (struct grpc_desc* desc,
                            void *_msg, size_t size)
 {
 	msg_object_receiver_t *msg = _msg;
@@ -772,7 +772,7 @@ exit_no_unlock:
 	return 0;
 }
 
-void handle_no_object (struct rpc_desc* desc,
+void handle_no_object (struct grpc_desc* desc,
 		      void *_msg, size_t size){
 	__handle_no_object(desc->client, _msg);
 };
@@ -784,7 +784,7 @@ void handle_no_object (struct rpc_desc* desc,
  *  @param sender  Node sending the write access.
  *  @param msg     Message received.
  */
-void handle_receive_write_access (struct rpc_desc* desc,
+void handle_receive_write_access (struct grpc_desc* desc,
 				  void *_msg, size_t size)
 {
 	msg_injection_t *msg = _msg;
@@ -1069,7 +1069,7 @@ first_touch_error:
 	goto exit;
 }
 
-void handle_object_copy_req (struct rpc_desc* desc,
+void handle_object_copy_req (struct grpc_desc* desc,
 			    void *_msg, size_t size){
 	__handle_object_copy_req(desc->client, _msg);
 }
@@ -1149,7 +1149,7 @@ exit_no_unlock:
 	return err;
 }
 
-void handle_object_remove_to_mgr_req (struct rpc_desc* desc,
+void handle_object_remove_to_mgr_req (struct grpc_desc* desc,
 				     void *_msg, size_t size){
 	__handle_object_remove_to_mgr_req(desc->client, _msg);
 };
@@ -1160,7 +1160,7 @@ void handle_object_remove_to_mgr_req (struct rpc_desc* desc,
  *
  *  @param msg  Message received from the requesting node.
  */
-void handle_send_back_first_touch_req (struct rpc_desc* desc,
+void handle_send_back_first_touch_req (struct grpc_desc* desc,
 				       void *_msg, size_t size)
 {
 	msg_server_t *msg = _msg;
@@ -1198,7 +1198,7 @@ void handle_send_back_first_touch_req (struct rpc_desc* desc,
  *
  *  @param msg  Message received from the requesting node.
  */
-static int handle_change_prob_owner_req(struct rpc_desc* desc,
+static int handle_change_prob_owner_req(struct grpc_desc* desc,
 					void *_msg, size_t size)
 {
 	msg_server_t *msg = _msg;
@@ -1230,71 +1230,71 @@ static int handle_change_prob_owner_req(struct rpc_desc* desc,
 
 void object_server_init ()
 {
-	struct rpc_synchro* object_server;
-	struct rpc_synchro* object_server_may_block;
+	struct grpc_synchro* object_server;
+	struct grpc_synchro* object_server_may_block;
 
-	object_server = rpc_synchro_new(1, "object server", 1);
-	object_server_may_block = rpc_synchro_new(1, "object srv may block", 1);
+	object_server = grpc_synchro_new(1, "object server", 1);
+	object_server_may_block = grpc_synchro_new(1, "object srv may block", 1);
 
 	/***  Init the object server  ***/
 
-	__rpc_register(REQ_OBJECT_COPY,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(REQ_OBJECT_COPY,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_object_copy_req, 0);
 
-	__rpc_register(REQ_OBJECT_REMOVE,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(REQ_OBJECT_REMOVE,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_object_remove_req, 0);
 
-	__rpc_register(REQ_OBJECT_REMOVE_TO_MGR,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(REQ_OBJECT_REMOVE_TO_MGR,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_object_remove_to_mgr_req, 0);
 
-	__rpc_register(SEND_BACK_FIRST_TOUCH,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(SEND_BACK_FIRST_TOUCH,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server_may_block, handle_send_back_first_touch_req, 0);
 
-	__rpc_register(REQ_OBJECT_INVALID,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(REQ_OBJECT_INVALID,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_object_invalidation, 0);
 
-	__rpc_register(INVALIDATION_ACK,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(INVALIDATION_ACK,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_invalidation_ack, 0);
 
-	__rpc_register(REMOVE_ACK,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(REMOVE_ACK,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_remove_ack, 0);
 
-	__rpc_register(REMOVE_ACK2,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(REMOVE_ACK2,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server_may_block, handle_remove_ack2, 0);
 
-	__rpc_register(REMOVE_DONE,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(REMOVE_DONE,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_remove_done, 0);
 
-	__rpc_register(SEND_OWNERSHIP,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(SEND_OWNERSHIP,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_send_ownership_req, 0);
 
-	__rpc_register(CHANGE_OWNERSHIP_ACK,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(CHANGE_OWNERSHIP_ACK,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_change_ownership_ack, 0);
 
-	__rpc_register(OBJECT_SEND,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(OBJECT_SEND,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_object_receive, 0);
 
-	__rpc_register(SEND_WRITE_ACCESS,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(SEND_WRITE_ACCESS,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_receive_write_access, 0);
 
-	__rpc_register(NO_OBJECT_SEND,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(NO_OBJECT_SEND,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       object_server, handle_no_object, 0);
 
-	rpc_register_int(GDM_CHANGE_PROB_OWNER, handle_change_prob_owner_req,
+	grpc_register_int(GDM_CHANGE_PROB_OWNER, handle_change_prob_owner_req,
 			 0);
 }
 

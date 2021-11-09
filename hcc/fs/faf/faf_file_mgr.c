@@ -7,7 +7,7 @@
 #include <linux/file.h>
 #include <linux/wait.h>
 #include <gdm/gdm.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <hcc/file.h>
 #include <hcc/physical_fs.h>
 #include "../mobility.h"

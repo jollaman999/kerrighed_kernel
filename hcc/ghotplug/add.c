@@ -15,8 +15,8 @@
 #include <hcc/namespace.h>
 #include <hcc/hccnodemask.h>
 
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include <hcc/hcc_syscalls.h>
 #include <hcc/hcc_services.h>
 

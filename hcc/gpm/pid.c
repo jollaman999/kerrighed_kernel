@@ -16,8 +16,8 @@
 #include <hcc/pid.h>
 #include <hcc/task.h>
 #include <hcc/workqueue.h>
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include <hcc/ghotplug.h>
 #include <gdm/gdm.h>
 #include <gdm/object_server.h>

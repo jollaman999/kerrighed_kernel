@@ -26,8 +26,8 @@
 
 #include <gdm/gdm.h>
 #include <hcc/ghotplug.h>
-#include <net/grpc/rpc.h>
-#include <net/grpc/rpcid.h>
+#include <net/grpc/grpc.h>
+#include <net/grpc/grpcid.h>
 #include <hcc/file.h>
 #include "../file_struct_io_linker.h"
 

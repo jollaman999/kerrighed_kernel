@@ -10,7 +10,7 @@
 #include <linux/security.h>
 #include <linux/ipc.h>
 #include <linux/ipc_namespace.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 
 #include "semundolst_io_linker.h"

@@ -43,8 +43,8 @@
 #include <linux/kprobes.h>
 #include <linux/user_namespace.h>
 #ifdef CONFIG_HCC_PROC
-#include <net/grpc/rpc.h>
-#include <net/grpc/rpcid.h>
+#include <net/grpc/grpc.h>
+#include <net/grpc/grpcid.h>
 #include <hcc/remote_syscall.h>
 #endif
 #ifdef CONFIG_HCC_GPM

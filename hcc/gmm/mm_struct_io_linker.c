@@ -4,7 +4,7 @@
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/rmap.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 
 #include "mm_struct.h"

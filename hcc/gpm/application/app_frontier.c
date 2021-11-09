@@ -13,8 +13,8 @@
 #include <hcc/hccinit.h>
 #include <hcc/pid.h>
 #include <hcc/application.h>
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include "../checkpoint.h"
 
 /*--------------------------------------------------------------------------*

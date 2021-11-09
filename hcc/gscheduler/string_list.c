@@ -9,7 +9,7 @@
 #include <linux/string.h>
 #include <linux/list.h>
 #include <linux/types.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 
 struct string_list_object {

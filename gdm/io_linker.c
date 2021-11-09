@@ -14,7 +14,7 @@
 #include <hcc/hccinit.h>
 #include <hcc/hccflags.h>
 
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 #include <gdm/io_linker.h>
 
@@ -360,7 +360,7 @@ int gdm_io_change_state (struct gdm_obj * obj_entry,
  *  @param obj_entry    Object entry to import data into.
  *  @param buffer       Buffer containing data to import.
  */
-int gdm_io_import_object (struct rpc_desc *desc,
+int gdm_io_import_object (struct grpc_desc *desc,
                            struct gdm_set *set,
                            struct gdm_obj *obj_entry,
                            objid_t objid,
@@ -388,9 +388,9 @@ int gdm_io_import_object (struct rpc_desc *desc,
  *
  *  @param set          Kddm Set the object belong to.
  *  @param obj_entry    Object entry to export data from.
- *  @param desc		RPC descriptor to export data on.
+ *  @param desc		GRPC descriptor to export data on.
  */
-int gdm_io_export_object (struct rpc_desc *desc,
+int gdm_io_export_object (struct grpc_desc *desc,
 			   struct gdm_set *set,
                            struct gdm_obj *obj_entry,
                            objid_t objid,

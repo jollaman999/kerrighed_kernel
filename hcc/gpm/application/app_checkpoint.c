@@ -22,8 +22,8 @@
 #include <hcc/ghost_helpers.h>
 #include <hcc/remote_cred.h>
 #include <hcc/physical_fs.h>
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 #include "app_frontier.h"
 #include "app_utils.h"

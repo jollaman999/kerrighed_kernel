@@ -14,8 +14,8 @@
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
 #include <hcc/ghotplug.h>
-#include <net/grpc/rpc.h>
-#include <net/grpc/rpcid.h>
+#include <net/grpc/grpc.h>
+#include <net/grpc/grpcid.h>
 #include <gdm/gdm.h>
 
 #include "pid.h"

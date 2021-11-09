@@ -18,8 +18,8 @@
 #include <hcc/sys/types.h>
 #include <hcc/hccinit.h>
 #include <hcc/workqueue.h>
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 
 #include "rpc_internal.h"
 

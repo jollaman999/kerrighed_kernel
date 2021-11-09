@@ -10,7 +10,7 @@
 #include <linux/socket.h>
 #include <linux/sched.h>
 
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <hcc/action.h>
 #include <hcc/faf.h>
 #include <hcc/file.h>

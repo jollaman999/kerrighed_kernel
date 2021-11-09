@@ -13,7 +13,7 @@
 #include <linux/swap.h>
 #include <linux/swapops.h>
 
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 #include <hcc/page_table_tree.h>
 

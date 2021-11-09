@@ -17,8 +17,8 @@
 #ifdef CONFIG_HCC_GSCHED
 #include <hcc/gscheduler/placement.h>
 #endif
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include "network_ghost.h"
 
 struct vfork_done_proxy {

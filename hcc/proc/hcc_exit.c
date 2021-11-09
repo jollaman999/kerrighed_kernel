@@ -31,8 +31,8 @@
 #ifdef CONFIG_HCC_GPM
 #include <hcc/workqueue.h>
 #endif
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include <hcc/task.h>
 #include <hcc/hcc_exit.h>
 #ifdef CONFIG_HCC_GPM

@@ -14,7 +14,7 @@
 #include <linux/remote_sleep.h>
 
 #include <gdm/gdm.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <hcc/ghotplug.h>
 #include "ipc_handler.h"
 #include "msg_handler.h"

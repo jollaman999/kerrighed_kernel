@@ -11,8 +11,8 @@
 #include <linux/hcc_hashtable.h>
 #include <linux/cluster_barrier.h>
 
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include <hcc/ghotplug.h>
 #include <gdm/gdm.h>
 #include "protocol_action.h"
@@ -132,7 +132,7 @@ static void set_add(hccnodemask_t * vector)
         hcc_node_t node;
 
 	if(__hccnode_isset(hcc_node_id, vector))
-		rpc_enable(GDM_CHANGE_PROB_OWNER);
+		grpc_enable(GDM_CHANGE_PROB_OWNER);
 
 	hccnodes_copy(param.new_nodes_map, hccnode_online_map);
 
@@ -163,20 +163,20 @@ static void set_add(hccnodemask_t * vector)
 	if(!__hccnode_isset(hcc_node_id, vector))
 		return;
 
-	rpc_enable(REQ_OBJECT_COPY);
-	rpc_enable(REQ_OBJECT_REMOVE);
-	rpc_enable(REQ_OBJECT_REMOVE_TO_MGR);
-	rpc_enable(SEND_BACK_FIRST_TOUCH);
-	rpc_enable(REQ_OBJECT_INVALID);
-	rpc_enable(INVALIDATION_ACK);
-	rpc_enable(REMOVE_ACK);
-	rpc_enable(REMOVE_ACK2);
-	rpc_enable(REMOVE_DONE);
-	rpc_enable(SEND_OWNERSHIP);
-	rpc_enable(CHANGE_OWNERSHIP_ACK);
-	rpc_enable(OBJECT_SEND);
-	rpc_enable(SEND_WRITE_ACCESS);
-	rpc_enable(NO_OBJECT_SEND);
+	grpc_enable(REQ_OBJECT_COPY);
+	grpc_enable(REQ_OBJECT_REMOVE);
+	grpc_enable(REQ_OBJECT_REMOVE_TO_MGR);
+	grpc_enable(SEND_BACK_FIRST_TOUCH);
+	grpc_enable(REQ_OBJECT_INVALID);
+	grpc_enable(INVALIDATION_ACK);
+	grpc_enable(REMOVE_ACK);
+	grpc_enable(REMOVE_ACK2);
+	grpc_enable(REMOVE_DONE);
+	grpc_enable(SEND_OWNERSHIP);
+	grpc_enable(CHANGE_OWNERSHIP_ACK);
+	grpc_enable(OBJECT_SEND);
+	grpc_enable(SEND_WRITE_ACCESS);
+	grpc_enable(NO_OBJECT_SEND);
 }
 
 /**
@@ -279,10 +279,10 @@ extern hccnodemask_t failure_vector;
  * comm transact: set_copyset
  */
 
-static void handle_set_copyset(struct rpc_desc *desc)
+static void handle_set_copyset(struct grpc_desc *desc)
 {
 	struct gdm_set *set;
-	struct rpc_desc *new_desc;
+	struct grpc_desc *new_desc;
 	struct gdm_obj *obj_entry;
 	gdm_set_id_t set_id;
 	objid_t objid;
@@ -327,13 +327,13 @@ static void handle_set_copyset(struct rpc_desc *desc)
 				/* TODO: have to check if the set is HARDLINKED */
 				if (nth_online_hccnode(objid % hcc_nb_nodes) !=
 				    hcc_node_id) {
-					struct rpc_desc *desc;
+					struct grpc_desc *desc;
 
-					desc = rpc_begin(GDM_ADVERTISE_OWNER,
+					desc = grpc_begin(GDM_ADVERTISE_OWNER,
 							 nth_online_hccnode(objid % hcc_nb_nodes));
 					grpc_pack_type(desc, set_id);
 					grpc_pack_type(desc, objid);
-					rpc_end(desc, 0);
+					grpc_end(desc, 0);
 				};
 
 			} else {
@@ -402,14 +402,14 @@ static void handle_set_copyset(struct rpc_desc *desc)
 
 	forward_rq:
 		// Forward the request
-		new_desc = rpc_begin(hccnode_next_online_in_ring(hcc_node_id),
+		new_desc = grpc_begin(hccnode_next_online_in_ring(hcc_node_id),
 				     GDM_COPYSET);
 		grpc_pack_type(new_desc, set_id);
 		grpc_pack_type(new_desc, objid);
 		grpc_pack_type(new_desc, map);
 		grpc_pack_type(new_desc, true_owner);
 		grpc_pack_type(new_desc, potential_owner);
-		rpc_end(new_desc, 0);
+		grpc_end(new_desc, 0);
 	};
 
 };
@@ -419,7 +419,7 @@ static void handle_set_copyset(struct rpc_desc *desc)
  */
 static hccnodemask_t select_sync;
 
-static void handle_select_owner(struct rpc_desc *desc)
+static void handle_select_owner(struct grpc_desc *desc)
 {
 	struct gdm_set *set;
 	struct gdm_obj *obj_entry;
@@ -440,7 +440,7 @@ static void handle_select_owner(struct rpc_desc *desc)
 
 		// forward to the next node ?
 		if (hccnode_next_online_in_ring(hcc_node_id) != sender)
-			rpc_forward(desc, hccnode_next_online_in_ring(hcc_node_id));
+			grpc_forward(desc, hccnode_next_online_in_ring(hcc_node_id));
 
 		if (!hccnodes_equal(select_sync, hccnode_online_map)) {
 			// We have to wait for another sync
@@ -476,16 +476,16 @@ static void handle_select_owner(struct rpc_desc *desc)
 
 	// TODO: optimisation: ici on peut envoyer au suivant du copyset
 	if (hccnode_next_online_in_ring(hcc_node_id) != sender) {
-		struct rpc_desc *new_desc;
+		struct grpc_desc *new_desc;
 
-		new_desc = rpc_begin(GDM_SELECT_OWNER,
+		new_desc = grpc_begin(GDM_SELECT_OWNER,
 				     hccnode_next_online_in_ring(hcc_node_id));
 		grpc_pack_type(new_desc, sender);
 		grpc_pack_type(new_desc, set_id);
 		grpc_pack_type(new_desc, objid);
 		grpc_pack_type(new_desc, copyset);
 		grpc_pack_type(new_desc, sync);
-		rpc_end(new_desc, 0);
+		grpc_end(new_desc, 0);
 
 	};
 
@@ -541,7 +541,7 @@ static int browse_failure(unsigned long objid, void *_obj_entry,
 
 	switch (OBJ_STATE(obj_entry)) {
 	case READ_COPY:{
-		struct rpc_desc *desc;
+		struct grpc_desc *desc;
 		hccnodemask_t copyset;
 		hcc_node_t unknown = -1;
 
@@ -558,14 +558,14 @@ static int browse_failure(unsigned long objid, void *_obj_entry,
 		hccnodes_clear(copyset);
 		hccnode_set(hcc_node_id, copyset);
 
-		desc = rpc_begin(GDM_COPYSET,
+		desc = grpc_begin(GDM_COPYSET,
 				 hccnode_next_online_in_ring(hcc_node_id));
 		grpc_pack_type(desc, set->id);
 		grpc_pack_type(desc, objid);
 		grpc_pack_type(desc, copyset);
 		grpc_pack_type(desc, unknown);
 		grpc_pack_type(desc, hcc_node_id);
-		rpc_end(desc, 0);
+		grpc_end(desc, 0);
 
 		break;
 	};
@@ -577,13 +577,13 @@ static int browse_failure(unsigned long objid, void *_obj_entry,
 		/* We just have to update the default probeOwner */
 
 		if (get_prob_owner(obj_entry) != hcc_node_id) {
-			struct rpc_desc *desc;
+			struct grpc_desc *desc;
 
-			desc = rpc_begin(GDM_ADVERTISE_OWNER,
+			desc = grpc_begin(GDM_ADVERTISE_OWNER,
 					 get_prob_owner(obj_entry));
 			grpc_pack_type(desc, set->id);
 			grpc_pack_type(desc, objid);
-			rpc_end(desc, 0);
+			grpc_end(desc, 0);
 		};
 
 		break;
@@ -685,7 +685,7 @@ static void gdm_set_select_owner_cb(void *_set, void *_data)
  */
 static void set_failure(hccnodemask_t * vector)
 {
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	objid_t objid = 0;
 	gdm_set_id_t set_id = 0;
 	int sync = hcc_node_id;
@@ -705,14 +705,14 @@ static void set_failure(hccnodemask_t * vector)
 	       "the recovery step and we should use read/write lock\n");
 	up (&gdm_def_ns->table_sem);
 
-	desc = rpc_begin(GDM_SELECT_OWNER,
+	desc = grpc_begin(GDM_SELECT_OWNER,
 			 hccnode_next_online_in_ring(hcc_node_id));
 	grpc_pack_type(desc, hcc_node_id);
 	grpc_pack_type(desc, set_id);
 	grpc_pack_type(desc, objid);
 	grpc_pack_type(desc, v);
 	grpc_pack_type(desc, sync);
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 };
 
@@ -753,8 +753,8 @@ int gdm_ghotplug_init(void){
 	gdm_barrier = alloc_cluster_barrier(GDM_GHOTPLUG_BARRIER);
 	BUG_ON (IS_ERR(gdm_barrier));
 
-//	rpc_register(GDM_COPYSET, handle_set_copyset, 0);
-//	rpc_register(GDM_SELECT_OWNER, handle_select_owner, 0);
+//	grpc_register(GDM_COPYSET, handle_set_copyset, 0);
+//	grpc_register(GDM_SELECT_OWNER, handle_select_owner, 0);
 
 	register_ghotplug_notifier(gdm_notification, GHOTPLUG_PRIO_GDM);
 	return 0;

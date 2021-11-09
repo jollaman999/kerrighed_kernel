@@ -24,8 +24,8 @@
 #include <hcc/hccinit.h>
 #include <linux/hcc_hashtable.h>
 
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 
 #include "rpc_internal.h"
 

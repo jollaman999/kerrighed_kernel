@@ -52,7 +52,7 @@
 #include "internal.h"
 
 #ifdef CONFIG_HCC_GMM
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #endif
 
 #define RPC_MAX_PAGES 1700

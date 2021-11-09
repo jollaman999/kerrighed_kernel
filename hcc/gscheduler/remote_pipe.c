@@ -16,8 +16,8 @@
 #include <hcc/gscheduler/pipe.h>
 #include <hcc/gscheduler/global_config.h>
 #include <hcc/gscheduler/remote_pipe.h>
-#include <net/grpc/rpc.h>
-#include <net/grpc/rpcid.h>
+#include <net/grpc/grpc.h>
+#include <net/grpc/grpcid.h>
 
 static void handle_pipe_get_remote_value(struct rpc_desc *desc)
 {

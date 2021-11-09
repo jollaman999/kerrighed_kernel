@@ -6,7 +6,7 @@
 
 #include <linux/mm.h>
 
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm_tree.h>
 #include <gdm/gdm_types.h>
 #include <gdm/object.h>
@@ -400,7 +400,7 @@ static void gdm_tree_for_each_obj_entry(struct gdm_set *set,
 
 
 
-static void gdm_tree_export (struct rpc_desc* desc, struct gdm_set *set)
+static void gdm_tree_export (struct grpc_desc* desc, struct gdm_set *set)
 {
 	struct gdm_tree *tree = set->obj_set;
 
@@ -409,7 +409,7 @@ static void gdm_tree_export (struct rpc_desc* desc, struct gdm_set *set)
 
 
 
-static void *gdm_tree_import (struct rpc_desc* desc, int *free_data)
+static void *gdm_tree_import (struct grpc_desc* desc, int *free_data)
 {
 	int *tree_type;
 

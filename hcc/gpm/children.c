@@ -19,7 +19,7 @@
 #include <hcc/task.h>
 #include <hcc/pid.h>
 #include <hcc/hccinit.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 #include <hcc/hcc_exit.h>	/* For remote zombies handling */
 #include <hcc/libproc.h>

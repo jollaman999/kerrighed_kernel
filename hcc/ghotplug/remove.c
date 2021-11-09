@@ -23,7 +23,7 @@
 #include <tools/workqueue.h>
 #include <tools/hcc_syscalls.h>
 #include <tools/hcc_services.h>
-#include <rpc/rpc.h>
+#include <rpc/grpc.h>
 
 #include "ghotplug_internal.h"
 

@@ -15,7 +15,7 @@
 #include <hcc/hccflags.h>
 #include <linux/cluster_barrier.h>
 #include <linux/unique_id.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #ifdef CONFIG_HCC_PROC
 #include <hcc/pid.h>
 #endif

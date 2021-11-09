@@ -17,8 +17,8 @@
 #include <linux/shm.h>
 #include <linux/syscalls.h>
 #include <linux/unique_id.h>
-#include <net/grpc/rpc.h>
-#include <net/grpc/rpcid.h>
+#include <net/grpc/grpc.h>
+#include <net/grpc/grpcid.h>
 #include <gdm/gdm.h>
 #include <hcc/namespace.h>
 #include <hcc/ghost.h>

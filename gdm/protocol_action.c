@@ -18,8 +18,8 @@
 #include <gdm/gdm.h>
 #include <gdm/object_server.h>
 #include "protocol_action.h"
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 
 int delayed_transfer_write_access (hcc_node_t dest_node, void *msg);
 
@@ -44,7 +44,7 @@ struct kmem_cache *gdm_da_cachep;
  *  @param  objid       Id of the concerned object.
  */
 static inline void send_msg_to_object_server(hcc_node_t dest,
-					     enum rpcid type,
+					     enum grpcid type,
 					     int ns_id,
 					     gdm_set_id_t set_id,
 					     objid_t objid,
@@ -63,7 +63,7 @@ static inline void send_msg_to_object_server(hcc_node_t dest,
 	msg_to_server.new_owner = new_owner;
 	msg_to_server.reply_node = hcc_node_id;
 
-	rpc_async(type, dest, &msg_to_server, sizeof(msg_server_t));
+	grpc_async(type, dest, &msg_to_server, sizeof(msg_server_t));
 }
 
 
@@ -86,7 +86,7 @@ static inline int send_msg_to_object_receiver(hcc_node_t dest,
 					      long req_id)
 {
 	msg_object_receiver_t object_send_msg;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err = 0;
 
 	BUG_ON(dest < 0 || dest > HCC_MAX_NODES);
@@ -98,7 +98,7 @@ static inline int send_msg_to_object_receiver(hcc_node_t dest,
 	object_send_msg.object_state = object_state;
 	object_send_msg.flags = flags;
 
-	desc = rpc_begin(OBJECT_SEND, dest);
+	desc = grpc_begin(OBJECT_SEND, dest);
 	if (!desc)
 		OOM;
 
@@ -122,7 +122,7 @@ static inline int send_msg_to_object_receiver(hcc_node_t dest,
 	if (flags & GDM_SYNC_OBJECT)
 		grpc_unpack_type (desc, err);
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	if (flags & GDM_REMOVE_ON_ACK)
 		destroy_gdm_obj_entry(set, obj_entry, objid, 0);
@@ -131,7 +131,7 @@ out:
 	return err;
 
 err_cancel:
-	rpc_cancel(desc);
+	grpc_cancel(desc);
 	goto out;
 }
 
@@ -208,7 +208,7 @@ void request_copies_invalidation(struct gdm_set * set,
 	hccnode_clear(hcc_node_id, nodes);
 	hccnode_clear(sender, nodes);
 
-	rpc_async_m(REQ_OBJECT_INVALID, &nodes,
+	grpc_async_m(REQ_OBJECT_INVALID, &nodes,
 		    &msgToServer, sizeof(msg_server_t));
 
 	return;
@@ -254,7 +254,7 @@ int request_copies_remove(struct gdm_set * set,
 		msgToServer.objid = objid;
 		msgToServer.reply_node = sender;
 
-		rpc_async_m(REQ_OBJECT_REMOVE, RMSET(obj_entry),
+		grpc_async_m(REQ_OBJECT_REMOVE, RMSET(obj_entry),
 			    &msgToServer, sizeof(msg_server_t));
 
 		need_wait = 1;
@@ -468,7 +468,7 @@ void transfer_write_access_and_unlock(struct gdm_set * set,
 		return;
 	}
 
-	rpc_async(SEND_WRITE_ACCESS, dest_node, &msg, sizeof(msg_injection_t));
+	grpc_async(SEND_WRITE_ACCESS, dest_node, &msg, sizeof(msg_injection_t));
 
 	gdm_invalidate_local_object_and_unlock(obj_entry, set, objid,
 						INV_COPY);
@@ -568,7 +568,7 @@ void send_remove_ack2(struct gdm_set * set,
 	msg_to_server.objid = objid;
 	msg_to_server.req_id = 0;
 
-	rpc_async(REMOVE_ACK2, dest_node,
+	grpc_async(REMOVE_ACK2, dest_node,
 		  &msg_to_server, sizeof(msg_server_t));
 }
 
@@ -597,7 +597,7 @@ void send_remove_object_done(struct gdm_set * set,
 
 	DUP2_SET(rmset, &msg.rmset);
 
-	rpc_async(REMOVE_DONE, dest_node, &msg, sizeof(rm_done_msg_server_t));
+	grpc_async(REMOVE_DONE, dest_node, &msg, sizeof(rm_done_msg_server_t));
 }
 
 
@@ -708,7 +708,7 @@ void send_back_object_first_touch(struct gdm_set * set,
 	msgToServer.reply_node = hcc_node_id;
 	msgToServer.flags = flags;
 
-	rpc_async(req_type, dest_node,
+	grpc_async(req_type, dest_node,
 		  &msgToServer, sizeof(msg_server_t));
 
 	change_prob_owner(obj_entry, dest_node);
@@ -736,7 +736,7 @@ void request_change_prob_owner(struct gdm_set * set,
 	msg_to_server.objid = objid;
 	msg_to_server.new_owner = new_owner;
 
-	rpc_sync(GDM_CHANGE_PROB_OWNER, dest_node, &msg_to_server,
+	grpc_sync(GDM_CHANGE_PROB_OWNER, dest_node, &msg_to_server,
 		 sizeof(msg_server_t));
 }
 
@@ -767,7 +767,7 @@ void send_change_ownership_req(struct gdm_set * set,
 	changeOwnerMsg.reply_node = hcc_node_id;
 	changeOwnerMsg.owner_info = *master_info;
 
-	rpc_async(SEND_OWNERSHIP, dest_node,
+	grpc_async(SEND_OWNERSHIP, dest_node,
 		  &changeOwnerMsg, sizeof(msg_injection_t));
 
 	gdm_change_obj_state(set, obj_entry, objid, WAIT_CHG_OWN_ACK);
@@ -796,7 +796,7 @@ void ack_change_object_owner(struct gdm_set * set,
 	obj_entry->master_obj = *master_info;
 	gdm_change_obj_state(set, obj_entry, objid, READ_OWNER);
 
-	rpc_async(CHANGE_OWNERSHIP_ACK, dest_node,
+	grpc_async(CHANGE_OWNERSHIP_ACK, dest_node,
 		  &msgToServer, sizeof (msg_server_t));
 }
 

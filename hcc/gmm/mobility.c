@@ -28,7 +28,7 @@
 #include <asm/pgtable.h>
 #include <hcc/hccsyms.h>
 #include <hcc/hccinit.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 #include <hcc/file_stat.h>
 #include <hcc/ghost.h>

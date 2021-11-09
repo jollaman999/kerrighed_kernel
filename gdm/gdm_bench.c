@@ -4,7 +4,7 @@
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 
 #define NR_TEST_LOOPS 16
@@ -346,7 +346,7 @@ int do_bench (char *buff, int size, int master_node)
 
 
 
-int handle_gdm_bench (struct rpc_desc* desc, void *_msg, size_t size)
+int handle_gdm_bench (struct grpc_desc* desc, void *_msg, size_t size)
 {
 	int *master_node = _msg;
 
@@ -371,7 +371,7 @@ int gdm_bench(char *buff, int size)
 	for (i = master_node + 1; i <= master_node + 3; i++)
 		hccnode_set(i, nodes);
 
-	rpc_async_m(GDM_BENCH, &nodes, &master_node, sizeof(int));
+	grpc_async_m(GDM_BENCH, &nodes, &master_node, sizeof(int));
 
 	return do_bench(buff, size, master_node);
 }
@@ -380,13 +380,13 @@ int gdm_bench(char *buff, int size)
 
 void init_gdm_test (void)
 {
-	struct rpc_synchro* test_server;
+	struct grpc_synchro* test_server;
 
-	test_server = rpc_synchro_new(1, "gdm test", 0);
+	test_server = grpc_synchro_new(1, "gdm test", 0);
 
 	register_io_linker (GDM_TEST_LINKER, &gdm_test_linker);
 
-	__rpc_register(GDM_BENCH,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(GDM_BENCH,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       test_server, handle_gdm_bench, 0);
 }

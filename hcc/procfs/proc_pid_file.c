@@ -23,8 +23,8 @@
 #include <hcc/pid.h>
 #include <hcc/remote_cred.h>
 
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include <hcc/task.h>
 #include "proc_pid.h"
 

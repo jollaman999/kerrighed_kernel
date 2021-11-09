@@ -18,8 +18,8 @@
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>
 #include <hcc/physical_fs.h>
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 #include "../pid.h"
 #include "../restart.h"

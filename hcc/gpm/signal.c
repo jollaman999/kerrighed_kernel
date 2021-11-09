@@ -30,7 +30,7 @@
 #include <hcc/action.h>
 #include <hcc/ghost.h>
 #include <hcc/ghost_helpers.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 
 struct signal_struct_gdm_object {

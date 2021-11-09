@@ -42,8 +42,8 @@
 #include <hcc/action.h>
 #include <hcc/migration.h>
 #include <hcc/ghotplug.h>
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include "remote_clone.h"
 #include "network_ghost.h"
 #include "gpm_internal.h"

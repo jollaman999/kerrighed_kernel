@@ -12,8 +12,8 @@
 #include <linux/proc_fs.h>
 #include <linux/binfmts.h>
 #include <asm/mmu_context.h>
-#include <net/grpc/rpc.h>
-#include <net/grpc/rpcid.h>
+#include <net/grpc/grpc.h>
+#include <net/grpc/grpcid.h>
 #include <hcc/hccinit.h>
 #include <asm/uaccess.h>
 #include <hcc/hcc_services.h>

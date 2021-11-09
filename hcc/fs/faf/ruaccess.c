@@ -17,7 +17,7 @@
 #include <linux/errno.h>
 #include <hcc/faf.h>
 #include <hcc/ghotplug.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 
 
 enum ruaccess_op {

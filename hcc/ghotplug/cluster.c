@@ -35,7 +35,7 @@
 #include <hcc/workqueue.h>
 #include <hcc/hccnodemask.h>
 #include <hcc/namespace.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #ifdef CONFIG_HCC_GDM
 #include <gdm/gdm.h>
 #endif

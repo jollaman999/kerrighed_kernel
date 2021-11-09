@@ -14,8 +14,8 @@
 #include <linux/module.h>
 
 #include <gdm/gdm.h>
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include <gdm/object_server.h>
 #include <gdm/object.h>
 #include <gdm/io_linker.h>

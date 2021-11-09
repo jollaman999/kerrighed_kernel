@@ -18,8 +18,8 @@
 #include <linux/unique_id.h>
 
 #include "process.h"
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 
 #include <gdm/gdm.h>
 #include <gdm/gdm_set.h>
@@ -274,7 +274,7 @@ int find_gdm_set_remotely(struct gdm_set *gdm_set)
 	msg_gdm_set_t *msg;
 	int msg_size;
 	int err = -ENOMEM;
-	struct rpc_desc* desc;
+	struct grpc_desc* desc;
 	struct gdm_set_ops *set_ops = NULL;
 	void *tree_init_data = NULL;
 	int free_init_data = 1;
@@ -284,7 +284,7 @@ int find_gdm_set_remotely(struct gdm_set *gdm_set)
 	gdm_id.set_id = gdm_set->id;
 	gdm_id.ns_id = gdm_set->ns->id;
 
-	desc = rpc_begin(REQ_GDM_SET_LOOKUP, gdm_set_mgr_node_id);
+	desc = grpc_begin(REQ_GDM_SET_LOOKUP, gdm_set_mgr_node_id);
 	grpc_pack_type(desc, gdm_id);
 
 	msg_size = sizeof(msg_gdm_set_t) + MAX_PRIVATE_DATA_SIZE;
@@ -300,7 +300,7 @@ int find_gdm_set_remotely(struct gdm_set *gdm_set)
 	tree_init_data = set_ops->import(desc, &free_init_data);
 	}
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	if (msg->gdm_set_id == GDM_SET_UNUSED) {
 		err = -ENOENT;
@@ -556,7 +556,7 @@ void unfreeze_gdm(void)
  *  @param sender    Identifier of the remote requesting machine.
  *  @param msg       Identifier of the gdm set to lookup for.
  */
-int handle_req_gdm_set_lookup(struct rpc_desc* desc,
+int handle_req_gdm_set_lookup(struct grpc_desc* desc,
 			       void *_msg, size_t size)
 {
 	gdm_id_msg_t gdm_id = *((gdm_id_msg_t *) _msg);
@@ -564,7 +564,7 @@ int handle_req_gdm_set_lookup(struct rpc_desc* desc,
 	msg_gdm_set_t *msg;
 	int msg_size = sizeof(msg_gdm_set_t);
 
-	BUG_ON(!hccnode_online(rpc_desc_get_client(desc)));
+	BUG_ON(!hccnode_online(grpc_desc_get_client(desc)));
 
 	gdm_set = local_get_gdm_set(gdm_id.ns_id, gdm_id.set_id);
 
@@ -644,9 +644,9 @@ int __handle_req_gdm_set_destroy(hcc_node_t sender,
 	return 0;
 }
 
-int handle_req_gdm_set_destroy(struct rpc_desc* desc,
+int handle_req_gdm_set_destroy(struct grpc_desc* desc,
 				void *msg, size_t size){
-	return __handle_req_gdm_set_destroy(rpc_desc_get_client(desc), msg);
+	return __handle_req_gdm_set_destroy(grpc_desc_get_client(desc), msg);
 }
 
 /*****************************************************************************/
@@ -665,7 +665,7 @@ int _destroy_gdm_set(struct gdm_set * gdm_set)
 	gdm_id.set_id = gdm_set->id;
 	gdm_id.ns_id = gdm_set->ns->id;
 
-	rpc_async_m(REQ_GDM_SET_DESTROY, &hccnode_online_map,
+	grpc_async_m(REQ_GDM_SET_DESTROY, &hccnode_online_map,
 		    &gdm_id, sizeof(gdm_id_msg_t));
 	return 0;
 }
@@ -712,11 +712,11 @@ void __gdm_set_destroy(void *_gdm_set,
 
 void gdm_set_init()
 {
-	struct rpc_synchro* gdm_server;
+	struct grpc_synchro* gdm_server;
 
 	printk ("GDM set init\n");
 
-	gdm_server = rpc_synchro_new(1, "gdm server", 0);
+	gdm_server = grpc_synchro_new(1, "gdm server", 0);
 
 	gdm_set_cachep = KMEM_CACHE(gdm_set, SLAB_PANIC);
 
@@ -724,12 +724,12 @@ void gdm_set_init()
 
 	gdm_tree_lvl_cachep = KMEM_CACHE(gdm_tree_lvl, SLAB_PANIC);
 
-	__rpc_register(REQ_GDM_SET_LOOKUP,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(REQ_GDM_SET_LOOKUP,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       gdm_server, handle_req_gdm_set_lookup, 0);
 
-	__rpc_register(REQ_GDM_SET_DESTROY,
-		       RPC_TARGET_NODE, RPC_HANDLER_KTHREAD_VOID,
+	__grpc_register(REQ_GDM_SET_DESTROY,
+		       GRPC_TARGET_NODE, GRPC_HANDLER_KTHREAD_VOID,
 		       gdm_server, handle_req_gdm_set_destroy, 0);
 
 	printk ("GDM set init : done\n");

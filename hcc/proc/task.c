@@ -26,7 +26,7 @@
 #include <hcc/task.h>
 #include <hcc/pid.h>
 
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpc.h>
 #include <hcc/libproc.h>
 #include <gdm/gdm.h>
 

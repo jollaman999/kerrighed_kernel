@@ -14,8 +14,8 @@
 #include <linux/module.h>
 #include <hcc/sys/types.h>
 
-#include <net/grpc/rpc.h>
-#include <net/grpc/rpcid.h>
+#include <net/grpc/grpc.h>
+#include <net/grpc/grpcid.h>
 #include <gdm/gdm.h>
 #include <hcc/ghotplug.h>
 #include <hcc/dynamic_node_info_linker.h>

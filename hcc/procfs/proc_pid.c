@@ -15,8 +15,8 @@
 #include <hcc/task.h>
 #include <hcc/hccinit.h>
 
-#include <net/grpc/rpcid.h>
-#include <net/grpc/rpc.h>
+#include <net/grpc/grpcid.h>
+#include <net/grpc/grpc.h>
 #include <hcc/task.h>
 #include <hcc/pid.h>
 #include "proc_pid.h"
