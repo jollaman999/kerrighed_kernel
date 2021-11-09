@@ -26,7 +26,7 @@ static void grpc_remove(hccnodemask_t * vector)
 #ifdef CONFIG_HCC
 static int grpc_notification(struct notifier_block *nb, ghotplug_event_t event,
 			    void *data){
-	struct hotplug_node_set *node_set = data;
+	struct ghotplug_node_set *node_set = data;
 	
 	switch(event){
 	case GHOTPLUG_NOTIFY_REMOVE:
@@ -40,12 +40,12 @@ static int grpc_notification(struct notifier_block *nb, ghotplug_event_t event,
 };
 #endif
 
-int grpc_hotplug_init(void){
+int grpc_ghotplug_init(void){
 #ifdef CONFIG_HCC
 	register_ghotplug_notifier(grpc_notification, GHOTPLUG_PRIO_GRPC);
 #endif
 	return 0;
 };
 
-void grpc_hotplug_cleanup(void){
+void grpc_ghotplug_cleanup(void){
 };
