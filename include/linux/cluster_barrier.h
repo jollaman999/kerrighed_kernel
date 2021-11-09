@@ -10,7 +10,7 @@
 #include <linux/sched.h>
 enum static_cluster_barrier_id {
 	CLUSTER_BARRIER_NONE = 0,
-	GDM_HOTPLUG_BARRIER,
+	GDM_GHOTPLUG_BARRIER,
 	GSCHED_GHOTPLUG_BARRIER,
 	CLUSTER_BARRIER_MAX,
 };
