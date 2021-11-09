@@ -47,8 +47,8 @@ static inline int nr_def_groups(struct config_group *def_groups[])
 
 /* Subsystems initializers / cleaners */
 
-int hcc_sched_info_start(void);
-void hcc_sched_info_exit(void);
+int hcc_gsched_info_start(void);
+void hcc_gsched_info_exit(void);
 
 int global_lock_start(void);
 void global_lock_exit(void);

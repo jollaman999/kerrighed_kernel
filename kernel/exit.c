@@ -234,7 +234,7 @@ void release_task(struct task_struct * p)
 #endif /* CONFIG_HCC_GPM */
 repeat:
 #ifdef CONFIG_HCC_GSCHED
-	hcc_sched_info_free(p);
+	hcc_gsched_info_free(p);
 #endif
 #ifdef CONFIG_HCC_PROC
 	hcc_release_task(p);

@@ -19,7 +19,7 @@
 #endif
 #include <hcc/gscheduler/info.h>
 
-struct hcc_sched_info {
+struct hcc_gsched_info {
 	struct list_head modules;
 	struct list_head list;
 	struct task_struct *task;
@@ -36,9 +36,9 @@ static DEFINE_SPINLOCK(modules_lock);
 static u64 version;
 
 static
-struct hcc_sched_module_info_type *module_info_type_get(const char *name)
+struct hcc_gsched_module_info_type *module_info_type_get(const char *name)
 {
-	struct hcc_sched_module_info_type *type;
+	struct hcc_gsched_module_info_type *type;
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(type, &modules, list)
@@ -52,20 +52,20 @@ struct hcc_sched_module_info_type *module_info_type_get(const char *name)
 	return NULL;
 }
 
-static void __add_module_info(struct hcc_sched_info *info,
-			      struct hcc_sched_module_info *mod_info,
+static void __add_module_info(struct hcc_gsched_info *info,
+			      struct hcc_gsched_module_info *mod_info,
 			      struct list_head *next,
-			      struct hcc_sched_module_info_type *type)
+			      struct hcc_gsched_module_info_type *type)
 {
 	mod_info->type = type;
 	list_add(&mod_info->instance_list, &type->instance_head);
 	list_add_tail_rcu(&mod_info->info_list, next);
 }
 
-static void add_missing_mod_info(struct hcc_sched_info *info,
-				 struct hcc_sched_module_info_type *type)
+static void add_missing_mod_info(struct hcc_gsched_info *info,
+				 struct hcc_gsched_module_info_type *type)
 {
-	struct hcc_sched_module_info *mod_info, *new_mod_info;
+	struct hcc_gsched_module_info *mod_info, *new_mod_info;
 	struct list_head *at;
 	int ret;
 
@@ -96,11 +96,11 @@ static void add_missing_mod_info(struct hcc_sched_info *info,
 	}
 }
 
-int hcc_sched_module_info_register(struct hcc_sched_module_info_type *type)
+int hcc_gsched_module_info_register(struct hcc_gsched_module_info_type *type)
 {
 	struct list_head *where;
-	struct hcc_sched_module_info_type *pos;
-	struct hcc_sched_info *info;
+	struct hcc_gsched_module_info_type *pos;
+	struct hcc_gsched_info *info;
 	unsigned long flags;
 
 	if (!strlen(type->name))
@@ -111,7 +111,7 @@ int hcc_sched_module_info_register(struct hcc_sched_module_info_type *type)
 	mutex_lock(&sched_info_list_mutex);
 	spin_lock_irqsave(&modules_lock, flags);
 	/*
-	 * Lexicographically sort the list so that import_hcc_sched_info does
+	 * Lexicographically sort the list so that import_hcc_gsched_info does
 	 * not need to do a complex sort of imported module infos
 	 */
 	where = &modules;
@@ -123,7 +123,7 @@ int hcc_sched_module_info_register(struct hcc_sched_module_info_type *type)
 	spin_unlock_irqrestore(&modules_lock, flags);
 
 	/*
-	 * Matches smp_read_barrier_depends() in hcc_sched_info_copy(), which
+	 * Matches smp_read_barrier_depends() in hcc_gsched_info_copy(), which
 	 * parses the modules list with RCU lock only.
 	 * list_add_tail_rcu() does not ensure that the new module is seen in
 	 * the list before version is incremented.
@@ -139,15 +139,15 @@ int hcc_sched_module_info_register(struct hcc_sched_module_info_type *type)
 
 	return 0;
 }
-EXPORT_SYMBOL(hcc_sched_module_info_register);
+EXPORT_SYMBOL(hcc_gsched_module_info_register);
 
 /*
  * must only be called at module unloading (See comment in
- * hcc_sched_info_copy)
+ * hcc_gsched_info_copy)
  */
-void hcc_sched_module_info_unregister(struct hcc_sched_module_info_type *type)
+void hcc_gsched_module_info_unregister(struct hcc_gsched_module_info_type *type)
 {
-	struct hcc_sched_module_info *mod_info, *tmp;
+	struct hcc_gsched_module_info *mod_info, *tmp;
 	unsigned long flags;
 
 	spin_lock_irqsave(&modules_lock, flags);
@@ -170,17 +170,17 @@ void hcc_sched_module_info_unregister(struct hcc_sched_module_info_type *type)
 		type->free(mod_info);
 	}
 }
-EXPORT_SYMBOL(hcc_sched_module_info_unregister);
+EXPORT_SYMBOL(hcc_gsched_module_info_unregister);
 
 /* Must be called under rcu_read_lock() */
-struct hcc_sched_module_info *
-hcc_sched_module_info_get(struct task_struct *task,
-			  struct hcc_sched_module_info_type *type)
+struct hcc_gsched_module_info *
+hcc_gsched_module_info_get(struct task_struct *task,
+			  struct hcc_gsched_module_info_type *type)
 {
-	struct hcc_sched_info *info;
-	struct hcc_sched_module_info *mod_info;
+	struct hcc_gsched_info *info;
+	struct hcc_gsched_module_info *mod_info;
 
-	info = rcu_dereference(task->hcc_sched);
+	info = rcu_dereference(task->hcc_gsched);
 	if (!info)
 		return NULL;
 	list_for_each_entry_rcu(mod_info, &info->modules, info_list)
@@ -188,12 +188,12 @@ hcc_sched_module_info_get(struct task_struct *task,
 			return mod_info;
 	return NULL;
 }
-EXPORT_SYMBOL(hcc_sched_module_info_get);
+EXPORT_SYMBOL(hcc_gsched_module_info_get);
 
-static struct hcc_sched_info *alloc_sched_info(struct task_struct *task,
+static struct hcc_gsched_info *alloc_sched_info(struct task_struct *task,
 					       int gfp_flags)
 {
-	struct hcc_sched_info *info;
+	struct hcc_gsched_info *info;
 
 	info = kmem_cache_alloc(sched_info_cachep, gfp_flags);
 	if (info) {
@@ -210,11 +210,11 @@ static struct hcc_sched_info *alloc_sched_info(struct task_struct *task,
  * reference on the returned mod_info's module.
  * Caller must release this reference after the last call to next_mod_info().
  */
-static struct hcc_sched_module_info *
-next_mod_info(struct hcc_sched_info *info,
-	      struct hcc_sched_module_info *mod_info)
+static struct hcc_gsched_module_info *
+next_mod_info(struct hcc_gsched_info *info,
+	      struct hcc_gsched_module_info *mod_info)
 {
-	struct hcc_sched_module_info *next_info;
+	struct hcc_gsched_module_info *next_info;
 	struct list_head *pos;
 
 	if (!info)
@@ -233,7 +233,7 @@ next_mod_info(struct hcc_sched_info *info,
 
 	list_for_each_continue_rcu(pos, &info->modules) {
 		next_info = list_entry(pos,
-				       struct hcc_sched_module_info,
+				       struct hcc_gsched_module_info,
 				       info_list);
 		if (try_module_get(next_info->type->owner))
 			return next_info;
@@ -242,9 +242,9 @@ next_mod_info(struct hcc_sched_info *info,
 	return NULL;
 }
 
-static void add_module_info(struct hcc_sched_info *info,
-			    struct hcc_sched_module_info *mod_info,
-			    struct hcc_sched_module_info_type *type)
+static void add_module_info(struct hcc_gsched_info *info,
+			    struct hcc_gsched_module_info *mod_info,
+			    struct hcc_gsched_module_info_type *type)
 {
 	spin_lock_irq(&modules_lock);
 	__add_module_info(info, mod_info, &info->modules, type);
@@ -252,15 +252,15 @@ static void add_module_info(struct hcc_sched_info *info,
 }
 
 /*
- * Algorithm similar to hcc_sched_info_copy()'s normal path, with only new
+ * Algorithm similar to hcc_gsched_info_copy()'s normal path, with only new
  * module infos.
  */
-static void add_missing_mod_infos(struct hcc_sched_info *info)
+static void add_missing_mod_infos(struct hcc_gsched_info *info)
 {
 	struct task_struct *task;
 	struct list_head *pos;
-	struct hcc_sched_module_info_type *type;
-	struct hcc_sched_module_info *mod_info, *new_mod_info;
+	struct hcc_gsched_module_info_type *type;
+	struct hcc_gsched_module_info *mod_info, *new_mod_info;
 
 	task = info->task;
 	rcu_read_lock();
@@ -268,7 +268,7 @@ static void add_missing_mod_infos(struct hcc_sched_info *info)
 	for (pos = rcu_dereference(modules.next);
 	     pos != &modules;
 	     pos = rcu_dereference(pos->next)) {
-		type = list_entry(pos, struct hcc_sched_module_info_type, list);
+		type = list_entry(pos, struct hcc_gsched_module_info_type, list);
 		if (!try_module_get(type->owner))
 			continue;
 		rcu_read_unlock();
@@ -297,7 +297,7 @@ static void add_missing_mod_infos(struct hcc_sched_info *info)
 
 }
 
-static void complete_and_commit_sched_info(struct hcc_sched_info *info,
+static void complete_and_commit_sched_info(struct hcc_gsched_info *info,
 					   u64 start_version)
 {
 	mutex_lock(&sched_info_list_mutex);
@@ -306,29 +306,29 @@ static void complete_and_commit_sched_info(struct hcc_sched_info *info,
 	list_add(&info->list, &sched_info_head);
 	mutex_unlock(&sched_info_list_mutex);
 
-	rcu_assign_pointer(info->task->hcc_sched, info);
+	rcu_assign_pointer(info->task->hcc_gsched, info);
 }
 
-int hcc_sched_info_copy(struct task_struct *task)
+int hcc_gsched_info_copy(struct task_struct *task)
 {
-	struct hcc_sched_info *info;
-	struct hcc_sched_info *new_info;
+	struct hcc_gsched_info *info;
+	struct hcc_gsched_info *new_info;
 	struct list_head *pos;
-	struct hcc_sched_module_info_type *type;
-	struct hcc_sched_module_info *mod_info, *new_mod_info;
+	struct hcc_gsched_module_info_type *type;
+	struct hcc_gsched_module_info *mod_info, *new_mod_info;
 	u64 start_version;
 
-	rcu_assign_pointer(task->hcc_sched, NULL);
+	rcu_assign_pointer(task->hcc_gsched, NULL);
 
 	if (!task->nsproxy->hcc_ns)
 		return 0;
 
 	if (hcc_current) {
-		rcu_assign_pointer(task->hcc_sched, hcc_current->hcc_sched);
+		rcu_assign_pointer(task->hcc_gsched, hcc_current->hcc_gsched);
 		return 0;
 	}
 
-	/* Kernel threads do not need hcc_sched_info */
+	/* Kernel threads do not need hcc_gsched_info */
 	/*
 	 * This test is not really clean, since at this stage task->mm points to
 	 * the mm of the caller (parent or sister task), but we only want to
@@ -343,7 +343,7 @@ int hcc_sched_info_copy(struct task_struct *task)
 
 	start_version = version;
 	/*
-	 * Matches smp_wmb() in hcc_sched_module_info_register()
+	 * Matches smp_wmb() in hcc_gsched_module_info_register()
 	 * Ensures that version is not seen incremented before the new module
 	 * responsible for it is seen added to the modules list.
 	 */
@@ -356,7 +356,7 @@ int hcc_sched_info_copy(struct task_struct *task)
 	 * Both lists are sorted in the same order of types, and all current's
 	 * modules have their type in the registered modules list. This is
 	 * guaranteed as long as no module calls
-	 * hcc_sched_module_info_unregister() outside module
+	 * hcc_gsched_module_info_unregister() outside module
 	 * unloading. Conversely, some types may not have an info for
 	 * current.
 	 */
@@ -368,7 +368,7 @@ int hcc_sched_info_copy(struct task_struct *task)
 	 * RCU is locked.
 	 */
 	rcu_read_lock();
-	info = rcu_dereference(task->hcc_sched);
+	info = rcu_dereference(task->hcc_gsched);
 	mod_info = next_mod_info(info, NULL);
 	/*
 	 * We do not use list_for_each(_entry)_rcu because we must avoid any
@@ -378,7 +378,7 @@ int hcc_sched_info_copy(struct task_struct *task)
 	for (pos = rcu_dereference(modules.next);
 	     pos != &modules;
 	     pos = rcu_dereference(pos->next)) {
-		type = list_entry(pos, struct hcc_sched_module_info_type, list);
+		type = list_entry(pos, struct hcc_gsched_module_info_type, list);
 		if (!try_module_get(type->owner))
 			continue;
 		/*
@@ -413,10 +413,10 @@ int hcc_sched_info_copy(struct task_struct *task)
 	return 0;
 }
 
-static void free_sched_info(struct hcc_sched_info *info)
+static void free_sched_info(struct hcc_gsched_info *info)
 {
-	struct hcc_sched_module_info *mod_info, *tmp;
-	struct hcc_sched_module_info_type *type;
+	struct hcc_gsched_module_info *mod_info, *tmp;
+	struct hcc_gsched_module_info_type *type;
 	unsigned long flags;
 
 	/* Prevent an unloading module type from changing the list */
@@ -435,14 +435,14 @@ static void free_sched_info(struct hcc_sched_info *info)
 
 static void delayed_free_sched_info(struct rcu_head *rhp)
 {
-	struct hcc_sched_info *info =
-		container_of(rhp, struct hcc_sched_info, rcu);
+	struct hcc_gsched_info *info =
+		container_of(rhp, struct hcc_gsched_info, rcu);
 	free_sched_info(info);
 }
 
-void hcc_sched_info_free(struct task_struct *task)
+void hcc_gsched_info_free(struct task_struct *task)
 {
-	struct hcc_sched_info *info = rcu_dereference(task->hcc_sched);
+	struct hcc_gsched_info *info = rcu_dereference(task->hcc_gsched);
 
 #ifdef CONFIG_HCC_GPM
 	if (hcc_current)
@@ -455,25 +455,25 @@ void hcc_sched_info_free(struct task_struct *task)
 	mutex_lock(&sched_info_list_mutex);
 	list_del(&info->list);
 	mutex_unlock(&sched_info_list_mutex);
-	rcu_assign_pointer(task->hcc_sched, NULL);
+	rcu_assign_pointer(task->hcc_gsched, NULL);
 	call_rcu(&info->rcu, delayed_free_sched_info);
 }
 
 #ifdef CONFIG_HCC_GPM
 
-int export_hcc_sched_info(struct gpm_action *action, ghost_t *ghost,
+int export_hcc_gsched_info(struct gpm_action *action, ghost_t *ghost,
 			  struct task_struct *task)
 {
-	struct hcc_sched_info *info;
-	struct hcc_sched_module_info *mod_info;
-	struct hcc_sched_module_info_type *type;
+	struct hcc_gsched_info *info;
+	struct hcc_gsched_module_info *mod_info;
+	struct hcc_gsched_module_info_type *type;
 	struct list_head *mods;
 	struct list_head *pos;
 	size_t type_name_len;
 	int err;
 
 	rcu_read_lock();
-	info = rcu_dereference(task->hcc_sched);
+	info = rcu_dereference(task->hcc_gsched);
 	if (!info)
 		goto end_of_list;
 	/*
@@ -523,12 +523,12 @@ err_module:
 	goto out;
 }
 
-int import_hcc_sched_info(struct gpm_action *action, ghost_t *ghost,
+int import_hcc_gsched_info(struct gpm_action *action, ghost_t *ghost,
 			  struct task_struct *task)
 {
-	struct hcc_sched_info *info;
-	struct hcc_sched_module_info_type *type;
-	struct hcc_sched_module_info *mod_info;
+	struct hcc_gsched_info *info;
+	struct hcc_gsched_module_info_type *type;
+	struct hcc_gsched_module_info *mod_info;
 	size_t type_name_len;
 	size_t max_type_name_len = 0;
 	char *type_name = NULL;
@@ -584,27 +584,27 @@ int import_hcc_sched_info(struct gpm_action *action, ghost_t *ghost,
 	return err;
 }
 
-void post_import_hcc_sched_info(struct task_struct *task)
+void post_import_hcc_gsched_info(struct task_struct *task)
 {
 	mutex_lock(&sched_info_list_mutex);
-	task->hcc_sched->task = task;
+	task->hcc_gsched->task = task;
 	mutex_unlock(&sched_info_list_mutex);
 }
 
-void unimport_hcc_sched_info(struct task_struct *task)
+void unimport_hcc_gsched_info(struct task_struct *task)
 {
-	hcc_sched_info_free(task);
+	hcc_gsched_info_free(task);
 }
 
 #endif /* CONFIG_HCC_GPM */
 
-int hcc_sched_info_start(void)
+int hcc_gsched_info_start(void)
 {
-	sched_info_cachep = KMEM_CACHE(hcc_sched_info, SLAB_PANIC);
+	sched_info_cachep = KMEM_CACHE(hcc_gsched_info, SLAB_PANIC);
 
 	return 0;
 }
 
-void hcc_sched_info_exit(void)
+void hcc_gsched_info_exit(void)
 {
 }

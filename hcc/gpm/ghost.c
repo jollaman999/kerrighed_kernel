@@ -507,7 +507,7 @@ static int export_task(struct gpm_action *action,
 		GOTO_ERROR;
 
 #ifdef CONFIG_HCC_GSCHED
-	r = export_hcc_sched_info(action, ghost, task);
+	r = export_hcc_gsched_info(action, ghost, task);
 	if (r)
 		GOTO_ERROR;
 #endif
@@ -834,7 +834,7 @@ static void unimport_task(struct gpm_action *action,
 #endif
 	unimport_sched_info(ghost_task);
 #ifdef CONFIG_HCC_GSCHED
-	unimport_hcc_sched_info(ghost_task);
+	unimport_hcc_gsched_info(ghost_task);
 #endif
 	unimport_group_leader(ghost_task);
 	unimport_pids(ghost_task);
@@ -1506,9 +1506,9 @@ static struct task_struct *import_task(struct gpm_action *action,
 		goto err_group_leader;
 
 #ifdef CONFIG_HCC_GSCHED
-	retval = import_hcc_sched_info(action, ghost, task);
+	retval = import_hcc_gsched_info(action, ghost, task);
 	if (retval)
-		goto err_hcc_sched_info;
+		goto err_hcc_gsched_info;
 #endif
 
 	retval = import_sched_info(action, ghost, task);
@@ -1647,8 +1647,8 @@ err_mm_struct:
 	unimport_sched_info(task);
 err_sched_info:
 #ifdef CONFIG_HCC_GSCHED
-	unimport_hcc_sched_info(task);
-err_hcc_sched_info:
+	unimport_hcc_gsched_info(task);
+err_hcc_gsched_info:
 #endif
 	unimport_group_leader(task);
 err_group_leader:
@@ -1937,7 +1937,7 @@ struct task_struct *create_new_process_from_ghost(struct task_struct *tskRecv,
 	join_local_relatives(newTsk);
 
 #ifdef CONFIG_HCC_GSCHED
-	post_import_hcc_sched_info(newTsk);
+	post_import_hcc_gsched_info(newTsk);
 #endif
 
 	/* Now the process can be made world-wide visible. */

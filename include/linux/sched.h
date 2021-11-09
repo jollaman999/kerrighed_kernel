@@ -1793,7 +1793,7 @@ struct task_struct {
 	struct app_struct *application;
 #endif
 #ifdef CONFIG_HCC_GSCHED
-	struct hcc_sched_info *hcc_sched;
+	struct hcc_gsched_info *hcc_gsched;
 #endif
 
 };

@@ -90,9 +90,9 @@ int init_gscheduler(void)
 	struct config_group **defs = NULL;
 
 	/* per task informations framework */
-	ret = hcc_sched_info_start();
+	ret = hcc_gsched_info_start();
 	if (ret)
-		goto err_hcc_sched_info;
+		goto err_hcc_gsched_info;
 
 	/* initialize global mechanisms to replicate configfs operations */
 	ret = global_lock_start();
@@ -182,8 +182,8 @@ err_string_list:
 	global_lock_exit();
 err_global_lock:
 
-	hcc_sched_info_exit();
-err_hcc_sched_info:
+	hcc_gsched_info_exit();
+err_hcc_gsched_info:
 
 	return ret;
 }

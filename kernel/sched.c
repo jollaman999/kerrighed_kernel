@@ -7263,7 +7263,7 @@ out:
 }
 
 static
-int hcc_sched_setscheduler(pid_t pid, int policy, struct sched_param *param)
+int hcc_gsched_setscheduler(pid_t pid, int policy, struct sched_param *param)
 {
 	struct setscheduler_msg msg;
 
@@ -7294,7 +7294,7 @@ do_sched_setscheduler(pid_t pid, int policy, struct sched_param __user *param)
 	rcu_read_unlock();
 #ifdef CONFIG_HCC_PROC
 	if (!p)
-		retval = hcc_sched_setscheduler(pid, policy, &lparam);
+		retval = hcc_gsched_setscheduler(pid, policy, &lparam);
 #endif
 
 	return retval;
@@ -7349,7 +7349,7 @@ out:
 	return retval;
 }
 
-static int hcc_sched_getscheduler(pid_t pid)
+static int hcc_gsched_getscheduler(pid_t pid)
 {
 	return hcc_remote_syscall_simple(PROC_SCHED_GETSCHEDULER, pid,
 					 NULL, 0);
@@ -7389,7 +7389,7 @@ out:
 	return retval;
 }
 
-static int hcc_sched_getparam(pid_t pid, struct sched_param *param)
+static int hcc_gsched_getparam(pid_t pid, struct sched_param *param)
 {
 	struct rpc_desc *desc;
 	int res, r;
@@ -7448,7 +7448,7 @@ SYSCALL_DEFINE1(sched_getscheduler, pid_t, pid)
 	rcu_read_unlock();
 #ifdef CONFIG_HCC_PROC
 	if (!p)
-		retval = hcc_sched_getscheduler(pid);
+		retval = hcc_gsched_getscheduler(pid);
 #endif
 
 	return retval;
@@ -7473,7 +7473,7 @@ SYSCALL_DEFINE2(sched_getparam, pid_t, pid, struct sched_param __user *, param)
 #ifdef CONFIG_HCC_PROC
 	if (!p) {
 		read_unlock(&tasklist_lock);
-		retval = hcc_sched_getparam(pid, &lp);
+		retval = hcc_gsched_getparam(pid, &lp);
 		if (retval)
 			goto out_nounlock;
 		goto copy;

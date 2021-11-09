@@ -1651,7 +1651,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #endif
 #endif
 #ifdef CONFIG_HCC_GSCHED
-	retval = hcc_sched_info_copy(p);
+	retval = hcc_gsched_info_copy(p);
 	if (retval)
 #ifdef CONFIG_HCC_PROC
 		goto bad_fork_free_hcc_task;
@@ -1703,7 +1703,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		write_unlock_irq(&tasklist_lock);
 		retval = -ERESTARTNOINTR;
 #if defined(CONFIG_HCC_GSCHED)
-		goto bad_fork_free_hcc_sched;
+		goto bad_fork_free_hcc_gsched;
 #elif defined(CONFIG_HCC_PROC)
 		goto bad_fork_free_hcc_task;
 #else
@@ -1717,7 +1717,7 @@ struct task_struct *copy_process(unsigned long clone_flags,
 		spin_unlock(&current->sighand->siglock);
 		write_unlock_irq(&tasklist_lock);
 #ifdef CONFIG_HCC_GSCHED
-		goto bad_fork_free_hcc_sched;
+		goto bad_fork_free_hcc_gsched;
 #else
 		goto bad_fork_free_hcc_task;
 #endif
@@ -1790,8 +1790,8 @@ struct task_struct *copy_process(unsigned long clone_flags,
 	return p;
 
 #ifdef CONFIG_HCC_GSCHED
-bad_fork_free_hcc_sched:
-	hcc_sched_info_free(p);
+bad_fork_free_hcc_gsched:
+	hcc_gsched_info_free(p);
 #endif
 #ifdef CONFIG_HCC_PROC
 bad_fork_free_hcc_task:

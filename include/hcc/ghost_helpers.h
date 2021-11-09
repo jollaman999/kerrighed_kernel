@@ -302,12 +302,12 @@ void free_ghost_cgroups(struct task_struct *ghost);
 
 #ifdef CONFIG_HCC_GSCHED
 
-int export_hcc_sched_info(struct gpm_action *action, struct ghost *ghost,
+int export_hcc_gsched_info(struct gpm_action *action, struct ghost *ghost,
 			  struct task_struct *task);
-int import_hcc_sched_info(struct gpm_action *action, struct ghost *ghost,
+int import_hcc_gsched_info(struct gpm_action *action, struct ghost *ghost,
 			  struct task_struct *task);
-void post_import_hcc_sched_info(struct task_struct *task);
-void unimport_hcc_sched_info(struct task_struct *task);
+void post_import_hcc_gsched_info(struct task_struct *task);
+void unimport_hcc_gsched_info(struct task_struct *task);
 
 int export_process_set_links_start(struct gpm_action *action, ghost_t *ghost,
 				   struct task_struct *task);
