@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32-krg_xeon
-# Wed Nov 10 11:05:12 2021
+# Wed Nov 10 11:06:54 2021
 #
 CONFIG_64BIT=y
 # CONFIG_X86_32 is not set
@@ -1508,11 +1508,7 @@ CONFIG_FUSION_LOGGING=y
 #
 # See the help texts for more information.
 #
-CONFIG_FIREWIRE=m
-CONFIG_FIREWIRE_OHCI=m
-CONFIG_FIREWIRE_OHCI_DEBUG=y
-CONFIG_FIREWIRE_SBP2=m
-CONFIG_FIREWIRE_NET=m
+# CONFIG_FIREWIRE is not set
 # CONFIG_IEEE1394 is not set
 # CONFIG_I2O is not set
 # CONFIG_MACINTOSH_DRIVERS is not set
@@ -1633,12 +1629,6 @@ CONFIG_SFC_MCDI_LOGGING=y
 CONFIG_BE2NET=m
 # CONFIG_TR is not set
 # CONFIG_WLAN is not set
-# CONFIG_B43_BUSES_BCMA_AND_SSB is not set
-# CONFIG_B43_BUSES_BCMA is not set
-# CONFIG_B43_BUSES_SSB is not set
-# CONFIG_B43LEGACY_DMA_AND_PIO_MODE is not set
-# CONFIG_B43LEGACY_DMA_MODE is not set
-# CONFIG_B43LEGACY_PIO_MODE is not set
 
 #
 # Enable WiMAX (Networking options) to see the WiMAX drivers
@@ -2717,10 +2707,6 @@ CONFIG_DVB_PLUTO2=m
 # Supported SDMC DM1105 Adapters
 #
 CONFIG_DVB_DM1105=m
-CONFIG_DVB_FIREDTV=m
-CONFIG_DVB_FIREDTV_FIREWIRE=y
-# CONFIG_DVB_FIREDTV_IEEE1394 is not set
-CONFIG_DVB_FIREDTV_INPUT=y
 
 #
 # Supported Earthsoft PT1 Adapters
@@ -3835,7 +3821,6 @@ CONFIG_RING_BUFFER_BENCHMARK=m
 # CONFIG_PRIO_TREE_TEST is not set
 # CONFIG_INTERVAL_TREE_TEST is not set
 CONFIG_PROVIDE_OHCI1394_DMA_INIT=y
-# CONFIG_FIREWIRE_OHCI_REMOTE_DMA is not set
 CONFIG_DYNAMIC_DEBUG=y
 # CONFIG_DMA_API_DEBUG is not set
 CONFIG_ASYNC_RAID6_TEST=m
