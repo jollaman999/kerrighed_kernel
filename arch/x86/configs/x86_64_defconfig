@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32-krg_xeon
-# Mon Nov 15 17:06:56 2021
+# Mon Nov 15 17:18:29 2021
 #
 CONFIG_64BIT=y
 # CONFIG_X86_32 is not set
@@ -2376,9 +2376,8 @@ CONFIG_USB_DEVICEFS=y
 CONFIG_USB_SUSPEND=y
 # CONFIG_USB_OTG is not set
 CONFIG_USB_MON=y
-CONFIG_USB_WUSB=m
-CONFIG_USB_WUSB_CBAF=m
-# CONFIG_USB_WUSB_CBAF_DEBUG is not set
+# CONFIG_USB_WUSB is not set
+# CONFIG_USB_WUSB_CBAF is not set
 
 #
 # USB Host Controller Drivers
@@ -2399,8 +2398,8 @@ CONFIG_USB_OHCI_LITTLE_ENDIAN=y
 CONFIG_USB_UHCI_HCD=y
 CONFIG_USB_SL811_HCD=m
 # CONFIG_USB_R8A66597_HCD is not set
-CONFIG_USB_WHCI_HCD=m
-CONFIG_USB_HWA_HCD=m
+# CONFIG_USB_WHCI_HCD is not set
+# CONFIG_USB_HWA_HCD is not set
 
 #
 # USB Device Class drivers
@@ -2475,11 +2474,7 @@ CONFIG_USB_USS720=m
 #
 # CONFIG_USB_GPIO_VBUS is not set
 # CONFIG_NOP_USB_XCEIV is not set
-CONFIG_UWB=m
-CONFIG_UWB_HWA=m
-CONFIG_UWB_WHCI=m
-# CONFIG_UWB_WLP is not set
-# CONFIG_UWB_I1480U is not set
+# CONFIG_UWB is not set
 # CONFIG_MMC is not set
 # CONFIG_MEMSTICK is not set
 CONFIG_NEW_LEDS=y
