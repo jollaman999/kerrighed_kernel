@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32-krg_xeon
-# Mon Nov 15 18:31:44 2021
+# Mon Nov 15 18:38:02 2021
 #
 CONFIG_64BIT=y
 # CONFIG_X86_32 is not set
@@ -1099,8 +1099,7 @@ CONFIG_BLK_DEV=y
 CONFIG_BLK_DEV_FD=m
 CONFIG_BLK_DEV_PCIESSD_MTIP32XX=m
 # CONFIG_BLK_CPQ_DA is not set
-CONFIG_BLK_CPQ_CISS_DA=m
-# CONFIG_CISS_SCSI_TAPE is not set
+# CONFIG_BLK_CPQ_CISS_DA is not set
 # CONFIG_BLK_DEV_DAC960 is not set
 # CONFIG_BLK_DEV_UMEM is not set
 # CONFIG_BLK_DEV_COW_COMMON is not set
