@@ -114,10 +114,10 @@ static struct vfsmount *get_vfsmount_from_fd(int fd)
 
 	if (fd == AT_FDCWD) {
 		struct fs_struct *fs = current->fs;
-		spin_lock(&fs->lock);
+		read_lock(&fs->lock);
 		path = fs->pwd;
 		mntget(path.mnt);
-		spin_unlock(&fs->lock);
+		read_unlock(&fs->lock);
 	} else {
 		int fput_needed;
 		struct file *file = fget_light(fd, &fput_needed);
@@ -247,7 +247,7 @@ long do_handle_open(int mountdirfd,
 		retval =  PTR_ERR(file);
 	} else {
 		retval = fd;
-		fsnotify_open(file->f_path.dentry);
+		fsnotify_open(file);
 		fd_install(fd, file);
 	}
 	return retval;
