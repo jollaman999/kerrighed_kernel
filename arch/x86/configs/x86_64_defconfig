@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32-krg_xeon
-# Mon Nov 15 19:05:26 2021
+# Tue Nov 16 10:56:00 2021
 #
 CONFIG_64BIT=y
 # CONFIG_X86_32 is not set
@@ -1258,7 +1258,7 @@ CONFIG_SCSI_DEBUG=m
 # CONFIG_SCSI_PM8001 is not set
 # CONFIG_SCSI_SRP is not set
 # CONFIG_SCSI_BFA_FC is not set
-# CONFIG_SCSI_VIRTIO is not set
+CONFIG_SCSI_VIRTIO=y
 CONFIG_SCSI_DH=y
 # CONFIG_SCSI_DH_RDAC is not set
 # CONFIG_SCSI_DH_HP_SW is not set
