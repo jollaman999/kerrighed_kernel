@@ -107,7 +107,7 @@ static void multipath_end_request(struct bio *bio, int error)
 
 static void unplug_slaves(struct mddev *mddev)
 {
-	multipath_conf_t *conf = mddev->private;
+	struct mpconf *conf = mddev->private;
 	int i;
 
 	rcu_read_lock();
