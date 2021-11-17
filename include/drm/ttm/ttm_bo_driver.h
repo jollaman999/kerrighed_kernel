@@ -42,8 +42,6 @@
 #include <linux/spinlock.h>
 #include <linux/reservation.h>
 
-#define TTM_MAX_BO_PRIORITY	16
-
 struct ttm_backend_func {
 	/**
 	 * struct ttm_backend_func member bind
@@ -302,7 +300,7 @@ struct ttm_mem_type_manager {
 	 * Protected by the global->lru_lock.
 	 */
 
-	struct list_head lru[TTM_MAX_BO_PRIORITY];
+	struct list_head lru;
 
 	/*
 	 * Protected by @move_lock.
@@ -520,7 +518,7 @@ struct ttm_bo_global {
 	/**
 	 * Protected by the lru_lock.
 	 */
-	struct list_head swap_lru[TTM_MAX_BO_PRIORITY];
+	struct list_head swap_lru;
 
 	/**
 	 * Internal protection.
