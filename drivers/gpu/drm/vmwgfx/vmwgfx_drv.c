@@ -1145,7 +1145,7 @@ static long vmw_generic_ioctl(struct file *filp, unsigned int cmd,
 			return (long) vmw_execbuf_ioctl(dev, arg, file_priv,
 							_IOC_SIZE(cmd));
 		} else if (nr == DRM_COMMAND_BASE + DRM_VMW_UPDATE_LAYOUT) {
-			if (!drm_is_current_master(file_priv) &&
+			if (!file_priv->is_master &&
 			    !capable(CAP_SYS_ADMIN))
 				return -EACCES;
 		}
