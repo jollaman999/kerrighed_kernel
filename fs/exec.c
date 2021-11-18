@@ -1637,10 +1637,8 @@ int do_execve(const char * filename,
 out:
 #ifdef CONFIG_KRG_EPM
 	/* Quiet the BUG_ON() in mmput() */
-	if (bprm->mm) {
-		acct_arg_size(bprm, 0);
+	if (bprm->mm)
 		atomic_dec(&bprm->mm->mm_ltasks);
-	}
 #endif
 	if (bprm->mm) {
 		acct_arg_size(bprm, 0);
