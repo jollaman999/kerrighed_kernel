@@ -659,11 +659,6 @@ int setup_arg_pages(struct linux_binprm *bprm,
 	unsigned long stack_expand;
 	unsigned long rlim_stack;
 
-#ifdef CONFIG_KRG_MM
-	if (mm->anon_vma_kddm_set)
-		krg_check_vma_link(vma);
-#endif
-
 #ifdef CONFIG_STACK_GROWSUP
 	/* Limit stack size to 1GB */
 	stack_base = current->signal->rlim[RLIMIT_STACK].rlim_max;
@@ -727,6 +722,11 @@ int setup_arg_pages(struct linux_binprm *bprm,
 
 	/* mprotect_fixup is overkill to remove the temporary stack flags */
 	vma->vm_flags &= ~VM_STACK_INCOMPLETE_SETUP;
+
+#ifdef CONFIG_KRG_MM
+	if (mm->anon_vma_kddm_set)
+		krg_check_vma_link(vma);
+#endif
 
 	stack_expand = EXTRA_STACK_VM_PAGES * PAGE_SIZE;
 	stack_size = vma->vm_end - vma->vm_start;
@@ -1637,8 +1637,10 @@ int do_execve(const char * filename,
 out:
 #ifdef CONFIG_KRG_EPM
 	/* Quiet the BUG_ON() in mmput() */
-	if (bprm->mm)
+	if (bprm->mm) {
+		acct_arg_size(bprm, 0);
 		atomic_dec(&bprm->mm->mm_ltasks);
+	}
 #endif
 	if (bprm->mm) {
 		acct_arg_size(bprm, 0);
