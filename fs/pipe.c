@@ -19,7 +19,6 @@
 #include <linux/pagemap.h>
 #include <linux/audit.h>
 #include <linux/syscalls.h>
-#include <linux/ima.h>
 #include <linux/fcntl.h>
 
 #include <asm/uaccess.h>
@@ -1056,31 +1055,33 @@ err:
 	return ERR_PTR(err);
 }
 
-struct file *__create_write_pipe(struct path *path, int flags)
+struct file *__create_write_pipe(struct dentry *dentry, int flags)
 {
 	struct file *f;
 	int err = -ENFILE;
+	struct path path;
 #ifdef CONFIG_KRG_EPM
 	struct pipe_inode_info *pipe;
 #endif
+	path.dentry = dentry;
+	path.mnt = mntget(pipe_mnt);
 
-	path->mnt = mntget(pipe_mnt);
-
-	f = alloc_file(path, FMODE_WRITE, &write_pipefifo_fops);
+	f = alloc_file(&path, FMODE_WRITE, &write_pipefifo_fops);
 	if (!f)
 		goto err;
-	f->f_mapping = path->dentry->d_inode->i_mapping;
+	f->f_mapping = dentry->d_inode->i_mapping;
 
 	f->f_flags = O_WRONLY | (flags & O_NONBLOCK);
 	f->f_version = 0;
 #ifdef CONFIG_KRG_EPM
-	pipe = path->dentry->d_inode->i_pipe;
+	pipe = dentry->d_inode->i_pipe;
 	pipe->fwrite = f;
 #endif
 
 	return f;
 
 err:
+	path_put(&path);
 	return ERR_PTR(err);
 }
 
@@ -1088,15 +1089,15 @@ struct file *create_write_pipe(int flags)
 {
 	int err;
 	struct file *f;
-	struct path path;
+	struct dentry *dentry;
 
-	path.dentry = __prepare_pipe_dentry();
-	if (IS_ERR(path.dentry)) {
-		err = PTR_ERR(path.dentry);
+	dentry = __prepare_pipe_dentry();
+	if (IS_ERR(dentry)) {
+		err = PTR_ERR(dentry);
 		goto err;
 	}
 
-	f = __create_write_pipe(&path, flags);
+	f = __create_write_pipe(dentry, flags);
 	if (IS_ERR(f)) {
 		err = PTR_ERR(f);
 		goto err_dentry;
@@ -1105,8 +1106,8 @@ struct file *create_write_pipe(int flags)
 	return f;
 
  err_dentry:
-	free_pipe_info(path.dentry->d_inode);
-	path_put(&path);
+	free_pipe_info(dentry->d_inode);
+	dput(dentry);
 	return ERR_PTR(err);
 
  err:
@@ -1120,52 +1121,30 @@ void free_write_pipe(struct file *f)
 	put_filp(f);
 }
 
-static struct file *alloc_pipe_file(struct path *path, fmode_t mode,
-		const struct file_operations *fop, int flags)
+struct file *__create_read_pipe(struct path *path, int flags)
 {
-	struct file *file;
 #ifdef CONFIG_KRG_EPM
 	struct pipe_inode_info *pipe;
 #endif
+	struct file *f = alloc_file(path, FMODE_READ,
+				    &read_pipefifo_fops);
+	if (!f)
+		return ERR_PTR(-ENFILE);
 
-	file = get_empty_filp();
-	if (!file)
-		return NULL;
+	/* Grab pipe from the writer */
+	path_get(path);
+	f->f_flags = O_RDONLY | (flags & O_NONBLOCK);
 
-	file->f_path.dentry = dget(path->dentry);
-	file->f_path.mnt = mntget(pipe_mnt);
-	file->f_mapping = path->dentry->d_inode->i_mapping;
-	file->f_mode = mode;
-	file->f_flags = O_RDONLY | (flags & O_NONBLOCK);
-	file->f_op = fop;
 #ifdef CONFIG_KRG_EPM
 	pipe = path->dentry->d_inode->i_pipe;
-	pipe->fread = file;
+	pipe->fread = f;
 #endif
-
-	/*
-	 * These mounts don't really matter in practice
-	 * for r/o bind mounts.  They aren't userspace-
-	 * visible.  We do this for consistency, and so
-	 * that we can do debugging checks at __fput()
-	 */
-	if ((mode & FMODE_WRITE) && !special_file(path->dentry->d_inode->i_mode)) {
-		file_take_write(file);
-		WARN_ON(mnt_clone_write(path->mnt));
-	}
-	ima_counts_get(file);
-	return file;
+	return f;
 }
 
 struct file *create_read_pipe(struct file *wrf, int flags)
 {
-	/* Grab pipe from the writer */
-	struct file *f = alloc_pipe_file(&wrf->f_path, FMODE_READ,
-				    &read_pipefifo_fops, flags);
-	if (!f)
-		return ERR_PTR(-ENFILE);
-
-	return f;
+	return __create_read_pipe(&wrf->f_path, flags);
 }
 
 int do_pipe_flags(int *fd, int flags)
@@ -1482,15 +1461,11 @@ struct file *reopen_pipe_file_entry_from_krg_desc(struct task_struct *task,
 	BUG_ON(!path.dentry);
 
 	if (desc->pipe.f_flags & O_WRONLY) {
-		file = __create_write_pipe(&path, desc->pipe.f_flags);
+		file = __create_write_pipe(path.dentry, desc->pipe.f_flags);
 		if (!IS_ERR(file))
 			dget(path.dentry);
-	} else {
-		file = alloc_pipe_file(&path, FMODE_READ,
-				       &read_pipefifo_fops, desc->pipe.f_flags);
-		if (!file)
-			return ERR_PTR(-ENFILE);
-	}
+	} else
+		file = __create_read_pipe(&path, desc->pipe.f_flags);
 
 	return file;
 }
