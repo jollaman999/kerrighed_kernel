@@ -27,11 +27,11 @@
 
 #include "internal.h"
 
-#ifdef CONFIG_KRG_DVFS
-#include <kerrighed/dvfs.h>
+#ifdef CONFIG_HCC_DVFS
+#include <hcc/dvfs.h>
 #endif
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 
 /* sysctl tunables... */
@@ -57,9 +57,9 @@ static inline void file_free_rcu(struct rcu_head *head)
 
 static inline void file_free(struct file *f)
 {
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	if (f->f_objid)
-		krg_put_file(f);
+		hcc_put_file(f);
 #endif
 	percpu_counter_dec(&nr_files);
 	file_check_state(f);
@@ -245,7 +245,7 @@ void __fput(struct file *file)
 {
 	struct dentry *dentry = file->f_path.dentry;
 	struct vfsmount *mnt = file->f_path.mnt;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	struct inode *inode;
 #else
 	struct inode *inode = dentry->d_inode;
@@ -253,7 +253,7 @@ void __fput(struct file *file)
 
 	might_sleep();
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT) {
 		eventpoll_release(file);
 		security_file_free(file);

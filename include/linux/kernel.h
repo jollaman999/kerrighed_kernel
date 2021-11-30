@@ -253,7 +253,7 @@ extern void oops_exit(void);
 extern int oops_may_print(void);
 NORET_TYPE void do_exit(long error_code)
 	ATTRIB_NORET;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 NORET_TYPE void do_exit_wo_notify(long code)
 	ATTRIB_NORET;
 #endif
@@ -711,9 +711,9 @@ extern int hex_to_bin(char ch);
 				     ##__VA_ARGS__); 0; })
 #endif
 
-#ifdef CONFIG_KERRIGHED
-#define pr_kerrighed(fmt, ...) do { \
-		dynamic_pr_kerrighed(fmt, ##__VA_ARGS__);	\
+#ifdef CONFIG_HCC
+#define pr_hcc(fmt, ...) do { \
+		dynamic_pr_hcc(fmt, ##__VA_ARGS__);	\
 	} while (0)
 #endif
 

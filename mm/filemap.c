@@ -44,8 +44,8 @@
 
 #include <asm/mman.h>
 
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 
 /*
@@ -1521,7 +1521,7 @@ SYSCALL_DEFINE(readahead)(int fd, loff_t offset, size_t count)
 	file = fget(fd);
 	if (file) {
 		if (file->f_mode & FMODE_READ) {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 			if (file->f_flags & O_FAF_CLT) {
 				faf_error(file, "readahead");
 				ret = -ENOSYS;
@@ -1532,7 +1532,7 @@ SYSCALL_DEFINE(readahead)(int fd, loff_t offset, size_t count)
 			pgoff_t end = (offset + count - 1) >> PAGE_CACHE_SHIFT;
 			unsigned long len = end - start + 1;
 			ret = do_readahead(mapping, file, start, len);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 			}
 #endif
 		}

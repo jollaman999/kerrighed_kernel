@@ -120,7 +120,7 @@ static void videobuf_vm_close(struct vm_area_struct *vma)
 	return;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct videobuf_vm_ops = {

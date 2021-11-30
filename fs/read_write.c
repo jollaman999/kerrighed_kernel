@@ -21,11 +21,11 @@
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
 
-#ifdef CONFIG_KRG_DVFS
-#include <kerrighed/dvfs.h>
+#ifdef CONFIG_HCC_DVFS
+#include <hcc/dvfs.h>
 #endif
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 
 const struct file_operations generic_ro_fops = {
@@ -208,10 +208,10 @@ loff_t vfs_llseek(struct file *file, loff_t offset, int origin)
 {
 	loff_t (*fn)(struct file *, loff_t, int);
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	loff_t pos;
-	if (file->f_flags & O_KRG_SHARED)
-		file->f_pos = krg_file_pos_read(file);
+	if (file->f_flags & O_HCC_SHARED)
+		file->f_pos = hcc_file_pos_read(file);
 #endif
 	fn = no_llseek;
 	if (file->f_mode & FMODE_LSEEK) {
@@ -219,10 +219,10 @@ loff_t vfs_llseek(struct file *file, loff_t offset, int origin)
 		if (file->f_op && file->f_op->llseek)
 			fn = file->f_op->llseek;
 	}
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	pos = fn(file, offset, origin);
-	if (file->f_flags & O_KRG_SHARED)
-		krg_file_pos_write(file, file->f_pos);
+	if (file->f_flags & O_HCC_SHARED)
+		hcc_file_pos_write(file, file->f_pos);
 	return pos;
 #else
 	return fn(file, offset, origin);
@@ -241,9 +241,9 @@ SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, origin)
 	if (!file)
 		goto bad;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT) {
-		retval = krg_faf_lseek(file, offset, origin);
+		retval = hcc_faf_lseek(file, offset, origin);
 		fput_light(file, fput_needed);
 		return retval;
 	}
@@ -279,9 +279,9 @@ SYSCALL_DEFINE5(llseek, unsigned int, fd, unsigned long, offset_high,
 	if (origin > SEEK_MAX)
 		goto out_putf;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT) {
-		retval = krg_faf_llseek(file, offset_high, offset_low,
+		retval = hcc_faf_llseek(file, offset_high, offset_low,
 					&offset, origin);
 	} else {
 #endif
@@ -289,7 +289,7 @@ SYSCALL_DEFINE5(llseek, unsigned int, fd, unsigned long, offset_high,
 			origin);
 
 	retval = (int)offset;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	}
 #endif
 	if (offset >= 0) {
@@ -377,9 +377,9 @@ ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
 
 	if (!(file->f_mode & FMODE_READ))
 		return -EBADF;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
-		return krg_faf_read(file, buf, count, pos);
+		return hcc_faf_read(file, buf, count, pos);
 #endif
 	if (!file->f_op || (!file->f_op->read && !file->f_op->aio_read))
 		return -EINVAL;
@@ -436,9 +436,9 @@ ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_
 
 	if (!(file->f_mode & FMODE_WRITE))
 		return -EBADF;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
-		return krg_faf_write(file, buf, count, pos);
+		return hcc_faf_write(file, buf, count, pos);
 #endif
 	if (!file->f_op || (!file->f_op->write && !file->f_op->aio_write))
 		return -EINVAL;
@@ -464,7 +464,7 @@ ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_
 
 EXPORT_SYMBOL(vfs_write);
 
-#ifndef CONFIG_KRG_DVFS
+#ifndef CONFIG_HCC_DVFS
 static inline loff_t file_pos_read(struct file *file)
 {
 	return file->f_pos;
@@ -783,9 +783,9 @@ ssize_t vfs_readv(struct file *file, const struct iovec __user *vec,
 {
 	if (!(file->f_mode & FMODE_READ))
 		return -EBADF;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
-		return krg_faf_readv(file, vec, vlen, pos);
+		return hcc_faf_readv(file, vec, vlen, pos);
 #endif
 	if (!file->f_op || (!file->f_op->aio_read && !file->f_op->read))
 		return -EINVAL;
@@ -800,9 +800,9 @@ ssize_t vfs_writev(struct file *file, const struct iovec __user *vec,
 {
 	if (!(file->f_mode & FMODE_WRITE))
 		return -EBADF;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
-		return krg_faf_writev(file, vec, vlen, pos);
+		return hcc_faf_writev(file, vec, vlen, pos);
 #endif
 	if (!file->f_op || (!file->f_op->aio_write && !file->f_op->write))
 		return -EINVAL;

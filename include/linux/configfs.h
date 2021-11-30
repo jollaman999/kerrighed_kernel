@@ -225,7 +225,7 @@ struct configfs_item_operations {
 	void (*release)(struct config_item *);
 	ssize_t	(*show_attribute)(struct config_item *, struct configfs_attribute *,char *);
 	ssize_t	(*store_attribute)(struct config_item *,struct configfs_attribute *,const char *, size_t);
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	int (*allow_link)(struct config_item *src, struct config_item *target, const char *);
 	int (*allow_drop_link)(struct config_item *src, struct config_item *target);
 #else
@@ -239,7 +239,7 @@ struct configfs_group_operations {
 	struct config_group *(*make_group)(struct config_group *group, const char *name);
 	int (*commit_item)(struct config_item *item);
 	void (*disconnect_notify)(struct config_group *group, struct config_item *item);
-#ifdef CONFIG_KRG_SCHED
+#ifdef CONFIG_HCC_GSCHED
 	int (*allow_drop_item)(struct config_group *group, struct config_item *item);
 #endif
 	void (*drop_item)(struct config_group *group, struct config_item *item);

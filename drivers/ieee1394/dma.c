@@ -247,7 +247,7 @@ static int dma_region_pagefault(struct vm_area_struct *vma,
 	return 0;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct dma_region_vm_ops = {

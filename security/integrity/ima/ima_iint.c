@@ -112,7 +112,7 @@ out:
 }
 
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_GIPC
 struct ima_iint_cache *ima_iint_find_insert_get(struct inode *inode)
 {
 	struct ima_iint_cache *iint = NULL;

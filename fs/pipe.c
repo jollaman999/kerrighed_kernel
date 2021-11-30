@@ -24,12 +24,12 @@
 #include <asm/uaccess.h>
 #include <asm/ioctls.h>
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 #include <linux/splice.h>
-#include <kerrighed/app_shared.h>
-#include <kerrighed/ghost.h>
-#include <kerrighed/ghost_helpers.h>
-#include <kerrighed/regular_file_mgr.h>
+#include <hcc/app_shared.h>
+#include <hcc/ghost.h>
+#include <hcc/ghost_helpers.h>
+#include <hcc/regular_file_mgr.h>
 #endif
 
 /*
@@ -922,7 +922,7 @@ struct pipe_inode_info * alloc_pipe_info(struct inode *inode)
 			init_waitqueue_head(&pipe->wait);
 			pipe->r_counter = pipe->w_counter = 1;
 			pipe->inode = inode;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 			pipe->fread = NULL;
 			pipe->fwrite = NULL;
 #endif
@@ -1060,7 +1060,7 @@ struct file *__create_write_pipe(struct dentry *dentry, int flags)
 	struct file *f;
 	int err = -ENFILE;
 	struct path path;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	struct pipe_inode_info *pipe;
 #endif
 	path.dentry = dentry;
@@ -1073,7 +1073,7 @@ struct file *__create_write_pipe(struct dentry *dentry, int flags)
 
 	f->f_flags = O_WRONLY | (flags & O_NONBLOCK);
 	f->f_version = 0;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	pipe = dentry->d_inode->i_pipe;
 	pipe->fwrite = f;
 #endif
@@ -1123,7 +1123,7 @@ void free_write_pipe(struct file *f)
 
 struct file *__create_read_pipe(struct path *path, int flags)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	struct pipe_inode_info *pipe;
 #endif
 	struct file *f = alloc_file(path, FMODE_READ,
@@ -1135,7 +1135,7 @@ struct file *__create_read_pipe(struct path *path, int flags)
 	path_get(path);
 	f->f_flags = O_RDONLY | (flags & O_NONBLOCK);
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	pipe = path->dentry->d_inode->i_pipe;
 	pipe->fread = f;
 #endif
@@ -1192,7 +1192,7 @@ int do_pipe_flags(int *fd, int flags)
 	return error;
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 
 int cr_add_pipe_inode_to_shared_table(struct task_struct *task,
 				      struct file *file)
@@ -1280,7 +1280,7 @@ out:
 	return ret;
 }
 
-int cr_export_now_pipe_inode(struct epm_action *action, ghost_t *ghost,
+int cr_export_now_pipe_inode(struct gpm_action *action, ghost_t *ghost,
 			     struct task_struct *task,
 			     union export_args *args)
 {
@@ -1335,7 +1335,7 @@ err:
 	return ret;
 }
 
-static int cr_import_now_pipe_inode(struct epm_action *action,
+static int cr_import_now_pipe_inode(struct gpm_action *action,
 				    ghost_t *ghost,
 				    struct task_struct *fake,
 				    int local_only,
@@ -1414,22 +1414,22 @@ struct shared_object_operations cr_shared_pipe_inode_ops = {
 	.delete            = cr_delete_pipe_inode,
 };
 
-/** Return a kerrighed descriptor corresponding to the given file.
- *  @author Matthieu Fertré
+/** Return a hcc descriptor corresponding to the given file.
+ *  @author Innogrid HCC
  *
- *  @param file       The file to get a Kerrighed descriptor for.
+ *  @param file       The file to get a HCC descriptor for.
  *  @param desc       The returned descriptor.
  *  @param desc_size  Size of the returned descriptor.
  *
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-int get_pipe_file_krg_desc(struct file *file, void **desc, int *desc_size)
+int get_pipe_file_hcc_desc(struct file *file, void **desc, int *desc_size)
 {
-	struct regular_file_krg_desc *data;
+	struct regular_file_hcc_desc *data;
 	int size, r = -ENOENT;
 
-	size = sizeof(struct regular_file_krg_desc);
+	size = sizeof(struct regular_file_hcc_desc);
 
 	data = kmalloc(size, GFP_KERNEL);
 	if (!data) {
@@ -1448,10 +1448,10 @@ exit:
 	return r;
 }
 
-struct file *reopen_pipe_file_entry_from_krg_desc(struct task_struct *task,
+struct file *reopen_pipe_file_entry_from_hcc_desc(struct task_struct *task,
 						  void *_desc)
 {
-	struct regular_file_krg_desc *desc = _desc;
+	struct regular_file_hcc_desc *desc = _desc;
 	struct path path;
 	struct file *file;
 

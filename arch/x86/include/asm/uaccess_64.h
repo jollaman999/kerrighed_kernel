@@ -153,7 +153,7 @@ int __copy_in_user(void __user *dst, const void __user *src, unsigned size)
 	int ret = 0;
 
 	might_fault();
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	/* Combine two remote accesses into a single one */
 	if (!__builtin_constant_p(size)
 	    || unlikely(test_thread_flag(TIF_RUACCESS)))

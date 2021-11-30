@@ -463,7 +463,7 @@ out:
 	return block_page_mkwrite_return(ret);
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const 
 #endif
 struct vm_operations_struct gfs2_vm_ops = {

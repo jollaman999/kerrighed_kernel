@@ -6,8 +6,8 @@
  * Copyright 2002 Andi Kleen <ak@suse.de>
  */
 #include <linux/module.h>
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 #include <asm/uaccess.h>
 
@@ -15,7 +15,7 @@
  * Copy a null terminated string from userspace.
  */
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 
 #define __do_strncpy_from_user(dst,src,count,res)			   \
 do {									   \
@@ -35,7 +35,7 @@ do {									   \
 		".section .fixup,\"ax\"\n"				   \
 		"3:	cmpq %0,%1\n"					   \
 		"	jne 5f\n"					   \
-		"4: 	movq $krg___strncpy_from_user,%%rax\n"		   \
+		"4: 	movq $hcc___strncpy_from_user,%%rax\n"		   \
 		"	call usercopy_check_ruaccess\n"			   \
 		" 	testq %%rax,%%rax\n"				   \
 		" 	jz 2b\n"					   \
@@ -49,7 +49,7 @@ do {									   \
 		: "memory");						   \
 } while (0)
 
-#else /* !CONFIG_KRG_FAF */
+#else /* !CONFIG_HCC_FAF */
 
 #define __do_strncpy_from_user(dst,src,count,res)			   \
 do {									   \
@@ -77,7 +77,7 @@ do {									   \
 		: "memory");						   \
 } while (0)
 
-#endif /* !CONFIG_KRG_FAF */
+#endif /* !CONFIG_HCC_FAF */
 
 long
 __strncpy_from_user(char *dst, const char __user *src, long count)
@@ -105,13 +105,13 @@ EXPORT_SYMBOL(strncpy_from_user);
 unsigned long __clear_user(void __user *addr, unsigned long size)
 {
 	long __d0;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	long __d1;
 #endif
 	might_fault();
 	/* no memory constraint because it doesn't change any memory gcc knows
 	   about */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	asm volatile(
 		"	testq  %[size8],%[size8]\n"
 		"	jz     4f\n"
@@ -131,7 +131,7 @@ unsigned long __clear_user(void __user *addr, unsigned long size)
 		"	jne 2b\n"
 		"	pushq %%rax\n"
 		"	pushq %%rdx\n"
-		"	movq $krg___clear_user,%%rax\n"
+		"	movq $hcc___clear_user,%%rax\n"
 		"	movq %[size8],%%rsi\n"
 		"	call usercopy_check_ruaccess\n"
 		"	testq %%rax,%%rax\n"
@@ -147,7 +147,7 @@ unsigned long __clear_user(void __user *addr, unsigned long size)
 		: [size1] "r"(size & 7), "[size8]" (size / 8), "[dst]"(addr),
 		  "[orig_dst]" (addr),
 		  [zero] "r" (0UL), [eight] "r" (8UL));
-#else /* !CONFIG_KRG_FAF */
+#else /* !CONFIG_HCC_FAF */
 	asm volatile(
 		"	testq  %[size8],%[size8]\n"
 		"	jz     4f\n"
@@ -170,7 +170,7 @@ unsigned long __clear_user(void __user *addr, unsigned long size)
 		: [size8] "=&c"(size), [dst] "=&D" (__d0)
 		: [size1] "r"(size & 7), "[size8]" (size / 8), "[dst]"(addr),
 		  [zero] "r" (0UL), [eight] "r" (8UL));
-#endif /* !CONFIG_KRG_FAF */
+#endif /* !CONFIG_HCC_FAF */
 	return size;
 }
 EXPORT_SYMBOL(__clear_user);
@@ -197,7 +197,7 @@ long __strnlen_user(const char __user *s, long n)
 	while (1) {
 		if (res>n)
 			return n+1;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		{
 			long ret = 0;
 			long local_access = 1;
@@ -209,7 +209,7 @@ long __strnlen_user(const char __user *s, long n)
 				"3:	movq %5,%0\n"
 				"	testq %2,%2\n"
 				"	jnz 2b\n"
-				"	movq $krg___strnlen_user,%%rax\n"
+				"	movq $hcc___strnlen_user,%%rax\n"
 				"	call usercopy_check_ruaccess\n"
 				"	jmp 2b\n"
 				".previous\n"
@@ -222,10 +222,10 @@ long __strnlen_user(const char __user *s, long n)
 				return 0;
 			}
 		}
-#else /* !CONFIG_KRG_FAF */
+#else /* !CONFIG_HCC_FAF */
 		if (__get_user(c, s))
 			return 0;
-#endif /* !CONFIG_KRG_FAF */
+#endif /* !CONFIG_HCC_FAF */
 		if (!c)
 			return res+1;
 		res++;
@@ -248,7 +248,7 @@ long strlen_user(const char __user *s)
 	char c;
 
 	for (;;) {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		{
 			long ret = 0;
 			long local_access = 1;
@@ -263,7 +263,7 @@ long strlen_user(const char __user *s)
 				"3:	movq %5,%0\n"
 				"	testq %2,%2\n"
 				"	jnz 2b\n"
-				"	movq $krg___strnlen_user,%%rax\n"
+				"	movq $hcc___strnlen_user,%%rax\n"
 				"	call usercopy_check_ruaccess\n"
 				"	jmp 2b\n"
 				"4:	movq %5,%0\n"
@@ -280,10 +280,10 @@ long strlen_user(const char __user *s)
 				return 0;
 			}
 		}
-#else /* !CONFIG_KRG_FAF */
+#else /* !CONFIG_HCC_FAF */
 		if (get_user(c, s))
 			return 0;
-#endif /* !CONFIG_KRG_FAF */
+#endif /* !CONFIG_HCC_FAF */
 		if (!c)
 			return res+1;
 		res++;

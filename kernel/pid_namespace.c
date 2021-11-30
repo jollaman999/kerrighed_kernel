@@ -16,9 +16,9 @@
 #include <linux/proc_fs.h>
 #include <linux/reboot.h>
 
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 #include <linux/module.h>
-#include <kerrighed/namespace.h>
+#include <hcc/namespace.h>
 #endif
 
 #define BITS_PER_PAGE		(PAGE_SIZE*8)
@@ -80,20 +80,20 @@ static void proc_cleanup_work(struct work_struct *work)
 	pid_ns_release_proc(ns);
 }
 
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns)
 {
 	struct pid_namespace *ns;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	unsigned int level = 0;
 #else
 	unsigned int level = parent_pid_ns->level + 1;
 #endif
 	int i, err = -ENOMEM;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	if (parent_pid_ns)
 		level = parent_pid_ns->level + 1;
 #endif
@@ -116,13 +116,13 @@ struct pid_namespace *create_pid_namespace(struct pid_namespace *parent_pid_ns)
 
 	kref_init(&ns->kref);
 	ns->level = level;
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 	if (parent_pid_ns) {
 		ns->global = parent_pid_ns->global;
-		ns->global |= current->create_krg_ns;
-		if (parent_pid_ns->krg_ns_root)
-			get_pid_ns(parent_pid_ns->krg_ns_root);
-		ns->krg_ns_root = parent_pid_ns->krg_ns_root;
+		ns->global |= current->create_hcc_ns;
+		if (parent_pid_ns->hcc_ns_root)
+			get_pid_ns(parent_pid_ns->hcc_ns_root);
+		ns->hcc_ns_root = parent_pid_ns->hcc_ns_root;
 		ns->parent = get_pid_ns(parent_pid_ns);
 	}
 #else
@@ -151,9 +151,9 @@ static void destroy_pid_namespace(struct pid_namespace *ns)
 {
 	int i;
 
-#ifdef CONFIG_KRG_PROC
-	if (ns->krg_ns_root && ns->krg_ns_root != ns)
-		put_pid_ns(ns->krg_ns_root);
+#ifdef CONFIG_HCC_PROC
+	if (ns->hcc_ns_root && ns->hcc_ns_root != ns)
+		put_pid_ns(ns->hcc_ns_root);
 #endif
 	proc_free_inum(ns->proc_inum);
 	for (i = 0; i < PIDMAP_ENTRIES; i++)
@@ -182,7 +182,7 @@ void free_pid_ns(struct kref *kref)
 	if (parent != NULL)
 		put_pid_ns(parent);
 }
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROC
 EXPORT_SYMBOL(free_pid_ns);
 #endif
 
@@ -259,15 +259,15 @@ void zap_pid_ns_processes(struct pid_namespace *pid_ns)
 	return;
 }
 
-#ifdef CONFIG_KRG_PROC
-struct pid_namespace *find_get_krg_pid_ns(void)
+#ifdef CONFIG_HCC_PROC
+struct pid_namespace *find_get_hcc_pid_ns(void)
 {
-	struct krg_namespace *krg_ns = find_get_krg_ns();
-	struct pid_namespace *ns = get_pid_ns(krg_ns->root_nsproxy.pid_ns);
-	put_krg_ns(krg_ns);
+	struct hcc_namespace *hcc_ns = find_get_hcc_ns();
+	struct pid_namespace *ns = get_pid_ns(hcc_ns->root_nsproxy.pid_ns);
+	put_hcc_ns(hcc_ns);
 	return ns;
 }
-EXPORT_SYMBOL(find_get_krg_pid_ns);
+EXPORT_SYMBOL(find_get_hcc_pid_ns);
 #endif
 
 int reboot_pid_ns(struct pid_namespace *pid_ns, int cmd)

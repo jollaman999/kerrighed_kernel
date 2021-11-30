@@ -419,19 +419,19 @@ int sys_fork(struct pt_regs *regs)
  */
 int sys_vfork(struct pt_regs *regs)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	int retval;
-#ifdef CONFIG_KRG_CAP
-	if (can_use_krg_cap(current, CAP_DISTANT_FORK))
+#ifdef CONFIG_HCC_GCAP
+	if (can_use_hcc_gcap(current, GCAP_DISTANT_FORK))
 	{
 #endif
-		retval = krg_do_fork(CLONE_VFORK | SIGCHLD,
+		retval = hcc_do_fork(CLONE_VFORK | SIGCHLD,
 					 regs->sp, regs, 0,
 					 NULL, NULL, 0);
 		if (retval > 0)
 			return retval;
 	}
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_GPM */
 	return do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, regs->sp, regs, 0,
 		       NULL, NULL);
 }

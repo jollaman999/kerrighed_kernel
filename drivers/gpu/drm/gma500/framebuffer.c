@@ -155,7 +155,7 @@ static void psbfb_vm_close(struct vm_area_struct *vma)
 {
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct psbfb_vm_ops = {

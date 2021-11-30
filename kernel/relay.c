@@ -60,7 +60,7 @@ static int relay_buf_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 /*
  * vm_ops for relay file mappings.
  */
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct relay_file_mmap_ops = {

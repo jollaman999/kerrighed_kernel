@@ -205,8 +205,8 @@ void * mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
 	unsigned long flags;
 	wait_queue_t wait;
 	gfp_t gfp_temp;
-#ifdef CONFIG_KRG_EPM
-	struct task_struct *krg_cur;
+#ifdef CONFIG_HCC_GPM
+	struct task_struct *hcc_cur;
 #endif
 
 	might_sleep_if(gfp_mask & __GFP_WAIT);
@@ -235,9 +235,9 @@ repeat_alloc:
 	if (!(gfp_mask & __GFP_WAIT))
 		return NULL;
 
-#ifdef CONFIG_KRG_EPM
-	krg_cur = krg_current;
-	krg_current = NULL;
+#ifdef CONFIG_HCC_GPM
+	hcc_cur = hcc_current;
+	hcc_current = NULL;
 #endif
 	/* Now start performing page reclaim */
 	gfp_temp = gfp_mask;
@@ -252,8 +252,8 @@ repeat_alloc:
 		io_schedule_timeout(5*HZ);
 	}
 	finish_wait(&pool->wait, &wait);
-#ifdef CONFIG_KRG_EPM
-	krg_current = krg_cur;
+#ifdef CONFIG_HCC_GPM
+	hcc_current = hcc_cur;
 #endif
 
 	goto repeat_alloc;

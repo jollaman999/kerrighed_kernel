@@ -188,7 +188,7 @@ static inline struct hugetlbfs_sb_info *HUGETLBFS_SB(struct super_block *sb)
 
 extern const struct file_operations hugetlbfs_file_operations;
 extern
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 const
 #endif
 struct vm_operations_struct hugetlb_vm_ops;

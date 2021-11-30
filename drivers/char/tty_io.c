@@ -407,7 +407,7 @@ static long hung_up_tty_compat_ioctl(struct file *file,
 	return cmd == TIOCSPGRP ? -ENOTTY : -EIO;
 }
 
-#ifndef CONFIG_KRG_DVFS
+#ifndef CONFIG_HCC_DVFS
 static
 #endif
 const struct file_operations tty_fops = {
@@ -434,7 +434,7 @@ static const struct file_operations console_fops = {
 	.fasync		= tty_fasync,
 };
 
-#ifndef CONFIG_KRG_DVFS
+#ifndef CONFIG_HCC_DVFS
 static
 #endif
 const struct file_operations hung_up_tty_fops = {

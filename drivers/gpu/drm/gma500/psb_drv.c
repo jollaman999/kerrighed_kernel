@@ -473,7 +473,7 @@ static const struct dev_pm_ops psb_pm_ops = {
 	.runtime_idle = psb_runtime_idle,
 };
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct psb_gem_vm_ops = {

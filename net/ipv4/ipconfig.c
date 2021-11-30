@@ -59,10 +59,10 @@
 #include <net/ipconfig.h>
 #include <net/route.h>
 
-#ifdef CONFIG_KRGRPC
-#include <kerrighed/krginit.h>
-#include <kerrighed/hotplug.h>
-#include <kerrighed/krgnodemask.h>
+#ifdef CONFIG_HCC_GRPC
+#include <hcc/hccinit.h>
+#include <hcc/ghotplug.h>
+#include <hcc/hccnodemask.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -1437,12 +1437,12 @@ static int __init ip_auto_config(void)
 #endif
 	printk("######Pre Codex [%d]  \n",((unsigned char *)&ic_myaddr)[3]);
 
-#ifdef CONFIG_KRG_AUTONODEID
- 	if(ISSET_KRG_INIT_FLAGS(KRG_INITFLAGS_AUTONODEID)){
-		kerrighed_node_id = ((unsigned char *)&ic_myaddr)[3];
-		SET_KRG_INIT_FLAGS(KRG_INITFLAGS_NODEID);
-		printk("Automatic setting of kerrighed_node_id: %d\n",
-			kerrighed_node_id);
+#ifdef CONFIG_HCC_AUTONODEID
+ 	if(ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_AUTONODEID)){
+		hcc_node_id = ((unsigned char *)&ic_myaddr)[3];
+		SET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID);
+		printk("Automatic setting of hcc_node_id: %d\n",
+			hcc_node_id);
 	}
 	printk("######Codex [%d]  \n",((unsigned char *)&ic_myaddr)[3]);
 

@@ -33,9 +33,9 @@
 #include <linux/elf-randomize.h>
 #include <linux/utsname.h>
 #include <linux/coredump.h>
-#ifdef CONFIG_KRG_EPM
-#include <kerrighed/children.h>
-#include <kerrighed/krgsyms.h>
+#ifdef CONFIG_HCC_GPM
+#include <hcc/children.h>
+#include <hcc/hccsyms.h>
 #endif
 #include <asm/uaccess.h>
 #include <asm/param.h>
@@ -1380,8 +1380,8 @@ static void fill_prstatus(struct elf_prstatus *prstatus,
 	prstatus->pr_info.si_signo = prstatus->pr_cursig = signr;
 	prstatus->pr_sigpend = p->pending.signal.sig[0];
 	prstatus->pr_sighold = p->blocked.sig[0];
-#ifdef CONFIG_KRG_EPM
-	prstatus->pr_ppid = krg_get_real_parent_pid(p);
+#ifdef CONFIG_HCC_GPM
+	prstatus->pr_ppid = hcc_get_real_parent_pid(p);
 #else
 	rcu_read_lock();
 	prstatus->pr_ppid = task_pid_vnr(rcu_dereference(p->real_parent));
@@ -1428,8 +1428,8 @@ static int fill_psinfo(struct elf_prpsinfo *psinfo, struct task_struct *p,
 			psinfo->pr_psargs[i] = ' ';
 	psinfo->pr_psargs[len] = 0;
 
-#ifdef CONFIG_KRG_EPM
-	psinfo->pr_ppid = krg_get_real_parent_pid(p);
+#ifdef CONFIG_HCC_GPM
+	psinfo->pr_ppid = hcc_get_real_parent_pid(p);
 #else
 	rcu_read_lock();
 	psinfo->pr_ppid = task_pid_vnr(rcu_dereference(p->real_parent));
@@ -2190,13 +2190,13 @@ out:
 
 static int __init init_elf_binfmt(void)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	int retval;
 
-	krgsyms_register(KRGSYMS_BINFMTS_ELF, &elf_format);
+	hccsyms_register(HCCSYMS_BINFMTS_ELF, &elf_format);
 	retval = register_binfmt(&elf_format);
 	if (retval)
-		krgsyms_unregister(KRGSYMS_BINFMTS_ELF);
+		hccsyms_unregister(HCCSYMS_BINFMTS_ELF);
 	return retval;
 #else
 	return register_binfmt(&elf_format);
@@ -2206,8 +2206,8 @@ static int __init init_elf_binfmt(void)
 static void __exit exit_elf_binfmt(void)
 {
 	/* Remove the COFF and ELF loaders. */
-#ifdef CONFIG_KRG_EPM
-	krgsyms_unregister(KRGSYMS_BINFMTS_ELF);
+#ifdef CONFIG_HCC_GPM
+	hccsyms_unregister(HCCSYMS_BINFMTS_ELF);
 #endif
 	unregister_binfmt(&elf_format);
 }

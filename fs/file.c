@@ -138,7 +138,7 @@ static void copy_fdtable(struct fdtable *nfdt, struct fdtable *ofdt)
 	memset((char *)(nfdt->close_on_exec) + cpy, 0, set);
 }
 
-#ifndef CONFIG_KRG_DVFS
+#ifndef CONFIG_HCC_DVFS
 static
 #endif
 struct fdtable * alloc_fdtable(unsigned int nr)
@@ -251,7 +251,7 @@ static int expand_fdtable(struct files_struct *files, int nr)
  * expanded and execution may have blocked.
  * The files->file_lock should be held on entry, and will be held on exit.
  */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 static int __expand_files(struct task_struct *task, struct files_struct *files,
 			  int nr)
 #else
@@ -266,7 +266,7 @@ int expand_files(struct files_struct *files, int nr)
 	 * N.B. For clone tasks sharing a files structure, this test
 	 * will limit the total number of files that can be opened.
 	 */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (nr >= task->signal->rlim[RLIMIT_NOFILE].rlim_cur)
 #else
 	if (nr >= current->signal->rlim[RLIMIT_NOFILE].rlim_cur)
@@ -285,14 +285,14 @@ int expand_files(struct files_struct *files, int nr)
 	return expand_fdtable(files, nr);
 }
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 int expand_files(struct files_struct *files, int nr)
 {
 	return __expand_files(current, files, nr);
 }
 #endif
 
-#ifndef CONFIG_KRG_DVFS
+#ifndef CONFIG_HCC_DVFS
 static
 #endif
 int count_open_files(struct fdtable *fdt)
@@ -461,14 +461,14 @@ struct files_struct init_files = {
 /*
  * allocate a file descriptor, mark it busy.
  */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 int __alloc_fd(struct task_struct *task,
 	       unsigned start, unsigned flags)
 #else
 int alloc_fd(unsigned start, unsigned flags)
 #endif
 {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	struct files_struct *files = task->files;
 #else
 	struct files_struct *files = current->files;
@@ -488,7 +488,7 @@ repeat:
 		fd = find_next_zero_bit(fdt->open_fds->fds_bits,
 					   fdt->max_fds, fd);
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	error = __expand_files(task, files, fd);
 #else
 	error = expand_files(files, fd);
@@ -526,7 +526,7 @@ out:
 	return error;
 }
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 int alloc_fd(unsigned start, unsigned flags)
 {
 	return __alloc_fd(current, start, flags);
@@ -539,7 +539,7 @@ int get_unused_fd(void)
 }
 EXPORT_SYMBOL(get_unused_fd);
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 int __get_unused_fd(struct task_struct *task)
 {
 	return __alloc_fd(task, 0, 0);

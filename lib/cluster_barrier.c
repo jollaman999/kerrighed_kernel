@@ -3,17 +3,17 @@
  *
  *  Implementation of a cluster wide barrier.
  *
- *  Copyright (C) 2009, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/cluster_barrier.h>
-#include <linux/krg_hashtable.h>
+#include <linux/hcc_hashtable.h>
 #include <linux/unique_id.h>
-#include <net/krgrpc/rpc.h>
+#include <net/grpc/grpc.h>
 
-#include <kerrighed/types.h>
-#include <kerrighed/hotplug.h>
-#include <kerrighed/krginit.h>
+#include <hcc/types.h>
+#include <hcc/ghotplug.h>
+#include <hcc/hccinit.h>
 
 #define TABLE_SIZE 128
 
@@ -50,8 +50,8 @@ struct cluster_barrier *alloc_cluster_barrier(unique_id_t key)
 		return ERR_PTR(-ENOMEM);
 
 	for (i = 0; i < 2; i++) {
-		krgnodes_clear (barrier->core[i].nodes_in_barrier);
-		krgnodes_clear (barrier->core[i].nodes_to_wait);
+		hccnodes_clear (barrier->core[i].nodes_in_barrier);
+		hccnodes_clear (barrier->core[i].nodes_to_wait);
 		init_waitqueue_head(&barrier->core[i].waiting_tsk);
 		barrier->core[i].in_barrier = 0;
 	}
@@ -76,16 +76,16 @@ void free_cluster_barrier(struct cluster_barrier *barrier)
 }
 
 int cluster_barrier(struct cluster_barrier *barrier,
-		    krgnodemask_t *nodes,
-		    kerrighed_node_t master)
+		    hccnodemask_t *nodes,
+		    hcc_node_t master)
 {
 	struct cluster_barrier_core *core_bar;
 	struct cluster_barrier_id id;
-	struct rpc_desc *desc;
+	struct grpc_desc *desc;
 	int err = 0;
 
-	BUG_ON (!__krgnode_isset(kerrighed_node_id, nodes));
-	BUG_ON (!__krgnode_isset(master, nodes));
+	BUG_ON (!__hccnode_isset(hcc_node_id, nodes));
+	BUG_ON (!__hccnode_isset(master, nodes));
 
 	spin_lock(&barrier->lock);
 	barrier->id.toggle = (barrier->id.toggle + 1) % 2;
@@ -98,12 +98,12 @@ int cluster_barrier(struct cluster_barrier *barrier,
 	if (err)
 		return err;
 
-	desc = rpc_begin(RPC_ENTER_BARRIER, master);
+	desc = grpc_begin(GRPC_ENTER_BARRIER, master);
 
-	rpc_pack_type (desc, id);
-	rpc_pack(desc, 0, nodes, sizeof(krgnodemask_t));
+	grpc_pack_type (desc, id);
+	grpc_pack(desc, 0, nodes, sizeof(hccnodemask_t));
 
-	rpc_end(desc, 0);
+	grpc_end(desc, 0);
 
 	/* Wait for the barrier to complete */
 
@@ -119,32 +119,32 @@ int cluster_barrier(struct cluster_barrier *barrier,
 /*****************************************************************************/
 
 
-static int handle_enter_barrier(struct rpc_desc* desc,
+static int handle_enter_barrier(struct grpc_desc* desc,
 				void *_msg, size_t size)
 {
 	struct cluster_barrier_id *id = ((struct cluster_barrier_id *) _msg);
 	struct cluster_barrier_core *core_bar;
 	struct cluster_barrier *barrier;
-	krgnodemask_t nodes;
+	hccnodemask_t nodes;
 
-	rpc_unpack(desc, 0, &nodes, sizeof(krgnodemask_t));
+	grpc_unpack(desc, 0, &nodes, sizeof(hccnodemask_t));
 
 	barrier = hashtable_find (barrier_table, id->key);
 	BUG_ON(!barrier);
 
 	core_bar = &barrier->core[id->toggle];
 
-	if (krgnodes_empty(core_bar->nodes_to_wait)) {
-		krgnodes_copy(core_bar->nodes_in_barrier, nodes);
-		krgnodes_copy(core_bar->nodes_to_wait, nodes);
+	if (hccnodes_empty(core_bar->nodes_to_wait)) {
+		hccnodes_copy(core_bar->nodes_in_barrier, nodes);
+		hccnodes_copy(core_bar->nodes_to_wait, nodes);
 	}
 	else
-		BUG_ON(!krgnodes_equal(core_bar->nodes_in_barrier, nodes));
+		BUG_ON(!hccnodes_equal(core_bar->nodes_in_barrier, nodes));
 
-	krgnode_clear(desc->client, core_bar->nodes_to_wait);
+	hccnode_clear(desc->client, core_bar->nodes_to_wait);
 
-	if (krgnodes_empty(core_bar->nodes_to_wait)) {
-                rpc_async_m(RPC_EXIT_BARRIER, &core_bar->nodes_in_barrier,
+	if (hccnodes_empty(core_bar->nodes_to_wait)) {
+                grpc_async_m(GRPC_EXIT_BARRIER, &core_bar->nodes_in_barrier,
 			    id, sizeof (struct cluster_barrier_id));
 	}
 
@@ -152,7 +152,7 @@ static int handle_enter_barrier(struct rpc_desc* desc,
 }
 
 
-static int handle_exit_barrier(struct rpc_desc* desc,
+static int handle_exit_barrier(struct grpc_desc* desc,
 			       void *_msg, size_t size)
 {
 	struct cluster_barrier_id *id = ((struct cluster_barrier_id *) _msg);
@@ -178,20 +178,20 @@ static int handle_exit_barrier(struct rpc_desc* desc,
 /*****************************************************************************/
 
 static int barrier_notification(struct notifier_block *nb,
-				hotplug_event_t event,
+				ghotplug_event_t event,
 				void *data)
 {
 	switch(event){
-	case HOTPLUG_NOTIFY_ADD:
-		rpc_enable(RPC_ENTER_BARRIER);
-		rpc_enable(RPC_EXIT_BARRIER);
+	case GHOTPLUG_NOTIFY_ADD:
+		grpc_enable(GRPC_ENTER_BARRIER);
+		grpc_enable(GRPC_EXIT_BARRIER);
 		break;
 
-	case HOTPLUG_NOTIFY_REMOVE:
+	case GHOTPLUG_NOTIFY_REMOVE:
 		/* TODO */
 		break;
 
-	case HOTPLUG_NOTIFY_FAIL:
+	case GHOTPLUG_NOTIFY_FAIL:
 		/* TODO */
 		break;
 
@@ -207,8 +207,8 @@ void init_cluster_barrier(void)
 	init_and_set_unique_id_root(&barrier_id_root, CLUSTER_BARRIER_MAX);
 	barrier_table = hashtable_new(TABLE_SIZE);
 
-	rpc_register_int (RPC_ENTER_BARRIER, handle_enter_barrier, 0);
-	rpc_register_int (RPC_EXIT_BARRIER, handle_exit_barrier, 0);
+	grpc_register_int (GRPC_ENTER_BARRIER, handle_enter_barrier, 0);
+	grpc_register_int (GRPC_EXIT_BARRIER, handle_exit_barrier, 0);
 
-	register_hotplug_notifier(barrier_notification, HOTPLUG_PRIO_BARRIER);
+	register_ghotplug_notifier(barrier_notification, GHOTPLUG_PRIO_BARRIER);
 }

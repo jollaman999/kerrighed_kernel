@@ -2032,7 +2032,7 @@ static int prepend_name(char **buffer, int *buflen, struct qstr *name)
  * If path is not reachable from the supplied root, then the value of
  * root is changed (without modifying refcounts).
  */
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 char *____d_path(const struct path *path, struct path *root,
 		 char *buffer, int buflen, bool *deleted)
 #else
@@ -2047,7 +2047,7 @@ char *__d_path(const struct path *path, struct path *root,
 
 	spin_lock(&vfsmount_lock);
 	prepend(&end, &buflen, "\0", 1);
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	if (d_unlinked(dentry)) {
 		*deleted = true;
 		if (prepend(&end, &buflen, " (deleted)", 10) != 0)
@@ -2114,7 +2114,7 @@ Elong:
 	goto out;
 }
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 char *d_path_check(const struct path *path, char *buf, int buflen, bool *deleted)
 {
 	char *res;

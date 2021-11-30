@@ -628,7 +628,7 @@ struct drm_driver {
 			    uint32_t handle);
 
 	/* Driver private ops for this object */
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 const
 #endif
 struct vm_operations_struct *gem_vm_ops;

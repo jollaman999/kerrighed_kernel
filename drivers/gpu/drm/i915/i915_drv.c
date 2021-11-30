@@ -1666,7 +1666,7 @@ static const struct dev_pm_ops i915_pm_ops = {
 	.runtime_resume = intel_runtime_resume,
 };
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct i915_gem_vm_ops = {

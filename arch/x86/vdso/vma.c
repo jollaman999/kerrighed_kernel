@@ -121,7 +121,7 @@ static unsigned long vdso_addr(unsigned long start, unsigned len)
 	return addr;
 }
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 void import_vdso_context(struct vm_area_struct *vma)
 {
 	if (!vdso_enabled)

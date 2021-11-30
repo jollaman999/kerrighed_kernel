@@ -21,8 +21,8 @@
 
 #include <asm/unistd.h>
 
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 
 /*
@@ -43,7 +43,7 @@ SYSCALL_DEFINE(fadvise64_64)(int fd, loff_t offset, loff_t len, int advice)
 	if (!file)
 		return -EBADF;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT) {
 		faf_error(file, "fadvise64");
 		ret = -ENOSYS;

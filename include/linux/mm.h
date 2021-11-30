@@ -125,11 +125,11 @@ extern unsigned int kobjsize(const void *objp);
 #define VM_SAO		0x20000000	/* Strong Access Ordering (powerpc) */
 #define VM_PFN_AT_MMAP	0x40000000	/* PFNMAP vma that is fully mapped at mmap time */
 #define VM_MERGEABLE	0x80000000	/* KSM may merge identical pages */
-#ifdef CONFIG_KRG_MM
-#define VM_KDDM		0x100000000ULL	/* The vma is stored inside KDDM */
+#ifdef CONFIG_HCC_GMM
+#define VM_GDM		0x100000000ULL	/* The vma is stored inside GDM */
 #endif
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 #define VM_HUGEPAGE	0x200000000ULL	/* MADV_HUGEPAGE marked this vma */
 #else
 #if BITS_PER_LONG > 32
@@ -216,7 +216,7 @@ struct vm_fault {
 	pgoff_t pgoff;			/* Logical page offset based on vma */
 	void __user *virtual_address;	/* Faulting virtual address */
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 	pte_t pte;
 #endif
 	struct page *page;		/* ->fault handlers should return a
@@ -235,12 +235,12 @@ struct vm_operations_struct {
 	void (*open)(struct vm_area_struct * area);
 	void (*close)(struct vm_area_struct * area);
 	int (*fault)(struct vm_area_struct *vma, struct vm_fault *vmf);
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 	struct page * (*wppage)(struct vm_area_struct *area,
 				unsigned long address,
 				struct page *old_page);
 	void (*unlink)(struct vm_area_struct *area);
-#endif // CONFIG_KRG_MM
+#endif // CONFIG_HCC_GMM
 
 	/* notification that a previously read-only page is about to become
 	 * writable, if an error is returned it will cause a SIGBUS */
@@ -397,10 +397,10 @@ static inline struct page *compound_head(struct page *page)
 	return page;
 }
 
-#ifdef CONFIG_KRG_MM
-static inline int page_kddm_count(struct page *page)
+#ifdef CONFIG_HCC_GMM
+static inline int page_gdm_count(struct page *page)
 {
-	return atomic_read(&page->_kddm_count);
+	return atomic_read(&page->_gdm_count);
 }
 #endif
 
@@ -946,7 +946,7 @@ int walk_page_range(unsigned long addr, unsigned long end,
 		struct mm_walk *walk);
 void free_pgd_range(struct mmu_gather *tlb, unsigned long addr,
 		unsigned long end, unsigned long floor, unsigned long ceiling);
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 int copy_page_range(struct mm_struct *dst, struct mm_struct *src,
 			struct vm_area_struct *vma, int anon_only);
 #else
@@ -991,7 +991,7 @@ static inline int handle_mm_fault(struct mm_struct *mm,
 }
 #endif
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 		unsigned long address, pte_t *page_table, pmd_t *pmd,
 		unsigned int flags, pte_t orig_pte);
@@ -1033,7 +1033,7 @@ static inline int vma_stack_continue(struct vm_area_struct *vma, unsigned long a
 extern unsigned long move_page_tables(struct vm_area_struct *vma,
 		unsigned long old_addr, struct vm_area_struct *new_vma,
 		unsigned long new_addr, unsigned long len);
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 int do_mprotect(struct mm_struct *mm, unsigned long start, size_t len,
 		unsigned long prot, int personality);
 unsigned long __do_mremap(struct mm_struct *mm, unsigned long addr,
@@ -1327,7 +1327,7 @@ extern int vma_adjust(struct vm_area_struct *vma, unsigned long start,
 	unsigned long end, pgoff_t pgoff, struct vm_area_struct *insert);
 extern struct vm_area_struct *vma_merge(struct mm_struct *,
 	struct vm_area_struct *prev, unsigned long addr, unsigned long end,
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 	unsigned long long vm_flags, struct anon_vma *, struct file *, pgoff_t,
 #else
 	unsigned long vm_flags, struct anon_vma *, struct file *, pgoff_t,
@@ -1362,7 +1362,7 @@ static inline void removed_exe_file_vma(struct mm_struct *mm)
 extern int may_expand_vm(struct mm_struct *mm, unsigned long npages);
 extern int install_special_mapping(struct mm_struct *mm,
 				   unsigned long addr, unsigned long len,
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 				   unsigned long long flags, struct page **pages);
 #else
 				   unsigned long flags, struct page **pages);
@@ -1371,7 +1371,7 @@ extern int install_special_mapping(struct mm_struct *mm,
 
 extern unsigned long get_unmapped_area_prot(struct file *, unsigned long, unsigned long, unsigned long, unsigned long, int);
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 extern unsigned long __get_unmapped_area_prot(struct mm_struct *, struct file *, unsigned long,
 											unsigned long, unsigned long, unsigned long, int);
 #endif
@@ -1383,14 +1383,14 @@ static inline unsigned long get_unmapped_area(struct file *file, unsigned long a
 	return get_unmapped_area_prot(file, addr, len, pgoff, flags, 0);
 }
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 extern unsigned long __get_unmapped_area_prot(struct mm_struct *, struct file *, unsigned long , unsigned long , unsigned long , unsigned long , int );
 #endif
 
 extern unsigned long do_mmap_pgoff(struct file *file, unsigned long addr,
 	unsigned long len, unsigned long prot,
 	unsigned long flag, unsigned long pgoff);
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 extern unsigned long mmap_region(struct file *file, unsigned long addr,
 	unsigned long len, unsigned long flags,
 	unsigned long long vm_flags, unsigned long pgoff);
@@ -1419,7 +1419,7 @@ out:
 
 extern int do_munmap(struct mm_struct *, unsigned long, size_t);
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 extern unsigned long __do_brk(struct mm_struct * mm, unsigned long addr,
 			      unsigned long len, unsigned long _lock_limit);
 unsigned long __sys_brk(struct mm_struct *mm, unsigned long brk,
@@ -1468,8 +1468,8 @@ unsigned long ra_submit(struct file_ra_state *ra,
 extern unsigned long stack_guard_gap;
 
 /* Do stack extension */
-#ifdef CONFIG_KRG_MM
-extern int krg_expand_stack(struct vm_area_struct *vma, unsigned long address);
+#ifdef CONFIG_HCC_GMM
+extern int hcc_expand_stack(struct vm_area_struct *vma, unsigned long address);
 extern int __expand_stack(struct vm_area_struct *vma, unsigned long address);
 static inline int expand_stack(struct vm_area_struct *vma,
 			       unsigned long address)
@@ -1477,8 +1477,8 @@ static inline int expand_stack(struct vm_area_struct *vma,
 	int err;
 
 	err = __expand_stack(vma, address);
-	if (!err && vma->vm_mm->anon_vma_kddm_set)
-		krg_expand_stack(vma, address);
+	if (!err && vma->vm_mm->anon_vma_gdm_set)
+		hcc_expand_stack(vma, address);
 
 	return err;
 }
@@ -1538,7 +1538,7 @@ static inline unsigned long vma_pages(struct vm_area_struct *vma)
 	return (vma->vm_end - vma->vm_start) >> PAGE_SHIFT;
 }
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 pgprot_t vm_get_page_prot(unsigned long long vm_flags);
 #else
 pgprot_t vm_get_page_prot(unsigned long vm_flags);
@@ -1664,8 +1664,8 @@ extern void copy_user_huge_page(struct page *dst, struct page *src,
 				unsigned int pages_per_huge_page);
 #endif /* CONFIG_TRANSPARENT_HUGEPAGE || CONFIG_HUGETLBFS */
 
-#ifdef CONFIG_KRG_MM
-#include <kerrighed/mm.h>
+#ifdef CONFIG_HCC_GMM
+#include <hcc/gmm.h>
 #endif
 
 #endif /* __KERNEL__ */

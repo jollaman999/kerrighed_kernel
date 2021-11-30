@@ -62,8 +62,8 @@
 #include <linux/bootmem.h>
 #include <linux/hugetlb.h>
 
-#ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
+#ifdef CONFIG_HCC_GPM
+#include <hcc/hccsyms.h>
 #endif
 
 #include <asm/futex.h>
@@ -2939,15 +2939,15 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
 	return do_futex(uaddr, op, val, tp, uaddr2, val2, val3);
 }
 
-#ifdef CONFIG_KRG_EPM
-int futex_krgsyms_register(void)
+#ifdef CONFIG_HCC_GPM
+int futex_hccsyms_register(void)
 {
-	return krgsyms_register(KRGSYMS_FUTEX_WAIT_RESTART, futex_wait_restart);
+	return hccsyms_register(HCCSYMS_FUTEX_WAIT_RESTART, futex_wait_restart);
 }
 
-int futex_krgsyms_unregister(void)
+int futex_hccsyms_unregister(void)
 {
-	return krgsyms_unregister(KRGSYMS_FUTEX_WAIT_RESTART);
+	return hccsyms_unregister(HCCSYMS_FUTEX_WAIT_RESTART);
 }
 #endif
 

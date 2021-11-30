@@ -34,9 +34,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef CONFIG_KRG_HOTPLUG
-#include <kerrighed/sys/types.h>
-#include <kerrighed/hotplug.h>
+#ifdef CONFIG_HCC_GHOTPLUG
+#include <hcc/sys/types.h>
+#include <hcc/ghotplug.h>
 #endif
 
 #include "core.h"
@@ -349,8 +349,8 @@ static void node_established_contact(struct tipc_node *n_ptr)
 
 	dbg("node_established_contact:-> %x\n", n_ptr->addr);
 
-#ifdef CONFIG_KRG_HOTPLUG
-	krg_node_arrival(tipc_node(n_ptr->addr)-1);
+#ifdef CONFIG_HCC_GHOTPLUG
+	hcc_node_arrival(tipc_node(n_ptr->addr)-1);
 #endif
 
 	if (!tipc_node_has_active_routes(n_ptr) && in_own_cluster(n_ptr->addr)) {
@@ -401,8 +401,8 @@ static void node_lost_contact(struct tipc_node *n_ptr)
 	char addr_string[16];
 	u32 i;
 
-#ifdef CONFIG_KRG_HOTPLUG
-	krg_node_departure(tipc_node(n_ptr->addr)-1);
+#ifdef CONFIG_HCC_GHOTPLUG
+	hcc_node_departure(tipc_node(n_ptr->addr)-1);
 #endif
 
 	/* Clean up broadcast reception remains */

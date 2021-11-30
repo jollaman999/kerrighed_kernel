@@ -125,15 +125,15 @@ do {								\
 			       buf, len, ascii);		\
 } while (0)
 
-#ifdef CONFIG_KERRIGHED
-#define dynamic_pr_kerrighed(fmt, ...) do {				\
+#ifdef CONFIG_HCC
+#define dynamic_pr_hcc(fmt, ...) do {				\
 	static struct _ddebug descriptor				\
 	__used								\
 	__attribute__((section("__verbose"), aligned(8))) =		\
 	{ KBUILD_MODNAME, __func__, __FILE__, fmt, DEBUG_HASH,	\
 		DEBUG_HASH2, __LINE__, _DPRINTK_FLAGS_DEFAULT };	\
 	if (__dynamic_dbg_enabled(descriptor))				\
-		printk(KERN_DEBUG "kerrighed: " pr_fmt(fmt),		\
+		printk(KERN_DEBUG "hcc: " pr_fmt(fmt),		\
 				##__VA_ARGS__);				\
 	} while (0)
 #endif
@@ -165,7 +165,7 @@ static inline int ddebug_dyndbg_module_param_cb(char *param, char *val,
 #define dynamic_dev_dbg(dev, fmt, ...)					\
 	do { if (0) dev_printk(KERN_DEBUG, dev, fmt, ##__VA_ARGS__); } while (0)
 
-#ifdef CONFIG_KERRIGHED					\
+#ifdef CONFIG_HCC					\
 	do { if (0) printk(KERN_DEBUG pr_fmt(fmt), ##__VA_ARGS__); } while (0)
 #endif
 #endif

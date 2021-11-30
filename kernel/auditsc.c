@@ -66,9 +66,9 @@
 #include <linux/syscalls.h>
 #include <linux/capability.h>
 #include <linux/fs_struct.h>
-#ifdef CONFIG_KRG_EPM
-#include <kerrighed/action.h>
-#include <kerrighed/ghost.h>
+#ifdef CONFIG_HCC_GPM
+#include <hcc/action.h>
+#include <hcc/ghost.h>
 #endif
 
 #include "audit.h"
@@ -1916,8 +1916,8 @@ void audit_finish_fork(struct task_struct *child)
 	p->current_state = ctx->current_state;
 }
 
-#ifdef CONFIG_KRG_EPM
-int export_audit_context(struct epm_action *action,
+#ifdef CONFIG_HCC_GPM
+int export_audit_context(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	struct audit_context *ctx = task->audit_context;
@@ -1929,7 +1929,7 @@ int export_audit_context(struct epm_action *action,
 	return err;
 }
 
-int import_audit_context(struct epm_action *action,
+int import_audit_context(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	struct audit_context ctx;
@@ -1983,7 +1983,7 @@ void free_ghost_audit_context(struct task_struct *task)
 	if (ctx)
 		audit_free_context(ctx);
 }
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 /**
  * audit_syscall_exit - deallocate audit context after a system call

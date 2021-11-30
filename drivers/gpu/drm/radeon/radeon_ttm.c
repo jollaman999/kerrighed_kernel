@@ -964,7 +964,7 @@ void radeon_ttm_set_active_vram_size(struct radeon_device *rdev, u64 size)
 }
 
 static struct vm_operations_struct radeon_ttm_vm_ops;
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct *ttm_vm_ops = NULL;

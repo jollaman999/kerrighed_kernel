@@ -19,8 +19,8 @@
 
 #include <asm/uaccess.h>
 
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 
 int vfs_readdir(struct file *file, filldir_t filler, void *buf)
@@ -106,7 +106,7 @@ efault:
 	return -EFAULT;
 }
 
-#ifndef CONFIG_KRG_FAF
+#ifndef CONFIG_HCC_FAF
 static inline
 #endif
 int do_oldreaddir(struct file *file, struct old_linux_dirent *dirent,
@@ -136,9 +136,9 @@ SYSCALL_DEFINE3(old_readdir, unsigned int, fd,
 	if (!file)
 		goto out;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
-		error = krg_faf_getdents(file, OLDREADDIR, dirent, count);
+		error = hcc_faf_getdents(file, OLDREADDIR, dirent, count);
 	else
 #endif
 	error = do_oldreaddir(file, dirent, count);
@@ -210,7 +210,7 @@ efault:
 	return -EFAULT;
 }
 
-#ifndef CONFIG_KRG_FAF
+#ifndef CONFIG_HCC_FAF
 static inline
 #endif
 int do_getdents(struct file *file, struct linux_dirent *dirent,
@@ -220,7 +220,7 @@ int do_getdents(struct file *file, struct linux_dirent *dirent,
 	struct getdents_callback buf;
 	int error;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	BUG_ON(file->f_flags & O_FAF_CLT);
 #endif
 
@@ -258,9 +258,9 @@ SYSCALL_DEFINE3(getdents, unsigned int, fd,
 	if (!file)
 		goto out;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
-		error = krg_faf_getdents(file, GETDENTS, dirent, count);
+		error = hcc_faf_getdents(file, GETDENTS, dirent, count);
 	else
 #endif
 	error = do_getdents(file, dirent, count);
@@ -315,7 +315,7 @@ efault:
 	return -EFAULT;
 }
 
-#ifndef CONFIG_KRG_FAF
+#ifndef CONFIG_HCC_FAF
 static inline
 #endif
 int do_getdents64(struct file *file, struct linux_dirent64 *dirent,
@@ -325,7 +325,7 @@ int do_getdents64(struct file *file, struct linux_dirent64 *dirent,
 	struct getdents_callback64 buf;
 	int error;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	BUG_ON(file->f_flags & O_FAF_CLT);
 #endif
 
@@ -364,9 +364,9 @@ SYSCALL_DEFINE3(getdents64, unsigned int, fd,
 	if (!file)
 		goto out;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT)
-		error = krg_faf_getdents(file, GETDENTS64, dirent, count);
+		error = hcc_faf_getdents(file, GETDENTS64, dirent, count);
 	else
 #endif
 	error = do_getdents64(file, dirent, count);

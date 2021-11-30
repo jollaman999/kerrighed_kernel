@@ -23,12 +23,8 @@
 #include <linux/syscalls.h>
 #include <linux/rcupdate.h>
 
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
-#endif
-
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 
 struct timerfd_ctx {
@@ -268,7 +264,7 @@ static struct file *timerfd_fget(int fd)
 	file = fget(fd);
 	if (!file)
 		return ERR_PTR(-EBADF);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT) {
 		faf_error(file, "timerfd");
 		fput(file);

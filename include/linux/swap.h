@@ -8,7 +8,7 @@
 #include <linux/memcontrol.h>
 #include <linux/sched.h>
 #include <linux/node.h>
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 #include <linux/page-flags.h>
 #endif
 
@@ -224,7 +224,7 @@ extern unsigned long nr_free_pagecache_pages(void);
 /* Definition of global_page_state not available yet */
 #define nr_free_pages() global_page_state(NR_FREE_PAGES)
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 int page_swapcount(struct page *page);
 #endif
 
@@ -253,7 +253,7 @@ extern unsigned long max_swapfile_size(void);
  */
 static inline void lru_cache_add_anon(struct page *page)
 {
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 	if (PageMigratable(page))
 		__lru_cache_add(page, LRU_INACTIVE_MIGR);
 	else
@@ -263,7 +263,7 @@ static inline void lru_cache_add_anon(struct page *page)
 
 static inline void lru_cache_add_active_anon(struct page *page)
 {
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 	if (PageMigratable(page))
 		__lru_cache_add(page, LRU_ACTIVE_MIGR);
 	else

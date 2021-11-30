@@ -4073,7 +4073,7 @@ out_put:
 	ring_buffer_put(rb); /* could be last */
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct perf_mmap_vmops = {

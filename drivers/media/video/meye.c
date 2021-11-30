@@ -1590,7 +1590,7 @@ static void meye_vm_close(struct vm_area_struct *vma)
 	meye.vma_use_count[idx]--;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct meye_vm_ops = {

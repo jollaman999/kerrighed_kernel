@@ -24,8 +24,8 @@
 #include <asm/proto.h>
 #include <asm/pat.h>
 
-#ifdef CONFIG_KRG_PROCFS
-#include <kerrighed/dynamic_node_info_linker.h>
+#ifdef CONFIG_HCC_PROCFS
+#include <hcc/dynamic_node_info_linker.h>
 #endif
 
 /*
@@ -95,8 +95,8 @@ void arch_report_meminfo(struct seq_file *m)
 #endif
 }
 
-#ifdef CONFIG_KRG_PROCFS
-void krg_arch_fill_dynamic_node_info(krg_dynamic_node_info_t *info)
+#ifdef CONFIG_HCC_PROCFS
+void hcc_arch_fill_dynamic_node_info(hcc_dynamic_node_info_t *info)
 {
 	info->arch_meminfo.direct_map_4k = direct_pages_count[PG_LEVEL_4K];
 	info->arch_meminfo.direct_map_2M = direct_pages_count[PG_LEVEL_2M];
@@ -109,11 +109,11 @@ void krg_arch_fill_dynamic_node_info(krg_dynamic_node_info_t *info)
 #endif
 }
 
-void krg_arch_accumulate_meminfo(const krg_dynamic_node_info_t *local_info,
-				 krg_dynamic_node_info_t *global_info)
+void hcc_arch_accumulate_meminfo(const hcc_dynamic_node_info_t *local_info,
+				 hcc_dynamic_node_info_t *global_info)
 {
-	const krg_arch_meminfo_t *local = &local_info->arch_meminfo;
-	krg_arch_meminfo_t *global = &global_info->arch_meminfo;
+	const hcc_arch_meminfo_t *local = &local_info->arch_meminfo;
+	hcc_arch_meminfo_t *global = &global_info->arch_meminfo;
 
 	global->direct_map_4k += local->direct_map_4k;
 	global->direct_map_2M += local->direct_map_2M;
@@ -123,10 +123,10 @@ void krg_arch_accumulate_meminfo(const krg_dynamic_node_info_t *local_info,
 	}
 }
 
-void krg_arch_report_meminfo(struct seq_file *m,
-			     const krg_dynamic_node_info_t *info)
+void hcc_arch_report_meminfo(struct seq_file *m,
+			     const hcc_dynamic_node_info_t *info)
 {
-	const krg_arch_meminfo_t *arch_info = &info->arch_meminfo;
+	const hcc_arch_meminfo_t *arch_info = &info->arch_meminfo;
 
 	seq_printf(m, "DirectMap4k:    %8lu kB\n",
 		   arch_info->direct_map_4k << 2);
@@ -143,7 +143,7 @@ void krg_arch_report_meminfo(struct seq_file *m,
 			   arch_info->direct_map_1G << 20);
 #endif
 }
-#endif /* CONFIG_KRG_PROCFS */
+#endif /* CONFIG_HCC_PROCFS */
 #else
 static inline void split_page_count(int level) { }
 #endif

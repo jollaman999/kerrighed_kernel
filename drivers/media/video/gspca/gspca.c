@@ -108,7 +108,7 @@ static void gspca_vm_close(struct vm_area_struct *vma)
 		frame->v4l2_buf.flags &= ~V4L2_BUF_FLAG_MAPPED;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct gspca_vm_ops = {

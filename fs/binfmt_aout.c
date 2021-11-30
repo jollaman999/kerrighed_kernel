@@ -25,8 +25,8 @@
 #include <linux/personality.h>
 #include <linux/init.h>
 #include <linux/coredump.h>
-#ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
+#ifdef CONFIG_HCC_GPM
+#include <hcc/hccsyms.h>
 #endif
 
 #include <asm/system.h>
@@ -459,13 +459,13 @@ out:
 
 static int __init init_aout_binfmt(void)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	int retval;
 
-	krgsyms_register(KRGSYMS_BINFMTS_AOUT, &aout_format);
+	hccsyms_register(HCCSYMS_BINFMTS_AOUT, &aout_format);
 	retval = register_binfmt(&aout_format);
 	if (retval)
-		krgsyms_unregister(KRGSYMS_BINFMTS_AOUT);
+		hccsyms_unregister(HCCSYMS_BINFMTS_AOUT);
 	return retval;
 #else
 	return register_binfmt(&aout_format);
@@ -474,8 +474,8 @@ static int __init init_aout_binfmt(void)
 
 static void __exit exit_aout_binfmt(void)
 {
-#ifdef CONFIG_KRG_EPM
-	krgsyms_unregister(KRGSYMS_BINFMTS_AOUT);
+#ifdef CONFIG_HCC_GPM
+	hccsyms_unregister(HCCSYMS_BINFMTS_AOUT);
 #endif
 	unregister_binfmt(&aout_format);
 }

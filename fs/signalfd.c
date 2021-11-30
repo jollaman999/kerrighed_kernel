@@ -29,8 +29,8 @@
 #include <linux/signalfd.h>
 #include <linux/syscalls.h>
 
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 
 void signalfd_cleanup(struct sighand_struct *sighand)
@@ -273,7 +273,7 @@ SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
 		if (!file)
 			return -EBADF;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		if (file->f_flags & O_FAF_CLT) {
 			faf_error(file, "signalfd");
 			fput(file);

@@ -31,12 +31,11 @@
 #include <linux/uio.h>
 #include <linux/security.h>
 
-#ifdef CONFIG_KRG_EPM
-#include <kerrighed/file_stat.h>
+#ifdef CONFIG_HCC_GPM
+#include <hcc/file_stat.h>
 #endif
-
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 
 /*
@@ -1148,7 +1147,7 @@ EXPORT_SYMBOL(generic_splice_sendpage);
 /*
  * Attempt to initiate a splice from pipe to file.
  */
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
@@ -1184,7 +1183,7 @@ long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
 /*
  * Attempt to initiate a splice from a file to a pipe.
  */
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 long do_splice_to(struct file *in, loff_t *ppos,
@@ -1391,8 +1390,8 @@ static inline struct pipe_inode_info *pipe_info(struct inode *inode)
 	return NULL;
 }
 
-#ifdef CONFIG_KRG_EPM
-long krg_do_splice(struct file *in, struct file *out,
+#ifdef CONFIG_HCC_GPM
+long hcc_do_splice(struct file *in, struct file *out,
 		   loff_t *offset, size_t len, unsigned int flags)
 {
 	/*
@@ -1415,7 +1414,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
 	loff_t offset, *off;
 	long ret;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	if (is_pipe(in)) {
 		if (!(in->f_flags & O_FAF_CLT))
 			ipipe = pipe_info(in->f_path.dentry->d_inode);
@@ -1451,7 +1450,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
 		return splice_pipe_to_pipe(ipipe, opipe, len, flags);
 	}
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	if (is_pipe(in)) {
 #else
 	if (ipipe) {
@@ -1468,9 +1467,9 @@ static long do_splice(struct file *in, loff_t __user *off_in,
 		} else
 			off = &out->f_pos;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 		if (!ipipe)
-			ret = krg_do_splice(in, out, off, len, flags);
+			ret = hcc_do_splice(in, out, off, len, flags);
 		else
 #endif
 		ret = do_splice_from(ipipe, out, off, len, flags);
@@ -1481,7 +1480,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
 		return ret;
 	}
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	if (is_pipe(out)) {
 #else
 	if (opipe) {
@@ -1498,9 +1497,9 @@ static long do_splice(struct file *in, loff_t __user *off_in,
 		} else
 			off = &in->f_pos;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 		if (!opipe)
-			ret = krg_do_splice(in, out, off, len, flags);
+			ret = hcc_do_splice(in, out, off, len, flags);
 		else
 #endif
 		ret = do_splice_to(in, off, opipe, len, flags);
@@ -1807,7 +1806,7 @@ SYSCALL_DEFINE4(vmsplice, int, fd, const struct iovec __user *, iov,
 	error = -EBADF;
 	file = fget_light(fd, &fput);
 	if (file) {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		if (file->f_flags & O_FAF_CLT) {
 			error = -ENOSYS;
 			faf_error(file, "vmsplice");
@@ -2055,7 +2054,7 @@ retry:
 /*
  * Link contents of ipipe to opipe.
  */
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_GPM
 static
 #endif
 int link_pipe(struct pipe_inode_info *ipipe,
@@ -2187,7 +2186,7 @@ SYSCALL_DEFINE4(tee, int, fdin, int, fdout, size_t, len, unsigned int, flags)
 
 			if (out) {
 				if (out->f_mode & FMODE_WRITE)
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 				{
 					if (in->f_flags & O_FAF_CLT) {
 						faf_error(in, "tee");
@@ -2201,7 +2200,7 @@ SYSCALL_DEFINE4(tee, int, fdin, int, fdout, size_t, len, unsigned int, flags)
 					}
 #endif
 					error = do_tee(in, out, len, flags);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 				}
 				out_put:
 #endif
