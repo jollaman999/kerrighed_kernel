@@ -1,7 +1,7 @@
 /*
  *  hcc/proc/remote_cred.c
  *
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/cred.h>
 #include <net/grpc/grpc.h>

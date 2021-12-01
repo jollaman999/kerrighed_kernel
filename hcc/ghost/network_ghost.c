@@ -1,8 +1,7 @@
 /** Network Ghost interface.
  *  @file network_ghost.c
  *
- *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <net/grpc/grpc.h>
 #include <hcc/ghost.h>

@@ -1,7 +1,6 @@
 /** GMM module initialization.
  *  @file mm.c
  *
- *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
  *  Copyright (C) 2019-2021, Innogrid HCC.
  *
  *  Implementation of functions used to initialize and finalize the

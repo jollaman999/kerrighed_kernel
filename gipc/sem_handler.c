@@ -3,7 +3,7 @@
  *
  *  All the code for sharing IPC semaphore accross the cluster
  *
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/ipc.h>
 #include <linux/ipc_namespace.h>

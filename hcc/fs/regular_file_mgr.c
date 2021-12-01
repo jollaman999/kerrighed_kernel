@@ -1,7 +1,6 @@
 /** Global management of regular files.
  *  @file regular_file_mgr.c
  *
- *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/mutex.h>

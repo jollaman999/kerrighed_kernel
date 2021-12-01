@@ -3,7 +3,7 @@
  *
  *  GDM IPC msg_queue id Linker.
  *
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/shm.h>
 #include <linux/lockdep.h>

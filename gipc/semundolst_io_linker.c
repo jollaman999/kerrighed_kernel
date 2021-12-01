@@ -3,7 +3,7 @@
  *
  *  GDM SEM undo proc list Linker.
  *
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/sem.h>
 #include <linux/lockdep.h>

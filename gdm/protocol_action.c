@@ -1,7 +1,6 @@
 /** Basic coherence protocol actions.
  *  @file protocol_action.c
  *
- *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
  *  Copyright (C) 2019-2021, Innogrid HCC.
  *
  *  The file implements the basic operations used by the GDM coherence

@@ -1,7 +1,7 @@
 /*
  *  hcc/epm/pidmap.c
  *
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/pid_namespace.h>

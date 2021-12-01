@@ -1,7 +1,7 @@
 /*
  *  hcc/gscheduler/hashed_string_list.c
  *
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/string.h>

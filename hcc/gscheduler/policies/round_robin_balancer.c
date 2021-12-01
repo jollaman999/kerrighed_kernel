@@ -1,7 +1,7 @@
 /*
  *  hcc/gscheduler/policies/round_robin_balancer.c
  *
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 /**

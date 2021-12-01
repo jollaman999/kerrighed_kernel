@@ -1,7 +1,7 @@
 /*
  *  hcc/gscheduler/global_lock.c
  *
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/errno.h>

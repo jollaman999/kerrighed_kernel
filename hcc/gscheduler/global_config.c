@@ -1,7 +1,7 @@
 /*
  *  hcc/gscheduler/global_config.c
  *
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 /*

@@ -1,8 +1,7 @@
 /*
  *  hcc/epm/ghost.c
  *
- *  Copyright (C) 1999-2006 INRIA, Universite de Rennes 1, EDF
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  *
  *  @author Innogrid HCC
  */

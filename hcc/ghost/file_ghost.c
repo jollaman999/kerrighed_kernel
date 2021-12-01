@@ -1,7 +1,7 @@
 /** File Ghost interface.
  *  @file file_ghost.c
  *
- *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/cred.h>
 #include <linux/file.h>

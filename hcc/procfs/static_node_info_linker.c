@@ -1,7 +1,6 @@
 /** Static node information management.
  *  @file static_node_info_linker.c
  *
- *  Copyright (C) 2001-2006, INRIA, Universite de Rennes 1, EDF.
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/swap.h>

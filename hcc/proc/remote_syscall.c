@@ -1,7 +1,7 @@
 /*
  *  hcc/proc/remote_syscall.c
  *
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <net/grpc/grpc.h>
 #include <linux/cred.h>

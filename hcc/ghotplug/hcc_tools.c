@@ -1,7 +1,7 @@
 /** Initilize the tool module.
  *  @file hcc_tools.c
  *
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 #include <linux/module.h>
 #include <linux/kernel.h>

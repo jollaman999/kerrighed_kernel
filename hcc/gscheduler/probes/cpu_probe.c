@@ -1,7 +1,7 @@
 /*
  *  hcc/gscheduler/probes/cpu_probe.c
  *
- *  Copyright (C) 2019-2021 Innogrid HCC.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/kernel.h>
