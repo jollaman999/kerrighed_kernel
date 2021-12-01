@@ -14,7 +14,7 @@
 #include <asm/mmu_context.h>
 #include <net/grpc/grpc.h>
 #include <net/grpc/grpcid.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <asm/uaccess.h>
 #include <hcc/hcc_services.h>
 #include <gdm/gdm.h>

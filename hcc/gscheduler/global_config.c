@@ -39,7 +39,7 @@
 #include <linux/jiffies.h>
 #include <linux/errno.h>
 #include <linux/err.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
 #include <hcc/ghotplug.h>

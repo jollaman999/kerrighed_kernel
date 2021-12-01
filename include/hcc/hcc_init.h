@@ -1,5 +1,5 @@
-#ifndef __HCCINIT_H__
-#define __HCCINIT_H__
+#ifndef __HCC_INIT_H__
+#define __HCC_INIT_H__
 
 #include <hcc/types.h>
 #include <linux/rwsem.h>

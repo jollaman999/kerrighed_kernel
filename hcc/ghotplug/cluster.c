@@ -24,7 +24,7 @@
 #include <asm/uaccess.h>
 #include <asm/ioctl.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/ghotplug.h>
 #include <hcc/hccnodemask.h>
 

@@ -7,7 +7,7 @@
 #include <linux/timer.h>
 #include <linux/workqueue.h>
 #include <hcc/hccnodemask.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 
 #include <hcc/workqueue.h>
 #include <net/grpc/grpcid.h>

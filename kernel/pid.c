@@ -40,7 +40,7 @@
 
 #ifdef CONFIG_HCC_PROC
 #include <hcc/pid.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #endif
 
 #define pid_hashfn(nr, ns)	\

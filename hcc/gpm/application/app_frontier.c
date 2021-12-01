@@ -10,7 +10,7 @@
 #include <linux/cred.h>
 #include <hcc/remote_cred.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/pid.h>
 #include <hcc/application.h>
 #include <net/grpc/grpcid.h>

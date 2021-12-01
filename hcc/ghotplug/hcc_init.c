@@ -11,7 +11,7 @@
 
 #include <hcc/version.h>
 #include <hcc/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/hcc_flags.h>
 #include <linux/cluster_barrier.h>
 #include <linux/unique_id.h>

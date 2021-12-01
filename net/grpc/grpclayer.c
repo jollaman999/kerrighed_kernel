@@ -13,7 +13,7 @@
 #include <linux/spinlock.h>
 #include <linux/lockdep.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/hccnodemask.h>
 #include <linux/hcc_hashtable.h>
 

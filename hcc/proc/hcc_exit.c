@@ -16,7 +16,7 @@
 #include <linux/tracehook.h>
 #include <linux/task_io_accounting_ops.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/pid.h>
 #include <hcc/children.h>
 #include <hcc/signal.h>

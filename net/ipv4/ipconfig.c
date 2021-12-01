@@ -60,7 +60,7 @@
 #include <net/route.h>
 
 #ifdef CONFIG_HCC_GRPC
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/ghotplug.h>
 #include <hcc/hccnodemask.h>
 #endif

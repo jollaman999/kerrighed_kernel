@@ -91,7 +91,7 @@
 #include <hcc/sys/types.h>
 #if HCC_MAX_NODES <= 1
 /* hcc_node_id is used for some macros in this special case */
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #endif
 
 

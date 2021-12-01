@@ -23,7 +23,7 @@
 #include <linux/rcupdate.h>
 #include <net/net_namespace.h>
 #include <gdm/gdm_info.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/namespace.h>
 #include <hcc/hcc_syms.h>
 #include <hcc/children.h>

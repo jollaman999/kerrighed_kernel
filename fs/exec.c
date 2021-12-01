@@ -61,7 +61,7 @@
 #endif
 #ifdef CONFIG_HCC_PROC
 #include <hcc/task.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #endif
 #ifdef CONFIG_HCC_GPM
 #include <hcc/signal.h>

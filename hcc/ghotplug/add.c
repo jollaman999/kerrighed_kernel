@@ -10,7 +10,7 @@
 #include <linux/hcc_hashtable.h>
 #include <linux/uaccess.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/ghotplug.h>
 #include <hcc/namespace.h>
 #include <hcc/hccnodemask.h>

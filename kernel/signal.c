@@ -36,7 +36,7 @@
 #include <hcc/pid.h>
 #include <hcc/remote_cred.h>
 #include <hcc/hccnodemask.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/remote_syscall.h>
 #endif
 #ifdef CONFIG_HCC_GPM

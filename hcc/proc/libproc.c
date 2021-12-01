@@ -5,7 +5,7 @@
  */
 
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/pid.h>
 #include <gdm/io_linker.h>
 

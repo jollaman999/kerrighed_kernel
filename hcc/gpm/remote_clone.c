@@ -8,7 +8,7 @@
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/completion.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/sys/types.h>
 #include <hcc/pid.h>
 #include <hcc/ghotplug.h>

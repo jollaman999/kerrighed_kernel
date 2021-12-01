@@ -27,7 +27,7 @@
 #include <hcc/hcc_signal.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/remote_cred.h>
 #include <hcc/remote_syscall.h>
 #ifdef CONFIG_HCC_GCAP

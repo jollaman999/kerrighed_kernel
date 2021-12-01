@@ -13,7 +13,7 @@
 #include <linux/elf.h>
 #include <hcc/pid.h>
 #include <hcc/task.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 
 #include <net/grpc/grpcid.h>
 #include <net/grpc/grpc.h>

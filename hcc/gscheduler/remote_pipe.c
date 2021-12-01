@@ -11,7 +11,7 @@
 #include <linux/err.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/workqueue.h>
 #include <hcc/gscheduler/pipe.h>
 #include <hcc/gscheduler/global_config.h>

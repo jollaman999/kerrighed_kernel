@@ -9,7 +9,7 @@
 #define __IO_LINKER__
 
 #include <hcc/hccnodemask.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/sys/types.h>
 
 #include <gdm/gdm_types.h>

@@ -3,7 +3,7 @@
 
 #include <linux/threads.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 
 static inline int __hcc_cpu_id(hcc_node_t node, int cpu_id)
 {

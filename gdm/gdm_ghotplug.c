@@ -7,7 +7,7 @@
 #include <linux/kernel.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <linux/hcc_hashtable.h>
 #include <linux/cluster_barrier.h>
 

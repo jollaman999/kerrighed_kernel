@@ -21,7 +21,7 @@
 #include <net/tipc/tipc_bearer.h>
 #include <hcc/hccnodemask.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <linux/hcc_hashtable.h>
 
 #include <net/grpc/grpcid.h>

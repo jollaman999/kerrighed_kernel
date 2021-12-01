@@ -27,7 +27,7 @@
 #include <asm/tlbflush.h>
 #include <asm/pgtable.h>
 #include <hcc/hcc_syms.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 #include <hcc/file_stat.h>

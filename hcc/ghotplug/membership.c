@@ -2,7 +2,7 @@
 #include <hcc/ghotplug.h>
 #include <hcc/hccnodemask.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 
 static void membership_online_add(hccnodemask_t *vector)
 {

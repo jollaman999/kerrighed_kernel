@@ -19,7 +19,7 @@
 #include <linux/rculist.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/pid.h>
 #include <hcc/migration.h>
 #include <hcc/gscheduler/policy.h>

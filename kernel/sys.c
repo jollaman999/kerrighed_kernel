@@ -48,7 +48,7 @@
 #include <hcc/remote_syscall.h>
 #endif
 #ifdef CONFIG_HCC_GPM
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/pid.h>
 #include <hcc/task.h>
 #include <hcc/children.h>

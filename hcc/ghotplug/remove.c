@@ -13,7 +13,7 @@
 #include <linux/device.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/hashtable.h>
 #include <hcc/ghotplug.h>
 #include <hcc/hcc_flags.h>

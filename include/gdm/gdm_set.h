@@ -10,7 +10,7 @@
 
 #include <linux/socket.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/hcc_syms.h>
 
 #include <gdm/gdm_types.h>

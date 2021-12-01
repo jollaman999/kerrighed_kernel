@@ -13,7 +13,7 @@
 
 #include <hcc/types.h>
 #include <hcc/ghotplug.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 
 #define TABLE_SIZE 128
 

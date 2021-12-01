@@ -59,7 +59,7 @@
 #endif
 #ifdef CONFIG_HCC_PROC
 #include <hcc/task.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/hcc_exit.h>
 #endif
 #ifdef CONFIG_HCC_GPM

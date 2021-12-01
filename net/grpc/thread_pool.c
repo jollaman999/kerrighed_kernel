@@ -16,7 +16,7 @@
 #include <linux/file.h>
 #include <linux/fdtable.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/workqueue.h>
 #include <net/grpc/grpcid.h>
 #include <net/grpc/grpc.h>

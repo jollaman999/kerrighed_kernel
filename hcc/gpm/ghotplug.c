@@ -6,7 +6,7 @@
 #include <linux/nsproxy.h>
 #include <hcc/capabilities.h>
 #include <hcc/hccnodemask.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/pid.h>
 #include <hcc/ghotplug.h>
 #include <hcc/migration.h>

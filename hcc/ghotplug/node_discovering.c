@@ -2,7 +2,7 @@
 
 #include <hcc/sys/types.h>
 #include <hcc/hccnodemask.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/ghotplug.h>
 
 hccnodemask_t hccnode_possible_map;

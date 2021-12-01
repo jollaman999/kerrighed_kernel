@@ -12,7 +12,7 @@
 #include <hcc/ghotplug.h>
 #include <hcc/hccnodemask.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <asm/uaccess.h>
 
 #include <hcc/hcc_services.h>

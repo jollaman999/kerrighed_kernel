@@ -11,7 +11,7 @@
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/hcc_flags.h>
 
 #include <net/grpc/grpc.h>

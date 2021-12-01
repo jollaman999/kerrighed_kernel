@@ -8,7 +8,7 @@
 #include <linux/threads.h>
 #include <linux/types.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/hccnodemask.h>
 
 /*

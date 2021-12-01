@@ -18,7 +18,7 @@
 #include <hcc/children.h>
 #include <hcc/task.h>
 #include <hcc/pid.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 #include <hcc/hcc_exit.h>	/* For remote zombies handling */

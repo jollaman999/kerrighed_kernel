@@ -26,7 +26,7 @@
 
 #ifdef CONFIG_HCC_GPM
 #include <hcc/action.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/children.h>
 #include <hcc/hcc_exit.h>
 #endif

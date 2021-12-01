@@ -4,7 +4,7 @@
 #include <linux/ipc.h>
 #ifdef CONFIG_HCC_GIPC
 #include <linux/unique_id.h>
-#include <hcc/hccinit.h>
+#include <hcc/hcc_init.h>
 #include <hcc/types.h>
 #endif
 
