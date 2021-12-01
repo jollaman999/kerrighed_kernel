@@ -26,7 +26,7 @@ struct ipc_ids {
 	struct rw_semaphore rw_mutex;
 	struct idr ipcs_idr;
 #ifdef CONFIG_HCC_GIPC
-	struct hcc_gipc_ops *hccops;
+	struct hcc_gipc_ops *hcc_ops;
 #endif
 };
 

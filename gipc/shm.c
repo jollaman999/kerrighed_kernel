@@ -614,7 +614,7 @@ int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 		if (error)
 			goto no_file;
 	} else
-		shp->shm_perm.hccops = NULL;
+		shp->shm_perm.hcc_ops = NULL;
 #endif
 	error = shp->shm_perm.id;
 

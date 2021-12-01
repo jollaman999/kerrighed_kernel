@@ -141,7 +141,7 @@ void ipc_init_ids(struct ipc_ids *ids)
 
 	idr_init(&ids->ipcs_idr);
 #ifdef CONFIG_HCC_GIPC
-	ids->hccops = NULL;
+	ids->hcc_ops = NULL;
 #endif
 }
 
@@ -198,7 +198,7 @@ static struct kern_ipc_perm *ipc_findkey(struct ipc_ids *ids, key_t key)
 
 #ifdef CONFIG_HCC_GIPC
 	if (is_hcc_gipc(ids)) {
-		ipc = ids->hccops->ipc_findkey(ids, key);
+		ipc = ids->hcc_ops->ipc_findkey(ids, key);
 		if (IS_ERR(ipc))
 			ipc = NULL;
 		return ipc;
@@ -884,7 +884,7 @@ out:
 struct kern_ipc_perm *ipc_lock(struct ipc_ids *ids, int id)
 {
 	if (is_hcc_gipc(ids))
-		return ids->hccops->ipc_lock(ids, id);
+		return ids->hcc_ops->ipc_lock(ids, id);
 
 	return local_ipc_lock(ids, id);
 }
@@ -915,8 +915,8 @@ void local_ipc_unlock(struct kern_ipc_perm *perm)
 
 void ipc_unlock(struct kern_ipc_perm *perm)
 {
-	if (perm->hccops)
-		perm->hccops->ipc_unlock(perm);
+	if (perm->hcc_ops)
+		perm->hcc_ops->ipc_unlock(perm);
 	else
 		local_ipc_unlock(perm);
 }
@@ -1250,7 +1250,7 @@ void sem_rcu_free(struct rcu_head *head)
 
 int is_hcc_gipc(struct ipc_ids *ids)
 {
-	if (ids->hccops)
+	if (ids->hcc_ops)
 		return 1;
 
 	return 0;

@@ -55,7 +55,7 @@ static struct msg_queue *create_local_msq(struct ipc_namespace *ns,
 	INIT_LIST_HEAD(&msq->q_receivers);
 	INIT_LIST_HEAD(&msq->q_senders);
 
-	msq->q_perm.hccops = msg_ids(ns).hccops;
+	msq->q_perm.hcc_ops = msg_ids(ns).hcc_ops;
 	local_msg_unlock(msq);
 
 	return msq;

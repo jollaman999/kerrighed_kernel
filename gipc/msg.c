@@ -258,7 +258,7 @@ int newque(struct ipc_namespace *ns, struct ipc_params *params)
 			return retval;
 		}
 	} else
-		msq->q_perm.hccops = NULL;
+		msq->q_perm.hcc_ops = NULL;
 #endif
 
 	msg_unlock(msq);

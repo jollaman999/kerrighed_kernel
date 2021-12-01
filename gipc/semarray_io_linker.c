@@ -62,7 +62,7 @@ struct sem_array *create_local_sem(struct ipc_namespace *ns,
 	INIT_LIST_HEAD(&sma->list_id);
 	INIT_LIST_HEAD(&sma->remote_sem_pending);
 
-	sma->sem_perm.hccops = sem_ids(ns).hccops;
+	sma->sem_perm.hcc_ops = sem_ids(ns).hcc_ops;
 	sem_unlock(sma, -1);
 
 	return sma;

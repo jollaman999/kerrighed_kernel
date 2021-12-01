@@ -59,9 +59,9 @@ int hcc_gipc_get_maxid(struct ipc_ids* ids)
 	ipcmap_object_t *ipc_map;
 	int max_id;
 
-	ipc_map = _gdm_get_object(ids->hccops->map_gdm_set, 0);
+	ipc_map = _gdm_get_object(ids->hcc_ops->map_gdm_set, 0);
 	max_id = ipc_map->alloc_map - 1;
-	_gdm_put_object(ids->hccops->map_gdm_set, 0);
+	_gdm_put_object(ids->hcc_ops->map_gdm_set, 0);
 
 	return max_id;
 }
@@ -71,10 +71,10 @@ int hcc_gipc_get_new_id(struct ipc_ids* ids)
 	ipcmap_object_t *ipc_map, *max_id;
 	int i = 1, id = -1, offset;
 
-	max_id = _gdm_grab_object(ids->hccops->map_gdm_set, 0);
+	max_id = _gdm_grab_object(ids->hcc_ops->map_gdm_set, 0);
 
 	while (id == -1) {
-		ipc_map = _gdm_grab_object(ids->hccops->map_gdm_set, i);
+		ipc_map = _gdm_grab_object(ids->hcc_ops->map_gdm_set, i);
 
 		if (ipc_map->alloc_map != ULONG_MAX) {
 			offset = find_first_zero_bit(&ipc_map->alloc_map,
@@ -89,11 +89,11 @@ int hcc_gipc_get_new_id(struct ipc_ids* ids)
 			}
 		}
 
-		_gdm_put_object(ids->hccops->map_gdm_set, i);
+		_gdm_put_object(ids->hcc_ops->map_gdm_set, i);
 		i++;
 	}
 
-	_gdm_put_object(ids->hccops->map_gdm_set, 0);
+	_gdm_put_object(ids->hcc_ops->map_gdm_set, 0);
 
 	return id;
 }
@@ -103,12 +103,12 @@ int hcc_gipc_get_this_id(struct ipc_ids *ids, int id)
 	ipcmap_object_t *ipc_map, *max_id;
 	int i, offset, ret = 0;
 
-	max_id = _gdm_grab_object(ids->hccops->map_gdm_set, 0);
+	max_id = _gdm_grab_object(ids->hcc_ops->map_gdm_set, 0);
 
 	offset = id % BITS_PER_LONG;
 	i = (id - offset)/BITS_PER_LONG +1;
 
-	ipc_map = _gdm_grab_object(ids->hccops->map_gdm_set, i);
+	ipc_map = _gdm_grab_object(ids->hcc_ops->map_gdm_set, i);
 
 	if (test_and_set_bit(offset, &ipc_map->alloc_map)) {
 		ret = -EBUSY;
@@ -119,8 +119,8 @@ int hcc_gipc_get_this_id(struct ipc_ids *ids, int id)
 		max_id->alloc_map = id + 1;
 
 out_id_unavailable:
-	_gdm_put_object(ids->hccops->map_gdm_set, i);
-	_gdm_put_object(ids->hccops->map_gdm_set, 0);
+	_gdm_put_object(ids->hcc_ops->map_gdm_set, i);
+	_gdm_put_object(ids->hcc_ops->map_gdm_set, 0);
 
 	return ret;
 }
@@ -135,42 +135,42 @@ void hcc_gipc_rmid(struct ipc_ids* ids, int index)
 	i = 1 + index / BITS_PER_LONG;
 	offset = index % BITS_PER_LONG;
 
-	ipc_map = _gdm_grab_object(ids->hccops->map_gdm_set, i);
+	ipc_map = _gdm_grab_object(ids->hcc_ops->map_gdm_set, i);
 
 	BUG_ON(!test_bit(offset, &ipc_map->alloc_map));
 
 	clear_bit(offset, &ipc_map->alloc_map);
 
-	_gdm_put_object(ids->hccops->map_gdm_set, i);
+	_gdm_put_object(ids->hcc_ops->map_gdm_set, i);
 
 	/* Check if max_id must be adjusted */
 
-	max_id = _gdm_grab_object(ids->hccops->map_gdm_set, 0);
+	max_id = _gdm_grab_object(ids->hcc_ops->map_gdm_set, 0);
 
 	if (max_id->alloc_map != index + 1)
 		goto done;
 
 	for (; i > 0; i--) {
 
-		ipc_map = _gdm_grab_object(ids->hccops->map_gdm_set, i);
+		ipc_map = _gdm_grab_object(ids->hcc_ops->map_gdm_set, i);
 		if (ipc_map->alloc_map != 0) {
 			for (; offset >= 0; offset--) {
 				if (test_bit (offset, &ipc_map->alloc_map)) {
 					max_id->alloc_map = 1 + offset +
 						(i - 1) * BITS_PER_LONG;
 					_gdm_put_object(
-						ids->hccops->map_gdm_set, i);
+						ids->hcc_ops->map_gdm_set, i);
 					goto done;
 				}
 			}
 		}
 		offset = 31;
-		_gdm_put_object(ids->hccops->map_gdm_set, i);
+		_gdm_put_object(ids->hcc_ops->map_gdm_set, i);
 	}
 
 	max_id->alloc_map = 0;
 done:
-	_gdm_put_object(ids->hccops->map_gdm_set, 0);
+	_gdm_put_object(ids->hcc_ops->map_gdm_set, 0);
 
 	return;
 }

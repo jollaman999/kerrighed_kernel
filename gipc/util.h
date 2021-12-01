@@ -237,7 +237,7 @@ static inline int ipc_checkid(struct kern_ipc_perm *ipcp, int uid)
 static inline void ipc_lock_by_ptr(struct kern_ipc_perm *perm)
 {
 #ifdef CONFIG_HCC_GIPC
-	BUG_ON(perm->hccops);
+	BUG_ON(perm->hcc_ops);
 #endif
 	rcu_read_lock();
 	spin_lock(&perm->lock);

@@ -284,9 +284,9 @@ void sem_unlock(struct sem_array *sma, int locknum)
 	if (locknum == -1) {
 		struct kern_ipc_perm *perm = &(sma)->sem_perm;
 #ifdef CONFIG_HCC_GIPC
-		if (perm->hccops) {
+		if (perm->hcc_ops) {
 			rcu_read_lock();
-			perm->hccops->ipc_unlock(perm);
+			perm->hcc_ops->ipc_unlock(perm);
 		} else
 #endif
 		spin_unlock(&perm->lock);
@@ -466,7 +466,7 @@ int newary(struct ipc_namespace *ns, struct ipc_params *params)
 		}
 	} else
 
-	sma->sem_perm.hccops = NULL;
+	sma->sem_perm.hcc_ops = NULL;
 
 	id = ipc_addid(&sem_ids(ns), &sma->sem_perm, ns->sc_semmni,
 		       params->requested_id);
@@ -752,7 +752,7 @@ static int update_queue(struct sem_array *sma, int semnum)
 	   keep the sem for it */
 	int remote = 0, loop = 0;
 
-	if (sma->sem_perm.hccops) {
+	if (sma->sem_perm.hcc_ops) {
 		remote = get_random_int()%2;
 		loop = 1;
 	}
@@ -1834,7 +1834,7 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 		goto out_unlock_free;
 
 #ifdef CONFIG_HCC_GIPC
-	if (undos && sma->sem_perm.hccops) {
+	if (undos && sma->sem_perm.hcc_ops) {
 		un = hcc_gipc_sem_find_undo(sma);
 		if (IS_ERR(un)) {
 			error = PTR_ERR(un);

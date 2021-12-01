@@ -35,7 +35,7 @@ static struct kern_ipc_perm *kcb_ipc_shm_lock(struct ipc_ids *ids, int id)
 
 	index = ipcid_to_idx(id);
 
-	shp_object = _gdm_grab_object_no_ft(ids->hccops->data_gdm_set, index);
+	shp_object = _gdm_grab_object_no_ft(ids->hcc_ops->data_gdm_set, index);
 
 	if (!shp_object)
 		goto error;
@@ -54,7 +54,7 @@ static struct kern_ipc_perm *kcb_ipc_shm_lock(struct ipc_ids *ids, int id)
 	return &(shp->shm_perm);
 
 error:
-	_gdm_put_object(ids->hccops->data_gdm_set, index);
+	_gdm_put_object(ids->hcc_ops->data_gdm_set, index);
 	rcu_read_unlock();
 
 	return ERR_PTR(-EINVAL);
@@ -69,7 +69,7 @@ static void kcb_ipc_shm_unlock(struct kern_ipc_perm *ipcp)
 	if (ipcp->deleted)
 		deleted = 1;
 
-	_gdm_put_object(ipcp->hccops->data_gdm_set, index);
+	_gdm_put_object(ipcp->hcc_ops->data_gdm_set, index);
 
 	if (!deleted)
 		spin_unlock(&ipcp->lock);
@@ -82,12 +82,12 @@ static struct kern_ipc_perm *kcb_ipc_shm_findkey(struct ipc_ids *ids, key_t key)
 	long *key_index;
 	int id = -1;
 
-	key_index = _gdm_get_object_no_ft(ids->hccops->key_gdm_set, key);
+	key_index = _gdm_get_object_no_ft(ids->hcc_ops->key_gdm_set, key);
 
 	if (key_index)
 		id = *key_index;
 
-	_gdm_put_object(ids->hccops->key_gdm_set, key);
+	_gdm_put_object(ids->hcc_ops->key_gdm_set, key);
 
 	if (id != -1)
 		return kcb_ipc_shm_lock(ids, id);
@@ -106,12 +106,12 @@ int hcc_gipc_shm_newseg (struct ipc_namespace *ns, struct shmid_kernel *shp)
 	long *key_index;
 	int index, err;
 
-	BUG_ON(!shm_ids(ns).hccops);
+	BUG_ON(!shm_ids(ns).hcc_ops);
 
 	index = ipcid_to_idx(shp->shm_perm.id);
 
 	shp_object = _gdm_grab_object_manual_ft(
-		shm_ids(ns).hccops->data_gdm_set, index);
+		shm_ids(ns).hcc_ops->data_gdm_set, index);
 
 	BUG_ON(shp_object);
 
@@ -138,21 +138,21 @@ int hcc_gipc_shm_newseg (struct ipc_namespace *ns, struct shmid_kernel *shp)
 
 	shp_object->local_shp = shp;
 
-	_gdm_set_object(shm_ids(ns).hccops->data_gdm_set, index, shp_object);
+	_gdm_set_object(shm_ids(ns).hcc_ops->data_gdm_set, index, shp_object);
 
 	if (shp->shm_perm.key != IPC_PRIVATE)
 	{
-		key_index = _gdm_grab_object(shm_ids(ns).hccops->key_gdm_set,
+		key_index = _gdm_grab_object(shm_ids(ns).hcc_ops->key_gdm_set,
 					      shp->shm_perm.key);
 		*key_index = index;
-		_gdm_put_object (shm_ids(ns).hccops->key_gdm_set,
+		_gdm_put_object (shm_ids(ns).hcc_ops->key_gdm_set,
 				  shp->shm_perm.key);
 	}
 
-	shp->shm_perm.hccops = shm_ids(ns).hccops;
+	shp->shm_perm.hcc_ops = shm_ids(ns).hcc_ops;
 
 err_put:
-	_gdm_put_object(shm_ids(ns).hccops->data_gdm_set, index);
+	_gdm_put_object(shm_ids(ns).hcc_ops->data_gdm_set, index);
 
 	return 0;
 
@@ -160,7 +160,7 @@ err_put:
 
 void hcc_gipc_shm_rmkey(struct ipc_namespace *ns, key_t key)
 {
-	_gdm_remove_object(shm_ids(ns).hccops->key_gdm_set, key);
+	_gdm_remove_object(shm_ids(ns).hcc_ops->key_gdm_set, key);
 }
 
 void hcc_gipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
@@ -175,13 +175,13 @@ void hcc_gipc_shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
 	mm_set = shp->shm_file->f_dentry->d_inode->i_mapping->gdm_set;
 
 	if (key != IPC_PRIVATE) {
-		_gdm_grab_object_no_ft(shm_ids(ns).hccops->key_gdm_set, key);
-		_gdm_remove_frozen_object(shm_ids(ns).hccops->key_gdm_set, key);
+		_gdm_grab_object_no_ft(shm_ids(ns).hcc_ops->key_gdm_set, key);
+		_gdm_remove_frozen_object(shm_ids(ns).hcc_ops->key_gdm_set, key);
 	}
 
 	local_shm_unlock(shp);
 
-	_gdm_remove_frozen_object(shm_ids(ns).hccops->data_gdm_set, index);
+	_gdm_remove_frozen_object(shm_ids(ns).hcc_ops->data_gdm_set, index);
 	_destroy_gdm_set(mm_set);
 
 	hcc_gipc_rmid(&shm_ids(ns), index);
@@ -241,7 +241,7 @@ int hcc_shm_init_ns(struct ipc_namespace *ns)
 	shm_ops->ipc_unlock = kcb_ipc_shm_unlock;
 	shm_ops->ipc_findkey = kcb_ipc_shm_findkey;
 
-	shm_ids(ns).hccops = shm_ops;
+	shm_ids(ns).hcc_ops = shm_ops;
 
 	return 0;
 
@@ -257,13 +257,13 @@ err:
 
 void hcc_shm_exit_ns(struct ipc_namespace *ns)
 {
-	if (shm_ids(ns).hccops) {
+	if (shm_ids(ns).hcc_ops) {
 
-		_destroy_gdm_set(shm_ids(ns).hccops->data_gdm_set);
-		_destroy_gdm_set(shm_ids(ns).hccops->key_gdm_set);
-		_destroy_gdm_set(shm_ids(ns).hccops->map_gdm_set);
+		_destroy_gdm_set(shm_ids(ns).hcc_ops->data_gdm_set);
+		_destroy_gdm_set(shm_ids(ns).hcc_ops->key_gdm_set);
+		_destroy_gdm_set(shm_ids(ns).hcc_ops->map_gdm_set);
 
-		kfree(shm_ids(ns).hccops);
+		kfree(shm_ids(ns).hcc_ops);
 	}
 }
 

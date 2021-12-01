@@ -23,16 +23,16 @@
 #include "hcc_msg.h"
 #include "gipc_mobility.h"
 
-struct msghccops {
-	struct hcc_gipc_ops hccops;
+struct msghcc_ops {
+	struct hcc_gipc_ops hcc_ops;
 	struct gdm_set *master_gdm_set;
 };
 
 struct gdm_set *hcc_gipc_ops_master_set(struct hcc_gipc_ops *ipcops)
 {
-	struct msghccops *msgops;
+	struct msghcc_ops *msgops;
 
-	msgops = container_of(ipcops, struct msghccops, hccops);
+	msgops = container_of(ipcops, struct msghcc_ops, hcc_ops);
 
 	return msgops->master_gdm_set;
 }
@@ -51,7 +51,7 @@ static struct kern_ipc_perm *kcb_ipc_msg_lock(struct ipc_ids *ids, int id)
 
 	index = ipcid_to_idx(id);
 
-	msq_object = _gdm_grab_object_no_ft(ids->hccops->data_gdm_set, index);
+	msq_object = _gdm_grab_object_no_ft(ids->hcc_ops->data_gdm_set, index);
 
 	if (!msq_object)
 		goto error;
@@ -67,7 +67,7 @@ static struct kern_ipc_perm *kcb_ipc_msg_lock(struct ipc_ids *ids, int id)
 	return &(msq->q_perm);
 
 error:
-	_gdm_put_object(ids->hccops->data_gdm_set, index);
+	_gdm_put_object(ids->hcc_ops->data_gdm_set, index);
 
 	return ERR_PTR(-EINVAL);
 }
@@ -87,7 +87,7 @@ static void kcb_ipc_msg_unlock(struct kern_ipc_perm *ipcp)
 
 	index = ipcid_to_idx(ipcp->id);
 
-	_gdm_put_object(ipcp->hccops->data_gdm_set, index);
+	_gdm_put_object(ipcp->hcc_ops->data_gdm_set, index);
 
 	__set_current_state(task_state);
 
@@ -99,12 +99,12 @@ static struct kern_ipc_perm *kcb_ipc_msg_findkey(struct ipc_ids *ids, key_t key)
 	long *key_index;
 	int id = -1;
 
-	key_index = _gdm_get_object_no_ft(ids->hccops->key_gdm_set, key);
+	key_index = _gdm_get_object_no_ft(ids->hcc_ops->key_gdm_set, key);
 
 	if (key_index)
 		id = *key_index;
 
-	_gdm_put_object(ids->hccops->key_gdm_set, key);
+	_gdm_put_object(ids->hcc_ops->key_gdm_set, key);
 
 	if (id != -1)
 		return kcb_ipc_msg_lock(ids, id);
@@ -124,12 +124,12 @@ int hcc_gipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 	long *key_index;
 	int index, err = 0;
 
-	BUG_ON(!msg_ids(ns).hccops);
+	BUG_ON(!msg_ids(ns).hcc_ops);
 
 	index = ipcid_to_idx(msq->q_perm.id);
 
 	msq_object = _gdm_grab_object_manual_ft(
-		msg_ids(ns).hccops->data_gdm_set, index);
+		msg_ids(ns).hcc_ops->data_gdm_set, index);
 
 	BUG_ON(msq_object);
 
@@ -143,28 +143,28 @@ int hcc_gipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 	msq_object->local_msq->is_master = 1;
 	msq_object->mobile_msq.q_perm.id = -1;
 
-	_gdm_set_object(msg_ids(ns).hccops->data_gdm_set, index, msq_object);
+	_gdm_set_object(msg_ids(ns).hcc_ops->data_gdm_set, index, msq_object);
 
 	if (msq->q_perm.key != IPC_PRIVATE)
 	{
-		key_index = _gdm_grab_object(msg_ids(ns).hccops->key_gdm_set,
+		key_index = _gdm_grab_object(msg_ids(ns).hcc_ops->key_gdm_set,
 					      msq->q_perm.key);
 		*key_index = index;
-		_gdm_put_object(msg_ids(ns).hccops->key_gdm_set,
+		_gdm_put_object(msg_ids(ns).hcc_ops->key_gdm_set,
 				 msq->q_perm.key);
 	}
 
-	master_set = hcc_gipc_ops_master_set(msg_ids(ns).hccops);
+	master_set = hcc_gipc_ops_master_set(msg_ids(ns).hcc_ops);
 
 	master_node = _gdm_grab_object(master_set, index);
 	*master_node = hcc_node_id;
 
-	msq->q_perm.hccops = msg_ids(ns).hccops;
+	msq->q_perm.hcc_ops = msg_ids(ns).hcc_ops;
 
 	_gdm_put_object(master_set, index);
 
 err_put:
-	_gdm_put_object(msg_ids(ns).hccops->data_gdm_set, index);
+	_gdm_put_object(msg_ids(ns).hcc_ops->data_gdm_set, index);
 
 	return err;
 }
@@ -180,18 +180,18 @@ void hcc_gipc_msg_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 	key = msq->q_perm.key;
 
 	if (key != IPC_PRIVATE) {
-		_gdm_grab_object_no_ft(ipcp->hccops->key_gdm_set, key);
-		_gdm_remove_frozen_object(ipcp->hccops->key_gdm_set, key);
+		_gdm_grab_object_no_ft(ipcp->hcc_ops->key_gdm_set, key);
+		_gdm_remove_frozen_object(ipcp->hcc_ops->key_gdm_set, key);
 	}
 
-	master_set = hcc_gipc_ops_master_set(ipcp->hccops);
+	master_set = hcc_gipc_ops_master_set(ipcp->hcc_ops);
 
 	_gdm_grab_object_no_ft(master_set, index);
 	_gdm_remove_frozen_object(master_set, index);
 
 	local_msg_unlock(msq);
 
-	_gdm_remove_frozen_object(ipcp->hccops->data_gdm_set, index);
+	_gdm_remove_frozen_object(ipcp->hcc_ops->data_gdm_set, index);
 
 	hcc_gipc_rmid(&msg_ids(ns), index);
 }
@@ -223,7 +223,7 @@ long hcc_gipc_msgsnd(int msqid, long mtype, void __user *mtext,
 
 	index = ipcid_to_idx(msqid);
 
-	master_set = hcc_gipc_ops_master_set(msg_ids(ns).hccops);
+	master_set = hcc_gipc_ops_master_set(msg_ids(ns).hcc_ops);
 
 	master_node = _gdm_get_object_no_ft(master_set, index);
 	if (!master_node) {
@@ -349,7 +349,7 @@ long hcc_gipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	/* TODO: manage ipc namespace */
 	index = ipcid_to_idx(msqid);
 
-	master_set = hcc_gipc_ops_master_set(msg_ids(ns).hccops);
+	master_set = hcc_gipc_ops_master_set(msg_ids(ns).hcc_ops);
 
 	master_node = _gdm_get_object_no_ft(master_set, index);
 	if (!master_node) {
@@ -475,40 +475,40 @@ int hcc_msg_init_ns(struct ipc_namespace *ns)
 {
 	int r;
 
-	struct msghccops *msg_ops = kmalloc(sizeof(struct msghccops),
+	struct msghcc_ops *msg_ops = kmalloc(sizeof(struct msghcc_ops),
 					    GFP_KERNEL);
 	if (!msg_ops) {
 		r = -ENOMEM;
 		goto err;
 	}
 
-	msg_ops->hccops.map_gdm_set = create_new_gdm_set(
+	msg_ops->hcc_ops.map_gdm_set = create_new_gdm_set(
 		gdm_def_ns, MSGMAP_GDM_ID, IPCMAP_LINKER,
 		GDM_RR_DEF_OWNER, sizeof(ipcmap_object_t),
 		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(msg_ops->hccops.map_gdm_set)) {
-		r = PTR_ERR(msg_ops->hccops.map_gdm_set);
+	if (IS_ERR(msg_ops->hcc_ops.map_gdm_set)) {
+		r = PTR_ERR(msg_ops->hcc_ops.map_gdm_set);
 		goto err_map;
 	}
 
-	msg_ops->hccops.key_gdm_set = create_new_gdm_set(
+	msg_ops->hcc_ops.key_gdm_set = create_new_gdm_set(
 		gdm_def_ns, MSGKEY_GDM_ID, MSGKEY_LINKER,
 		GDM_RR_DEF_OWNER, sizeof(long),
 		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(msg_ops->hccops.key_gdm_set)) {
-		r = PTR_ERR(msg_ops->hccops.key_gdm_set);
+	if (IS_ERR(msg_ops->hcc_ops.key_gdm_set)) {
+		r = PTR_ERR(msg_ops->hcc_ops.key_gdm_set);
 		goto err_key;
 	}
 
-	msg_ops->hccops.data_gdm_set = create_new_gdm_set(
+	msg_ops->hcc_ops.data_gdm_set = create_new_gdm_set(
 		gdm_def_ns, MSG_GDM_ID, MSG_LINKER,
 		GDM_RR_DEF_OWNER, sizeof(msq_object_t),
 		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(msg_ops->hccops.data_gdm_set)) {
-		r = PTR_ERR(msg_ops->hccops.data_gdm_set);
+	if (IS_ERR(msg_ops->hcc_ops.data_gdm_set)) {
+		r = PTR_ERR(msg_ops->hcc_ops.data_gdm_set);
 		goto err_data;
 	}
 
@@ -522,20 +522,20 @@ int hcc_msg_init_ns(struct ipc_namespace *ns)
 		goto err_master;
 	}
 
-	msg_ops->hccops.ipc_lock = kcb_ipc_msg_lock;
-	msg_ops->hccops.ipc_unlock = kcb_ipc_msg_unlock;
-	msg_ops->hccops.ipc_findkey = kcb_ipc_msg_findkey;
+	msg_ops->hcc_ops.ipc_lock = kcb_ipc_msg_lock;
+	msg_ops->hcc_ops.ipc_unlock = kcb_ipc_msg_unlock;
+	msg_ops->hcc_ops.ipc_findkey = kcb_ipc_msg_findkey;
 
-	msg_ids(ns).hccops = &msg_ops->hccops;
+	msg_ids(ns).hcc_ops = &msg_ops->hcc_ops;
 
 	return 0;
 
 err_master:
-	_destroy_gdm_set(msg_ops->hccops.data_gdm_set);
+	_destroy_gdm_set(msg_ops->hcc_ops.data_gdm_set);
 err_data:
-	_destroy_gdm_set(msg_ops->hccops.key_gdm_set);
+	_destroy_gdm_set(msg_ops->hcc_ops.key_gdm_set);
 err_key:
-	_destroy_gdm_set(msg_ops->hccops.map_gdm_set);
+	_destroy_gdm_set(msg_ops->hcc_ops.map_gdm_set);
 err_map:
 	kfree(msg_ops);
 err:
@@ -544,15 +544,15 @@ err:
 
 void hcc_msg_exit_ns(struct ipc_namespace *ns)
 {
-	if (msg_ids(ns).hccops) {
-		struct msghccops *msg_ops;
+	if (msg_ids(ns).hcc_ops) {
+		struct msghcc_ops *msg_ops;
 
-		msg_ops = container_of(msg_ids(ns).hccops, struct msghccops,
-				       hccops);
+		msg_ops = container_of(msg_ids(ns).hcc_ops, struct msghcc_ops,
+				       hcc_ops);
 
-		_destroy_gdm_set(msg_ops->hccops.map_gdm_set);
-		_destroy_gdm_set(msg_ops->hccops.key_gdm_set);
-		_destroy_gdm_set(msg_ops->hccops.data_gdm_set);
+		_destroy_gdm_set(msg_ops->hcc_ops.map_gdm_set);
+		_destroy_gdm_set(msg_ops->hcc_ops.key_gdm_set);
+		_destroy_gdm_set(msg_ops->hcc_ops.data_gdm_set);
 		_destroy_gdm_set(msg_ops->master_gdm_set);
 
 		kfree(msg_ops);

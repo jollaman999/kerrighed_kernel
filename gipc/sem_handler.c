@@ -22,8 +22,8 @@
 #include "util.h"
 #include "hccsem.h"
 
-struct semhccops {
-	struct hcc_gipc_ops hccops;
+struct semhcc_ops {
+	struct hcc_gipc_ops hcc_ops;
 	struct gdm_set *undo_list_gdm_set;
 
 	/* unique_id generator for sem_undo_list identifier */
@@ -32,9 +32,9 @@ struct semhccops {
 
 struct gdm_set *hcc_gipc_ops_undolist_set(struct hcc_gipc_ops *ipcops)
 {
-	struct semhccops *semops;
+	struct semhcc_ops *semops;
 
-	semops = container_of(ipcops, struct semhccops, hccops);
+	semops = container_of(ipcops, struct semhcc_ops, hcc_ops);
 
 	return semops->undo_list_gdm_set;
 }
@@ -44,10 +44,10 @@ struct gdm_set *task_undolist_set(struct task_struct *task)
 	struct ipc_namespace *ns;
 
 	ns = task_nsproxy(task)->ipc_ns;
-	if (!sem_ids(ns).hccops)
+	if (!sem_ids(ns).hcc_ops)
 		return ERR_PTR(-EINVAL);
 
-	return hcc_gipc_ops_undolist_set(sem_ids(ns).hccops);
+	return hcc_gipc_ops_undolist_set(sem_ids(ns).hcc_ops);
 }
 
 /*****************************************************************************/
@@ -66,7 +66,7 @@ static struct kern_ipc_perm *kcb_ipc_sem_lock(struct ipc_ids *ids, int id)
 
 	index = ipcid_to_idx(id);
 
-	sem_object = _gdm_grab_object_no_ft(ids->hccops->data_gdm_set, index);
+	sem_object = _gdm_grab_object_no_ft(ids->hcc_ops->data_gdm_set, index);
 
 	if (!sem_object)
 		goto error;
@@ -85,7 +85,7 @@ static struct kern_ipc_perm *kcb_ipc_sem_lock(struct ipc_ids *ids, int id)
 	return &(sma->sem_perm);
 
 error:
-	_gdm_put_object(ids->hccops->data_gdm_set, index);
+	_gdm_put_object(ids->hcc_ops->data_gdm_set, index);
 	rcu_read_unlock();
 
 	return ERR_PTR(-EINVAL);
@@ -109,7 +109,7 @@ static void kcb_ipc_sem_unlock(struct kern_ipc_perm *ipcp)
 	if (ipcp->deleted)
 		deleted = 1;
 
-	_gdm_put_object(ipcp->hccops->data_gdm_set, index);
+	_gdm_put_object(ipcp->hcc_ops->data_gdm_set, index);
 
 	__set_current_state(task_state);
 
@@ -124,12 +124,12 @@ static struct kern_ipc_perm *kcb_ipc_sem_findkey(struct ipc_ids *ids, key_t key)
 	long *key_index;
 	int id = -1;
 
-	key_index = _gdm_get_object_no_ft(ids->hccops->key_gdm_set, key);
+	key_index = _gdm_get_object_no_ft(ids->hcc_ops->key_gdm_set, key);
 
 	if (key_index)
 		id = *key_index;
 
-	_gdm_put_object(ids->hccops->key_gdm_set, key);
+	_gdm_put_object(ids->hcc_ops->key_gdm_set, key);
 
 	if (id != -1)
 		return kcb_ipc_sem_lock(ids, id);
@@ -149,12 +149,12 @@ int hcc_gipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma,
 	int index ;
 	int i;
 
-	BUG_ON(!sem_ids(ns).hccops);
+	BUG_ON(!sem_ids(ns).hcc_ops);
 
 	index = ipcid_to_idx(sma->sem_perm.id);
 
 	sem_object = _gdm_grab_object_manual_ft(
-		sem_ids(ns).hccops->data_gdm_set, index);
+		sem_ids(ns).hcc_ops->data_gdm_set, index);
 
 	BUG_ON(sem_object);
 
@@ -182,20 +182,20 @@ int hcc_gipc_sem_newary(struct ipc_namespace *ns, struct sem_array *sma,
 		INIT_LIST_HEAD(&sem_object->imported_sem.sem_base[i].remote_sem_pending);
 	}
 
-	_gdm_set_object(sem_ids(ns).hccops->data_gdm_set, index, sem_object);
+	_gdm_set_object(sem_ids(ns).hcc_ops->data_gdm_set, index, sem_object);
 
 	if (sma->sem_perm.key != IPC_PRIVATE)
 	{
-		key_index = _gdm_grab_object(sem_ids(ns).hccops->key_gdm_set,
+		key_index = _gdm_grab_object(sem_ids(ns).hcc_ops->key_gdm_set,
 					      sma->sem_perm.key);
 		*key_index = index;
-		_gdm_put_object(sem_ids(ns).hccops->key_gdm_set,
+		_gdm_put_object(sem_ids(ns).hcc_ops->key_gdm_set,
 				 sma->sem_perm.key);
 	}
 
-	_gdm_put_object(sem_ids(ns).hccops->data_gdm_set, index);
+	_gdm_put_object(sem_ids(ns).hcc_ops->data_gdm_set, index);
 
-	sma->sem_perm.hccops = sem_ids(ns).hccops;
+	sma->sem_perm.hcc_ops = sem_ids(ns).hcc_ops;
 
 	return 0;
 }
@@ -207,7 +207,7 @@ static inline void __remove_semundo_from_proc_list(struct sem_array *sma,
 	struct gdm_set *undo_list_set;
 	struct semundo_list_object *undo_list;
 
-	undo_list_set = hcc_gipc_ops_undolist_set(sma->sem_perm.hccops);
+	undo_list_set = hcc_gipc_ops_undolist_set(sma->sem_perm.hcc_ops);
 
 	undo_list = _gdm_grab_object_no_ft(undo_list_set, proc_list_id);
 
@@ -252,14 +252,14 @@ void hcc_gipc_sem_freeary(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 	}
 
 	if (ipcp->key != IPC_PRIVATE) {
-		_gdm_grab_object(sem_ids(ns).hccops->key_gdm_set,
+		_gdm_grab_object(sem_ids(ns).hcc_ops->key_gdm_set,
 				  ipcp->key);
-		_gdm_remove_frozen_object(sem_ids(ns).hccops->key_gdm_set,
+		_gdm_remove_frozen_object(sem_ids(ns).hcc_ops->key_gdm_set,
 					   ipcp->key);
 	}
 
 	sem_unlock(sma, -1);
-	_gdm_remove_frozen_object(sem_ids(ns).hccops->data_gdm_set, index);
+	_gdm_remove_frozen_object(sem_ids(ns).hcc_ops->data_gdm_set, index);
 
 	hcc_gipc_rmid(&sem_ids(ns), index);
 }
@@ -358,13 +358,13 @@ static inline struct semundo_list_object * __create_semundo_proc_list(
 	unique_id_t undo_list_id;
 	struct semundo_list_object *undo_list;
 	struct ipc_namespace *ns;
-	struct semhccops *semops;
+	struct semhcc_ops *semops;
 
 	ns = task_nsproxy(task)->ipc_ns;
-	if (!sem_ids(ns).hccops)
+	if (!sem_ids(ns).hcc_ops)
 		return ERR_PTR(-EINVAL);
 
-	semops = container_of(sem_ids(ns).hccops, struct semhccops, hccops);
+	semops = container_of(sem_ids(ns).hcc_ops, struct semhcc_ops, hcc_ops);
 
 	/* get a random id */
 	undo_list_id = get_unique_id(&semops->undo_list_unique_id_root);
@@ -564,7 +564,7 @@ struct sem_undo * hcc_gipc_sem_find_undo(struct sem_array* sma)
 	struct semundo_list_object *undo_list = NULL;
 	unique_id_t undo_list_id;
 
-	undo_list_set = hcc_gipc_ops_undolist_set(sma->sem_perm.hccops);
+	undo_list_set = hcc_gipc_ops_undolist_set(sma->sem_perm.hcc_ops);
 	if (IS_ERR(undo_list_set)) {
 		undo = ERR_PTR(PTR_ERR(undo_list_set));
 		goto exit;
@@ -681,7 +681,7 @@ void hcc_gipc_sem_exit_sem(struct ipc_namespace *ns,
 	if (task->sysvsem.undo_list_id == UNIQUE_ID_NONE)
 		return;
 
-	undo_list_gdm_set = hcc_gipc_ops_undolist_set(sem_ids(ns).hccops);
+	undo_list_gdm_set = hcc_gipc_ops_undolist_set(sem_ids(ns).hcc_ops);
 	if (IS_ERR(undo_list_gdm_set)) {
 		BUG();
 		return;
@@ -724,39 +724,39 @@ int hcc_sem_init_ns(struct ipc_namespace *ns)
 {
 	int r;
 
-	struct semhccops *sem_ops = kmalloc(sizeof(struct semhccops),
+	struct semhcc_ops *sem_ops = kmalloc(sizeof(struct semhcc_ops),
 					     GFP_KERNEL);
 	if (!sem_ops) {
 		r = -ENOMEM;
 		goto err;
 	}
 
-	sem_ops->hccops.map_gdm_set = create_new_gdm_set(
+	sem_ops->hcc_ops.map_gdm_set = create_new_gdm_set(
 		gdm_def_ns, SEMMAP_GDM_ID, IPCMAP_LINKER,
 		GDM_RR_DEF_OWNER, sizeof(ipcmap_object_t),
 		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(sem_ops->hccops.map_gdm_set)) {
-		r = PTR_ERR(sem_ops->hccops.map_gdm_set);
+	if (IS_ERR(sem_ops->hcc_ops.map_gdm_set)) {
+		r = PTR_ERR(sem_ops->hcc_ops.map_gdm_set);
 		goto err_map;
 	}
 
-	sem_ops->hccops.key_gdm_set = create_new_gdm_set(
+	sem_ops->hcc_ops.key_gdm_set = create_new_gdm_set(
 		gdm_def_ns, SEMKEY_GDM_ID, SEMKEY_LINKER,
 		GDM_RR_DEF_OWNER, sizeof(long), GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(sem_ops->hccops.key_gdm_set)) {
-		r = PTR_ERR(sem_ops->hccops.key_gdm_set);
+	if (IS_ERR(sem_ops->hcc_ops.key_gdm_set)) {
+		r = PTR_ERR(sem_ops->hcc_ops.key_gdm_set);
 		goto err_key;
 	}
 
-	sem_ops->hccops.data_gdm_set = create_new_gdm_set(
+	sem_ops->hcc_ops.data_gdm_set = create_new_gdm_set(
 		gdm_def_ns, SEMARRAY_GDM_ID, SEMARRAY_LINKER,
 		GDM_RR_DEF_OWNER, sizeof(semarray_object_t),
 		GDM_LOCAL_EXCLUSIVE);
 
-	if (IS_ERR(sem_ops->hccops.data_gdm_set)) {
-		r = PTR_ERR(sem_ops->hccops.data_gdm_set);
+	if (IS_ERR(sem_ops->hcc_ops.data_gdm_set)) {
+		r = PTR_ERR(sem_ops->hcc_ops.data_gdm_set);
 		goto err_data;
 	}
 
@@ -772,20 +772,20 @@ int hcc_sem_init_ns(struct ipc_namespace *ns)
 
 	init_unique_id_root(&sem_ops->undo_list_unique_id_root);
 
-	sem_ops->hccops.ipc_lock = kcb_ipc_sem_lock;
-	sem_ops->hccops.ipc_unlock = kcb_ipc_sem_unlock;
-	sem_ops->hccops.ipc_findkey = kcb_ipc_sem_findkey;
+	sem_ops->hcc_ops.ipc_lock = kcb_ipc_sem_lock;
+	sem_ops->hcc_ops.ipc_unlock = kcb_ipc_sem_unlock;
+	sem_ops->hcc_ops.ipc_findkey = kcb_ipc_sem_findkey;
 
-	sem_ids(ns).hccops = &sem_ops->hccops;
+	sem_ids(ns).hcc_ops = &sem_ops->hcc_ops;
 
 	return 0;
 
 err_undolist:
-	_destroy_gdm_set(sem_ops->hccops.data_gdm_set);
+	_destroy_gdm_set(sem_ops->hcc_ops.data_gdm_set);
 err_data:
-	_destroy_gdm_set(sem_ops->hccops.key_gdm_set);
+	_destroy_gdm_set(sem_ops->hcc_ops.key_gdm_set);
 err_key:
-	_destroy_gdm_set(sem_ops->hccops.map_gdm_set);
+	_destroy_gdm_set(sem_ops->hcc_ops.map_gdm_set);
 err_map:
 	kfree(sem_ops);
 err:
@@ -794,16 +794,16 @@ err:
 
 void hcc_sem_exit_ns(struct ipc_namespace *ns)
 {
-	if (sem_ids(ns).hccops) {
-		struct semhccops *sem_ops;
+	if (sem_ids(ns).hcc_ops) {
+		struct semhcc_ops *sem_ops;
 
-		sem_ops = container_of(sem_ids(ns).hccops, struct semhccops,
-				      hccops);
+		sem_ops = container_of(sem_ids(ns).hcc_ops, struct semhcc_ops,
+				      hcc_ops);
 
 		_destroy_gdm_set(sem_ops->undo_list_gdm_set);
-		_destroy_gdm_set(sem_ops->hccops.data_gdm_set);
-		_destroy_gdm_set(sem_ops->hccops.key_gdm_set);
-		_destroy_gdm_set(sem_ops->hccops.map_gdm_set);
+		_destroy_gdm_set(sem_ops->hcc_ops.data_gdm_set);
+		_destroy_gdm_set(sem_ops->hcc_ops.key_gdm_set);
+		_destroy_gdm_set(sem_ops->hcc_ops.map_gdm_set);
 
 		kfree(sem_ops);
 	}

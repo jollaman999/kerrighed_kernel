@@ -107,7 +107,7 @@ struct kern_ipc_perm
 	unsigned long	seq;
 	void		*security;
 #ifdef CONFIG_HCC_GIPC
-	struct hcc_gipc_ops *hccops;
+	struct hcc_gipc_ops *hcc_ops;
 #endif
 };
 

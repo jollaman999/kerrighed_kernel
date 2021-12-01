@@ -79,7 +79,7 @@ struct shmid_kernel *create_local_shp (struct ipc_namespace *ns,
 
 	ns->shm_tot += (shp->shm_segsz + PAGE_SIZE -1) >> PAGE_SHIFT;
 
-	shp->shm_perm.hccops = shm_ids(ns).hccops;
+	shp->shm_perm.hcc_ops = shm_ids(ns).hcc_ops;
 
 	local_shm_unlock(shp);
 
