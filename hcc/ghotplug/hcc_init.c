@@ -305,7 +305,7 @@ static void __init init_ids(void)
 		check_node_id(hcc_node_id);
 #ifdef CONFIG_HCC_GHOTPLUG
 		universe[hcc_node_id].state = 1;
-		set_hccnode_present(hcc_node_id);
+		set_hcc_node_present(hcc_node_id);
 #endif
 	}
 

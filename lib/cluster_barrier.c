@@ -50,8 +50,8 @@ struct cluster_barrier *alloc_cluster_barrier(unique_id_t key)
 		return ERR_PTR(-ENOMEM);
 
 	for (i = 0; i < 2; i++) {
-		hccnodes_clear (barrier->core[i].nodes_in_barrier);
-		hccnodes_clear (barrier->core[i].nodes_to_wait);
+		hcc_nodes_clear (barrier->core[i].nodes_in_barrier);
+		hcc_nodes_clear (barrier->core[i].nodes_to_wait);
 		init_waitqueue_head(&barrier->core[i].waiting_tsk);
 		barrier->core[i].in_barrier = 0;
 	}
@@ -76,7 +76,7 @@ void free_cluster_barrier(struct cluster_barrier *barrier)
 }
 
 int cluster_barrier(struct cluster_barrier *barrier,
-		    hccnodemask_t *nodes,
+		    hcc_nodemask_t *nodes,
 		    hcc_node_t master)
 {
 	struct cluster_barrier_core *core_bar;
@@ -84,8 +84,8 @@ int cluster_barrier(struct cluster_barrier *barrier,
 	struct grpc_desc *desc;
 	int err = 0;
 
-	BUG_ON (!__hccnode_isset(hcc_node_id, nodes));
-	BUG_ON (!__hccnode_isset(master, nodes));
+	BUG_ON (!__hcc_node_isset(hcc_node_id, nodes));
+	BUG_ON (!__hcc_node_isset(master, nodes));
 
 	spin_lock(&barrier->lock);
 	barrier->id.toggle = (barrier->id.toggle + 1) % 2;
@@ -101,7 +101,7 @@ int cluster_barrier(struct cluster_barrier *barrier,
 	desc = grpc_begin(GRPC_ENTER_BARRIER, master);
 
 	grpc_pack_type (desc, id);
-	grpc_pack(desc, 0, nodes, sizeof(hccnodemask_t));
+	grpc_pack(desc, 0, nodes, sizeof(hcc_nodemask_t));
 
 	grpc_end(desc, 0);
 
@@ -125,25 +125,25 @@ static int handle_enter_barrier(struct grpc_desc* desc,
 	struct cluster_barrier_id *id = ((struct cluster_barrier_id *) _msg);
 	struct cluster_barrier_core *core_bar;
 	struct cluster_barrier *barrier;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 
-	grpc_unpack(desc, 0, &nodes, sizeof(hccnodemask_t));
+	grpc_unpack(desc, 0, &nodes, sizeof(hcc_nodemask_t));
 
 	barrier = hashtable_find (barrier_table, id->key);
 	BUG_ON(!barrier);
 
 	core_bar = &barrier->core[id->toggle];
 
-	if (hccnodes_empty(core_bar->nodes_to_wait)) {
-		hccnodes_copy(core_bar->nodes_in_barrier, nodes);
-		hccnodes_copy(core_bar->nodes_to_wait, nodes);
+	if (hcc_nodes_empty(core_bar->nodes_to_wait)) {
+		hcc_nodes_copy(core_bar->nodes_in_barrier, nodes);
+		hcc_nodes_copy(core_bar->nodes_to_wait, nodes);
 	}
 	else
-		BUG_ON(!hccnodes_equal(core_bar->nodes_in_barrier, nodes));
+		BUG_ON(!hcc_nodes_equal(core_bar->nodes_in_barrier, nodes));
 
-	hccnode_clear(desc->client, core_bar->nodes_to_wait);
+	hcc_node_clear(desc->client, core_bar->nodes_to_wait);
 
-	if (hccnodes_empty(core_bar->nodes_to_wait)) {
+	if (hcc_nodes_empty(core_bar->nodes_to_wait)) {
                 grpc_async_m(GRPC_EXIT_BARRIER, &core_bar->nodes_in_barrier,
 			    id, sizeof (struct cluster_barrier_id));
 	}

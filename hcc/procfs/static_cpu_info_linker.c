@@ -24,7 +24,7 @@ struct gdm_set *static_cpu_info_gdm_set;
 
 hcc_node_t cpu_info_default_owner(struct gdm_set *set,
 					objid_t objid,
-					const hccnodemask_t *nodes,
+					const hcc_nodemask_t *nodes,
 					int nr_nodes)
 {
 	return hcc_cpu_node(objid);

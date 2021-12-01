@@ -1,14 +1,14 @@
 #include <linux/module.h>
 
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/hcc_init.h>
 #include <hcc/ghotplug.h>
 
-hccnodemask_t hccnode_possible_map;
-hccnodemask_t hccnode_present_map;
-hccnodemask_t hccnode_online_map;
-EXPORT_SYMBOL(hccnode_online_map);
+hcc_nodemask_t hcc_node_possible_map;
+hcc_nodemask_t hcc_node_present_map;
+hcc_nodemask_t hcc_node_online_map;
+EXPORT_SYMBOL(hcc_node_online_map);
 
 struct universe_elem universe[HCC_MAX_NODES];
 
@@ -18,7 +18,7 @@ void hcc_node_unreachable(hcc_node_t);
 void hcc_node_arrival(hcc_node_t nodeid)
 {
 	printk("hcc_node_arrival: nodeid = %d\n", nodeid);
-	set_hccnode_present(nodeid);
+	set_hcc_node_present(nodeid);
 	hcc_node_reachable(nodeid);
 #ifdef CONFIG_HCC_GHOTPLUG
 	universe[nodeid].state = 1;
@@ -31,7 +31,7 @@ void hcc_node_departure(hcc_node_t nodeid)
 #ifdef CONFIG_HCC_GHOTPLUG
 	universe[nodeid].state = 0;
 #endif
-	clear_hccnode_present(nodeid);
+	clear_hcc_node_present(nodeid);
 	hcc_node_unreachable(nodeid);
 }
 
@@ -39,9 +39,9 @@ void init_node_discovering(void)
 {
 	int i;
 
-	hccnodes_setall(hccnode_possible_map);
-	hccnodes_clear(hccnode_present_map);
-	hccnodes_clear(hccnode_online_map);
+	hcc_nodes_setall(hcc_node_possible_map);
+	hcc_nodes_clear(hcc_node_present_map);
+	hcc_nodes_clear(hcc_node_online_map);
 	
 #ifdef CONFIG_HCC_GHOTPLUG
 	for (i = 0; i < HCC_MAX_NODES; i++) {
@@ -54,6 +54,6 @@ void init_node_discovering(void)
 #ifdef CONFIG_HCC_GHOTPLUG
 		universe[hcc_node_id].state = 1;
 #endif
-		set_hccnode_present(hcc_node_id);
+		set_hcc_node_present(hcc_node_id);
 	}
 }

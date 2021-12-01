@@ -359,17 +359,17 @@ int handle_gdm_bench (struct grpc_desc* desc, void *_msg, size_t size)
 int gdm_bench(char *buff, int size)
 {
 	int n, i, master_node = hcc_node_id;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 
 	if (hcc_nb_nodes < 4) {
 		n = snprintf (buff, size, "Not enough nodes (min nodes: 4)\n");
 		return n;
 	}
 
-	hccnodes_clear(nodes);
+	hcc_nodes_clear(nodes);
 
 	for (i = master_node + 1; i <= master_node + 3; i++)
-		hccnode_set(i, nodes);
+		hcc_node_set(i, nodes);
 
 	grpc_async_m(GDM_BENCH, &nodes, &master_node, sizeof(int));
 

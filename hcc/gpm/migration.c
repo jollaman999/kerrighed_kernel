@@ -25,7 +25,7 @@
 #include <linux/notifier.h>
 #include <hcc/hcc_signal.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/hcc_init.h>
 #include <hcc/remote_cred.h>
 #include <hcc/remote_syscall.h>
@@ -291,7 +291,7 @@ static int do_migrate_process(struct task_struct *task,
 	struct siginfo info;
 	int retval;
 
-	if (!hccnode_online(destination_node_id))
+	if (!hcc_node_online(destination_node_id))
 		return -ENONET;
 
 	if (destination_node_id == hcc_node_id)
@@ -423,7 +423,7 @@ int migrate_linux_threads(pid_t pid,
 
 	/* Check the destination node */
 	/* Just an optimization to avoid doing a useless remote request */
-	if (!hccnode_online(dest_node))
+	if (!hcc_node_online(dest_node))
 		return -ENONET;
 
 	rcu_read_lock();
@@ -475,7 +475,7 @@ int sys_migrate_thread(pid_t pid, hcc_node_t dest_node)
 void hcc_syscall_exit(long syscall_nr)
 {
 	__migrate_linux_threads(current, MIGR_LOCAL_PROCESS,
-				hccnode_next_online_in_ring(hcc_node_id));
+				hcc_node_next_online_in_ring(hcc_node_id));
 }
 #endif
 

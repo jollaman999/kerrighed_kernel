@@ -11,7 +11,7 @@
 #include <linux/workqueue.h>
 #include <linux/spinlock.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/hcc_init.h>
 
 #include <gdm/gdm.h>
@@ -194,7 +194,7 @@ void request_copies_invalidation(struct gdm_set * set,
 				 hcc_node_t sender)
 {
 	msg_server_t msgToServer;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 
 	BUG_ON(sender < 0 || sender > HCC_MAX_NODES);
 
@@ -204,8 +204,8 @@ void request_copies_invalidation(struct gdm_set * set,
 	msgToServer.reply_node = sender;
 
 	DUP2_SET(COPYSET(obj_entry), &nodes);
-	hccnode_clear(hcc_node_id, nodes);
-	hccnode_clear(sender, nodes);
+	hcc_node_clear(hcc_node_id, nodes);
+	hcc_node_clear(sender, nodes);
 
 	grpc_async_m(REQ_OBJECT_INVALID, &nodes,
 		    &msgToServer, sizeof(msg_server_t));
@@ -496,13 +496,13 @@ int delayed_transfer_write_access(hcc_node_t dest_node, void *_msg)
 
 
 
-void merge_ack_set(hccnodemask_t *obj_set,
-		   hccnodemask_t *recv_set)
+void merge_ack_set(hcc_nodemask_t *obj_set,
+		   hcc_nodemask_t *recv_set)
 {
-	hccnodemask_t v;
+	hcc_nodemask_t v;
 
-	__hccnodes_xor(&v, obj_set, recv_set, HCC_MAX_NODES);
-	__hccnodes_and(obj_set, &v, recv_set, HCC_MAX_NODES);
+	__hcc_nodes_xor(&v, obj_set, recv_set, HCC_MAX_NODES);
+	__hcc_nodes_and(obj_set, &v, recv_set, HCC_MAX_NODES);
 }
 
 
@@ -583,7 +583,7 @@ void send_remove_ack2(struct gdm_set * set,
 void send_remove_object_done(struct gdm_set * set,
 			     objid_t objid,
 			     hcc_node_t dest_node,
-			     hccnodemask_t *rmset)
+			     hcc_nodemask_t *rmset)
 {
 	rm_done_msg_server_t msg;
 
@@ -815,7 +815,7 @@ hcc_node_t choose_injection_node_in_copyset(struct gdm_obj * object)
 	int i = 0, res = -1;
 
 	while (i < HCC_MAX_NODES && res == -1) {
-		if (hccnode_online(i)
+		if (hcc_node_online(i)
 		    && i != hcc_node_id
 		    && NODE_IN_SET(COPYSET(object), i)) {
 			res = i;

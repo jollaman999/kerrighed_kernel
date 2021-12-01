@@ -70,7 +70,7 @@ struct process_set *gscheduler_get_process_set(struct gscheduler *gscheduler);
  * @param node_set	node_set to copy the gscheduler's node set in
  */
 void gscheduler_get_node_set(struct gscheduler *gscheduler,
-			    hccnodemask_t *node_set);
+			    hcc_nodemask_t *node_set);
 
 /**
  * do {} while () style macro to begin an iteration over all universal

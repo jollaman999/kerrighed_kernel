@@ -18,7 +18,7 @@ int __nodes_add(struct ghotplug_context *ctx);
 int repair_monitor(void);
 void update_heartbeat(void);
 
-int hccnodemask_copy_from_user(hccnodemask_t *dst, __hccnodemask_t *from);
+int hcc_nodemask_copy_from_user(hcc_nodemask_t *dst, __hcc_nodemask_t *from);
 
 int hcc_set_cluster_creator(void __user *arg);
 

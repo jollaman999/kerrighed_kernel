@@ -55,7 +55,7 @@ static inline hcc_static_node_info_t *get_static_node_info(int node_id)
 
 hcc_node_t node_info_default_owner(struct gdm_set *set,
 					 objid_t objid,
-					 const hccnodemask_t *nodes,
+					 const hcc_nodemask_t *nodes,
 					 int nr_nodes);
 
 #endif /* STATIC_NODE_INFO_LINKER_H */

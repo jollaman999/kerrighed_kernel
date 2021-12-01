@@ -33,9 +33,9 @@ struct gscheduler_policy_operations {
 							   * destructor */
 	/* notifier of node set changes */
 	void (*update_node_set)(struct gscheduler_policy *policy,
-				const hccnodemask_t *new_set,
-				const hccnodemask_t *removed_set,
-				const hccnodemask_t *added_set);
+				const hcc_nodemask_t *new_set,
+				const hcc_nodemask_t *removed_set,
+				const hcc_nodemask_t *added_set);
 	/* process placement function
 	 * called when a task attached to this policy creates a new task */
 	hcc_node_t (*new_task_node)(struct gscheduler_policy *policy,
@@ -165,9 +165,9 @@ static inline void gscheduler_policy_put(struct gscheduler_policy *policy)
  */
 static inline
 void gscheduler_policy_update_node_set(struct gscheduler_policy *policy,
-				      const hccnodemask_t *new_set,
-				      const hccnodemask_t *removed_set,
-				      const hccnodemask_t *added_set)
+				      const hcc_nodemask_t *new_set,
+				      const hcc_nodemask_t *removed_set,
+				      const hcc_nodemask_t *added_set)
 {
 	struct gscheduler_policy_type *type =
 		container_of(policy->group.cg_item.ci_type,

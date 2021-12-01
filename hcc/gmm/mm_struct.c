@@ -220,7 +220,7 @@ void create_mm_struct_object(struct mm_struct *mm)
 
 	atomic_inc(&mm->mm_users); // Get a reference count for the GDM.
 
-	hccnode_set(hcc_node_id, mm->copyset);
+	hcc_node_set(hcc_node_id, mm->copyset);
 
 	mm->mm_id = get_unique_id(&mm_struct_unique_id_root);
 
@@ -259,7 +259,7 @@ static struct mm_struct *kcb_copy_mm(struct task_struct * tsk,
 	mm->mm_id = 0;
 	mm->anon_vma_gdm_set = NULL;
 	mm->anon_vma_gdm_id = 0;
-	hccnodes_clear (mm->copyset);
+	hcc_nodes_clear (mm->copyset);
 
 	if (clone_flags & CLONE_VFORK)
 		goto done_put;
@@ -288,7 +288,7 @@ int init_anon_vma_gdm_set(struct task_struct *tsk,
 	struct gdm_set *set;
 
 	mm->mm_id = 0;
-	hccnodes_clear (mm->copyset);
+	hcc_nodes_clear (mm->copyset);
 
 	set = __create_new_gdm_set(gdm_def_ns, 0, &gdm_pt_set_ops, mm,
 				    MEMORY_LINKER, hcc_node_id,
@@ -397,7 +397,7 @@ void hcc_do_mmap_region(struct vm_area_struct *vma,
 {
 	struct mm_struct *mm = vma->vm_mm;
 	struct mm_mmap_msg msg;
-	hccnodemask_t copyset;
+	hcc_nodemask_t copyset;
 
 	if (!mm->anon_vma_gdm_set)
 		return;
@@ -409,7 +409,7 @@ void hcc_do_mmap_region(struct vm_area_struct *vma,
 	if (!(vma->vm_flags & VM_GDM))
 		return;
 
-	if (hccnode_is_unique(hcc_node_id, mm->copyset))
+	if (hcc_node_is_unique(hcc_node_id, mm->copyset))
 		return;
 
 	msg.mm_id = mm->mm_id;
@@ -419,8 +419,8 @@ void hcc_do_mmap_region(struct vm_area_struct *vma,
 	msg.vm_flags = vm_flags;
 	msg.pgoff = vma->vm_pgoff;
 
-	hccnodes_copy(copyset, mm->copyset);
-	hccnode_clear(hcc_node_id, copyset);
+	hcc_nodes_copy(copyset, mm->copyset);
+	hcc_node_clear(hcc_node_id, copyset);
 
 	grpc_sync_m(GRPC_MM_MMAP_REGION, &copyset, &msg, sizeof(msg));
 }
@@ -431,20 +431,20 @@ void hcc_do_munmap(struct mm_struct *mm,
 		   size_t len)
 {
 	struct mm_mmap_msg msg;
-	hccnodemask_t copyset;
+	hcc_nodemask_t copyset;
 
 	if (!mm->mm_id)
 		return;
 
-	if (hccnode_is_unique(hcc_node_id, mm->copyset))
+	if (hcc_node_is_unique(hcc_node_id, mm->copyset))
 		return;
 
 	msg.mm_id = mm->mm_id;
 	msg.start = start;
 	msg.len = len;
 
-	hccnodes_copy(copyset, mm->copyset);
-	hccnode_clear(hcc_node_id, copyset);
+	hcc_nodes_copy(copyset, mm->copyset);
+	hcc_node_clear(hcc_node_id, copyset);
 
 	grpc_sync_m(GRPC_MM_MUNMAP, &copyset, &msg, sizeof(msg));
 }
@@ -455,12 +455,12 @@ void hcc_do_mremap(struct mm_struct *mm, unsigned long addr,
 		   unsigned long _new_addr, unsigned long lock_limit)
 {
 	struct mm_mmap_msg msg;
-	hccnodemask_t copyset;
+	hcc_nodemask_t copyset;
 
 	if (!mm->mm_id)
 		return;
 
-	if (hccnode_is_unique(hcc_node_id, mm->copyset))
+	if (hcc_node_is_unique(hcc_node_id, mm->copyset))
 		return;
 
 	msg.mm_id = mm->mm_id;
@@ -472,8 +472,8 @@ void hcc_do_mremap(struct mm_struct *mm, unsigned long addr,
 	msg._new_addr = _new_addr;
 	msg.lock_limit = lock_limit;
 
-	hccnodes_copy(copyset, mm->copyset);
-	hccnode_clear(hcc_node_id, copyset);
+	hcc_nodes_copy(copyset, mm->copyset);
+	hcc_node_clear(hcc_node_id, copyset);
 
 	grpc_sync_m(GRPC_MM_MREMAP, &copyset, &msg, sizeof(msg));
 }
@@ -484,11 +484,11 @@ void hcc_do_brk(struct mm_struct *mm,
 		unsigned long data_limit)
 {
 	struct mm_mmap_msg msg;
-	hccnodemask_t copyset;
+	hcc_nodemask_t copyset;
 
 	BUG_ON (!mm->mm_id);
 
-	if (hccnode_is_unique(hcc_node_id, mm->copyset))
+	if (hcc_node_is_unique(hcc_node_id, mm->copyset))
 		return;
 
 	msg.mm_id = mm->mm_id;
@@ -496,8 +496,8 @@ void hcc_do_brk(struct mm_struct *mm,
 	msg.lock_limit = lock_limit;
 	msg.data_limit = data_limit;
 
-	hccnodes_copy(copyset, mm->copyset);
-	hccnode_clear(hcc_node_id, copyset);
+	hcc_nodes_copy(copyset, mm->copyset);
+	hcc_node_clear(hcc_node_id, copyset);
 
 	grpc_sync_m(GRPC_MM_DO_BRK, &copyset, &msg, sizeof(msg));
 }
@@ -507,20 +507,20 @@ int hcc_expand_stack(struct vm_area_struct *vma,
 {
 	struct mm_struct *mm = vma->vm_mm;
 	struct mm_mmap_msg msg;
-	hccnodemask_t copyset;
+	hcc_nodemask_t copyset;
 	int r;
 
 	BUG_ON (!mm->mm_id);
 
-	if (hccnode_is_unique(hcc_node_id, mm->copyset))
+	if (hcc_node_is_unique(hcc_node_id, mm->copyset))
 		return 0;
 
 	msg.mm_id = mm->mm_id;
 	msg.start = vma->vm_start;
 	msg.flags = address;
 
-	hccnodes_copy(copyset, mm->copyset);
-	hccnode_clear(hcc_node_id, copyset);
+	hcc_nodes_copy(copyset, mm->copyset);
+	hcc_node_clear(hcc_node_id, copyset);
 
 	r = grpc_sync_m(GRPC_MM_EXPAND_STACK, &copyset, &msg, sizeof(msg));
 
@@ -534,12 +534,12 @@ void hcc_do_mprotect(struct mm_struct *mm,
 		     int personality)
 {
 	struct mm_mmap_msg msg;
-	hccnodemask_t copyset;
+	hcc_nodemask_t copyset;
 
 	if (!mm->mm_id)
 		return;
 
-	if (hccnode_is_unique(hcc_node_id, mm->copyset))
+	if (hcc_node_is_unique(hcc_node_id, mm->copyset))
 		return;
 
 	msg.mm_id = mm->mm_id;
@@ -548,8 +548,8 @@ void hcc_do_mprotect(struct mm_struct *mm,
 	msg.prot = prot;
 	msg.personality = personality;
 
-	hccnodes_copy(copyset, mm->copyset);
-	hccnode_clear(hcc_node_id, copyset);
+	hcc_nodes_copy(copyset, mm->copyset);
+	hcc_node_clear(hcc_node_id, copyset);
 
 	grpc_sync_m(GRPC_MM_MPROTECT, &copyset, &msg, sizeof(msg));
 }

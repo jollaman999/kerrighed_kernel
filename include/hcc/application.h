@@ -81,7 +81,7 @@ struct app_gdm_object {
 	int chkpt_sn;
 
 	app_state_t state;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 
 	__u64 user_data;
 };
@@ -111,7 +111,7 @@ struct app_struct {
 		} checkpoint;
 
 		struct {
-			hccnodemask_t replacing_nodes;
+			hcc_nodemask_t replacing_nodes;
 			pid_t substitution_pgrp;
 			pid_t substitution_sid;
 		} restart;

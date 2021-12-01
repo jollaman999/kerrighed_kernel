@@ -13,7 +13,7 @@
 #include <hcc/hcc_init.h>
 #include <hcc/ghotplug.h>
 #include <hcc/namespace.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 
 #include <net/grpc/grpcid.h>
 #include <net/grpc/grpc.h>
@@ -50,13 +50,13 @@ static void handle_node_add(struct grpc_desc *grpc_desc, void *data, size_t size
 
 	page = (char *)__get_free_page(GFP_KERNEL);
 	if (page) {
-		ret = hccnodelist_scnprintf(page, PAGE_SIZE, hccnode_online_map);
+		ret = hcc_nodelist_scnprintf(page, PAGE_SIZE, hcc_node_online_map);
 		BUG_ON(ret >= PAGE_SIZE);
 		printk("HCC is running on %d nodes: %s\n",
-		       num_online_hccnodes(), page);
+		       num_online_hcc_nodes(), page);
 		free_page((unsigned long)page);
 	} else {
-		printk("HCC is running on %d nodes\n", num_online_hccnodes());
+		printk("HCC is running on %d nodes\n", num_online_hcc_nodes());
 	}
 }
 
@@ -70,7 +70,7 @@ static int do_nodes_add(struct ghotplug_context *ctx)
 	if (!page)
 		return -ENOMEM;
 
-	ret = hccnodelist_scnprintf(page, PAGE_SIZE, ctx->node_set.v);
+	ret = hcc_nodelist_scnprintf(page, PAGE_SIZE, ctx->node_set.v);
 	BUG_ON(ret >= PAGE_SIZE);
 	printk("hcc: [ADD] Adding nodes %s ...\n", page);
 
@@ -89,7 +89,7 @@ static int do_nodes_add(struct ghotplug_context *ctx)
 	}
 
 	/* Send request to all members of the current cluster */
-	for_each_online_hccnode(node)
+	for_each_online_hcc_node(node)
 		grpc_async(NODE_ADD, node, &ctx->node_set, sizeof(ctx->node_set));
 
 	printk("hcc: [ADD] Adding nodes succeeded.\n");
@@ -111,7 +111,7 @@ static int nodes_add(void __user *arg)
 		return -ENOMEM;
 
 	ctx->node_set.subclusterid = __node_set.subclusterid;
-	err = hccnodemask_copy_from_user(&ctx->node_set.v, &__node_set.v);
+	err = hcc_nodemask_copy_from_user(&ctx->node_set.v, &__node_set.v);
 	if (err)
 		goto out;
 
@@ -119,15 +119,15 @@ static int nodes_add(void __user *arg)
 	if (ctx->node_set.subclusterid != hcc_subsession_id)
 		goto out;
 
-	if (!hccnode_online(hcc_node_id))
+	if (!hcc_node_online(hcc_node_id))
 		goto out;
 
 	err = -ENONET;
-	if (!hccnodes_subset(ctx->node_set.v, hccnode_present_map))
+	if (!hcc_nodes_subset(ctx->node_set.v, hcc_node_present_map))
 		goto out;
 
 	err = -EPERM;
-	if (hccnodes_intersects(ctx->node_set.v, hccnode_online_map))
+	if (hcc_nodes_intersects(ctx->node_set.v, hcc_node_online_map))
 		goto out;
 
 	err = do_nodes_add(ctx);

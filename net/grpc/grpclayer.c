@@ -14,7 +14,7 @@
 #include <linux/lockdep.h>
 #include <hcc/sys/types.h>
 #include <hcc/hcc_init.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <linux/hcc_hashtable.h>
 
 #include <net/grpc/grpcid.h>
@@ -91,10 +91,10 @@ int __grpc_send(struct grpc_desc* desc,
 		break;
 
 	case GRPC_RQ_SRV: {
-		hccnodemask_t nodes;
+		hcc_nodemask_t nodes;
 
-		hccnodes_clear(nodes);
-		hccnode_set(desc->client, nodes);
+		hcc_nodes_clear(nodes);
+		hcc_node_set(desc->client, nodes);
 
 		err = __grpc_send_ll(desc, &nodes, seq_id,
 				    __flags, data, size,
@@ -111,7 +111,7 @@ int __grpc_send(struct grpc_desc* desc,
 }
 
 struct grpc_desc* grpc_begin_m(enum grpcid grpcid,
-			     hccnodemask_t* nodes)
+			     hcc_nodemask_t* nodes)
 {
 	struct grpc_desc* desc;
 	int i;
@@ -120,7 +120,7 @@ struct grpc_desc* grpc_begin_m(enum grpcid grpcid,
 	if(!desc)
 		goto oom;
 
-	__hccnodes_copy(&desc->nodes, nodes);
+	__hcc_nodes_copy(&desc->nodes, nodes);
 	desc->type = GRPC_RQ_CLT;
 	desc->client = hcc_node_id;
 	
@@ -128,7 +128,7 @@ struct grpc_desc* grpc_begin_m(enum grpcid grpcid,
 	if(!desc->desc_send)
 		goto oom_free_desc;
 
-	for_each_hccnode_mask(i, desc->nodes){
+	for_each_hcc_node_mask(i, desc->nodes){
 		desc->desc_recv[i] = grpc_desc_recv_alloc();
 		if(!desc->desc_recv[i])
 			goto oom_free_desc_recv;
@@ -146,7 +146,7 @@ struct grpc_desc* grpc_begin_m(enum grpcid grpcid,
 	return desc;
 
 oom_free_desc_recv:
-	for_each_hccnode_mask(i, desc->nodes)
+	for_each_hcc_node_mask(i, desc->nodes)
 		if (desc->desc_recv[i])
 			kmem_cache_free(grpc_desc_recv_cachep,
 					desc->desc_recv[i]);
@@ -212,7 +212,7 @@ int __grpc_end_unpack_clean(struct grpc_desc* desc)
 {
 	int i;
 
-	for_each_hccnode_mask(i, desc->nodes){
+	for_each_hcc_node_mask(i, desc->nodes){
 		struct grpc_desc_recv* desc_recv = desc->desc_recv[i];
 
 		desc->desc_recv[i] = NULL;
@@ -242,7 +242,7 @@ int grpc_end(struct grpc_desc* desc, int flags)
 	case GRPC_RQ_CLT:{
 		int i;
 
-		for_each_hccnode_mask(i, desc->nodes){
+		for_each_hcc_node_mask(i, desc->nodes){
 			__grpc_end_unpack(desc->desc_recv[i]);
 		}
 
@@ -340,7 +340,7 @@ void grpc_cancel_unpack(struct grpc_desc* desc)
 {
 	hcc_node_t node;
 
-	for_each_hccnode_mask(node, desc->nodes)
+	for_each_hcc_node_mask(node, desc->nodes)
 		grpc_cancel_unpack_from(desc, node);
 }
 
@@ -651,9 +651,9 @@ grpc_unpack(struct grpc_desc* desc, int flags, void* data, size_t size){
 		// If it's not a single request, the result of this function (in this case)
 		// is UNDEFINED
 
-		BUG_ON(hccnodes_weight(desc->nodes)!=1);
+		BUG_ON(hcc_nodes_weight(desc->nodes)!=1);
 		
-		node = first_hccnode(desc->nodes);
+		node = first_hcc_node(desc->nodes);
 		
 		BUG_ON(node >= HCC_MAX_NODES);
 		
@@ -765,7 +765,7 @@ int grpc_wait_all(struct grpc_desc *desc)
 	// (comment definir qu'un retour est acheve ? variable d'etat dans desc_recv ?)
 	// tant qu'il reste des retours a effectuer, on attend et on boucle
 
-	for_each_hccnode_mask(i, desc->nodes){
+	for_each_hcc_node_mask(i, desc->nodes){
 
 		if(list_empty(&desc->desc_recv[i]->list_provided_head))
 			continue;

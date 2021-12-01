@@ -75,19 +75,19 @@ static inline hcc_node_t get_req_node(hcc_node_t nodeid)
 }
 
 
-static inline hccnodemask_t get_proc_nodes_vector(hcc_node_t nodeid)
+static inline hcc_nodemask_t get_proc_nodes_vector(hcc_node_t nodeid)
 {
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 	nodeid = get_req_node(nodeid);
-	hccnodes_clear(nodes);
+	hcc_nodes_clear(nodes);
 
 	if (nodeid == HCC_MAX_NODES) {
 		if (IS_HCC_NODE(HCC_FLAGS_RUNNING))
-			hccnodes_copy(nodes, hccnode_online_map);
+			hcc_nodes_copy(nodes, hcc_node_online_map);
 		else
-			hccnode_set(hcc_node_id, nodes);
+			hcc_node_set(hcc_node_id, nodes);
 	} else
-		hccnode_set(nodeid, nodes);
+		hcc_node_set(nodeid, nodes);
 
 	return nodes;
 }
@@ -156,11 +156,11 @@ static void init_cpu_info_seq_struct(struct cpu_info_seq_struct *seq_data)
 
 	req_node = get_req_node(seq_data->req_node);
 
-	if (hccnode_online(hcc_node_id)) {
+	if (hcc_node_online(hcc_node_id)) {
 		// Init values to parse CPU.
 		if (req_node == HCC_MAX_NODES) {
 			// Cluster wide CPU info
-			seq_data->cur_node = nth_online_hccnode(0);
+			seq_data->cur_node = nth_online_hcc_node(0);
 			seq_data->last_node = HCC_MAX_NODES - 1;
 		} else {
 			// Node wide CPU info
@@ -186,7 +186,7 @@ static void go_to_selected_cpu(struct cpu_info_seq_struct *seq_data,
 		static_node_info = get_static_node_info(seq_data->cur_node);
 		if (seq_data->cpu_id >= static_node_info->nr_cpu) {
 			seq_data->cur_node =
-				hccnode_next_online(seq_data->cur_node);
+				hcc_node_next_online(seq_data->cur_node);
 			seq_data->cpu_id = 0;
 		}
 	}
@@ -312,7 +312,7 @@ hcc_arch_report_meminfo(struct seq_file *m, const hcc_dynamic_node_info_t *info)
 static int show_meminfo(struct seq_file *p, void *v)
 {
 	hcc_node_t nodeid = (long)p->private;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 	hcc_dynamic_node_info_t global_dyn_info;
 	hcc_dynamic_node_info_t *dyn_info;
 	hcc_node_t node;
@@ -326,7 +326,7 @@ static int show_meminfo(struct seq_file *p, void *v)
 
 	memset(&global_dyn_info, 0, sizeof(hcc_dynamic_node_info_t));
 
-	for_each_hccnode_mask(node, nodes) {
+	for_each_hcc_node_mask(node, nodes) {
 		dyn_info = get_dynamic_node_info(node);
 
 		global_dyn_info.totalram += dyn_info->totalram;
@@ -524,7 +524,7 @@ static int hcc_show_stat(struct seq_file *p, void *v)
 	hcc_dynamic_node_info_t *dynamic_node_info;
 	hcc_static_node_info_t *static_node_info;
 	int i, j;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 	cputime64_t user, nice, system, idle, iowait, irq, softirq, steal;
 	cputime64_t guest;
 	unsigned long long nr_context_switches = 0;
@@ -555,7 +555,7 @@ static int hcc_show_stat(struct seq_file *p, void *v)
 	 * first without parsing data twice... Yes... Dirty...
 	 */
 	seq_printf(p, "%s", head_blank);
-	for_each_hccnode_mask(node_id, nodes) {
+	for_each_hcc_node_mask(node_id, nodes) {
 		static_node_info = get_static_node_info(node_id);
 		dynamic_node_info = get_dynamic_node_info(node_id);
 
@@ -704,7 +704,7 @@ static int show_loadavg(struct seq_file *p, void *v)
 {
 	hcc_node_t nodeid = (long)p->private;
 	hcc_dynamic_node_info_t *dynamic_node_info;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 	hcc_node_t i;
 	int a, b, c, nr_threads, last_pid;
 	long nr_running;
@@ -716,7 +716,7 @@ static int show_loadavg(struct seq_file *p, void *v)
 
 	nodes = get_proc_nodes_vector(nodeid);
 
-	for_each_hccnode_mask(i, nodes) {
+	for_each_hcc_node_mask(i, nodes) {
 		dynamic_node_info = get_dynamic_node_info(i);
 		a += dynamic_node_info->avenrun[0];
 		b += dynamic_node_info->avenrun[1];
@@ -809,9 +809,9 @@ static int hcc_nrnodes_read_proc(char *buffer, char **start, off_t offset,
 			       "ONLINE:%d\n"
 			       "PRESENT:%d\n"
 			       "POSSIBLE:%d\n",
-			       num_online_hccnodes(),
-			       num_present_hccnodes(),
-			       num_possible_hccnodes());
+			       num_online_hcc_nodes(),
+			       num_present_hcc_nodes(),
+			       num_possible_hcc_nodes());
 
 	if (offset + count >= len) {
 		count = len - offset;
@@ -864,7 +864,7 @@ static int show_uptime(struct seq_file *p, void *v)
 	hcc_node_t nodeid = (long)p->private;
 	hcc_dynamic_node_info_t *dynamic_node_info;
 	hcc_node_t i, nr_nodes = 0;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 	struct timespec uptime;
 	unsigned long long idle = 0;
 	unsigned long idle_mod;
@@ -876,7 +876,7 @@ static int show_uptime(struct seq_file *p, void *v)
 
 	uptime.tv_sec = uptime.tv_nsec = 0;
 
-	for_each_hccnode_mask(i, nodes) {
+	for_each_hcc_node_mask(i, nodes) {
 		dynamic_node_info = get_dynamic_node_info(i);
 		nr_nodes++;
 

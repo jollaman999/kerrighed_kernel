@@ -62,7 +62,7 @@
 #ifdef CONFIG_HCC_GRPC
 #include <hcc/hcc_init.h>
 #include <hcc/ghotplug.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #endif
 
 #include <asm/uaccess.h>

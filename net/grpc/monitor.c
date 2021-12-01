@@ -6,7 +6,7 @@
 
 #include <linux/timer.h>
 #include <linux/workqueue.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/hcc_init.h>
 
 #include <hcc/workqueue.h>
@@ -32,14 +32,14 @@ static void grpc_pingpong_handler (struct grpc_desc *grpc_desc,
 static void grpc_worker(struct work_struct *data)
 {
 	static unsigned long l = 0;
-	hccnodemask_t n;
+	hcc_nodemask_t n;
 	int r;
 
 	r = 0;
 	l++;
 	
-	hccnodes_clear(n);
-	hccnode_set(0, n);
+	hcc_nodes_clear(n);
+	hcc_node_set(0, n);
 
 	r = grpc_async(GRPC_PINGPONG, 0, &l, sizeof(l));
 	if(r<0)

@@ -21,7 +21,7 @@
 #include <hcc/children.h>
 #include <hcc/signal.h>
 #include <hcc/application.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <asm/cputime.h>
 #endif
 #ifdef CONFIG_HCC_GSCHED
@@ -385,7 +385,7 @@ int hcc_wait_task_zombie(struct wait_opts *wo,
 	 * change afterwards, but this will be needed to support hot removal of
 	 * nodes with zombie migration.
 	 */
-	BUG_ON(!hccnode_online(child->node));
+	BUG_ON(!hcc_node_online(child->node));
 
 	desc = grpc_begin(PROC_WAIT_TASK_ZOMBIE, child->node);
 	if (!desc)

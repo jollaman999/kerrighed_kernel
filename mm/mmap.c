@@ -214,7 +214,7 @@ int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
 		if (!can_use_hcc_gcap(current, GCAP_USE_REMOTE_MEMORY))
 			goto error;
 
-		for_each_online_hccnode(node) {
+		for_each_online_hcc_node(node) {
 			if (node == hcc_node_id)
 				continue;
 			dyn_info = get_dynamic_node_info(node);

@@ -13,7 +13,7 @@
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <linux/hcc_hashtable.h>
 #include <linux/unique_id.h>
 
@@ -564,7 +564,7 @@ int handle_req_gdm_set_lookup(struct grpc_desc* desc,
 	msg_gdm_set_t *msg;
 	int msg_size = sizeof(msg_gdm_set_t);
 
-	BUG_ON(!hccnode_online(grpc_desc_get_client(desc)));
+	BUG_ON(!hcc_node_online(grpc_desc_get_client(desc)));
 
 	gdm_set = local_get_gdm_set(gdm_id.ns_id, gdm_id.set_id);
 
@@ -620,7 +620,7 @@ int __handle_req_gdm_set_destroy(hcc_node_t sender,
 	struct gdm_ns *ns;
 	struct gdm_set *gdm_set;
 
-	BUG_ON(!hccnode_online(sender));
+	BUG_ON(!hcc_node_online(sender));
 
 	/* Remove the gdm set from the name space */
 
@@ -665,7 +665,7 @@ int _destroy_gdm_set(struct gdm_set * gdm_set)
 	gdm_id.set_id = gdm_set->id;
 	gdm_id.ns_id = gdm_set->ns->id;
 
-	grpc_async_m(REQ_GDM_SET_DESTROY, &hccnode_online_map,
+	grpc_async_m(REQ_GDM_SET_DESTROY, &hcc_node_online_map,
 		    &gdm_id, sizeof(gdm_id_msg_t));
 	return 0;
 }

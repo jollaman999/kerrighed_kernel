@@ -41,7 +41,7 @@
 #include <linux/err.h>
 #include <hcc/hcc_init.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/ghotplug.h>
 #include <hcc/workqueue.h>
 #ifdef CONFIG_HCC_GPM
@@ -284,7 +284,7 @@ struct config_op_message {
 	enum config_op op;
 };
 
-static struct grpc_desc *__global_config_op_begin(hccnodemask_t *nodes,
+static struct grpc_desc *__global_config_op_begin(hcc_nodemask_t *nodes,
 						 enum config_op op)
 {
 	struct config_op_message msg = {
@@ -318,12 +318,12 @@ static struct grpc_desc *__global_config_op_begin(hccnodemask_t *nodes,
  *		       the operation.
  */
 static struct grpc_desc *global_config_op_begin(enum config_op op,
-					       hccnodemask_t *nodes)
+					       hcc_nodemask_t *nodes)
 {
-	hccnodemask_t _nodes = hccnode_online_map;
+	hcc_nodemask_t _nodes = hcc_node_online_map;
 	struct grpc_desc *desc;
 
-	hccnode_clear(hcc_node_id, _nodes);
+	hcc_node_clear(hcc_node_id, _nodes);
 	desc = __global_config_op_begin(&_nodes, op);
 	if (!IS_ERR(desc))
 		*nodes = _nodes;
@@ -342,13 +342,13 @@ static struct grpc_desc *global_config_op_begin(enum config_op op,
  * @return	       0 if the operation succeeded on all contacted nodes, or
  *                     error
  */
-static int global_config_op_end(struct grpc_desc *desc, hccnodemask_t *nodes)
+static int global_config_op_end(struct grpc_desc *desc, hcc_nodemask_t *nodes)
 {
 	int res = 0;
 	hcc_node_t node;
 	int err;
 
-	for_each_hccnode_mask(node, *nodes) {
+	for_each_hcc_node_mask(node, *nodes) {
 		err = grpc_unpack_type_from(desc, node, res);
 		if (!err && res) {
 			grpc_cancel(desc);
@@ -443,7 +443,7 @@ static void put_string(char *string)
 
 static
 int
-do_global_config_write(struct grpc_desc *desc, hccnodemask_t *nodes,
+do_global_config_write(struct grpc_desc *desc, hcc_nodemask_t *nodes,
 		       struct config_item *item,
 		       struct configfs_attribute *attr,
 		       const char *page, size_t count)
@@ -480,7 +480,7 @@ static int global_config_write(struct config_item *item,
 			       const char *page, size_t count)
 {
 	struct grpc_desc *desc;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 
 	desc = global_config_op_begin(CO_WRITE, &nodes);
 	if (IS_ERR(desc))
@@ -488,7 +488,7 @@ static int global_config_write(struct config_item *item,
 	return do_global_config_write(desc, &nodes, item, attr, page, count);
 }
 
-static int __global_config_write(hccnodemask_t *nodes,
+static int __global_config_write(hcc_nodemask_t *nodes,
 				 struct config_item *item,
 				 struct configfs_attribute *attr,
 				 const char *page, size_t count)
@@ -564,7 +564,7 @@ err_path:
 	goto out;
 }
 
-static int do_global_config_dir_op(struct grpc_desc *desc, hccnodemask_t *nodes,
+static int do_global_config_dir_op(struct grpc_desc *desc, hcc_nodemask_t *nodes,
 				   enum config_op op,
 				   const char *name, const char *old_name)
 {
@@ -592,7 +592,7 @@ err_cancel:
 	goto out;
 }
 
-static int __global_config_dir_op(hccnodemask_t *nodes, enum config_op op,
+static int __global_config_dir_op(hcc_nodemask_t *nodes, enum config_op op,
 				  const char *name, const char *old_name)
 {
 	struct grpc_desc *desc;
@@ -625,7 +625,7 @@ static int global_config_dir_op(enum config_op op,
 				const char *name, const char *old_name)
 {
 	struct grpc_desc *desc;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 	int err;
 
 	desc = global_config_op_begin(op, &nodes);
@@ -1528,7 +1528,7 @@ out:
 
 static int replicate_config(hcc_node_t node)
 {
-	hccnodemask_t nodes = hccnodemask_of_node(node);
+	hcc_nodemask_t nodes = hcc_nodemask_of_node(node);
 	struct global_config_item *item;
 	struct global_config_attr *attr;
 	enum config_op op;
@@ -1569,12 +1569,12 @@ cleanup:
 
 int global_config_add(struct ghotplug_context *ctx)
 {
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 	hcc_node_t node, master;
 	int err, err2 = 0;
 
-	hccnodes_or(nodes, ctx->node_set.v, hccnode_online_map);
-	master = first_hccnode(nodes);
+	hcc_nodes_or(nodes, ctx->node_set.v, hcc_node_online_map);
+	master = first_hcc_node(nodes);
 
 	if (master == hcc_node_id) {
 		err = global_config_freeze();
@@ -1591,9 +1591,9 @@ int global_config_add(struct ghotplug_context *ctx)
 		goto out_check;
 
 	/* There is no config to replicate at cluster start. */
-	if (first_hccnode(hccnode_online_map) == hcc_node_id) {
-		BUG_ON(hccnode_isset(hcc_node_id, ctx->node_set.v));
-		for_each_hccnode_mask(node, ctx->node_set.v) {
+	if (first_hcc_node(hcc_node_online_map) == hcc_node_id) {
+		BUG_ON(hcc_node_isset(hcc_node_id, ctx->node_set.v));
+		for_each_hcc_node_mask(node, ctx->node_set.v) {
 			err = replicate_config(node);
 			if (err)
 				break;
@@ -1605,7 +1605,7 @@ int global_config_add(struct ghotplug_context *ctx)
 out_check:
 	err = err ? : err2;
 	if (err) {
-		if (hccnode_isset(hcc_node_id, ctx->node_set.v))
+		if (hcc_node_isset(hcc_node_id, ctx->node_set.v))
 			grpc_disable(GLOBAL_CONFIG_OP);
 		up_write(&attrs_rwsem);
 		if (master == hcc_node_id)
@@ -1617,9 +1617,9 @@ out:
 
 int global_config_post_add(struct ghotplug_context *ctx)
 {
-	BUG_ON(!hccnodes_subset(ctx->node_set.v, hccnode_online_map));
+	BUG_ON(!hcc_nodes_subset(ctx->node_set.v, hcc_node_online_map));
 	up_write(&attrs_rwsem);
-	if (first_hccnode(hccnode_online_map) == hcc_node_id)
+	if (first_hcc_node(hcc_node_online_map) == hcc_node_id)
 		global_config_thaw();
 
 	return 0;

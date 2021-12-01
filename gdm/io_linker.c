@@ -20,7 +20,7 @@
 
 struct iolinker_struct *iolinker_list[MAX_IO_LINKER];
 
-hccnodemask_t hccnode_gdm_map;
+hcc_nodemask_t hcc_node_gdm_map;
 hcc_node_t gdm_nb_nodes;
 
 
@@ -408,13 +408,13 @@ int gdm_io_export_object (struct grpc_desc *desc,
 
 hcc_node_t __gdm_io_default_owner (struct gdm_set *set,
 					  objid_t objid,
-					  const hccnodemask_t *nodes,
+					  const hcc_nodemask_t *nodes,
 					  int nr_nodes)
 {
 	switch (set->def_owner) {
 	  case GDM_RR_DEF_OWNER:
-		  if (likely(__hccnode_isset(hcc_node_id, nodes)))
-			  return __nth_hccnode(objid % nr_nodes, nodes);
+		  if (likely(__hcc_node_isset(hcc_node_id, nodes)))
+			  return __nth_hcc_node(objid % nr_nodes, nodes);
 		  else
 			  return hcc_node_id;
 
@@ -433,7 +433,7 @@ hcc_node_t __gdm_io_default_owner (struct gdm_set *set,
 hcc_node_t gdm_io_default_owner (struct gdm_set * set, objid_t objid)
 {
 	return __gdm_io_default_owner (set, objid,
-					&hccnode_gdm_map,
+					&hcc_node_gdm_map,
 					gdm_nb_nodes);
 }
 
@@ -472,7 +472,7 @@ void io_linker_init (void)
 	int i;
 
 	gdm_nb_nodes = hcc_nb_nodes;
-	hccnodes_copy(hccnode_gdm_map, hccnode_online_map);
+	hcc_nodes_copy(hcc_node_gdm_map, hcc_node_online_map);
 
 	for (i = 0; i < MAX_IO_LINKER; i++)
 		iolinker_list[i] = NULL;

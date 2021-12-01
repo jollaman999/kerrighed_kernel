@@ -88,12 +88,12 @@ int mm_export_object (struct grpc_desc *desc,
 
 	mm = obj_entry->object;
 
-	hccnode_set (desc->client, mm->copyset);
+	hcc_node_set (desc->client, mm->copyset);
 
 	grpc_pack(desc, 0, &mm->mm_id, sizeof(unique_id_t));
 	grpc_pack(desc, 0, &mm->anon_vma_gdm_id, sizeof(unique_id_t));
 	grpc_pack(desc, 0, &mm->context.vdso, sizeof(void*));
-	grpc_pack(desc, 0, &mm->copyset, sizeof(hccnodemask_t));
+	grpc_pack(desc, 0, &mm->copyset, sizeof(hcc_nodemask_t));
 
 	get_unmap_exec_id = hcc_syms_export(mm->get_unmapped_exec_area);
 	BUG_ON(mm->get_unmapped_exec_area && get_unmap_exec_id == HCC_SYMS_UNDEF);
@@ -158,7 +158,7 @@ int mm_import_object (struct grpc_desc *desc,
 		mm->context.vdso = context_vdso;
 	}
 
-	r = grpc_unpack(desc, 0, &mm->copyset, sizeof(hccnodemask_t));
+	r = grpc_unpack(desc, 0, &mm->copyset, sizeof(hcc_nodemask_t));
 	if (r)
 		return r;
 

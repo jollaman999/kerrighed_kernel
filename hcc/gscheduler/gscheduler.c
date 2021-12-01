@@ -14,7 +14,7 @@
 #include <linux/mutex.h>
 #include <linux/err.h>
 #include <hcc/hcc_flags.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/ghotplug.h>
 #include <hcc/gscheduler/policy.h>
 #include <hcc/gscheduler/process_set.h>
@@ -37,7 +37,7 @@ struct gscheduler {
 	struct global_config_item global_item; /** global_config subsystem */
 	struct global_config_attrs global_attrs;
 
-	hccnodemask_t node_set;
+	hcc_nodemask_t node_set;
 	unsigned node_set_exclusive:1;
 	unsigned node_set_max_fit:1;
 
@@ -73,7 +73,7 @@ static LIST_HEAD(gschedulers_head);
 static DEFINE_SPINLOCK(gschedulers_list_lock);
 static DEFINE_MUTEX(gschedulers_list_mutex);
 
-static hccnodemask_t shared_set;
+static hcc_nodemask_t shared_set;
 
 void gscheduler_get(struct gscheduler *gscheduler)
 {
@@ -138,11 +138,11 @@ struct process_set *gscheduler_get_process_set(struct gscheduler *gscheduler)
 }
 EXPORT_SYMBOL(gscheduler_get_process_set);
 
-static inline const hccnodemask_t *get_node_set(struct gscheduler *gscheduler)
+static inline const hcc_nodemask_t *get_node_set(struct gscheduler *gscheduler)
 {
 	if (gscheduler->node_set_max_fit) {
 		if (gscheduler->node_set_exclusive)
-			return &hccnode_online_map;
+			return &hcc_node_online_map;
 		else
 			return &shared_set;
 	} else {
@@ -151,18 +151,18 @@ static inline const hccnodemask_t *get_node_set(struct gscheduler *gscheduler)
 }
 
 static
-inline void set_node_set(struct gscheduler *gscheduler, const hccnodemask_t *set)
+inline void set_node_set(struct gscheduler *gscheduler, const hcc_nodemask_t *set)
 {
 	BUG_ON(gscheduler->node_set_max_fit);
-	__hccnodes_copy(&gscheduler->node_set, set);
+	__hcc_nodes_copy(&gscheduler->node_set, set);
 }
 
 void gscheduler_get_node_set(struct gscheduler *gscheduler,
-			    hccnodemask_t *node_set)
+			    hcc_nodemask_t *node_set)
 {
 	spin_lock(&gschedulers_list_lock);
 	spin_lock(&gscheduler->lock);
-	__hccnodes_copy(node_set, get_node_set(gscheduler));
+	__hcc_nodes_copy(node_set, get_node_set(gscheduler));
 	spin_unlock(&gscheduler->lock);
 	spin_unlock(&gschedulers_list_lock);
 }
@@ -357,18 +357,18 @@ static struct configfs_group_operations gscheduler_group_ops = {
 
 static ssize_t node_set_show(struct gscheduler *s, char *page)
 {
-	hccnodemask_t set;
+	hcc_nodemask_t set;
 
 	gscheduler_get_node_set(s, &set);
-	return hccnodelist_scnprintf(page, GSCHEDULER_ATTR_SIZE, set);
+	return hcc_nodelist_scnprintf(page, GSCHEDULER_ATTR_SIZE, set);
 }
 
 static int node_set_may_be_exclusive(const struct gscheduler *s,
-				     const hccnodemask_t *node_set);
+				     const hcc_nodemask_t *node_set);
 
 static void policy_update_node_set(struct gscheduler *gscheduler,
-				   const hccnodemask_t *removed_set,
-				   const hccnodemask_t *added_set)
+				   const hcc_nodemask_t *removed_set,
+				   const hcc_nodemask_t *added_set)
 {
 	struct gscheduler_policy *policy;
 
@@ -383,11 +383,11 @@ static void policy_update_node_set(struct gscheduler *gscheduler,
 }
 
 static int do_update_node_set(struct gscheduler *s,
-			      const hccnodemask_t *new_set,
+			      const hcc_nodemask_t *new_set,
 			      bool max_fit)
 {
-	hccnodemask_t removed_set, added_set;
-	const hccnodemask_t *old_set;
+	hcc_nodemask_t removed_set, added_set;
+	const hcc_nodemask_t *old_set;
 	struct gscheduler_policy *policy = NULL;
 	int err = -EBUSY;
 
@@ -396,7 +396,7 @@ static int do_update_node_set(struct gscheduler *s,
 
 	if (max_fit) {
 		if (s->node_set_exclusive)
-			new_set = &hccnode_online_map;
+			new_set = &hcc_node_online_map;
 		else
 			new_set = &shared_set;
 	} else if (!new_set) {
@@ -404,16 +404,16 @@ static int do_update_node_set(struct gscheduler *s,
 	}
 
 	old_set = get_node_set(s);
-	hccnodes_andnot(removed_set, *old_set, *new_set);
-	hccnodes_andnot(added_set, *new_set, *old_set);
+	hcc_nodes_andnot(removed_set, *old_set, *new_set);
+	hcc_nodes_andnot(added_set, *new_set, *old_set);
 
 	if (s->node_set_exclusive) {
 		if (!node_set_may_be_exclusive(s, new_set))
 			goto unlock;
-		hccnodes_andnot(shared_set, shared_set, added_set);
-		hccnodes_or(shared_set, shared_set, removed_set);
+		hcc_nodes_andnot(shared_set, shared_set, added_set);
+		hcc_nodes_or(shared_set, shared_set, removed_set);
 	} else {
-		if (!hccnodes_subset(*new_set, shared_set))
+		if (!hcc_nodes_subset(*new_set, shared_set))
 			goto unlock;
 	}
 	err = 0;
@@ -438,15 +438,15 @@ unlock:
 static
 ssize_t node_set_store(struct gscheduler *s, const char *page, size_t count)
 {
-	hccnodemask_t new_set;
+	hcc_nodemask_t new_set;
 	int err;
 	ssize_t ret;
 
-	err = hccnodelist_parse(page, new_set);
+	err = hcc_nodelist_parse(page, new_set);
 	if (err) {
 		ret = err;
 	} else {
-		if (hccnodes_subset(new_set, hccnode_online_map)) {
+		if (hcc_nodes_subset(new_set, hcc_node_online_map)) {
 			err = do_update_node_set(s, &new_set, false);
 			ret = err ? err : count;
 		} else {
@@ -472,21 +472,21 @@ static ssize_t node_set_exclusive_show(struct gscheduler *s, char *page)
 }
 
 static int node_set_may_be_exclusive(const struct gscheduler *s,
-			    const hccnodemask_t *node_set)
+			    const hcc_nodemask_t *node_set)
 {
 	struct gscheduler *pos;
 
 	list_for_each_entry(pos, &gschedulers_head, list)
 		if (pos != s
 		    && (pos->node_set_exclusive || !pos->node_set_max_fit)
-		    && hccnodes_intersects(*node_set, *get_node_set(pos)))
+		    && hcc_nodes_intersects(*node_set, *get_node_set(pos)))
 			return 0;
 	return 1;
 }
 
 static int make_node_set_exclusive(struct gscheduler *s)
 {
-	const hccnodemask_t *set = get_node_set(s);
+	const hcc_nodemask_t *set = get_node_set(s);
 	int err = 0;
 
 	if (s->node_set_exclusive)
@@ -497,7 +497,7 @@ static int make_node_set_exclusive(struct gscheduler *s)
 		goto out;
 	}
 
-	hccnodes_andnot(shared_set, shared_set, *set);
+	hcc_nodes_andnot(shared_set, shared_set, *set);
 	s->node_set_exclusive = 1;
 
 out:
@@ -507,7 +507,7 @@ out:
 static void make_node_set_not_exclusive(struct gscheduler *s)
 {
 	if (s->node_set_exclusive) {
-		hccnodes_or(shared_set, shared_set, *get_node_set(s));
+		hcc_nodes_or(shared_set, shared_set, *get_node_set(s));
 		s->node_set_exclusive = 0;
 	}
 }
@@ -518,7 +518,7 @@ node_set_exclusive_store(struct gscheduler *s, const char *page, size_t count)
 {
 	int new_state;
 	char *last_read;
-	hccnodemask_t added, removed;
+	hcc_nodemask_t added, removed;
 	bool changed;
 	int err;
 
@@ -530,14 +530,14 @@ node_set_exclusive_store(struct gscheduler *s, const char *page, size_t count)
 	mutex_lock(&gschedulers_list_mutex);
 	spin_lock(&gschedulers_list_lock);
 	if (new_state) {
-		hccnodes_clear(added);
-		hccnodes_copy(removed, *get_node_set(s));
+		hcc_nodes_clear(added);
+		hcc_nodes_copy(removed, *get_node_set(s));
 		changed = !s->node_set_exclusive;
 		err = make_node_set_exclusive(s);
 		changed = changed && !err;
 	} else {
-		hccnodes_copy(added, *get_node_set(s));
-		hccnodes_clear(removed);
+		hcc_nodes_copy(added, *get_node_set(s));
+		hcc_nodes_clear(removed);
 		changed = s->node_set_exclusive;
 		make_node_set_not_exclusive(s);
 		err = 0;
@@ -790,8 +790,8 @@ static struct config_group gschedulers_group = {
 
 int gscheduler_post_add(struct ghotplug_context *ctx)
 {
-	const hccnodemask_t *added = &ctx->node_set.v;
-	hccnodemask_t removed = HCCNODE_MASK_NONE;
+	const hcc_nodemask_t *added = &ctx->node_set.v;
+	hcc_nodemask_t removed = HCC_NODE_MASK_NONE;
 	struct gscheduler *s;
 
 	mutex_lock(&gschedulers_list_mutex);
@@ -803,7 +803,7 @@ int gscheduler_post_add(struct ghotplug_context *ctx)
 		}
 
 	spin_lock(&gschedulers_list_lock);
-	hccnodes_or(shared_set, shared_set, *added);
+	hcc_nodes_or(shared_set, shared_set, *added);
 	spin_unlock(&gschedulers_list_lock);
 
 	list_for_each_entry(s, &gschedulers_head, list)

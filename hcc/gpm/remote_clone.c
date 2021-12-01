@@ -78,7 +78,7 @@ int hcc_do_fork(unsigned long clone_flags,
 #else
 	if (distant_node < 0)
 		distant_node = hcc_node_id;
-	distant_node = hccnode_next_online_in_ring(distant_node);
+	distant_node = hcc_node_next_online_in_ring(distant_node);
 #endif
 	if (distant_node < 0 || distant_node == hcc_node_id)
 		goto out_action_stop;

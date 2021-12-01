@@ -2,7 +2,7 @@
 #define __HCC_GRPC__
 
 #include <net/grpc/grpcid.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/sys/types.h>
 
 #include <linux/list.h>
@@ -90,7 +90,7 @@ struct grpc_desc {
 	struct grpc_desc_send* desc_send;
 	struct grpc_desc_recv* desc_recv[HCC_MAX_NODES];
 	struct grpc_service* service;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 	enum grpc_rq_type type;
 	struct list_head list;
 	int in_interrupt;
@@ -138,7 +138,7 @@ int __grpc_register(enum grpcid grpcid,
 		   unsigned long flags);
 
 struct grpc_desc* grpc_begin_m(enum grpcid grpcid,
-			     hccnodemask_t* nodes);
+			     hcc_nodemask_t* nodes);
 
 int grpc_cancel(struct grpc_desc* desc);
 
@@ -209,17 +209,17 @@ int grpc_register(enum grpcid grpcid,
 static inline
 struct grpc_desc* grpc_begin(enum grpcid grpcid,
 			   hcc_node_t node){
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 
-	hccnodes_clear(nodes);
-	hccnode_set(node, nodes);
+	hcc_nodes_clear(nodes);
+	hcc_node_set(node, nodes);
 
 	return grpc_begin_m(grpcid, &nodes);
 };
 
 static inline
 int grpc_async_m(enum grpcid grpcid,
-		hccnodemask_t* nodes,
+		hcc_nodemask_t* nodes,
 		const void* data, size_t size){
 	struct grpc_desc* desc;
 	int err = -ENOMEM;
@@ -241,17 +241,17 @@ static inline
 int grpc_async(enum grpcid grpcid,
 	      hcc_node_t node,
 	      const void* data, size_t size){
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 
-	hccnodes_clear(nodes);
-	hccnode_set(node, nodes);
+	hcc_nodes_clear(nodes);
+	hcc_node_set(node, nodes);
 	
 	return grpc_async_m(grpcid, &nodes, data, size);
 };
 
 static inline
 int grpc_sync_m(enum grpcid grpcid,
-	       hccnodemask_t* nodes,
+	       hcc_nodemask_t* nodes,
 	       const void* data, size_t size){
 	struct grpc_desc *desc;
 	int rold, r, first, error;
@@ -271,7 +271,7 @@ int grpc_sync_m(enum grpcid grpcid,
 	error = 0;
 	r = 0;
 
-	__for_each_hccnode_mask(i, nodes){
+	__for_each_hcc_node_mask(i, nodes){
 		grpc_unpack_type_from(desc, i, rold);
 		if(first){
 			r = rold;
@@ -293,10 +293,10 @@ static inline
 int grpc_sync(enum grpcid grpcid,
 	     hcc_node_t node,
 	     const void* data, size_t size){
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 
-	hccnodes_clear(nodes);
-	hccnode_set(node, nodes);
+	hcc_nodes_clear(nodes);
+	hcc_node_set(node, nodes);
 	
 	return grpc_sync_m(grpcid, &nodes, data, size);
 };

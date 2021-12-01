@@ -4,14 +4,14 @@
 
 #include <linux/notifier.h>
 #include <linux/kernel.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <net/grpc/grpcid.h>
 #include <net/grpc/grpc.h>
 #include <hcc/ghotplug.h>
 
 #include "grpc_internal.h"
 
-static void grpc_remove(hccnodemask_t * vector)
+static void grpc_remove(hcc_nodemask_t * vector)
 {
 	printk("Have to send all the tx_queue before stopping the node\n");
 };

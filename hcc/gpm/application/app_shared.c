@@ -669,7 +669,7 @@ err_pack:
 struct dist_shared_index {
 	struct shared_index index;
 	hcc_node_t master_node;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 };
 
 static void clear_one_dist_shared_index(struct rb_node *node,
@@ -727,7 +727,7 @@ static int rcv_dist_objects_list_from(struct grpc_desc *desc,
 		s->index.type = type;
 		s->index.key = key;
 		s->master_node = HCC_NODE_ID_NONE;
-		hccnodes_clear(s->nodes);
+		hcc_nodes_clear(s->nodes);
 
 		idx = __insert_shared_index(dist_shared_indexes, &s->index);
 		if (idx != &s->index) {
@@ -745,7 +745,7 @@ static int rcv_dist_objects_list_from(struct grpc_desc *desc,
 			/* only one master per object */
 			BUG_ON(locality == SHARED_MASTER);
 
-		hccnode_set(node, s->nodes);
+		hcc_node_set(node, s->nodes);
 
 		/* next ! */
 		r = grpc_unpack_type_from(desc, node, type);
@@ -839,7 +839,7 @@ static int rcv_full_dist_objects_list(struct grpc_desc *desc,
 			idx = container_of(node, struct shared_index, node);
 			obj = container_of(idx, struct shared_object, index);
 
-			if (hccnode_is_unique(hcc_node_id, s.nodes))
+			if (hcc_node_is_unique(hcc_node_id, s.nodes))
 				obj->checkpoint.locality = LOCAL_ONLY;
 			else if (s.master_node == hcc_node_id)
 				obj->checkpoint.locality = SHARED_MASTER;
@@ -895,7 +895,7 @@ int global_chkpt_shared(struct grpc_desc *desc,
 
 	/* 1) waiting the list of shared objects */
 
-	for_each_hccnode_mask(node, obj->nodes) {
+	for_each_hcc_node_mask(node, obj->nodes) {
 		r = rcv_dist_objects_list_from(desc,
 					       &dist_shared_indexes,
 					       node);
@@ -1438,7 +1438,7 @@ static int rcv_substitution_files(struct grpc_desc *desc,
 		}
 
 		if (node == HCC_NODE_ID_NONE
-		    || hccnode_isset(node, app->restart.replacing_nodes)) {
+		    || hcc_node_isset(node, app->restart.replacing_nodes)) {
 
 			/* the object is useful on this node, add it */
 			obj->index.type = index.type;
@@ -1696,7 +1696,7 @@ static int local_restart_shared_objects(struct grpc_desc *desc,
 	ghost_t *ghost;
 
 	/* 1) restore objects for which we are master */
-	for_each_hccnode_mask(node, app->restart.replacing_nodes) {
+	for_each_hcc_node_mask(node, app->restart.replacing_nodes) {
 
 		ghost = create_file_ghost(GHOST_READ, app->app_id, chkpt_sn,
 					  "shared_obj_%d.bin", node);
@@ -1760,7 +1760,7 @@ int local_restart_shared(struct grpc_desc *desc,
 
 	__set_ghost_fs(&oldfs);
 
-	nb_nodes = hccnodes_weight(app->restart.replacing_nodes);
+	nb_nodes = hcc_nodes_weight(app->restart.replacing_nodes);
 
 	ghost_offsets = kzalloc(nb_nodes * sizeof(int), GFP_KERNEL);
 	if (!ghost_offsets) {
@@ -1813,7 +1813,7 @@ static int global_restart_shared_objects(struct grpc_desc *desc,
 	if (err_grpc)
 		goto err_grpc;
 
-	for_each_hccnode_mask(node, obj->nodes) {
+	for_each_hcc_node_mask(node, obj->nodes) {
 		r = rcv_restored_dist_objects_list_from(desc,
 							&dist_shared_indexes,
 							node);

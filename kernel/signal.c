@@ -35,7 +35,7 @@
 #include <net/grpc/grpcid.h>
 #include <hcc/pid.h>
 #include <hcc/remote_cred.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/hcc_init.h>
 #include <hcc/remote_syscall.h>
 #endif
@@ -1423,7 +1423,7 @@ static int hcc_kill_pg_info(int sig, struct siginfo *info, pid_t pgid)
 {
 	struct kill_info_msg msg;
 	struct grpc_desc *desc;
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 	hcc_node_t node;
 	int retval = -ESRCH;
 
@@ -1436,9 +1436,9 @@ static int hcc_kill_pg_info(int sig, struct siginfo *info, pid_t pgid)
 	if (!(pgid & GLOBAL_PID_MASK))
 		goto out;
 
-	hccnodes_copy(nodes, hccnode_online_map);
-	hccnode_clear(hcc_node_id, nodes);
-	if (hccnodes_empty(nodes))
+	hcc_nodes_copy(nodes, hcc_node_online_map);
+	hcc_node_clear(hcc_node_id, nodes);
+	if (hcc_nodes_empty(nodes))
 		goto out;
 
 	desc = grpc_begin_m(PROC_KILL_PG_INFO, &nodes);
@@ -1452,7 +1452,7 @@ static int hcc_kill_pg_info(int sig, struct siginfo *info, pid_t pgid)
 		goto err_cancel;
 
 	retval = -ESRCH;
-	for_each_hccnode_mask(node, nodes) {
+	for_each_hcc_node_mask(node, nodes) {
 		retval = grpc_wait_return_from(desc, node);
 		if (!retval)
 			break;

@@ -58,7 +58,7 @@ static inline hcc_static_cpu_info_t *get_static_cpu_info(int node_id,
 
 hcc_node_t cpu_info_default_owner(struct gdm_set *set,
 					objid_t objid,
-					const hccnodemask_t *nodes,
+					const hcc_nodemask_t *nodes,
 					int nr_nodes);
 
 #endif /* STATIC_CPU_INFO LINKER_H */

@@ -26,14 +26,14 @@
 #include <hcc/sys/types.h>
 #include <hcc/hcc_init.h>
 #include <hcc/ghotplug.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 
 #include <hcc/hcc_flags.h>
 
 #include <hcc/hcc_syscalls.h>
 #include <hcc/hcc_services.h>
 #include <hcc/workqueue.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/namespace.h>
 #include <net/grpc/grpc.h>
 #ifdef CONFIG_HCC_GDM
@@ -527,7 +527,7 @@ static int send_kernel_version(struct grpc_desc *desc)
 	if (err)
 		goto error;
 
-	for_each_hccnode_mask(node, desc->nodes) {
+	for_each_hcc_node_mask(node, desc->nodes) {
 		err = grpc_unpack_type_from(desc, node, ret);
 		if (err)
 			goto error;
@@ -606,7 +606,7 @@ static void handle_cluster_start(struct grpc_desc *desc, void *data, size_t size
 		spin_lock(&cluster_start_lock);
 		if (cluster_start_ctx
 		    && msg->seq_id == cluster_start_msg.seq_id) {
-			BUG_ON(!hccnodes_equal(msg->node_set.v,
+			BUG_ON(!hcc_nodes_equal(msg->node_set.v,
 					       cluster_start_ctx->node_set.v));
 			ghotplug_ctx_get(cluster_start_ctx);
 			ctx = cluster_start_ctx;
@@ -660,13 +660,13 @@ static void handle_cluster_start(struct grpc_desc *desc, void *data, size_t size
 
 	page = (char *)__get_free_page(GFP_KERNEL);
 	if (page) {
-		ret = hccnodelist_scnprintf(page, PAGE_SIZE, ctx->node_set.v);
+		ret = hcc_nodelist_scnprintf(page, PAGE_SIZE, ctx->node_set.v);
 		BUG_ON(ret >= PAGE_SIZE);
 		printk("HCC is running on %d nodes: %s\n",
-		       hccnodes_weight(ctx->node_set.v), page);
+		       hcc_nodes_weight(ctx->node_set.v), page);
 		free_page((unsigned long)page);
 	} else {
-		printk("HCC is running on %d nodes\n", num_online_hccnodes());
+		printk("HCC is running on %d nodes\n", num_online_hcc_nodes());
 	}
 	complete_all(&cluster_started);
 
@@ -699,7 +699,7 @@ static void cluster_start_worker(struct work_struct *work)
 	if (!page)
 		goto out;
 
-	ret = hccnodelist_scnprintf(page, PAGE_SIZE,
+	ret = hcc_nodelist_scnprintf(page, PAGE_SIZE,
 				    cluster_start_ctx->node_set.v);
 	BUG_ON(ret >= PAGE_SIZE);
 	printk("hcc: [ADD] Setting up new nodes %s ...\n", page);
@@ -718,8 +718,8 @@ static void cluster_start_worker(struct work_struct *work)
 	if (err)
 		goto cancel;
 
-	for_each_hccnode_mask(node, cluster_start_ctx->node_set.v) {
-		printk("for each hccnode %d\n",node);
+	for_each_hcc_node_mask(node, cluster_start_ctx->node_set.v) {
+		printk("for each hcc_node %d\n",node);
 		err = grpc_unpack_type_from(desc, node, ret);
 		if (err)
 			goto cancel;
@@ -772,9 +772,9 @@ int do_cluster_start(struct ghotplug_context *ctx)
 			ghotplug_ctx_get(ctx);
 			cluster_start_ctx = ctx;
 			cluster_start_msg.seq_id++;
-			hccnodes_or(cluster_start_msg.node_set.v,
+			hcc_nodes_or(cluster_start_msg.node_set.v,
 					ctx->node_set.v,
-					hccnode_online_map);
+					hcc_node_online_map);
 			queue_work(hcc_wq, &cluster_start_work);
 		}
 	}
@@ -800,7 +800,7 @@ static int boot_node_ready(struct hcc_namespace *ns)
 	if (!ctx)
 		return -ENOMEM;
 	ctx->node_set.subclusterid = 0;
-	ctx->node_set.v = hccnodemask_of_node(hcc_node_id);
+	ctx->node_set.v = hcc_nodemask_of_node(hcc_node_id);
 
 	r = do_cluster_start(ctx);
 	ghotplug_ctx_put(ctx);
@@ -844,7 +844,7 @@ static int cluster_restart(void *arg)
 	if (!capable(CAP_SYS_BOOT))
 		return -EPERM;
 
-	grpc_async_m(NODE_FAIL, &hccnode_online_map,
+	grpc_async_m(NODE_FAIL, &hcc_node_online_map,
 		    &unused, sizeof(unused));
 	
 	return 0;
@@ -876,7 +876,7 @@ static int cluster_stop(void *arg)
 	if (!capable(CAP_SYS_BOOT))
 		return -EPERM;
 
-	grpc_async_m(NODE_POWEROFF, &hccnode_online_map,
+	grpc_async_m(NODE_POWEROFF, &hcc_node_online_map,
 		    &unused, sizeof(unused));
 	
 	return 0;
@@ -915,11 +915,11 @@ static int cluster_nodes(void __user *arg)
 		goto out;
 
 	for (bcl = 0; bcl < HCC_MAX_NODES; bcl++) {
-		if (hccnode_online(bcl))
+		if (hcc_node_online(bcl))
 			state = GHOTPLUG_NODE_ONLINE;
-		else if (hccnode_present(bcl))
+		else if (hcc_node_present(bcl))
 			state = GHOTPLUG_NODE_PRESENT;
-		else if (hccnode_possible(bcl))
+		else if (hcc_node_possible(bcl))
 			state = GHOTPLUG_NODE_POSSIBLE;
 		else
 			state = GHOTPLUG_NODE_INVALID;
@@ -932,7 +932,7 @@ out:
 	return r;
 }
 
-int hccnodemask_copy_from_user(hccnodemask_t *dstp, __hccnodemask_t *srcp)
+int hcc_nodemask_copy_from_user(hcc_nodemask_t *dstp, __hcc_nodemask_t *srcp)
 {
 	int r;
 

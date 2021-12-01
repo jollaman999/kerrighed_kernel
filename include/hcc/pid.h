@@ -9,7 +9,7 @@
 #include <linux/types.h>
 #include <hcc/sys/types.h>
 #include <hcc/hcc_init.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 
 /*
  * WARNING: procfs and futex need at least the 2 MSbits free (in procfs: 1 for
@@ -171,7 +171,7 @@ static inline void pidmap_map_read_unlock(void)
 
 static inline hcc_node_t pidmap_node(hcc_node_t node)
 {
-	return hccnode_online(node) ? node : HCC_NODE_ID_NONE;
+	return hcc_node_online(node) ? node : HCC_NODE_ID_NONE;
 }
 
 static inline struct pid_namespace *node_pidmap(hcc_node_t node)

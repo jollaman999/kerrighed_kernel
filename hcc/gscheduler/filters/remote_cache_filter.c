@@ -11,7 +11,7 @@
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/gscheduler/filter.h>
 
 MODULE_LICENSE("GPL v2");
@@ -21,7 +21,7 @@ MODULE_DESCRIPTION("Filter to proactively cache remote values");
 struct remote_cache_filter {
 	struct gscheduler_filter filter;
 	unsigned long remote_values[HCC_MAX_NODES];
-	hccnodemask_t available_values;
+	hcc_nodemask_t available_values;
 	unsigned long polling_period; /* in jiffies */
 	hcc_node_t current_node;
 	struct delayed_work polling_work;
@@ -136,10 +136,10 @@ static int try_get_remote_values(struct remote_cache_filter *f)
 			break;
 		nr++;
 		if (ret > 0)
-			hccnode_set(current_node, f->available_values);
+			hcc_node_set(current_node, f->available_values);
 		else
-			hccnode_clear(current_node, f->available_values);
-		current_node = hccnode_next_online(current_node);
+			hcc_node_clear(current_node, f->available_values);
+		current_node = hcc_node_next_online(current_node);
 		if (current_node == HCC_MAX_NODES)
 			current_node = HCC_NODE_ID_NONE;
 	}
@@ -156,7 +156,7 @@ static void get_remote_values(struct remote_cache_filter *rc_filter)
 	hcc_node_t first_node;
 
 	if (rc_filter->current_node == HCC_NODE_ID_NONE) {
-		first_node = nth_online_hccnode(0);
+		first_node = nth_online_hcc_node(0);
 		if (first_node != HCC_MAX_NODES) {
 			rc_filter->current_node = first_node;
 			try_get_remote_values(rc_filter);
@@ -214,7 +214,7 @@ DEFINE_GSCHEDULER_FILTER_GET_REMOTE_VALUE(remote_cache_filter, filter,
 		reschedule_next_poll(f);
 		get_remote_values(f);
 	}
-	if (hccnode_isset(node, f->available_values)) {
+	if (hcc_node_isset(node, f->available_values)) {
 		value_p[0] = f->remote_values[node];
 		ret = 1;
 	}
@@ -237,7 +237,7 @@ DEFINE_GSCHEDULER_FILTER_NEW(remote_cache_filter, name)
 				    NULL);
 	if (err)
 		goto err_filter;
-	hccnodes_clear(f->available_values);
+	hcc_nodes_clear(f->available_values);
 	f->polling_period = 0;
 	f->current_node = HCC_NODE_ID_NONE;
 	INIT_DELAYED_WORK(&f->polling_work, polling_worker);

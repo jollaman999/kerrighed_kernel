@@ -2,7 +2,7 @@
 #define __GHOTPLUG__
 
 #include <linux/kref.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 
 enum {
 	GHOTPLUG_PRIO_SCHED_POST,
@@ -36,7 +36,7 @@ enum {
 
 struct ghotplug_node_set {
 	int subclusterid;
-	hccnodemask_t v;
+	hcc_nodemask_t v;
 };
 
 struct ghotplug_context {

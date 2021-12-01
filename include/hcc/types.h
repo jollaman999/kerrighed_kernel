@@ -4,7 +4,7 @@
 #include <hcc/sys/types.h>
 
 #ifdef __KERNEL__
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #endif
 
 #define HCC_FCT(p) if(p!=NULL) p

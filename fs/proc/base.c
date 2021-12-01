@@ -87,7 +87,7 @@
 #include <hcc/action.h>
 #endif
 #ifdef CONFIG_HCC_GDM
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <gdm/gdm.h>
 #endif
 #if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
@@ -829,10 +829,10 @@ static int proc_tid_gdm(struct task_struct *task, char *buffer)
 	len += sprintf (buffer + len, "  * Object:        %p\n",
 			obj_entry->object);
 	len += sprintf (buffer + len, "  * Copy set: ");
-	len += hccnodemask_scnprintf(buffer + len, PAGE_SIZE - len,
+	len += hcc_nodemask_scnprintf(buffer + len, PAGE_SIZE - len,
 				     obj_entry->master_obj.copyset);
 	len += sprintf (buffer + len, "\n  * Remove set: ");
-	len += hccnodemask_scnprintf(buffer + len, PAGE_SIZE - len,
+	len += hcc_nodemask_scnprintf(buffer + len, PAGE_SIZE - len,
 				     obj_entry->master_obj.copyset);
 	len += sprintf (buffer + len, "\n  * Waiting processes: ");
 	len += proc_gdm_print_wq (buffer + len, &obj_entry->waiting_tsk);

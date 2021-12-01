@@ -22,7 +22,7 @@
 #include <linux/module.h>
 #include <linux/spinlock.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/hcc_init.h>
 #include <hcc/gscheduler/policy.h>
 #include <hcc/gscheduler/gscheduler.h>
@@ -60,7 +60,7 @@ round_robin_balancer_new_task_node(struct gscheduler_policy *policy,
 {
 	struct round_robin_balancer *rrb = to_round_robin_balancer(policy);
 	struct gscheduler *s = gscheduler_policy_get_gscheduler(policy);
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 	hcc_node_t node = HCC_NODE_ID_NONE;
 
 	if (!s)
@@ -71,7 +71,7 @@ round_robin_balancer_new_task_node(struct gscheduler_policy *policy,
 	node = rrb->last_target;
 	if (node == HCC_NODE_ID_NONE)
 		node = hcc_node_id;
-	node = next_hccnode_in_ring(node, nodes);
+	node = next_hcc_node_in_ring(node, nodes);
 	rrb->last_target = node;
 	rrb_unlock(rrb);
 

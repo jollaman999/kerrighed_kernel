@@ -3,7 +3,7 @@
 
 #include <linux/ioctl.h>
 #include <hcc/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 
 /*--------------------------------------------------------------------------*
  *                                                                          *
@@ -71,16 +71,16 @@
                                     int)
 /* Removed: #define KSYS_GHOTPLUG_START     _IOW(HCC_PROC_MAGIC, \ */
 /*                                              COMM_PROC_BASE + 3,   \ */
-/*                                              __hccnodemask_t) */
+/*                                              __hcc_nodemask_t) */
 #define KSYS_GHOTPLUG_RESTART   _IOW(HCC_PROC_MAGIC, \
                                     COMM_PROC_BASE + 4,   \
-                                    __hccnodemask_t)
+                                    __hcc_nodemask_t)
 #define KSYS_GHOTPLUG_SHUTDOWN  _IOW(HCC_PROC_MAGIC, \
                                     COMM_PROC_BASE + 5,   \
-                                    __hccnodemask_t)
+                                    __hcc_nodemask_t)
 #define KSYS_GHOTPLUG_REBOOT    _IOW(HCC_PROC_MAGIC, \
                                     COMM_PROC_BASE + 6,   \
-                                    __hccnodemask_t)
+                                    __hcc_nodemask_t)
 #define KSYS_GHOTPLUG_STATUS    _IOR(HCC_PROC_MAGIC, \
                                     COMM_PROC_BASE + 7,   \
 				    struct ghotplug_clusters)
@@ -191,7 +191,7 @@ struct ghotplug_clusters {
 */
 struct __ghotplug_node_set {
 	int subclusterid;
-	__hccnodemask_t v;
+	__hcc_nodemask_t v;
 };
 
 

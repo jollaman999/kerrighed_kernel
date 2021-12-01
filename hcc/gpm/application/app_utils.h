@@ -11,13 +11,13 @@
 #include <net/grpc/grpc.h>
 
 static inline int app_wait_returns_from_nodes(struct grpc_desc *desc,
-					      hccnodemask_t nodes)
+					      hcc_nodemask_t nodes)
 {
 	hcc_node_t node;
 	int ret, r=0;
 	enum grpc_error error;
 
-	for_each_hccnode_mask(node, nodes) {
+	for_each_hcc_node_mask(node, nodes) {
 		error = grpc_unpack_type_from(desc, node, ret);
 		if (error) /* unpack has failed */
 			r = error;
@@ -48,7 +48,7 @@ err_grpc:
 }
 
 static inline int ask_nodes_to_continue(struct grpc_desc *desc,
-					hccnodemask_t nodes,
+					hcc_nodemask_t nodes,
 					int result)
 {
 	int r;

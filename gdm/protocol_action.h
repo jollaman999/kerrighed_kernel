@@ -87,7 +87,7 @@ void transfer_write_access_and_unlock (struct gdm_set *set,
 				       hcc_node_t dest_node,
 				       masterObj_t * master_info);
 
-void merge_ack_set(hccnodemask_t *obj_set, hccnodemask_t *recv_set);
+void merge_ack_set(hcc_nodemask_t *obj_set, hcc_nodemask_t *recv_set);
 
 /** Send an object invalidation ack to the given node.
  *  @author Innogrid HCC
@@ -108,7 +108,7 @@ void send_remove_ack2 (struct gdm_set *set, objid_t objid,
  */
 void send_remove_object_done (struct gdm_set *set, objid_t objid,
 			      hcc_node_t dest_node,
-			      hccnodemask_t *rmset);
+			      hcc_nodemask_t *rmset);
 
 
 /** Do an object first touch.

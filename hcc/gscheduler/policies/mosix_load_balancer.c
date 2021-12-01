@@ -18,7 +18,7 @@
 #include <linux/spinlock.h>
 #include <linux/rculist.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/hcc_init.h>
 #include <hcc/pid.h>
 #include <hcc/migration.h>
@@ -165,7 +165,7 @@ no_load:
 }
 
 hcc_node_t __find_target_node(struct mosix_load_balancer *lb,
-				    const hccnodemask_t *nodes,
+				    const hcc_nodemask_t *nodes,
 				    unsigned long high_load)
 {
 	unsigned long lowest_remote_load, remote_load;
@@ -175,7 +175,7 @@ hcc_node_t __find_target_node(struct mosix_load_balancer *lb,
 
 	lowest_remote_load = high_load;
 
-	__for_each_hccnode_mask(i, nodes) {
+	__for_each_hcc_node_mask(i, nodes) {
 		if (unlikely(i == hcc_node_id))
 			continue;
 
@@ -200,7 +200,7 @@ hcc_node_t find_target_node(struct mosix_load_balancer *lb,
 				  unsigned long current_load)
 {
 	struct gscheduler *s = gscheduler_policy_get_gscheduler(&lb->policy);
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 	hcc_node_t target_node = HCC_NODE_ID_NONE;
 
 	if (s) {
@@ -247,13 +247,13 @@ out:
 
 /* Expell migratable tasks we manage */
 static void __expell_all(struct mosix_load_balancer *lb,
-			 const hccnodemask_t *nodes)
+			 const hcc_nodemask_t *nodes)
 {
 	struct gscheduler *gscheduler;
 	struct process_set *processes;
 	struct task_struct *t;
 	hcc_node_t node;
-	hcc_node_t fallback_node = __first_hccnode(nodes);
+	hcc_node_t fallback_node = __first_hcc_node(nodes);
 	int err;
 
 	gscheduler = gscheduler_policy_get_gscheduler(&lb->policy);
@@ -296,12 +296,12 @@ put_gscheduler:
 
 static
 void mosix_load_balancer_update_node_set(struct gscheduler_policy *policy,
-					 const hccnodemask_t *new_set,
-					 const hccnodemask_t *removed_set,
-					 const hccnodemask_t *added_set)
+					 const hcc_nodemask_t *new_set,
+					 const hcc_nodemask_t *removed_set,
+					 const hcc_nodemask_t *added_set)
 {
 	struct mosix_load_balancer *lb = to_mosix_load_balancer(policy);
-	if (__hccnode_isset(hcc_node_id, removed_set))
+	if (__hcc_node_isset(hcc_node_id, removed_set))
 		__expell_all(lb, new_set);
 }
 

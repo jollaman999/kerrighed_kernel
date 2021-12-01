@@ -20,7 +20,7 @@ struct gdm_set *static_node_info_gdm_set;
 
 hcc_node_t node_info_default_owner(struct gdm_set *set,
 					 objid_t objid,
-					 const hccnodemask_t *nodes,
+					 const hcc_nodemask_t *nodes,
 					 int nr_nodes)
 {
 	return objid;

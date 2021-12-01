@@ -54,32 +54,32 @@ typedef enum {
 #define RMSET(obj_entry) (&(obj_entry)->master_obj.rmset)
 
 /** Clear the copyset */
-#define CLEAR_SET(set) __hccnodes_clear(set)
+#define CLEAR_SET(set) __hcc_nodes_clear(set)
 
 /** Duplicate the copyset */
-#define DUP2_SET(set, v) __hccnodes_copy(v, set)
+#define DUP2_SET(set, v) __hcc_nodes_copy(v, set)
 
 /** Tests the presence of a node in the copyset */
-#define NODE_IN_SET(set,nodeid) __hccnode_isset(nodeid, set)
+#define NODE_IN_SET(set,nodeid) __hcc_node_isset(nodeid, set)
 
 /** Tests if local node is the object owner */
 
 #define I_AM_OWNER(obj_entry) ((obj_entry)->flags & GDM_OWNER_OBJ)
 
 /** Tests if the copyset is empty */
-#define SET_IS_EMPTY(set) __hccnodes_empty(set)
+#define SET_IS_EMPTY(set) __hcc_nodes_empty(set)
 
 /** Tests if the local node own the exclusive copy of the object */
-#define OBJ_EXCLUSIVE(obj_entry) (hccnode_is_unique(hcc_node_id, (obj_entry)->master_obj.copyset) || \
-				  hccnode_is_unique(get_prob_owner(obj_entry), (obj_entry)->master_obj.copyset))
+#define OBJ_EXCLUSIVE(obj_entry) (hcc_node_is_unique(hcc_node_id, (obj_entry)->master_obj.copyset) || \
+				  hcc_node_is_unique(get_prob_owner(obj_entry), (obj_entry)->master_obj.copyset))
 
-#define OBJ_EXCLUSIVE2(set) (__hccnode_is_unique(hcc_node_id, set))
+#define OBJ_EXCLUSIVE2(set) (__hcc_node_is_unique(hcc_node_id, set))
 
 /** Add a node in the copyset */
-#define ADD_TO_SET(set,nodeid) __hccnode_set(nodeid, set)
+#define ADD_TO_SET(set,nodeid) __hcc_node_set(nodeid, set)
 
 /** Remove a node from the copyset */
-#define REMOVE_FROM_SET(set,nodeid) __hccnode_clear(nodeid, set)
+#define REMOVE_FROM_SET(set,nodeid) __hcc_node_clear(nodeid, set)
 
 #define I_AM_DEFAULT_OWNER(set, objid) \
         (hcc_node_id == gdm_io_default_owner(set, objid))

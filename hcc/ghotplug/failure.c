@@ -10,7 +10,7 @@
 #include <linux/sched.h>
 #include <linux/irqflags.h>
 #include <hcc/ghotplug.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/sys/types.h>
 #include <hcc/hcc_init.h>
 #include <asm/uaccess.h>
@@ -22,7 +22,7 @@
 
 #include "ghotplug_internal.h"
 
-hccnodemask_t failure_vector;
+hcc_nodemask_t failure_vector;
 struct work_struct fail_work;
 struct work_struct recovery_work;
 struct notifier_block *ghotplug_failure_notifier_list;
@@ -31,8 +31,8 @@ static void recovery_worker(struct work_struct *data)
 {
 	hcc_node_t i;
 
-	for_each_hccnode_mask(i, failure_vector){
-		clear_hccnode_online(i);
+	for_each_hcc_node_mask(i, failure_vector){
+		clear_hcc_node_online(i);
 		printk("FAILURE OF %d DECIDED\n", i);
 		printk("should ignore messages from this node\n");
 	}
@@ -45,13 +45,13 @@ static void recovery_worker(struct work_struct *data)
 #endif
 }
 
-void hcc_failure(hccnodemask_t * vector)
+void hcc_failure(hcc_nodemask_t * vector)
 {
 
-	if(__hccnodes_equal(&failure_vector, vector))
+	if(__hcc_nodes_equal(&failure_vector, vector))
 		return;
 	
-	__hccnodes_copy(&failure_vector, vector);
+	__hcc_nodes_copy(&failure_vector, vector);
 
 	queue_work(hcc_ha_wq, &recovery_work);
 }
@@ -80,7 +80,7 @@ static int nodes_fail(void __user *arg)
 
 	node_set.subclusterid = __node_set.subclusterid;
 
-	err = hccnodemask_copy_from_user(&node_set.v, &__node_set.v);
+	err = hcc_nodemask_copy_from_user(&node_set.v, &__node_set.v);
 	if (err)
 		return err;
 	

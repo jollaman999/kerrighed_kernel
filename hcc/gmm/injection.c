@@ -41,7 +41,7 @@ hcc_node_t select_injection_node_ff(void)
        int shrink_caches = 0;
 
        if (last_chosen_node == HCC_NODE_ID_NONE)
-               start_node = hccnode_next_online_in_ring (hcc_node_id);
+               start_node = hcc_node_next_online_in_ring (hcc_node_id);
        else
                start_node = last_chosen_node;
 
@@ -54,9 +54,9 @@ retry:
 	       return node;
        }
 
-       node = hccnode_next_online_in_ring (node);
+       node = hcc_node_next_online_in_ring (node);
        if (node == hcc_node_id)
-	       node = hccnode_next_online_in_ring (node);
+	       node = hcc_node_next_online_in_ring (node);
        if (node != start_node)
                goto retry;
 
@@ -79,9 +79,9 @@ hcc_node_t select_injection_node_rr(void)
        else
                start_node = last_chosen_node;
 
-       node = hccnode_next_online_in_ring (start_node);
+       node = hcc_node_next_online_in_ring (start_node);
        if (node == hcc_node_id)
-	       node = hccnode_next_online_in_ring (node);
+	       node = hcc_node_next_online_in_ring (node);
 retry:
        if ( (node_mem_usage[node] == FREE_MEM) ||
 	    (shrink_caches && (node_mem_usage[node] == LOW_MEM))) {
@@ -89,9 +89,9 @@ retry:
 	       return node;
        }
 
-       node = hccnode_next_online_in_ring (node);
+       node = hcc_node_next_online_in_ring (node);
        if (node == hcc_node_id)
-	       node = hccnode_next_online_in_ring (node);
+	       node = hcc_node_next_online_in_ring (node);
        if (node != start_node)
                goto retry;
 
@@ -144,10 +144,10 @@ void handle_notify_low_mem (struct grpc_desc* desc,
 
 static void do_notify_mem(unsigned long unused)
 {
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 
-	hccnodes_copy(nodes, hccnode_online_map);
-	hccnode_clear(hcc_node_id, nodes);
+	hcc_nodes_copy(nodes, hcc_node_online_map);
+	hcc_node_clear(hcc_node_id, nodes);
 
 	grpc_async_m(GRPC_MM_NOTIFY_LOW_MEM, &nodes, &mem_usage_notified,
 		    sizeof(mem_usage_notified));

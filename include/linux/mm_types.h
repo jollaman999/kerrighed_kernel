@@ -314,7 +314,7 @@ struct mm_struct {
 #ifdef CONFIG_HCC_GMM
 	struct gdm_set * anon_vma_gdm_set;
 	unique_id_t anon_vma_gdm_id;
-	hccnodemask_t copyset;		/* Nodes owning a copy of the struct */
+	hcc_nodemask_t copyset;		/* Nodes owning a copy of the struct */
 	unique_id_t mm_id;
 #endif
 

@@ -281,7 +281,7 @@ static int restore_local_app(long app_id, int chkpt_sn,
 			goto err_read;
 		}
 
-		hccnodes_clear(app->restart.replacing_nodes);
+		hcc_nodes_clear(app->restart.replacing_nodes);
 	} else {
 		do {
 			__set_current_state(TASK_UNINTERRUPTIBLE);
@@ -290,7 +290,7 @@ static int restore_local_app(long app_id, int chkpt_sn,
 		} while (app == NULL);
 	}
 
-	hccnode_set(node_id, app->restart.replacing_nodes);
+	hcc_node_set(node_id, app->restart.replacing_nodes);
 
 	app->chkpt_sn = chkpt_sn;
 
@@ -404,20 +404,20 @@ __find_node_for_restart(hcc_node_t *first_avail_node,
 	int n;
 
 	/* looking for a node not involved in the application */
-	for (n = hccnode_next_online(*first_avail_node);
+	for (n = hcc_node_next_online(*first_avail_node);
 	     n < HCC_MAX_NODES;
-	     n = hccnode_next_online(n)) {
+	     n = hcc_node_next_online(n)) {
 
-		if (!hccnode_isset(n, obj->nodes)) {
-			hccnode_set(n, obj->nodes);
+		if (!hcc_node_isset(n, obj->nodes)) {
+			hcc_node_set(n, obj->nodes);
 			goto out;
 		}
 	}
 
 	/* all nodes are implied in the application,
 	   selecting the first existing node... */
-	for (n = hccnode_next_online(0); n < HCC_MAX_NODES;
-	     n = hccnode_next_online(n)) {
+	for (n = hcc_node_next_online(0); n < HCC_MAX_NODES;
+	     n = hcc_node_next_online(n)) {
 		*first_avail_node = n+1;
 		*duplicate = 1;
 		goto out;
@@ -434,7 +434,7 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 {
 	struct grpc_desc *desc;
 	struct init_restart_msg msg;
-	hccnodemask_t nodes, nodes_to_replace;
+	hcc_nodemask_t nodes, nodes_to_replace;
 	hcc_node_t prev_available_node = 0;
 	hcc_node_t node, recovery_node;
 	int duplicate = 0;
@@ -471,16 +471,16 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 	}
 
 	/* prepare nodes vector */
-	hccnodes_clear(nodes);
-	hccnodes_clear(nodes_to_replace);
-	for_each_hccnode_mask(node, obj->nodes){
-		if (likely(hccnode_online(node)))
-			hccnode_set(node, nodes);
+	hcc_nodes_clear(nodes);
+	hcc_nodes_clear(nodes_to_replace);
+	for_each_hcc_node_mask(node, obj->nodes){
+		if (likely(hcc_node_online(node)))
+			hcc_node_set(node, nodes);
 		else
-			hccnode_set(node, nodes_to_replace);
+			hcc_node_set(node, nodes_to_replace);
 	}
 
-	if (!hccnodes_empty(nodes)) {
+	if (!hcc_nodes_empty(nodes)) {
 		desc = grpc_begin_m(APP_INIT_RESTART, &nodes);
 
 		r = grpc_pack_type(desc, msg);
@@ -497,13 +497,13 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 
 	/* some nodes may be unavailable */
 	msg.recovery = 1;
-	for_each_hccnode_mask(node, nodes_to_replace) {
+	for_each_hcc_node_mask(node, nodes_to_replace) {
 		duplicate = 0;
 
 		recovery_node = __find_node_for_restart(
 			&prev_available_node, &duplicate, obj, node);
 
-		hccnode_set(recovery_node, nodes);
+		hcc_node_set(recovery_node, nodes);
 
 		desc = grpc_begin(APP_INIT_RESTART, recovery_node);
 		r = grpc_pack_type(desc, msg);
@@ -529,7 +529,7 @@ static int global_init_restart(struct app_gdm_object *obj, int chkpt_sn, int fla
 		grpc_end(desc, 0);
 	}
 
-	hccnodes_copy(obj->nodes, nodes);
+	hcc_nodes_copy(obj->nodes, nodes);
 exit:
 	return r;
 
@@ -752,7 +752,7 @@ err:
 }
 
 static inline int get_orphan_sessions_and_pgrps(struct grpc_desc *desc,
-						hccnodemask_t nodes,
+						hcc_nodemask_t nodes,
 						pids_list_t *orphan_pids)
 {
 	hcc_node_t node;
@@ -761,7 +761,7 @@ static inline int get_orphan_sessions_and_pgrps(struct grpc_desc *desc,
 	INIT_LIST_HEAD(&orphan_pids->pids);
 	orphan_pids->nb = 0;
 
-	for_each_hccnode_mask(node, nodes) {
+	for_each_hcc_node_mask(node, nodes) {
 		int local_orphans;
 		pid_t pid;
 

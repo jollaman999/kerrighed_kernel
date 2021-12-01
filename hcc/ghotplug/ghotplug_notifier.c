@@ -7,7 +7,7 @@
 #include <linux/slab.h>
 
 #include <hcc/ghotplug.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 
 static RAW_NOTIFIER_HEAD(ghotplug_chain_add);
 static RAW_NOTIFIER_HEAD(ghotplug_chain_remove);

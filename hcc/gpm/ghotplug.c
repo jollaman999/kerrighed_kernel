@@ -5,7 +5,7 @@
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <hcc/capabilities.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/hcc_init.h>
 #include <hcc/pid.h>
 #include <hcc/ghotplug.h>
@@ -19,7 +19,7 @@ static int gpm_add(struct ghotplug_context *ctx)
 }
 
 /* migrate all processes that we can migrate */
-static int gpm_remove(const hccnodemask_t *vector)
+static int gpm_remove(const hcc_nodemask_t *vector)
 {
 	struct task_struct *tsk;
 	hcc_node_t dest_node = hcc_node_id;
@@ -27,8 +27,8 @@ static int gpm_remove(const hccnodemask_t *vector)
 	printk("gpm_remove...\n");
 
 	/* Here we assume that all nodes of the cluster are not removed */
-	dest_node = hccnode_next_online_in_ring(dest_node);
-	BUG_ON(__hccnode_isset(dest_node, vector));
+	dest_node = hcc_node_next_online_in_ring(dest_node);
+	BUG_ON(__hcc_node_isset(dest_node, vector));
 
 	read_lock(&tasklist_lock);
 	for_each_process(tsk) {
@@ -47,8 +47,8 @@ static int gpm_remove(const hccnodemask_t *vector)
 			 * Here we assume that all nodes of the cluster are not
 			 * removed.
 			 */
-			dest_node = hccnode_next_online_in_ring(dest_node);
-			BUG_ON(__hccnode_isset(dest_node, vector));
+			dest_node = hcc_node_next_online_in_ring(dest_node);
+			BUG_ON(__hcc_node_isset(dest_node, vector));
 
 			continue;
 		}

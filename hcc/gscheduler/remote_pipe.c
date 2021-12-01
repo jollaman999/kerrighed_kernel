@@ -10,7 +10,7 @@
 #include <linux/errno.h>
 #include <linux/err.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/hcc_init.h>
 #include <hcc/workqueue.h>
 #include <hcc/gscheduler/pipe.h>
@@ -143,7 +143,7 @@ static int start_pipe_get_remote_value(
 	size_t in_size = sink->type->get_value_types.in_type_size;
 	int err;
 
-	if (!hccnode_online(node))
+	if (!hcc_node_online(node))
 		return -EINVAL;
 	if (node == hcc_node_id)
 		return gscheduler_source_get_value(local_pipe->source,

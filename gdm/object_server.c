@@ -795,7 +795,7 @@ void handle_receive_write_access (struct grpc_desc* desc,
 	obj_entry = get_alloc_gdm_obj_entry (msg->ns_id, msg->set_id,
 					      msg->objid, &set);
 
-	hccnodes_copy(obj_entry->master_obj.rmset, msg->owner_info.rmset);
+	hcc_nodes_copy(obj_entry->master_obj.rmset, msg->owner_info.rmset);
 
 	switch (OBJ_STATE(obj_entry)) {
 	  case WAIT_OBJ_WRITE:

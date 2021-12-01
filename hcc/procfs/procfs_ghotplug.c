@@ -3,7 +3,7 @@
  */
 #include <linux/notifier.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 
 #include <net/grpc/grpcid.h>
 #include <net/grpc/grpc.h>
@@ -14,20 +14,20 @@
 struct notifier_block;
 
 inline
-void procfs_add(hccnodemask_t * v){
+void procfs_add(hcc_nodemask_t * v){
 	hcc_node_t i;
 
-	__for_each_hccnode_mask(i, v){
+	__for_each_hcc_node_mask(i, v){
 		create_proc_node_info(i);
 	};
 
 };
 
 inline
-void procfs_remove(hccnodemask_t * v){
+void procfs_remove(hcc_nodemask_t * v){
 	hcc_node_t i;
 
-	__for_each_hccnode_mask(i, v){
+	__for_each_hcc_node_mask(i, v){
 		remove_proc_node_info(i);
 	};
 

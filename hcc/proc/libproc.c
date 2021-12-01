@@ -11,7 +11,7 @@
 
 /* Generic function to assign a default owner to a pid-named gdm object */
 hcc_node_t global_pid_default_owner(struct gdm_set *set, objid_t objid,
-					  const hccnodemask_t *nodes,
+					  const hcc_nodemask_t *nodes,
 					  int nr_nodes)
 {
 	hcc_node_t node;
@@ -22,7 +22,7 @@ hcc_node_t global_pid_default_owner(struct gdm_set *set, objid_t objid,
 		/* Invalid ID */
 		node = hcc_node_id;
 	if (node != hcc_node_id
-	    && unlikely(!__hccnode_isset(node, nodes)))
-		node = __next_hccnode_in_ring(node, nodes);
+	    && unlikely(!__hcc_node_isset(node, nodes)))
+		node = __next_hcc_node_in_ring(node, nodes);
 	return node;
 }

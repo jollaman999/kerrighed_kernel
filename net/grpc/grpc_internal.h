@@ -7,7 +7,7 @@
 #include <linux/radix-tree.h>
 #include <linux/slab.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <net/grpc/grpc.h>
 
 #define __GRPC_HEADER_FLAGS_SIGNAL    (1<<0)
@@ -109,7 +109,7 @@ struct grpc_desc_elem {
 };
 
 struct grpc_tx_elem {
-	hccnodemask_t nodes;
+	hcc_nodemask_t nodes;
 	hcc_node_t index;
 	hcc_node_t link_seq_index;
 	void *data;
@@ -167,7 +167,7 @@ void grpc_new_desc_id_unlock(void);
 int __grpc_emergency_send_buf_alloc(struct grpc_desc *desc, size_t size);
 void __grpc_emergency_send_buf_free(struct grpc_desc *desc);
 int __grpc_send_ll(struct grpc_desc* desc,
-		  hccnodemask_t *nodes,
+		  hcc_nodemask_t *nodes,
 		  unsigned long seq_id,
 		  int __flags,
 		  const void* data, size_t size,

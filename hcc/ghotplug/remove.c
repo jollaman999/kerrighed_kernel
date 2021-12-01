@@ -12,7 +12,7 @@
 #include <linux/workqueue.h>
 #include <linux/device.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/hcc_init.h>
 #include <hcc/hashtable.h>
 #include <hcc/ghotplug.h>
@@ -41,13 +41,13 @@ void do_local_node_remove(struct ghotplug_node_set *node_set)
 	ghotplug_remove_notify(node_set, GHOTPLUG_NOTIFY_REMOVE_DISTANT);
 
 	printk("...confirm\n");
-	grpc_sync_m(NODE_REMOVE_CONFIRM, &hccnode_online_map, node_set, sizeof(*node_set));
+	grpc_sync_m(NODE_REMOVE_CONFIRM, &hcc_node_online_map, node_set, sizeof(*node_set));
 
 	CLEAR_HCC_NODE_FLAGS(HCC_FLAGS_RUNNING);
 
-	for_each_online_hccnode(node)
+	for_each_online_hcc_node(node)
 		if(node != hcc_node_id)
-			clear_hccnode_online(node);
+			clear_hcc_node_online(node);
 
 	hooks_stop();
 	SET_HCC_NODE_FLAGS(HCC_FLAGS_STOPPED);
@@ -77,7 +77,7 @@ static void handle_node_remove(struct grpc_desc *desc, void *data, size_t size)
 	printk("handle_node_remove\n");
 	node_set = data;
 
-	if(!hccnode_isset(hcc_node_id, node_set->v)){
+	if(!hcc_node_isset(hcc_node_id, node_set->v)){
 		do_other_node_remove(node_set);
 		return;
 	}
@@ -107,7 +107,7 @@ inline void __fwd_remove_cb(struct ghotplug_node_set *node_set)
 	printk("__fwd_remove_cb: begin (%d / %d)\n", node_set->subclusterid, hcc_subsession_id);
 	if (node_set->subclusterid == hcc_subsession_id) {
 
-		grpc_async_m(NODE_REMOVE, &hccnode_online_map, node_set, sizeof(*node_set));
+		grpc_async_m(NODE_REMOVE, &hcc_node_online_map, node_set, sizeof(*node_set));
 		
 	} else {
 		hcc_node_t node;
@@ -146,18 +146,18 @@ static int nodes_remove(void __user *arg)
 		return -EFAULT;
 
 	node_set.subclusterid = __node_set.subclusterid;
-	err = hccnodemask_copy_from_user(&node_set.v, &__node_set.v);
+	err = hcc_nodemask_copy_from_user(&node_set.v, &__node_set.v);
 	if (err)
 		return err;
 
-	if (!hccnodes_subset(node_set.v, hccnode_present_map))
+	if (!hcc_nodes_subset(node_set.v, hcc_node_present_map))
 		return -ENONET;
 
-	if (!hccnodes_subset(node_set.v, hccnode_online_map))
+	if (!hcc_nodes_subset(node_set.v, hcc_node_online_map))
 		return -EPERM;
 
 	/* TODO: Really required? */
-	if (hccnode_isset(hcc_node_id, node_set.v))
+	if (hcc_node_isset(hcc_node_id, node_set.v))
 		return -EPERM;
 
 	__fwd_remove_cb(&node_set);
@@ -194,7 +194,7 @@ static int nodes_poweroff(void __user *arg)
 
 	node_set.subclusterid = __node_set.subclusterid;
 
-	err = hccnodemask_copy_from_user(&node_set.v, &__node_set.v);
+	err = hcc_nodemask_copy_from_user(&node_set.v, &__node_set.v);
 	if (err)
 		return err;
 

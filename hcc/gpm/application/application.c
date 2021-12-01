@@ -161,9 +161,9 @@ void delete_app(struct app_struct *app)
 	if (r)
 		goto exit_put;
 
-	hccnode_clear(hcc_node_id, obj->nodes);
+	hcc_node_clear(hcc_node_id, obj->nodes);
 
-	if (hccnodes_empty(obj->nodes)) {
+	if (hcc_nodes_empty(obj->nodes)) {
 		_gdm_remove_frozen_object(app_gdm_set, obj->app_id);
 		goto exit;
 	}
@@ -194,8 +194,8 @@ int create_application(struct task_struct *task)
 	obj->app_id = app_id;
 	obj->chkpt_sn = 0;
 
-	hccnodes_clear(obj->nodes);
-	hccnode_set(hcc_node_id, obj->nodes);
+	hcc_nodes_clear(obj->nodes);
+	hcc_node_set(hcc_node_id, obj->nodes);
 	app = new_local_app(app_id);
 	if (IS_ERR(app)) {
 		r = PTR_ERR(app);
@@ -308,7 +308,7 @@ static int register_task_to_appid(long app_id,
 			r = PTR_ERR(app);
 			goto error;
 		}
-		hccnode_set(hcc_node_id, obj->nodes);
+		hcc_node_set(hcc_node_id, obj->nodes);
 	}
 	r = register_task_to_app(app, task);
 

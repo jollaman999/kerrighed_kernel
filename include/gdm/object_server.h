@@ -69,7 +69,7 @@ typedef struct {
 /** WARNING: in this structure, field order matter */
 typedef struct {
 	MSG_HEADER
-	hccnodemask_t rmset;              /**< The remove set to wait for */
+	hcc_nodemask_t rmset;              /**< The remove set to wait for */
 } rm_done_msg_server_t;
 
 /** Structure used to store data sent for object ownership change. */

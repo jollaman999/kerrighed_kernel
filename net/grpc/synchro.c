@@ -13,7 +13,7 @@
 #include <linux/spinlock.h>
 #include <linux/lockdep.h>
 #include <linux/string.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 
 #include <net/grpc/grpcid.h>
 #include <net/grpc/grpc.h>

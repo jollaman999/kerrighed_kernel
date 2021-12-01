@@ -732,7 +732,7 @@ static void gdm_pt_export (struct grpc_desc* desc, struct gdm_set *set)
 {
 	struct mm_struct *mm = set->obj_set;
 
-	hccnode_set (desc->client, mm->copyset);
+	hcc_node_set (desc->client, mm->copyset);
 
 	grpc_pack_type(desc, mm->mm_id);
 }

@@ -12,7 +12,7 @@
 #include <hcc/pid.h>
 #include <hcc/namespace.h>
 #include <hcc/sys/types.h>
-#include <hcc/hccnodemask.h>
+#include <hcc/hcc_nodemask.h>
 #include <hcc/ghotplug.h>
 #include <net/grpc/grpc.h>
 #include <net/grpc/grpcid.h>
@@ -208,7 +208,7 @@ void pidmap_map_cleanup(struct hcc_namespace *hcc_ns)
 	hcc_node_t node;
 	struct pid_namespace *ns;
 
-	BUG_ON(num_online_hccnodes());
+	BUG_ON(num_online_hcc_nodes());
 
 	/*
 	 * Wait until all PIDs are ready to be reused
@@ -372,7 +372,7 @@ int pidmap_map_add(struct ghotplug_context *ctx)
 	struct grpc_desc *desc;
 	int err;
 
-	if (!hccnode_isset(hcc_node_id, ctx->node_set.v))
+	if (!hcc_node_isset(hcc_node_id, ctx->node_set.v))
 		return 0;
 
 	err = pidmap_map_read_lock();
