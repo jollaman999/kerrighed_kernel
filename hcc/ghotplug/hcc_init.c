@@ -43,7 +43,7 @@ hcc_subsession_t hcc_subsession_id = -1;
 
 /* Initialisation flags */
 #ifdef CONFIG_HCC_AUTONODEID_ON
-#define IF_AUTONODEID (1<<HCC_INITFLAGS_AUTONODEID)
+#define IF_AUTONODEID (1<<HCC_INIT_FLAGS_AUTONODEID)
 #else
 #define IF_AUTONODEID (0)
 #endif
@@ -112,9 +112,9 @@ static int __init  parse_autonodeid(char *str) {
 	int v = 0;
 	get_option(&str, &v);
 	if(v)
-		SET_HCC_INIT_FLAGS(HCC_INITFLAGS_AUTONODEID);
+		SET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_AUTONODEID);
 	else
-		CLR_HCC_INIT_FLAGS(HCC_INITFLAGS_AUTONODEID);
+		CLR_HCC_INIT_FLAGS(HCC_INIT_FLAGS_AUTONODEID);
 	return 0;
 }
 __setup("autonodeid=",parse_autonodeid);
@@ -123,7 +123,7 @@ static int __init  parse_node_id(char *str) {
 	int v;
 	get_option(&str, &v);
 	hcc_node_id = v;
-	SET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID);
+	SET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_NODEID);
 	return 0;
 }
 __setup("node_id=",parse_node_id);
@@ -132,7 +132,7 @@ static int __init  parse_session_id(char *str){
 	int v;
 	get_option(&str, &v);
 	hcc_session_id = v;
-	SET_HCC_INIT_FLAGS(HCC_INITFLAGS_SESSIONID);
+	SET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_SESSIONID);
 	return 0;
 }
 __setup("session_id=",parse_session_id);
@@ -242,11 +242,11 @@ static void read_hcc_nodes(char *_h, char *k)
 	lh = strlen(h);
 
 	for (ik=k; ik && *ik;) {
-		if (!ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_SESSIONID)) {
+		if (!ISSET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_SESSIONID)) {
 			if (strncmp("session=", ik, 8) == 0){
 				ik += 8;
 				hcc_session_id = simple_strtoul(ik, NULL, 10);
-				SET_HCC_INIT_FLAGS(HCC_INITFLAGS_SESSIONID);
+				SET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_SESSIONID);
 
 				ik = get_next_line(ik);
 				continue;
@@ -260,13 +260,13 @@ static void read_hcc_nodes(char *_h, char *k)
 			continue;
 		}
 
-		if (!ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID)) {
+		if (!ISSET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_NODEID)) {
 			if (strncmp(h, ik, lh) == 0) {
 				char *end;
 				ik += lh;
 
 				hcc_node_id = simple_strtoul(ik, &end, 10);
-				SET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID);
+				SET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_NODEID);
 			}
 		}
 
@@ -278,8 +278,8 @@ static void __init init_ids(void)
 {
 	char *hostname, *hcc_nodes;
 
-	if (!ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID) ||
-	    !ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_SESSIONID)) {
+	if (!ISSET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_NODEID) ||
+	    !ISSET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_SESSIONID)) {
 		/* first we read the name of the node */
 		hostname = read_from_file("/etc/hostname", 256);
 		if (!hostname) {
@@ -301,7 +301,7 @@ static void __init init_ids(void)
 	}
 
  out:
-	if (ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID)) {
+	if (ISSET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_NODEID)) {
 		check_node_id(hcc_node_id);
 #ifdef CONFIG_HCC_GHOTPLUG
 		universe[hcc_node_id].state = 1;
@@ -316,8 +316,8 @@ static void __init init_ids(void)
 	printk("HCC node ID    : %d\n", hcc_node_id);
 	printk("HCC min nodes  : %d\n", hcc_nb_nodes_min);
 
-	if (!ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID) ||
-	    !ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_SESSIONID))
+	if (!ISSET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_NODEID) ||
+	    !ISSET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_SESSIONID))
 		panic("hcc: incomplete session ID / node ID settings!\n");
 
 	return;

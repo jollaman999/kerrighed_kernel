@@ -1438,9 +1438,9 @@ static int __init ip_auto_config(void)
 	printk("######Pre Codex [%d]  \n",((unsigned char *)&ic_myaddr)[3]);
 
 #ifdef CONFIG_HCC_AUTONODEID
- 	if(ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_AUTONODEID)){
+ 	if(ISSET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_AUTONODEID)){
 		hcc_node_id = ((unsigned char *)&ic_myaddr)[3];
-		SET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID);
+		SET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_NODEID);
 		printk("Automatic setting of hcc_node_id: %d\n",
 			hcc_node_id);
 	}

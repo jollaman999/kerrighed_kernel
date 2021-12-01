@@ -50,7 +50,7 @@ void init_node_discovering(void)
 	}
 #endif
 
-	if (ISSET_HCC_INIT_FLAGS(HCC_INITFLAGS_NODEID)) {
+	if (ISSET_HCC_INIT_FLAGS(HCC_INIT_FLAGS_NODEID)) {
 #ifdef CONFIG_HCC_GHOTPLUG
 		universe[hcc_node_id].state = 1;
 #endif
