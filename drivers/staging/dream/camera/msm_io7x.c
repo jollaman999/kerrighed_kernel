@@ -187,7 +187,7 @@ void msm_camio_camif_pad_reg_reset(void)
 	uint32_t reg;
 	uint32_t mask, value;
 
-	/* select CLHCCM_VFE_SRC_CAM_VFE_SRC:  internal source */
+	/* select CLKRGM_VFE_SRC_CAM_VFE_SRC:  internal source */
 	msm_camio_clk_sel(MSM_CAMIO_CLK_SRC_INTERNAL);
 
 	reg = (readl(mdcbase)) & CAMIF_CFG_RMSK;

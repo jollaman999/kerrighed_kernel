@@ -117,7 +117,7 @@
 #define TCM825X_MSKGR           0x487F
 #define TCM825X_MSKRB           0x497F
 #define TCM825X_MSKGB           0x4A7F
-#define TCM825X_MSHCC           0x4B7F
+#define TCM825X_MSKRG           0x4B7F
 #define TCM825X_MSKBG           0x4C7F
 #define TCM825X_HDTCSW          0x4D80
 #define TCM825X_VDTCSW          0x4D40
