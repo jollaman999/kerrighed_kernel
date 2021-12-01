@@ -16,7 +16,7 @@
 #include "gipc_handler.h"
 #include "msg_io_linker.h"
 #include "util.h"
-#include "hccmsg.h"
+#include "hcc_msg.h"
 
 struct kmem_cache *msq_object_cachep;
 

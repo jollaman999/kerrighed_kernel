@@ -1,5 +1,5 @@
-#ifndef __KHCC_MSG__
-#define __KHCC_MSG__
+#ifndef __HCC_MSG__
+#define __HCC_MSG__
 
 
 struct msg_msgseg {
@@ -69,4 +69,4 @@ long __do_msgrcv(int msqid, long *pmtype, void __user *mtext,
 
 void local_master_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp);
 
-#endif // __KHCC_MSG__
+#endif // __HCC_MSG__

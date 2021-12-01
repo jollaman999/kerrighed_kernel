@@ -34,7 +34,7 @@
 #include "gipc_handler.h"
 #include "gipc_mobility.h"
 #include "hccshm.h"
-#include "hccmsg.h"
+#include "hcc_msg.h"
 #include "hccsem.h"
 #include "msg_handler.h"
 #include "sem_handler.h"

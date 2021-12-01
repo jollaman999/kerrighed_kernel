@@ -43,7 +43,7 @@
 #include <asm/uaccess.h>
 #include "util.h"
 #ifdef CONFIG_HCC_GIPC
-#include "hccmsg.h"
+#include "hcc_msg.h"
 #ifdef CONFIG_HCC_GPM
 #include <hcc/action.h>
 #endif

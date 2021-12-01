@@ -21,7 +21,7 @@
 #include "gipcmap_io_linker.h"
 #include "gipc_handler.h"
 #include "util.h"
-#include "hccmsg.h"
+#include "hcc_msg.h"
 
 
 struct ipc_namespace *find_get_hcc_gipcns(void)

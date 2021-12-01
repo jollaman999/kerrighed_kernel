@@ -20,7 +20,7 @@
 #include "msg_io_linker.h"
 #include "gipcmap_io_linker.h"
 #include "util.h"
-#include "hccmsg.h"
+#include "hcc_msg.h"
 #include "gipc_mobility.h"
 
 struct msghccops {
