@@ -28,7 +28,7 @@
 #include <hcc/ghotplug.h>
 #include <hcc/hccnodemask.h>
 
-#include <hcc/hccflags.h>
+#include <hcc/hcc_flags.h>
 
 #include <hcc/hcc_syscalls.h>
 #include <hcc/hcc_services.h>
@@ -654,8 +654,8 @@ static void handle_cluster_start(struct grpc_desc *desc, void *data, size_t size
 
 	grpc_enable_all();
 
-	SET_HCC_CLUSTER_FLAGS(HCCFLAGS_RUNNING);
-	SET_HCC_NODE_FLAGS(HCCFLAGS_RUNNING);
+	SET_HCC_CLUSTER_FLAGS(HCC_FLAGS_RUNNING);
+	SET_HCC_NODE_FLAGS(HCC_FLAGS_RUNNING);
 	clusters_status[hcc_subsession_id] = CLUSTER_DEF;
 
 	page = (char *)__get_free_page(GFP_KERNEL);

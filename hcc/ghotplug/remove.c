@@ -16,7 +16,7 @@
 #include <hcc/hccinit.h>
 #include <hcc/hashtable.h>
 #include <hcc/ghotplug.h>
-#include <hcc/hccflags.h>
+#include <hcc/hcc_flags.h>
 #include <asm/uaccess.h>
 #include <asm/ioctl.h>
 
@@ -32,7 +32,7 @@ void do_local_node_remove(struct ghotplug_node_set *node_set)
 {
 	hcc_node_t node;
 
-	SET_HCC_NODE_FLAGS(HCCFLAGS_STOPPING);
+	SET_HCC_NODE_FLAGS(HCC_FLAGS_STOPPING);
 	printk("do_local_node_remove\n");
 
 	printk("...notify local\n");
@@ -43,14 +43,14 @@ void do_local_node_remove(struct ghotplug_node_set *node_set)
 	printk("...confirm\n");
 	grpc_sync_m(NODE_REMOVE_CONFIRM, &hccnode_online_map, node_set, sizeof(*node_set));
 
-	CLEAR_HCC_NODE_FLAGS(HCCFLAGS_RUNNING);
+	CLEAR_HCC_NODE_FLAGS(HCC_FLAGS_RUNNING);
 
 	for_each_online_hccnode(node)
 		if(node != hcc_node_id)
 			clear_hccnode_online(node);
 
 	hooks_stop();
-	SET_HCC_NODE_FLAGS(HCCFLAGS_STOPPED);
+	SET_HCC_NODE_FLAGS(HCC_FLAGS_STOPPED);
 
 #if 0
 	printk("...sleep\n");

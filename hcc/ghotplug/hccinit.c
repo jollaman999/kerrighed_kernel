@@ -12,7 +12,7 @@
 #include <hcc/version.h>
 #include <hcc/types.h>
 #include <hcc/hccinit.h>
-#include <hcc/hccflags.h>
+#include <hcc/hcc_flags.h>
 #include <linux/cluster_barrier.h>
 #include <linux/unique_id.h>
 #include <net/grpc/grpc.h>
@@ -640,8 +640,8 @@ void __init hcc_init(void){
 		return;
 #endif
 
-	SET_HCC_CLUSTER_FLAGS(HCCFLAGS_LOADED);
-	SET_HCC_NODE_FLAGS(HCCFLAGS_LOADED);
+	SET_HCC_CLUSTER_FLAGS(HCC_FLAGS_LOADED);
+	SET_HCC_NODE_FLAGS(HCC_FLAGS_LOADED);
 
 	printk("HCC... loaded!\n");
 

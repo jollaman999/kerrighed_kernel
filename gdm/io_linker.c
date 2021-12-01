@@ -12,7 +12,7 @@
 #include <linux/spinlock.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccinit.h>
-#include <hcc/hccflags.h>
+#include <hcc/hcc_flags.h>
 
 #include <net/grpc/grpc.h>
 #include <gdm/gdm.h>

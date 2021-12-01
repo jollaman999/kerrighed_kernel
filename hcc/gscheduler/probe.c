@@ -13,7 +13,7 @@
 #include <linux/kernel.h>
 #include <linux/jiffies.h>
 #include <linux/string.h>
-#include <hcc/hccflags.h>
+#include <hcc/hcc_flags.h>
 #include <hcc/gscheduler/pipe.h>
 #include <hcc/gscheduler/global_config.h>
 #include <hcc/gscheduler/probe.h>
@@ -734,7 +734,7 @@ static struct config_group *probes_make_group(struct config_group *group,
 		goto out;
 
 	if (!(current->flags & PF_KTHREAD)
-	    && !IS_HCC_NODE(HCCFLAGS_RUNNING))
+	    && !IS_HCC_NODE(HCC_FLAGS_RUNNING))
 		goto out;
 
 	global_probes = global_config_make_item_begin(&group->cg_item, name);

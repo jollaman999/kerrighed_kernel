@@ -15,7 +15,7 @@
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <linux/proc_fs.h>
-#include <hcc/hccflags.h>
+#include <hcc/hcc_flags.h>
 #include <hcc/procfs.h>
 
 #include <hcc/ghotplug.h>
@@ -83,7 +83,7 @@ static inline hccnodemask_t get_proc_nodes_vector(hcc_node_t nodeid)
 	hccnodes_clear(nodes);
 
 	if (nodeid == HCC_MAX_NODES) {
-		if (IS_HCC_NODE(HCCFLAGS_RUNNING))
+		if (IS_HCC_NODE(HCC_FLAGS_RUNNING))
 			hccnodes_copy(nodes, hccnode_online_map);
 		else
 			hccnode_set(hcc_node_id, nodes);

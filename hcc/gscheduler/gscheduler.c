@@ -13,7 +13,7 @@
 #include <linux/spinlock.h>
 #include <linux/mutex.h>
 #include <linux/err.h>
-#include <hcc/hccflags.h>
+#include <hcc/hcc_flags.h>
 #include <hcc/hccnodemask.h>
 #include <hcc/ghotplug.h>
 #include <hcc/gscheduler/policy.h>
@@ -701,7 +701,7 @@ static struct config_group *gschedulers_make_group(struct config_group *group,
 		goto out;
 
 	if (!(current->flags & PF_KTHREAD)
-	    && !IS_HCC_NODE(HCCFLAGS_RUNNING))
+	    && !IS_HCC_NODE(HCC_FLAGS_RUNNING))
 		goto out;
 
 	global_names = global_config_make_item_begin(&group->cg_item, name);
