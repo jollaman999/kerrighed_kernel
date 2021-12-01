@@ -8,11 +8,9 @@ do_command()
 {
 	if [ -f ${srctree}/arch/$2/include/asm/Kbuild ]; then
 		make ARCH=$2 KBUILD_HEADERS=$1 headers_$1
-		printf "\n++++++++++++++++++++Codex+++++++++++++++++\n"
 		printf "\n %s \n " ${srctree}/arch/$2/include/asm/Kbuild
 	elif [ -f ${srctree}/include/asm-$2/Kbuild ]; then
 		make ARCH=$2 KBUILD_HEADERS=$1 headers_$1
-		printf "\n++++++++++++++++++++Kudex+++++++++++++++++\n"
 		printf "\n %s \n " ${srctree}/include/asm-$2/Kbuild
 	else
 		printf "Ignoring arch: %s\n" ${arch}
