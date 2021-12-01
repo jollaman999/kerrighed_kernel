@@ -19,6 +19,7 @@
 #include <net/tipc/tipc.h>
 #include <net/tipc/tipc_port.h>
 #include <net/tipc/tipc_bearer.h>
+#include <hcc/ghotplug.h>
 #include <hcc/hcc_nodemask.h>
 #include <hcc/sys/types.h>
 #include <hcc/hcc_init.h>

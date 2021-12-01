@@ -78,9 +78,8 @@ struct universe_elem {
 };
 extern struct universe_elem universe[HCC_MAX_NODES];
 
-extern void (*hcc_cluster_autostart)(void);
-extern void (*hcc_node_reachable)(hcc_node_t nodeid);
-extern void (*hcc_node_unreachable)(hcc_node_t nodeid);
+void hcc_node_reachable(hcc_node_t nodeid);
+void hcc_node_unreachable(hcc_node_t nodeid);
 
 void hcc_node_arrival(hcc_node_t nodeid);
 void hcc_node_departure(hcc_node_t nodeid);

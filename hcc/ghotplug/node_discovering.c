@@ -12,9 +12,6 @@ EXPORT_SYMBOL(hcc_node_online_map);
 
 struct universe_elem universe[HCC_MAX_NODES];
 
-void hcc_node_reachable(hcc_node_t);
-void hcc_node_unreachable(hcc_node_t);
-
 void hcc_node_arrival(hcc_node_t nodeid)
 {
 	printk("hcc_node_arrival: nodeid = %d\n", nodeid);
