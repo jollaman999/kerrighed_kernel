@@ -11,7 +11,7 @@
 #include <linux/socket.h>
 #include <hcc/sys/types.h>
 #include <hcc/hccinit.h>
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 
 #include <gdm/gdm_types.h>
 #include <gdm/name_space.h>
@@ -124,7 +124,7 @@ typedef struct {
 	int obj_size;              /**< Size of objects stored in gdm set */
 	iolinker_id_t linker_id;   /**< Identifier of the io linker  */
 	unsigned long data_size;   /**< Size of set private data to receive */
-	hccsyms_val_t set_ops;     /**< GDM set operations struct ID */
+	hcc_syms_val_t set_ops;     /**< GDM set operations struct ID */
 	char private_data[1];
 } msg_gdm_set_t;
 

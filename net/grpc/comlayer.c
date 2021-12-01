@@ -64,7 +64,7 @@ struct rx_engine {
 
 struct rx_engine tipc_rx_engine[HCC_MAX_NODES];
 
-struct workqueue_struct *hcccom_wq;
+struct workqueue_struct *hcc_comlayer_wq;
 
 #ifdef CONFIG_64BIT
 
@@ -485,7 +485,7 @@ void tipc_reachable_node_worker(struct work_struct *work){
 	list_splice_init(&engine->not_retx_queue, &engine->retx_queue);
 	spin_unlock_bh(&tipc_tx_queue_lock);
 
-	queue_delayed_work_on(smp_processor_id(), hcccom_wq,
+	queue_delayed_work_on(smp_processor_id(), hcc_comlayer_wq,
 			      &engine->retx_work, 0);
 }
 
@@ -614,7 +614,7 @@ int __grpc_send_ll(struct grpc_desc* desc,
 		lockdep_on();
 
 		/* Schedule the work ASAP */
-		queue_work(hcccom_wq, &engine->delayed_tx_work.work);
+		queue_work(hcc_comlayer_wq, &engine->delayed_tx_work.work);
 
 	} else {
 		int err = 0;
@@ -1087,7 +1087,7 @@ static void run_rx_queue_worker(struct work_struct *work)
 
 static void schedule_run_rx_queue(struct rx_engine *engine)
 {
-	queue_delayed_work(hcccom_wq, &engine->run_rx_queue_work, HZ / 2);
+	queue_delayed_work(hcc_comlayer_wq, &engine->run_rx_queue_work, HZ / 2);
 }
 
 /*
@@ -1124,7 +1124,7 @@ static void tipc_handler(void *usr_handle,
 			for_each_online_cpu(cpuid){
 				struct tx_engine *engine = &per_cpu(tipc_tx_engine,
 									cpuid);
-				queue_delayed_work_on(cpuid, hcccom_wq,
+				queue_delayed_work_on(cpuid, hcc_comlayer_wq,
 							&engine->cleanup_not_retx_work,0);
 
 			}
@@ -1138,14 +1138,14 @@ static void tipc_handler(void *usr_handle,
 	// Check if we are not receiving an already received packet
 	if (h->link_seq_id < grpc_link_recv_seq_id[h->from]) {
 		hccnode_set(h->from, nodes_requiring_ack);
-		queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
+		queue_delayed_work(hcc_comlayer_wq, &tipc_ack_work, 0);
 		goto exit;
 	}
 
 	// Check if we are receiving lot of packets but sending none
 	if (consecutive_recv[h->from] >= max_consecutive_recv[h->from]){
 		hccnode_set(h->from, nodes_requiring_ack);
-		queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
+		queue_delayed_work(hcc_comlayer_wq, &tipc_ack_work, 0);
 	}
 	consecutive_recv[h->from]++;
 
@@ -1200,8 +1200,8 @@ u32 port_dispatcher(struct tipc_port *p_ptr, struct sk_buff *buf)
 	 */
 	if (msg_errcode(msg) == TIPC_ERR_NO_NAME
 	    && hccnode_present(msg_nameinst(msg))) {
-		queue_delayed_work(hcccom_wq, &tipc_ack_work, REJECT_BACKOFF);
-		queue_delayed_work_on(cpuid, hcccom_wq,
+		queue_delayed_work(hcc_comlayer_wq, &tipc_ack_work, REJECT_BACKOFF);
+		queue_delayed_work_on(cpuid, hcc_comlayer_wq,
 				      &engine->reachable_work, REJECT_BACKOFF);
 	}
 
@@ -1220,10 +1220,10 @@ void port_wakeup(struct tipc_port *p_ptr){
 	 * retx by 1 jiffy.
 	 */
 
-	queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
+	queue_delayed_work(hcc_comlayer_wq, &tipc_ack_work, 0);
 
-	queue_delayed_work_on(cpuid, hcccom_wq, &engine->retx_work, 1);
-	queue_delayed_work_on(cpuid, hcccom_wq, &engine->delayed_tx_work, 1);
+	queue_delayed_work_on(cpuid, hcc_comlayer_wq, &engine->retx_work, 1);
+	queue_delayed_work_on(cpuid, hcc_comlayer_wq, &engine->delayed_tx_work, 1);
 }
 
 int comlayer_enable_dev(const char *name)
@@ -1283,11 +1283,11 @@ void comlayer_disable(void)
 void hcc_node_reachable(hcc_node_t nodeid){
 	int cpuid;
 
-	queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
+	queue_delayed_work(hcc_comlayer_wq, &tipc_ack_work, 0);
 	for_each_online_cpu(cpuid){
 		struct tx_engine *engine = &per_cpu(tipc_tx_engine, cpuid);
 
-		queue_delayed_work_on(cpuid, hcccom_wq,
+		queue_delayed_work_on(cpuid, hcc_comlayer_wq,
 				      &engine->reachable_work, 0);
 	}
 }
@@ -1299,7 +1299,7 @@ void grpc_enable_lowmem_mode(hcc_node_t nodeid){
 	max_consecutive_recv[nodeid] = MAX_CONSECUTIVE_RECV__LOWMEM_MODE;
 
 	hccnode_set(nodeid, nodes_requiring_ack);
-	queue_delayed_work(hcccom_wq, &tipc_ack_work, 0);
+	queue_delayed_work(hcc_comlayer_wq, &tipc_ack_work, 0);
 }
 
 void grpc_disable_lowmem_mode(hcc_node_t nodeid){
@@ -1313,7 +1313,7 @@ void grpc_enable_local_lowmem_mode(void){
 
 	for_each_online_cpu(cpuid){
 		struct tx_engine *engine = &per_cpu(tipc_tx_engine, cpuid);
-		queue_delayed_work_on(cpuid, hcccom_wq,
+		queue_delayed_work_on(cpuid, hcc_comlayer_wq,
 			&engine->cleanup_not_retx_work, 0);
 	}
 }
@@ -1345,7 +1345,7 @@ int comlayer_init(void)
 		INIT_DELAYED_WORK(&engine->unreachable_work, tipc_unreachable_node_worker);
 	}
 
-	hcccom_wq = create_workqueue("hcccom");
+	hcc_comlayer_wq = create_workqueue("hcc_comlayer");
 
 	ack_cleanup_window_size = ACK_CLEANUP_WINDOW_SIZE;
 

@@ -1258,7 +1258,7 @@ int is_hcc_gipc(struct ipc_ids *ids)
 
 int init_keripc(void)
 {
-	printk("HCCIPC initialisation : start\n");
+	printk("HCC GIPC initialisation : start\n");
 
 	ipcmap_object_cachep = kmem_cache_create("ipcmap_object",
 						 sizeof(ipcmap_object_t),
@@ -1273,7 +1273,7 @@ int init_keripc(void)
 
 	shm_handler_init();
 
-	printk("HCCIPC initialisation done\n");
+	printk("HCC GIPC initialisation done\n");
 
 	return 0;
 }

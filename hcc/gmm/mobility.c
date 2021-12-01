@@ -26,7 +26,7 @@
 #include <asm/pgalloc.h>
 #include <asm/tlbflush.h>
 #include <asm/pgtable.h>
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #include <hcc/hccinit.h>
 #include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
@@ -377,7 +377,7 @@ static int export_one_vma (struct gpm_action *action,
                            struct vm_area_struct *vma,
 			   hashtable_t *file_table)
 {
-	hccsyms_val_t vm_ops_type, initial_vm_ops_type;
+	hcc_syms_val_t vm_ops_type, initial_vm_ops_type;
 	int r;
 
 	/* First, check if we need to link the VMA to the anon gdm_set */
@@ -399,26 +399,26 @@ static int export_one_vma (struct gpm_action *action,
 	/* Define and export the vm_ops type of the vma */
 
 	r = -EPERM;
-	vm_ops_type = hccsyms_export((void *)vma->vm_ops);
-	if (vma->vm_ops && vm_ops_type == HCCSYMS_UNDEF)
+	vm_ops_type = hcc_syms_export((void *)vma->vm_ops);
+	if (vma->vm_ops && vm_ops_type == HCC_SYMS_UNDEF)
 		goto out;
 
 	/* shmem_vm_ops (posix shm) is supported only for checkpoint/restart */
 	if (action->type != GPM_CHECKPOINT
-	    && vma->vm_ops && vm_ops_type == HCCSYMS_VM_OPS_SHMEM)
+	    && vma->vm_ops && vm_ops_type == HCC_SYMS_VM_OPS_SHMEM)
 		goto out;
 
-	initial_vm_ops_type = hccsyms_export((void *)vma->initial_vm_ops);
-	if (vma->initial_vm_ops && initial_vm_ops_type == HCCSYMS_UNDEF)
+	initial_vm_ops_type = hcc_syms_export((void *)vma->initial_vm_ops);
+	if (vma->initial_vm_ops && initial_vm_ops_type == HCC_SYMS_UNDEF)
 		goto out;
 
-	BUG_ON(vma->vm_private_data && vm_ops_type != HCCSYMS_VM_OPS_SPECIAL_MAPPING);
+	BUG_ON(vma->vm_private_data && vm_ops_type != HCC_SYMS_VM_OPS_SPECIAL_MAPPING);
 
-	r = ghost_write (ghost, &vm_ops_type, sizeof (hccsyms_val_t));
+	r = ghost_write (ghost, &vm_ops_type, sizeof (hcc_syms_val_t));
 	if (r)
 		goto out;
 
-	r = ghost_write (ghost, &initial_vm_ops_type, sizeof (hccsyms_val_t));
+	r = ghost_write (ghost, &initial_vm_ops_type, sizeof (hcc_syms_val_t));
 
 out:
 	return r;
@@ -938,7 +938,7 @@ static int import_one_vma (struct gpm_action *action,
 			   hashtable_t *file_table)
 {
 	struct vm_area_struct *vma;
-	hccsyms_val_t vm_ops_type, initial_vm_ops_type;
+	hcc_syms_val_t vm_ops_type, initial_vm_ops_type;
 	int r;
 
 	vma = kmem_cache_alloc(vm_area_cachep, GFP_KERNEL);
@@ -960,15 +960,15 @@ static int import_one_vma (struct gpm_action *action,
 #endif
 
 	/* Import the vm_ops type of the vma */
-	r = ghost_read(ghost, &vm_ops_type, sizeof (hccsyms_val_t));
+	r = ghost_read(ghost, &vm_ops_type, sizeof (hcc_syms_val_t));
 	if (r)
 		goto err_vm_ops;
-	r = ghost_read(ghost, &initial_vm_ops_type, sizeof (hccsyms_val_t));
+	r = ghost_read(ghost, &initial_vm_ops_type, sizeof (hcc_syms_val_t));
 	if (r)
 		goto err_vm_ops;
 
-	vma->vm_ops = hccsyms_import(vm_ops_type);
-	vma->initial_vm_ops = hccsyms_import (initial_vm_ops_type);
+	vma->vm_ops = hcc_syms_import(vm_ops_type);
+	vma->initial_vm_ops = hcc_syms_import (initial_vm_ops_type);
 
 	BUG_ON (vma->vm_ops == &generic_file_vm_ops && vma->vm_file == NULL);
 
@@ -981,7 +981,7 @@ static int import_one_vma (struct gpm_action *action,
 	if (action->type == GPM_CHECKPOINT)
 		restore_initial_vm_ops(vma);
 
-	if (vm_ops_type == HCCSYMS_VM_OPS_SPECIAL_MAPPING)
+	if (vm_ops_type == HCC_SYMS_VM_OPS_SPECIAL_MAPPING)
 		import_vdso_context(vma);
 
 	if (vma->vm_flags & VM_EXECUTABLE)

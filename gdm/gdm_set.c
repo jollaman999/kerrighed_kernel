@@ -296,7 +296,7 @@ int find_gdm_set_remotely(struct gdm_set *gdm_set)
 	grpc_unpack(desc, 0, msg, msg_size);
 
 	if (msg->gdm_set_id != GDM_SET_UNUSED) {
-		set_ops = hccsyms_import (msg->set_ops);
+		set_ops = hcc_syms_import (msg->set_ops);
 	tree_init_data = set_ops->import(desc, &free_init_data);
 	}
 
@@ -588,7 +588,7 @@ int handle_req_gdm_set_lookup(struct grpc_desc* desc,
 	msg->link = gdm_set->def_owner;
 	msg->obj_size = gdm_set->obj_size;
 	msg->data_size = gdm_set->private_data_size;
-	msg->set_ops = hccsyms_export (gdm_set->ops);
+	msg->set_ops = hcc_syms_export (gdm_set->ops);
 	memcpy(msg->private_data, gdm_set->private_data, gdm_set->private_data_size);
 
 done:

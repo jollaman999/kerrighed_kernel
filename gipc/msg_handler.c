@@ -25,11 +25,11 @@
 #include "gipc_mobility.h"
 
 struct msghccops {
-	struct hccipc_ops hccops;
+	struct hcc_gipc_ops hccops;
 	struct gdm_set *master_gdm_set;
 };
 
-struct gdm_set *hccipc_ops_master_set(struct hccipc_ops *ipcops)
+struct gdm_set *hcc_gipc_ops_master_set(struct hcc_gipc_ops *ipcops)
 {
 	struct msghccops *msgops;
 
@@ -155,7 +155,7 @@ int hcc_gipc_msg_newque(struct ipc_namespace *ns, struct msg_queue *msq)
 				 msq->q_perm.key);
 	}
 
-	master_set = hccipc_ops_master_set(msg_ids(ns).hccops);
+	master_set = hcc_gipc_ops_master_set(msg_ids(ns).hccops);
 
 	master_node = _gdm_grab_object(master_set, index);
 	*master_node = hcc_node_id;
@@ -185,7 +185,7 @@ void hcc_gipc_msg_freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
 		_gdm_remove_frozen_object(ipcp->hccops->key_gdm_set, key);
 	}
 
-	master_set = hccipc_ops_master_set(ipcp->hccops);
+	master_set = hcc_gipc_ops_master_set(ipcp->hccops);
 
 	_gdm_grab_object_no_ft(master_set, index);
 	_gdm_remove_frozen_object(master_set, index);
@@ -224,7 +224,7 @@ long hcc_gipc_msgsnd(int msqid, long mtype, void __user *mtext,
 
 	index = ipcid_to_idx(msqid);
 
-	master_set = hccipc_ops_master_set(msg_ids(ns).hccops);
+	master_set = hcc_gipc_ops_master_set(msg_ids(ns).hccops);
 
 	master_node = _gdm_get_object_no_ft(master_set, index);
 	if (!master_node) {
@@ -350,7 +350,7 @@ long hcc_gipc_msgrcv(int msqid, long *pmtype, void __user *mtext,
 	/* TODO: manage ipc namespace */
 	index = ipcid_to_idx(msqid);
 
-	master_set = hccipc_ops_master_set(msg_ids(ns).hccops);
+	master_set = hcc_gipc_ops_master_set(msg_ids(ns).hccops);
 
 	master_node = _gdm_get_object_no_ft(master_set, index);
 	if (!master_node) {

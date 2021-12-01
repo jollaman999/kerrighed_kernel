@@ -110,7 +110,7 @@ int init_gdm (void)
 	  process_remove(0);
 	*/
 
-	hccsyms_register (HCCSYMS_GDM_TREE_OPS, &gdm_tree_set_ops);
+	hcc_syms_register (HCC_SYMS_GDM_TREE_OPS, &gdm_tree_set_ops);
 
 	printk ("GDM initialisation done\n");
 
@@ -126,7 +126,7 @@ void cleanup_gdm (void)
 {
 	printk ("GDM termination : start\n");
 
-	hccsyms_unregister (HCCSYMS_GDM_TREE_OPS);
+	hcc_syms_unregister (HCC_SYMS_GDM_TREE_OPS);
 
 	gdm_ghotplug_cleanup();
 

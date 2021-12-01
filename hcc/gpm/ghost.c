@@ -25,7 +25,7 @@
 #include <gdm/gdm_info.h>
 #include <hcc/hccinit.h>
 #include <hcc/namespace.h>
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #include <hcc/children.h>
 #include <hcc/task.h>
 #include <hcc/signal.h>
@@ -55,11 +55,11 @@ int export_restart_block(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	struct thread_info *ti = task_thread_info(task);
-	enum hccsyms_val fn_id;
+	enum hcc_syms_val fn_id;
 	int r;
 
-	fn_id = hccsyms_export(ti->restart_block.fn);
-	if (fn_id == HCCSYMS_UNDEF) {
+	fn_id = hcc_syms_export(ti->restart_block.fn);
+	if (fn_id == HCC_SYMS_UNDEF) {
 		r = -EBUSY;
 		goto out;
 	}
@@ -107,8 +107,8 @@ static int export_binfmt(struct gpm_action *action,
 {
 	int binfmt_id;
 
-	binfmt_id = hccsyms_export(task->mm->binfmt);
-	if (binfmt_id == HCCSYMS_UNDEF)
+	binfmt_id = hcc_syms_export(task->mm->binfmt);
+	if (binfmt_id == HCC_SYMS_UNDEF)
 		return -EPERM;
 
 	return ghost_write(ghost, &binfmt_id, sizeof(int));
@@ -869,7 +869,7 @@ struct exec_domain *import_exec_domain(struct gpm_action *action,
 int import_restart_block(struct gpm_action *action,
 			 ghost_t *ghost, struct restart_block *p)
 {
-	enum hccsyms_val fn_id;
+	enum hcc_syms_val fn_id;
 	int r;
 
 	r = ghost_read(ghost, &fn_id, sizeof(fn_id));
@@ -878,7 +878,7 @@ int import_restart_block(struct gpm_action *action,
 	r = ghost_read(ghost, p, sizeof(*p));
 	if (r)
 		goto err_read;
-	p->fn = hccsyms_import(fn_id);
+	p->fn = hcc_syms_import(fn_id);
 
 err_read:
 	return r;
@@ -919,7 +919,7 @@ static int import_binfmt(struct gpm_action *action,
 	err = ghost_read(ghost, &binfmt_id, sizeof(int));
 	if (err)
 		goto out;
-	task->mm->binfmt = hccsyms_import(binfmt_id);
+	task->mm->binfmt = hcc_syms_import(binfmt_id);
 out:
 	return err;
 }

@@ -198,7 +198,7 @@ int hcc_shm_init_ns(struct ipc_namespace *ns)
 {
 	int r;
 
-	struct hccipc_ops *shm_ops = kmalloc(sizeof(struct hccipc_ops),
+	struct hcc_gipc_ops *shm_ops = kmalloc(sizeof(struct hcc_gipc_ops),
 					     GFP_KERNEL);
 	if (!shm_ops) {
 		r = -ENOMEM;
@@ -278,7 +278,7 @@ void shm_handler_init(void)
 	register_io_linker(SHMID_LINKER, &shmid_linker);
 	register_io_linker(SHMKEY_LINKER, &shmkey_linker);
 
-	hccsyms_register(HCCSYMS_VM_OPS_SHM, &shm_vm_ops);
+	hcc_syms_register(HCC_SYMS_VM_OPS_SHM, &shm_vm_ops);
 
 	printk("Shm Server configured\n");
 }

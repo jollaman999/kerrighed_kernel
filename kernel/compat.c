@@ -28,7 +28,7 @@
 #include <linux/module.h>
 
 #ifdef CONFIG_HCC_GPM
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -786,28 +786,28 @@ long compat_sys_clock_nanosleep(clockid_t which_clock, int flags,
 }
 
 #ifdef CONFIG_HCC_GPM
-int compat_hccsyms_register(void)
+int compat_hcc_syms_register(void)
 {
 	int err;
 
-	err = hccsyms_register(HCCSYMS_COMPAT_NANOSLEEP_RESTART,
+	err = hcc_syms_register(HCC_SYMS_COMPAT_NANOSLEEP_RESTART,
 			compat_nanosleep_restart);
 	if (err)
 		return err;
-	err = hccsyms_register(HCCSYMS_COMPAT_CLOCK_NANOSLEEP_RESTART,
+	err = hcc_syms_register(HCC_SYMS_COMPAT_CLOCK_NANOSLEEP_RESTART,
 			compat_clock_nanosleep_restart);
 	if (err)
-		hccsyms_unregister(HCCSYMS_COMPAT_NANOSLEEP_RESTART);
+		hcc_syms_unregister(HCC_SYMS_COMPAT_NANOSLEEP_RESTART);
 
 	return err;
 }
 
-int compat_hccsyms_unregister(void)
+int compat_hcc_syms_unregister(void)
 {
 	int err;
 
-	err = hccsyms_unregister(HCCSYMS_COMPAT_CLOCK_NANOSLEEP_RESTART);
-	err = err ? err : hccsyms_unregister(HCCSYMS_COMPAT_NANOSLEEP_RESTART);
+	err = hcc_syms_unregister(HCC_SYMS_COMPAT_CLOCK_NANOSLEEP_RESTART);
+	err = err ? err : hcc_syms_unregister(HCC_SYMS_COMPAT_NANOSLEEP_RESTART);
 
 	return err;
 }

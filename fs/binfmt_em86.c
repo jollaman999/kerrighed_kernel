@@ -19,7 +19,7 @@
 #include <linux/file.h>
 #include <linux/errno.h>
 #ifdef CONFIG_HCC_GPM
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #endif
 
 
@@ -106,10 +106,10 @@ static int __init init_em86_binfmt(void)
 #ifdef CONFIG_HCC_GPM
 	int retval;
 
-	hccsyms_register(HCCSYMS_BINFMTS_EM86, &em86_format);
+	hcc_syms_register(HCC_SYMS_BINFMTS_EM86, &em86_format);
 	retval = register_binfmt(&em86_format);
 	if (retval)
-		hccsyms_unregister(HCCSYMS_BINFMTS_EM86);
+		hcc_syms_unregister(HCC_SYMS_BINFMTS_EM86);
 	return retval;
 #else
 	return register_binfmt(&em86_format);
@@ -119,7 +119,7 @@ static int __init init_em86_binfmt(void)
 static void __exit exit_em86_binfmt(void)
 {
 #ifdef CONFIG_HCC_GPM
-	hccsyms_unregister(HCCSYMS_BINFMTS_EM86);
+	hcc_syms_unregister(HCC_SYMS_BINFMTS_EM86);
 #endif
 	unregister_binfmt(&em86_format);
 }

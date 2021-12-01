@@ -15,7 +15,7 @@
 #include <linux/err.h>
 #include <linux/fs.h>
 #ifdef CONFIG_HCC_GPM
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #endif
 
 static int load_script(struct linux_binprm *bprm,struct pt_regs *regs)
@@ -111,10 +111,10 @@ static int __init init_script_binfmt(void)
 #ifdef CONFIG_HCC_GPM
 	int retval;
 
-	hccsyms_register(HCCSYMS_BINFMTS_SCRIPT, &script_format);
+	hcc_syms_register(HCC_SYMS_BINFMTS_SCRIPT, &script_format);
 	retval = register_binfmt(&script_format);
 	if (retval)
-		hccsyms_unregister(HCCSYMS_BINFMTS_SCRIPT);
+		hcc_syms_unregister(HCC_SYMS_BINFMTS_SCRIPT);
 	return retval;
 #else
 	return register_binfmt(&script_format);
@@ -124,7 +124,7 @@ static int __init init_script_binfmt(void)
 static void __exit exit_script_binfmt(void)
 {
 #ifdef CONFIG_HCC_GPM
-	hccsyms_unregister(HCCSYMS_BINFMTS_SCRIPT);
+	hcc_syms_unregister(HCC_SYMS_BINFMTS_SCRIPT);
 #endif
 	unregister_binfmt(&script_format);
 }

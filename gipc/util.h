@@ -273,7 +273,7 @@ void unlink_queue(struct sem_array *sma, struct sem_queue *q);
 void msg_rcu_free(struct rcu_head *head);
 void sem_rcu_free(struct rcu_head *head);
 
-struct hccipc_ops {
+struct hcc_gipc_ops {
 	struct gdm_set *map_gdm_set;
 	struct gdm_set *key_gdm_set;
 	struct gdm_set *data_gdm_set;

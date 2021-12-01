@@ -31,7 +31,7 @@
 #include <hcc/faf.h>
 #endif
 #ifdef CONFIG_HCC_GPM
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -1087,13 +1087,13 @@ SYSCALL_DEFINE5(ppoll, struct pollfd __user *, ufds, unsigned int, nfds,
 #endif /* HAVE_SET_RESTORE_SIGMASK */
 
 #ifdef CONFIG_HCC_GPM
-int select_hccsyms_register(void)
+int select_hcc_syms_register(void)
 {
-	return hccsyms_register(HCCSYMS_DO_RESTART_POLL, do_restart_poll);
+	return hcc_syms_register(HCC_SYMS_DO_RESTART_POLL, do_restart_poll);
 }
 
-int select_hccsyms_unregister(void)
+int select_hcc_syms_unregister(void)
 {
-	return hccsyms_unregister(HCCSYMS_DO_RESTART_POLL);
+	return hcc_syms_unregister(HCC_SYMS_DO_RESTART_POLL);
 }
 #endif /* CONFIG_HCC_GPM */

@@ -951,7 +951,7 @@ int ghotplug_cluster_init(void)
 {
 	int bcl;
 
-	if (sysfs_create_group(hccghotplugsys, &attr_group))
+	if (sysfs_create_group(hcc_ghotplugsys, &attr_group))
 		panic("Couldn't initialize /sys/hcc/ghotplug!\n");
 
 	for (bcl = 0; bcl < HCC_MAX_CLUSTERS; bcl++) {

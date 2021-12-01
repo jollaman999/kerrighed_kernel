@@ -37,7 +37,7 @@
 #include <asm/mmu_context.h>
 
 #ifdef CONFIG_HCC_GMM
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #include <hcc/dynamic_node_info_linker.h>
 #include <hcc/faf.h>
 #endif
@@ -2932,14 +2932,14 @@ struct vm_operations_struct special_mapping_vmops = {
 };
 
 #ifdef CONFIG_HCC_GMM
-int special_mapping_vm_ops_hccsyms_register(void)
+int special_mapping_vm_ops_hcc_syms_register(void)
 {
-	return hccsyms_register(HCCSYMS_VM_OPS_SPECIAL_MAPPING, (void *)&special_mapping_vmops);
+	return hcc_syms_register(HCC_SYMS_VM_OPS_SPECIAL_MAPPING, (void *)&special_mapping_vmops);
 }
 
-int special_mapping_vm_ops_hccsyms_unregister(void)
+int special_mapping_vm_ops_hcc_syms_unregister(void)
 {
-	return hccsyms_unregister(HCCSYMS_VM_OPS_SPECIAL_MAPPING);
+	return hcc_syms_unregister(HCC_SYMS_VM_OPS_SPECIAL_MAPPING);
 }
 #endif
 

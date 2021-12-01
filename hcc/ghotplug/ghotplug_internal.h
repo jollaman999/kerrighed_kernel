@@ -1,7 +1,7 @@
 #ifndef __GHOTPLUG_INTERNAL__
 #define __GHOTPLUG_INTERNAL__
 
-extern struct kobject *hccghotplugsys;
+extern struct kobject *hcc_ghotplugsys;
 
 extern struct workqueue_struct *hcc_ha_wq;
 

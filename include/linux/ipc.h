@@ -89,7 +89,7 @@ struct ipc_kludge {
 #define IPCMNI 32768  /* <= MAX_INT limit for ipc arrays (including sysctl changes) */
 
 #ifdef CONFIG_HCC_GIPC
-struct hccipc_ops;
+struct hcc_gipc_ops;
 #endif
 
 /* used by in-kernel data structures */
@@ -107,7 +107,7 @@ struct kern_ipc_perm
 	unsigned long	seq;
 	void		*security;
 #ifdef CONFIG_HCC_GIPC
-	struct hccipc_ops *hccops;
+	struct hcc_gipc_ops *hccops;
 #endif
 };
 

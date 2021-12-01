@@ -135,7 +135,7 @@ int export_one_open_file (struct gpm_action *action,
                           struct file *file)
 {
 	struct dvfs_mobility_operations *ops;
-	hccsyms_val_t dvfs_ops_type;
+	hcc_syms_val_t dvfs_ops_type;
 	int r;
 
 	BUG_ON(action->type == GPM_CHECKPOINT);
@@ -154,9 +154,9 @@ int export_one_open_file (struct gpm_action *action,
 #endif
 	ops = get_dvfs_mobility_ops(file);
 
-	dvfs_ops_type = hccsyms_export(ops);
+	dvfs_ops_type = hcc_syms_export(ops);
 
-	r = ghost_write(ghost, &dvfs_ops_type, sizeof(hccsyms_val_t));
+	r = ghost_write(ghost, &dvfs_ops_type, sizeof(hcc_syms_val_t));
 	if (r)
 		goto err;
 
@@ -862,7 +862,7 @@ int import_one_open_file (struct gpm_action *action,
 	struct dvfs_file_struct *dvfs_file = NULL;
 	struct dvfs_mobility_operations *ops;
 	struct file *file = NULL, *imported_file = NULL;
-	hccsyms_val_t dvfs_ops_type;
+	hcc_syms_val_t dvfs_ops_type;
 	unsigned long objid;
 	int first_import = 0;
 	int r = 0;
@@ -878,7 +878,7 @@ int import_one_open_file (struct gpm_action *action,
 	if (r)
 		goto err_read;
 
-	ops = hccsyms_import(dvfs_ops_type);
+	ops = hcc_syms_import(dvfs_ops_type);
 
 	/* We need to import the file, to avoid leaving unused data in
 	 * the ghost... We can probably do better...
@@ -1490,10 +1490,10 @@ void unimport_fs_struct(struct task_struct *tsk)
 int dvfs_mobility_init(void)
 {
 #ifdef CONFIG_HCC_FAF
-	hccsyms_register(HCCSYMS_DVFS_MOBILITY_FAF_OPS,
+	hcc_syms_register(HCC_SYMS_DVFS_MOBILITY_FAF_OPS,
 			 &dvfs_mobility_faf_ops);
 #endif
-	hccsyms_register(HCCSYMS_DVFS_MOBILITY_REGULAR_OPS,
+	hcc_syms_register(HCC_SYMS_DVFS_MOBILITY_REGULAR_OPS,
 			 &dvfs_mobility_regular_ops);
 
 	return 0;
@@ -1501,9 +1501,9 @@ int dvfs_mobility_init(void)
 
 void dvfs_mobility_finalize (void)
 {
-	hccsyms_unregister(HCCSYMS_DVFS_MOBILITY_REGULAR_OPS);
+	hcc_syms_unregister(HCC_SYMS_DVFS_MOBILITY_REGULAR_OPS);
 #ifdef CONFIG_HCC_FAF
-	hccsyms_unregister(HCCSYMS_DVFS_MOBILITY_FAF_OPS);
+	hcc_syms_unregister(HCC_SYMS_DVFS_MOBILITY_FAF_OPS);
 #endif
 }
 

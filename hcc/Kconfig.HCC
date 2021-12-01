@@ -102,19 +102,19 @@ config HCC_AUTONODEID_OFF
 endchoice
 
 config HCC_GHOTPLUG
-	bool "HCCHotplug"
+	bool "HCC GHOTPLUG"
 	depends on HCC
 	help
 	  Support for nodes management
 
 config HCC_GHOTPLUG_DEL
-	bool "HCCHotplug: removal support"
+	bool "HCC GHOTPLUG: removal support"
 	depends on HCC_GHOTPLUG
 	help
 	  Support node removal
 
 config HCC_GHOTPLUG_XCH
-	bool "HCCHotplug: replacement support"
+	bool "HCC GHOTPLUG: replacement support"
 	depends on HCC_GHOTPLUG
 	help
 	  Support node replacement
@@ -127,7 +127,7 @@ config HCC_DISABLE_HEARTBEAT
          just select this option.
 
 config HCC_GDM
-	bool "Kernel Distributed Data Management (GDM)"
+	bool "HCC GDM"
 	depends on HCC_COMMUNICATION_FRAMEWORK
 	help
 	  Cluster wide data management. This is the general purpose
@@ -140,7 +140,7 @@ config HCC_GDM_DEBUG
 	def_bool HCC_GDM && HCC_DEBUG
 
 config HCC_GCAP
-	bool "HCCCapabilities"
+	bool "HCC GCAP"
 	depends on HCC
 	help
 	  HCC capabilities mechanism.
@@ -148,7 +148,7 @@ config HCC_GCAP
 	  If unsure, say Y.
 
 config HCC_PROCFS
-	bool "ProcFS"
+	bool "HCC ProcFS"
 	depends on HCC_GDM && HCC
 	help
 	  Global /proc mechanism.
@@ -156,13 +156,13 @@ config HCC_PROCFS
 	  If unsure, say Y.
 
 #config HCC_SYNC
-#	bool "HCCSync"
+#	bool "HCC Sync"
 #	depends on HCC && HCC_GDM
 #	help
 #	  Synchronization library
 
 config HCC_GMM
-	bool "GMM"
+	bool "HCC GMM"
 	depends on HCC && HCC_GDM && !TRACK_DIRTY_PAGES && !COMPACTION && !KSM  && !TRANSPARENT_HUGEPAGE
 	help
 	  HCC's global memory management
@@ -178,7 +178,7 @@ config HCC_DVFS
 	  If unsure, say Y.
 
 config HCC_FAF
-	bool "File access forwarding"
+	bool "HCC FAF(File access forwarding)"
 	depends on HCC && HCC_DVFS
 	select EPOLL
 	help
@@ -188,7 +188,7 @@ config HCC_FAF
 	  If unsure, say Y.
 
 config HCC_GIPC
-	bool "HCCGIPC"
+	bool "HCC GIPC"
 	depends on HCC && HCC_GDM && HCC_GMM && IPC_NS
 	help
 	  HCC's global IPC management
@@ -203,7 +203,7 @@ config HCC_PROC
 	  If unsure, say Y.
 
 config HCC_GPM
-	bool "HCCGPM"
+	bool "HCC GPM"
 	depends on HCC && HCC_PROC && HCC_GCAP && HCC_GMM && (HCC_DVFS || HCC_FAF)
 	help
 	  HCC Process Management:

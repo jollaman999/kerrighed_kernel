@@ -23,14 +23,14 @@
 #include "hccsem.h"
 
 struct semhccops {
-	struct hccipc_ops hccops;
+	struct hcc_gipc_ops hccops;
 	struct gdm_set *undo_list_gdm_set;
 
 	/* unique_id generator for sem_undo_list identifier */
 	unique_id_root_t undo_list_unique_id_root;
 };
 
-struct gdm_set *hccipc_ops_undolist_set(struct hccipc_ops *ipcops)
+struct gdm_set *hcc_gipc_ops_undolist_set(struct hcc_gipc_ops *ipcops)
 {
 	struct semhccops *semops;
 
@@ -47,7 +47,7 @@ struct gdm_set *task_undolist_set(struct task_struct *task)
 	if (!sem_ids(ns).hccops)
 		return ERR_PTR(-EINVAL);
 
-	return hccipc_ops_undolist_set(sem_ids(ns).hccops);
+	return hcc_gipc_ops_undolist_set(sem_ids(ns).hccops);
 }
 
 /*****************************************************************************/
@@ -207,7 +207,7 @@ static inline void __remove_semundo_from_proc_list(struct sem_array *sma,
 	struct gdm_set *undo_list_set;
 	struct semundo_list_object *undo_list;
 
-	undo_list_set = hccipc_ops_undolist_set(sma->sem_perm.hccops);
+	undo_list_set = hcc_gipc_ops_undolist_set(sma->sem_perm.hccops);
 
 	undo_list = _gdm_grab_object_no_ft(undo_list_set, proc_list_id);
 
@@ -564,7 +564,7 @@ struct sem_undo * hcc_gipc_sem_find_undo(struct sem_array* sma)
 	struct semundo_list_object *undo_list = NULL;
 	unique_id_t undo_list_id;
 
-	undo_list_set = hccipc_ops_undolist_set(sma->sem_perm.hccops);
+	undo_list_set = hcc_gipc_ops_undolist_set(sma->sem_perm.hccops);
 	if (IS_ERR(undo_list_set)) {
 		undo = ERR_PTR(PTR_ERR(undo_list_set));
 		goto exit;
@@ -681,7 +681,7 @@ void hcc_gipc_sem_exit_sem(struct ipc_namespace *ns,
 	if (task->sysvsem.undo_list_id == UNIQUE_ID_NONE)
 		return;
 
-	undo_list_gdm_set = hccipc_ops_undolist_set(sem_ids(ns).hccops);
+	undo_list_gdm_set = hcc_gipc_ops_undolist_set(sem_ids(ns).hccops);
 	if (IS_ERR(undo_list_gdm_set)) {
 		BUG();
 		return;

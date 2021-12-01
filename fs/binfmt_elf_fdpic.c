@@ -37,7 +37,7 @@
 #include <linux/coredump.h>
 #ifdef CONFIG_HCC_GPM
 #include <hcc/children.h>
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -98,10 +98,10 @@ static int __init init_elf_fdpic_binfmt(void)
 #ifdef CONFIG_HCC_GPM
 	int retval;
 
-	hccsyms_register(HCCSYMS_BINFMTS_ELF_FDPIC, &elf_fdpic_format);
+	hcc_syms_register(HCC_SYMS_BINFMTS_ELF_FDPIC, &elf_fdpic_format);
 	retval = register_binfmt(&elf_fdpic_format);
 	if (retval)
-		hccsyms_unregister(HCCSYMS_BINFMTS_ELF_FDPIC);
+		hcc_syms_unregister(HCC_SYMS_BINFMTS_ELF_FDPIC);
 	return retval;
 #else
 	return register_binfmt(&elf_fdpic_format);
@@ -111,7 +111,7 @@ static int __init init_elf_fdpic_binfmt(void)
 static void __exit exit_elf_fdpic_binfmt(void)
 {
 #ifdef CONFIG_HCC_GPM
-	hccsyms_unregister(HCCSYMS_BINFMTS_ELF_FDPIC);
+	hcc_syms_unregister(HCC_SYMS_BINFMTS_ELF_FDPIC);
 #endif
 	unregister_binfmt(&elf_fdpic_format);
 }

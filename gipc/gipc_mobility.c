@@ -798,7 +798,7 @@ int __sys_msgq_checkpoint(int msqid, int fd)
 
 	index = ipcid_to_idx(msqid);
 
-	master_set = hccipc_ops_master_set(msg_ids(ns).hccops);
+	master_set = hcc_gipc_ops_master_set(msg_ids(ns).hccops);
 
 	master_node = _gdm_get_object_no_ft(master_set, index);
 	if (!master_node) {

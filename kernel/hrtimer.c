@@ -47,7 +47,7 @@
 #include <linux/timer.h>
 
 #ifdef CONFIG_HCC_GPM
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -1660,15 +1660,15 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
 }
 
 #ifdef CONFIG_HCC_GPM
-int hrtimer_hccsyms_register(void)
+int hrtimer_hcc_syms_register(void)
 {
-	return hccsyms_register(HCCSYMS_HRTIMER_NANOSLEEP_RESTART,
+	return hcc_syms_register(HCC_SYMS_HRTIMER_NANOSLEEP_RESTART,
 				hrtimer_nanosleep_restart);
 }
 
-int hrtimer_hccsyms_unregister(void)
+int hrtimer_hcc_syms_unregister(void)
 {
-	return hccsyms_unregister(HCCSYMS_HRTIMER_NANOSLEEP_RESTART);
+	return hcc_syms_unregister(HCC_SYMS_HRTIMER_NANOSLEEP_RESTART);
 }
 #endif
 

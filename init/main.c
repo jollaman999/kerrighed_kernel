@@ -76,7 +76,7 @@
 #include <trace/boot.h>
 
 #ifdef CONFIG_HCC_GHOTPLUG
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #endif
 
 #include <asm/io.h>
@@ -936,7 +936,7 @@ static void __init do_basic_setup(void)
 	cpuset_init_smp();
 	usermodehelper_init();
 #ifdef CONFIG_HCC_GHOTPLUG
-	init_hccsyms();
+	init_hcc_syms();
 #endif
 	shmem_init();	
 	driver_init();

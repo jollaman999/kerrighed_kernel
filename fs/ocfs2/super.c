@@ -47,7 +47,7 @@
 #include <cluster/masklog.h>
 
 #ifdef CONFIG_HCC_GMM
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #endif
 
 #include "ocfs2.h"
@@ -1559,7 +1559,7 @@ static int __init ocfs2_init(void)
 		goto leave;
 
 #ifdef CONFIG_HCC_GMM
-	status = hccsyms_register(HCCSYMS_VM_OPS_OCFS2_FILE, &ocfs2_file_vm_ops);
+	status = hcc_syms_register(HCC_SYMS_VM_OPS_OCFS2_FILE, &ocfs2_file_vm_ops);
 	if (status)
 		goto leave;
 #endif
@@ -1573,7 +1573,7 @@ leave:
 		ocfs2_free_mem_caches();
 		exit_ocfs2_uptodate_cache();
 #ifdef CONFIG_HCC_GMM
-		hccsyms_unregister(HCCSYMS_VM_OPS_OCFS2_FILE);
+		hcc_syms_unregister(HCC_SYMS_VM_OPS_OCFS2_FILE);
 #endif
 	}
 
@@ -1588,7 +1588,7 @@ leave:
 static void __exit ocfs2_exit(void)
 {
 #ifdef CONFIG_HCC_GMM
-	hccsyms_unregister(HCCSYMS_VM_OPS_OCFS2_FILE);
+	hcc_syms_unregister(HCC_SYMS_VM_OPS_OCFS2_FILE);
 #endif
 
 	mlog_entry_void();

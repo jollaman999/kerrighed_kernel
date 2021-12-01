@@ -39,8 +39,8 @@ void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma);
 extern struct kmem_cache *mm_cachep;
 extern struct vm_operations_struct generic_file_vm_ops;
 
-int special_mapping_vm_ops_hccsyms_register(void);
-int special_mapping_vm_ops_hccsyms_unregister(void);
+int special_mapping_vm_ops_hcc_syms_register(void);
+int special_mapping_vm_ops_hcc_syms_unregister(void);
 
 static inline void dump_vma(struct task_struct *tsk)
 {

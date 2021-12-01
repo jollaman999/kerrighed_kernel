@@ -46,7 +46,7 @@
 #include <linux/freezer.h>
 
 #ifdef CONFIG_HCC_GMM
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #endif
 
 #include "ext4.h"
@@ -4873,7 +4873,7 @@ static int __init init_ext4_fs(void)
 	if (err)
 		return err;
 #ifdef CONFIG_HCC_GMM
-	err = hccsyms_register(HCCSYMS_VM_OPS_FILE_EXT4, (void *)&ext4_file_vm_ops);
+	err = hcc_syms_register(HCC_SYMS_VM_OPS_FILE_EXT4, (void *)&ext4_file_vm_ops);
 	if(err)
 			goto out5;
 #endif
@@ -4911,7 +4911,7 @@ out3:
 	kset_unregister(ext4_kset);
 out4:
 #ifdef CONFIG_HCC_GMM
-	hccsyms_unregister(HCCSYMS_VM_OPS_FILE_EXT4);
+	hcc_syms_unregister(HCC_SYMS_VM_OPS_FILE_EXT4);
 out5:
 #endif
 	exit_ext4_system_zone();

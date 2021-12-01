@@ -63,7 +63,7 @@
 #include <linux/hugetlb.h>
 
 #ifdef CONFIG_HCC_GPM
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #endif
 
 #include <asm/futex.h>
@@ -2940,14 +2940,14 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
 }
 
 #ifdef CONFIG_HCC_GPM
-int futex_hccsyms_register(void)
+int futex_hcc_syms_register(void)
 {
-	return hccsyms_register(HCCSYMS_FUTEX_WAIT_RESTART, futex_wait_restart);
+	return hcc_syms_register(HCC_SYMS_FUTEX_WAIT_RESTART, futex_wait_restart);
 }
 
-int futex_hccsyms_unregister(void)
+int futex_hcc_syms_unregister(void)
 {
-	return hccsyms_unregister(HCCSYMS_FUTEX_WAIT_RESTART);
+	return hcc_syms_unregister(HCC_SYMS_FUTEX_WAIT_RESTART);
 }
 #endif
 

@@ -35,7 +35,7 @@
 #include <linux/coredump.h>
 #ifdef CONFIG_HCC_GPM
 #include <hcc/children.h>
-#include <hcc/hccsyms.h>
+#include <hcc/hcc_syms.h>
 #endif
 #include <asm/uaccess.h>
 #include <asm/param.h>
@@ -2193,10 +2193,10 @@ static int __init init_elf_binfmt(void)
 #ifdef CONFIG_HCC_GPM
 	int retval;
 
-	hccsyms_register(HCCSYMS_BINFMTS_ELF, &elf_format);
+	hcc_syms_register(HCC_SYMS_BINFMTS_ELF, &elf_format);
 	retval = register_binfmt(&elf_format);
 	if (retval)
-		hccsyms_unregister(HCCSYMS_BINFMTS_ELF);
+		hcc_syms_unregister(HCC_SYMS_BINFMTS_ELF);
 	return retval;
 #else
 	return register_binfmt(&elf_format);
@@ -2207,7 +2207,7 @@ static void __exit exit_elf_binfmt(void)
 {
 	/* Remove the COFF and ELF loaders. */
 #ifdef CONFIG_HCC_GPM
-	hccsyms_unregister(HCCSYMS_BINFMTS_ELF);
+	hcc_syms_unregister(HCC_SYMS_BINFMTS_ELF);
 #endif
 	unregister_binfmt(&elf_format);
 }
