@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/signal.c
+ *  hcc/gpm/signal.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
@@ -551,7 +551,7 @@ struct signal_struct *hcc_signal_exit(struct signal_struct *sig)
 	return sig;
 }
 
-/* EPM actions */
+/* GPM actions */
 
 /* individual struct sigpending */
 

@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/app_restart.c
+ *  hcc/gpm/app_restart.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */

@@ -34,11 +34,11 @@ typedef struct kernel_hcc_gcap_struct {
 #define __HCC_GCAP_SUPPORTED_MM 0
 #endif
 #ifdef CONFIG_HCC_GPM
-#define __HCC_GCAP_SUPPORTED_EPM CAP_TO_MASK(GCAP_CAN_MIGRATE)	 \
+#define __HCC_GCAP_SUPPORTED_GPM CAP_TO_MASK(GCAP_CAN_MIGRATE)	 \
 				|CAP_TO_MASK(GCAP_DISTANT_FORK)   \
 				|CAP_TO_MASK(GCAP_CHECKPOINTABLE)
 #else
-#define __HCC_GCAP_SUPPORTED_EPM 0
+#define __HCC_GCAP_SUPPORTED_GPM 0
 #endif
 #define __HCC_GCAP_SUPPORTED_DEBUG 0
 #ifdef CONFIG_HCC_SYSCALL_EXIT_HOOK
@@ -54,7 +54,7 @@ typedef struct kernel_hcc_gcap_struct {
 #define HCC_GCAP_SUPPORTED ((kernel_cap_t){{ __HCC_GCAP_SUPPORTED_BASE   \
 					   |__HCC_GCAP_SUPPORTED_PROCFS \
 					   |__HCC_GCAP_SUPPORTED_MM     \
-					   |__HCC_GCAP_SUPPORTED_EPM    \
+					   |__HCC_GCAP_SUPPORTED_GPM    \
 					   |__HCC_GCAP_SUPPORTED_DEBUG  \
 					   |__HCC_GCAP_SUPPORTED_SEH, 0 }})
 

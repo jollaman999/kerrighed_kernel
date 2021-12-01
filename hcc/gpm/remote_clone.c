@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/remote_clone.c
+ *  hcc/gpm/remote_clone.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */

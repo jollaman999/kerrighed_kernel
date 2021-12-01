@@ -233,7 +233,7 @@ struct gpm_action;
  * Export information to a ghost so that a peer config_item can be reached on a
  * peer node
  *
- * @param action	EPM action using the ghost
+ * @param action	GPM action using the ghost
  * @param ghost		ghost to export to
  * @param item		globalized config_item to reach on peer node
  *
@@ -248,7 +248,7 @@ int export_global_config_item(struct gpm_action *action, ghost_t *ghost,
  * Returns success as long as ghost can still be used. An error in item lookup
  * is returned in item pointer.
  *
- * @param action	EPM action using the ghost
+ * @param action	GPM action using the ghost
  * @param ghost		ghost to import from
  * @param item_p	pointer to a pointer to fill with the found item or
  *			error item, if ghost info could be successfuly imported

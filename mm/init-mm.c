@@ -9,9 +9,9 @@
 #include <asm/pgtable.h>
 
 #ifdef CONFIG_HCC_GPM
-#define INIT_MM_EPM	.mm_ltasks	= ATOMIC_INIT(1),
+#define INIT_MM_GPM	.mm_ltasks	= ATOMIC_INIT(1),
 #else
-#define INIT_MM_EPM
+#define INIT_MM_GPM
 #endif
 
 #ifdef CONFIG_HCC_GMM
@@ -24,7 +24,7 @@ struct mm_struct init_mm = {
 	.mm_rb		= RB_ROOT,
 	.pgd		= swapper_pg_dir,
 	INIT_MM_MM
-	INIT_MM_EPM
+	INIT_MM_GPM
 	.mm_users	= ATOMIC_INIT(2),
 	.mm_count	= ATOMIC_INIT(1),
 	.mmap_sem	= __RWSEM_INITIALIZER(init_mm.mmap_sem),

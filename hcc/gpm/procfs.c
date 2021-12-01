@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/procfs.c
+ *  hcc/gpm/procfs.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
@@ -19,7 +19,7 @@
 #include "migration.h"
 #include "application/application_cr_api.h"
 
-static struct proc_dir_entry *proc_epm = NULL;
+static struct proc_dir_entry *proc_gpm = NULL;
 
 /**
  *  /proc function call to migrate a task
@@ -297,10 +297,10 @@ int gpm_procfs_start(void)
 	int r;
 	int err = -EINVAL;
 
-	/* /proc/hcc/epm */
+	/* /proc/hcc/gpm */
 
-	proc_epm = create_proc_entry("epm", S_IFDIR | 0755, proc_hcc);
-	if (!proc_epm)
+	proc_gpm = create_proc_entry("gpm", S_IFDIR | 0755, proc_hcc);
+	if (!proc_gpm)
 		return -ENOMEM;
 
 	r = register_proc_service(KSYS_PROCESS_MIGRATION, proc_migrate_process);
@@ -387,5 +387,5 @@ void gpm_procfs_exit(void)
 	unregister_proc_service(KSYS_APP_CR_ENABLE);
 	unregister_proc_service(KSYS_APP_CR_EXCLUDE);
 
-	procfs_deltree(proc_epm);
+	procfs_deltree(proc_gpm);
 }

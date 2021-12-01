@@ -98,7 +98,7 @@ deffct(proc);
 #endif
 #ifdef CONFIG_HCC_GPM
 deffct(ghost);
-deffct(epm);
+deffct(gpm);
 #endif
 #ifdef CONFIG_HCC_GSCHED
 deffct(gscheduler);
@@ -409,8 +409,8 @@ int init_hcc_upper_layers(void)
 #endif
 
 #ifdef CONFIG_HCC_GPM
-	if (init_epm())
-		goto err_epm;
+	if (init_gpm())
+		goto err_gpm;
 #endif
 
 	printk("Init HCC distributed services: done\n");
@@ -427,8 +427,8 @@ int init_hcc_upper_layers(void)
       err_sched:
 #endif
 #ifdef CONFIG_HCC_GPM
-	cleanup_epm();
-      err_epm:
+	cleanup_gpm();
+      err_gpm:
 #endif
 #ifdef CONFIG_HCC_GIPC
 	cleanup_keripc();

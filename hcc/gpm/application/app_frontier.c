@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/app_frontier.c
+ *  hcc/gpm/app_frontier.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */

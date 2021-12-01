@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/sighand.c
+ *  hcc/gpm/sighand.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
@@ -396,7 +396,7 @@ void hcc_sighand_cleanup(struct sighand_struct *sig)
 		hcc_sighand_unlock(locked_id);
 }
 
-/* EPM actions */
+/* GPM actions */
 
 static int cr_export_later_sighand_struct(struct gpm_action *action,
 					  ghost_t *ghost,

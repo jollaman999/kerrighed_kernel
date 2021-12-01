@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/application.c
+ *  hcc/gpm/application.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */

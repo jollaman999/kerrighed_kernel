@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/ghost.c
+ *  hcc/gpm/ghost.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  *
@@ -219,7 +219,7 @@ static void post_export_pids(struct gpm_action *action,
 #endif
 }
 
-/* export_vfork_done() is located in hcc/epm/remote_clone.c */
+/* export_vfork_done() is located in hcc/gpm/remote_clone.c */
 
 static int export_cpu_timers(struct gpm_action *action,
 			     ghost_t *ghost, struct task_struct *task)
@@ -298,11 +298,11 @@ out:
 	return retval;
 }
 
-/* export_signal_struct() is located in hcc/epm/signal.c */
+/* export_signal_struct() is located in hcc/gpm/signal.c */
 
-/* export_sighand_struct() is located in hcc/epm/sighand.c */
+/* export_sighand_struct() is located in hcc/gpm/sighand.c */
 
-/* export_private_signals() is located in hcc/epm/signal.c */
+/* export_private_signals() is located in hcc/gpm/signal.c */
 
 static int export_notifier(struct gpm_action *action,
 			   ghost_t *ghost, struct task_struct *task)
@@ -703,11 +703,11 @@ static void unimport_notifier(struct task_struct *task)
 	/* TODO */
 }
 
-/* unimport_private_signals() is located in hcc/epm/signal.c */
+/* unimport_private_signals() is located in hcc/gpm/signal.c */
 
-/* unimport_sighand_struct() is located in hcc/epm/sighand.c */
+/* unimport_sighand_struct() is located in hcc/gpm/sighand.c */
 
-/* unimport_signal_struct() is located in hcc/epm/signal.c */
+/* unimport_signal_struct() is located in hcc/gpm/signal.c */
 
 static void unimport_nsproxy(struct task_struct *task)
 {
@@ -729,7 +729,7 @@ static void unimport_cpu_timers(struct task_struct *task)
 	/* TODO */
 }
 
-/* unimport_vfork_done() is located in hcc/epm/remote_clone.c */
+/* unimport_vfork_done() is located in hcc/gpm/remote_clone.c */
 
 static void __unimport_pids(struct task_struct *task, enum pid_type max_type)
 {
@@ -1062,7 +1062,7 @@ out:
 	return retval;
 }
 
-/* import_vfork_done() is located in hcc/epm/remote_clone.c */
+/* import_vfork_done() is located in hcc/gpm/remote_clone.c */
 
 static int import_cpu_timers(struct gpm_action *action,
 			     ghost_t *ghost, struct task_struct *task)
@@ -1144,11 +1144,11 @@ err:
 	goto out;
 }
 
-/* import_signal_struct() is located in hcc/epm/signal.c */
+/* import_signal_struct() is located in hcc/gpm/signal.c */
 
-/* import_sighand_struct() is located in hcc/epm/sighand.c */
+/* import_sighand_struct() is located in hcc/gpm/sighand.c */
 
-/* import_private_signals() is located in hcc/epm/signal.c */
+/* import_private_signals() is located in hcc/gpm/signal.c */
 
 static int import_notifier(struct gpm_action *action,
 			   ghost_t *ghost, struct task_struct *task)

@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/migration.c
+ *  hcc/gpm/migration.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */

@@ -1,5 +1,5 @@
 /*
- *  HCC/modules/epm/app_utils.h
+ *  HCC/modules/gpm/app_utils.h
  *
  *  Copyright (C) 2008 INRIA
  *

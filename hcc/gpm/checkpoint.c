@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/checkpoint.c
+ *  hcc/gpm/checkpoint.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */

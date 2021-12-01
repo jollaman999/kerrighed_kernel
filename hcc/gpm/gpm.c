@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/epm.c
+ *  hcc/gpm/gpm.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
@@ -86,9 +86,9 @@ static int restart_block_hcc_syms_unregister(void)
 	return retval;
 }
 
-int init_epm(void)
+int init_gpm(void)
 {
-	printk("EPM initialisation: start\n");
+	printk("GPM initialisation: start\n");
 
 	restart_block_hcc_syms_register();
 
@@ -114,11 +114,11 @@ int init_epm(void)
 
 	gpm_ghotplug_init();
 
-	printk("EPM initialisation: done\n");
+	printk("GPM initialisation: done\n");
 	return 0;
 }
 
-void cleanup_epm(void)
+void cleanup_gpm(void)
 {
 	gpm_ghotplug_cleanup();
 	application_cr_server_finalize();

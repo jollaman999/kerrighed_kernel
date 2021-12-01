@@ -172,7 +172,7 @@ int import_sysv_sem(struct gpm_action *action,
                     ghost_t *ghost, struct task_struct *task);
 void unimport_sysv_sem(struct task_struct *task);
 
-/* EPM */
+/* GPM */
 
 /* Arch-dependent helpers */
 

@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/pidmap.c
+ *  hcc/gpm/pidmap.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */

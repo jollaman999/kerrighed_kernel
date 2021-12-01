@@ -1,5 +1,5 @@
 /*
- *  hcc/epm/children.c
+ *  hcc/gpm/children.c
  *
  *  Copyright (C) 2019-2021, Innogrid HCC.
  */
