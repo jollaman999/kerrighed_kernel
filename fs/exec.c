@@ -857,7 +857,7 @@ static int exec_mmap(struct mm_struct *mm)
 		mmput(old_mm);
 #ifdef CONFIG_HCC_GMM
 		if (mm_id)
-			kh_mm_release(old_mm, 1);
+			hcc_mm_release(old_mm, 1);
 #endif
 		return 0;
 	}

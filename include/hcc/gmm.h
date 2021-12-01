@@ -73,17 +73,17 @@ void mm_struct_unpin(struct mm_struct *mm);
 
 /** HCC Kernel Hooks **/
 
-extern void (*kh_mm_get) (struct mm_struct *mm);
-extern void (*kh_mm_release) (struct mm_struct *mm, int notify);
+extern void (*hcc_mm_get) (struct mm_struct *mm);
+extern void (*hcc_mm_release) (struct mm_struct *mm, int notify);
 
 int hcc_do_execve(struct task_struct *tsk, struct mm_struct *mm);
-extern struct mm_struct *(*kh_copy_mm)(struct task_struct *tsk,
+extern struct mm_struct *(*hcc_copy_mm)(struct task_struct *tsk,
 				       struct mm_struct *oldmm,
 				       unsigned long clone_flags);
 
-extern void (*kh_fill_pte)(struct mm_struct *mm, unsigned long addr,
+extern void (*hcc_fill_pte)(struct mm_struct *mm, unsigned long addr,
 			   pte_t *pte);
-extern void (*kh_zap_pte)(struct mm_struct *mm, unsigned long addr,
+extern void (*hcc_zap_pte)(struct mm_struct *mm, unsigned long addr,
 			  pte_t *pte);
 
 int try_to_flush_page(struct page *page);

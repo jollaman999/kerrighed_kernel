@@ -925,7 +925,7 @@ static int copy_mm(unsigned long clone_flags, struct task_struct * tsk)
 		 * to inc the mm_task counter */
 		if (!hcc_current)
 #endif
-			HCCFCT(kh_mm_get)(oldmm);
+			HCCFCT(hcc_mm_get)(oldmm);
 #endif
 		mm = oldmm;
 		goto good_mm;
@@ -933,8 +933,8 @@ static int copy_mm(unsigned long clone_flags, struct task_struct * tsk)
 
 	retval = -ENOMEM;
 #ifdef CONFIG_HCC_GMM
-	if (kh_copy_mm)
-		mm = kh_copy_mm(tsk, oldmm, clone_flags);
+	if (hcc_copy_mm)
+		mm = hcc_copy_mm(tsk, oldmm, clone_flags);
 	else
 #endif
 	mm = dup_mm(tsk);
@@ -1496,9 +1496,9 @@ struct task_struct *copy_process(unsigned long clone_flags,
 #endif /* CONFIG_HCC_GCAP */
 
 #ifdef CONFIG_HCC_GDM
-	if (!kh_copy_gdm_info)
+	if (!hcc_copy_gdm_info)
 		p->gdm_info = NULL;
-	else if ((retval = kh_copy_gdm_info(clone_flags, p)))
+	else if ((retval = hcc_copy_gdm_info(clone_flags, p)))
 		goto bad_fork_cleanup_policy;
 #endif /* CONFIG_HCC_GDM */
 
@@ -1821,7 +1821,7 @@ bad_fork_cleanup_mm:
 #ifdef CONFIG_HCC_GPM
 		if (!hcc_current)
 #endif
-			HCCFCT(kh_mm_release)(p->mm, 1);
+			HCCFCT(hcc_mm_release)(p->mm, 1);
 #endif
 #ifdef CONFIG_HCC_GPM
 	if (p->mm)

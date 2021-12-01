@@ -26,16 +26,16 @@
 #include "vma_struct.h"
 #include "mm_server.h"
 
-void (*kh_mm_get) (struct mm_struct *mm) = NULL;
-void (*kh_mm_release) (struct mm_struct *mm, int notify) = NULL;
+void (*hcc_mm_get) (struct mm_struct *mm) = NULL;
+void (*hcc_mm_release) (struct mm_struct *mm, int notify) = NULL;
 
-struct mm_struct *(*kh_copy_mm)(struct task_struct *tsk,
+struct mm_struct *(*hcc_copy_mm)(struct task_struct *tsk,
 				struct mm_struct *oldmm,
 				unsigned long clone_flags) = NULL;
 
-void (*kh_fill_pte)(struct mm_struct *mm, unsigned long addr,
+void (*hcc_fill_pte)(struct mm_struct *mm, unsigned long addr,
 		    pte_t *pte) = NULL;
-void (*kh_zap_pte)(struct mm_struct *mm, unsigned long addr,
+void (*hcc_zap_pte)(struct mm_struct *mm, unsigned long addr,
 		   pte_t *pte) = NULL;
 
 int hcc_do_execve(struct task_struct *tsk, struct mm_struct *mm)
@@ -577,11 +577,11 @@ void mm_struct_init (void)
 	if (IS_ERR(mm_struct_gdm_set))
 		OOM;
 
-	hook_register(&kh_copy_mm, kcb_copy_mm);
-	hook_register(&kh_mm_get, kcb_mm_get);
-	hook_register(&kh_mm_release, kcb_mm_release);
-	hook_register(&kh_fill_pte, kcb_fill_pte);
-	hook_register(&kh_zap_pte, kcb_zap_pte);
+	hook_register(&hcc_copy_mm, kcb_copy_mm);
+	hook_register(&hcc_mm_get, kcb_mm_get);
+	hook_register(&hcc_mm_release, kcb_mm_release);
+	hook_register(&hcc_fill_pte, kcb_fill_pte);
+	hook_register(&hcc_zap_pte, kcb_zap_pte);
 }
 
 

@@ -382,11 +382,11 @@ static void mosix_probe_init_variables(void)
 		mosix_data.mosix_single_process_load * STD_SPD / cpu_speed;
 
 /*         |+ called each time calc_load is called +| */
-/*         hook_register(&kh_calc_load, kcb_accumulate_load); */
+/*         hook_register(&hcc_calc_load, kcb_accumulate_load); */
 /*         |+ called when a process is added to the run queue +| */
-/*         hook_register(&kh_process_on, kcb_process_on); */
+/*         hook_register(&hcc_process_on, kcb_process_on); */
 /*         |+ called when a process is removed from the run queue +| */
-/*         hook_register(&kh_process_off, kcb_process_off); */
+/*         hook_register(&hcc_process_off, kcb_process_off); */
 }
 
 DEFINE_GSCHEDULER_PROBE_SOURCE_GET(value_mean_load, unsigned long, value_p, nr)

@@ -922,7 +922,7 @@ copy_to_user(void __user *to, const void *from, unsigned long n)
 #ifdef CONFIG_HCC_FAF
 	{
 		if (check_ruaccess())
-			n = kh_copy_user_generic(to, from, n, 0);
+			n = hcc_copy_user_generic(to, from, n, 0);
 		else
 #endif
 		n = __copy_to_user(to, from, n);
@@ -956,7 +956,7 @@ copy_from_user(void *to, const void __user *from, unsigned long n)
 #ifdef CONFIG_HCC_FAF
 	{
 		if (check_ruaccess())
-			n = kh_copy_user_generic(to, from, n, 1);
+			n = hcc_copy_user_generic(to, from, n, 1);
 		else
 #endif
 		n = __copy_from_user(to, from, n);

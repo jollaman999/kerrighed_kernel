@@ -34,7 +34,7 @@ event_counter_t total_grab_object_counter = 0;
 event_counter_t total_remove_object_counter = 0;
 event_counter_t total_flush_object_counter = 0;
 
-int (*kh_copy_gdm_info)(unsigned long clone_flags, struct task_struct * tsk);
+int (*hcc_copy_gdm_info)(unsigned long clone_flags, struct task_struct * tsk);
 
 struct kmem_cache *gdm_info_cachep;
 
@@ -98,7 +98,7 @@ int init_gdm (void)
 
 	start_run_queue_thread ();
 
-	hook_register(&kh_copy_gdm_info, kcb_copy_gdm_info);
+	hook_register(&hcc_copy_gdm_info, kcb_copy_gdm_info);
 
 	gdm_ghotplug_init();
 
