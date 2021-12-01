@@ -920,7 +920,7 @@ static unsigned long zap_pte_range(struct mmu_gather *tlb,
 		if (vma->vm_mm->anon_vma_gdm_set &&
 		    !(details && (details->check_mapping ||
 				  details->nonlinear_vma ))) {
-			HCCFCT(hcc_zap_pte)(vma->vm_mm, addr, pte);
+			HCC_FCT(hcc_zap_pte)(vma->vm_mm, addr, pte);
 			ptent = *pte;
 			if (pte_none(ptent)) {
 				(*zap_work)--;

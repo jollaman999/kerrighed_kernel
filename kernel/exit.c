@@ -1200,7 +1200,7 @@ NORET_TYPE void do_exit(long code)
 	exit_mm(tsk);
 #ifdef CONFIG_HCC_GMM
 	if (mm)
-		HCCFCT(hcc_mm_release)(mm, notify);
+		HCC_FCT(hcc_mm_release)(mm, notify);
 #endif
 	if (group_dead)
 		acct_process();

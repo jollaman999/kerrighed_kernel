@@ -925,7 +925,7 @@ static int copy_mm(unsigned long clone_flags, struct task_struct * tsk)
 		 * to inc the mm_task counter */
 		if (!hcc_current)
 #endif
-			HCCFCT(hcc_mm_get)(oldmm);
+			HCC_FCT(hcc_mm_get)(oldmm);
 #endif
 		mm = oldmm;
 		goto good_mm;
@@ -1821,7 +1821,7 @@ bad_fork_cleanup_mm:
 #ifdef CONFIG_HCC_GPM
 		if (!hcc_current)
 #endif
-			HCCFCT(hcc_mm_release)(p->mm, 1);
+			HCC_FCT(hcc_mm_release)(p->mm, 1);
 #endif
 #ifdef CONFIG_HCC_GPM
 	if (p->mm)

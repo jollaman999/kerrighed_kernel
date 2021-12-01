@@ -7,7 +7,7 @@
 #include <hcc/hccnodemask.h>
 #endif
 
-#define HCCFCT(p) if(p!=NULL) p
+#define HCC_FCT(p) if(p!=NULL) p
 
 #if defined(CONFIG_HCC) || defined(CONFIG_HCC_GRPC)
 
