@@ -13,7 +13,7 @@
 #include <net/grpc/grpc.h>
 #include <gdm/gdm.h>
 #include "gipc_handler.h"
-#include "hccshm.h"
+#include "hcc_shm.h"
 #include "util.h"
 #include "shmid_io_linker.h"
 #include "shm_memory_linker.h"

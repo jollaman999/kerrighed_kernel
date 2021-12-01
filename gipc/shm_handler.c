@@ -12,7 +12,7 @@
 #include <linux/msg.h>
 #include <gdm/gdm.h>
 #include <hcc/ghotplug.h>
-#include "hccshm.h"
+#include "hcc_shm.h"
 #include "gipc_handler.h"
 #include "shm_handler.h"
 #include "shmid_io_linker.h"

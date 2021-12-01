@@ -64,7 +64,7 @@ int __hcc_panic__ = 0;
 struct workqueue_struct *hcc_wq;
 struct workqueue_struct *hcc_nb_wq;
 
-struct kobject* hccsys;
+struct kobject* hcc_sys;
 struct kobject* hcc_ghotplugsys;
 
 #define deffct(p) extern int init_##p(void); extern void cleanup_##p(void)
@@ -598,17 +598,17 @@ static struct attribute_group attr_group = {
 static int init_sysfs(void){
 	int r;
 
-	hccsys = kobject_create_and_add("hcc", NULL);
-	if(!hccsys)
+	hcc_sys = kobject_create_and_add("hcc", NULL);
+	if(!hcc_sys)
 		return -1;
 
-	hcc_ghotplugsys = kobject_create_and_add("ghotplug", hccsys);
+	hcc_ghotplugsys = kobject_create_and_add("ghotplug", hcc_sys);
 	if(!hcc_ghotplugsys)
 		return -1;
 
-	r = sysfs_create_group(hccsys, &attr_group);
+	r = sysfs_create_group(hcc_sys, &attr_group);
 	if(r)
-		kobject_put(hccsys);
+		kobject_put(hcc_sys);
 
 	return 0;
 }

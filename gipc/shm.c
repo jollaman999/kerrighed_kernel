@@ -42,7 +42,7 @@
 
 #include <asm/uaccess.h>
 #ifdef CONFIG_HCC_GIPC
-#include "hccshm.h"
+#include "hcc_shm.h"
 #endif
 
 #include "util.h"

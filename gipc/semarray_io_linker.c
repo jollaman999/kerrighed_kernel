@@ -18,7 +18,7 @@
 #include "gipc_handler.h"
 #include "semarray_io_linker.h"
 #include "util.h"
-#include "hccsem.h"
+#include "hcc_sem.h"
 
 struct kmem_cache *semarray_object_cachep;
 

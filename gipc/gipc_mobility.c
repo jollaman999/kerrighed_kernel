@@ -33,9 +33,9 @@
 #include <hcc/pid.h>
 #include "gipc_handler.h"
 #include "gipc_mobility.h"
-#include "hccshm.h"
+#include "hcc_shm.h"
 #include "hcc_msg.h"
-#include "hccsem.h"
+#include "hcc_sem.h"
 #include "msg_handler.h"
 #include "sem_handler.h"
 #include "semundolst_io_linker.h"

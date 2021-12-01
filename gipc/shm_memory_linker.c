@@ -18,7 +18,7 @@
 #include <linux/kernel.h>
 #include <linux/swap.h>
 #include <gdm/gdm.h>
-#include "hccshm.h"
+#include "hcc_shm.h"
 #include "gipc_handler.h"
 
 extern int memory_first_touch (struct gdm_obj * obj_entry,

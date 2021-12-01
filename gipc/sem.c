@@ -94,7 +94,7 @@
 #ifdef CONFIG_HCC_GPM
 #include <hcc/action.h>
 #endif
-#include "hccsem.h"
+#include "hcc_sem.h"
 #endif
 
 /* sem_undo_list controls shared access to the list of sem_undo structures

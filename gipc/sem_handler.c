@@ -20,7 +20,7 @@
 #include "semundolst_io_linker.h"
 #include "gipcmap_io_linker.h"
 #include "util.h"
-#include "hccsem.h"
+#include "hcc_sem.h"
 
 struct semhcc_ops {
 	struct hcc_gipc_ops hcc_ops;
