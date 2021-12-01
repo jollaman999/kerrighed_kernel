@@ -963,11 +963,11 @@ int ghotplug_cluster_init(void)
 	grpc_register(NODE_POWEROFF, handle_node_poweroff, 0);
 #endif
 
-	register_proc_service(KSYS_GHOTPLUG_READY, node_ready);
-	register_proc_service(KSYS_GHOTPLUG_SHUTDOWN, cluster_stop);
-	register_proc_service(KSYS_GHOTPLUG_RESTART, cluster_restart);
-	register_proc_service(KSYS_GHOTPLUG_STATUS, cluster_status);
-	register_proc_service(KSYS_GHOTPLUG_NODES, cluster_nodes);
+	register_proc_service(HCC_SYS_GHOTPLUG_READY, node_ready);
+	register_proc_service(HCC_SYS_GHOTPLUG_SHUTDOWN, cluster_stop);
+	register_proc_service(HCC_SYS_GHOTPLUG_RESTART, cluster_restart);
+	register_proc_service(HCC_SYS_GHOTPLUG_STATUS, cluster_status);
+	register_proc_service(HCC_SYS_GHOTPLUG_NODES, cluster_nodes);
 
 	return 0;
 }

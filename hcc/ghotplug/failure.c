@@ -96,7 +96,7 @@ int ghotplug_failure_init(void)
 
 	grpc_register_void(NODE_FAIL, handle_node_fail, 0);
 	
-	register_proc_service(KSYS_GHOTPLUG_FAIL, nodes_fail);
+	register_proc_service(HCC_SYS_GHOTPLUG_FAIL, nodes_fail);
 
 	return 0;
 }

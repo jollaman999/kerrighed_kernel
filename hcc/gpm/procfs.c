@@ -303,89 +303,89 @@ int gpm_procfs_start(void)
 	if (!proc_gpm)
 		return -ENOMEM;
 
-	r = register_proc_service(KSYS_PROCESS_MIGRATION, proc_migrate_process);
+	r = register_proc_service(HCC_SYS_PROCESS_MIGRATION, proc_migrate_process);
 	if (r)
 		goto err;
 
-	r = register_proc_service(KSYS_THREAD_MIGRATION, proc_migrate_thread);
+	r = register_proc_service(HCC_SYS_THREAD_MIGRATION, proc_migrate_thread);
 	if (r)
 		goto unreg_migrate_process;
 
-	r = register_proc_service(KSYS_APP_FREEZE, proc_app_freeze);
+	r = register_proc_service(HCC_SYS_APP_FREEZE, proc_app_freeze);
 	if (r)
 		goto unreg_migrate_thread;
 
-	r = register_proc_service(KSYS_APP_UNFREEZE, proc_app_unfreeze);
+	r = register_proc_service(HCC_SYS_APP_UNFREEZE, proc_app_unfreeze);
 	if (r)
 		goto unreg_app_freeze;
 
-	r = register_proc_service(KSYS_APP_CHKPT, proc_app_chkpt);
+	r = register_proc_service(HCC_SYS_APP_CHKPT, proc_app_chkpt);
 	if (r)
 		goto unreg_app_unfreeze;
 
-	r = register_proc_service(KSYS_APP_RESTART, proc_app_restart);
+	r = register_proc_service(HCC_SYS_APP_RESTART, proc_app_restart);
 	if (r)
 		goto unreg_app_chkpt;
 
-	r = register_proc_service(KSYS_APP_SET_USERDATA, proc_app_set_userdata);
+	r = register_proc_service(HCC_SYS_APP_SET_USERDATA, proc_app_set_userdata);
 	if (r)
 		goto unreg_app_restart;
 
-	r = register_proc_service(KSYS_APP_GET_USERDATA, proc_app_get_userdata);
+	r = register_proc_service(HCC_SYS_APP_GET_USERDATA, proc_app_get_userdata);
 	if (r)
 		goto unreg_app_set_userdata;
 
-	r = register_proc_service(KSYS_APP_CR_DISABLE, proc_app_cr_disable);
+	r = register_proc_service(HCC_SYS_APP_CR_DISABLE, proc_app_cr_disable);
 	if (r)
 		goto unreg_app_get_userdata;
 
-	r = register_proc_service(KSYS_APP_CR_ENABLE, proc_app_cr_enable);
+	r = register_proc_service(HCC_SYS_APP_CR_ENABLE, proc_app_cr_enable);
 	if (r)
 		goto unreg_app_cr_disable;
 
-	r = register_proc_service(KSYS_APP_CR_EXCLUDE, proc_app_cr_exclude);
+	r = register_proc_service(HCC_SYS_APP_CR_EXCLUDE, proc_app_cr_exclude);
 	if (r)
 		goto unreg_app_cr_enable;
 
 	return 0;
 
 unreg_app_cr_enable:
-	unregister_proc_service(KSYS_APP_CR_ENABLE);
+	unregister_proc_service(HCC_SYS_APP_CR_ENABLE);
 unreg_app_cr_disable:
-	unregister_proc_service(KSYS_APP_CR_DISABLE);
+	unregister_proc_service(HCC_SYS_APP_CR_DISABLE);
 unreg_app_get_userdata:
-	unregister_proc_service(KSYS_APP_GET_USERDATA);
+	unregister_proc_service(HCC_SYS_APP_GET_USERDATA);
 unreg_app_set_userdata:
-	unregister_proc_service(KSYS_APP_SET_USERDATA);
+	unregister_proc_service(HCC_SYS_APP_SET_USERDATA);
 unreg_app_restart:
-	unregister_proc_service(KSYS_APP_RESTART);
+	unregister_proc_service(HCC_SYS_APP_RESTART);
 unreg_app_chkpt:
-	unregister_proc_service(KSYS_APP_CHKPT);
+	unregister_proc_service(HCC_SYS_APP_CHKPT);
 unreg_app_unfreeze:
-	unregister_proc_service(KSYS_APP_UNFREEZE);
+	unregister_proc_service(HCC_SYS_APP_UNFREEZE);
 unreg_app_freeze:
-	unregister_proc_service(KSYS_APP_FREEZE);
+	unregister_proc_service(HCC_SYS_APP_FREEZE);
 unreg_migrate_thread:
-	unregister_proc_service(KSYS_THREAD_MIGRATION);
+	unregister_proc_service(HCC_SYS_THREAD_MIGRATION);
 unreg_migrate_process:
-	unregister_proc_service(KSYS_PROCESS_MIGRATION);
+	unregister_proc_service(HCC_SYS_PROCESS_MIGRATION);
 err:
 	return err;
 }
 
 void gpm_procfs_exit(void)
 {
-	unregister_proc_service(KSYS_PROCESS_MIGRATION);
-	unregister_proc_service(KSYS_THREAD_MIGRATION);
-	unregister_proc_service(KSYS_APP_FREEZE);
-	unregister_proc_service(KSYS_APP_UNFREEZE);
-	unregister_proc_service(KSYS_APP_CHKPT);
-	unregister_proc_service(KSYS_APP_RESTART);
-	unregister_proc_service(KSYS_APP_SET_USERDATA);
-	unregister_proc_service(KSYS_APP_GET_USERDATA);
-	unregister_proc_service(KSYS_APP_CR_DISABLE);
-	unregister_proc_service(KSYS_APP_CR_ENABLE);
-	unregister_proc_service(KSYS_APP_CR_EXCLUDE);
+	unregister_proc_service(HCC_SYS_PROCESS_MIGRATION);
+	unregister_proc_service(HCC_SYS_THREAD_MIGRATION);
+	unregister_proc_service(HCC_SYS_APP_FREEZE);
+	unregister_proc_service(HCC_SYS_APP_UNFREEZE);
+	unregister_proc_service(HCC_SYS_APP_CHKPT);
+	unregister_proc_service(HCC_SYS_APP_RESTART);
+	unregister_proc_service(HCC_SYS_APP_SET_USERDATA);
+	unregister_proc_service(HCC_SYS_APP_GET_USERDATA);
+	unregister_proc_service(HCC_SYS_APP_CR_DISABLE);
+	unregister_proc_service(HCC_SYS_APP_CR_ENABLE);
+	unregister_proc_service(HCC_SYS_APP_CR_EXCLUDE);
 
 	procfs_deltree(proc_gpm);
 }

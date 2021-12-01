@@ -574,31 +574,31 @@ int init_hcc_gcap(void)
 {
 	int r;
 
-	r = register_proc_service(KSYS_SET_CAP, proc_set_cap);
+	r = register_proc_service(HCC_SYS_SET_CAP, proc_set_cap);
 	if (r != 0)
 		goto out;
 
-	r = register_proc_service(KSYS_GET_CAP, proc_get_cap);
+	r = register_proc_service(HCC_SYS_GET_CAP, proc_get_cap);
 	if (r != 0)
 		goto unreg_set_cap;
 
-	r = register_proc_service(KSYS_SET_FATHER_CAP, proc_set_father_cap);
+	r = register_proc_service(HCC_SYS_SET_FATHER_CAP, proc_set_father_cap);
 	if (r != 0)
 		goto unreg_get_cap;
 
-	r = register_proc_service(KSYS_GET_FATHER_CAP, proc_get_father_cap);
+	r = register_proc_service(HCC_SYS_GET_FATHER_CAP, proc_get_father_cap);
 	if (r != 0)
 		goto unreg_set_father_cap;
 
-	r = register_proc_service(KSYS_SET_PID_CAP, proc_set_pid_cap);
+	r = register_proc_service(HCC_SYS_SET_PID_CAP, proc_set_pid_cap);
 	if (r != 0)
 		goto unreg_get_father_cap;
 
-	r = register_proc_service(KSYS_GET_PID_CAP, proc_get_pid_cap);
+	r = register_proc_service(HCC_SYS_GET_PID_CAP, proc_get_pid_cap);
 	if (r != 0)
 		goto unreg_set_pid_cap;
 
-	r = register_proc_service(KSYS_GET_SUPPORTED_CAP,
+	r = register_proc_service(HCC_SYS_GET_SUPPORTED_CAP,
 				  proc_get_supported_cap);
 	if (r != 0)
 		goto unreg_get_pid_cap;
@@ -612,29 +612,29 @@ int init_hcc_gcap(void)
 	return r;
 
  unreg_get_pid_cap:
-	unregister_proc_service(KSYS_GET_PID_CAP);
+	unregister_proc_service(HCC_SYS_GET_PID_CAP);
  unreg_set_pid_cap:
-	unregister_proc_service(KSYS_SET_PID_CAP);
+	unregister_proc_service(HCC_SYS_SET_PID_CAP);
  unreg_get_father_cap:
-	unregister_proc_service(KSYS_GET_FATHER_CAP);
+	unregister_proc_service(HCC_SYS_GET_FATHER_CAP);
  unreg_set_father_cap:
-	unregister_proc_service(KSYS_SET_FATHER_CAP);
+	unregister_proc_service(HCC_SYS_SET_FATHER_CAP);
  unreg_get_cap:
-	unregister_proc_service(KSYS_GET_CAP);
+	unregister_proc_service(HCC_SYS_GET_CAP);
  unreg_set_cap:
-	unregister_proc_service(KSYS_SET_CAP);
+	unregister_proc_service(HCC_SYS_SET_CAP);
 	goto out;
 }
 
 void cleanup_hcc_gcap(void)
 {
-	unregister_proc_service(KSYS_GET_SUPPORTED_CAP);
-	unregister_proc_service(KSYS_GET_PID_CAP);
-	unregister_proc_service(KSYS_SET_PID_CAP);
-	unregister_proc_service(KSYS_GET_FATHER_CAP);
-	unregister_proc_service(KSYS_SET_FATHER_CAP);
-	unregister_proc_service(KSYS_GET_CAP);
-	unregister_proc_service(KSYS_SET_CAP);
+	unregister_proc_service(HCC_SYS_GET_SUPPORTED_CAP);
+	unregister_proc_service(HCC_SYS_GET_PID_CAP);
+	unregister_proc_service(HCC_SYS_SET_PID_CAP);
+	unregister_proc_service(HCC_SYS_GET_FATHER_CAP);
+	unregister_proc_service(HCC_SYS_SET_FATHER_CAP);
+	unregister_proc_service(HCC_SYS_GET_CAP);
+	unregister_proc_service(HCC_SYS_SET_CAP);
 
 	return;
 }

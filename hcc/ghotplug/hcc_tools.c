@@ -68,25 +68,25 @@ int init_tools(void)
 	if ((error = hcc_syscalls_init()))
 		goto ErrorSys;
 
-	error = register_proc_service(KSYS_NB_MAX_NODES, tools_proc_nb_max_nodes);
+	error = register_proc_service(HCC_SYS_NB_MAX_NODES, tools_proc_nb_max_nodes);
 	if (error != 0) {
 		error = -EINVAL;
 		goto Error;
 	}
 
-	error = register_proc_service(KSYS_NB_MAX_CLUSTERS, tools_proc_nb_max_clusters);
+	error = register_proc_service(HCC_SYS_NB_MAX_CLUSTERS, tools_proc_nb_max_clusters);
 	if (error != 0) {
 		error = -EINVAL;
 		goto Error;
 	}
 
-	error = register_proc_service(KSYS_GET_NODE_ID, tools_proc_node_id);
+	error = register_proc_service(HCC_SYS_GET_NODE_ID, tools_proc_node_id);
 	if (error != 0) {
 		error = -EINVAL;
 		goto Error;
 	}
 
-	error = register_proc_service(KSYS_GET_NODES_COUNT, tools_proc_nodes_count);
+	error = register_proc_service(HCC_SYS_GET_NODES_COUNT, tools_proc_nodes_count);
 	if (error != 0) {
 		error = -EINVAL;
 		goto Error;

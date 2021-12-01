@@ -142,7 +142,7 @@ int ghotplug_add_init(void)
 {
 	grpc_register_void(NODE_ADD, handle_node_add, 0);
 
-	register_proc_service(KSYS_GHOTPLUG_ADD, nodes_add);
+	register_proc_service(HCC_SYS_GHOTPLUG_ADD, nodes_add);
 	return 0;
 }
 

@@ -213,8 +213,8 @@ int ghotplug_remove_init(void)
 	grpc_register_void(NODE_FWD_REMOVE, handle_node_fwd_remove, 0);
 	grpc_register_int(NODE_REMOVE_CONFIRM, handle_node_remove_confirm, 0);
 	
-	register_proc_service(KSYS_GHOTPLUG_REMOVE, nodes_remove);
-	register_proc_service(KSYS_GHOTPLUG_POWEROFF, nodes_poweroff);
+	register_proc_service(HCC_SYS_GHOTPLUG_REMOVE, nodes_remove);
+	register_proc_service(HCC_SYS_GHOTPLUG_POWEROFF, nodes_poweroff);
 
 	return 0;
 }
