@@ -13,7 +13,6 @@
 
 typedef struct kernel_krg_cap_struct {
 	kernel_cap_t effective;
-	char effective_depth[16];
 	kernel_cap_t permitted;
 	kernel_cap_t inheritable_permitted;
 	kernel_cap_t inheritable_effective;

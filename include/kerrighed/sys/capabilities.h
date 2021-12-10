@@ -25,7 +25,6 @@ enum {
 typedef struct krg_cap_struct
 {
 	int krg_cap_effective;
-	char krg_cap_effective_depth[16];
 	int krg_cap_permitted;
 	int krg_cap_inheritable_permitted;
 	int krg_cap_inheritable_effective;
