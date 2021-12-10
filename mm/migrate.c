@@ -79,11 +79,7 @@ int putback_lru_pages(struct list_head *l)
 	list_for_each_entry_safe(page, page2, l, lru) {
 		list_del(&page->lru);
 		dec_zone_page_state(page, NR_ISOLATED_ANON +
-				page_is_file_cache(page)
-#ifdef CONFIG_KRG_MM
-				+ page_is_migratable(page)*2
-#endif
-				);
+				page_is_file_cache(page));
 		putback_lru_page(page);
 		count++;
 	}
@@ -933,11 +929,7 @@ out:
  		 */
  		list_del(&page->lru);
 		dec_zone_page_state(page, NR_ISOLATED_ANON +
-				page_is_file_cache(page)
-#ifdef CONFIG_KRG_MM
-				+ page_is_migratable(page)*2
-#endif
-				);
+				page_is_file_cache(page));
 		putback_lru_page(page);
 	}
 	/*
@@ -1244,11 +1236,7 @@ static int do_move_page_to_node_array(struct mm_struct *mm,
 		if (!err) {
 			list_add_tail(&page->lru, &pagelist);
 			inc_zone_page_state(page, NR_ISOLATED_ANON +
-					    page_is_file_cache(page)
-#ifdef CONFIG_KRG_MM
-					  + page_is_migratable(page)*2
-#endif
-					    );
+					    page_is_file_cache(page));
 		}
 put_and_set:
 		/*

@@ -24,7 +24,10 @@ static inline int page_is_file_cache(struct page *page)
 #ifdef CONFIG_KRG_MM
 static inline int page_is_migratable(struct page *page)
 {
-	return PageMigratable(page);
+	if (PageMigratable(page))
+		return LRU_MIGR;
+
+	return 0;
 }
 #endif
 
@@ -56,11 +59,6 @@ del_page_from_lru_list(struct zone *zone, struct page *page, enum lru_list l)
  */
 static inline enum lru_list page_lru_base_type(struct page *page)
 {
-#ifdef CONFIG_KRG_MM
-	if (page_is_migratable(page))
-		return LRU_INACTIVE_MIGR;
-	else
-#endif
 	if (page_is_file_cache(page))
 		return LRU_INACTIVE_FILE;
 	return LRU_INACTIVE_ANON;
@@ -80,10 +78,10 @@ del_page_from_lru(struct zone *zone, struct page *page)
 			__ClearPageActive(page);
 			l += LRU_ACTIVE;
 		}
-		/*
-		 * We don't need to add other LRU_***
-		 * page_lru_base_type will calculate l value.
-		 */
+#ifdef CONFIG_KRG_MM
+		if (PageMigratable(page))
+			l += LRU_MIGR;
+#endif
 	}
 	mem_cgroup_lru_del_list(page, l);
 	list_del(&page->lru);
@@ -107,6 +105,10 @@ static inline enum lru_list page_lru(struct page *page)
 		lru = page_lru_base_type(page);
 		if (PageActive(page))
 			lru += LRU_ACTIVE;
+#ifdef CONFIG_KRG_MM
+		if (PageMigratable(page))
+			lru += LRU_MIGR;
+#endif
 	}
 
 	return lru;
