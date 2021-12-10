@@ -153,9 +153,9 @@ __setup("nb_nodes_min=",parse_nb_nodes_min);
 
 static inline void check_node_id (int node_id)
 {
-	if ((node_id >= HCC_MAX_NODES) || (node_id < 0))
+	if ((node_id >= HCC_MAX_NODES) || (node_id <= 0))
 	{
-		printk ("Invalid hcc node id %d (Max id = %d)\n",
+		printk ("Invalid hcc node_id %d. Must be greater then 0 and less than max id. (max id = %d)\n",
 			node_id, HCC_MAX_NODES);
 		BUG();
 	}
