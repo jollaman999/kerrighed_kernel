@@ -1028,7 +1028,7 @@ keep:
 int __isolate_lru_page(struct page *page, isolate_mode_t mode, int file)
 {
 	bool all_lru_mode;
-	int ret = -EBUSY;
+	int ret = -EINVAL;
 
 	/* Only take pages on the LRU. */
 	if (!PageLRU(page))
@@ -1055,6 +1055,8 @@ int __isolate_lru_page(struct page *page, isolate_mode_t mode, int file)
 	 */
 	if (PageUnevictable(page))
 		return ret;
+
+	ret = -EBUSY;
 
 	/*
 	 * To minimise LRU disruption, the caller can indicate that it only
