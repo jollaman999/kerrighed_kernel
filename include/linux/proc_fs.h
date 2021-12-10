@@ -306,9 +306,9 @@ union proc_op {
 		struct task_struct *task);
 };
 
-#if defined(CONFIG_KRG_PROCFS) && defined(CONFIG_KRG_PROC)
+#if defined(CONFIG_HCC_PROCFS) && defined(CONFIG_HCC_PROC)
 #include <linux/types.h>
-#include <kerrighed/sys/types.h>
+#include <hcc/sys/types.h>
 
 struct proc_distant_pid_info;
 
@@ -319,12 +319,12 @@ union proc_distant_op {
 			 char *buf, size_t count);
 };
 
-struct task_kddm_object;
+struct task_gdm_object;
 
 struct proc_distant_pid_info {
-	struct task_kddm_object *task_obj;
+	struct task_gdm_object *task_obj;
 	pid_t pid;
-	kerrighed_node_t prob_node;
+	hcc_node_t prob_node;
 	int dumpable;
 	uid_t euid;
 	gid_t egid;
@@ -340,9 +340,9 @@ struct proc_inode {
 	int fd;
 	union proc_op op;
 	struct proc_dir_entry *pde;
-#ifdef CONFIG_KRG_PROCFS
-	void *krg_procfs_private;
-#ifdef CONFIG_KRG_PROC
+#ifdef CONFIG_HCC_PROCFS
+	void *hcc_procfs_private;
+#ifdef CONFIG_HCC_PROC
 	struct proc_distant_pid_info distant_proc;
 #endif
 #endif

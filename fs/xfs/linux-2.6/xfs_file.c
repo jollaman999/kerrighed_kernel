@@ -39,7 +39,7 @@
 #include <linux/dcache.h>
 #include <linux/splice.h>
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct xfs_file_vm_ops;
@@ -962,7 +962,7 @@ const struct file_operations xfs_dir_file_operations = {
 	.fsync		= xfs_dir_fsync,
 };
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct xfs_file_vm_ops = {

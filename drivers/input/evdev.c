@@ -1,4 +1,4 @@
-/*
+	/*
  * Event char devices, giving access to raw input device events.
  *
  * Copyright (c) 1999-2002 Vojtech Pavlik
@@ -18,7 +18,7 @@
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/init.h>
-#include <linux/input.h>
+#include <linux/input/mt.h>
 #include <linux/major.h>
 #include <linux/device.h>
 #include "input-compat.h"
@@ -37,13 +37,16 @@ struct evdev {
 };
 
 struct evdev_client {
-	int head;
-	int tail;
+	unsigned int head;
+	unsigned int tail;
+	unsigned int packet_head; /* [future] position of the first element of next packet */
 	spinlock_t buffer_lock; /* protects access to buffer, head and tail */
 	struct fasync_struct *fasync;
 	struct evdev *evdev;
 	struct list_head node;
-	int bufsize;
+	int clkid;
+	bool revoked;
+	unsigned int bufsize;
 	struct input_event buffer[];
 };
 
@@ -51,17 +54,42 @@ static struct evdev *evdev_table[EVDEV_MINORS];
 static DEFINE_MUTEX(evdev_table_mutex);
 
 static void evdev_pass_event(struct evdev_client *client,
-			     struct input_event *event)
+			     struct input_event *event,
+			     ktime_t mono, ktime_t real)
 {
-	/*
-	 * Interrupts are disabled, just acquire the lock
-	 */
+	if (client->revoked)
+		return;
+
+	event->time = ktime_to_timeval(client->clkid == CLOCK_MONOTONIC ?
+					mono : real);
+
+	/* Interrupts are disabled, just acquire the lock. */
 	spin_lock(&client->buffer_lock);
+
 	client->buffer[client->head++] = *event;
 	client->head &= client->bufsize - 1;
-	spin_unlock(&client->buffer_lock);
 
-	kill_fasync(&client->fasync, SIGIO, POLL_IN);
+	if (unlikely(client->head == client->tail)) {
+		/*
+		 * This effectively "drops" all unconsumed events, leaving
+		 * EV_SYN/SYN_DROPPED plus the newest event in the queue.
+		 */
+		client->tail = (client->head - 2) & (client->bufsize - 1);
+
+		client->buffer[client->tail].time = event->time;
+		client->buffer[client->tail].type = EV_SYN;
+		client->buffer[client->tail].code = SYN_DROPPED;
+		client->buffer[client->tail].value = 0;
+
+		client->packet_head = client->tail;
+	}
+
+	if (event->type == EV_SYN && event->code == SYN_REPORT) {
+		client->packet_head = client->head;
+		kill_fasync(&client->fasync, SIGIO, POLL_IN);
+	}
+
+	spin_unlock(&client->buffer_lock);
 }
 
 /*
@@ -73,8 +101,11 @@ static void evdev_event(struct input_handle *handle,
 	struct evdev *evdev = handle->private;
 	struct evdev_client *client;
 	struct input_event event;
+	ktime_t time_mono, time_real;
 
-	do_gettimeofday(&event.time);
+	time_mono = ktime_get();
+	time_real = ktime_sub(time_mono, ktime_get_monotonic_offset());
+
 	event.type = type;
 	event.code = code;
 	event.value = value;
@@ -82,15 +113,17 @@ static void evdev_event(struct input_handle *handle,
 	rcu_read_lock();
 
 	client = rcu_dereference(evdev->grab);
+
 	if (client)
-		evdev_pass_event(client, &event);
+		evdev_pass_event(client, &event, time_mono, time_real);
 	else
 		list_for_each_entry_rcu(client, &evdev->client_list, node)
-			evdev_pass_event(client, &event);
+			evdev_pass_event(client, &event, time_mono, time_real);
 
 	rcu_read_unlock();
 
-	wake_up_interruptible(&evdev->wait);
+	if (type == EV_SYN && code == SYN_REPORT)
+		wake_up_interruptible(&evdev->wait);
 }
 
 static int evdev_fasync(int fd, struct file *file, int on)
@@ -104,19 +137,14 @@ static int evdev_flush(struct file *file, fl_owner_t id)
 {
 	struct evdev_client *client = file->private_data;
 	struct evdev *evdev = client->evdev;
-	int retval;
 
-	retval = mutex_lock_interruptible(&evdev->mutex);
-	if (retval)
-		return retval;
+	mutex_lock(&evdev->mutex);
 
-	if (!evdev->exist)
-		retval = -ENODEV;
-	else
-		retval = input_flush_device(&evdev->handle, file);
+	if (evdev->exist && !client->revoked)
+		input_flush_device(&evdev->handle, file);
 
 	mutex_unlock(&evdev->mutex);
-	return retval;
+	return 0;
 }
 
 static void evdev_free(struct device *dev)
@@ -310,27 +338,31 @@ static ssize_t evdev_write(struct file *file, const char __user *buffer,
 	struct evdev_client *client = file->private_data;
 	struct evdev *evdev = client->evdev;
 	struct input_event event;
-	int retval;
+	int retval = 0;
+
+	if (count != 0 && count < input_event_size())
+		return -EINVAL;
 
 	retval = mutex_lock_interruptible(&evdev->mutex);
 	if (retval)
 		return retval;
 
-	if (!evdev->exist) {
+	if (!evdev->exist || client->revoked) {
 		retval = -ENODEV;
 		goto out;
 	}
 
-	while (retval < count) {
+	while (retval + input_event_size() <= count) {
 
 		if (input_event_from_user(buffer + retval, &event)) {
 			retval = -EFAULT;
 			goto out;
 		}
+		retval += input_event_size();
 
 		input_inject_event(&evdev->handle,
 				   event.type, event.code, event.value);
-		retval += input_event_size();
+		cond_resched();
 	}
 
  out:
@@ -345,7 +377,7 @@ static int evdev_fetch_next_event(struct evdev_client *client,
 
 	spin_lock_irq(&client->buffer_lock);
 
-	have_event = client->head != client->tail;
+	have_event = client->packet_head != client->tail;
 	if (have_event) {
 		*event = client->buffer[client->tail++];
 		client->tail &= client->bufsize - 1;
@@ -362,33 +394,49 @@ static ssize_t evdev_read(struct file *file, char __user *buffer,
 	struct evdev_client *client = file->private_data;
 	struct evdev *evdev = client->evdev;
 	struct input_event event;
-	int retval;
+	size_t read = 0;
+	int error;
 
-	if (count < input_event_size())
+	if (count != 0 && count < input_event_size())
 		return -EINVAL;
 
-	if (client->head == client->tail && evdev->exist &&
-	    (file->f_flags & O_NONBLOCK))
-		return -EAGAIN;
+	for (;;) {
+		if (!evdev->exist || client->revoked)
+			return -ENODEV;
 
-	retval = wait_event_interruptible(evdev->wait,
-		client->head != client->tail || !evdev->exist);
-	if (retval)
-		return retval;
+		if (client->packet_head == client->tail &&
+		    (file->f_flags & O_NONBLOCK))
+			return -EAGAIN;
 
-	if (!evdev->exist)
-		return -ENODEV;
+		/*
+		 * count == 0 is special - no IO is done but we check
+		 * for error conditions (see above).
+		 */
+		if (count == 0)
+			break;
 
-	while (retval + input_event_size() <= count &&
-	       evdev_fetch_next_event(client, &event)) {
+		while (read + input_event_size() <= count &&
+		       evdev_fetch_next_event(client, &event)) {
 
-		if (input_event_to_user(buffer + retval, &event))
-			return -EFAULT;
+			if (input_event_to_user(buffer + read, &event))
+				return -EFAULT;
 
-		retval += input_event_size();
+			read += input_event_size();
+		}
+
+		if (read)
+			break;
+
+		if (!(file->f_flags & O_NONBLOCK)) {
+			error = wait_event_interruptible(evdev->wait,
+					client->packet_head != client->tail ||
+					!evdev->exist || client->revoked);
+			if (error)
+				return error;
+		}
 	}
 
-	return retval;
+	return read;
 }
 
 /* No kernel lock - fine */
@@ -396,10 +444,19 @@ static unsigned int evdev_poll(struct file *file, poll_table *wait)
 {
 	struct evdev_client *client = file->private_data;
 	struct evdev *evdev = client->evdev;
+	unsigned int mask;
 
 	poll_wait(file, &evdev->wait, wait);
-	return ((client->head == client->tail) ? 0 : (POLLIN | POLLRDNORM)) |
-		(evdev->exist ? 0 : (POLLHUP | POLLERR));
+
+	if (evdev->exist && !client->revoked)
+		mask = POLLOUT | POLLWRNORM;
+	else
+		mask = POLLHUP | POLLERR;
+
+	if (client->packet_head != client->tail)
+		mask |= POLLIN | POLLRDNORM;
+
+	return mask;
 }
 
 #ifdef CONFIG_COMPAT
@@ -520,6 +577,41 @@ static int handle_eviocgbit(struct input_dev *dev, unsigned int cmd, void __user
 }
 #undef OLD_KEY_MAX
 
+static int evdev_handle_mt_request(struct input_dev *dev,
+				   unsigned int size,
+				   int __user *ip)
+{
+	const struct input_mt *mt = dev->mt;
+	unsigned int code;
+	int max_slots;
+	int i;
+
+	if (get_user(code, &ip[0]))
+		return -EFAULT;
+	if (!mt || !input_is_mt_value(code))
+		return -EINVAL;
+
+	max_slots = (size - sizeof(__u32)) / sizeof(__s32);
+	for (i = 0; i < mt->num_slots && i < max_slots; i++) {
+		int value = input_mt_get_value(&mt->slots[i], code);
+		if (put_user(value, &ip[1 + i]))
+			return -EFAULT;
+	}
+
+	return 0;
+}
+
+static int evdev_revoke(struct evdev *evdev, struct evdev_client *client,
+			struct file *file)
+{
+	client->revoked = true;
+	evdev_ungrab(evdev, client);
+	input_flush_device(&evdev->handle, file);
+	wake_up_interruptible(&evdev->wait);
+
+	return 0;
+}
+
 static long evdev_do_ioctl(struct file *file, unsigned int cmd,
 			   void __user *p, int compat_mode)
 {
@@ -599,8 +691,21 @@ static long evdev_do_ioctl(struct file *file, unsigned int cmd,
 		else
 			return evdev_ungrab(evdev, client);
 
-	default:
+	case EVIOCREVOKE:
+		if (p)
+			return -EINVAL;
+		else
+			return evdev_revoke(evdev, client, file);
 
+	case EVIOCSCLOCKID:
+		if (copy_from_user(&i, p, sizeof(unsigned int)))
+			return -EFAULT;
+		if (i != CLOCK_MONOTONIC && i != CLOCK_REALTIME)
+			return -EINVAL;
+		client->clkid = i;
+		return 0;
+
+	default:
 		if (_IOC_TYPE(cmd) != 'E')
 			return -EINVAL;
 
@@ -612,6 +717,9 @@ static long evdev_do_ioctl(struct file *file, unsigned int cmd,
 			if (_IOC_NR(cmd) == _IOC_NR(EVIOCGPROP(0)))
 				return bits_to_user(dev->propbit, INPUT_PROP_MAX,
 				    _IOC_SIZE(cmd), p, compat_mode);
+
+			if (_IOC_NR(cmd) == _IOC_NR(EVIOCGMTSLOTS(0)))
+				return evdev_handle_mt_request(dev, _IOC_SIZE(cmd), ip);
 
 			if (_IOC_NR(cmd) == _IOC_NR(EVIOCGKEY(0)))
 				return bits_to_user(dev->key, KEY_MAX, _IOC_SIZE(cmd),
@@ -722,7 +830,7 @@ static long evdev_ioctl_handler(struct file *file, unsigned int cmd,
 	if (retval)
 		return retval;
 
-	if (!evdev->exist) {
+	if (!evdev->exist || client->revoked) {
 		retval = -ENODEV;
 		goto out;
 	}

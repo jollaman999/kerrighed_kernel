@@ -27,11 +27,11 @@
 #include <linux/rcupdate.h>
 #include <linux/hrtimer.h>
 #include <net/busy_poll.h>
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
-#ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
+#ifdef CONFIG_HCC_GPM
+#include <hcc/hcc_syms.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -134,9 +134,9 @@ EXPORT_SYMBOL(poll_initwait);
 static void free_poll_entry(struct poll_table_entry *entry)
 {
 	remove_wait_queue(entry->wait_address, &entry->wait);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (entry->filp->f_flags & O_FAF_CLT)
-		krg_faf_poll_dequeue(entry->filp);
+		hcc_faf_poll_dequeue(entry->filp);
 #endif
 	fput(entry->filp);
 }
@@ -223,7 +223,7 @@ static int pollwake(wait_queue_t *wait, unsigned mode, int sync, void *key)
 	return __pollwake(wait, mode, sync, key);
 }
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 static void poll_put_entry(poll_table *_p, struct poll_table_entry *entry)
 {
 	struct poll_wqueues *p = container_of(_p, struct poll_wqueues, pt);
@@ -251,7 +251,7 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
 	struct poll_wqueues *pwq = container_of(p, struct poll_wqueues, pt);
 	struct poll_table_entry *entry = poll_get_entry(pwq);
 	if (!entry)
-#ifndef CONFIG_KRG_FAF
+#ifndef CONFIG_HCC_FAF
 		return;
 #else
 	        goto check_faf;
@@ -263,14 +263,14 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
 	init_waitqueue_func_entry(&entry->wait, pollwake);
 	entry->wait.private = pwq;
 	add_wait_queue(wait_address, &entry->wait);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 check_faf:
 	if (filp->f_flags & O_FAF_CLT) {
-		if (krg_faf_poll_wait(filp, entry != NULL)) {
+		if (hcc_faf_poll_wait(filp, entry != NULL)) {
 			if (entry) {
 				/*
 				 * Don't call free_poll_entry() since it would
-				 * call krg_faf_poll_dequeue().
+				 * call hcc_faf_poll_dequeue().
 				 */
 				remove_wait_queue(wait_address, &entry->wait);
 				fput(filp);
@@ -1086,14 +1086,14 @@ SYSCALL_DEFINE5(ppoll, struct pollfd __user *, ufds, unsigned int, nfds,
 }
 #endif /* HAVE_SET_RESTORE_SIGMASK */
 
-#ifdef CONFIG_KRG_EPM
-int select_krgsyms_register(void)
+#ifdef CONFIG_HCC_GPM
+int select_hcc_syms_register(void)
 {
-	return krgsyms_register(KRGSYMS_DO_RESTART_POLL, do_restart_poll);
+	return hcc_syms_register(HCC_SYMS_DO_RESTART_POLL, do_restart_poll);
 }
 
-int select_krgsyms_unregister(void)
+int select_hcc_syms_unregister(void)
 {
-	return krgsyms_unregister(KRGSYMS_DO_RESTART_POLL);
+	return hcc_syms_unregister(HCC_SYMS_DO_RESTART_POLL);
 }
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_GPM */

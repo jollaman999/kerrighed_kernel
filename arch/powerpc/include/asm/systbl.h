@@ -348,8 +348,8 @@ SYSCALL_SPU(ni_syscall)		/* sendmsg */
 SYSCALL_SPU(ni_syscall)		/* recvmsg */
 SYSCALL_SPU(ni_syscall)		/* recvmmsg */
 SYSCALL_SPU(ni_syscall)		/* accept4 */
-SYSCALL_SPU(ni_syscall)		/* name_to_handle_at */
-SYSCALL_SPU(ni_syscall)		/* open_by_handle_at */
+SYSCALL_SPU(name_to_handle_at)
+SYSCALL_SPU(open_by_handle_at)
 COMPAT_SYS_SPU(clock_adjtime)
 SYSCALL_SPU(syncfs)
 COMPAT_SYS_SPU(sendmmsg)

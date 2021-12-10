@@ -142,14 +142,14 @@ static inline unsigned long pmd_pfn(pmd_t pmd)
 {
 	phys_addr_t pfn = pmd_val(pmd);
 	pfn ^= protnone_mask(pfn);
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 	return (pfn & PTE_PFN_MASK) >> PAGE_SHIFT;
 #else
 	return (pfn & pmd_pfn_mask(pmd)) >> PAGE_SHIFT;
 #endif
 }
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 static inline unsigned long pud_pfn(pud_t pud)
 {
 	return (pud_val(pud) & PTE_PFN_MASK) >> PAGE_SHIFT;
@@ -170,7 +170,7 @@ static inline unsigned long pgd_pfn(pgd_t pgd)
 
 static inline int pmd_large(pmd_t pte)
 {
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 	return (pmd_flags(pte) & (_PAGE_PSE | _PAGE_PRESENT)) ==
 		(_PAGE_PSE | _PAGE_PRESENT);
 #else
@@ -270,7 +270,9 @@ static inline pte_t pfn_pte(unsigned long page_nr, pgprot_t pgprot)
 {
 	phys_addr_t pfn = (phys_addr_t)page_nr << PAGE_SHIFT;
 	pfn ^= protnone_mask(pgprot_val(pgprot));
+#ifndef CONFIG_HCC_GMM
 	pfn &= PTE_PFN_MASK;
+#endif
 	return __pte(pfn | massage_pgprot(pgprot));
 }
 
@@ -278,7 +280,9 @@ static inline pmd_t pfn_pmd(unsigned long page_nr, pgprot_t pgprot)
 {
 	phys_addr_t pfn = (phys_addr_t)page_nr << PAGE_SHIFT;
 	pfn ^= protnone_mask(pgprot_val(pgprot));
+#ifndef CONFIG_HCC_GMM
 	pfn &= PHYSICAL_PMD_PAGE_MASK;
+#endif
 	return __pmd(pfn | massage_pgprot(pgprot));
 }
 
@@ -465,7 +469,7 @@ static inline int pte_hidden(pte_t pte)
 
 static inline int pmd_present(pmd_t pmd)
 {
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 	return pmd_flags(pmd) & _PAGE_PRESENT;
 #else
 	/*
@@ -485,7 +489,7 @@ static inline int pmd_none(pmd_t pmd)
 	return (unsigned long)native_pmd_val(pmd) == 0;
 }
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 static inline unsigned long pmd_page_vaddr(pmd_t pmd)
 {
 	return (unsigned long)__va(pmd_val(pmd) & PTE_PFN_MASK);
@@ -563,7 +567,7 @@ static inline int pud_present(pud_t pud)
 	return pud_flags(pud) & _PAGE_PRESENT;
 }
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 static inline unsigned long pud_page_vaddr(pud_t pud)
 {
 	return (unsigned long)__va(pud_val(pud) & PTE_PFN_MASK);
@@ -803,25 +807,25 @@ static inline void clone_pgd_range(pgd_t *dst, pgd_t *src, int count)
 #endif
 }
 
-#ifdef CONFIG_KRG_MM
-struct kddm_obj;
-static inline void set_pte_obj_entry(pte_t *ptep, struct kddm_obj *obj)
+#ifdef CONFIG_HCC_GMM
+struct gdm_obj;
+static inline void set_pte_obj_entry(pte_t *ptep, struct gdm_obj *obj)
 {
 	pte_t pte = __pte((unsigned long)obj);
 	pte = pte_set_flags(pte, _PAGE_OBJ_ENTRY);
 	set_pte(ptep, pte);
 }
 
-static inline void set_swap_pte_obj_entry(pte_t *ptep, struct kddm_obj *obj)
+static inline void set_swap_pte_obj_entry(pte_t *ptep, struct gdm_obj *obj)
 {
 	pte_t pte = __pte((unsigned long)obj);
 	pte = pte_set_flags(pte, _PAGE_OBJ_ENTRY | _PAGE_FILE);
 	set_pte(ptep, pte);
 }
 
-static inline struct kddm_obj *get_pte_obj_entry(pte_t *ptep)
+static inline struct gdm_obj *get_pte_obj_entry(pte_t *ptep)
 {
-	return (struct kddm_obj *)(pte_val(*ptep) & (~(_PAGE_OBJ_ENTRY |
+	return (struct gdm_obj *)(pte_val(*ptep) & (~(_PAGE_OBJ_ENTRY |
 						       _PAGE_FILE)));
 }
 
@@ -837,14 +841,14 @@ static inline int swap_pte_obj_entry(pte_t *ptep)
 		(!pte_present(*ptep)));
 }
 
-#endif /* KRG_MM */
+#endif /* HCC_GMM */
 
 #define __HAVE_ARCH_PFN_MODIFY_ALLOWED 1
 extern bool pfn_modify_allowed(unsigned long pfn, pgprot_t prot);
 
 static inline bool arch_has_pfn_modify_check(void)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	return false;
 #else
 	return boot_cpu_has_bug(X86_BUG_L1TF);

@@ -7,7 +7,7 @@
 #include <linux/kernel_stat.h>
 #include <asm/cputime.h>
 
-#ifndef CONFIG_KRG_PROCFS
+#ifndef CONFIG_HCC_PROCFS
 static
 #endif
 int uptime_proc_show(struct seq_file *m, void *v)

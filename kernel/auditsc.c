@@ -64,12 +64,11 @@
 #include <linux/binfmts.h>
 #include <linux/highmem.h>
 #include <linux/syscalls.h>
-#include <linux/inotify.h>
 #include <linux/capability.h>
 #include <linux/fs_struct.h>
-#ifdef CONFIG_KRG_EPM
-#include <kerrighed/action.h>
-#include <kerrighed/ghost.h>
+#ifdef CONFIG_HCC_GPM
+#include <hcc/action.h>
+#include <hcc/ghost.h>
 #endif
 
 #include "audit.h"
@@ -745,9 +744,8 @@ static int audit_filter_rules(struct task_struct *tsk,
 			}
 			break;
 		case AUDIT_WATCH:
-			if (name && audit_watch_inode(rule->watch) != (unsigned long)-1)
-				result = (name->dev == audit_watch_dev(rule->watch) &&
-					  name->ino == audit_watch_inode(rule->watch));
+			if (name)
+				result = audit_watch_compare(rule->watch, name->ino, name->dev);
 			break;
 		case AUDIT_DIR:
 			if (ctx)
@@ -1918,8 +1916,8 @@ void audit_finish_fork(struct task_struct *child)
 	p->current_state = ctx->current_state;
 }
 
-#ifdef CONFIG_KRG_EPM
-int export_audit_context(struct epm_action *action,
+#ifdef CONFIG_HCC_GPM
+int export_audit_context(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	struct audit_context *ctx = task->audit_context;
@@ -1931,7 +1929,7 @@ int export_audit_context(struct epm_action *action,
 	return err;
 }
 
-int import_audit_context(struct epm_action *action,
+int import_audit_context(struct gpm_action *action,
 			 ghost_t *ghost, struct task_struct *task)
 {
 	struct audit_context ctx;
@@ -1985,7 +1983,7 @@ void free_ghost_audit_context(struct task_struct *task)
 	if (ctx)
 		audit_free_context(ctx);
 }
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 /**
  * audit_syscall_exit - deallocate audit context after a system call
@@ -2051,7 +2049,7 @@ static inline void handle_one(const struct inode *inode)
 	struct audit_tree_refs *p;
 	struct audit_chunk *chunk;
 	int count;
-	if (likely(list_empty(&inode->inotify_watches)))
+	if (likely(hlist_empty(&inode->i_fsnotify_mark_entries)))
 		return;
 	context = current->audit_context;
 	p = context->trees;
@@ -2094,7 +2092,7 @@ retry:
 	seq = read_seqbegin(&rename_lock);
 	for(;;) {
 		struct inode *inode = d->d_inode;
-		if (inode && unlikely(!list_empty(&inode->inotify_watches))) {
+		if (inode && unlikely(!hlist_empty(&inode->i_fsnotify_mark_entries))) {
 			struct audit_chunk *chunk;
 			chunk = audit_tree_lookup(inode);
 			if (chunk) {

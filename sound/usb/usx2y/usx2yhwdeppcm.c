@@ -666,7 +666,7 @@ static int snd_usX2Y_hwdep_pcm_vm_fault(struct vm_area_struct *area,
 }
 
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct snd_usX2Y_hwdep_pcm_vm_ops = {

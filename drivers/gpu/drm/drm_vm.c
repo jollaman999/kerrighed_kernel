@@ -372,7 +372,7 @@ static int drm_vm_sg_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 }
 
 /** AGP virtual memory operations */
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const 
 #endif
  struct vm_operations_struct drm_vm_ops = {
@@ -382,7 +382,7 @@ static const
 };
 
 /** Shared virtual memory operations */
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const 
 #endif
  struct vm_operations_struct drm_vm_shm_ops = {
@@ -392,7 +392,7 @@ static const
 };
 
 /** DMA virtual memory operations */
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const 
 #endif
  struct vm_operations_struct drm_vm_dma_ops = {
@@ -402,7 +402,7 @@ static const
 };
 
 /** Scatter-gather virtual memory operations */
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const 
 #endif
  struct vm_operations_struct drm_vm_sg_ops = {

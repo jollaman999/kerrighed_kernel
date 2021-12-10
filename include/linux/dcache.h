@@ -328,7 +328,7 @@ extern int d_validate(struct dentry *, struct dentry *);
  */
 extern char *dynamic_dname(struct dentry *, char *, int, const char *, ...);
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 char *____d_path(const struct path *path, struct path *root,
 		 char *buffer, int buflen, bool *deleted);
 char *d_path_check(const struct path *, char *, int buflen, bool *deleted);

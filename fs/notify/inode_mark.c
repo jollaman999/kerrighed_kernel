@@ -291,12 +291,20 @@ struct fsnotify_mark_entry *fsnotify_find_mark_entry(struct fsnotify_group *grou
 	return NULL;
 }
 
+void fsnotify_duplicate_mark(struct fsnotify_mark_entry *new, struct fsnotify_mark_entry *old)
+{
+	assert_spin_locked(&old->lock);
+	new->inode = old->inode;
+	new->group = old->group;
+	new->mask = old->mask;
+	new->free_mark = old->free_mark;
+}
+
 /*
  * Nothing fancy, just initialize lists and locks and counters.
  */
 void fsnotify_init_mark(struct fsnotify_mark_entry *entry,
 			void (*free_mark)(struct fsnotify_mark_entry *entry))
-
 {
 	memset(entry, 0, sizeof(*entry));
 	spin_lock_init(&entry->lock);
@@ -311,14 +319,31 @@ void fsnotify_init_mark(struct fsnotify_mark_entry *entry,
  * event types should be delivered to which group and for which inodes.
  */
 int fsnotify_add_mark(struct fsnotify_mark_entry *entry,
-		      struct fsnotify_group *group, struct inode *inode)
+		      struct fsnotify_group *group, struct inode *inode,
+		      int allow_dups)
 {
-	struct fsnotify_mark_entry *lentry;
+	struct fsnotify_mark_entry *lentry = NULL;
 	int ret = 0;
 
 	inode = igrab(inode);
 	if (unlikely(!inode))
 		return -EINVAL;
+
+	entry->flags = FSNOTIFY_MARK_FLAG_INODE;
+
+	/*
+	 * if this group isn't being testing for inode type events we need
+	 * to start testing
+	 */
+	if (unlikely(list_empty(&group->inode_group_list)))
+		fsnotify_add_inode_group(group);
+	/*
+	 * XXX This is where we could also do the fsnotify_add_vfsmount_group
+	 * if we are setting and vfsmount mark....
+
+	if (unlikely(list_empty(&group->vfsmount_group_list)))
+		fsnotify_add_vfsmount_group(group);
+	 */
 
 	/*
 	 * LOCKING ORDER!!!!
@@ -330,7 +355,8 @@ int fsnotify_add_mark(struct fsnotify_mark_entry *entry,
 	spin_lock(&group->mark_lock);
 	spin_lock(&inode->i_lock);
 
-	lentry = fsnotify_find_mark_entry(group, inode);
+	if (!allow_dups)
+		lentry = fsnotify_find_mark_entry(group, inode);
 	if (!lentry) {
 		entry->group = group;
 		entry->inode = inode;

@@ -1088,7 +1088,7 @@ static int unuse_vma(struct vm_area_struct *vma,
 	return 0;
 }
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 static int __unuse_mm(struct mm_struct *mm,
 				swp_entry_t entry, struct page *page)
 #else
@@ -1255,7 +1255,7 @@ static int try_to_unuse(unsigned int type)
 			continue;
 		}
 		if (swap_count(swcount) && start_mm != &init_mm)
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 			retval = __unuse_mm(start_mm, entry, page);
 #else
 			retval = unuse_mm(start_mm, entry, page);
@@ -1288,7 +1288,7 @@ static int try_to_unuse(unsigned int type)
 				else if (mm == &init_mm)
 					set_start_mm = 1;
 				else
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 					retval = __unuse_mm(mm, entry, page);
 #else
 					retval = unuse_mm(mm, entry, page);

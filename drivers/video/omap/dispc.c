@@ -1035,7 +1035,7 @@ static void mmap_user_close(struct vm_area_struct *vma)
 	atomic_dec(&dispc.map_count[plane]);
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct mmap_user_ops = {

@@ -54,7 +54,7 @@ static inline pte_t native_ptep_get_and_clear(pte_t *xp)
  * Bits _PAGE_BIT_PRESENT, _PAGE_BIT_FILE and _PAGE_BIT_PROTNONE are taken,
  * split up the 29 bits of offset into this range:
  */
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 /* Bit _PAGE_OBJ_ENTRY is taken too */
 #define PTE_FILE_MAX_BITS	28
 
@@ -91,11 +91,11 @@ static inline pte_t native_ptep_get_and_clear(pte_t *xp)
 	 + (((off) >> (PTE_FILE_BITS1 + PTE_FILE_BITS2))		\
 	    << PTE_FILE_SHIFT3)						\
 	 + _PAGE_FILE })
-#endif /* ! CONFIG_KRG_MM */
+#endif /* ! CONFIG_HCC_GMM */
 
 
 /* Encode and de-code a swap entry */
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 #define SWP_TYPE_BITS		5
 #define SWP_OFFSET_SHIFT	9
 #else
@@ -106,11 +106,11 @@ static inline pte_t native_ptep_get_and_clear(pte_t *xp)
 #define SWP_TYPE_BITS (_PAGE_BIT_PROTNONE - _PAGE_BIT_PRESENT - 1)
 #define SWP_OFFSET_SHIFT (_PAGE_BIT_FILE + 1)
 #endif
-#endif /* ! CONFIG_KRG_MM */
+#endif /* ! CONFIG_HCC_GMM */
 
 
 #define MAX_SWAPFILES_CHECK() BUILD_BUG_ON(MAX_SWAPFILES_SHIFT > SWP_TYPE_BITS)
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 #define __swp_type(x)			(((x).val >> (_PAGE_BIT_FILE + 1)) \
 					 & ((1U << SWP_TYPE_BITS) - 1))
 #else
@@ -118,7 +118,7 @@ static inline pte_t native_ptep_get_and_clear(pte_t *xp)
 					 & ((1U << SWP_TYPE_BITS) - 1))
 #endif
 #define __swp_offset(x)			((x).val >> SWP_OFFSET_SHIFT)
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 #define __swp_entry(type, offset)	((swp_entry_t) { \
 					 ((type) << (_PAGE_BIT_FILE + 1)) \
 					 | ((offset) << SWP_OFFSET_SHIFT) })
@@ -130,9 +130,9 @@ static inline pte_t native_ptep_get_and_clear(pte_t *xp)
 #define __pte_to_swp_entry(pte)		((swp_entry_t) { (pte).pte_low })
 #define __swp_entry_to_pte(x)		((pte_t) { .pte = (x).val })
 
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 #include <asm/pgtable-invert.h>
-#else /* CONFIG_KRG_MM */
+#else /* CONFIG_HCC_GMM */
 /* No inverted PFNs on 2 level page tables */
 
 static inline u64 protnone_mask(u64 val)
@@ -149,6 +149,6 @@ static inline bool __pte_needs_invert(u64 val)
 {
 	return false;
 }
-#endif /* CONFIG_KRG_MM */
+#endif /* CONFIG_HCC_GMM */
 
 #endif /* _ASM_X86_PGTABLE_2LEVEL_H */

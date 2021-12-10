@@ -14,7 +14,7 @@ lib-y := ctype.o string.o vsprintf.o cmdline.o \
 	 proportions.o prio_heap.o ratelimit.o show_mem.o \
 	 is_single_threaded.o plist.o decompress.o seq_buf.o
 
-ifdef CONFIG_KRGRPC
+ifdef CONFIG_HCC_GRPC
 lib-y += hashtable.o unique_id.o cluster_barrier.o remote_sleep.o
 endif
 

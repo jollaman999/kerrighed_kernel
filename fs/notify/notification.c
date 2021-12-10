@@ -56,7 +56,7 @@ static struct kmem_cache *fsnotify_event_holder_cachep;
  * it is needed.  It's refcnt is set 1 at kernel init time and will never
  * get set to 0 so it will never get 'freed'
  */
-static struct fsnotify_event q_overflow_event;
+static struct fsnotify_event *q_overflow_event;
 static atomic_t fsnotify_sync_cookie = ATOMIC_INIT(0);
 
 /**
@@ -104,7 +104,8 @@ struct fsnotify_event_holder *fsnotify_alloc_event_holder(void)
 
 void fsnotify_destroy_event_holder(struct fsnotify_event_holder *holder)
 {
-	kmem_cache_free(fsnotify_event_holder_cachep, holder);
+	if (holder)
+		kmem_cache_free(fsnotify_event_holder_cachep, holder);
 }
 
 /*
@@ -129,53 +130,17 @@ struct fsnotify_event_private_data *fsnotify_remove_priv_from_event(struct fsnot
 }
 
 /*
- * Check if 2 events contain the same information.  We do not compare private data
- * but at this moment that isn't a problem for any know fsnotify listeners.
- */
-static bool event_compare(struct fsnotify_event *old, struct fsnotify_event *new)
-{
-	if ((old->mask == new->mask) &&
-	    (old->to_tell == new->to_tell) &&
-	    (old->data_type == new->data_type) &&
-	    (old->name_len == new->name_len)) {
-		switch (old->data_type) {
-		case (FSNOTIFY_EVENT_INODE):
-			/* remember, after old was put on the wait_q we aren't
-			 * allowed to look at the inode any more, only thing
-			 * left to check was if the file_name is the same */
-			if (!old->name_len ||
-			    !strcmp(old->file_name, new->file_name))
-				return true;
-			break;
-		case (FSNOTIFY_EVENT_PATH):
-			if ((old->path.mnt == new->path.mnt) &&
-			    (old->path.dentry == new->path.dentry))
-				return true;
-			break;
-		case (FSNOTIFY_EVENT_NONE):
-			if (old->mask & FS_Q_OVERFLOW)
-				return true;
-			else if (old->mask & FS_IN_IGNORED)
-				return false;
-			return false;
-		};
-	}
-	return false;
-}
-
-/*
  * Add an event to the group notification queue.  The group can later pull this
  * event off the queue to deal with.  If the event is successfully added to the
  * group's notification queue, a reference is taken on event.
  */
 int fsnotify_add_notify_event(struct fsnotify_group *group, struct fsnotify_event *event,
-			      struct fsnotify_event_private_data *priv)
+			      struct fsnotify_event_private_data *priv,
+			      int (*merge)(struct list_head *, struct fsnotify_event *))
 {
 	struct fsnotify_event_holder *holder = NULL;
 	struct list_head *list = &group->notification_list;
-	struct fsnotify_event_holder *last_holder;
-	struct fsnotify_event *last_event;
-	int ret = 0;
+	int rc = 0;
 
 	/*
 	 * There is one fsnotify_event_holder embedded inside each fsnotify_event.
@@ -195,10 +160,22 @@ alloc_holder:
 	mutex_lock(&group->notification_mutex);
 
 	if (group->q_len >= group->max_events) {
-		event = &q_overflow_event;
-		ret = -EOVERFLOW;
+		event = q_overflow_event;
+		rc = -EOVERFLOW;
 		/* sorry, no private data on the overflow event */
 		priv = NULL;
+	}
+
+	if (!list_empty(list) && merge) {
+		int ret;
+
+		ret = merge(list, event);
+		if (ret) {
+			mutex_unlock(&group->notification_mutex);
+			if (holder != &event->holder)
+				fsnotify_destroy_event_holder(holder);
+			return ret;
+		}
 	}
 
 	spin_lock(&event->lock);
@@ -215,18 +192,6 @@ alloc_holder:
 		goto alloc_holder;
 	}
 
-	if (!list_empty(list)) {
-		last_holder = list_entry(list->prev, struct fsnotify_event_holder, event_list);
-		last_event = last_holder->event;
-		if (event_compare(last_event, event)) {
-			spin_unlock(&event->lock);
-			mutex_unlock(&group->notification_mutex);
-			if (holder != &event->holder)
-				fsnotify_destroy_event_holder(holder);
-			return -EEXIST;
-		}
-	}
-
 	group->q_len++;
 	holder->event = event;
 
@@ -238,7 +203,7 @@ alloc_holder:
 	mutex_unlock(&group->notification_mutex);
 
 	wake_up(&group->notification_waitq);
-	return ret;
+	return rc;
 }
 
 /*
@@ -316,25 +281,77 @@ void fsnotify_flush_notify(struct fsnotify_group *group)
 
 static void initialize_event(struct fsnotify_event *event)
 {
-	event->holder.event = NULL;
 	INIT_LIST_HEAD(&event->holder.event_list);
 	atomic_set(&event->refcnt, 1);
 
 	spin_lock_init(&event->lock);
 
-	event->path.dentry = NULL;
-	event->path.mnt = NULL;
-	event->inode = NULL;
-	event->data_type = FSNOTIFY_EVENT_NONE;
-
 	INIT_LIST_HEAD(&event->private_data_list);
+}
 
-	event->to_tell = NULL;
+/*
+ * Caller damn well better be holding whatever mutex is protecting the
+ * old_holder->event_list and the new_event must be a clean event which
+ * cannot be found anywhere else in the kernel.
+ */
+int fsnotify_replace_event(struct fsnotify_event_holder *old_holder,
+			   struct fsnotify_event *new_event)
+{
+	struct fsnotify_event *old_event = old_holder->event;
+	struct fsnotify_event_holder *new_holder = &new_event->holder;
 
-	event->file_name = NULL;
-	event->name_len = 0;
+	enum event_spinlock_class {
+		SPINLOCK_OLD,
+		SPINLOCK_NEW,
+	};
 
-	event->sync_cookie = 0;
+	/*
+	 * if the new_event's embedded holder is in use someone
+	 * screwed up and didn't give us a clean new event.
+	 */
+	BUG_ON(!list_empty(&new_holder->event_list));
+
+	spin_lock_nested(&old_event->lock, SPINLOCK_OLD);
+	spin_lock_nested(&new_event->lock, SPINLOCK_NEW);
+
+	new_holder->event = new_event;
+	list_replace_init(&old_holder->event_list, &new_holder->event_list);
+
+	spin_unlock(&new_event->lock);
+	spin_unlock(&old_event->lock);
+
+	/* event == holder means we are referenced through the in event holder */
+	if (old_holder != &old_event->holder)
+		fsnotify_destroy_event_holder(old_holder);
+
+	fsnotify_get_event(new_event); /* on the list take reference */
+	fsnotify_put_event(old_event); /* off the list, drop reference */
+
+	return 0;
+}
+
+struct fsnotify_event *fsnotify_clone_event(struct fsnotify_event *old_event)
+{
+	struct fsnotify_event *event;
+
+	event = kmem_cache_alloc(fsnotify_event_cachep, GFP_KERNEL);
+	if (!event)
+		return NULL;
+
+	memcpy(event, old_event, sizeof(*event));
+	initialize_event(event);
+
+	if (event->name_len) {
+		event->file_name = kstrdup(old_event->file_name, GFP_KERNEL);
+		if (!event->file_name) {
+			kmem_cache_free(fsnotify_event_cachep, event);
+			return NULL;
+		}
+	}
+	if (event->data_type == FSNOTIFY_EVENT_PATH)
+		path_get(&event->path);
+
+	return event;
 }
 
 /*
@@ -355,7 +372,7 @@ struct fsnotify_event *fsnotify_create_event(struct inode *to_tell, __u32 mask, 
 {
 	struct fsnotify_event *event;
 
-	event = kmem_cache_alloc(fsnotify_event_cachep, gfp);
+	event = kmem_cache_zalloc(fsnotify_event_cachep, gfp);
 	if (!event)
 		return NULL;
 
@@ -372,28 +389,18 @@ struct fsnotify_event *fsnotify_create_event(struct inode *to_tell, __u32 mask, 
 
 	event->sync_cookie = cookie;
 	event->to_tell = to_tell;
+	event->data_type = data_type;
 
 	switch (data_type) {
-	case FSNOTIFY_EVENT_FILE: {
-		struct file *file = data;
-		struct path *path = &file->f_path;
-		event->path.dentry = path->dentry;
-		event->path.mnt = path->mnt;
-		path_get(&event->path);
-		event->data_type = FSNOTIFY_EVENT_PATH;
-		break;
-	}
 	case FSNOTIFY_EVENT_PATH: {
 		struct path *path = data;
 		event->path.dentry = path->dentry;
 		event->path.mnt = path->mnt;
 		path_get(&event->path);
-		event->data_type = FSNOTIFY_EVENT_PATH;
 		break;
 	}
 	case FSNOTIFY_EVENT_INODE:
 		event->inode = data;
-		event->data_type = FSNOTIFY_EVENT_INODE;
 		break;
 	case FSNOTIFY_EVENT_NONE:
 		event->inode = NULL;
@@ -414,8 +421,11 @@ __init int fsnotify_notification_init(void)
 	fsnotify_event_cachep = KMEM_CACHE(fsnotify_event, SLAB_PANIC);
 	fsnotify_event_holder_cachep = KMEM_CACHE(fsnotify_event_holder, SLAB_PANIC);
 
-	initialize_event(&q_overflow_event);
-	q_overflow_event.mask = FS_Q_OVERFLOW;
+	q_overflow_event = fsnotify_create_event(NULL, FS_Q_OVERFLOW, NULL,
+						 FSNOTIFY_EVENT_NONE, NULL, 0,
+						 GFP_KERNEL);
+	if (!q_overflow_event)
+		panic("unable to allocate fsnotify q_overflow_event\n");
 
 	return 0;
 }

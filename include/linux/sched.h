@@ -92,11 +92,12 @@ struct sched_param {
 #include <linux/latencytop.h>
 #include <linux/cred.h>
 #include <linux/percpu-rwsem.h>
-#ifdef CONFIG_KRG_CAP
-#include <kerrighed/capabilities.h>
+#ifdef CONFIG_HCC_GCAP
+#include <hcc/capabilities.h>
 #endif
-#ifdef CONFIG_KRG_EPM
-#include <kddm/kddm_types.h>
+#ifdef CONFIG_HCC_GPM
+#include <gdm/gdm_types.h>
+#include <hcc/sys/types.h>
 #endif
 #include <asm/processor.h>
 
@@ -203,7 +204,7 @@ extern unsigned long long time_sync_thresh;
 #define TASK_DEAD		64
 #define TASK_WAKEKILL		128
 #define TASK_WAKING		256
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 /* in tsk->exit_state */
 #define EXIT_MIGRATION		512
 #endif
@@ -509,9 +510,9 @@ struct sighand_struct {
 	struct k_sigaction	action[_NSIG];
 	spinlock_t		siglock;
 	wait_queue_head_t	signalfd_wqh;
-#ifdef CONFIG_KRG_EPM
-	objid_t			krg_objid;
-	struct sighand_struct_kddm_object *kddm_obj;
+#ifdef CONFIG_HCC_GPM
+	objid_t			hcc_objid;
+	struct sighand_struct_gdm_object *gdm_obj;
 #endif
 };
 
@@ -731,9 +732,9 @@ struct signal_struct {
 	unsigned audit_tty_log_passwd;
 #endif /* CONFIG_AUDIT */
 #endif /* __GENKSYMS__ */
-#ifdef CONFIG_KRG_EPM
-	objid_t krg_objid;
-	struct signal_struct_kddm_object *kddm_obj;
+#ifdef CONFIG_HCC_GPM
+	objid_t hcc_objid;
+	struct signal_struct_gdm_object *gdm_obj;
 #endif
 };
 
@@ -819,9 +820,9 @@ struct user_struct {
 #ifndef __GENKSYMS__
 	unsigned long unix_inflight;	/* How many files in flight in unix sockets */
 #endif
-#ifdef CONFIG_KRG_EPM
-	objid_t krg_objid;
-	struct signal_struct_kddm_object *kddm_obj;
+#ifdef CONFIG_HCC_GPM
+	objid_t hcc_objid;
+	struct signal_struct_gdm_object *gdm_obj;
 #endif
 };
 
@@ -1368,7 +1369,7 @@ struct wait_opts {
 	enum pid_type		wo_type;
 	int			wo_flags;
 	struct pid		*wo_pid;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	pid_t			wo_upid;
 #endif
 
@@ -1376,7 +1377,7 @@ struct wait_opts {
 	int __user		*wo_stat;
 	struct rusage __user	*wo_rusage;
 
-#ifndef CONFIG_KRG_EPM
+#ifndef CONFIG_HCC_GPM
 	wait_queue_t		child_wait;
 #endif
 	int			notask_error;
@@ -1455,11 +1456,15 @@ struct task_struct {
 	unsigned did_exec:1;
 	unsigned in_execve:1;	/* Tell the LSMs that the process is doing an
 				 * execve */
-#ifdef CONFIG_KRG_HOTPLUG
-	unsigned create_krg_ns:1;
+#ifdef CONFIG_HCC_GHOTPLUG
+	unsigned create_hcc_ns:1;
 #endif
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	unsigned remote_vfork_done:1;
+
+	int gpm_type;
+	hcc_node_t gpm_source;
+	hcc_node_t gpm_target;
 #endif
 	unsigned in_iowait:1;
 
@@ -1768,27 +1773,27 @@ struct task_struct {
 	} memcg_oom;
 #endif
 #endif /* __GENKYSMS__ */
-#ifdef CONFIG_KRG_CAP
-	kernel_krg_cap_t krg_caps;
-	atomic_t krg_cap_used[CAP_SIZE];
-	atomic_t krg_cap_unavailable[CAP_SIZE];
-	atomic_t krg_cap_unavailable_private[CAP_SIZE];
+#ifdef CONFIG_HCC_GCAP
+	kernel_hcc_gcap_t hcc_gcaps;
+	atomic_t hcc_gcap_used[CAP_SIZE];
+	atomic_t hcc_gcap_unavailable[CAP_SIZE];
+	atomic_t hcc_gcap_unavailable_private[CAP_SIZE];
 #endif
-#ifdef CONFIG_KRG_KDDM
-	struct kddm_info_struct *kddm_info;
+#ifdef CONFIG_HCC_GDM
+	struct gdm_info_struct *gdm_info;
 #endif
-#ifdef CONFIG_KRG_PROC
-	struct task_kddm_object *task_obj;
+#ifdef CONFIG_HCC_PROC
+	struct task_gdm_object *task_obj;
 #endif
-#ifdef CONFIG_KRG_EPM
-	int krg_action_flags;
+#ifdef CONFIG_HCC_GPM
+	int hcc_action_flags;
 	struct task_struct *effective_current;
-	struct children_kddm_object *parent_children_obj;
-	struct children_kddm_object *children_obj;
+	struct children_gdm_object *parent_children_obj;
+	struct children_gdm_object *children_obj;
 	struct app_struct *application;
 #endif
-#ifdef CONFIG_KRG_SCHED
-	struct krg_sched_info *krg_sched;
+#ifdef CONFIG_HCC_GSCHED
+	struct hcc_gsched_info *hcc_gsched;
 #endif
 
 };
@@ -1978,7 +1983,7 @@ extern void thread_group_times(struct task_struct *p, cputime_t *ut, cputime_t *
 /*
  * Per process flags
  */
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 /* PF_ALIGNWARN is unused */
 #define PF_DELAY_NOTIFY	0x00000001	/* must do_notify_parent() before can be */
 					/* reaped */
@@ -1990,7 +1995,7 @@ extern void thread_group_times(struct task_struct *p, cputime_t *ut, cputime_t *
 #define PF_EXITING	0x00000004	/* getting shut down */
 #define PF_EXITPIDONE	0x00000008	/* pi exit done on shut down */
 #define PF_VCPU		0x00000010	/* I'm a virtual CPU */
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 #define PF_AWAY		0x00000020	/* I don't want to be considered as local */
 					/* by my relatives */
 #endif
@@ -2316,7 +2321,7 @@ extern struct   mm_struct init_mm;
 
 extern struct pid_namespace init_pid_ns;
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 extern struct task_struct *baby_sitter;
 #endif
 
@@ -2403,7 +2408,7 @@ extern void force_sig(int, struct task_struct *);
 extern void force_sig_specific(int, struct task_struct *);
 extern int send_sig(int, struct task_struct *, int);
 extern void zap_other_threads(struct task_struct *p);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 extern struct sigqueue *__sigqueue_alloc(struct task_struct *t, gfp_t flags,
 					 int override_rlimit);
 extern void __sigqueue_free(struct sigqueue *q);
@@ -2484,7 +2489,7 @@ extern void __cleanup_sighand(struct sighand_struct *);
 extern void exit_itimers(struct signal_struct *);
 extern void flush_itimer_signals(void);
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 int wait_task_zombie(struct wait_opts *wo, struct task_struct *p);
 #endif
 extern NORET_TYPE void do_group_exit(int);
@@ -2496,7 +2501,7 @@ extern int disallow_signal(int);
 extern int do_execve(const char *, char __user * __user *, char __user * __user *, struct pt_regs *);
 extern long do_fork(unsigned long, unsigned long, struct pt_regs *, unsigned long, int __user *, int __user *);
 struct task_struct *fork_idle(int);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 struct task_struct *copy_process(unsigned long clone_flags,
 				 unsigned long stack_start,
 				 struct pt_regs *regs,
@@ -2505,18 +2510,17 @@ struct task_struct *copy_process(unsigned long clone_flags,
 				 struct pid *pid,
 				 int trace);
 /* remote clone */
-int krg_do_fork(unsigned long clone_flags,
+int hcc_do_fork(unsigned long clone_flags,
 		unsigned long stack_start,
 		struct pt_regs *regs,
 		unsigned long stack_size,
 		int *parent_tidptr,
 		int *child_tidptr,
 		int trace);
-bool in_krg_do_fork(void);
+bool in_hcc_do_fork(void);
 /* vfork with remote child */
-void krg_vfork_done(struct completion *vfork_done);
-extern spinlock_t krg_vfork_done_lock;
-#endif /* CONFIG_KRG_EPM */
+void hcc_vfork_done(struct completion *vfork_done);
+#endif /* CONFIG_HCC_GPM */
 
 extern void __set_task_comm(struct task_struct *tsk, char *from, bool exec);
 static inline void set_task_comm(struct task_struct *tsk, char *from)
@@ -2866,7 +2870,7 @@ static inline void thread_group_cputime_free(struct signal_struct *sig)
  * callers must hold sighand->siglock.
  */
 extern void recalc_sigpending_and_wake(struct task_struct *t);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 extern int recalc_sigpending_tsk(struct task_struct *t);
 #endif
 extern void recalc_sigpending(void);

@@ -23,6 +23,10 @@
 #include <linux/syscalls.h>
 #include <linux/rcupdate.h>
 
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
+#endif
+
 struct timerfd_ctx {
 	struct hrtimer tmr;
 	ktime_t tintv;
@@ -260,6 +264,13 @@ static struct file *timerfd_fget(int fd)
 	file = fget(fd);
 	if (!file)
 		return ERR_PTR(-EBADF);
+#ifdef CONFIG_HCC_FAF
+	if (file->f_flags & O_FAF_CLT) {
+		faf_error(file, "timerfd");
+		fput(file);
+		return ERR_PTR(-ENOSYS);
+	}
+#endif
 	if (file->f_op != &timerfd_fops) {
 		fput(file);
 		return ERR_PTR(-EINVAL);
@@ -292,7 +303,7 @@ SYSCALL_DEFINE2(timerfd_create, int, clockid, int, flags)
 	ctx->moffs = ktime_get_monotonic_offset();
 
 	ufd = anon_inode_getfd("[timerfd]", &timerfd_fops, ctx,
-			       flags & TFD_SHARED_FCNTL_FLAGS);
+			       O_RDWR | (flags & TFD_SHARED_FCNTL_FLAGS));
 	if (ufd < 0)
 		kfree(ctx);
 

@@ -11,6 +11,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/fs.h>
+#include <linux/log2.h>
 #include <linux/mount.h>
 #include <linux/pipe_fs_i.h>
 #include <linux/uio.h>
@@ -18,18 +19,29 @@
 #include <linux/pagemap.h>
 #include <linux/audit.h>
 #include <linux/syscalls.h>
-#include <linux/ima.h>
+#include <linux/fcntl.h>
 
 #include <asm/uaccess.h>
 #include <asm/ioctls.h>
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 #include <linux/splice.h>
-#include <kerrighed/app_shared.h>
-#include <kerrighed/ghost.h>
-#include <kerrighed/ghost_helpers.h>
-#include <kerrighed/regular_file_mgr.h>
+#include <hcc/app_shared.h>
+#include <hcc/ghost.h>
+#include <hcc/ghost_helpers.h>
+#include <hcc/regular_file_mgr.h>
 #endif
+
+/*
+ * The max size that a non-root user is allowed to grow the pipe. Can
+ * be set by root in /proc/sys/fs/pipe-max-size
+ */
+unsigned int pipe_max_size = 1048576;
+
+/*
+ * Minimum pipe size, as required by POSIX
+ */
+unsigned int pipe_min_size = PAGE_SIZE;
 
 /*
  * We use a start+len construction, which provides full use of the 
@@ -382,7 +394,7 @@ pipe_read(struct kiocb *iocb, const struct iovec *_iov,
 			error = ops->confirm(pipe, buf);
 			if (error) {
 				if (!ret)
-					error = ret;
+					ret = error;
 				break;
 			}
 
@@ -412,7 +424,7 @@ redo:
 			if (!buf->len) {
 				buf->ops = NULL;
 				ops->release(pipe, buf);
-				curbuf = (curbuf + 1) & (PIPE_BUFFERS-1);
+				curbuf = (curbuf + 1) & (pipe->buffers - 1);
 				pipe->curbuf = curbuf;
 				pipe->nrbufs = --bufs;
 				do_wakeup = 1;
@@ -494,7 +506,7 @@ pipe_write(struct kiocb *iocb, const struct iovec *_iov,
 	chars = total_len & (PAGE_SIZE-1); /* size of the last buffer */
 	if (pipe->nrbufs && chars != 0) {
 		int lastbuf = (pipe->curbuf + pipe->nrbufs - 1) &
-							(PIPE_BUFFERS-1);
+							(pipe->buffers - 1);
 		struct pipe_buffer *buf = pipe->bufs + lastbuf;
 		const struct pipe_buf_operations *ops = buf->ops;
 		int offset = buf->offset + buf->len;
@@ -541,8 +553,8 @@ redo1:
 			break;
 		}
 		bufs = pipe->nrbufs;
-		if (bufs < PIPE_BUFFERS) {
-			int newbuf = (pipe->curbuf + bufs) & (PIPE_BUFFERS-1);
+		if (bufs < pipe->buffers) {
+			int newbuf = (pipe->curbuf + bufs) & (pipe->buffers-1);
 			struct pipe_buffer *buf = pipe->bufs + newbuf;
 			struct page *page = pipe->tmp_page;
 			char *src;
@@ -606,7 +618,7 @@ redo2:
 			if (!total_len)
 				break;
 		}
-		if (bufs < PIPE_BUFFERS)
+		if (bufs < pipe->buffers)
 			continue;
 		if (filp->f_flags & O_NONBLOCK) {
 			if (!ret)
@@ -668,7 +680,7 @@ static long pipe_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			nrbufs = pipe->nrbufs;
 			while (--nrbufs >= 0) {
 				count += pipe->bufs[buf].len;
-				buf = (buf+1) & (PIPE_BUFFERS-1);
+				buf = (buf+1) & (pipe->buffers - 1);
 			}
 			mutex_unlock(&inode->i_mutex);
 
@@ -699,7 +711,7 @@ pipe_poll(struct file *filp, poll_table *wait)
 	}
 
 	if (filp->f_mode & FMODE_WRITE) {
-		mask |= (nrbufs < PIPE_BUFFERS) ? POLLOUT | POLLWRNORM : 0;
+		mask |= (nrbufs < pipe->buffers) ? POLLOUT | POLLWRNORM : 0;
 		/*
 		 * Most Unices do not set POLLERR for FIFOs but on Linux they
 		 * behave exactly like pipes for poll().
@@ -905,29 +917,36 @@ struct pipe_inode_info * alloc_pipe_info(struct inode *inode)
 
 	pipe = kzalloc(sizeof(struct pipe_inode_info), GFP_KERNEL);
 	if (pipe) {
-		init_waitqueue_head(&pipe->wait);
-		pipe->r_counter = pipe->w_counter = 1;
-		pipe->inode = inode;
-#ifdef CONFIG_KRG_EPM
-		pipe->fread = NULL;
-		pipe->fwrite = NULL;
+		pipe->bufs = kzalloc(sizeof(struct pipe_buffer) * PIPE_DEF_BUFFERS, GFP_KERNEL);
+		if (pipe->bufs) {
+			init_waitqueue_head(&pipe->wait);
+			pipe->r_counter = pipe->w_counter = 1;
+			pipe->inode = inode;
+#ifdef CONFIG_HCC_GPM
+			pipe->fread = NULL;
+			pipe->fwrite = NULL;
 #endif
+			pipe->buffers = PIPE_DEF_BUFFERS;
+			return pipe;
+		}
+		kfree(pipe);
 	}
 
-	return pipe;
+	return NULL;
 }
 
 void __free_pipe_info(struct pipe_inode_info *pipe)
 {
 	int i;
 
-	for (i = 0; i < PIPE_BUFFERS; i++) {
+	for (i = 0; i < pipe->buffers; i++) {
 		struct pipe_buffer *buf = pipe->bufs + i;
 		if (buf->ops)
 			buf->ops->release(pipe, buf);
 	}
 	if (pipe->tmp_page)
 		__free_page(pipe->tmp_page);
+	kfree(pipe->bufs);
 	kfree(pipe);
 }
 
@@ -1036,31 +1055,33 @@ err:
 	return ERR_PTR(err);
 }
 
-struct file *__create_write_pipe(struct path *path, int flags)
+struct file *__create_write_pipe(struct dentry *dentry, int flags)
 {
 	struct file *f;
 	int err = -ENFILE;
-#ifdef CONFIG_KRG_EPM
+	struct path path;
+#ifdef CONFIG_HCC_GPM
 	struct pipe_inode_info *pipe;
 #endif
+	path.dentry = dentry;
+	path.mnt = mntget(pipe_mnt);
 
-	path->mnt = mntget(pipe_mnt);
-
-	f = alloc_file(path, FMODE_WRITE, &write_pipefifo_fops);
+	f = alloc_file(&path, FMODE_WRITE, &write_pipefifo_fops);
 	if (!f)
 		goto err;
-	f->f_mapping = path->dentry->d_inode->i_mapping;
+	f->f_mapping = dentry->d_inode->i_mapping;
 
 	f->f_flags = O_WRONLY | (flags & O_NONBLOCK);
 	f->f_version = 0;
-#ifdef CONFIG_KRG_EPM
-	pipe = path->dentry->d_inode->i_pipe;
+#ifdef CONFIG_HCC_GPM
+	pipe = dentry->d_inode->i_pipe;
 	pipe->fwrite = f;
 #endif
 
 	return f;
 
 err:
+	path_put(&path);
 	return ERR_PTR(err);
 }
 
@@ -1068,15 +1089,15 @@ struct file *create_write_pipe(int flags)
 {
 	int err;
 	struct file *f;
-	struct path path;
+	struct dentry *dentry;
 
-	path.dentry = __prepare_pipe_dentry();
-	if (IS_ERR(path.dentry)) {
-		err = PTR_ERR(path.dentry);
+	dentry = __prepare_pipe_dentry();
+	if (IS_ERR(dentry)) {
+		err = PTR_ERR(dentry);
 		goto err;
 	}
 
-	f = __create_write_pipe(&path, flags);
+	f = __create_write_pipe(dentry, flags);
 	if (IS_ERR(f)) {
 		err = PTR_ERR(f);
 		goto err_dentry;
@@ -1085,8 +1106,8 @@ struct file *create_write_pipe(int flags)
 	return f;
 
  err_dentry:
-	free_pipe_info(path.dentry->d_inode);
-	path_put(&path);
+	free_pipe_info(dentry->d_inode);
+	dput(dentry);
 	return ERR_PTR(err);
 
  err:
@@ -1100,52 +1121,30 @@ void free_write_pipe(struct file *f)
 	put_filp(f);
 }
 
-static struct file *alloc_pipe_file(struct path *path, fmode_t mode,
-		const struct file_operations *fop, int flags)
+struct file *__create_read_pipe(struct path *path, int flags)
 {
-	struct file *file;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	struct pipe_inode_info *pipe;
 #endif
+	struct file *f = alloc_file(path, FMODE_READ,
+				    &read_pipefifo_fops);
+	if (!f)
+		return ERR_PTR(-ENFILE);
 
-	file = get_empty_filp();
-	if (!file)
-		return NULL;
+	/* Grab pipe from the writer */
+	path_get(path);
+	f->f_flags = O_RDONLY | (flags & O_NONBLOCK);
 
-	file->f_path.dentry = dget(path->dentry);
-	file->f_path.mnt = mntget(pipe_mnt);
-	file->f_mapping = path->dentry->d_inode->i_mapping;
-	file->f_mode = mode;
-	file->f_flags = O_RDONLY | (flags & O_NONBLOCK);
-	file->f_op = fop;
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	pipe = path->dentry->d_inode->i_pipe;
-	pipe->fread = file;
+	pipe->fread = f;
 #endif
-
-	/*
-	 * These mounts don't really matter in practice
-	 * for r/o bind mounts.  They aren't userspace-
-	 * visible.  We do this for consistency, and so
-	 * that we can do debugging checks at __fput()
-	 */
-	if ((mode & FMODE_WRITE) && !special_file(path->dentry->d_inode->i_mode)) {
-		file_take_write(file);
-		WARN_ON(mnt_clone_write(path->mnt));
-	}
-	ima_counts_get(file);
-	return file;
+	return f;
 }
 
 struct file *create_read_pipe(struct file *wrf, int flags)
 {
-	/* Grab pipe from the writer */
-	struct file *f = alloc_pipe_file(&wrf->f_path, FMODE_READ,
-				    &read_pipefifo_fops, flags);
-	if (!f)
-		return ERR_PTR(-ENFILE);
-
-	return f;
+	return __create_read_pipe(&wrf->f_path, flags);
 }
 
 int do_pipe_flags(int *fd, int flags)
@@ -1193,7 +1192,7 @@ int do_pipe_flags(int *fd, int flags)
 	return error;
 }
 
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 
 int cr_add_pipe_inode_to_shared_table(struct task_struct *task,
 				      struct file *file)
@@ -1281,7 +1280,7 @@ out:
 	return ret;
 }
 
-int cr_export_now_pipe_inode(struct epm_action *action, ghost_t *ghost,
+int cr_export_now_pipe_inode(struct gpm_action *action, ghost_t *ghost,
 			     struct task_struct *task,
 			     union export_args *args)
 {
@@ -1336,7 +1335,7 @@ err:
 	return ret;
 }
 
-static int cr_import_now_pipe_inode(struct epm_action *action,
+static int cr_import_now_pipe_inode(struct gpm_action *action,
 				    ghost_t *ghost,
 				    struct task_struct *fake,
 				    int local_only,
@@ -1415,22 +1414,22 @@ struct shared_object_operations cr_shared_pipe_inode_ops = {
 	.delete            = cr_delete_pipe_inode,
 };
 
-/** Return a kerrighed descriptor corresponding to the given file.
- *  @author Matthieu Fertré
+/** Return a hcc descriptor corresponding to the given file.
+ *  @author Innogrid HCC
  *
- *  @param file       The file to get a Kerrighed descriptor for.
+ *  @param file       The file to get a HCC descriptor for.
  *  @param desc       The returned descriptor.
  *  @param desc_size  Size of the returned descriptor.
  *
  *  @return   0 if everything ok.
  *            Negative value otherwise.
  */
-int get_pipe_file_krg_desc(struct file *file, void **desc, int *desc_size)
+int get_pipe_file_hcc_desc(struct file *file, void **desc, int *desc_size)
 {
-	struct regular_file_krg_desc *data;
+	struct regular_file_hcc_desc *data;
 	int size, r = -ENOENT;
 
-	size = sizeof(struct regular_file_krg_desc);
+	size = sizeof(struct regular_file_hcc_desc);
 
 	data = kmalloc(size, GFP_KERNEL);
 	if (!data) {
@@ -1449,10 +1448,10 @@ exit:
 	return r;
 }
 
-struct file *reopen_pipe_file_entry_from_krg_desc(struct task_struct *task,
+struct file *reopen_pipe_file_entry_from_hcc_desc(struct task_struct *task,
 						  void *_desc)
 {
-	struct regular_file_krg_desc *desc = _desc;
+	struct regular_file_hcc_desc *desc = _desc;
 	struct path path;
 	struct file *file;
 
@@ -1462,15 +1461,11 @@ struct file *reopen_pipe_file_entry_from_krg_desc(struct task_struct *task,
 	BUG_ON(!path.dentry);
 
 	if (desc->pipe.f_flags & O_WRONLY) {
-		file = __create_write_pipe(&path, desc->pipe.f_flags);
+		file = __create_write_pipe(path.dentry, desc->pipe.f_flags);
 		if (!IS_ERR(file))
 			dget(path.dentry);
-	} else {
-		file = alloc_pipe_file(&path, FMODE_READ,
-				       &read_pipefifo_fops, desc->pipe.f_flags);
-		if (!file)
-			return ERR_PTR(-ENFILE);
-	}
+	} else
+		file = __create_read_pipe(&path, desc->pipe.f_flags);
 
 	return file;
 }
@@ -1500,6 +1495,126 @@ SYSCALL_DEFINE2(pipe2, int __user *, fildes, int, flags)
 SYSCALL_DEFINE1(pipe, int __user *, fildes)
 {
 	return sys_pipe2(fildes, 0);
+}
+
+/*
+ * Allocate a new array of pipe buffers and copy the info over. Returns the
+ * pipe size if successful, or return -ERROR on error.
+ */
+static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long nr_pages)
+{
+	struct pipe_buffer *bufs;
+
+	/*
+	 * We can shrink the pipe, if arg >= pipe->nrbufs. Since we don't
+	 * expect a lot of shrink+grow operations, just free and allocate
+	 * again like we would do for growing. If the pipe currently
+	 * contains more buffers than arg, then return busy.
+	 */
+	if (nr_pages < pipe->nrbufs)
+		return -EBUSY;
+
+	bufs = kcalloc(nr_pages, sizeof(struct pipe_buffer), GFP_KERNEL);
+	if (unlikely(!bufs))
+		return -ENOMEM;
+
+	/*
+	 * The pipe array wraps around, so just start the new one at zero
+	 * and adjust the indexes.
+	 */
+	if (pipe->nrbufs) {
+		unsigned int tail;
+		unsigned int head;
+
+		tail = pipe->curbuf + pipe->nrbufs;
+		if (tail < pipe->buffers)
+			tail = 0;
+		else
+			tail &= (pipe->buffers - 1);
+
+		head = pipe->nrbufs - tail;
+		if (head)
+			memcpy(bufs, pipe->bufs + pipe->curbuf, head * sizeof(struct pipe_buffer));
+		if (tail)
+			memcpy(bufs + head, pipe->bufs, tail * sizeof(struct pipe_buffer));
+	}
+
+	pipe->curbuf = 0;
+	kfree(pipe->bufs);
+	pipe->bufs = bufs;
+	pipe->buffers = nr_pages;
+	return nr_pages * PAGE_SIZE;
+}
+
+/*
+ * Currently we rely on the pipe array holding a power-of-2 number
+ * of pages.
+ */
+static inline unsigned int round_pipe_size(unsigned int size)
+{
+	unsigned long nr_pages;
+
+	nr_pages = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
+	return roundup_pow_of_two(nr_pages) << PAGE_SHIFT;
+}
+
+/*
+ * This should work even if CONFIG_PROC_FS isn't set, as proc_dointvec_minmax
+ * will return an error.
+ */
+int pipe_proc_fn(struct ctl_table *table, int write, void __user *buf,
+		 size_t *lenp, loff_t *ppos)
+{
+	int ret;
+
+	ret = proc_dointvec_minmax(table, write, buf, lenp, ppos);
+	if (ret < 0 || !write)
+		return ret;
+
+	pipe_max_size = round_pipe_size(pipe_max_size);
+	return ret;
+}
+
+long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct pipe_inode_info *pipe;
+	long ret;
+
+	pipe = file->f_path.dentry->d_inode->i_pipe;
+	if (!pipe)
+		return -EBADF;
+
+	mutex_lock(&pipe->inode->i_mutex);
+
+	switch (cmd) {
+	case F_SETPIPE_SZ: {
+		unsigned int size, nr_pages;
+
+		size = round_pipe_size(arg);
+		nr_pages = size >> PAGE_SHIFT;
+
+		ret = -EINVAL;
+		if (!nr_pages)
+			goto out;
+
+		if (!capable(CAP_SYS_RESOURCE) && size > pipe_max_size) {
+			ret = -EPERM;
+			goto out;
+		}
+		ret = pipe_set_size(pipe, nr_pages);
+		break;
+		}
+	case F_GETPIPE_SZ:
+		ret = pipe->buffers * PAGE_SIZE;
+		break;
+	default:
+		ret = -EINVAL;
+		break;
+	}
+
+out:
+	mutex_unlock(&pipe->inode->i_mutex);
+	return ret;
 }
 
 /*

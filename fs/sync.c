@@ -15,8 +15,8 @@
 #include <linux/quotaops.h>
 #include <linux/buffer_head.h>
 #include <linux/kthread.h>
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 #include "internal.h"
 
@@ -271,9 +271,9 @@ int vfs_fsync_range(struct file *file, struct dentry *dentry, loff_t start,
 	 * don't have a struct file available.  Damn nfsd..
 	 */
 	if (file) {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		if (file->f_flags & O_FAF_CLT) {
-			ret = krg_faf_fsync(file);
+			ret = hcc_faf_fsync(file);
 			goto out;
 		}
 #endif
@@ -358,10 +358,11 @@ SYSCALL_DEFINE1(fdatasync, unsigned int, fd)
  */
 int generic_write_sync(struct file *file, loff_t pos, loff_t count)
 {
-	if (!(file->f_flags & O_SYNC) && !IS_SYNC(file->f_mapping->host))
+	if (!(file->f_flags & O_DSYNC) && !IS_SYNC(file->f_mapping->host))
 		return 0;
 	return vfs_fsync_range(file, file->f_path.dentry, pos,
-			       pos + count - 1, 1);
+			       pos + count - 1,
+			       (file->f_flags & __O_SYNC) ? 0 : 1);
 }
 EXPORT_SYMBOL(generic_write_sync);
 
@@ -460,6 +461,14 @@ SYSCALL_DEFINE(sync_file_range)(int fd, loff_t offset, loff_t nbytes,
 	file = fget_light(fd, &fput_needed);
 	if (!file)
 		goto out;
+
+#ifdef CONFIG_HCC_FAF
+	if (file->f_flags & O_FAF_CLT) {
+		faf_error(file, "sync_file_range");
+		ret = -ENOSYS;
+		goto out_put;
+	}
+#endif
 
 	i_mode = file->f_path.dentry->d_inode->i_mode;
 	ret = -ESPIPE;

@@ -346,14 +346,22 @@
 /* #define __NR_fanotify_init		338 */
 /* #define __NR_fanotify_mark		339 */
 /* #define __NR_prlimit64		340 */
-/* #define __NR_name_to_handle_at	341 */
-/* #define __NR_open_by_handle_at  	342 */
+#define __NR_name_to_handle_at	341
+#define __NR_open_by_handle_at  	342
 #define __NR_clock_adjtime	343
 #define __NR_syncfs             344
 #define __NR_sendmmsg		345
 #define __NR_setns		346
 #define __NR_process_vm_readv  347
 #define __NR_process_vm_writev 348
+/* #define __NR_kcmp 349 */
+/* #define __NR_finit_module 350 */
+/* #define __NR_sched_setattr 351 */
+/* #define __NR_sched_getattr 352 */
+/* #define __NR_renameat2 353 */
+/* #define __NR_seccomp 354 */
+/* #define __NR_getrandom 355 */
+#define __NR_memfd_create 356
 
 #ifdef __KERNEL__
 

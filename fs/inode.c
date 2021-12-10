@@ -21,7 +21,6 @@
 #include <linux/pagemap.h>
 #include <linux/cdev.h>
 #include <linux/bootmem.h>
-#include <linux/inotify.h>
 #include <linux/fsnotify.h>
 #include <linux/mount.h>
 #include <linux/async.h>
@@ -154,7 +153,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	inode->i_cdev = NULL;
 	inode->i_rdev = 0;
 	inode->dirtied_when = 0;
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	inode->i_objid = 0;
 #endif
 
@@ -169,8 +168,8 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
 	init_rwsem(&inode->i_alloc_sem);
 	lockdep_set_class(&inode->i_alloc_sem, &sb->s_type->i_alloc_sem_key);
 
-#ifdef CONFIG_KRG_DVFS
-	mapping->kddm_set = NULL;
+#ifdef CONFIG_HCC_DVFS
+	mapping->gdm_set = NULL;
 #endif
 	mapping->a_ops = &empty_aops;
 	mapping->host = inode;
@@ -272,10 +271,6 @@ void inode_init_once(struct inode *inode)
 	INIT_RAW_PRIO_TREE_ROOT(&inode->i_data.i_mmap);
 	INIT_LIST_HEAD(&inode->i_data.i_mmap_nonlinear);
 	i_size_ordered_init(inode);
-#ifdef CONFIG_INOTIFY
-	INIT_LIST_HEAD(&inode->inotify_watches);
-	mutex_init(&inode->inotify_mutex);
-#endif
 #ifdef CONFIG_FSNOTIFY
 	INIT_HLIST_HEAD(&inode->i_fsnotify_mark_entries);
 #endif
@@ -448,7 +443,6 @@ int invalidate_inodes(struct super_block *sb, bool kill_dirty)
 
 	down_write(&iprune_sem);
 	spin_lock(&inode_lock);
-	inotify_unmount_inodes(&sb->s_inodes);
 	fsnotify_unmount_inodes(sb);
 	busy = invalidate_list(&sb->s_inodes, &throw_away, kill_dirty);
 	spin_unlock(&inode_lock);

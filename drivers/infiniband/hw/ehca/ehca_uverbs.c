@@ -95,7 +95,7 @@ static void ehca_mm_close(struct vm_area_struct *vma)
 		     vma->vm_start, vma->vm_end, *count);
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct vm_ops = {

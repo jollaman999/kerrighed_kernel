@@ -133,7 +133,8 @@ static int dnotify_handle_event(struct fsnotify_group *group,
  * userspace notification for that pair.
  */
 static bool dnotify_should_send_event(struct fsnotify_group *group,
-				      struct inode *inode, __u32 mask)
+				      struct inode *inode, struct vfsmount *mnt,
+				      __u32 mask, void *data, int data_type)
 {
 	struct fsnotify_mark_entry *entry;
 	bool send;
@@ -362,7 +363,7 @@ int fcntl_dirnotify(int fd, struct file *filp, unsigned long arg)
 		dnentry = container_of(entry, struct dnotify_mark_entry, fsn_entry);
 		spin_lock(&entry->lock);
 	} else {
-		fsnotify_add_mark(new_entry, dnotify_group, inode);
+		fsnotify_add_mark(new_entry, dnotify_group, inode, 0);
 		spin_lock(&new_entry->lock);
 		entry = new_entry;
 		dnentry = new_dnentry;
@@ -432,8 +433,7 @@ static int __init dnotify_init(void)
 	dnotify_struct_cache = KMEM_CACHE(dnotify_struct, SLAB_PANIC);
 	dnotify_mark_entry_cache = KMEM_CACHE(dnotify_mark_entry, SLAB_PANIC);
 
-	dnotify_group = fsnotify_obtain_group(DNOTIFY_GROUP_NUM,
-					      0, &dnotify_fsnotify_ops);
+	dnotify_group = fsnotify_alloc_group(&dnotify_fsnotify_ops);
 	if (IS_ERR(dnotify_group))
 		panic("unable to allocate fsnotify group for dnotify\n");
 	return 0;

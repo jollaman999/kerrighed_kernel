@@ -55,12 +55,6 @@ int inotify_max_user_watches __read_mostly;
 static struct kmem_cache *inotify_inode_mark_cachep __read_mostly;
 struct kmem_cache *event_priv_cachep __read_mostly;
 
-/*
- * When inotify registers a new group it increments this and uses that
- * value as an offset to set the fsnotify group "name" and priority.
- */
-static atomic_t inotify_grp_num;
-
 #ifdef CONFIG_SYSCTL
 
 #include <linux/sysctl.h>
@@ -441,7 +435,7 @@ void inotify_ignored_and_remove_idr(struct fsnotify_mark_entry *entry,
 	fsn_event_priv->group = group;
 	event_priv->wd = ientry->wd;
 
-	ret = fsnotify_add_notify_event(group, ignored_event, fsn_event_priv);
+	ret = fsnotify_add_notify_event(group, ignored_event, fsn_event_priv, NULL);
 	if (ret)
 		inotify_free_event_priv(fsn_event_priv);
 
@@ -459,7 +453,9 @@ skip_send_ignore:
 /* ding dong the mark is dead */
 static void inotify_free_mark(struct fsnotify_mark_entry *entry)
 {
-	struct inotify_inode_mark_entry *ientry = (struct inotify_inode_mark_entry *)entry;
+	struct inotify_inode_mark_entry *ientry;
+
+	ientry = container_of(entry, struct inotify_inode_mark_entry, fsn_entry);
 
 	kmem_cache_free(inotify_inode_mark_cachep, ientry);
 }
@@ -585,7 +581,7 @@ retry:
 	}
 
 	/* we are on the idr, now get on the inode */
-	ret = fsnotify_add_mark(&tmp_ientry->fsn_entry, group, inode);
+	ret = fsnotify_add_mark(&tmp_ientry->fsn_entry, group, inode, 0);
 	if (ret) {
 		/* we failed to get on the inode, get off the idr */
 		inotify_remove_from_idr(group, tmp_ientry);
@@ -633,11 +629,8 @@ retry:
 static struct fsnotify_group *inotify_new_group(unsigned int max_events)
 {
 	struct fsnotify_group *group;
-	unsigned int grp_num;
 
-	/* fsnotify_obtain_group took a reference to group, we put this when we kill the file in the end */
-	grp_num = (INOTIFY_GROUP_NUM - atomic_inc_return(&inotify_grp_num));
-	group = fsnotify_obtain_group(grp_num, 0, &inotify_fsnotify_ops);
+	group = fsnotify_alloc_group(&inotify_fsnotify_ops);
 	if (IS_ERR(group))
 		return group;
 

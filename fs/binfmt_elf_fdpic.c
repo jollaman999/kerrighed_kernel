@@ -35,9 +35,9 @@
 #include <linux/elf-fdpic.h>
 #include <linux/elfcore.h>
 #include <linux/coredump.h>
-#ifdef CONFIG_KRG_EPM
-#include <kerrighed/children.h>
-#include <kerrighed/krgsyms.h>
+#ifdef CONFIG_HCC_GPM
+#include <hcc/children.h>
+#include <hcc/hcc_syms.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -95,13 +95,13 @@ static struct linux_binfmt elf_fdpic_format = {
 
 static int __init init_elf_fdpic_binfmt(void)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	int retval;
 
-	krgsyms_register(KRGSYMS_BINFMTS_ELF_FDPIC, &elf_fdpic_format);
+	hcc_syms_register(HCC_SYMS_BINFMTS_ELF_FDPIC, &elf_fdpic_format);
 	retval = register_binfmt(&elf_fdpic_format);
 	if (retval)
-		krgsyms_unregister(KRGSYMS_BINFMTS_ELF_FDPIC);
+		hcc_syms_unregister(HCC_SYMS_BINFMTS_ELF_FDPIC);
 	return retval;
 #else
 	return register_binfmt(&elf_fdpic_format);
@@ -110,8 +110,8 @@ static int __init init_elf_fdpic_binfmt(void)
 
 static void __exit exit_elf_fdpic_binfmt(void)
 {
-#ifdef CONFIG_KRG_EPM
-	krgsyms_unregister(KRGSYMS_BINFMTS_ELF_FDPIC);
+#ifdef CONFIG_HCC_GPM
+	hcc_syms_unregister(HCC_SYMS_BINFMTS_ELF_FDPIC);
 #endif
 	unregister_binfmt(&elf_fdpic_format);
 }
@@ -1389,8 +1389,8 @@ static void fill_prstatus(struct elf_prstatus *prstatus,
 	prstatus->pr_info.si_signo = prstatus->pr_cursig = signr;
 	prstatus->pr_sigpend = p->pending.signal.sig[0];
 	prstatus->pr_sighold = p->blocked.sig[0];
-#ifdef CONFIG_KRG_EPM
-	prstatus->pr_ppid = krg_get_real_parent_pid(p);
+#ifdef CONFIG_HCC_GPM
+	prstatus->pr_ppid = hcc_get_real_parent_pid(p);
 #else
 	rcu_read_lock();
 	prstatus->pr_ppid = task_pid_vnr(rcu_dereference(p->real_parent));
@@ -1440,8 +1440,8 @@ static int fill_psinfo(struct elf_prpsinfo *psinfo, struct task_struct *p,
 			psinfo->pr_psargs[i] = ' ';
 	psinfo->pr_psargs[len] = 0;
 
-#ifdef CONFIG_KRG_EPM
-	psinfo->pr_ppid = krg_get_real_parent_pid(p);
+#ifdef CONFIG_HCC_GPM
+	psinfo->pr_ppid = hcc_get_real_parent_pid(p);
 #else
 	rcu_read_lock();
 	psinfo->pr_ppid = task_pid_vnr(rcu_dereference(p->real_parent));

@@ -11,7 +11,7 @@
 #include <linux/blk_types.h>
 #include <linux/types.h>
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #include <asm/statfs.h>
 #endif
 
@@ -110,6 +110,9 @@ struct inodes_stat_t {
 /* File needs atomic accesses to f_pos */
 #define FMODE_ATOMIC_POS	((__force fmode_t)0x8000)
 
+
+/* File was opened by fanotify and shouldn't generate fanotify events */
+#define FMODE_NONOTIFY		((__force fmode_t)0x1000000)
 
 /*
  * The below are the various read and write types that we support. Some of
@@ -277,7 +280,7 @@ struct inodes_stat_t {
 #define S_NOCMTIME	128	/* Do not update file c/mtime */
 #define S_SWAPFILE	256	/* Do not truncate: swapon got its bmaps */
 #define S_PRIVATE	512	/* Inode is fs-internal */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 #define S_IFAF          1024
 #endif
 #define S_AUTOMOUNT	2048	/* Automount/referral quasi-directory */
@@ -708,8 +711,8 @@ struct address_space {
 	spinlock_t		private_lock;	/* for use by the address_space */
 	struct list_head	private_list;	/* ditto */
 	struct address_space	*assoc_mapping;	/* ditto */
-#ifdef CONFIG_KRG_DVFS
-	struct kddm_set         *kddm_set;
+#ifdef CONFIG_HCC_DVFS
+	struct gdm_set         *gdm_set;
 #endif
 } __attribute__((aligned(sizeof(long))));
 	/*
@@ -839,18 +842,13 @@ struct inode {
 
 	__u32			i_generation;
 
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	unsigned long           i_objid;
 #endif
 
 #ifdef CONFIG_FSNOTIFY
 	__u32			i_fsnotify_mask; /* all events this inode cares about */
 	struct hlist_head	i_fsnotify_mark_entries; /* fsnotify mark entries */
-#endif
-
-#ifdef CONFIG_INOTIFY
-	struct list_head	inotify_watches; /* watches on this inode */
-	struct mutex		inotify_mutex;	/* protects the watches list */
 #endif
 
 	unsigned long		i_state;
@@ -1009,7 +1007,7 @@ struct file {
 	const struct file_operations	*f_op;
 	spinlock_t		f_lock;  /* f_ep_links, f_flags, no IRQ */
 	atomic_long_t		f_count;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	unsigned long           f_flags;
 #else
 	unsigned int 		f_flags;
@@ -1024,10 +1022,10 @@ struct file {
 #ifdef CONFIG_SECURITY
 	void			*f_security;
 #endif
-#ifdef CONFIG_KRG_DVFS
+#ifdef CONFIG_HCC_DVFS
 	unsigned long           f_objid;
 #endif
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	unsigned long           f_faf_srv_index;
 #endif
 
@@ -1046,6 +1044,18 @@ struct file {
 	struct mutex		f_pos_lock;
 #endif
 };
+
+struct file_handle {
+	__u32 handle_bytes;
+	int handle_type;
+	/* file identifier */
+	unsigned char f_handle[0];
+};
+
+extern int vfs_inode_fhandle(struct inode *, struct file_handle *, int size);
+extern struct dentry *vfs_fhandle_to_dentry(struct super_block *,
+					    struct file_handle *);
+
 extern spinlock_t files_lock;
 #define file_list_lock() spin_lock(&files_lock);
 #define file_list_unlock() spin_unlock(&files_lock);
@@ -1780,7 +1790,6 @@ struct inode_operations {
 	ssize_t (*getxattr) (struct dentry *, const char *, void *, size_t);
 	ssize_t (*listxattr) (struct dentry *, char *, size_t);
 	int (*removexattr) (struct dentry *, const char *);
-	void (*truncate_range)(struct inode *, loff_t, loff_t);
 	long (*fallocate)(struct inode *inode, int mode, loff_t offset,
 			  loff_t len);
 	int (*fiemap)(struct inode *, struct fiemap_extent_info *, u64 start,
@@ -2083,7 +2092,7 @@ extern void drop_collected_mounts(struct vfsmount *);
 
 extern int vfs_statfs(struct path *, struct kstatfs *);
 extern int user_statfs(const char __user *, struct kstatfs *);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 extern int fd_statfs(int fd, struct kstatfs *, int *,
 	      struct statfs __user *);
 #else
@@ -2818,8 +2827,10 @@ int proc_nr_files(struct ctl_table *table, int write,
 int __init get_filesystem_list(char *buf);
 
 #define __FMODE_EXEC		((__force int) FMODE_EXEC)
+#define __FMODE_NONOTIFY	((__force int) FMODE_NONOTIFY)
 
-#define OPEN_FMODE(flag) ((__force fmode_t)((flag + 1) & O_ACCMODE))
+#define OPEN_FMODE(flag) ((__force fmode_t)(((flag + 1) & O_ACCMODE) | \
+					    (flag & __FMODE_NONOTIFY)))
 
 #endif /* __KERNEL__ */
 #endif /* _LINUX_FS_H */

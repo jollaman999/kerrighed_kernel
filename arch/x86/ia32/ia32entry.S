@@ -936,8 +936,8 @@ ia32_sys_call_table:
 	.quad quiet_ni_syscall		/* sys_fanotify_init */
 	.quad quiet_ni_syscall		/* sys32_fanotify_mark */
 	.quad quiet_ni_syscall		/* sys_prlimit64  340 */
-	.quad quiet_ni_syscall		/* sys_name_to_handle_at */
-	.quad quiet_ni_syscall		/* compat_sys_open_by_handle_at */
+	.quad sys_name_to_handle_at
+	.quad compat_sys_open_by_handle_at
 	.quad compat_sys_clock_adjtime
 	.quad sys_syncfs
 	.quad compat_sys_sendmmsg	/* 345 */

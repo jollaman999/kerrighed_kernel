@@ -11,8 +11,8 @@
 #include <linux/module.h>
 #include <linux/backing-dev.h>
 #include <linux/interrupt.h>
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 #include <asm/uaccess.h>
 #include <asm/mmx.h>
@@ -89,9 +89,9 @@ long
 __strncpy_from_user(char *dst, const char __user *src, long count)
 {
 	long res;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (check_ruaccess())
-		res = krg___strncpy_from_user(dst, src, count);
+		res = hcc___strncpy_from_user(dst, src, count);
 	else
 #endif
 	__do_strncpy_from_user(dst, src, count, res);
@@ -122,14 +122,14 @@ strncpy_from_user(char *dst, const char __user *src, long count)
 {
 	long res = -EFAULT;
 	if (access_ok(VERIFY_READ, src, 1))
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	{
 		if (check_ruaccess())
-			res = krg___strncpy_from_user(dst, src, count);
+			res = hcc___strncpy_from_user(dst, src, count);
 		else
 #endif
 		__do_strncpy_from_user(dst, src, count, res);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	}
 #endif
 	return res;
@@ -174,14 +174,14 @@ clear_user(void __user *to, unsigned long n)
 {
 	might_fault();
 	if (access_ok(VERIFY_WRITE, to, n))
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	{
 		if (check_ruaccess())
-			n = krg___clear_user(to, n);
+			n = hcc___clear_user(to, n);
 		else
 #endif
 		__do_clear_user(to, n);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	}
 #endif
 	return n;
@@ -202,9 +202,9 @@ EXPORT_SYMBOL(clear_user);
 unsigned long
 __clear_user(void __user *to, unsigned long n)
 {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (check_ruaccess())
-		n  = krg___clear_user(to, n);
+		n  = hcc___clear_user(to, n);
 	else
 #endif
 	__do_clear_user(to, n);
@@ -230,9 +230,9 @@ long strnlen_user(const char __user *s, long n)
 
 	might_fault();
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (check_ruaccess())
-		return krg___strnlen_user(s, n);
+		return hcc___strnlen_user(s, n);
 #endif
 	__asm__ __volatile__(
 		"	testl %0, %0\n"
@@ -752,9 +752,9 @@ do {									\
 unsigned long __copy_to_user_ll(void __user *to, const void *from,
 				unsigned long n)
 {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (check_ruaccess())
-		return krg_copy_user_generic(to, from, n, 0);
+		return hcc_copy_user_generic(to, from, n, 0);
 #endif
 #ifndef CONFIG_X86_WP_WORKS_OK
 	if (unlikely(boot_cpu_data.wp_works_ok == 0) &&
@@ -825,9 +825,9 @@ unsigned long __copy_from_user_ll(void *to, const void __user *from,
 					unsigned long n)
 {
 	__uaccess_begin_nospec();
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (check_ruaccess())
-		n = krg_copy_user_generic(to, from, n, 1);
+		n = hcc_copy_user_generic(to, from, n, 1);
 	else
 #endif
 	if (movsl_is_ok(to, from, n))
@@ -843,9 +843,9 @@ unsigned long __copy_from_user_ll_nozero(void *to, const void __user *from,
 					 unsigned long n)
 {
 	__uaccess_begin_nospec();
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (check_ruaccess())
-		n = krg_copy_user_generic(to, from, n, 0);
+		n = hcc_copy_user_generic(to, from, n, 0);
 	else
 #endif
 	if (movsl_is_ok(to, from, n))
@@ -862,9 +862,9 @@ unsigned long __copy_from_user_ll_nocache(void *to, const void __user *from,
 					unsigned long n)
 {
 	__uaccess_begin_nospec();
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (check_ruaccess())
-		n = krg_copy_user_generic(to, from, n, 1);
+		n = hcc_copy_user_generic(to, from, n, 1);
 	else
 #endif
 #ifdef CONFIG_X86_INTEL_USERCOPY
@@ -884,9 +884,9 @@ unsigned long __copy_from_user_ll_nocache_nozero(void *to, const void __user *fr
 					unsigned long n)
 {
 	__uaccess_begin_nospec();
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (check_ruaccess())
-		n = krg_copy_user_generic(to, from, n, 0);
+		n = hcc_copy_user_generic(to, from, n, 0);
 	else
 #endif
 #ifdef CONFIG_X86_INTEL_USERCOPY
@@ -919,14 +919,14 @@ unsigned long
 copy_to_user(void __user *to, const void *from, unsigned long n)
 {
 	if (access_ok(VERIFY_WRITE, to, n))
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	{
 		if (check_ruaccess())
-			n = kh_copy_user_generic(to, from, n, 0);
+			n = hcc_copy_user_generic(to, from, n, 0);
 		else
 #endif
 		n = __copy_to_user(to, from, n);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	}
 #endif
 	return n;
@@ -953,14 +953,14 @@ unsigned long
 copy_from_user(void *to, const void __user *from, unsigned long n)
 {
 	if (access_ok(VERIFY_READ, from, n))
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	{
 		if (check_ruaccess())
-			n = kh_copy_user_generic(to, from, n, 1);
+			n = hcc_copy_user_generic(to, from, n, 1);
 		else
 #endif
 		n = __copy_from_user(to, from, n);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	}
 #endif
 	else

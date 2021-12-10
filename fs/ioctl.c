@@ -18,8 +18,8 @@
 #include <linux/falloc.h>
 
 #include <asm/ioctls.h>
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 
 /* So that the fiemap access checks can't overflow on 32 bit machines. */
@@ -641,9 +641,10 @@ SYSCALL_DEFINE3(ioctl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
 	if (!filp)
 		goto out;
 
-#ifdef CONFIG_KRG_FAF
-	if (filp->f_flags & O_FAF_CLT) {
-		error = krg_faf_ioctl(filp, cmd, arg);
+#ifdef CONFIG_HCC_FAF
+	if ((filp->f_flags & O_FAF_CLT)
+	    && (cmd != FIOCLEX) && (cmd != FIONCLEX)) {
+		error = hcc_faf_ioctl(filp, cmd, arg);
 		goto out_fput;
 	}
 #endif

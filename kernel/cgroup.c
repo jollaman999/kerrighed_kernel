@@ -63,9 +63,9 @@
 #include <linux/flex_array.h> /* used in cgroup_attach_proc */
 #include <linux/kthread.h>
 
-#ifdef CONFIG_KRG_EPM
-#include <kerrighed/ghost.h>
-#include <kerrighed/action.h>
+#ifdef CONFIG_HCC_GPM
+#include <hcc/ghost.h>
+#include <hcc/action.h>
 #endif
 
 #include <asm/atomic.h>
@@ -1088,7 +1088,7 @@ static int parse_cgroupfs_options(char *data,
 			if (opts->release_agent)
 				return -EINVAL;
 			opts->release_agent =
-				kstrndup(token + 14, PATH_MAX, GFP_KERNEL);
+				kstrndup(token + 14, PATH_MAX - 1, GFP_KERNEL);
 			if (!opts->release_agent)
 				return -ENOMEM;
 		} else if (!strncmp(token, "name=", 5)) {
@@ -1110,7 +1110,7 @@ static int parse_cgroupfs_options(char *data,
 			if (opts->name)
 				return -EINVAL;
 			opts->name = kstrndup(name,
-					      MAX_CGROUP_ROOT_NAMELEN,
+					      MAX_CGROUP_ROOT_NAMELEN - 1,
 					      GFP_KERNEL);
 			if (!opts->name)
 				return -ENOMEM;
@@ -1557,6 +1557,8 @@ static struct file_system_type cgroup_fs_type = {
 	.get_sb = cgroup_get_sb,
 	.kill_sb = cgroup_kill_sb,
 };
+
+static struct kobject *cgroup_kobj;
 
 static inline struct cgroup *__d_cgrp(struct dentry *dentry)
 {
@@ -2092,9 +2094,23 @@ static int attach_task_by_pid(struct cgroup *cgrp, u64 pid, bool threadgroup)
 	struct task_struct *tsk;
 	const struct cred *cred = current_cred(), *tcred;
 	int ret;
+#ifdef CONFIG_HCC_GPM
+	char *cgrp_root_name = cgrp->root->name;
+#endif
 
 	if (!cgroup_lock_live_group(cgrp))
 		return -ENODEV;
+
+#ifdef CONFIG_HCC_GPM
+	/* Prevent 'systemd' like daemons to set cgroup */
+	if (strlen(cgrp_root_name)) {
+		if ((!strcmp("systemd", cgrp_root_name)) ||
+		    (!strcmp("elogind", cgrp_root_name))) {
+			cgroup_unlock();
+			return 0;
+		}
+	}
+#endif
 
 	if (pid) {
 		rcu_read_lock();
@@ -4014,9 +4030,18 @@ int __init cgroup_init(void)
 	hhead = css_set_hash(init_css_set.subsys);
 	hlist_add_head(&init_css_set.hlist, hhead);
 	BUG_ON(!init_root_id(&rootnode));
-	err = register_filesystem(&cgroup_fs_type);
-	if (err < 0)
+
+	cgroup_kobj = kobject_create_and_add("cgroup", fs_kobj);
+	if (!cgroup_kobj) {
+		err = -ENOMEM;
 		goto out;
+	}
+
+	err = register_filesystem(&cgroup_fs_type);
+	if (err < 0) {
+		kobject_put(cgroup_kobj);
+		goto out;
+	}
 
 	proc_create("cgroups", 0, NULL, &proc_cgroupstats_operations);
 
@@ -4805,8 +4830,8 @@ css_get_next(struct cgroup_subsys *ss, int id,
 	return ret;
 }
 
-#ifdef CONFIG_KRG_EPM
-int export_cgroups(struct epm_action *action,
+#ifdef CONFIG_HCC_GPM
+int export_cgroups(struct gpm_action *action,
 		   ghost_t *ghost, struct task_struct *task)
 {
 	int err = 0;
@@ -4818,7 +4843,7 @@ int export_cgroups(struct epm_action *action,
 	return err;
 }
 
-int import_cgroups(struct epm_action *action,
+int import_cgroups(struct gpm_action *action,
 		   ghost_t *ghost, struct task_struct *task)
 {
 	/* TODO */
@@ -4840,7 +4865,7 @@ void free_ghost_cgroups(struct task_struct *ghost)
 	/* TODO */
 	cgroup_exit(ghost, 0);
 }
-#endif /* CONFIG_KRG_EPM */
+#endif /* CONFIG_HCC_GPM */
 
 /*
  * get corresponding css from file open on cgroupfs directory

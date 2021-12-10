@@ -35,8 +35,8 @@
 #include <linux/fs_struct.h>
 #include <linux/nospec.h>
 #include <asm/uaccess.h>
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 
 #include "internal.h"
@@ -148,8 +148,8 @@ static int do_getname(const char __user *filename, char *page,
 
 #define EMBEDDED_NAME_MAX      (PATH_MAX - sizeof(struct filename))
 
-struct filename *
-getname(const char __user * filename)
+static struct filename *
+getname_flags(const char __user * filename, int flags, int *empty)
 {
 	int len;
 	struct filename *result, *err;
@@ -160,6 +160,7 @@ getname(const char __user * filename)
 	if (result)
 		return result;
 
+	/*ub_dentry_checkup();*/
 	result = __getname();
 	if (unlikely(!result))
 		return ERR_PTR(-ENOMEM);
@@ -198,8 +199,12 @@ recopy:
 	}
 
 	err = ERR_PTR(-ENOENT);
-	if (unlikely(!len))
-		goto error;
+	if (unlikely(!len)) {
+		if (empty)
+			*empty = 1;
+		if (!(flags & LOOKUP_EMPTY))
+			goto error;
+	}
 
 	err = ERR_PTR(-ENAMETOOLONG);
 	if (unlikely(len >= PATH_MAX))
@@ -212,6 +217,12 @@ recopy:
 error:
 	final_putname(result);
 	return err;
+}
+
+struct filename *
+getname(const char __user * filename)
+{
+	return getname_flags(filename, 0, 0);
 }
 EXPORT_SYMBOL(getname);
 
@@ -1027,12 +1038,23 @@ static int do_lookup(struct nameidata *nd, struct qstr *name,
 		     struct path *path)
 {
 	struct vfsmount *mnt = nd->path.mnt;
-	struct dentry *dentry = __d_lookup(nd->path.dentry, name);
+	struct dentry *dentry, *parent;
 	int flags = nd->flags;
-	struct dentry *parent;
 	struct inode *dir;
 	int err;
 
+	/*
+	 * See if the low-level filesystem might want
+	 * to use its own hash..
+	 */
+	barrier_nospec();
+	if (nd->path.dentry->d_op && nd->path.dentry->d_op->d_hash) {
+		int err = nd->path.dentry->d_op->d_hash(nd->path.dentry, name);
+		if (err < 0)
+			return err;
+	}
+
+	dentry = __d_lookup(nd->path.dentry, name);
 	if (!dentry)
 		goto need_lookup;
 found:
@@ -1123,7 +1145,8 @@ fail:
 static inline int follow_on_final(struct inode *inode, unsigned lookup_flags)
 {
 	return inode && unlikely(inode->i_op->follow_link) &&
-		((lookup_flags & LOOKUP_FOLLOW) || S_ISDIR(inode->i_mode));
+		((lookup_flags & LOOKUP_FOLLOW) || S_ISDIR(inode->i_mode) ||
+		 (lookup_flags & LOOKUP_OPATH));
 }
 
 /*
@@ -1200,17 +1223,7 @@ static int __link_path_walk(struct filename *filename, struct nameidata *nd)
 			case 1:
 				continue;
 		}
-		/*
-		 * See if the low-level filesystem might want
-		 * to use its own hash..
-		 */
-		barrier_nospec();
-		if (nd->path.dentry->d_op && nd->path.dentry->d_op->d_hash) {
-			err = nd->path.dentry->d_op->d_hash(nd->path.dentry,
-							    &this);
-			if (err < 0)
-				break;
-		}
+
 		/* This does the actual lookups.. */
 		err = do_lookup(nd, &this, &next);
 		if (err)
@@ -1258,12 +1271,6 @@ last_component:
 			case 1:
 				goto return_reval;
 		}
-		if (nd->path.dentry->d_op && nd->path.dentry->d_op->d_hash) {
-			err = nd->path.dentry->d_op->d_hash(nd->path.dentry,
-							    &this);
-			if (err < 0)
-				break;
-		}
 		err = do_lookup(nd, &this, &next);
 		if (err)
 			break;
@@ -1272,8 +1279,8 @@ last_component:
 			err = do_follow_link(&next, nd);
 			if (err)
 				goto return_err;
-#ifdef CONFIG_KRG_FAF
-                        if (nd->path.dentry)
+#ifdef CONFIG_HCC_FAF
+			if (nd->path.dentry)
 #endif
 			inode = nd->path.dentry->d_inode;
 		} else
@@ -1369,7 +1376,7 @@ static int path_init(int dfd, const char *name, unsigned int flags, struct namei
 		if (!file)
 			goto out_fail;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		if (file->f_flags & O_FAF_CLT) {
 			faf_client_data_t *data = file->private_data;
 
@@ -1377,13 +1384,16 @@ static int path_init(int dfd, const char *name, unsigned int flags, struct namei
 			if (!S_ISDIR(data->i_mode))
 				goto fput_fail;
 
-			retval = krg_faf_do_path_lookup(file, name, flags, nd);
+			retval = hcc_faf_do_path_lookup(file, name, flags, nd);
 
 			fput_light(file, fput_needed);
 			return retval;
 		}
 #endif
 		dentry = file->f_path.dentry;
+
+		if ((flags & LOOKUP_EMPTY) && *name == '\0')
+			goto skip_checks;
 
 		retval = -ENOTDIR;
 		if (!S_ISDIR(dentry->d_inode->i_mode))
@@ -1398,7 +1408,7 @@ static int path_init(int dfd, const char *name, unsigned int flags, struct namei
 			if (retval)
 				goto fput_fail;
 		}
-
+skip_checks:
 		nd->path = file->f_path;
 		path_get(&file->f_path);
 
@@ -1631,11 +1641,11 @@ struct dentry *lookup_one_noperm(const char *name, struct dentry *base)
 	return __lookup_hash(&this, base, NULL);
 }
 
-int user_path_at(int dfd, const char __user *name, unsigned flags,
-		 struct path *path)
+int user_path_at_empty(int dfd, const char __user *name, unsigned flags,
+		 struct path *path, int *empty)
 {
 	struct nameidata nd;
-	struct filename *tmp = getname(name);
+	struct filename *tmp = getname_flags(name, flags, empty);
 	int err = PTR_ERR(tmp);
 	if (!IS_ERR(tmp)) {
 
@@ -1647,6 +1657,12 @@ int user_path_at(int dfd, const char __user *name, unsigned flags,
 			*path = nd.path;
 	}
 	return err;
+}
+
+int user_path_at(int dfd, const char __user *name, unsigned flags,
+		 struct path *path)
+{
+	return user_path_at_empty(dfd, name, flags, path, 0);
 }
 
 static struct filename *
@@ -1978,6 +1994,9 @@ static inline int lookup_flags(unsigned int f)
 	if (f & O_DIRECTORY)
 		retval |= LOOKUP_DIRECTORY;
 
+	if (f & O_PATH)
+		retval |= LOOKUP_OPATH;
+
 	return retval;
 }
 
@@ -2200,6 +2219,18 @@ struct file *do_filp_open(int dfd, struct filename *filename,
 	int got_write = false;
 	const char *pathname = filename->name;
 
+	/* Must never be set by userspace */
+	open_flag &= ~FMODE_NONOTIFY;
+
+	/*
+	 * O_SYNC is implemented as __O_SYNC|O_DSYNC.  As many places only
+	 * check for O_DSYNC if the need any syncing at all we enforce it's
+	 * always set instead of having to deal with possibly weird behaviour
+	 * for malicious applications setting only __O_SYNC.
+	 */
+	if (open_flag & __O_SYNC)
+		open_flag |= O_DSYNC;
+
 	if (!acc_mode)
 		acc_mode = MAY_OPEN | ACC_MODE(flag);
 
@@ -2360,7 +2391,7 @@ do_last:
 	if (path.dentry->d_inode && S_ISDIR(path.dentry->d_inode->i_mode))
 		goto exit;
 ok:
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if ((!nd.path.dentry) && (nd.path.mnt)) {
 		struct file *file = (struct file *)nd.path.mnt;
 		get_file(file);

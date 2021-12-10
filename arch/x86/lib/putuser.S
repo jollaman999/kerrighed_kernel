@@ -41,7 +41,7 @@ ENTRY(__put_user_1)
 	jae bad_put_user
 1:	movb %al,(%_ASM_CX)
 	xor %eax,%eax
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	ret
 10:	mov $1,%_ASM_BX
 	jmp ruaccess_put_user
@@ -59,7 +59,7 @@ ENTRY(__put_user_2)
 	jae bad_put_user
 2:	movw %ax,(%_ASM_CX)
 	xor %eax,%eax
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	ret
 20:	mov $2,%_ASM_BX
 	jmp ruaccess_put_user
@@ -77,7 +77,7 @@ ENTRY(__put_user_4)
 	jae bad_put_user
 3:	movl %eax,(%_ASM_CX)
 	xor %eax,%eax
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	ret
 30:	mov $4,%_ASM_BX
 	jmp ruaccess_put_user
@@ -98,7 +98,7 @@ ENTRY(__put_user_8)
 5:	movl %edx,4(%_ASM_CX)
 #endif
 	xor %eax,%eax
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	ret
 40:	mov $8,%_ASM_BX
 	jmp ruaccess_put_user
@@ -115,23 +115,23 @@ bad_put_user:
 END(bad_put_user)
 
 .section __ex_table,"a"
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	_ASM_PTR 1b,10b
 	_ASM_PTR 2b,20b
 	_ASM_PTR 3b,30b
 	_ASM_PTR 4b,40b
-#else /* !CONFIG_KRG_FAF */
+#else /* !CONFIG_HCC_FAF */
 	_ASM_PTR 1b,bad_put_user
 	_ASM_PTR 2b,bad_put_user
 	_ASM_PTR 3b,bad_put_user
 	_ASM_PTR 4b,bad_put_user
-#endif /* !CONFIG_KRG_FAF */
+#endif /* !CONFIG_HCC_FAF */
 #ifdef CONFIG_X86_32
 	_ASM_PTR 5b,bad_put_user
 #endif
 .previous
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 
 #ifdef CONFIG_X86_64
 ruaccess_put_user:
@@ -169,7 +169,7 @@ ruaccess_put_user:
 	movq %rsp,%rsi
 	movq %rbx,%rdx
 	xorl %ecx,%ecx
-	callq krg_copy_user_generic
+	callq hcc_copy_user_generic
 	addq $8,%rsp
 	CFI_ADJUST_CFA_OFFSET -8
 	popq_cfi %r11
@@ -223,7 +223,7 @@ ruaccess_put_user:
 	movl %ecx,%eax
 	movl %ebx,%ecx
 	lea 8(%esp),%edx
-	call krg_copy_user_generic
+	call hcc_copy_user_generic
 	addl $4,%esp
 	CFI_ADJUST_CFA_OFFSET -4
 	popl %ecx
@@ -279,7 +279,7 @@ ENTRY(ruaccess_put_user_asm)
 	CFI_REL_OFFSET rsi,0
 	pushq_cfi %rcx
 	CFI_REL_OFFSET rcx,0
-	/* krg_copy_user_generic may clobber r8-r11 */
+	/* hcc_copy_user_generic may clobber r8-r11 */
 	pushq_cfi %r8
 	CFI_REL_OFFSET r8,0
 	pushq_cfi %r9
@@ -293,7 +293,7 @@ ENTRY(ruaccess_put_user_asm)
 	leaq 72(%rsp),%rsi
 	/* %rdx is already loaded */
 	xorl %ecx,%ecx
-	call krg_copy_user_generic
+	call hcc_copy_user_generic
 	popq_cfi %r11
 	CFI_RESTORE r11
 	popq_cfi %r10
@@ -354,7 +354,7 @@ ENTRY(ruaccess_put_user_asm)
 	CFI_ADJUST_CFA_OFFSET 4
 	/* 4 + 2*4 + 4 = 16 */
 	lea 16(%esp),%edx
-	call krg_copy_user_generic
+	call hcc_copy_user_generic
 	addl $4,%esp
 	CFI_ADJUST_CFA_OFFSET -4
 5:
@@ -373,4 +373,4 @@ ENTRY(ruaccess_put_user_asm)
 END(ruaccess_put_user_asm)
 #endif /* CONFIG_X86_32 */
 
-#endif /* CONFIG_KRG_FAF */
+#endif /* CONFIG_HCC_FAF */

@@ -22,6 +22,27 @@
 #define F_NOTIFY	(F_LINUX_SPECIFIC_BASE+2)
 
 /*
+ * Set and get of pipe page size array
+ */
+#define F_SETPIPE_SZ	(F_LINUX_SPECIFIC_BASE + 7)
+#define F_GETPIPE_SZ	(F_LINUX_SPECIFIC_BASE + 8)
+
+/*
+ * Set/Get seals
+ */
+#define F_ADD_SEALS	(F_LINUX_SPECIFIC_BASE + 9)
+#define F_GET_SEALS	(F_LINUX_SPECIFIC_BASE + 10)
+
+/*
+ * Types of seals
+ */
+#define F_SEAL_SEAL	0x0001	/* prevent further seals from being set */
+#define F_SEAL_SHRINK	0x0002	/* prevent file from shrinking */
+#define F_SEAL_GROW	0x0004	/* prevent file from growing */
+#define F_SEAL_WRITE	0x0008	/* prevent writes */
+/* (1U << 31) is reserved for signed error codes */
+
+/*
  * Types of directory notifications that may be requested.
  */
 #define DN_ACCESS	0x00000001	/* File accessed */
@@ -40,6 +61,7 @@
                                            unlinking file.  */
 #define AT_SYMLINK_FOLLOW	0x400   /* Follow symbolic links.  */
 #define AT_NO_AUTOMOUNT		0x800	/* Suppress terminal automount traversal */
+#define AT_EMPTY_PATH		0x1000	/* Allow empty relative pathname */
 
 #ifdef __KERNEL__
 
@@ -69,8 +91,8 @@
 
 #endif /* __KERNEL__ */
 
-#ifdef CONFIG_KRG_DVFS
-#include <kerrighed/fcntl.h>
+#ifdef CONFIG_HCC_DVFS
+#include <hcc/fcntl.h>
 #endif
 
 #endif

@@ -340,11 +340,19 @@ ENTRY(sys_call_table)
 	.long sys_ni_syscall	/* sys_fanotify_init */
 	.long sys_ni_syscall	/* sys_fanotify_mark */
 	.long sys_ni_syscall	/* sys_prlimit64  340 */
-	.long sys_ni_syscall	/* sys_name_to_handle_at */
-	.long sys_ni_syscall	/* sys_open_by_handle_at */
+	.long sys_name_to_handle_at
+	.long sys_open_by_handle_at
 	.long sys_clock_adjtime
 	.long sys_syncfs
 	.long sys_sendmmsg		/* 345 */
 	.long sys_setns
 	.long sys_process_vm_readv
 	.long sys_process_vm_writev
+	.long sys_kcmp			/* 349 */
+	.long sys_finit_module
+	.long sys_sched_setattr
+	.long sys_sched_getattr
+	.long sys_renameat2
+	.long sys_seccomp
+	.long sys_getrandom
+	.long sys_memfd_create	/* 356 */

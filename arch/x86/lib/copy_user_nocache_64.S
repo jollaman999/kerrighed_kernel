@@ -33,7 +33,7 @@
 102:
 	.section .fixup,"ax"
 103:	addl %ecx,%edx			/* ecx is zerorest also */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	jmp copy_user_check_ruaccess
 #else
 	jmp copy_user_handle_tail
@@ -54,7 +54,7 @@
  */
 ENTRY(__copy_user_nocache)
 	CFI_STARTPROC
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	pushq_cfi %rdx	/* save count */
 	CFI_REL_OFFSET rdx,0
 #endif
@@ -105,7 +105,7 @@ ENTRY(__copy_user_nocache)
 	decl %ecx
 	jnz 21b
 23:	xorl %eax,%eax
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	leaq 8(%rsp),%rsp
 	CFI_ADJUST_CFA_OFFSET -8
 #endif
@@ -120,7 +120,7 @@ ENTRY(__copy_user_nocache)
 	jmp 60f
 50:	movl %ecx,%edx
 60:	sfence
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	jmp copy_user_check_ruaccess
 #else
 	jmp copy_user_handle_tail

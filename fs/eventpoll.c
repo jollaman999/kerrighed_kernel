@@ -33,8 +33,8 @@
 #include <linux/bitops.h>
 #include <linux/mutex.h>
 #include <linux/anon_inodes.h>
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 #include <asm/uaccess.h>
 #include <asm/system.h>
@@ -565,9 +565,9 @@ static void ep_unregister_pollwait(struct eventpoll *ep, struct epitem *epi)
 		list_del(&pwq->llink);
 		ep_remove_wait_queue(pwq);
 		kmem_cache_free(pwq_cache, pwq);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		if (epi->ffd.file->f_flags & O_FAF_CLT)
-			krg_faf_poll_dequeue(epi->ffd.file);
+			hcc_faf_poll_dequeue(epi->ffd.file);
 #endif
 	}
 }
@@ -1048,20 +1048,20 @@ static void ep_ptable_queue_proc(struct file *file, wait_queue_head_t *whead,
 		list_add_tail(&pwq->llink, &epi->pwqlist);
 		epi->nwait++;
 	} else {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		pwq = NULL;
 #endif
 		/* We have to signal that an error occurred */
 		epi->nwait = -1;
 	}
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (file->f_flags & O_FAF_CLT) {
-		if (krg_faf_poll_wait(file, pwq != NULL)) {
+		if (hcc_faf_poll_wait(file, pwq != NULL)) {
 			if (pwq) {
 				/*
 				 * Don't let ep_unregister_pollwait() do the
 				 * cleanup, since it would call
-				 * krg_faf_poll_dequeue().
+				 * hcc_faf_poll_dequeue().
 				 */
 				list_del(&pwq->llink);
 				remove_wait_queue(whead, &pwq->wait);
@@ -1681,7 +1681,7 @@ SYSCALL_DEFINE1(epoll_create1, int, flags)
 		goto out_free_ep;
 	}
 	file = anon_inode_getfile("[eventpoll]", &eventpoll_fops, ep,
-				  (flags & O_CLOEXEC));
+				   O_RDWR | (flags & O_CLOEXEC));
 
 	if (IS_ERR(file)) {
 		error = PTR_ERR(file);

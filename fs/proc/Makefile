@@ -10,6 +10,7 @@ proc-$(CONFIG_MMU)	:= mmu.o task_mmu.o
 proc-y       += inode.o root.o base.o generic.o array.o \
 		proc_tty.o
 proc-y	+= cmdline.o
+proc-y	+= consoles.o
 proc-y	+= cpuinfo.o
 proc-y	+= devices.o
 proc-y	+= interrupts.o
@@ -27,3 +28,5 @@ proc-$(CONFIG_PROC_VMCORE)	+= vmcore.o
 proc-$(CONFIG_PROC_DEVICETREE)	+= proc_devtree.o
 proc-$(CONFIG_PRINTK)	+= kmsg.o
 proc-$(CONFIG_PROC_PAGE_MONITOR)	+= page.o
+
+proc-$(CONFIG_PROC_HCC_VERSION)	+= hcc_version.o

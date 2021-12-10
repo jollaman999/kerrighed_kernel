@@ -100,7 +100,7 @@ struct msg_queue {
 	struct list_head q_receivers;
 	struct list_head q_senders;
 
-#ifdef CONFIG_KRG_IPC
+#ifdef CONFIG_HCC_GIPC
 	int is_master;
 #endif
 };

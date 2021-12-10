@@ -324,12 +324,12 @@ static void bad_page(struct page *page)
 
 	printk(KERN_ALERT "BUG: Bad page state in process %s  pfn:%05lx\n",
 		current->comm, page_to_pfn(page));
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 	printk(KERN_ALERT
-	        "page:%p flags:%p count:%d mapcount:%d mapping:%p kddm_count:%d obj_entry:%p\n",
+	        "page:%p flags:%p count:%d mapcount:%d mapping:%p gdm_count:%d obj_entry:%p\n",
 	       page, (void *)page->flags, page_count(page),
 	       page_mapcount(page), page->mapping,
-	       page_kddm_count(page), page->obj_entry);
+	       page_gdm_count(page), page->obj_entry);
 #else
 	printk(KERN_ALERT
 		"page:%p flags:%p count:%d mapcount:%d mapping:%p ",
@@ -594,9 +594,9 @@ static inline int free_pages_check(struct page *page)
 	if (unlikely(page_mapcount(page) |
 		(page->mapping != NULL)  |
 		(atomic_read(&page->_count) != 0) |
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 		(page->obj_entry != NULL) |
-		(page_kddm_count(page) != 0) |
+		(page_gdm_count(page) != 0) |
 #endif
 		(page->flags & PAGE_FLAGS_CHECK_AT_FREE) |
 		(mem_cgroup_bad_page_check(page)))) {
@@ -2345,8 +2345,8 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 
 	lockdep_trace_alloc(gfp_mask);
 
-#ifdef CONFIG_KRG_MM
-	krg_notify_mem(0);
+#ifdef CONFIG_HCC_GMM
+	hcc_notify_mem(0);
 #endif
 	might_sleep_if(gfp_mask & __GFP_WAIT);
 
@@ -2424,8 +2424,8 @@ void __pagevec_free(struct pagevec *pvec)
 
 void __free_pages(struct page *page, unsigned int order)
 {
-#ifdef CONFIG_KRG_MM
-	krg_notify_mem(0);
+#ifdef CONFIG_HCC_GMM
+	hcc_notify_mem(0);
 #endif
 	if (put_page_testzero(page)) {
 		trace_mm_page_free_direct(page, order);
@@ -2654,7 +2654,7 @@ void __show_free_areas(unsigned int filter)
 
 	printk("active_anon:%lu inactive_anon:%lu isolated_anon:%lu\n"
 		" active_file:%lu inactive_file:%lu isolated_file:%lu\n"
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 		" active_migr:%lu inactive_migr:%lu isolated_migr:%lu\n"
 #endif
 		" unevictable:%lu"
@@ -2667,7 +2667,7 @@ void __show_free_areas(unsigned int filter)
 		global_page_state(NR_ACTIVE_FILE),
 		global_page_state(NR_INACTIVE_FILE),
 		global_page_state(NR_ISOLATED_FILE),
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 		global_page_state(NR_ACTIVE_MIGR),
 		global_page_state(NR_INACTIVE_MIGR),
 		global_page_state(NR_ISOLATED_MIGR),
@@ -2702,7 +2702,7 @@ void __show_free_areas(unsigned int filter)
 			" unevictable:%lukB"
 			" isolated(anon):%lukB"
 			" isolated(file):%lukB"
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 			" isolated(migr):%lukB"
 #endif
 			" present:%lukB"
@@ -2733,7 +2733,7 @@ void __show_free_areas(unsigned int filter)
 			K(zone_page_state(zone, NR_UNEVICTABLE)),
 			K(zone_page_state(zone, NR_ISOLATED_ANON)),
 			K(zone_page_state(zone, NR_ISOLATED_FILE)),
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 			K(zone_page_state(zone, NR_ISOLATED_MIGR)),
 #endif
 			K(zone->present_pages),
@@ -3599,8 +3599,8 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 				continue;
 		}
 		page = pfn_to_page(pfn);
-#ifdef CONFIG_KRG_MM
-		atomic_set(&page->_kddm_count, 0);
+#ifdef CONFIG_HCC_GMM
+		atomic_set(&page->_gdm_count, 0);
 #endif
 		set_page_links(page, zone, nid, pfn);
 		mminit_verify_page_links(page, zone, nid, pfn);
@@ -4427,7 +4427,7 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 		zone->reclaim_stat.recent_rotated[1] = 0;
 		zone->reclaim_stat.recent_scanned[0] = 0;
 		zone->reclaim_stat.recent_scanned[1] = 0;
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 		zone->reclaim_stat.recent_scanned[2] = 0;
 		zone->reclaim_stat.recent_rotated[2] = 0;
 #endif

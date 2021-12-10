@@ -74,7 +74,7 @@ static void ipath_vma_close(struct vm_area_struct *vma)
 	kref_put(&ip->ref, ipath_release_mmap_info);
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const 
 #endif
 struct vm_operations_struct ipath_vm_ops = {

@@ -35,7 +35,7 @@ int meminfo_legacy_layout_sysctl_handler(ctl_table *table, int write,
         return proc_dointvec(table, write, buffer, length, ppos);
 }
 
-#ifndef CONFIG_KRG_PROCFS
+#ifndef CONFIG_HCC_PROCFS
 static
 #endif
 int meminfo_proc_show(struct seq_file *m, void *v)
@@ -115,7 +115,7 @@ int meminfo_proc_show(struct seq_file *m, void *v)
 		"Inactive(anon): %8lu kB\n"
 		"Active(file):   %8lu kB\n"
 		"Inactive(file): %8lu kB\n"
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 		"Active(migr):   %8lu kB\n"
 		"Inactive(migr): %8lu kB\n"
 #endif
@@ -165,7 +165,7 @@ int meminfo_proc_show(struct seq_file *m, void *v)
 		K(i.bufferram),
 		K(cached),
 		K(total_swapcache_pages),
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 		K(pages[LRU_ACTIVE_ANON]   + pages[LRU_ACTIVE_FILE] +
 		  pages[LRU_ACTIVE_MIGR]),
 		K(pages[LRU_INACTIVE_ANON] + pages[LRU_INACTIVE_FILE] +
@@ -178,7 +178,7 @@ int meminfo_proc_show(struct seq_file *m, void *v)
 		K(pages[LRU_INACTIVE_ANON]),
 		K(pages[LRU_ACTIVE_FILE]),
 		K(pages[LRU_INACTIVE_FILE]),
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 		K(pages[LRU_ACTIVE_MIGR]),
 		K(pages[LRU_INACTIVE_MIGR]),
 #endif

@@ -40,9 +40,9 @@
 #include <drm/ttm/ttm_module.h>
 #include "vmwgfx_fence.h"
 
-#define VMWGFX_DRIVER_DATE "20150810"
+#define VMWGFX_DRIVER_DATE "20170221"
 #define VMWGFX_DRIVER_MAJOR 2
-#define VMWGFX_DRIVER_MINOR 9
+#define VMWGFX_DRIVER_MINOR 12
 #define VMWGFX_DRIVER_PATCHLEVEL 0
 #define VMWGFX_FILE_PAGE_OFFSET 0x00100000
 #define VMWGFX_FIFO_STATIC_SIZE (1024*1024)
@@ -153,7 +153,6 @@ enum vmw_cmdbuf_res_type {
 struct vmw_cmdbuf_res_manager;
 
 struct vmw_cursor_snooper {
-	struct drm_crtc *crtc;
 	size_t age;
 	uint32_t *image;
 };
@@ -387,6 +386,7 @@ struct vmw_private {
 	spinlock_t hw_lock;
 	spinlock_t cap_lock;
 	bool has_dx;
+	bool assume_16bpp;
 
 	/*
 	 * VGA registers.
@@ -408,8 +408,12 @@ struct vmw_private {
 	void *fb_info;
 	enum vmw_display_unit_type active_display_unit;
 	struct vmw_legacy_display *ldu_priv;
-	struct vmw_screen_object_display *sou_priv;
 	struct vmw_overlay *overlay_priv;
+	struct drm_property *hotplug_mode_update_property;
+	struct drm_property *implicit_placement_property;
+	unsigned num_implicit;
+	struct vmw_framebuffer *implicit_fb;
+	struct mutex global_kms_state_mutex;
 
 	/*
 	 * Context and surface management.
@@ -440,13 +444,12 @@ struct vmw_private {
 	spinlock_t waiter_lock;
 	int fence_queue_waiters; /* Protected by waiter_lock */
 	int goal_queue_waiters; /* Protected by waiter_lock */
-	int cmdbuf_waiters; /* Protected by irq_lock */
-	int error_waiters; /* Protected by irq_lock */
-	atomic_t fifo_queue_waiters;
+	int cmdbuf_waiters; /* Protected by waiter_lock */
+	int error_waiters; /* Protected by waiter_lock */
+	int fifo_queue_waiters; /* Protected by waiter_lock */
 	uint32_t last_read_seqno;
-	spinlock_t irq_lock;
 	struct vmw_fence_manager *fman;
-	uint32_t irq_mask;
+	uint32_t irq_mask; /* Updates protected by waiter_lock */
 
 	/*
 	 * Device state
@@ -926,6 +929,7 @@ int vmw_kms_present(struct vmw_private *dev_priv,
 		    uint32_t num_clips);
 int vmw_kms_update_layout_ioctl(struct drm_device *dev, void *data,
 				struct drm_file *file_priv);
+void vmw_kms_legacy_hotspot_clear(struct vmw_private *dev_priv);
 
 int vmw_dumb_create(struct drm_file *file_priv,
 		    struct drm_device *dev,
@@ -1206,4 +1210,10 @@ static inline void vmw_fifo_resource_dec(struct vmw_private *dev_priv)
 {
 	atomic_dec(&dev_priv->num_fifo_resources);
 }
+
+/**
+ * Add vmw_msg module function
+ */
+extern int vmw_host_log(const char *log);
+
 #endif

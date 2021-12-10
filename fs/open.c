@@ -32,9 +32,11 @@
 #include <linux/fs_struct.h>
 #include <linux/ima.h>
 #include <linux/nospec.h>
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
+#include <linux/dnotify.h>
 
 #include "internal.h"
 
@@ -436,6 +438,14 @@ SYSCALL_DEFINE1(fchdir, unsigned int, fd)
 	if (!file)
 		goto out;
 
+#ifdef CONFIG_HCC_FAF
+	if (file->f_flags & O_FAF_CLT) {
+		faf_error(file, "fchdir");
+		error = -ENOSYS;
+		goto out_putf;
+	}
+#endif
+
 	inode = file->f_path.dentry->d_inode;
 
 	error = -ENOTDIR;
@@ -586,10 +596,12 @@ SYSCALL_DEFINE5(fchownat, int, dfd, const char __user *, filename, uid_t, user,
 	int error = -EINVAL;
 	unsigned int lookup_flags;
 
-	if ((flag & ~AT_SYMLINK_NOFOLLOW) != 0)
+	if ((flag & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) != 0)
 		goto out;
 
 	lookup_flags = (flag & AT_SYMLINK_NOFOLLOW) ? 0 : LOOKUP_FOLLOW;
+	if (flag & AT_EMPTY_PATH)
+		lookup_flags |= LOOKUP_EMPTY;
 retry:
 	error = user_path_at(dfd, filename, lookup_flags, &path);
 	if (error)
@@ -856,7 +868,7 @@ struct file *dentry_open(struct dentry *dentry, struct vfsmount *mnt, int flags,
 }
 EXPORT_SYMBOL(dentry_open);
 
-#ifndef CONFIG_KRG_FAF
+#ifndef CONFIG_HCC_FAF
 static
 #endif
 void __put_unused_fd(struct files_struct *files, unsigned int fd)
@@ -890,7 +902,7 @@ EXPORT_SYMBOL(put_unused_fd);
  * It should never happen - if we allow dup2() do it, _really_ bad things
  * will follow.
  */
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 void __fd_install(struct files_struct *files,
 		  unsigned int fd, struct file *file)
 {
@@ -919,11 +931,11 @@ long do_sys_open(int dfd, const char __user *filename, int flags, int mode)
 	struct filename *tmp = getname(filename);
 	int fd = PTR_ERR(tmp);
 
-#ifdef CONFIG_KRG_FAF
-       /* Flush Kerrighed O_flags to prevent kernel crashes due to wrong
+#ifdef CONFIG_HCC_FAF
+       /* Flush HCC O_flags to prevent kernel crashes due to wrong
         * flags passed from userland.
         */
-	flags = flags & (~O_KRG_FLAGS);
+	flags = flags & (~O_HCC_FLAGS);
 #endif
 	if (!IS_ERR(tmp)) {
 		fd = get_unused_fd_flags(flags);
@@ -933,10 +945,10 @@ long do_sys_open(int dfd, const char __user *filename, int flags, int mode)
 				put_unused_fd(fd);
 				fd = PTR_ERR(f);
 			} else {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 				if (!(f->f_flags & O_FAF_CLT))
 #endif
-				fsnotify_open(f->f_path.dentry);
+				fsnotify_open(f);
 				fd_install(fd, f);
 			}
 		}
@@ -992,7 +1004,7 @@ SYSCALL_DEFINE2(creat, const char __user *, pathname, int, mode)
 int filp_close(struct file *filp, fl_owner_t id)
 {
 	int retval = 0;
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	int flags = filp->f_flags;
 #endif
 
@@ -1004,7 +1016,7 @@ int filp_close(struct file *filp, fl_owner_t id)
 	if (filp->f_op && filp->f_op->flush)
 		retval = filp->f_op->flush(filp, id);
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if (filp->f_flags & O_FAF_CLT) {
 		fput(filp);
 		return retval;
@@ -1013,9 +1025,9 @@ int filp_close(struct file *filp, fl_owner_t id)
 	dnotify_flush(filp, id);
 	locks_remove_posix(filp, id);
 	fput(filp);
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if ((flags & O_FAF_SRV) && (file_count(filp) == 1))
-		krg_faf_srv_close(filp);
+		hcc_faf_srv_close(filp);
 #endif
 	return retval;
 }

@@ -28,8 +28,8 @@
 #include <linux/mount.h>
 #include <linux/syscalls.h>
 #include <linux/fs.h>
-#ifdef CONFIG_KRG_EPM
-#include <kerrighed/krgsyms.h>
+#ifdef CONFIG_HCC_GPM
+#include <hcc/hcc_syms.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -729,15 +729,15 @@ static int __init init_misc_binfmt(void)
 {
 	int err = register_filesystem(&bm_fs_type);
 	if (!err) {
-#ifdef CONFIG_KRG_EPM
-		krgsyms_register(KRGSYMS_BINFMTS_MISC, &misc_format);
+#ifdef CONFIG_HCC_GPM
+		hcc_syms_register(HCC_SYMS_BINFMTS_MISC, &misc_format);
 #endif
 		err = register_binfmt(&misc_format);
 		if (err)
 			unregister_filesystem(&bm_fs_type);
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 		if (err)
-			krgsyms_unregister(KRGSYMS_BINFMTS_MISC);
+			hcc_syms_unregister(HCC_SYMS_BINFMTS_MISC);
 #endif
 	}
 	return err;
@@ -745,8 +745,8 @@ static int __init init_misc_binfmt(void)
 
 static void __exit exit_misc_binfmt(void)
 {
-#ifdef CONFIG_KRG_EPM
-	krgsyms_unregister(KRGSYMS_BINFMTS_MISC);
+#ifdef CONFIG_HCC_GPM
+	hcc_syms_unregister(HCC_SYMS_BINFMTS_MISC);
 #endif
 	unregister_binfmt(&misc_format);
 	unregister_filesystem(&bm_fs_type);

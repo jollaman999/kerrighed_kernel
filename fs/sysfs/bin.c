@@ -331,7 +331,7 @@ static int bin_migrate(struct vm_area_struct *vma, const nodemask_t *from,
 }
 #endif
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct bin_vm_ops = {

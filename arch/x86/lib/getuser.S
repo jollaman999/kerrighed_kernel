@@ -45,7 +45,7 @@ ENTRY(__get_user_1)
 1:	movzb (%_ASM_AX),%edx
 	xor %eax,%eax
 	ret
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 10:
 	mov $1,%_ASM_DX
 	jmp ruaccess_get_user
@@ -65,7 +65,7 @@ ENTRY(__get_user_2)
 2:	movzwl -1(%_ASM_AX),%edx
 	xor %eax,%eax
 	ret
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 20:
 	sub $1,%_ASM_AX
 	mov $2,%_ASM_DX
@@ -86,7 +86,7 @@ ENTRY(__get_user_4)
 3:	mov -3(%_ASM_AX),%edx
 	xor %eax,%eax
 	ret
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 30:
 	sub $3,%_ASM_AX
 	mov $4,%_ASM_DX
@@ -108,7 +108,7 @@ ENTRY(__get_user_8)
 4:	movq -7(%_ASM_AX),%_ASM_DX
 	xor %eax,%eax
 	ret
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 40:
 	sub $7,%_ASM_AX
 	mov $8,%_ASM_DX
@@ -127,7 +127,7 @@ bad_get_user:
 END(bad_get_user)
 
 .section __ex_table,"a"
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	_ASM_PTR 1b,10b
 	_ASM_PTR 2b,20b
 	_ASM_PTR 3b,30b
@@ -135,16 +135,16 @@ END(bad_get_user)
 	_ASM_PTR 4b,40b
 #endif
 .previous
-#else /* CONFIG_KRG_FAF */
+#else /* CONFIG_HCC_FAF */
 	_ASM_PTR 1b,bad_get_user
 	_ASM_PTR 2b,bad_get_user
 	_ASM_PTR 3b,bad_get_user
 #ifdef CONFIG_X86_64
 	_ASM_PTR 4b,bad_get_user
 #endif
-#endif /* CONFIG_KRG_FAF */
+#endif /* CONFIG_HCC_FAF */
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 
 #ifdef CONFIG_X86_64
 ruaccess_get_user:
@@ -180,7 +180,7 @@ ruaccess_get_user:
 	movq %rsp,%rdi
 	movq %rax,%rsi
 	/* %rdx is set by the caller */
-	callq krg_copy_user_generic
+	callq hcc_copy_user_generic
 	/* shorter form of 'movq (%rsp),%rdx' */
 	popq_cfi %rdx
 	popq_cfi %r11
@@ -229,7 +229,7 @@ ruaccess_get_user:
 	movl %edx,%ecx
 	movl %eax,%edx
 	lea 4(%esp),%eax
-	call krg_copy_user_generic
+	call hcc_copy_user_generic
 	addl $4,%esp
 	/* shorter form of 'movl (%esp),%edx' */
 	popl %edx
@@ -278,7 +278,7 @@ ENTRY(ruaccess_get_user_asm)
 	CFI_REL_OFFSET rsi,0
 	pushq_cfi %rcx
 	CFI_REL_OFFSET rcx,0
-	/* krg_copy_user_generic may clobber r8-r11 */
+	/* hcc_copy_user_generic may clobber r8-r11 */
 	pushq_cfi %r8
 	CFI_REL_OFFSET r8,0
 	pushq_cfi %r9
@@ -292,7 +292,7 @@ ENTRY(ruaccess_get_user_asm)
 	movq %rax,%rsi
 	/* %rdx is already loaded */
 	xorl %ecx,%ecx
-	call krg_copy_user_generic
+	call hcc_copy_user_generic
 	popq_cfi %r11
 	CFI_RESTORE r11
 	popq_cfi %r10
@@ -351,7 +351,7 @@ ENTRY(ruaccess_get_user_asm)
 	movl %eax,%edx
 	/* 8 + 2*4 + 4 = 20 */
 	lea 20(%esp),%eax
-	call krg_copy_user_generic
+	call hcc_copy_user_generic
 	addl $4,%esp
 	CFI_ADJUST_CFA_OFFSET -4
 5:
@@ -370,4 +370,4 @@ ENTRY(ruaccess_get_user_asm)
 END(ruaccess_get_user_asm)
 #endif /* CONFIG_X86_32 */
 
-#endif /* CONFIG_KRG_FAF */
+#endif /* CONFIG_HCC_FAF */

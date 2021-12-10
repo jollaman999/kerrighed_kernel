@@ -122,13 +122,13 @@ static int __try_to_free_cp_buf(struct journal_head *jh)
 void __jbd2_log_wait_for_space(journal_t *journal)
 {
 	int nblocks, space_left;
-	assert_spin_locked(&journal->j_state_lock);
+	/* assert_spin_locked(&journal->j_state_lock); */
 
 	nblocks = jbd_space_needed(journal);
 	while (__jbd2_log_space_left(journal) < nblocks) {
 		if (journal->j_flags & JBD2_ABORT)
 			return;
-		spin_unlock(&journal->j_state_lock);
+		write_unlock(&journal->j_state_lock);
 		mutex_lock(&journal->j_checkpoint_mutex);
 
 		/*
@@ -142,7 +142,7 @@ void __jbd2_log_wait_for_space(journal_t *journal)
 		 * filesystem, so abort the journal and leave a stack
 		 * trace for forensic evidence.
 		 */
-		spin_lock(&journal->j_state_lock);
+		write_lock(&journal->j_state_lock);
 		spin_lock(&journal->j_list_lock);
 		nblocks = jbd_space_needed(journal);
 		space_left = __jbd2_log_space_left(journal);
@@ -153,7 +153,7 @@ void __jbd2_log_wait_for_space(journal_t *journal)
 			if (journal->j_committing_transaction)
 				tid = journal->j_committing_transaction->t_tid;
 			spin_unlock(&journal->j_list_lock);
-			spin_unlock(&journal->j_state_lock);
+			write_unlock(&journal->j_state_lock);
 			if (chkpt) {
 				jbd2_log_do_checkpoint(journal);
 			} else if (jbd2_cleanup_journal_tail(journal) == 0) {
@@ -171,7 +171,7 @@ void __jbd2_log_wait_for_space(journal_t *journal)
 				WARN_ON(1);
 				jbd2_journal_abort(journal, 0);
 			}
-			spin_lock(&journal->j_state_lock);
+			write_lock(&journal->j_state_lock);
 		} else {
 			spin_unlock(&journal->j_list_lock);
 		}
@@ -479,7 +479,7 @@ int jbd2_cleanup_journal_tail(journal_t *journal)
 	 * next transaction ID we will write, and where it will
 	 * start. */
 
-	spin_lock(&journal->j_state_lock);
+	write_lock(&journal->j_state_lock);
 	spin_lock(&journal->j_list_lock);
 	transaction = journal->j_checkpoint_transactions;
 	if (transaction) {
@@ -501,7 +501,7 @@ int jbd2_cleanup_journal_tail(journal_t *journal)
 	/* If the oldest pinned transaction is at the tail of the log
            already then there's not much we can do right now. */
 	if (journal->j_tail_sequence == first_tid) {
-		spin_unlock(&journal->j_state_lock);
+		write_unlock(&journal->j_state_lock);
 		return 1;
 	}
 
@@ -520,7 +520,7 @@ int jbd2_cleanup_journal_tail(journal_t *journal)
 	journal->j_free += freed;
 	journal->j_tail_sequence = first_tid;
 	journal->j_tail = blocknr;
-	spin_unlock(&journal->j_state_lock);
+	write_unlock(&journal->j_state_lock);
 
 	/*
 	 * If there is an external journal, we need to make sure that
@@ -536,7 +536,7 @@ int jbd2_cleanup_journal_tail(journal_t *journal)
 	    (journal->j_flags & JBD2_BARRIER))
 		__blkdev_issue_flush(journal->j_fs_dev, GFP_NOFS, NULL);
 	if (!(journal->j_flags & JBD2_ABORT))
-		jbd2_journal_update_superblock(journal, 1);
+		jbd2_journal_update_sb_log_tail(journal);
 	return 0;
 }
 

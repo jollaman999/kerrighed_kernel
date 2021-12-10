@@ -146,7 +146,7 @@ void arch_pick_mmap_layout(struct mm_struct *mm)
  */
 bool pfn_modify_allowed(unsigned long pfn, pgprot_t prot)
 {
-#ifdef CONFIG_KRG_EPM
+#ifdef CONFIG_HCC_GPM
 	return true;
 #else
 	if (!boot_cpu_has_bug(X86_BUG_L1TF))

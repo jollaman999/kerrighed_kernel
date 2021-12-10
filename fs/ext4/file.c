@@ -130,7 +130,7 @@ ext4_file_write(struct kiocb *iocb, const struct iovec *iov,
 
 	return ret;
 }
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const 
 #endif
 struct vm_operations_struct ext4_file_vm_ops = {
@@ -176,7 +176,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 		if (!IS_ERR(cp)) {
 			memcpy(sbi->s_es->s_last_mounted, cp,
 			       sizeof(sbi->s_es->s_last_mounted));
-			sb->s_dirt = 1;
+			ext4_mark_super_dirty(sb);
 		}
 	}
 	return generic_file_open(inode, filp);

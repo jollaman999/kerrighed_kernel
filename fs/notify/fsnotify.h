@@ -8,14 +8,22 @@
 
 /* protects reads of fsnotify_groups */
 extern struct srcu_struct fsnotify_grp_srcu;
-/* all groups which receive fsnotify events */
-extern struct list_head fsnotify_groups;
-/* all bitwise OR of all event types (FS_*) for all fsnotify_groups */
-extern __u32 fsnotify_mask;
+/* all groups which receive inode fsnotify events */
+extern struct list_head fsnotify_inode_groups;
+/* all groups which receive vfsmount fsnotify events */
+extern struct list_head fsnotify_vfsmount_groups;
+/* all bitwise OR of all event types (FS_*) for all fsnotify_inode_groups */
+extern __u32 fsnotify_inode_mask;
+/* all bitwise OR of all event types (FS_*) for all fsnotify_vfsmount_groups */
+extern __u32 fsnotify_vfsmount_mask;
 
 /* destroy all events sitting in this groups notification queue */
 extern void fsnotify_flush_notify(struct fsnotify_group *group);
 
+/* add a group to the inode group list */
+extern void fsnotify_add_inode_group(struct fsnotify_group *group);
+/* add a group to the vfsmount group list */
+extern void fsnotify_add_vfsmount_group(struct fsnotify_group *group);
 /* final kfree of a group */
 extern void fsnotify_final_destroy_group(struct fsnotify_group *group);
 

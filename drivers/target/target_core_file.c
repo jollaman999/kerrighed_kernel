@@ -117,7 +117,7 @@ static int fd_configure_device(struct se_device *dev)
 	 * Use O_DSYNC by default instead of O_SYNC to forgo syncing
 	 * of pure timestamp updates.
 	 */
-	flags = O_RDWR | O_CREAT | O_LARGEFILE | O_SYNC;
+	flags = O_RDWR | O_CREAT | O_LARGEFILE | O_DSYNC;
 
 	/*
 	 * Optionally allow fd_buffered_io=1 to be enabled for people
@@ -129,8 +129,8 @@ static int fd_configure_device(struct se_device *dev)
 	 * to write-out the entire device cache.
 	 */
 	if (fd_dev->fbd_flags & FDBD_HAS_BUFFERED_IO_WCE) {
-		pr_debug("FILEIO: Disabling O_SYNC, using buffered FILEIO\n");
-		flags &= ~O_SYNC;
+		pr_debug("FILEIO: Disabling O_DSYNC, using buffered FILEIO\n");
+		flags &= ~O_DSYNC;
 	}
 
 	file = filp_open(fd_dev->fd_dev_name, flags, 0600);

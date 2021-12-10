@@ -14,8 +14,8 @@
 #include <linux/security.h>
 #include <linux/syscalls.h>
 #include <linux/pagemap.h>
-#ifdef CONFIG_KRG_FAF
-#include <kerrighed/faf.h>
+#ifdef CONFIG_HCC_FAF
+#include <hcc/faf.h>
 #endif
 
 #include <asm/uaccess.h>
@@ -64,9 +64,9 @@ int vfs_fstat(unsigned int fd, struct kstat *stat)
 	int error = -EBADF;
 
 	if (f) {
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 		if (f->f_flags & O_FAF_CLT) {
-			error = krg_faf_fstat(f, stat);
+			error = hcc_faf_fstat(f, stat);
 			fput(f);
 			return error;
 		}
@@ -84,21 +84,24 @@ int vfs_fstatat(int dfd, char __user *filename, struct kstat *stat, int flag)
 	int error = -EINVAL;
 	unsigned int lookup_flags = 0;
 
-	if ((flag & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT)) != 0)
+	if ((flag & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT |
+		      AT_EMPTY_PATH)) != 0)
 		goto out;
 
 	if (!(flag & AT_SYMLINK_NOFOLLOW))
 		lookup_flags |= LOOKUP_FOLLOW;
+	if (flag & AT_EMPTY_PATH)
+		lookup_flags |= LOOKUP_EMPTY;
 retry:
 	error = user_path_at(dfd, filename, lookup_flags, &path);
 	if (error)
 		goto out;
 
-#ifdef CONFIG_KRG_FAF
+#ifdef CONFIG_HCC_FAF
 	if ((!path.dentry) && (path.mnt)) {
 		struct file *file = (struct file *)path.mnt;
 		get_file (file);
-		error = krg_faf_fstat(file, stat);
+		error = hcc_faf_fstat(file, stat);
 		fput(file);
 		return error;
 	}
@@ -309,17 +312,18 @@ SYSCALL_DEFINE4(readlinkat, int, dfd, const char __user *, pathname,
 {
 	struct path path;
 	int error;
-	unsigned int lookup_flags = 0;
+	int empty = 0;
+	unsigned int lookup_flags = LOOKUP_EMPTY;
 
 	if (bufsiz <= 0)
 		return -EINVAL;
 
 retry:
-	error = user_path_at(dfd, pathname, lookup_flags, &path);
+	error = user_path_at_empty(dfd, pathname, lookup_flags, &path, &empty);
 	if (!error) {
 		struct inode *inode = path.dentry->d_inode;
 
-		error = -EINVAL;
+		error = empty ? -ENOENT : -EINVAL;
 		if (inode->i_op->readlink) {
 			error = security_inode_readlink(path.dentry);
 			if (!error) {

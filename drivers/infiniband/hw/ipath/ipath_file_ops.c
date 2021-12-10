@@ -1114,7 +1114,7 @@ static int mmap_rcvegrbufs(struct vm_area_struct *vma,
 	}
 
 	if (vma->vm_flags & VM_WRITE) {
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
 		dev_info(&dd->pcidev->dev, "Can't map eager buffers as "
 			 "writable (flags=%llx)\n", vma->vm_flags);
 #else
@@ -1159,7 +1159,7 @@ static int ipath_file_vma_fault(struct vm_area_struct *vma,
 	return 0;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct ipath_file_vm_ops = {
@@ -1210,7 +1210,7 @@ static int mmap_kvaddr(struct vm_area_struct *vma, u64 pgaddr,
                 addr = pd->subport_rcvegrbuf + size * subport;
                 /* rcvegrbufs are read-only on the slave */
                 if (vma->vm_flags & VM_WRITE) {
-#ifdef CONFIG_KRG_MM
+#ifdef CONFIG_HCC_GMM
                         dev_info(&dd->pcidev->dev,
                                  "Can't map eager buffers as "
                                  "writable (flags=%llx)\n", vma->vm_flags);

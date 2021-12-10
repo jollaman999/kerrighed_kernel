@@ -4,13 +4,13 @@
  *  Implementation of unique id generator. This mechanism generates
  *  locally, an indentifier which is unique in the cluster.
  *
- *  Copyright (C) 2006-2007, Renaud Lottiaux, Kerlabs.
+ *  Copyright (C) 2019-2021, Innogrid HCC.
  */
 
 #include <linux/hardirq.h>
 #include <linux/module.h>
 #include <linux/unique_id.h>
-#include <kerrighed/krginit.h>
+#include <hcc/hcc_init.h>
 
 #define INITVAL 1
 
@@ -19,7 +19,7 @@ unique_id_root_t mm_unique_id_root = {
 };
 
 /** Initialize a unique id root.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param root   The root to initialize
  *  @return       0 if everything ok.
@@ -38,7 +38,7 @@ EXPORT_SYMBOL(init_unique_id_root);
 
 
 /** Initialize a unique id root with a given init value.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param root   The root to initialize
  *  @param base   Init of value for the key generator.
@@ -56,7 +56,7 @@ EXPORT_SYMBOL(init_and_set_unique_id_root);
 
 
 /** Generate a unique id from a given root.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param root   The root of the unique id to generate.
  *  @return       A unique id !
@@ -79,7 +79,7 @@ unique_id_t get_unique_id(unique_id_root_t *root)
 	/* Combine local unique id and local node id to generate a
 	   identifier which is unique cluster wide */
 
-	unique_id = unique_id | ((unsigned long)kerrighed_node_id << UNIQUE_ID_NODE_SHIFT);
+	unique_id = unique_id | ((unsigned long)hcc_node_id << UNIQUE_ID_NODE_SHIFT);
 
 	return unique_id;
 }

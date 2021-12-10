@@ -1591,7 +1591,7 @@ static int fuse_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
 	return 0;
 }
 
-#ifndef CONFIG_KRG_FAF
+#ifndef CONFIG_HCC_FAF
 static const
 #endif
 struct vm_operations_struct fuse_file_vm_ops = {

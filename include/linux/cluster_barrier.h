@@ -1,23 +1,23 @@
 /** Cluster wide barrier
  *  @file cluster_barrier.h
  *
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 #include <linux/wait.h>
 #include <linux/spinlock_types.h>
-#include <kerrighed/krgnodemask.h>
-#include <kerrighed/types.h>
+#include <hcc/hcc_nodemask.h>
+#include <hcc/types.h>
 #include <linux/sched.h>
 enum static_cluster_barrier_id {
 	CLUSTER_BARRIER_NONE = 0,
-	KDDM_HOTPLUG_BARRIER,
-	SCHED_HOTPLUG_BARRIER,
+	GDM_GHOTPLUG_BARRIER,
+	GSCHED_GHOTPLUG_BARRIER,
 	CLUSTER_BARRIER_MAX,
 };
 
 struct cluster_barrier_core {
-	krgnodemask_t nodes_in_barrier;
-	krgnodemask_t nodes_to_wait;
+	hcc_nodemask_t nodes_in_barrier;
+	hcc_nodemask_t nodes_to_wait;
 	wait_queue_head_t waiting_tsk;
 	int in_barrier;
 };
@@ -36,7 +36,7 @@ struct cluster_barrier {
 
 struct cluster_barrier *alloc_cluster_barrier(unique_id_t key);
 void free_cluster_barrier(struct cluster_barrier *barrier);
-int cluster_barrier(struct cluster_barrier *barrier, krgnodemask_t *nodes,
-		    kerrighed_node_t master);
+int cluster_barrier(struct cluster_barrier *barrier, hcc_nodemask_t *nodes,
+		    hcc_node_t master);
 void init_cluster_barrier(void);
 

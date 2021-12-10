@@ -670,9 +670,9 @@ __SYSCALL(__NR_fanotify_mark, sys_ni_syscall)
 #define __NR_prlimit64				302
 __SYSCALL(__NR_prlimit64, sys_ni_syscall)
 #define __NR_name_to_handle_at			303
-__SYSCALL(__NR_name_to_handle_at, sys_ni_syscall)
+__SYSCALL(__NR_name_to_handle_at, sys_name_to_handle_at)
 #define __NR_open_by_handle_at			304
-__SYSCALL(__NR_open_by_handle_at, sys_ni_syscall)
+__SYSCALL(__NR_open_by_handle_at, sys_open_by_handle_at)
 #define __NR_clock_adjtime			305
 __SYSCALL(__NR_clock_adjtime, sys_clock_adjtime)
 #define __NR_syncfs                             306
@@ -687,6 +687,22 @@ __SYSCALL(__NR_get_cpu, sys_ni_syscall)
 __SYSCALL(__NR_process_vm_readv, sys_process_vm_readv)
 #define __NR_process_vm_writev			311
 __SYSCALL(__NR_process_vm_writev, sys_process_vm_writev)
+#define __NR_kcmp			312
+__SYSCALL(__NR_kcmp, sys_ni_syscall)
+#define __NR_finit_module			313
+__SYSCALL(__NR_finit_module, sys_ni_syscall)
+#define __NR_sched_setattr			314
+__SYSCALL(__NR_sched_setattr, sys_ni_syscall)
+#define __NR_sched_getattr			315
+__SYSCALL(__NR_sched_getattr, sys_ni_syscall)
+#define __NR_renameat2			316
+__SYSCALL(__NR_renameat2, sys_ni_syscall)
+#define __NR_seccomp			317
+__SYSCALL(__NR_seccomp, sys_ni_syscall)
+#define __NR_getrandom			318
+__SYSCALL(__NR_getrandom, sys_ni_syscall)
+#define __NR_memfd_create			319
+__SYSCALL(__NR_memfd_create, sys_memfd_create)
 
 #ifndef __NO_STUBS
 #define __ARCH_WANT_OLD_READDIR

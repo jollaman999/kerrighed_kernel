@@ -95,7 +95,7 @@ static int ncp_file_mmap_fault(struct vm_area_struct *area,
 	return VM_FAULT_MAJOR;
 }
 
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 static const
 #endif
 struct vm_operations_struct ncp_file_mmap =

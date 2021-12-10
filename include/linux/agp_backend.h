@@ -53,7 +53,7 @@ struct agp_kern_info {
 	int current_memory;
 	bool cant_use_aperture;
 	unsigned long page_mask;
-#ifndef CONFIG_KERRIGHED
+#ifndef CONFIG_HCC
 const 
 #endif	
 	struct vm_operations_struct *vm_ops;

@@ -123,6 +123,8 @@ EXPORT_PER_CPU_SYMBOL(cpu_info);
 DEFINE_PER_CPU_SHARED_ALIGNED(struct cpuinfo_x86_rh, cpu_info_rh);
 EXPORT_PER_CPU_SYMBOL(cpu_info_rh);
 
+static DEFINE_PER_CPU(struct completion, die_complete);
+
 atomic_t init_deasserted;
 
 static void remove_siblinginfo(int cpu);
@@ -799,7 +801,8 @@ static int __cpuinit do_boot_cpu(int apicid, int cpu)
 
 	INIT_WORK(&c_idle.work, do_fork_idle);
 
-	alternatives_smp_switch(1);
+	/* Just in case we booted with a single CPU. */
+	alternatives_enable_smp();
 
 	c_idle.idle = get_idle_for_cpu(cpu);
 
@@ -1392,9 +1395,13 @@ static void __ref remove_cpu_from_maps(int cpu)
 	numa_remove_cpu(cpu);
 }
 
+static DEFINE_PER_CPU(struct completion, die_complete);
+
 void cpu_disable_common(void)
 {
 	int cpu = smp_processor_id();
+
+	init_completion(&per_cpu(die_complete, smp_processor_id()));
 
 	remove_siblinginfo(cpu);
 
@@ -1428,29 +1435,29 @@ int native_cpu_disable(void)
 	if (nmi_watchdog == NMI_LOCAL_APIC)
 		stop_apic_nmi_watchdog(NULL);
 	clear_local_APIC();
-
 	cpu_disable_common();
+
 	return 0;
+}
+
+void cpu_die_common(unsigned int cpu)
+{
+	wait_for_completion_timeout(&per_cpu(die_complete, cpu), HZ);
 }
 
 void native_cpu_die(unsigned int cpu)
 {
 	/* We don't do anything here: idle task is faking death itself. */
-	unsigned int i;
 
-	for (i = 0; i < 10; i++) {
-		/* They ack this in play_dead by setting CPU_DEAD */
-		if (per_cpu(cpu_state, cpu) == CPU_DEAD) {
-			if (system_state == SYSTEM_RUNNING)
-				pr_info("CPU %u is now offline\n", cpu);
+	cpu_die_common(cpu);
 
-			if (1 == num_online_cpus())
-				alternatives_smp_switch(0);
-			return;
-		}
-		msleep(100);
+	/* They ack this in play_dead() by setting CPU_DEAD */
+	if (per_cpu(cpu_state, cpu) == CPU_DEAD) {
+		if (system_state == SYSTEM_RUNNING)
+			pr_info("CPU %u is now offline\n", cpu);
+	} else {
+		pr_err("CPU %u didn't die...\n", cpu);
 	}
-	pr_err("CPU %u didn't die...\n", cpu);
 }
 
 void play_dead_common(void)
@@ -1463,6 +1470,7 @@ void play_dead_common(void)
 	mb();
 	/* Ack it */
 	__get_cpu_var(cpu_state) = CPU_DEAD;
+	complete(&per_cpu(die_complete, smp_processor_id()));
 
 	/*
 	 * With physical CPU hotplug, we should halt the cpu

@@ -3,7 +3,7 @@
  *
  *  Definition of unique id generator interface. This mechanism generates
  *  locally, an indentifier which is unique in the cluster.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  */
 
 #ifndef __UNIQUE_ID_H__
@@ -11,7 +11,7 @@
 
 
 #include <linux/spinlock.h>
-#include <kerrighed/types.h>
+#include <hcc/types.h>
 
 
 
@@ -75,7 +75,7 @@ extern unique_id_root_t mm_unique_id_root;
 
 
 /** Initialize a unique id root.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param root   The root to initialize
  *  @return       0 if everything ok.
@@ -86,7 +86,7 @@ int init_unique_id_root(unique_id_root_t *root);
 
 
 /** Initialize a unique id root with a given init value.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param root   The root to initialize
  *  @param base   Base value for the key generator.
@@ -98,7 +98,7 @@ int init_and_set_unique_id_root(unique_id_root_t *root, int base);
 
 
 /** Generate a unique id from a given root.
- *  @author Renaud Lottiaux
+ *  @author Innogrid HCC
  *
  *  @param root   The root of the unique id to generate.
  *  @return       A unique id !
