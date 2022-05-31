@@ -1294,7 +1294,7 @@ static ssize_t snd_rawmidi_write(struct file *file, const char __user *buf,
 			break;
 		count -= count1;
 	}
-	if (file->f_flags & O_DSYNC) {
+	if (file->f_flags & O_SYNC) {
 		spin_lock_irq(&runtime->lock);
 		while (runtime->avail != runtime->buffer_size) {
 			wait_queue_t wait;

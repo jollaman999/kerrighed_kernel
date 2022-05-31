@@ -701,8 +701,9 @@ int phys_mem_access_prot_allowed(struct file *file, unsigned long pfn,
 	if (!range_is_allowed(pfn, size))
 		return 0;
 
-	if (file->f_flags & O_DSYNC)
+	if (file->f_flags & O_SYNC) {
 		flags = _PAGE_CACHE_UC_MINUS;
+	}
 
 #ifdef CONFIG_X86_32
 	/*
