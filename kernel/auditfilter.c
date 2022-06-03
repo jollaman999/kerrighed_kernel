@@ -971,6 +971,7 @@ static inline int audit_del_rule(struct audit_entry *entry)
 	struct audit_watch *watch = entry->rule.watch;
 	struct audit_tree *tree = entry->rule.tree;
 	struct list_head *list;
+	LIST_HEAD(inotify_unregister_list);
 	int ret = 0;
 #ifdef CONFIG_AUDITSYSCALL
 	int dont_count = 0;
@@ -990,7 +991,7 @@ static inline int audit_del_rule(struct audit_entry *entry)
 	}
 
 	if (e->rule.watch)
-		audit_remove_watch_rule(&e->rule);
+		audit_remove_watch_rule(&e->rule, &inotify_unregister_list);
 
 	if (e->rule.tree)
 		audit_remove_tree_rule(&e->rule);
@@ -1007,6 +1008,9 @@ static inline int audit_del_rule(struct audit_entry *entry)
 		audit_signals--;
 #endif
 	mutex_unlock(&audit_filter_mutex);
+
+	if (!list_empty(&inotify_unregister_list))
+		audit_watch_inotify_unregister(&inotify_unregister_list);
 
 out:
 	if (watch)
