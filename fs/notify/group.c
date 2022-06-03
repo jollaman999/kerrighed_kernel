@@ -164,7 +164,8 @@ void fsnotify_put_group(struct fsnotify_group *group)
 /*
  * Create a new fsnotify_group and hold a reference for the group returned.
  */
-struct fsnotify_group *fsnotify_alloc_group(const struct fsnotify_ops *ops)
+struct fsnotify_group *fsnotify_alloc_group(__u32 mask,
+					    const struct fsnotify_ops *ops)
 {
 	struct fsnotify_group *group;
 
@@ -173,6 +174,8 @@ struct fsnotify_group *fsnotify_alloc_group(const struct fsnotify_ops *ops)
 		return ERR_PTR(-ENOMEM);
 
 	atomic_set(&group->refcnt, 1);
+
+	group->mask = mask;
 
 	mutex_init(&group->notification_mutex);
 	INIT_LIST_HEAD(&group->notification_list);
@@ -192,6 +195,9 @@ struct fsnotify_group *fsnotify_alloc_group(const struct fsnotify_ops *ops)
 	atomic_inc(&group->num_marks);
 
 	mutex_unlock(&fsnotify_grp_mutex);
+
+	if (mask)
+		fsnotify_recalc_global_mask();
 
 	return group;
 }
