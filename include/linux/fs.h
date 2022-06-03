@@ -111,9 +111,6 @@ struct inodes_stat_t {
 #define FMODE_ATOMIC_POS	((__force fmode_t)0x8000)
 
 
-/* File was opened by fanotify and shouldn't generate fanotify events */
-#define FMODE_NONOTIFY		((__force fmode_t)8388608)
-
 /*
  * The below are the various read and write types that we support. Some of
  * them include behavioral modifiers that send information down to the
@@ -2828,8 +2825,7 @@ int __init get_filesystem_list(char *buf);
 
 #define __FMODE_EXEC		((__force int) FMODE_EXEC)
 
-#define OPEN_FMODE(flag) ((__force fmode_t)(((flag + 1) & O_ACCMODE) | \
-					    (flag & FMODE_NONOTIFY)))
+#define OPEN_FMODE(flag) ((__force fmode_t)((flag + 1) & O_ACCMODE))
 
 #endif /* __KERNEL__ */
 #endif /* _LINUX_FS_H */

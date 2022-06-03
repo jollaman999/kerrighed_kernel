@@ -4,14 +4,6 @@
 #include <linux/types.h>
 
 /*
- * FMODE_EXEC is 0x20
- * FMODE_NONOTIFY is 0x800000
- * These cannot be used by userspace O_* until internal and external open
- * flags are split.
- * -Eric Paris
- */
-
-/*
  * When introducing new O_* bits, please check its uniqueness in fcntl_init().
  */
 
