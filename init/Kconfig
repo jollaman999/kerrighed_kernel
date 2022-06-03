@@ -327,7 +327,7 @@ config AUDITSYSCALL
 config AUDIT_TREE
 	def_bool y
 	depends on AUDITSYSCALL
-	select FSNOTIFY
+	select INOTIFY
 
 config UTRACE
 	bool "Infrastructure for tracing and debugging user processes"
