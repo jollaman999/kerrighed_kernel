@@ -55,6 +55,12 @@ int inotify_max_user_watches __read_mostly;
 static struct kmem_cache *inotify_inode_mark_cachep __read_mostly;
 struct kmem_cache *event_priv_cachep __read_mostly;
 
+/*
+ * When inotify registers a new group it increments this and uses that
+ * value as an offset to set the fsnotify group "name" and priority.
+ */
+static atomic_t inotify_grp_num;
+
 #ifdef CONFIG_SYSCTL
 
 #include <linux/sysctl.h>
@@ -627,8 +633,11 @@ retry:
 static struct fsnotify_group *inotify_new_group(unsigned int max_events)
 {
 	struct fsnotify_group *group;
+	unsigned int grp_num;
 
-	group = fsnotify_obtain_group(0, &inotify_fsnotify_ops);
+	/* fsnotify_obtain_group took a reference to group, we put this when we kill the file in the end */
+	grp_num = (INOTIFY_GROUP_NUM - atomic_inc_return(&inotify_grp_num));
+	group = fsnotify_obtain_group(grp_num, 0, &inotify_fsnotify_ops);
 	if (IS_ERR(group))
 		return group;
 
