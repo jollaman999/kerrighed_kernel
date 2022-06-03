@@ -435,7 +435,7 @@ void inotify_ignored_and_remove_idr(struct fsnotify_mark_entry *entry,
 	fsn_event_priv->group = group;
 	event_priv->wd = ientry->wd;
 
-	ret = fsnotify_add_notify_event(group, ignored_event, fsn_event_priv, NULL);
+	ret = fsnotify_add_notify_event(group, ignored_event, fsn_event_priv);
 	if (ret)
 		inotify_free_event_priv(fsn_event_priv);
 

@@ -327,10 +327,8 @@ extern struct fsnotify_event_private_data *fsnotify_remove_priv_from_event(struc
 									   struct fsnotify_event *event);
 
 /* attach the event to the group notification queue */
-extern int fsnotify_add_notify_event(struct fsnotify_group *group,
-				     struct fsnotify_event *event,
-				     struct fsnotify_event_private_data *priv,
-				     int (*merge)(struct list_head *, struct fsnotify_event *));
+extern int fsnotify_add_notify_event(struct fsnotify_group *group, struct fsnotify_event *event,
+				     struct fsnotify_event_private_data *priv);
 /* true if the group notification queue is empty */
 extern bool fsnotify_notify_queue_is_empty(struct fsnotify_group *group);
 /* return, but do not dequeue the first event on the notification queue */
