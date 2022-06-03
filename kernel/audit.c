@@ -56,6 +56,7 @@
 #include <net/netlink.h>
 #include <linux/skbuff.h>
 #include <linux/netlink.h>
+#include <linux/inotify.h>
 #include <linux/freezer.h>
 #include <linux/tty.h>
 
