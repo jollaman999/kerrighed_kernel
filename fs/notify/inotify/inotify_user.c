@@ -453,9 +453,7 @@ skip_send_ignore:
 /* ding dong the mark is dead */
 static void inotify_free_mark(struct fsnotify_mark_entry *entry)
 {
-	struct inotify_inode_mark_entry *ientry;
-
-	ientry = container_of(entry, struct inotify_inode_mark_entry, fsn_entry);
+	struct inotify_inode_mark_entry *ientry = (struct inotify_inode_mark_entry *)entry;
 
 	kmem_cache_free(inotify_inode_mark_cachep, ientry);
 }
