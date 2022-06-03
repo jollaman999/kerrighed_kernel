@@ -311,10 +311,9 @@ void fsnotify_init_mark(struct fsnotify_mark_entry *entry,
  * event types should be delivered to which group and for which inodes.
  */
 int fsnotify_add_mark(struct fsnotify_mark_entry *entry,
-		      struct fsnotify_group *group, struct inode *inode,
-		      int allow_dups)
+		      struct fsnotify_group *group, struct inode *inode)
 {
-	struct fsnotify_mark_entry *lentry = NULL;
+	struct fsnotify_mark_entry *lentry;
 	int ret = 0;
 
 	inode = igrab(inode);
@@ -331,8 +330,7 @@ int fsnotify_add_mark(struct fsnotify_mark_entry *entry,
 	spin_lock(&group->mark_lock);
 	spin_lock(&inode->i_lock);
 
-	if (!allow_dups)
-		lentry = fsnotify_find_mark_entry(group, inode);
+	lentry = fsnotify_find_mark_entry(group, inode);
 	if (!lentry) {
 		entry->group = group;
 		entry->inode = inode;

@@ -585,7 +585,7 @@ retry:
 	}
 
 	/* we are on the idr, now get on the inode */
-	ret = fsnotify_add_mark(&tmp_ientry->fsn_entry, group, inode, 0);
+	ret = fsnotify_add_mark(&tmp_ientry->fsn_entry, group, inode);
 	if (ret) {
 		/* we failed to get on the inode, get off the idr */
 		inotify_remove_from_idr(group, tmp_ientry);
