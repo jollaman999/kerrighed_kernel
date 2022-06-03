@@ -77,7 +77,7 @@ static u32 cifs_posix_convert_flags(unsigned int flags)
 		posix_flags |= SMB_O_EXCL;
 	if (flags & O_TRUNC)
 		posix_flags |= SMB_O_TRUNC;
-	if (flags & O_SYNC)
+	if (flags & O_DSYNC)
 		posix_flags |= SMB_O_SYNC;
 	if (flags & O_DIRECTORY)
 		posix_flags |= SMB_O_DIRECTORY;
