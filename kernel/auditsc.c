@@ -64,6 +64,7 @@
 #include <linux/binfmts.h>
 #include <linux/highmem.h>
 #include <linux/syscalls.h>
+#include <linux/inotify.h>
 #include <linux/capability.h>
 #include <linux/fs_struct.h>
 #ifdef CONFIG_HCC_GPM

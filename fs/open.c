@@ -36,7 +36,6 @@
 #ifdef CONFIG_HCC_FAF
 #include <hcc/faf.h>
 #endif
-#include <linux/dnotify.h>
 
 #include "internal.h"
 
