@@ -962,8 +962,7 @@ static void audit_tree_freeing_mark(struct fsnotify_mark_entry *entry, struct fs
 }
 
 static bool audit_tree_send_event(struct fsnotify_group *group, struct inode *inode,
-				  struct vfsmount *mnt, __u32 mask, void *data,
-				  int data_type)
+				  __u32 mask, void *data, int data_type)
 {
 	return 0;
 }
