@@ -948,7 +948,7 @@ long do_sys_open(int dfd, const char __user *filename, int flags, int mode)
 #ifdef CONFIG_HCC_FAF
 				if (!(f->f_flags & O_FAF_CLT))
 #endif
-				fsnotify_open(f);
+				fsnotify_open(f->f_path.dentry);
 				fd_install(fd, f);
 			}
 		}

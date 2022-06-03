@@ -1166,10 +1166,11 @@ out:
 	if (iov != iovstack)
 		kfree(iov);
 	if ((ret + (type == READ)) > 0) {
+		struct dentry *dentry = file->f_path.dentry;
 		if (type == READ)
-			fsnotify_access(file);
+			fsnotify_access(dentry);
 		else
-			fsnotify_modify(file);
+			fsnotify_modify(dentry);
 	}
 	return ret;
 }
